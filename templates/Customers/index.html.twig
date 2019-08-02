@@ -1,0 +1,287 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  Kundenverwaltung
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  Kundenverwaltung
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="newCustomerModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ 'nav.customer.add'|trans }}</h4>
+                </div>
+                <div id="modal-content-ajax"></div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-1">
+                <form class="form" id="customers-search-form" onsubmit="return false;">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="search" class="form-control" id="search" name="search"
+                                   placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="doSearch();"><span
+                                        class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
+                            </button>
+                        </span>
+                        </div>
+                        <!-- /input-group -->
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" onclick="showCreateCustomerForm()" data-toggle="modal"
+                            data-target="#newCustomerModal"><span
+                                class="glyphicon glyphicon-plus"></span> {{ 'nav.customer.add'|trans }}</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <p>
+
+                </p>
+
+                <div id="customers-table">
+                    {% include 'Customers/customer_table.html.twig' %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function () {
+            if ($("#search").val() != "") {
+                doSearch();
+            }
+
+            $("#search").delayKeyup(function () {
+                doSearch();
+            }, 400);
+        });
+
+        $.ajaxSetup({
+            cache: false
+        });
+
+        function collapseCustomer(id) {
+            var row = "#customer-" + id;
+            var cell = "#customer-cell-" + id;
+
+            if ($(row).is(':hidden')) {
+                $(row).show();
+                return true;
+            } else {
+                $(row).hide();
+                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
+                return false;
+            }
+        }
+
+        function enableCustomerForm(id) {
+            var formFieldset = "#customer-form-fieldset-" + id;
+            var cancelButton = "#customer-cancel-" + id;
+            var editButton = "#customer-edit-" + id;
+            var saveButton = "#customer-submit-" + id;
+            var birthdayInput = "#birthday-" + id;
+            $(cancelButton).html('Abbrechen');
+            $(editButton).addClass('button-hidden');
+            $(saveButton).removeClass('button-hidden');
+            $(formFieldset).removeAttr('disabled');
+            $(birthdayInput).datepicker($.datepicker.regional["{{ app.request.locale }}"]);
+
+            return false;
+        }
+
+        function getCustomer(id) {
+            var url = "{{ path('customers.get.customer', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $("#modal-content-ajax").html(content);
+            $('#newCustomerModal .modal-title').text("{{ 'customer.details'|trans }}");
+            $('#newCustomerModal').modal('show')
+
+            $.ajax({
+                url: url,
+                type: "get",
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#modal-content-ajax").html(data);
+                    } else {
+                        //window.location.href = "{{ path('start') }}";
+                    }
+                }
+            });
+
+            return false;
+        }
+
+        function editCustomer(id) {
+            var url = "{{ path('customers.edit.customer.show', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $("#modal-content-ajax").html(content);
+            $('#newCustomerModal .modal-title').text("{{ 'customer.details'|trans }}");
+            $('#newCustomerModal').modal('show')
+
+            $.ajax({
+                url: url,
+                type: "get",
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#modal-content-ajax").html(data);
+                    } else {
+                        //window.location.href = "{{ path('start') }}";
+                    }
+                }
+            });
+
+            return false;
+        }
+
+        function saveCustomer(id) {
+            var form = "#customer-form-" + id;
+            var url = "{{ path('customers.edit.customer', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+
+            return false;
+        }
+
+        function deleteCustomer(id) {
+            if (collapseCustomer(id)) {
+                var cell = "#customer-cell-" + id;
+                var url = "{{ path('customers.delete.customer', {'id': 'placeholder'}) }}";
+                url = url.replace("placeholder", id);
+
+                $(cell).load(url, function (response, status, xhr) {
+                    //if(status == "success") location.reload();
+                });
+            }
+
+
+            return false;
+        }
+
+        function doDeleteCustomer(id) {
+            var form = "#customer-form-" + id;
+            var url = "{{ path('customers.dodelete.customer', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+
+            return false;
+        }
+
+        function showCreateCustomerForm() {
+            var url = "{{ path('customers.new.customer') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $('#newCustomerModal .modal-title').text("{{ 'nav.customer.add'|trans }}");
+            $("#modal-content-ajax").html(content);
+            $("#modal-content-ajax").load(url, function (response, status, xhr) {
+                if (status == "success") {
+                    $("#birthday-new").datepicker($.datepicker.regional["{{ app.request.locale }}"]);
+                }
+            });
+
+            return false;
+        }
+
+        function createNewCustomer() {
+            var url = "{{ path('customers.create.customer')}}";
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#customer-form-new").serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#flash-message-overlay").empty();
+                        $("#flash-message-overlay").append(data);
+                    } else {
+                        window.location.href = "{{ path('customers.overview') }}";
+                    }
+                }
+            });
+
+            return false;
+        }
+
+        function doSearch() {
+            var url = "{{ path('customers.search')}}";
+            var content = '<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />';
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#customers-search-form").serialize()+'&'+$("#page").serialize(),
+                beforeSend: function () {
+                    $("#customers-table").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#customers-table").html(data);
+                }
+            });
+
+            return false;
+        }
+    </script>
+{% endblock %}

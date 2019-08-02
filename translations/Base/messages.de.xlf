@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>login.application.title</source>
+                <target>Pensionsverwaltung</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>nav.user</source>
+                <target>Benutzer</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>nav.user.overview</source>
+                <target>Benutzer Übersicht</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>nav.user.add</source>
+                <target>Benutzer anlegen</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>nav.logout</source>
+                <target>Abmelden</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>nav.welcome</source>
+                <target>Willkommen, %user%</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>button.cancel</source>
+                <target>Abbrechen</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>button.delete</source>
+                <target>Löschen</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>nav.appartment</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>nav.appartment.overview</source>
+                <target>Zimmer Übersicht</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>nav.appartment.add</source>
+                <target>Zimmer anlegen</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>nav.settings</source>
+                <target>Einstellungen</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>button.hide</source>
+                <target>Ausblenden</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>button.edit</source>
+                <target>Bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>button.save</source>
+                <target>Speichern</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>button.close</source>
+                <target>Schließen</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>nav.object</source>
+                <target>Niederlassungen</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>nav.object.overview</source>
+                <target>Niederlassungs Übersicht</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>nav.object.add</source>
+                <target>Niederlassung anlegen</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>flash.mandatory</source>
+                <target>Bitte alle Pflichtfelder ausfüllen.</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>nav.customer.overview</source>
+                <target>Gästeübersicht</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>nav.customer.add</source>
+                <target>Gast anlegen</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>nav.customers</source>
+                <target>Gäste</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>nav.invoices</source>
+                <target>Rechnungsübersicht</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>button.continue</source>
+                <target>Weiter</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>base.action</source>
+                <target>Aktion</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>button.back</source>
+                <target>Zurück</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>button.continue.with</source>
+                <target>Weiter mit</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>nav.prices</source>
+                <target>Preisliste</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>nav.price.add</source>
+                <target>Preis hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>nav.reservation.edit</source>
+                <target>Reservierung bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>nav.registrationbook</source>
+                <target>Meldebuch</target>
+            </trans-unit>            
+            <trans-unit id="33">
+                <source>nav.invoice.add</source>
+                <target>Neue Rechnung erstellen</target>
+            </trans-unit>
+            <trans-unit id="34">
+                <source>button.details</source>
+                <target>Details Anzeigen</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>button.export.pdf</source>
+                <target>als PDF exportieren</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>button.add</source>
+                <target>Hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>button.accept</source>
+                <target>Übernehmen</target>
+            </trans-unit>
+            <trans-unit id="38">
+                <source>nav.reservation.overview</source>
+                <target>Reservierungsübersicht</target>
+            </trans-unit>
+            <trans-unit id="39">
+                <source>nav.reservationorigin</source>
+                <target>Reservierungsherkunft</target>
+            </trans-unit>
+            <trans-unit id="40">
+                <source>nav.statistics</source>
+                <target>Statistik</target>
+            </trans-unit>
+            <trans-unit id="41">
+                <source>nav.utilization</source>
+                <target>Auslastung</target>
+            </trans-unit>
+            <trans-unit id="42">
+                <source>nav.origin</source>
+                <target>Reservierungsherkunft</target>
+            </trans-unit>
+            <trans-unit id="43">
+                <source>nav.templates</source>
+                <target>Vorlagen</target>
+            </trans-unit>
+            <trans-unit id="44">
+                <source>flash.invalidtoken</source>
+                <target>Ungültiges Token.</target>
+            </trans-unit>
+            <trans-unit id="45">
+                <source>button.download</source>
+                <target>Herunterladen</target>
+            </trans-unit>
+            <trans-unit id="46">
+                <source>nav.cashjournal</source>
+                <target>Kassenbuch</target>
+            </trans-unit>
+            <trans-unit id="47">
+                <source>flash.access.denied</source>
+                <target>Zugriff verweigert.</target>
+            </trans-unit>
+            <trans-unit id="48">
+                <source>button.gdpr</source>
+                <target>DSGVO Übersicht</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

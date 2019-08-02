@@ -1,0 +1,266 @@
+<?php
+namespace App\Entity;
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * Description of Correspondence
+ *
+ * @author Alexander
+ */
+
+/**
+ * @ORM\Entity
+ * @ORM\InheritanceType("SINGLE_TABLE")
+ * @ORM\DiscriminatorColumn(name="discr", type="string")
+ * @ORM\DiscriminatorMap({"correspondence" = "Correspondence", "mail" = "MailCorrespondence", "file" = "FileCorrespondence"})
+ */
+class Correspondence 
+{
+    /** 
+     * @ORM\Id @ORM\Column(type="integer") 
+     * @ORM\GeneratedValue 
+     */
+    protected $id;
+
+    /** 
+     * @ORM\Column(type="string", length=100) 
+     */
+    protected $name;
+
+    /**
+     * @ORM\Column(type="text")
+     */
+    protected $text;
+    
+    /** 
+     * @ORM\Column(name="created", type="datetime") 
+     */
+    protected $created;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Template", inversedBy="correspondences")
+     */
+    protected $template;
+    
+    /**
+     * @ORM\ManyToOne(targetEntity="Reservation", inversedBy="correspondences")
+     */
+    protected $reservation;
+    
+    /**
+     * @ORM\ManyToMany(targetEntity="Correspondence", inversedBy="parents")
+     */
+    protected $children;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="Correspondence", mappedBy="children")
+     * 
+     */
+    protected $parents;
+    
+    public function __construct() {
+        $this->created = new \DateTime();
+        $this->children = new ArrayCollection();
+        $this->parents = new ArrayCollection();
+    }
+
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Correspondence
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set text
+     *
+     * @param string $text
+     *
+     * @return Correspondence
+     */
+    public function setText($text)
+    {
+        $this->text = $text;
+
+        return $this;
+    }
+
+    /**
+     * Get text
+     *
+     * @return string
+     */
+    public function getText()
+    {
+        return $this->text;
+    }
+
+    /**
+     * Set created
+     *
+     * @param \DateTime $created
+     *
+     * @return Correspondence
+     */
+    public function setCreated($created)
+    {
+        $this->created = $created;
+
+        return $this;
+    }
+
+    /**
+     * Get created
+     *
+     * @return \DateTime
+     */
+    public function getCreated()
+    {
+        return $this->created;
+    }
+
+    /**
+     * Set template
+     *
+     * @param \App\Entity\Template $template
+     *
+     * @return Correspondence
+     */
+    public function setTemplate(\App\Entity\Template $template = null)
+    {
+        $this->template = $template;
+
+        return $this;
+    }
+
+    /**
+     * Get template
+     *
+     * @return \App\Entity\Template
+     */
+    public function getTemplate()
+    {
+        return $this->template;
+    }
+
+    /**
+     * Set reservation
+     *
+     * @param \App\Entity\Reservation $reservation
+     *
+     * @return Correspondence
+     */
+    public function setReservation(\App\Entity\Reservation $reservation = null)
+    {
+        $this->reservation = $reservation;
+
+        return $this;
+    }
+
+    /**
+     * Get reservation
+     *
+     * @return \App\Entity\Reservation
+     */
+    public function getReservation()
+    {
+        return $this->reservation;
+    }
+
+    /**
+     * Add child
+     *
+     * @param \App\Entity\Correspondence $child
+     *
+     * @return Correspondence
+     */
+    public function addChild(\App\Entity\Correspondence $child)
+    {
+        $this->children[] = $child;
+
+        return $this;
+    }
+
+    /**
+     * Remove child
+     *
+     * @param \App\Entity\Correspondence $child
+     */
+    public function removeChild(\App\Entity\Correspondence $child)
+    {
+        $this->children->removeElement($child);
+    }
+
+    /**
+     * Get children
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getChildren()
+    {
+        return $this->children;
+    }
+
+    /**
+     * Add parent
+     *
+     * @param \App\Entity\Correspondence $parent
+     *
+     * @return Correspondence
+     */
+    public function addParent(\App\Entity\Correspondence $parent)
+    {
+        $this->parents[] = $parent;
+
+        return $this;
+    }
+
+    /**
+     * Remove parent
+     *
+     * @param \App\Entity\Correspondence $parent
+     */
+    public function removeParent(\App\Entity\Correspondence $parent)
+    {
+        $this->parents->removeElement($parent);
+    }
+
+    /**
+     * Get parents
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getParents()
+    {
+        return $this->parents;
+    }
+}

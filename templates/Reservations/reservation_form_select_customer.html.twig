@@ -1,0 +1,56 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="lastname" name="lastname"
+                                   placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
+                          <span class="input-group-btn">
+                              <button class="btn btn-default" type="button" onclick="getCustomers(1)"><span
+                                          class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
+                              </button>
+                              <button class="btn btn-default" type="button" onclick="getFormForNewCustomer()"><span
+                                          class="glyphicon glyphicon-plus"></span> {{ 'nav.customer.add'|trans }}
+                              </button>
+                          </span>
+                        </div>
+                        <!-- /input-group -->
+                    </div>
+                </div>
+                <form id="customer-selection" class="form-horizontal" role="form" onsubmit="return createNewCustomer()">
+
+                    <div class="col-sm-12" id="customers">
+                        <p>
+                            {% if customer %}
+                                Bereits selektiert: {{ customer.firstname }} {{ customer.lastname }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary pull-right hidden"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="createNewCustomerFooter" class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return selectAppartment(false)"><a
+                    href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        {% if customer %}
+            <li class="next" onclick="return getReservationPreview({{ customer.id }})"><a
+                    href="#">{{ 'button.continue.with'|trans }} {{ customer.firstname }} {{ customer.lastname }}&rarr;</a>
+            </li>{% endif %}
+    </ul>
+</div>
+<script type="text/javascript">
+    // enable keyup for search
+    $("#lastname").delayKeyup(function () {
+        getCustomers(1);
+    }, 400);
+</script>

@@ -1,0 +1,64 @@
+<fieldset
+        id="template-form-fieldset-primary-{{ template.id }}" {% if template.id != "new" %} {% endif %}>
+    <div class="form-group">
+        <label for="name-{{ template.id }}" class="col-sm-4 control-label">{{ 'templates.name'|trans }}
+            *</label>
+        <div class="col-sm-8">
+            <input type="text" class="form-control" name="name-{{ template.id }}"
+                   value="{{ template.name }}" required />
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="name-{{ template.id }}" class="col-sm-4 control-label">{{ 'templates.type'|trans }}
+            *</label>
+        <div class="col-sm-8">
+            <select name="type-{{ template.id }}" class="form-control">
+                {% for type in types %}
+                    <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <textarea name="text-{{ template.id }}" id="editor1" rows="10" cols="70">{{ template.text|raw }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="params-{{ template.id }}" class="col-sm-4 control-label">{{ 'templates.params'|trans }}</label>
+        <div class="col-sm-8">
+            <input type="text" class="form-control" name="params-{{ template.id }}"
+                   value="{{ template.params }}" />
+        </div>
+    </div> 
+    <div class="form-group">
+        <label for="default-{{ template.id }}" class="col-sm-4 control-label">{{ 'templates.default'|trans }}</label>
+        <div class="col-sm-8 text-left">
+            <input type="checkbox" name="default-{{ template.id }}"
+                   {%if template.isDefault %}checked="checked"{%endif %} />
+        </div>
+    </div>
+</fieldset>
+
+<input name="_csrf_token" value="{{ token }}" type="hidden">
+
+<script>
+    // Replace the <textarea id="editor1"> with a CKEditor
+    // instance, using default configuration.
+    editor = CKEDITOR.replace( 'editor1', {
+        language: '{{ app.request.locale }}',
+        basicEntities: true,
+        entities: true,
+        entities_greek: false,
+        entities_latin: false,
+        htmlEncodeOutput: false,
+        entities_processNumerical: false,
+        allowedContent: true,
+        startupMode: 'source'
+    });
+    // Allow and preserve twig syntax @see http://stackoverflow.com/questions/20977910/editing-twig-templates-in-ckeditor
+    // Can also be coupled with this plugin : http://ckeditor.com/addon/showprotected
+    CKEDITOR.config.protectedSource.push(/\{\{[\s\S]*?\}\}/g);
+    CKEDITOR.config.protectedSource.push(/\{\%[\s\S]*?%\}/g);
+    CKEDITOR.config.protectedSource.push(/\{\#[\s\S]*?#\}/g);
+    CKEDITOR.config.protectedSource.push(/<\/?.*htmlpageheader.*?>/g);
+    CKEDITOR.config.protectedSource.push(/<\/?.*htmlpagefooter.*?>/g);
+</script>

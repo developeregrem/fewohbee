@@ -1,0 +1,14 @@
+<fieldset
+        id="origin-form-fieldset-primary-{{ origin.id }}" {% if origin.id != "new" %} disabled {% endif %}>
+    <div class="form-group">
+        <label for="name-{{ origin.id }}" class="col-sm-4 control-label">{{ 'reservationorigin.name'|trans }}
+            *</label>
+
+        <div class="col-sm-8">
+            <input type="text" class="form-control" name="name-{{ origin.id }}"
+                   value="{{ origin.name }}" required>
+        </div>
+    </div>
+</fieldset>
+
+<input name="_csrf_token" value="{{ token }}" type="hidden">

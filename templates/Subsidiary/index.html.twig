@@ -1,0 +1,235 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'object.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'object.description'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="newObjectModal">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ 'nav.object.add'|trans }}</h4>
+                </div>
+                <div id="modal-content-ajax"></div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <p>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" onclick="showCreateObjectForm()" data-toggle="modal"
+                            data-target="#newObjectModal"><span
+                                class="glyphicon glyphicon-plus"></span> {{ 'nav.object.add'|trans }}</button>
+                </div>
+                </p>
+                <table class="table table-responsive table-bordered table-hover">
+                    <tr>
+                        <th>{{ 'object.name'|trans }}</th>
+                        <th>{{ 'object.action'|trans }}</th>
+                    </tr>
+                    {% for object in objects %}
+                        <tr>
+                            <td>{{ object.name }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.details'|trans }}"><span
+                                            onclick="showObject({{ object.id }})"
+                                            class="glyphicon glyphicon-eye-open"></span></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}"><span
+                                            onclick="editObject({{ object.id }})"
+                                            class="glyphicon glyphicon-pencil"></span></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                            onclick="deleteObject({{ object.id }})"
+                                            class="glyphicon glyphicon-remove"></span></a>
+                            </td>
+                        </tr>
+                        <tr id="object-{{ object.id }}" hidden="true">
+                            <td colspan="6" id="object-cell-{{ object.id }}">
+                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $.ajaxSetup({
+            cache: false
+        });
+
+        function collapseObject(id) {
+            var row = "#object-" + id;
+            var cell = "#object-cell-" + id;
+
+            if ($(row).is(':hidden')) {
+                $(row).show();
+                return true;
+            } else {
+                $(row).hide();
+                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
+                return false;
+            }
+        }
+        ;
+
+        function enableObjectForm(id) {
+            var formFieldset = "#object-form-fieldset-" + id;
+            var cancelButton = "#object-cancel-" + id;
+            var editButton = "#object-edit-" + id;
+            var saveButton = "#object-submit-" + id;
+            $(cancelButton).html('Abbrechen');
+            $(editButton).addClass('button-hidden');
+            $(saveButton).removeClass('button-hidden');
+            $(formFieldset).removeAttr('disabled');
+
+            return false;
+        }
+        ;
+
+        function getObject(id, enableForm) {
+            var cell = "#object-cell-" + id;
+            var url = "{{ path('objects.get.object', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            if (enableForm) {
+                $(cell).load(url, function (response, status, xhr) {
+                    if (status == "success") enableObjectForm(id);
+                });
+            } else {
+                $(cell).load(url);
+            }
+
+            return false;
+        }
+        ;
+
+        function showObject(id) {
+            if (collapseObject(id)) {
+                getObject(id, false);
+            }
+
+            return false;
+        }
+        ;
+
+        function editObject(id) {
+            if (collapseObject(id)) {
+                getObject(id, true);
+            }
+
+            return false;
+        }
+        ;
+
+        function saveObject(id) {
+            var form = "#object-form-" + id;
+            var url = "{{ path('objects.edit.object', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+
+            return false;
+        }
+        ;
+
+        function deleteObject(id) {
+            if (collapseObject(id)) {
+                var cell = "#object-cell-" + id;
+                var url = "{{ path('objects.delete.object', {'id': 'placeholder'}) }}";
+                url = url.replace("placeholder", id);
+
+                $(cell).load(url, function (response, status, xhr) {
+                    //if(status == "success") location.reload();
+                });
+            }
+
+
+            return false;
+        }
+        ;
+
+        function doDeleteObject(id) {
+            var form = "#object-form-" + id;
+            var url = "{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+
+            return false;
+        }
+        ;
+
+        function showCreateObjectForm() {
+            var url = "{{ path('objects.new.object') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $("#modal-content-ajax").html(content);
+            $("#modal-content-ajax").load(url, function (response, status, xhr) {
+            });
+
+            return false;
+        }
+        ;
+
+        function createNewObject() {
+            var url = "{{ path('objects.create.object')}}";
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#object-form-new").serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#flash-message-overlay").empty();
+                        $("#flash-message-overlay").append(data);
+                    } else {
+                        window.location.href = "{{ path('objects.overview') }}";
+                    }
+                }
+            });
+
+            return false;
+        }
+        ;
+    </script>
+{% endblock %}

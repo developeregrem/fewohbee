@@ -1,0 +1,17 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+                {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
+            </div>
+        </div>
+        {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'new', 'reservationId':  'new'} %}
+    </div>
+</div>
+<div id="newReservationPreview" class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return selectCustomer()"><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+    </ul>
+    <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" onclick="createNewReservations()"/>
+</div>

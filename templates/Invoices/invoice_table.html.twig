@@ -1,0 +1,39 @@
+<table class="table table-responsive table-bordered table-hover">
+    <tr>
+        <th>{{ 'invoice.number'|trans }}</th>
+        <th>{{ 'invoice.date'|trans }}</th>
+        <th>{{ 'invoice.lastname'|trans }}</th>
+        <th>{{ 'invoice.company'|trans }}</th>
+        <th>{{ 'invoice.status'|trans }}</th>
+        <th>{{ 'invoice.action'|trans }}</th>
+    </tr>
+    {% for invoice in invoices %}
+        <tr>
+            <td>{{ invoice.number }}</td>
+            <td>{{ invoice.date|date('d.m.Y') }}</td>
+            <td>{{ invoice.lastname }}</td>
+            <td>{{ invoice.company }}</td>
+            <td>
+                {% if invoice.status == 1 %}
+                    {{ 'invoice.status.notpayed'|trans }}
+                {% else %}
+                    {{ 'invoice.status.payed'|trans }}
+                {% endif %}
+            </td>
+            <td>
+                <a href="#" title="{{ 'button.details'|trans }}"><span
+                            onclick="showInvoice({{ invoice.id }})" class="glyphicon glyphicon-eye-open"
+                            data-toggle="modal" data-target="#showInvoiceModal"></span></a>
+                <a href="#" title="{{ 'button.edit'|trans }}"><span
+                            onclick="showInvoice({{ invoice.id }}, true)" class="glyphicon glyphicon-pencil"
+                            data-toggle="modal" data-target="#showInvoiceModal"></span></a>
+                <a class="export-link"
+                   href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}"
+                   title="{{ 'button.export.pdf'|trans }}"><span
+                            class="glyphicon glyphicon-print"></span></a>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+<input id="page" type="hidden" name="page" value="{{ page }}" />
+{% include 'paginator.html.twig' with { 'url' : path('invoices.overview') } %}

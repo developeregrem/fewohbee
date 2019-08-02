@@ -1,0 +1,302 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'statistics.utilization.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'statistics.utilization.title'|trans }}
+{% endblock %}
+
+{# create list of localized month #}
+{% set monthList = [] %}
+{% for i in 1..12 %}
+    {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
+{% endfor %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <form id="table-filter" class="form-inline" role="form">                   
+                    <div class="form-group pull-right">
+                        <select id="objects" name="object" class="form-control">
+                            <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                            {% for object in objects %}
+                                <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                {{ 'statistics.utilization.monthly'|trans }}
+                                 <span id="refreshMonthly" class="glyphicon glyphicon-refresh pull-right" aria-hidden="true" style="cursor: pointer;"></span>
+                            </div>
+                            <div class="panel-body">
+                                <div id="monthlyChart" style="height: 200px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
+                            </div>
+                            <div class="panel-footer">
+                                <form class="form-inline" role="form">
+                                    <div class="form-group">
+                                    </div>
+                                    <div class="form-group">
+                                        <select id="monthlyStart" name="monthtlyStart" class="form-control">
+                                            {% set currentMonth = 'now'|date('n') %}
+                                            {% for month in monthList %}
+                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <select id="monthlyStartYear" name="monthtlyStartYear" class="form-control">
+                                            {% set currentYear = 'now'|date('Y') %}
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        &nbsp;-&nbsp; 
+                                        <select id="monthlyEnd" name="monthtlyEnd" class="form-control">
+                                            {% for month in monthList %}
+                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <select id="monthlyEndYear" name="monthtlyEndYear" class="form-control">
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5 col-md-offset-1">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                {{ 'statistics.utilization.yearly'|trans }}
+                                 <span id="refreshYearly" class="glyphicon glyphicon-refresh pull-right" aria-hidden="true" style="cursor: pointer;"></span>
+                            </div>
+                            <div class="panel-body">
+                                <div id="yearlyChart" style="height: 200px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
+                            </div>
+                            <div class="panel-footer">
+                                <form class="form-inline" role="form">
+                                    <div class="form-group">
+                                    </div>
+                                    <div class="form-group">
+                                        <select id="yearlyStartYear" name="yearlyStartYear" class="form-control">
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        &nbsp;-&nbsp; 
+                                        <select id="yearlyEndYear" name="yearlyEndYear" class="form-control">
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id='tooltip'></div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.resize.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.time.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.axislabels.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.autoMarkings.js"></script>
+    <script>
+
+    $(document).ready(function () {
+        
+        $("#objects").change(function () {
+            drawMonthlyChart();
+            drawYearlyChart();
+        });
+        
+        $("#monthlyStart, #monthlyEnd, #monthlyStartYear, #monthlyEndYear").change(function () {
+            drawMonthlyChart();
+        });
+        
+        $("#refreshMonthly").click(function () {
+            drawMonthlyChart();
+        });
+        
+        $("#yearlyStartYear, #yearlyEndYear").change(function () {
+            drawYearlyChart();
+        });
+        
+        $("#refreshYearly").click(function () {
+            drawYearlyChart();
+        });
+        
+        drawMonthlyChart();
+        drawYearlyChart();
+        
+        $("#tooltip").css({
+            position: "absolute",
+            display: "none",
+            border: "1px solid #fdd",
+            padding: "2px",
+            "background-color": "#fee",
+            opacity: 0.80
+        }).appendTo("body");
+
+        $("#monthlyChart").bind("plothover", function (event, pos, item) {
+            if (item != null) {
+                var d = new Date(item.datapoint[0]);
+                $("#tooltip").html(item.datapoint[0]+". "+item.series.label+ ": " + item.datapoint[1] + "%")
+                        .css({top: item.pageY + 5, left: item.pageX + 5})
+                        .fadeIn(200);
+            } else {
+                $("#tooltip").hide();
+            }
+        });
+        
+        $("#yearlyChart").bind("plothover", function (event, pos, item) {
+            if (item != null) {
+                var d = new Date(item.datapoint[0]);
+                $("#tooltip").html(item.datapoint[0]+". "+item.series.label+ ": " + item.datapoint[1].toFixed(1) + "%")
+                        .css({top: item.pageY + 5, left: item.pageX + 5})
+                        .fadeIn(200);
+            } else {
+                $("#tooltip").hide();
+            }
+        });
+    });
+        
+    function drawMonthlyChart() {
+        var objId = $("#objects").val();
+        var start = $("#monthlyStart").val();
+        var end = $("#monthlyEnd").val();
+        var startYear = $("#monthlyStartYear").val();
+        var endYear = $("#monthlyEndYear").val();
+        $("#monthlyChart").html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
+        $.ajax({
+            url: '{{ path('statistics.utilization.monthtly') }}',
+            data: {monthStart: start, monthEnd: end, yearStart: startYear, yearEnd: endYear, objectId: objId}
+        }).done(function (values) {
+            var yMax = 100;
+            var xMax = 28;
+            for (var i = 0; i < values.length; i++) {
+                //alert(values[i].data);
+                for (var n = 0; n < values[i].data.length; n++) {
+                    if(values[i].data[n][1] > yMax) {
+                        yMax = values[i].data[n][1];    //[1] -> utilization in %
+                    }
+                    if(values[i].data[n][0] > xMax) {
+                        xMax = values[i].data[n][0];    // [0] -> day
+                    }
+                }
+            }
+            
+            $.plot($("#monthlyChart"), values, {
+                series: {
+                    lines: {
+                        show: true
+                    },
+                    points: {
+                        show: true
+                    },
+                    autoMarkings: {
+                        enabled: true,
+                        showMinMax: false,
+                        showAvg: true
+                    }
+                },
+                axisLabels: {
+                    show: true
+                },
+                yaxes: [{
+                        //position: 'left',
+                        axisLabel: '%',
+                    }],
+                grid: {
+                    hoverable: true,
+                    clickable: true
+                },
+                yaxis: {
+                    max: yMax,
+                    min: 0
+                },
+                xaxis: {
+                    //mode: "time",
+                    //timezone: "browser",
+                    min: 1,
+                    max: xMax
+                }
+            }); 
+        });
+    }
+    
+    function drawYearlyChart() {
+        var objId = $("#objects").val();
+        var startYear = $("#yearlyStartYear").val();
+        var endYear = $("#yearlyEndYear").val();
+        $("#yearlyChart").html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
+        $.ajax({
+            url: '{{ path('statistics.utilization.yearly') }}',
+            data: {yearStart: startYear, yearEnd: endYear, objectId: objId}
+        }).done(function (values) {
+            var chartData = [];
+
+            {#for (i = 0; i < values.length; i++) {
+                var tmpValue = parseFloat(values[i][1]);
+                chartData.push([new Date(values[i][0]).getTime(), tmpValue]);
+            }#}
+
+            $.plot($("#yearlyChart"), values, {
+                series: {
+                    lines: {
+                        show: true
+                    },
+                    points: {
+                        show: true
+                    },
+                    autoMarkings: {
+                        enabled: true,
+                        showMinMax: false,
+                        showAvg: true
+                    }
+                },
+                axisLabels: {
+                    show: true
+                },
+                yaxes: [{
+                        //position: 'left',
+                        axisLabel: '%',
+                    }],
+                grid: {
+                    hoverable: true,
+                    clickable: true
+                },
+                yaxis: {
+                    max: 100,
+                    min: 0
+                },
+                xaxis: {
+                    //mode: "time",
+                    //timezone: "browser",
+                    min: 1,
+                    max: 12
+                }
+            }); 
+        });
+    }
+    </script>
+{% endblock %}

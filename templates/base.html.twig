@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <title>{% block title %}Pensionsverwaltung{% endblock %}</title>
+    <meta name="description" content="{% block description %}Welcome!{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}{% endblock %}">
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.paper.min.3.3.7.css">
+        <link rel="stylesheet"
+              href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style.css">
+    {% endblock %}
+    {% block javascripts %}
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.1.0.min.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas_5.9.0.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.3.3.7.js"></script>
+        <script type="text/javascript"
+                src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
+        <script type="text/javascript"
+                src="{{ app.request.basepath }}/resources/js/jquery.ui.datepicker-de.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
+    {% endblock %}
+    <!--<link rel="icon" type="image/x-icon" href="" />-->
+</head>
+<body>
+{% block body %}
+    {% block menu %}
+        {% set activeRouteName = getActiveRouteName() %}
+        <nav class="navbar navbar-inverse" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-inverse-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div style="" aria-expanded="true" class="navbar-collapse navbar-inverse-collapse collapse">              
+                <ul class="nav navbar-nav">
+                    <li{% if activeRouteName starts with "customers" %} class="active"{% endif %}><a href="{{ path('customers.overview') }}">{{ 'nav.customers'|trans }}</a></li>
+                    <li{% if activeRouteName starts with "invoices" %} class="active"{% endif %}><a href="{{ path('invoices.overview') }}">{{ 'nav.invoices'|trans }}</a></li>
+                    <li{% if activeRouteName starts with "registrationbook" %} class="active"{% endif %}><a href="{{ path('registrationbook.overview') }}">{{ 'nav.registrationbook'|trans }}</a></li>
+                    <li class="dropdown{% if activeRouteName starts with "statistics" %} active{% endif %}">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ 'nav.statistics'|trans }} <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li{% if activeRouteName starts with "statistics.utilization" %} class="active"{% endif %}><a href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a></li>
+                            <li{% if activeRouteName starts with "statistics.origin" %} class="active"{% endif %}><a href="{{ path('statistics.origin') }}">{{ 'nav.origin'|trans }}</a></li>
+                        </ul>
+                    </li>
+                    <li{% if activeRouteName starts with "cashjournal" %} class="active"{% endif %}><a href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <li class="dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span
+                                        class="glyphicon glyphicon-wrench"></span> {{ 'nav.settings'|trans }} <b
+                                        class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                                <li{% if activeRouteName starts with "users" %} class="active"{% endif %}>
+                                    <a href="{{ path('users.overview') }}"><span class="glyphicon glyphicon-user"></span> {{ 'nav.user'|trans }}</a></li>
+                                <li{% if activeRouteName starts with "appartments" %} class="active"{% endif %}>
+                                    <a href="{{ path('appartments.overview') }}"><span class="glyphicon glyphicon-th-list"></span> {{ 'nav.appartment'|trans }}</a></li>
+                                <li{% if activeRouteName starts with "objects" %} class="active"{% endif %}>
+                                    <a href="{{ path('objects.overview') }}"><span class="glyphicon glyphicon-home"></span> {{ 'nav.object'|trans }}</a></li>
+                                <li{% if activeRouteName starts with "prices" %} class="active"{% endif %}>
+                                    <a href="{{ path('prices.overview') }}"><span class="glyphicon glyphicon-euro"></span> {{ 'nav.prices'|trans }}</a></li>
+                                <li{% if activeRouteName starts with "reservationorigin" %} class="active"{% endif %}>
+                                    <a href="{{ path('reservationorigin.overview') }}"><span class="glyphicon glyphicon-log-in"></span> {{ 'nav.reservationorigin'|trans }}</a></li>
+                                <li{% if activeRouteName starts with "settings.templates" %} class="active"{% endif %}>
+                                    <a href="{{ path('settings.templates.overview') }}"><span class="glyphicon glyphicon-file"></span> {{ 'nav.templates'|trans }}</a></li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }} <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{{ path('logout') }}"><span class="glyphicon glyphicon-off"></span> {{ 'nav.logout'|trans }}</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    {% endblock %}
+    {% block flashMessage %}
+        <div class="container-fluid">
+            <div class="row" id="flash-message-container">
+                {% for type, flashMessages in app.flashes %}
+                    {% for flashMessage in flashMessages %}
+                        <div class="col-md-10 col-md-offset-1">
+                            <div class="alert alert-{{ type }} alert-dismissable">
+                                <button type="button" class="close" data-dismiss="alert"
+                                        aria-hidden="true">&times;</button>
+                                {{ flashMessage|trans }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endblock %}
+
+    {% block content %}{% endblock %}
+
+{% endblock %}
+</body>
+</html>

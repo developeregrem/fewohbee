@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>reservationorigin.title</source>
+                <target>Reservierungsherkunft</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>reservationorigin.description</source>
+                <target>Reservierungsherkunft</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>reservationorigin.add</source>
+                <target>Herkunft hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>reservationorigin.name</source>
+                <target>Bezeichnung</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>reservationorigin.flash.create.success</source>
+                <target>Reservierungsherkunft erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>reservationorigin.flash.edit.success</source>
+                <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>reservationorigin.flash.delete.success</source>
+                <target>Reservierungsherkunft erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>reservationorigin.delete.ask</source>
+                <target>Reservierungsherkunft wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>reservationorigin.flash.delete.inuse.reservations</source>
+                <target>Reservierungsherkunft kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

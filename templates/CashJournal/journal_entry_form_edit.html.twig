@@ -1,0 +1,50 @@
+<form id="entity-form-new" class="form-horizontal" role="form" onsubmit="return editEntry({{ entry.id }})">
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row" id="flash-message-overlay">
+                <div class="row">
+                </div>
+            </div>
+            {% include 'CashJournal/journal_entry_input_fields.html.twig' %}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div class="boxDefault pull-right">
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+            <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>  
+        </div>
+        {% if is_granted('ROLE_ADMIN') %}
+        <div class="boxDefault pull-left">            
+            <button type="button" class="btn btn-danger"
+                        onclick="return toggleDelete();">{{ 'button.delete'|trans }}</button>
+        </div>
+        <div id="boxDelete" class="hide pull-left">               
+            <button class="btn btn-default"
+                    onclick="return toggleDelete();">{{ 'button.cancel'|trans }}</button>
+            <button class="btn btn-danger" onclick="return doDeleteEntry({{ entry.id }});">{{ 'button.delete'|trans }}</button>
+            {{ 'journal.entry.delete.ask'|trans }}
+        </div>
+        {% endif %}        
+    </div>
+</form>
+{% if is_granted('ROLE_ADMIN') %}
+    <div id="boxDelete" class="hide">
+        <form id="deleteForm" role="form">            
+            <input type="hidden" name="id" value="{{ entry.id }}"/>
+            <input name="_csrf_token" value="{{ token }}" type="hidden">
+        </form>
+    </div>
+{% endif %}
+<script>
+   function toggleDelete() {
+        if ($("#boxDelete").is(":hidden")) {
+            $("#boxDelete").fadeIn().removeClass('hide');
+            $(".boxDefault").hide();
+        }
+        else {
+            $("#boxDelete").hide();
+            $(".boxDefault").fadeIn();
+        }
+        return false;
+    } 
+</script>

@@ -1,0 +1,68 @@
+<form id="user-form-new" class="form-horizontal" role="form" onsubmit="return createNewUser()">
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row" id="flash-message-overlay">
+                <div class="row">
+                </div>
+            </div>
+            <div class="col-md-11">
+                <div class="form-group">
+                    <label for="inputUsername" class="col-sm-4 control-label">{{ 'user.username'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="username-new" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputFirstname" class="col-sm-4 control-label">{{ 'user.firstname'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="firstname-new" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputLastname" class="col-sm-4 control-label">{{ 'user.lastname'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="lastname-new" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputEmail" class="col-sm-4 control-label">{{ 'user.email'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="email" class="form-control" name="email-new" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword" class="col-sm-4 control-label">{{ 'user.password'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" name="password-new"
+                               placeholder="{{ 'user.password'|trans }}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword3" class="col-sm-4 control-label">{{ 'user.role'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select name="role-new" class="form-control">
+                            {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword" class="col-sm-4 control-label">{{ 'user.active'|trans }}</label>
+                    <input name="active-new" type="checkbox" value="1">
+                </div>
+                <input name="_csrf_token" value="{{ token }}" type="hidden">
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
+    </div>
+</form>

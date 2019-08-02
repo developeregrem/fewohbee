@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>templates.title</source>
+                <target>Vorlagen</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>templates.description</source>
+                <target>Vorlagen für eMails, Rechnungen usw.</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>templates.add</source>
+                <target>Vorlage hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>templates.name</source>
+                <target>Name</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>templates.flash.create.success</source>
+                <target>Vorlage erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>templates.flash.edit.success</source>
+                <target>Vorlage erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>templates.flash.delete.success</source>
+                <target>Vorlage erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>templates.delete.ask</source>
+                <target>Vorlage wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>templates.flash.delete.inuse.reservations</source>
+                <target>Vorlage kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>templates.preview</source>
+                <target>Vorschau</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>templates.edit</source>
+                <target>Vorlage bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>templates.type</source>
+                <target>Vorlagentyp</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>TEMPLATE_RESERVATION_EMAIL</source>
+                <target>E-Mail Vorlage für Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>TEMPLATE_FILE_PDF</source>
+                <target>PDF Datei</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>templates.select.reservations</source>
+                <target>Reservierung auswählen</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>templates.select.template</source>
+                <target>Vorlage auswählen</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>templates.sendemail.success</source>
+                <target>Die Nachricht wurde erfolgreich versendet.</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>templates.sendemail.preview</source>
+                <target>Nachricht versenden</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>templates.savefile.success</source>
+                <target>Datei wurde erfolgreich gespeichert.</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>templates.correspondence.created</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>templates.correspondence.name</source>
+                <target>Name</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>templates.attachment.notfound</source>
+                <target>Der Anhang konnte nicht gefunden werden.</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>templates.correspondence.delete.ok</source>
+                <target>Eintrag erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>templates.correspondence.notfound</source>
+                <target>Der Eintrag konnte nicht gefunden werden.</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>templates.params</source>
+                <target>zusätzliche Paramater (JSON-String)</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>templates.default</source>
+                <target>Standardvorlage für Typ</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>templates.recipient</source>
+                <target>Empfänger</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>templates.subject</source>
+                <target>Betreff</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>templates.attachment</source>
+                <target>Anhang</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>TEMPLATE_INVOICE_PDF</source>
+                <target>PDF Rechnung</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>TEMPLATE_RESERVATION_PDF</source>
+                <target>PDF Vorlage für Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>TEMPLATE_CASHJOURNAL_PDF</source>
+                <target>PDF Kassenblatt</target>
+            </trans-unit>
+            <trans-unit id="33">
+                <source>TEMPLATE_GDPR_PDF</source>
+                <target>PDF für DSGVO Export</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

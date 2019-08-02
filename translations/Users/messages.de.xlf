@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>user.flash.create.success</source>
+                <target>Nutzer wurde erfolgreich hinzugefügt.</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>user.flash.edit.success</source>
+                <target>Nutzer wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>user.flash.delete.success</source>
+                <target>Nutzer wurde erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>user.firstname</source>
+                <target>Vorname</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>user.lastname</source>
+                <target>Nachname</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>user.username</source>
+                <target>Anmeldename</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>user.action</source>
+                <target>Aktion</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>user.email</source>
+                <target>eMail</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>user.password</source>
+                <target>Passwort</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>user.role</source>
+                <target>Rolle</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>user.active</source>
+                <target>Aktiv</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>user.flash.username.na</source>
+                <target>Der gewählte Anmeldename ist bereits vergeben!</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>user.delete.ask</source>
+                <target>Diesen Nutzer wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>user.lastaction</source>
+                <target>Letzte Aktion</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

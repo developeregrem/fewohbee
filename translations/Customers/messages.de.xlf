@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>customer.firstname</source>
+                <target>Vorname</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>customer.lastname</source>
+                <target>Nachname</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>customer.company</source>
+                <target>Firma</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>customer.email</source>
+                <target>E-Mail</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>customer.action</source>
+                <target>Aktion</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>customer.salutation</source>
+                <target>Anrede</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>customer.birthday</source>
+                <target>Geburtsdatum</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>customer.zip</source>
+                <target>PLZ</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>customer.city</source>
+                <target>Stadt</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>customer.country</source>
+                <target>Land</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>customer.phone</source>
+                <target>Festnetz</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>customer.fax</source>
+                <target>Fax</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>customer.mobilephone</source>
+                <target>Mobil</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>customer.address</source>
+                <target>Adresse</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>customer.mr</source>
+                <target>Herr</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>customer.ms</source>
+                <target>Frau</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>customer.flash.delete.success</source>
+                <target>Gast wurde erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>customer.flash.create.success</source>
+                <target>Gast wurde erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>customer.flash.edit.success</source>
+                <target>Gast wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>customer.delete.ask</source>
+                <target>Diesen Gast wirklich löschen? Hinweis: Alle bisherigen Buchungen wurden dann von einem "gelöschten" Gast getätigt.</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>customer.family</source>
+                <target>Familie</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>customer.remark</source>
+                <target>Bemerkungen</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>customer.person</source>
+                <target>Person</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>customer.contactdata</source>
+                <target>Kontaktdaten</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>customer.additional</source>
+                <target>weitere Angaben</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>customer.flash.delete.error.still.in.use</source>
+                <target>Gast kann nicht gelöscht werden, da er noch in einer zukünftigen oder aktuellen Reservierung verwendet wird.</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>customer.details</source>
+                <target>Gastdetails</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>customer.template</source>
+                <target>Vorlage</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>customer.addresstype</source>
+                <target>Typ</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>CUSTOMER_ADDRESS_TYPE_PRIVATE</source>
+                <target>privat</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>CUSTOMER_ADDRESS_TYPE_BUSINESS</source>
+                <target>geschäftlich</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>CUSTOMER_ADDRESS_TYPE_ADDITIONAL</source>
+                <target>weitere</target>
+            </trans-unit>
+            <trans-unit id="33">
+                <source>customer.address.add</source>
+                <target>neue Anschrift hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="34">
+                <source>customer.address.delete</source>
+                <target>Anschrift entfernen</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>customer.contact</source>
+                <target>Kontakt</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>customer.search.addresses</source>
+                <target>Anschriften suchen ...</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>customer.count.books</source>
+                <target>Anzahl Buchungen</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

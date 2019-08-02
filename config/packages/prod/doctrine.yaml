@@ -1,0 +1,52 @@
+doctrine:
+    orm:
+        metadata_cache_driver:
+            type: service
+            id: doctrine.system_cache_provider
+#            id: redis_cache_service
+        query_cache_driver:
+            type: service
+            id: doctrine.system_cache_provider
+#            id: redis_cache_service
+        result_cache_driver:
+            type: service
+            id: doctrine.result_cache_provider
+#            id: redis_cache_service
+
+services:
+    doctrine.result_cache_provider:
+        class: Symfony\Component\Cache\DoctrineProvider
+        public: false
+        arguments:
+            - '@doctrine.result_cache_pool'
+    doctrine.system_cache_provider:
+        class: Symfony\Component\Cache\DoctrineProvider
+        public: false
+        arguments:
+            - '@doctrine.system_cache_pool'
+            
+    redis_cache_service:
+        class: Doctrine\Common\Cache\RedisCache
+        calls:
+            - method: setRedis
+              arguments:
+                - '@redis'
+                    
+    redis:
+        class: Redis
+        public: false
+        calls:
+            - method: connect
+              arguments:
+                - redis # or host/ip with port
+            - method: select
+              arguments:
+                - 1 # change database by index
+
+framework:
+    cache:
+        pools:
+            doctrine.result_cache_pool:
+                adapter: cache.app
+            doctrine.system_cache_pool:
+                adapter: cache.system

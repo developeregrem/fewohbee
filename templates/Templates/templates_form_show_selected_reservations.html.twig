@@ -1,0 +1,112 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <ul class="list-group">
+                            <table class="table" id="selectedAppartments">
+                                <tr>
+                                    <th>{{ 'appartment.number'|trans }}</th>
+                                    <th>{{ 'appartment.description'|trans }}</th>
+                                    <th>{{ 'customer.firstname'|trans }}</th>
+                                    <th>{{ 'customer.lastname'|trans }}</th>
+                                    <th>{{ 'reservation.startdate'|trans }}</th>
+                                    <th>{{ 'reservation.enddate'|trans }}</th>
+                                    <th>{{ 'base.action'|trans }}</th>
+                                </tr>
+                                {% for key,reservation in reservations %}
+                                    <tr>
+                                        <td>{{ reservation.appartment.number }}</td>
+                                        <td>{{ reservation.appartment.description }}</td>
+                                        <td>{{ reservation.booker.firstname }}</td>
+                                        <td>{{ reservation.booker.lastname }}</td>
+                                        <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+                                        <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+                                        <td>
+                                            <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                                        onclick="return deleteReservationFromSelection({{ key }})"
+                                                        class="glyphicon glyphicon-remove"></span></a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return showGetReservations('false')"><a
+                    href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a></li>
+        {% if reservations|length > 0 %}
+            <li class="next" onclick="return selectTemplateForReservations()"><a
+                    href="#">{{ 'button.continue'|trans }} &rarr;</a></li>{% endif %}
+    </ul>
+</div>
+<script>
+
+    function showGetReservations(createNewInvoiceSessionObject) {
+        var url = "{{ path('settings.templates.get.reservations') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
+
+        $("#modal-content-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            data: { createNewInvoice: createNewInvoiceSessionObject },
+            beforeSend: function () {
+                $("modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function deleteReservationFromSelection(key) {
+        var url = "{{ path('settings.templates.remove.reservation.from.selection') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { reservationkey: key },
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+</script>

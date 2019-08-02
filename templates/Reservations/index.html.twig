@@ -1,0 +1,1017 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  Reservierungsverwaltung
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  Reservierungsverwaltung
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="newReservationModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">
+                        {{ 'nav.reservation.add'|trans }}
+                    </h4>
+                </div>
+                <div id="modal-content-ajax">
+                    <div class="modal-body">
+                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <p>
+
+                <form id="table-filter" class="form-inline" role="form" onsubmit="return getNewTable()">
+                    <div class="btn-group">
+                        <div class="form-group">
+                            <input type="input" class="form-control" id="start" name="start" placeholder="from"
+                                   value="{{ today|date('d.m.Y') }}">
+                        </div>
+                        <div class="form-group">
+                            <select name="intervall" class="form-control">
+                                <option value="8"{% if "8" == interval %} selected{% endif %}>
+                                    8 {{ 'reservation.days'|trans }}</option>
+                                <option value="15"{% if "15" == interval %} selected{% endif %}>
+                                    15 {{ 'reservation.days'|trans }}</option>
+                                <option value="22"{% if "22" == interval %} selected{% endif %}>
+                                    22 {{ 'reservation.days'|trans }}</option>
+                                <option value="30"{% if "30" == interval %} selected{% endif %}>
+                                    30 {{ 'reservation.days'|trans }}</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-default"><span
+                                        class="glyphicon glyphicon-refresh"></span> {{ 'reservation.table.reload'|trans }}
+                            </button>
+                            <button type="button" class="btn btn-default" onclick="return selectAppartment(true)"
+                                    data-toggle="modal" data-target="#newReservationModal"><span
+                                        class="glyphicon glyphicon-plus"></span> {{ 'nav.reservation.add'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group pull-right">
+                        <select id="objects" name="object" class="form-control">
+                            <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                            {% for object in objects %}
+                                <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+                </p>
+                <div id="table-ajax">
+                    <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/ckeditor/ckeditor.js"></script>
+    <script>
+    $.ajaxSetup({
+        cache: false
+    });
+    var lastClickedReservationId = 0;
+    
+    $(document).ready(function () {
+        // load initial table
+        getNewTable();
+
+        $("#start").datepicker({
+            changeMonth: true,
+            changeYear: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+        });
+
+        $("#objects").change(function () {
+            getNewTable();
+        });
+
+        fromOptions = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                var from = $(this).datepicker("getDate");
+                $("#end").datepicker("option", "minDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+                // add + 1 day in end form only if field is empty
+                if ($("#end").val().length === 0) {
+                    $("#end").datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+                    //$("#from").datepicker("option", "maxDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+                    getAvailableAppartmentsForPeriod();
+                }
+            }
+        };
+        endOptions = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                //$("#from").datepicker("option", "maxDate", selectedDate);
+            }
+        }
+    });
+
+    function selectReservatioForInvoice(id) {
+        var url = "{{ path('invoices.select.reservation') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { reservationid: id, createNewInvoice: "true"},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function selectReservationForTemplate(id) {
+        var url = "{{ path('settings.templates.select.reservation') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        lastClickedReservationId = id;
+        $(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { reservationid: id, createNew: "true"},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function getNewTable() {
+        var url = "{{ path('reservations.get.table') }}";
+        var form = "#table-filter";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $("#table-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#table-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function selectAppartment(createNewReservation) {
+        var url = "{{ path('reservations.select.appartment') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.add'|trans }}");
+        $("#modal-content-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            data: ($("#objects").serialize() + "&createNewReservation=" + createNewReservation),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+
+                if (from != null && end != null) {
+                    //$("#from").val(from);
+                    //$("#end").val(end);
+
+                    //getAvailableAppartmentsForPeriod();
+                }
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function getAvailableAppartmentsForPeriod(mode) {
+        $("#available-appartments").html("");
+
+        if (($("#from").val() !== '') && ($("#end").val() !== '')) {
+            if (mode === 'edit')
+                var url = "{{ path('reservations.get.edit.available.appartments') }}";
+            else
+                var url = "{{ path('reservations.get.available.appartments') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#reservation-period").serialize(),
+                beforeSend: function () {
+                    $("#available-appartments").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#available-appartments").html(data);
+                }
+            });
+        }
+
+        return false;
+    }
+    ;
+
+    function addAppartmentToSelection(id) {
+        var url = "{{ path('reservations.add.appartment.to.reservation') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        var data;
+        if (id) {
+            data = "appartmentid=" + id + "&" + $("#reservation-period").serialize()+ "&" + $("#appartment-options-" + id).serialize();
+        } else {
+            data = $("#reservation-period").serialize();
+        }
+        data = data + "&createNewReservation=false";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: data,
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+
+    function selectableAddAppartmentToSelection(id, start, end) {
+        var url = "{{ path('reservations.add.appartment.to.reservation.selectable') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        var data;
+        data = "appartmentid=" + id ;
+        data += "&from=" + start + "&end=" + end + "&createNewReservation=true";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: data,
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+
+    function deleteAppartmentFromSelection(id) {
+        var url = "{{ path('reservations.remove.appartment.from.reservation') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#from").serialize() + "&" + $("#end").serialize() + "&appartmentid=" + id + "&createNewReservation=false",
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function saveAppartmentOptions(id) {
+        var url = "{{ path('reservations.modify.appartment.options') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: ($("#from").serialize() + "&" + $("#end").serialize() + "&" + $('#appartment-options-' + id).serialize() + "&appartmentid=" + id + "&createNewReservation=false"),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function selectCustomer() {
+        var url = "{{ path('reservations.select.customer') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        var message = '<div class="col-md-10 col-md-offset-1">' +
+                '<div class="alert alert-danger alert-dismissable">' +
+                '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' +
+                '{{ 'reservation.no.selected.appartments'|trans }}' +
+                '</div>' +
+                '</div>';
+
+        if ($("#selectedAppartments tr").length == 1) {
+            $("#flash-message-overlay").empty();
+            $("#flash-message-overlay").append(message);
+        } else {
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#reservation-period").serialize(),
+                beforeSend: function () {
+                    $("#modal-content-ajax").html(content);
+                    $("#breadcrumb-appartments").wrap('<a href="#" />');
+                    $("#breadcrumb-customer").removeClass("hidden");
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#modal-content-ajax").html(data);
+                }
+            });
+        }
+
+        return false;
+    }
+    ;
+
+    function getCustomers(page, mode, tab, appartmentId) {
+        if (mode === 'edit')
+            var url = "{{ path('reservations.edit.customers.get') }}";
+        else
+            var url = "{{ path('reservations.get.customers') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        if (tab === null) tab = '';
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#lastname").serialize() + "&tab=" + tab + "&page=" + page + "&appartmentId=" + appartmentId,
+            beforeSend: function () {
+                $("#customers").html(content);
+                $("#customer-selection .btn-primary").addClass("hidden");
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#customers").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function getFormForNewCustomer() {
+        var url = "{{ path('reservations.get.customer.new.form') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            beforeSend: function () {
+                $("#customers").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#customers").html(data);
+                $("#customer-selection .btn-primary").removeClass("hidden");
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function createNewCustomer() {
+        var url = "{{ path('reservations.get.customer.create') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#customer-selection").serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function getReservationPreview(id, tab) {
+        var url = "{{ path('reservations.create.preview') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $("#modal-content-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { customerid: id, tab: tab },
+            beforeSend: function () {
+                $("#customers").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function toggleAppartmentOptions(id) {
+        if ($("#appartment-" + id).hasClass("hidden")) {
+            // close all other opened
+            $(".appartment-options").addClass("hidden");
+            $("#appartment-" + id).removeClass("hidden");
+        } else {
+            $("#appartment-" + id).addClass("hidden");
+        }
+
+        return false;
+    }
+    ;
+
+    function createNewReservations() {
+        var url = "{{ path('reservations.create.reservations') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#_csrf_token").serialize() + "&" + $("#reservation-remark").serialize() + "&" + $("#reservation-origin").serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                } else {
+                    window.location.href = "{{ path('start') }}";
+                }
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function getReservation(id, tab) {
+        if (id != "new") {
+            var url = "{{ path('reservations.get.reservation', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+            if (tab != null) {
+                url += '?tab=' + tab;
+            }
+
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $("#modal-content-ajax").html(content);
+            $('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
+            $('#newReservationModal').modal('show')
+
+            $.ajax({
+                url: url,
+                type: "get",
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#modal-content-ajax").html(data);
+                    } else {
+                        window.location.href = "{{ path('start') }}";
+                    }
+                }
+            });
+        } else {
+            getReservationPreview(null, tab);
+        }
+
+        return false;
+    }
+    ;
+
+    function editReservation(id) {
+        var url = "{{ path('reservations.edit.reservation', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
+        $("#modal-content-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            data: ($("#objects").serialize()),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from, .dateFrom").datepicker(fromOptions);
+
+                $("#end, .dateEnd").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    // tab = which tab is selected in show modal
+    function changeReservationCustomer(id, tab, appartmentId) {
+        var url = "{{ path('reservations.edit.reservation.customer', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $("#modal-content-ajax").html(content);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            data: {tab: tab, appartmentId: appartmentId },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function editReservationNewCustomer(id, tab) {
+        var url = "{{ path('reservations.edit.reservation.customer.create', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#customer-selection").serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                } else {
+                    getReservation(id, tab)
+                    if(id !== 'new' && tab == 'booker') {
+                        getNewTable();
+                    }
+                }
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function editReservationCustomerChange(id, tab, appartmentId) {
+        var url = "{{ path('reservations.edit.customer.change', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", $("#reservation-id").val());
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {customerId: id, tab: tab, appartmentId: appartmentId},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                //$('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
+                $("#modal-content-ajax").html(data);
+                if(tab == 'booker') {
+                    getNewTable();
+                }
+
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function toggleMoreInfo(fieldId) {
+        if ($("#" + fieldId).is(":hidden")) {
+            $("#" + fieldId).fadeIn().removeClass('hide');
+        }
+        else {
+            $("#" + fieldId).hide();
+        }
+        return false;
+    }
+
+    function doDeleteReservation(id) {
+        var form = "#reservationShowForm";
+        var url = "{{ path('reservations.dodelete.reservation') }}";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function showInvoice(id) {
+        var url = "{{ path('invoices.get.invoice', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $("#modal-content-ajax").html(content);
+        $("#modal-content-ajax").load(url, function (response, status, xhr) {
+        });
+
+        return false;
+    }
+    ;
+
+    function deleteReservationCustomer(elm, customerId) {
+        var form = $(elm).parent().find("#actions-customer-" + customerId);
+        var url = "{{ path('reservations.edit.delete.customer') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function editReservationCustomerEdit(customerId, form) {
+        var url = "{{ path('reservations.edit.customer.edit') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function saveEditCustomer(id, form) {
+        var url = "{{ path('reservations.edit.customer.edit.save') }}";
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $("#modal-content-ajax").html(content);
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function selectTemplateForReservations(templateId, inProcess) {
+        if (inProcess === undefined) {
+            inProcess = false;
+        }
+        var url = "{{ path('reservations.select.template') }}";
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        if(inProcess) {
+            var formData = $("#template-form").serialize();
+        } else {
+            var formData = null;
+        }        
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {templateId: templateId, inProcess: inProcess, formData: formData},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $('#newReservationModal .modal-title').text("{{ 'templates.select.template'|trans }}");
+                $("#modal-content-ajax").html(data);
+
+            }
+        });
+
+        return false;
+    }
+    
+    function previewTemplateForReservation(id, inProcess) {
+        if (inProcess === undefined) {
+            inProcess = false;
+        }
+        var url = "{{ path('reservations.select.template.preview', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {inProcess: inProcess},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $('#newReservationModal .modal-title').text("{{ 'templates.edit'|trans }}");
+                $("#modal-content-ajax").html(data);
+
+            }
+        });
+
+        return false;
+    }
+    
+    function sendEmail(form) {
+        var url = "{{ path('settings.templates.email.send') }}";
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        // set current content of editor as value, otherwise changes in editor are not taken
+        $(form).find("#editor1").val(CKEDITOR.instances.editor1.getData());
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                } else {
+                    // success
+                    //window.location.href = "{{ path('start') }}";
+                    getReservation(lastClickedReservationId, "correspondence");
+                }
+            }
+        });
+
+        return false;
+    }
+    
+    function saveTemplateFile(form) {
+        var url = "{{ path('settings.templates.file.save') }}";
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        // set current content of editor as value, otherwise changes in editor are not taken
+        $(form).find("#editor1").val(CKEDITOR.instances.editor1.getData());
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                    if(isTemplateAttachment) {
+                        previewTemplateForReservation(0, 'false');
+                    }
+                } else {
+                    // success
+                    //window.location.href = "{{ path('start') }}";
+                    getReservation(lastClickedReservationId, "correspondence");
+                }
+            }
+        });
+
+        return false;
+    }
+    
+    function exportPDFCorrespondence(id) {
+        var url = "{{ path('settings.templates.correspondence.export.pdf', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        // download file
+        window.location.href = url;
+
+        return false;
+    }
+    
+    function showMailCorrespondence(id, reservationId) {
+        var url = "{{ path('settings.templates.correspondence.show', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        // download file
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {reservationId: reservationId},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $('#newReservationModal .modal-title').text("{{ 'templates.preview'|trans }}");
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    </script>
+{% endblock %}

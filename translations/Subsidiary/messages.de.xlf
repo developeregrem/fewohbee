@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>object.title</source>
+                <target>Niederlassungsverwaltung</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>object.description</source>
+                <target>Niederlassungsverwaltung</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>object.name</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>object.action</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>object.description</source>
+                <target>Beschreibung</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>object.delete.ask</source>
+                <target>Diese Niederlassung wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>object.flash.delete.success</source>
+                <target>Niederlassung wurde erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>object.flash.create.success</source>
+                <target>Niederlassung wurde erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>object.flash.edit.success</source>
+                <target>Niederlassung wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

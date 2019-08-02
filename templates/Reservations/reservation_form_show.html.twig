@@ -1,0 +1,84 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+                {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
+            </div>
+        </div>
+        {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'edit', 'reservationId':  attribute(reservations, 0).id } %}
+    </div>
+</div>
+<form id="reservationShowForm">
+    <div class="modal-footer">
+        <div id="boxDefault">
+            <div class="dropup pull-left">
+                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownInvoice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{ 'reservation.invoices'|trans }} <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownInvoice">
+                    {% for invoice in attribute(reservations, 0).invoices %}
+                        <li><a href="#" onclick="return showInvoice({{ invoice.id }});">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a></li>
+                    {% endfor %}
+                    {% if attribute(reservations, 0).invoices|length > 0 %}
+                    <li role="separator" class="divider"></li>
+                    {% endif %}
+                    <li><a href="#" onclick="return selectReservatioForInvoice({{ attribute(reservations, 0).id }})">{{ 'reservation.button.create.invoice'|trans }}</a></li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+            <button type="button" class="btn btn-danger"
+                    onclick="return toggleReservationDelete();">{{ 'button.delete'|trans }}</button>
+        </div>
+        <div id="boxDelete" class="hide">
+            {{ 'reservation.delete.ask'|trans }}
+            <button class="btn btn-danger" onclick="return doDeleteReservation();">{{ 'button.delete'|trans }}</button>
+            <button class="btn btn-default"
+                    onclick="return toggleReservationDelete();">{{ 'button.cancel'|trans }}</button>
+            <input type="hidden" name="id" value="{{ attribute(reservations, 0).id }}"/>
+            <input name="_csrf_token" value="{{ token }}" type="hidden">
+        </div>
+    </div>
+</form>
+<script>
+    function toggleReservationDelete() {
+        if ($("#boxDelete").is(":hidden")) {
+            $("#boxDelete").fadeIn().removeClass('hide');
+            $("#boxDefault").hide();
+        }
+        else {
+            $("#boxDelete").hide();
+            $("#boxDefault").fadeIn();
+        }
+        return false;
+    }
+    
+    function deleteCorrespondence(id, rId) {
+        var url = "{{ path('settings.templates.correspondence.remove') }}";
+
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {id: id, _csrf_token: $("#_csrf_token").val()},
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);                    
+                } else {
+                    // success
+                    getReservation(rId, "correspondence");
+                    //$("#aid-"+id).remove();
+                }
+            }
+        });
+
+        return false;
+    }
+</script>
+

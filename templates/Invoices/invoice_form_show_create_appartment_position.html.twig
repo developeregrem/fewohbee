@@ -1,0 +1,212 @@
+<form id="new-appartment-position" class="form-horizontal" role="form"
+      onsubmit="return createAppartmentInvoicePosition()">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="row">
+                <div class="col-md-7">
+                    <p>
+
+                    <div class="form-group">
+                        <label for="inputAppartmentNumber"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.number'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <select name="number" class="form-control">
+                                {% for reservation in reservations %}
+                                    <option value="{{ reservation.appartment.number }}">{{ reservation.appartment.number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAppartmentDescription"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.description'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <select name="description" class="form-control">
+                                {% for reservation in reservations %}
+                                    <option value="{{ reservation.appartment.description }}">{{ reservation.appartment.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputStart"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.startdate'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="from" name="from" value="{{ attribute(reservations, 0).startDate|date('d.m.Y') }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputEnd"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.enddate'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="end" name="end" value="{{ attribute(reservations, 0).endDate|date('d.m.Y') }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAppartmentPersons"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.persons'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <select name="persons" class="form-control">
+                                {% set maxPersons = 0 %}
+                                {% for reservation in reservations %}
+                                    {% if maxPersons < reservation.persons %}
+                                        {% set maxPersons = reservation.persons %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% for i in 1..maxPersons %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAppartmentBeds"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.beds'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <select name="beds" class="form-control">
+                                {% set maxBeds = 0 %}
+                                {% for reservation in reservations %}
+                                    {% if maxBeds < reservation.appartment.bedsmax %}
+                                        {% set maxBeds = reservation.appartment.bedsmax %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% for i in 1..maxBeds %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAppartmentPriceCategory"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <select id="pricecategory" name="pricecategory" class="form-control"
+                                    onchange="return setVatAndPrice()">
+                                <option value="0|0" selected></option>
+                                {% for price in prices %}
+                                    <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}">{{ price.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputVat" class="col-sm-3 control-label">{{ 'invoice.vat'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="inputVat" name="vat" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputPrice"
+                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.price'|trans }}</label>
+
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="inputPrice" name="price" required>
+                        </div>
+                    </div>
+                    </p>
+                </div>
+                <div class="col-md-5">
+                    {% for reservation in reservations %}
+                        <p>
+                        <dl class="dl-horizontal">
+                            <dt>{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
+                            <dd></dd>
+                            <dt>{{ 'invoice.startdate'|trans }}</dt>
+                            <dd>{{ reservation.startdate|date('d.m.Y') }}</dd>
+                            <dt>{{ 'invoice.enddate'|trans }}</dt>
+                            <dd>{{ reservation.enddate|date('d.m.Y') }}</dd>
+                            <dt>{{ 'invoice.position.stays'|trans }}</dt>
+                            <dd>{{ get_date_diff_amount(reservation.startdate, reservation.enddate) }}</dd>
+                            <dt>{{ 'invoice.appartment.position.persons'|trans }}</dt>
+                            <dd>{{ reservation.persons }}</dd>
+                            <dt>{{ 'invoice.appartment.position.beds'|trans }}</dt>
+                            <dd>{{ reservation.appartment.bedsmax }}</dd>
+                        </dl>
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <ul class="pager pull-left">
+            <li class="previous" onclick="
+                {% if invoiceId == 'new' %}
+                    return showCreateInvoicePositions('false')
+                {% else %}
+                    return showInvoice({{ invoiceId }}, true)
+                {% endif %}
+                    "><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        </ul>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
+    </div>
+    <input type="hidden" name="invoice-id" value="{{ invoiceId }}" />
+    <input name="_csrf_token" value="{{ token }}" type="hidden">
+</form>
+<script>
+    function showCreateInvoicePositions(createNewPositionsSessionObject) {
+        var url = "{{ path('invoices.create.invoice.positions') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#new-invoice-id").serialize() + "&createInvoicePositions=" + createNewPositionsSessionObject,
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function setVatAndPrice() {
+        var vat = $("#pricecategory").val().split("|")[0];
+        var price = $("#pricecategory").val().split("|")[1];
+
+        $("#inputVat").val(vat);
+        $("#inputPrice").val(price);
+
+        return false;
+    }
+
+    function createAppartmentInvoicePosition() {
+        var url = "{{ path('invoices.create.appartment.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#new-appartment-position").serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+</script>

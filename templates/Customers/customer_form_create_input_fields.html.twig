@@ -1,0 +1,456 @@
+    <br />
+<div class="form-group">
+    <div class="col-sm-3">
+                <button type="button" class="btn btn-default" onclick="addAddressFields()" >
+                    <span class="glyphicon glyphicon-plus"></span> {{ 'customer.address.add'|trans }}
+                </button>
+    </div>
+    <div class="col-sm-4"></div>
+    <div class="col-sm-5">
+        <input name="customer-address" id="customer-address" class="form-control" placeholder="{{ 'customer.search.addresses'|trans }}" />
+    </div>
+</div>
+
+<div class="panel-group" id="accordion">
+    <div id="firstPanel" class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapseOne">
+                    {{ 'customer.person'|trans }} <span class="caret"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse in">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="salutation-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.salutation'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <select name="salutation-{{ customer.id }}" class="form-control">
+                            <option value="{{ 'customer.mr'|trans }}" {% if customer.salutation ==  'customer.mr'|trans %} selected {% endif %}>{{ 'customer.mr'|trans }}</option>
+                            <option value="{{ 'customer.ms'|trans }}" {% if customer.salutation ==  'customer.ms'|trans %} selected {% endif %}>{{ 'customer.ms'|trans }}</option>
+                            <option value="{{ 'customer.family'|trans }}" {% if customer.salutation == 'customer.family'|trans %} selected {% endif %}>{{ 'customer.family'|trans }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="firstname-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.firstname'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="firstname-{{ customer.id }}"
+                               value="{{ customer.firstname }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="lastname-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.lastname'|trans }} *</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="lastname-{{ customer.id }}"
+                               value="{{ customer.lastname }}" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% for address in customer.customerAddresses %}                
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#address{{ loop.index }}">
+                    {{ 'customer.contactdata'|trans }} <span class="caret"></span>
+                </a>
+                <span class="glyphicon glyphicon-trash pull-right mouse-pointer" 
+                      title="{{ 'customer.address.delete'|trans }}"
+                      onclick="deleteAddress(this);"></span>
+            </h4>
+            
+        </div>
+        <div id="address{{ loop.index }}" class="panel-collapse collapse addressfields">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="addresstype-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.addresstype'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select name="addresstype-{{ customer.id }}[]" class="form-control">
+                            {% for type in addresstypes %}
+                                <option value="{{ type }}" 
+                                        {% if type == address.type %} 
+                                            selected                                        
+                                        {% endif %}>{{ type|trans }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="company-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.company'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="company-{{ customer.id }}[]"
+                               value="{{ address.company }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="phone-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.phone'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="phone-{{ customer.id }}[]"
+                               value="{{ address.phone }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mobilephone-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.mobilephone'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="mobilephone-{{ customer.id }}[]"
+                               value="{{ address.mobilephone }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fax-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.fax'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="{{ address.fax }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="email-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.email'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="email-{{ customer.id }}[]"
+                               value="{{ address.email }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="address-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.address'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="address-{{ customer.id }}[]"
+                               value="{{ address.address }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="zip-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.zip'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="city-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.city'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]"
+                               value="{{ address.city }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="country-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.country'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select name="country-{{ customer.id }}[]" class="form-control">
+                            {% for key, country in countries %}
+                                <option value="{{ key }}" 
+                                        {% if key == app.request.locale|upper and customer.id == 'new' %} 
+                                            selected
+                                        {% elseif key == address.country %}
+                                            selected
+                                        {% endif %}>{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="{{ address.id }}" />
+    </div>    
+    {% endfor %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapseThree">
+                    {{ 'customer.additional'|trans }} <span class="caret"></span>
+                </a>
+            </h4>
+        </div>
+        <div id="collapseThree" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="birthday-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.birthday'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="birthday-{{ customer.id }}"
+                               name="birthday-{{ customer.id }}" pattern="[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4}"
+                               value="{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="remark-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.remark'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <textarea class="form-control" name="remark-{{ customer.id }}">{{ customer.remark }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input name="_csrf_token" value="{{ token }}" type="hidden">
+
+<div class="hidden" id="address-forms">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#addressXX">
+                    {{ 'customer.contactdata'|trans }} <span class="caret"></span>
+                </a>
+                <span class="glyphicon glyphicon-trash pull-right mouse-pointer" 
+                      title="{{ 'customer.address.delete'|trans }}"
+                      onclick="deleteAddress(this);"></span>
+            </h4>
+        </div>
+        <div id="addressXX" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="form-group">
+                    <label for="addresstype-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.addresstype'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select name="addresstype-{{ customer.id }}[]" class="form-control">
+                            {% for type in addresstypes %}
+                                <option value="{{ type }}">{{ type|trans }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="company-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.company'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="company-{{ customer.id }}[]"
+                               value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="phone-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.phone'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="phone-{{ customer.id }}[]"
+                               value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="mobilephone-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.mobilephone'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="mobilephone-{{ customer.id }}[]"
+                               value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fax-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.fax'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="email-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.email'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="email-{{ customer.id }}[]" value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="address-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.address'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" name="address-{{ customer.id }}[]" value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="zip-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.zip'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="city-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.city'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]" value="">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="country-{{ customer.id }}"
+                           class="col-sm-4 control-label">{{ 'customer.country'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select name="country-{{ customer.id }}[]" class="form-control">
+                            {% for key, country in countries %}
+                                <option value="{{ key }}" 
+                                        {% if key == app.request.locale|upper and customer.id == 'new' %} 
+                                            selected
+                                        {% endif %}>{{ country }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="0" />
+    </div>
+</div>
+    
+
+<script>
+{% if customer.id == 'new' %}
+    $(document).ready(function() {
+        $("#customer-template").change(function() {
+            if($(this).val() === '0') return;
+
+            var values = $(this).val().split("|");
+            $("select[name='salutation-new']").val(values[0]);
+            $("input[name='firstname-new']").val(values[1]);
+            $("input[name='lastname-new']").val(values[2]);
+            $("input[name='company-new']").val(values[3]);
+            $("input[name='address-new']").val($.trim(values[4]));
+            $("input[name='zip-new']").val(values[5]);
+            $("input[name='city-new']").val(values[6]);
+            $("input[name='birthday-new']").val(values[7]);
+            $("select[name='country-new']").val(values[8]);
+            $("input[name='phone-new']").val($.trim(values[9]));
+            $("input[name='fax-new']").val(values[10]);
+            $("input[name='mobilephone-new']").val(values[11]);
+            $("input[name='email-new']").val(values[12]);
+        });
+
+        preselectLastname();
+    });
+
+    function preselectLastname()
+    {
+        // preselect lastname from search input field
+        if($("#lastname").length != 0) {
+            $("input[name='lastname-new']").val($.trim($("#lastname").val()));
+        }
+    }
+{% endif %}
+    
+    $(document).ready(function() {
+        // look for city
+        $("#accordion").on("keyup", "input[name^='zip-']", function() {
+            // at the moment, only with complete plz
+            if($(this).val().length === 5) { 
+                var url = "{{ path('customers.citylookup')}}";
+                var content = '<span id="lookUpWait"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />&nbsp;</span>';
+                $elm = $(this);
+                $.ajax({
+                    url: url,
+                    type: "post",
+                    data: {plz: $elm.val()},
+                    beforeSend: function () {
+                        $elm.parents(".panel-body").find("input[name^='city-']")
+                                .parent().parent().find('label').prepend(content);
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        alert(xhr.status);
+                    },
+                    success: function (data) {
+                        if($("#lookUpWait").length > 0) {
+                            $("#lookUpWait").remove();
+                        }
+                        $elm.parents(".panel-body").find("input[name^='city-']").val(data);
+                    }
+                });
+            }
+        });
+        // disable all fields for hidden form, so it will not be send via post
+        $("#address-forms :input").prop('disabled', true);
+    });
+    function addAddressFields() {
+        $addressForms = $("#address-forms").children().clone(false);        
+        $newId = $(".addressfields").length + 1;                        // count existing addresses
+        $addressForms.find("#addressXX").prop("id", "address"+$newId);  // change id
+        $addressForms.find("a:first").prop("href", "#address"+$newId);  // change id
+        $addressForms.find(":input").prop('disabled', false);
+        $("#firstPanel").after($addressForms);
+        
+        $("#address"+$newId).collapse("show");
+        //alert($(".addressfields").length);
+    }
+    
+    function deleteAddress(elm) {
+        $panel = $(elm).parents(".panel-default");
+        //alert($panel.attr("class"));
+        $panel.remove();
+    }
+    
+    function fillAddressFields(item) {
+        addAddressFields();
+        $id = $(".addressfields").length + 1;   // number of address panels
+        
+        $("#address"+$id).find("select[name^='addresstype-']").val(item.type);
+        $("#address"+$id).find("input[name^='company-']").val(item.company);
+        $("#address"+$id).find("input[name^='address-']").val(item.address);
+        $("#address"+$id).find("input[name^='zip-']").val(item.zip);
+        $("#address"+$id).find("input[name^='city-']").val(item.city);
+        $("#address"+$id).find("select[name^='country-']").val(item.country);
+        $("#address"+$id).find("input[name^='phone-']").val(item.phone);
+        $("#address"+$id).find("input[name^='fax-']").val(item.fax);
+        $("#address"+$id).find("input[name^='mobilephone-']").val(item.mobile_phone);
+        $("#address"+$id).find("input[name^='email-']").val(item.email);
+    }
+    
+      $( function() {
+        var cache = {};
+        $( "#customer-address" ).autocomplete({
+          minLength: 2,
+          source: function( request, response ) {
+            var term = request.term;
+            if ( term in cache ) {
+              response( cache[ term ] );
+              return;
+            }
+            var url = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
+            url = url.replace("placeholder", term);
+            
+            $.getJSON( url, request, function( data, status, xhr ) {
+              cache[ term ] = data;
+              response( data );
+            });
+          },
+          select: function( event, ui ) {
+              fillAddressFields(ui.item);
+              return;
+          }
+        })
+        .autocomplete( "instance" )._renderItem = function( ul, item ) {
+            var out = (item.company.length > 0 ? 'Firma: ' + item.company + "<br>" : '');
+            out += item.address + ", " + item.zip + " " + item.city;
+            return $( "<li>" )
+              .append( '<div class="text-muted">' + out + "</div>" )
+              .appendTo( ul );
+          };
+        } );
+</script>

@@ -1,0 +1,6 @@
+vendor/
+var/
+nbproject/
+.idea/
+.env
+public/resources/images/export/

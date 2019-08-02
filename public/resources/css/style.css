@@ -1,0 +1,105 @@
+.login {
+    border-color: lightgray;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 15px;
+    padding: 15px;
+    background-color: #F5F5F5;
+}
+
+.button-hidden {
+    visibility: hidden;
+}
+
+.ui-widget {
+    font-size: 1.0em;
+}
+
+.modal-wide {
+    width: 800px;
+}
+
+.two-td-left {
+    border-right: none !important;
+}
+
+.two-td-right {
+    border-left: none !important;
+}
+
+.reservation {
+    border-left: none !important;
+    border-right: none !important;
+    padding: 4px 2px !important;
+}
+
+.reservation-inner {
+    border: 1px solid #666;
+    color: #fff;
+    padding: 3px;
+}
+
+.reservation-confirmed {
+    background-color: #2D9434;
+}
+
+.reservation-option {
+    background-color: #f6e95c;
+    color: #666;
+    border-color: #999;
+}
+
+.reservation-table-weekend {
+    background-color: #EEE;
+}
+
+#newReservationPreview .pager,
+#editCustomerSaveButtons .pager {
+    float: left;
+}
+
+#newReservationPreview button,
+#newReservationPreview input,
+#editCustomerSaveButtons button,
+#editCustomerSaveButtons input {
+    margin-top: inherit;
+}
+
+#newInvoicePreview .pager {
+    float: left;
+}
+
+#newInvoicePreview button,
+#newInvoicePreview input {
+    margin-top: inherit;
+}
+
+#customer-selection .btn-primary {
+    margin-right: 15px;
+}
+
+.dl-horizontal > dd:after {
+  display: table;
+  content: "";
+  clear: both;
+}
+
+.mouse-pointer {
+    cursor: pointer;
+}
+
+.border-left-thick {
+    border-left: 2px solid #ddd;
+}
+
+.cell-selected {
+    background-color: #f5f5f5;
+}
+
+.table-reservation .ui-selecting { background: #FECA40; }
+.table-reservation .ui-selected { background: #F39814; }
+
+/* fix for autocomplete not  shown */
+.ui-front { 
+    z-index: 9999; 
+}

@@ -1,0 +1,31 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                {% if template.templateType.name == 'TEMPLATE_RESERVATION_EMAIL' %}
+                    {% include 'Reservations/reservation_form_preview_template_email.html.twig' %}
+                {% elseif template.templateType.name == 'TEMPLATE_FILE_PDF' or template.templateType.name == 'TEMPLATE_RESERVATION_PDF'%}
+                    {% include 'Reservations/reservation_form_preview_template_file.html.twig' %}
+                {% endif %}                
+            </div>
+        </div>
+    </div>
+</div>
+<div id="createNewCustomerFooter" class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return selectTemplateForReservations()"><a
+                    href="#">&larr; {{ 'button.back'|trans }}</a></li>
+    </ul>   
+</div>
+<script>
+    // Replace the <textarea id="editor1"> with a CKEditor
+    // instance, using default configuration.
+    editor = CKEDITOR.replace( 'editor1', {
+        language: '{{ app.request.locale }}',
+        allowedContent: true
+    });
+</script>

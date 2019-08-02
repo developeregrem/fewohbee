@@ -1,0 +1,383 @@
+<div class="row">
+    <form id="new-invoice-id" class="form" role="form"
+          onsubmit="return showCreateInvoicePositions(null)">
+    <div id="invoice-id" class="col-md-4 col-md-offset-1">
+        <p>
+            <div class="form-group">
+                <input type="text" name="invoiceid" class="form-control"
+                       placeholder="{{ 'invoice.id'|trans }} ({{ 'invoice.id.last'|trans }} {{ lastinvoiceid }})"
+                       value="{{ invoiceid }}">
+            </div>
+            <button type="submit" class="btn btn-default"
+                    type="button">{{ 'invoice.button.save.numberanddate'|trans }}</button>
+        </p>
+    </div>
+    <div id="invoice-id" class="col-md-4">
+        <p>
+            <div class="form-group">
+                <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"                       
+                       value="{{ invoiceDate|date("Y-m-d") }}">
+            </div>
+        </p>
+    </div>
+</form>
+</div>
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <h4>{{ 'invoice.guest'|trans }}&nbsp;
+            <a href="#" onclick="return changeInvoiceCustomer();"
+               title="{{ 'button.edit'|trans }}" class="small"><span
+                        class="glyphicon glyphicon-pencil"></span></a>
+        </h4>
+        {{ customer.salutation }} <br />
+        {{ customer.firstname }} {{ customer.lastname }}<br />
+        {% if customer.company is not empty %}
+            {{ customer.company }}<br/>
+        {% endif %}
+        {{ customer.address }}<br />
+        {{ customer.zip }} {{ customer.city }}
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <p>
+        <h4>{{ 'invoice.appartment'|trans }}</h4>
+        <table class="table">
+            <tr>
+                <th>{{ 'invoice.appartment.position.number'|trans }}</th>
+                <th>{{ 'invoice.appartment.position.description'|trans }}</th>
+                <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
+                <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
+                <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
+                <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
+                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
+                <th>{{ 'invoice.action'|trans }}</th>
+            </tr>
+            {% for key,position in positionsAppartment %}
+                <tr>
+                    <td>{{ position.number }}</td>
+                    <td>{{ position.description }}</td>
+                    <td>{{ position.beds }}</td>
+                    <td>{{ position.persons }}</td>
+                    <td>{{ position.startdate|date("d.m.Y") }}</td>
+                    <td>{{ position.enddate|date("d.m.Y") }}</td>
+                    <td class="text-right">
+                        {% if is_decimal_place_0(position.vat) %}
+                            {{ position.vat|number_format(0, ',', '.') }}
+                        {% else %}
+                            {{ position.vat|number_format(2, ',', '.') }}
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td>
+                        <a href="#" title="{{ 'button.edit'|trans }}"><span
+                                    onclick="return showEditAppartmentInvoicePosition({{ key }})"
+                                    class="glyphicon glyphicon-pencil"></span></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                    onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})"
+                                    class="glyphicon glyphicon-remove"></span></a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()"><span
+                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.appartment'|trans }}</button>
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 col-md-offset-1">
+        <p>
+        <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
+        <table class="table">
+            <tr>
+                <th>{{ 'invoice.appartment.position.description'|trans }}</th>
+                <th>{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                <th>{{ 'invoice.action'|trans }}</th>
+            </tr>
+            {% for key,position in positionsMiscellaneous %}
+                <tr>
+                    <td>{{ position.description }}</td>
+                    <td>{{ position.amount }}</td>
+                    <td class="text-right">
+                        {% if is_decimal_place_0(position.vat) %}
+                            {{ position.vat|number_format(0, ',', '.') }}
+                        {% else %}
+                            {{ position.vat|number_format(2, ',', '.') }}
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td>
+                        <a href="#" title="{{ 'button.edit'|trans }}"><span
+                                    onclick="return showEditMiscellaneousInvoicePosition({{ key }})"
+                                    class="glyphicon glyphicon-pencil"></span></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                    onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})"
+                                    class="glyphicon glyphicon-remove"></span></a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+        <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()"><span
+                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
+        </p>
+    </div>
+</div>
+<div class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return selectReservation()"><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        {% if appartmentPositionExists %}
+            <li class="next" onclick="return showNewInvoicePreview()"><a
+                    href="#">{{ 'button.continue'|trans }} &rarr;</a></li>{% endif %}
+    </ul>
+</div>
+<script>
+function saveNewInvoiceId() {
+    var url = "{{ path('invoices.create.invoice.positions') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        data: $("#new-invoice-id").serialze(),
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function showCreateAppartmentInvoicePosition() {
+    var url = "{{ path('invoices.show.create.appartment.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+
+            $("#from").datepicker(fromOptions);
+            $("#end").datepicker(endOptions);
+        }
+    });
+
+    return false;
+}
+
+function showEditAppartmentInvoicePosition(key) {
+    var url = "{{ path('invoices.show.edit.appartment.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        data: { appartmentpositionkey: key },
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+
+            $("#from").datepicker(fromOptions);
+            $("#end").datepicker(endOptions);
+        }
+    });
+
+    return false;
+}
+
+function removeAppartmentPositionFromInvoicePositions(index) {
+    var url = "{{ path('invoices.delete.appartment.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        data: {appartmentInvoicePositionIndex: index},
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function showCreateMiscellaneousInvoicePosition() {
+    var url = "{{ path('invoices.show.create.miscellaneous.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+
+
+        }
+    });
+
+    return false;
+}
+
+function showEditMiscellaneousInvoicePosition(key) {
+    var url = "{{ path('invoices.show.edit.miscellaneous.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        data: { miscellaneouspositionkey: key },
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+
+
+        }
+    });
+
+    return false;
+}
+
+function removeMiscellaneousPositionFromInvoicePositions(index) {
+    var url = "{{ path('invoices.delete.miscellaneous.invoice.position') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        data: {miscellaneousInvoicePositionIndex: index},
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function showNewInvoicePreview() {
+    var url = "{{ path('invoices.show.new.invoice.preview') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function selectReservation() {
+    var url = "{{ path('invoices.select.reservation') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function changeInvoiceCustomer() {
+    var url = "{{ path('invoices.show.change.customer') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+
+    $.ajax({
+        url: url,
+        type: "post",
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+</script>

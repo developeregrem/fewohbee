@@ -1,0 +1,19 @@
+<div class="row">
+    <div class="col-sm-7">
+        <form id="price-form-{{ price.id }}" class="form-horizontal" role="form"
+              onsubmit="return savePrice({{ price.id }})">
+            {% include 'Prices/price_form_input_fields.html.twig' %}
+
+            <div class="form-group">
+                <div class="col-sm-10">
+                    <input type="button" id="price-cancel-{{ price.id }}" onclick="return collapsePrice({{ price.id }})"
+                           class="btn btn-default" value="{{ 'button.hide'|trans }}">
+                    <input type="button" id="price-edit-{{ price.id }}" onclick="return enablePriceForm({{ price.id }})"
+                           class="btn btn-default" value="{{ 'button.edit'|trans }}">
+                    <input type="submit" value="{{ 'button.save'|trans }}" id="price-submit-{{ price.id }}"
+                           class="btn btn-primary button-hidden">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

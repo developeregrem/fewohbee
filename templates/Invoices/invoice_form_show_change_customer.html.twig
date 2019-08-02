@@ -1,0 +1,169 @@
+<form id="new-appartment-position" class="form-horizontal" role="form"
+      onsubmit="return changeInvoiceCustomerSave()">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="row">
+                <div class="col-md-7">
+                    <p>
+                    <div class="form-group">
+                        <label for="recommendation" class="col-sm-3 control-label">{{ 'invoice.customer.recommendation'|trans }}</label>
+                        <div class="col-sm-9">
+                            <select id="recommendation" name="recommendation" class="form-control">
+                                <option value="0"></option>
+                                {% for customer in customers %}
+                                    {% for address in customer.customerAddresses %}
+                                    <option
+                                            value="{{ customer.salutation }}|{{ customer.firstname }}|{{ customer.lastname }}|{{ address.company }}|{{ address.address }}|{{ address.zip }}|{{ address.city }}">
+                                        {{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}{% if address.company %} | {{ 'customer.company'|trans }}: {{ address.company }}{% endif %}
+                                    </option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="salutation" class="col-sm-3 control-label">{{ 'customer.salutation'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="salutation" name="salutation" value="{{ invoiceCustomer.salutation }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="firstname" class="col-sm-3 control-label">{{ 'customer.firstname'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="firstname" name="firstname" value="{{ invoiceCustomer.firstname }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastname" class="col-sm-3 control-label">{{ 'customer.lastname'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="lastname" name="lastname" value="{{ invoiceCustomer.lastname }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="company" class="col-sm-3 control-label">{{ 'customer.company'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="company" name="company" value="{{ invoiceCustomer.company }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="address" class="col-sm-3 control-label">{{ 'customer.address'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="address" name="address" value="{{ invoiceCustomer.address }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="zip" class="col-sm-3 control-label">{{ 'customer.zip'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="zip" name="zip" value="{{ invoiceCustomer.zip }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="city" class="col-sm-3 control-label">{{ 'customer.city'|trans }}</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="city" name="city" value="{{ invoiceCustomer.city }}">
+                        </div>
+                    </div>
+                    </p>
+                </div>
+                <div class="col-md-5">
+                    {% for reservation in reservations %}
+                        <p>
+                        <dl class="dl-horizontal">
+                            <dt>{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
+                            <dd></dd>
+                            <dt>{{ 'invoice.startdate'|trans }}</dt>
+                            <dd>{{ reservation.startdate|date('d.m.Y') }}</dd>
+                            <dt>{{ 'invoice.enddate'|trans }}</dt>
+                            <dd>{{ reservation.enddate|date('d.m.Y') }}</dd>
+                            <dt>{{ 'invoice.position.stays'|trans }}</dt>
+                            <dd>{{ get_date_diff_amount(reservation.startdate, reservation.enddate) }}</dd>
+                            <dt>{{ 'invoice.appartment.position.persons'|trans }}</dt>
+                            <dd>{{ reservation.persons }}</dd>
+                            <dt>{{ 'invoice.appartment.position.beds'|trans }}</dt>
+                            <dd>{{ reservation.appartment.bedsmax }}</dd>
+                        </dl>
+                        </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <ul class="pager pull-left">
+            <li class="previous" onclick="
+                {% if invoiceId == 'new' %}
+                    return showCreateInvoicePositions('false')
+                {% else %}
+                    return showInvoice({{ invoiceId }}, true)
+                {% endif %}
+                    "><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        </ul>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
+    </div>
+    <input type="hidden" name="invoice-id" value="{{ invoiceId }}" />
+    <input name="_csrf_token" value="{{ token }}" type="hidden">
+</form>
+<script>
+    $(document).ready(function() {
+        $("#recommendation").change(function() {
+            if($(this).val() === '0') return;
+
+            var values = $(this).val().split("|");
+            $("#salutation").val(values[0]);
+            $("#firstname").val(values[1]);
+            $("#lastname").val(values[2]);
+            $("#company").val(values[3]);
+            $("#address").val(values[4]);
+            $("#zip").val(values[5]);
+            $("#city").val(values[6]);
+        });
+    });
+
+    function showCreateInvoicePositions(createNewPositionsSessionObject) {
+        var url = "{{ path('invoices.create.invoice.positions') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#new-invoice-id").serialize() + "&createInvoicePositions=" + createNewPositionsSessionObject,
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function changeInvoiceCustomerSave() {
+        var url = "{{ path('invoices.show.change.customer.save') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#new-appartment-position").serialize(),
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+</script>

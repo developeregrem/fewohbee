@@ -1,0 +1,194 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'invoice.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'invoice.description'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="showInvoiceModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ 'invoice.details'|trans }}</h4>
+                </div>
+                <div id="modal-content-ajax">
+                    <div class="modal-body">
+                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
+                            data-toggle="modal" data-target="#showInvoiceModal"><span
+                                class="glyphicon glyphicon-plus"></span> {{ 'nav.invoice.add'|trans }}</button>
+                </div>
+                <div class="form-group form-inline pull-right">{{ 'invoice.template'|trans }}:
+                    <select id="template" name="template" class="form-control">
+                        {% for template in templates %}
+                            <option value="{{ template.id }}"{% if template.id == templateId %} selected{% endif %}>{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-1">
+                <form class="form" id="invoices-search-form" onsubmit="return false;">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input type="search" class="form-control" id="search" name="search"
+                                   placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="button" onclick="doSearch();"><span
+                                        class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
+                            </button>
+                        </span>
+                        </div>
+                        <!-- /input-group -->
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row">
+            <div id="invoice-table" class="col-md-10 col-md-offset-1">
+                {% include 'Invoices/invoice_table.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function () {
+            $("#template").change(function () {
+                var templateId = $(this).val();
+
+                // loop through each download link
+                $(".export-link").each(function (index) {
+                    var src = $(this).attr("href");
+                    var pos = src.lastIndexOf('/');
+                    // replace old template id with new one
+                    var str = src.substring(0, pos + 1) + templateId;
+                    // set new href
+                    $(this).attr("href", str);
+                });
+
+            });
+
+            if ($("#search").val() != "") {
+                doSearch();
+            }
+
+            $("#search").delayKeyup(function () {
+                doSearch();
+            }, 400);
+        });
+
+        $.ajaxSetup({
+            cache: false
+        });
+
+        function showCreateInvoiceForm(createNewInvoiceSessionObject) {
+            var url = "{{ path('invoices.new.invoice') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+
+            $(".modal-header .modal-title").html("{{ 'invoice.select.open.reservation'|trans }}");
+
+            $("#modal-content-ajax").html(content);
+
+            $.ajax({
+                url: url,
+                type: "get",
+                data: { createNewInvoice: createNewInvoiceSessionObject },
+                beforeSend: function () {
+                    $("modal-content-ajax").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#modal-content-ajax").html(data);
+
+                    $("#from").datepicker(fromOptions);
+                    $("#end").datepicker(endOptions);
+                }
+            });
+
+            return false;
+        }
+        ;
+
+        function showInvoice(id, edit) {
+            var url = "{{ path('invoices.get.invoice', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+            $("#modal-content-ajax").html(content);
+            $("#modal-content-ajax").load(url, function (response, status, xhr) {
+                if(edit === true) {
+                    toggleInvoiceEditFields();
+                }
+            });
+
+            return false;
+        }
+
+        function doSearch() {
+            var url = "{{ path('invoices.search')}}";
+            var content = '<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />';
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#invoices-search-form").serialize()+'&'+$("#page").serialize(),
+                beforeSend: function () {
+                    $("#invoice-table").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#invoice-table").html(data);
+                }
+            });
+
+            return false;
+        }
+        {% if is_granted('ROLE_ADMIN') %}
+        function doDeleteInvoice() {
+            var form = "#invoiceDeleteForm";
+            var url = "{{ path('invoices.dodelete.invoice') }}";
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+            return false;
+        }
+    {% endif %}
+    </script>
+{% endblock %}

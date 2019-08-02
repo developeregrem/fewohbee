@@ -1,0 +1,105 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+            </div>
+        </div>
+        {% if correspondences|length > 0 %}
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <h4>{{ 'reservation.correspondences.available'|trans }}</h4>
+                <table class="table table-hover">
+                    <tr>
+                        <th></th>
+                        <th>{{ 'templates.name'|trans }}</th>
+                    </tr>
+                    {% for correspondence in correspondences %}
+                        {# do not allow other mails #}
+                        {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
+                            <tr onclick="return addAsAttachment({{ correspondence.id }});" class="mouse-pointer">
+                                <td style="width:10.0pt"><span class="glyphicon {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></span></td>
+                                <td>{{ correspondence.name }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <h4>{{ 'templates.title'|trans }}</h4>
+                <table class="table table-hover">
+                    <tr>
+                        <th></th>
+                        <th>{{ 'templates.name'|trans }}</th>
+                    </tr>
+                    {% for template in templates %}
+                            <tr onclick="return previewTemplateForReservation({{ template.id }}, {{ inProcess }});" class="mouse-pointer">
+                                <td style="width:10.0pt"><span class="glyphicon {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></span></td>
+                                <td>{{ template.name }}</td>
+                            </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="createNewCustomerFooter" class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return {% if inProcess == 'false' %}selectReservation()
+                                             {% else %}previewTemplateForReservation({{ selectedTemplateId }}, {{ inProcess }});{% endif %}">
+            <a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+    </ul>
+</div>
+    
+<script>
+function selectReservation(id) {
+    var url = "{{ path('settings.templates.select.reservation') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+    $(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
+    $.ajax({
+        url: url,
+        type: "post",
+        data: { reservationid: id },
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            $("#modal-content-ajax").html(data);
+        }
+    });
+
+    return false;
+}
+
+function addAsAttachment(id) {
+    var url = "{{ path('settings.templates.attachment.add') }}";
+    var content = '<div class="modal-body">' +
+            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+            '</div>';
+    //$(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
+    $.ajax({
+        url: url,
+        type: "post",
+        data: { id: id },
+        beforeSend: function () {
+            $("#modal-content-ajax").html(content);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            // go back to previously selected template (mail)
+            previewTemplateForReservation(0, 'false');
+        }
+    });
+
+    return false;
+}
+</script>

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>statistics.utilization.title</source>
+                <target>Auslastung</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>statistics.utilization.description</source>
+                <target>Auslastung</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>statistics.utilization.monthly</source>
+                <target>monatliche Auslastung</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>statistics.utilization.yearly</source>
+                <target>jährliche Auslastung</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>statistics.origin.title</source>
+                <target>Herkunft</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>statistics.origin.description</source>
+                <target>Herkunft</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>statistics.origin.monthly</source>
+                <target>monatliche Herkunftsübersicht</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>statistics.origin.yearly</source>
+                <target>jährliche Herkunftsübersicht</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>
