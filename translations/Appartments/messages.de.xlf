@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>appartment.delete.ask</source>
+                <target>Dieses Zimmer wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>appartment.number</source>
+                <target>Zimmernummer</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>appartment.bedsmin</source>
+                <target>Betten</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>appartment.bedsmax</source>
+                <target>max. Personen</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>appartment.action</source>
+                <target>Aktion</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>appartment.description</source>
+                <target>Beschreibung</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>appartment.flash.delete.success</source>
+                <target>Zimmer wurde erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>appartment.flash.create.success</source>
+                <target>Zimmer wurde erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>appartment.object</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>appartment.flash.edit.success</source>
+                <target>Zimmer wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>appartment.flash.delete.error.still.in.use</source>
+                <target>Zimmer kann nicht gelöscht werden da es bereits reserviert wurde.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

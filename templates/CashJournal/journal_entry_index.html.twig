@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'journal.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'journal.description'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="showModal">
+        <div class="modal-dialog">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title"></h4>
+                </div>
+                <div id="modal-content-ajax">
+                    <div class="modal-body">
+                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4 col-md-offset-1">
+                {% if not journal.isClosed %}
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" onclick="addJournalEntry({{ journal.id }})"
+                            data-toggle="modal" data-target="#showModal"><span
+                                class="glyphicon glyphicon-plus"></span> {{ 'journal.entry.add'|trans }}</button>
+                </div>
+                {% endif %}
+                
+            </div>
+            <div class="col-md-5">
+                <h5>{{ 'journal.single'|trans }} {{ getLocalizedMonth(journal.cashMonth, 'MMMM', app.request.locale) }} {{ journal.cashYear }}</h5>
+            </div>
+        </div>
+            <br />
+        <div class="row">
+            <div id="table-ajax" class="col-md-10 col-md-offset-1">
+                {% include 'CashJournal/journal_entry_table.html.twig' %}
+            </div>
+        </div>
+        <div class="row">
+            <div id="table-ajax" class="col-md-10 col-md-offset-1">
+            <ul class="pager">
+                    <li class="previous">
+                        <a href="{{ path('cashjournal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function () {
+            
+        });
+
+        $.ajaxSetup({
+            cache: false
+        });
+    {% if not journal.isClosed %}
+        function addJournalEntry(journalId) {
+            var url = "{{ path('cashjournal.journal.entry.new') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+
+            $(".modal-header .modal-title").html("{{ 'journal.entry.add'|trans }}");
+
+            $("#modal-content-ajax").html(content);
+
+            $.ajax({
+                url: url,
+                type: "get",
+                data: { id: journalId },
+                beforeSend: function () {
+                    $("modal-content-ajax").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#modal-content-ajax").html(data);
+                }
+            });
+
+            return false;
+        }
+
+        function createNewJournalEntry() {
+            var url = "{{ path('cashjournal.journal.entry.create')}}";
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#entity-form-new").serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#flash-message-overlay").empty();
+                        $("#flash-message-overlay").append(data);
+                    } else {
+                        location.reload();
+                    }
+                }
+            });
+
+            return false;
+        }
+        
+        function getEntry(entryId) {
+            var url = "{{ path('cashjournal.journal.entry', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", entryId);
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+
+            $(".modal-header .modal-title").html("{{ 'journal.entry.edit'|trans }}");
+
+            $("#modal-content-ajax").html(content);
+
+            $.ajax({
+                url: url,
+                type: "get",
+                data: { },
+                beforeSend: function () {
+                    $("modal-content-ajax").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#modal-content-ajax").html(data);
+                }
+            });
+
+            return false;
+        }
+        
+        function editEntry(entryId) {
+            var url = "{{ path('cashjournal.journal.entry.edit', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", entryId);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $("#entity-form-new").serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    if (data.length > 0) {
+                        $("#flash-message-overlay").empty();
+                        $("#flash-message-overlay").append(data);
+                    } else {
+                        location.reload();
+                    }
+                }
+            });
+
+            return false;
+        }
+        
+        {% if is_granted('ROLE_ADMIN') %}
+        function doDeleteEntry(entryId) {
+            var form = "#deleteForm";
+            var url = "{{ path('cashjournal.journal.entry.delete', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", entryId);
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: $(form).serialize(),
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+            return false;
+        }
+        {% endif %}
+    {% endif %}
+    </script>
+{% endblock %}

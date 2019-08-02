@@ -1,0 +1,19 @@
+<div class="row">
+    <div class="col-md-6">
+        <form id="origin-form-{{ origin.id }}" class="form-horizontal" role="form"
+              onsubmit="return saveOrigin({{ origin.id }})">
+            {% include 'ReservationOrigin/reservationorigin_form_input_fields.html.twig' %}
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <input type="button" id="origin-cancel-{{ origin.id }}" onclick="return collapseOrigin({{ origin.id }})"
+                           class="btn btn-default" value="{{ 'button.hide'|trans }}">
+                    <input type="button" id="origin-edit-{{ origin.id }}" onclick="return enableOriginForm({{ origin.id }})"
+                           class="btn btn-default" value="{{ 'button.edit'|trans }}">
+                    <input type="submit" value="{{ 'button.save'|trans }}" id="origin-submit-{{ origin.id }}"
+                           class="btn btn-primary button-hidden">
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

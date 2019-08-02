@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>registrationbook.number</source>
+                <target>lfd. Nr.</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>registrationbook.appartment</source>
+                <target>Zi.</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>registrationbook.lastname</source>
+                <target>Nachname</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>registrationbook.firstname</source>
+                <target>Vorname</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>registrationbook.birthday</source>
+                <target>Geburtstag</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>registrationbook.country</source>
+                <target>Land</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>registrationbook.address</source>
+                <target>Anschrift</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>registrationbook.period</source>
+                <target>Aufenthalt</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>registrationbook.stays</source>
+                <target>Übern.</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>registrationbook.addreservations</source>
+                <target>Einträge hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>reservationbook.flash.add.success</source>
+                <target>Eintrag erfolgreich übernommen.</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>registrationbook.year</source>
+                <target>Jahr</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>registrationbook.appartment</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>registrationbook.departures</source>
+                <target>Abreisen</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>registrationbook.help.message</source>
+                <target>In dieser Übersicht werden alle Einträge gelistet, die noch nicht in das Meldebuch übernommen wurden.</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>registrationbook.entry.skip</source>
+                <target>Eintrag überspringen</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>registrationbook.noentries</source>
+                <target>- keine Einträge vorhanden -</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>registrationbook.flash.delete.success</source>
+                <target>Eintrag erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>registrationbook.delete.ask</source>
+                <target>Eintrag wirklich löschen?</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

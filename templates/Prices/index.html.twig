@@ -1,0 +1,342 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'object.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'object.description'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="modal fade" id="newObjectModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">{{ 'nav.price.add'|trans }}</h4>
+                </div>
+                <div id="modal-content-ajax"></div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <p>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" onclick="showCreatePriceForm()" data-toggle="modal"
+                            data-target="#newObjectModal"><span
+                                class="glyphicon glyphicon-plus"></span> {{ 'nav.price.add'|trans }}</button>
+                </div>
+                </p>
+                <table class="table table-responsive table-bordered table-hover">
+                    <tr>
+                        <th>{{ 'price.description'|trans }}</th>
+                        <th>{{ 'price.seasonstart'|trans }}</th>
+                        <th>{{ 'price.seasonend'|trans }}</th>
+                        <th>{{ 'price.daysinweek'|trans }}</th>
+                        <th>{{ 'price.price'|trans }}</th>
+                        <th>{{ 'price.vat'|trans }}</th>
+                        <th>{{ 'price.type'|trans }}</th>
+                        <th>{{ 'price.active'|trans }}</th>
+                        <th>{{ 'base.action'|trans }}</th>
+                    </tr>
+                    {% for price in prices %}
+                        <tr>
+                            <td>{{ price.description }}</td>
+                            <td>{% if price.seasonstart %}{{ price.seasonstart|date('d.m.Y') }}{% endif %}</td>
+                            <td>{% if price.seasonend %}{{ price.seasonend|date('d.m.Y') }}{% endif %}</td>
+                            <td>
+                                {% if price.alldays == true %}{{ 'price.abbreviation.alldays'|trans }}{% endif %}
+                                {% if price.monday == true %}{{ 'price.abbreviation.monday'|trans }}{% endif %}
+                                {% if price.tuesday == true %}{{ 'price.abbreviation.tuesday'|trans }}{% endif %}
+                                {% if price.wednesday == true %}{{ 'price.abbreviation.wednesday'|trans }}{% endif %}
+                                {% if price.thursday == true %}{{ 'price.abbreviation.thursday'|trans }}{% endif %}
+                                {% if price.friday == true %}{{ 'price.abbreviation.friday'|trans }}{% endif %}
+                                {% if price.saturday == true %}{{ 'price.abbreviation.saturday'|trans }}{% endif %}
+                                {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
+                            </td>
+                            <td class="text-right">{{ price.price|number_format(2, ',', '.') }}</td>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(price.vat) %}
+                                    {{ price.vat|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ price.vat|number_format(2, ',', '.') }}
+                                {% endif %}
+                            </td>
+                            <td>{% if price.type == 1 %}
+                                    {{ 'price.miscellaneous'|trans }}
+                                {% elseif price.type == 2 %}
+                                    {{ 'price.appartment'|trans }}
+                                {% endif %}
+                            </td>
+                            <td>{% if price.active == true %}{{ 'price.active'|trans }} {% else %} {{ 'price.inactive'|trans }}{% endif %}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.details'|trans }}"><span
+                                            onclick="showPrice({{ price.id }})"
+                                            class="glyphicon glyphicon-eye-open"></span></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}"><span onclick="editPrice({{ price.id }})"
+                                                                                    class="glyphicon glyphicon-pencil"></span></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                            onclick="deletePrice({{ price.id }})"
+                                            class="glyphicon glyphicon-remove"></span></a>
+                            </td>
+                        </tr>
+                        <tr id="price-{{ price.id }}" hidden="true">
+                            <td colspan="9" id="price-cell-{{ price.id }}">
+                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+    function fromOptions(id) {
+        return options = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                $("#seasonend-" + id).datepicker("option", "minDate", selectedDate);
+
+                var from = $("#seasonstart-" + id).datepicker("getDate");
+                $("#seasonend-" + id).datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+            }
+        };
+    }
+    ;
+
+    function endOptions(id) {
+        return options = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                $("#seasonstart-" + id).datepicker("option", "maxDate", selectedDate);
+            }
+        };
+    }
+    ;
+
+    $.ajaxSetup({
+        cache: false
+    });
+
+    function collapsePrice(id) {
+        var row = "#price-" + id;
+        var cell = "#price-cell-" + id;
+
+        if ($(row).is(':hidden')) {
+            $(row).show();
+            return true;
+        } else {
+            $(row).hide();
+            $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
+            return false;
+        }
+    }
+    ;
+
+    function enablePriceForm(id) {
+        var formFieldsetPrimary = "#price-form-fieldset-primary-" + id;
+        var formFieldsetSecondary = "#price-form-fieldset-secondary-" + id;
+        var cancelButton = "#price-cancel-" + id;
+        var editButton = "#price-edit-" + id;
+        var saveButton = "#price-submit-" + id;
+        $(cancelButton).html('Abbrechen');
+        $(editButton).addClass('button-hidden');
+        $(saveButton).removeClass('button-hidden');
+        $(formFieldsetPrimary).removeAttr('disabled');
+        $(formFieldsetSecondary).removeAttr('disabled');
+
+        $("#seasonstart-" + id).datepicker(fromOptions(id));
+        $("#seasonend-" + id).datepicker(endOptions(id));
+
+        return false;
+    }
+    ;
+
+    function getPrice(id, enableForm) {
+        var cell = "#price-cell-" + id;
+        var url = "{{ path('prices.get.price', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        $.ajax({
+            url: url,
+            type: "get",
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $(cell).html(data);
+
+                if (enableForm) {
+                    enablePriceForm(id);
+                }
+            }
+        });
+
+
+        return false;
+    }
+    ;
+
+    function showPrice(id) {
+        if (collapsePrice(id)) {
+            getPrice(id, false);
+        }
+
+        return false;
+    }
+    ;
+
+    function editPrice(id) {
+        if (collapsePrice(id)) {
+            getPrice(id, true);
+        }
+
+        return false;
+    }
+    ;
+
+    function savePrice(id) {
+        var form = "#price-form-" + id;
+        var url = "{{ path('prices.edit.price', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function deletePrice(id) {
+        if (collapsePrice(id)) {
+            var cell = "#price-cell-" + id;
+            var url = "{{ path('prices.delete.price', {'id': 'placeholder'}) }}";
+            url = url.replace("placeholder", id);
+
+            $(cell).load(url, function (response, status, xhr) {
+                //if(status == "success") location.reload();
+            });
+        }
+
+
+        return false;
+    }
+    ;
+
+    function doDeletePrice(id) {
+        var form = "#price-form-" + id;
+        var url = "{{ path('prices.dodelete.price', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function showCreatePriceForm() {
+        var url = "{{ path('prices.new.price') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+        $("#modal-content-ajax").html(content);
+        $("#modal-content-ajax").load(url, function (response, status, xhr) {
+            if (status == "success") {
+                $("#seasonstart-new").datepicker(fromOptions('new'));
+                $("#seasonend-new").datepicker(endOptions('new'));
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function createNewPrice() {
+        var url = "{{ path('prices.create.price')}}";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#price-form-new").serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                if (data.length > 0) {
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                } else {
+                    window.location.href = "{{ path('prices.overview') }}";
+                }
+            }
+        });
+
+        return false;
+    }
+    ;
+
+    function checkIfTypeIsAppartment(id) {
+        if ($('#type-' + id).val() == 2) {
+            $('#price-form-fieldset-type-appartment-' + id).removeAttr('disabled');
+            $('#collapseThree-' + id).removeClass('collapse');
+            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').attr('required', true);
+            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').attr('required', true);
+            $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').attr('required', true);
+        } else {
+            $('#price-form-fieldset-type-appartment-' + id).attr('disabled', true);
+            $('#collapseThree-' + id).addClass('collapse');
+            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').removeAttr('required');
+            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').removeAttr('required');
+            $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').removeAttr('required');
+        }
+
+        return false;
+    }
+    ;
+
+    function checkAllCheckboxes(id) {
+        if ($('#collapseTwo-' + id + ' #alldays-' + id).is(':checked')) {
+            $('#collapseTwo-' + id + ' :checkbox').prop('checked', true);
+        } else {
+            $('#collapseTwo-' + id + ' :checkbox').prop('checked', false);
+        }
+
+        return false;
+    }
+    ;
+    </script>
+{% endblock %}

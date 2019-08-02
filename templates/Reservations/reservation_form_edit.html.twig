@@ -1,0 +1,195 @@
+<div class="modal-body">
+    <div class="container-fluid">
+        <div class="row" id="flash-message-overlay">
+            <div class="row">
+                {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
+            </div>
+        </div>
+        <form id="reservation-period" class="form-inline" role="form">
+            <div class="row">
+                <div class="col-md-10 col-md-offset-1">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <input type="input" class="form-control" id="from" name="from"
+                                   value="{{ reservation.startdate|date('d.m.Y') }}"
+                                   placeholder="{{ 'reservation.startdate'|trans }}"
+                                   onchange="getAvailableAppartmentsForPeriod('edit')">
+                        </div>
+                        -
+                        <div class="form-group">
+                            <input type="input" class="form-control" id="end" name="end"
+                                   value="{{ reservation.enddate|date('d.m.Y') }}"
+                                   placeholder="{{ 'reservation.enddate'|trans }}"
+                                   onchange="getAvailableAppartmentsForPeriod('edit')">
+                        </div>
+                    </div>
+                    <div class="col-sm-12"><br/>
+                        <table class="table table-hover" id="selectedAppartments">
+                            <tr>
+                                <th>{{ 'appartment.number'|trans }}</th>
+                                <th>{{ 'appartment.bedsmin'|trans }}</th>
+                                <th>{{ 'appartment.bedsmax'|trans }}</th>
+                                <th>{{ 'appartment.description'|trans }}</th>
+                            </tr>
+                            <tr onclick="return toggleAppartmentOptions({{ reservation.appartment.id }})">
+                                <td>{{ reservation.appartment.number }}</td>
+                                <td>{{ reservation.appartment.bedsmin }}</td>
+                                <td>{{ reservation.appartment.bedsmax }}</td>
+                                <td>{{ reservation.appartment.description }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" id="appartment-{{ reservation.appartment.id }}">
+                                    <div id="appartment-options-{{ reservation.appartment.id }}">
+                                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment, 'reservation': reservation } %}
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="box-available-appartments" class="hide">
+                <div class="row"><br/>
+
+                    <div class="col-md-10 col-md-offset-1">
+                        <div class="col-sm-12">
+                            <p class="text-muted pull-left">{{ 'reservation.appartment.available'|trans }}</p>
+
+                            <div class="form-group pull-right">
+                                <select id="objects" name="object" class="form-control"
+                                        onchange="getAvailableAppartmentsForPeriod('edit')">
+                                    <option value="all"
+                                            {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
+                                    {% for object in objects %}
+                                        <option value="{{ object.id }}"
+                                                {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-10 col-md-offset-1">
+
+                        <p>
+
+                        <div class="col-sm-12" id="available-appartments"></div>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <br/>
+
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label for="reservation-remark"
+                               class="col-sm-3 control-label">{{ 'customer.remark'|trans }}</label>
+                        <div class="col-sm-9">
+                            <textarea id="reservation-remark" class="form-control"
+                                      name="remark">{{ reservation.remark }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label for="reservation-origin"
+                               class="col-sm-3 control-label">{{ 'reservation.origin'|trans }}</label>
+                        <div class="col-sm-6">
+                            <select id="reservation-origin" name="reservation-origin" class="form-control">
+                                {% for origin in origins %}
+                                    <option value="{{ origin.id }}" {% if origin.id == reservation.reservationOrigin.id  %} selected {% endif %}>{{ origin.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    <button id="reservation-edit-save" class="btn btn-primary pull-right" type="button"
+                            onclick="return editUpdateReservation({{ reservation.appartment.id }})">{{ 'button.save'|trans }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <ul class="pager">
+        <li class="previous" onclick="return getReservation({{ reservation.id }})"><a
+                    href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="next" onclick="return toggleReservationEditAppartments({{ reservation.appartment.id }});"><a
+                    href="#">{{ 'reservation.edit.change.appartment'|trans }}</a></li>
+    </ul>
+</div>
+
+<script>
+    function toggleReservationEditAppartments(id) {
+        if ($("#box-available-appartments").is(":hidden")) {
+            getAvailableAppartmentsForPeriod('edit');
+            $("#box-available-appartments").fadeIn().removeClass('hide');
+            $("#appartment-" + id).hide();
+            $("#reservation-edit-save").hide();
+            $("#selectedAppartments").addClass('text-muted');
+        }
+        else {
+            $("#box-available-appartments").hide();
+            $("#reservation-edit-save").show();
+            $("#selectedAppartments").removeClass('text-muted');
+            $("#appartment-" + id).fadeIn();
+        }
+        return false;
+    }
+    function editUpdateReservation(appartmentId, mode) {
+        var reservationId = {{ reservation.id }};
+        var options = "status=" + $("#appartment-" + appartmentId).find("#status :selected").val()
+                + "&persons=" + $("#appartment-" + appartmentId).find("#persons :selected").val();
+        //alert(options);return false;
+        $("#available-appartments").html("");
+
+        if (($("#from").val() !== '') && ($("#end").val() !== '')) {
+            if (mode === 'changeAppartment')
+                var url = "{{ path('reservations.edit.appartment.change') }}";
+            else
+                var url = "{{ path('reservations.edit.reservation.change') }}";
+            var content = '<div class="modal-body">' +
+                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                    '</div>';
+
+            $.ajax({
+                url: url,
+                type: "post",
+                data: (options + "&id=" + reservationId + "&aid=" + appartmentId + "&from=" + $("#from").val() + "&end=" + $("#end").val() + "&" + $("#reservation-remark").serialize()
+                        + "&" + $("#reservation-origin").serialize()),
+                beforeSend: function () {
+                    $("#modal-content-ajax").html(content);
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(xhr.status);
+                },
+                success: function (data) {
+                    $("#modal-content-ajax").html(data);
+                    $("#from, .dateFrom").datepicker(fromOptions);
+                    $("#end, .dateEnd").datepicker(endOptions);
+                    getNewTable();
+                }
+            });
+        }
+
+        return false;
+    }
+    ;
+</script>

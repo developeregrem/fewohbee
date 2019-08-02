@@ -1,0 +1,40 @@
+{% set monthList = [] %}
+{% for i in 1..12 %}
+    {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
+{% endfor %}
+<div class="form-group">
+    <label for="year" class="col-sm-4 control-label">{{ 'journal.year'|trans }} *</label>
+
+    <div class="col-sm-8">
+        <input type="text" class="form-control" name="year" value="{{ journal.cashYear }}" required>
+    </div>
+</div>
+<div class="form-group">
+    <label for="month" class="col-sm-4 control-label">{{ 'journal.month'|trans }} *</label>
+
+    <div class="col-sm-8">
+        <select name="month" class="form-control">
+            {% set currentMonth = journal.cashMonth %}
+            {% for month in monthList %}
+                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+<div class="form-group">
+    <label for="cashStart" class="col-sm-4 control-label">{{ 'journal.cash.start'|trans }} *</label>
+
+    <div class="col-sm-8">
+        <input type="text" class="form-control" name="cashStart" value="{{ journal.cashStart }}" required>
+    </div>
+</div>
+<div class="form-group">
+    <label for="cashEnd" class="col-sm-4 control-label">{{ 'journal.cash.end'|trans }}</label>
+
+    <div class="col-sm-8">
+        <input type="text" class="form-control" name="cashEnd" value="{{ journal.cashEnd }}"><br />
+        <span class="text-muted small">{{ 'journal.cash.end.info'|trans }}</span>
+    </div>
+</div>
+<input name="_csrf_token" value="{{ token }}" type="hidden">
+</div>

@@ -1,0 +1,13 @@
+<table class="table table-hover">
+    <tr>
+        <th>{{ 'reservation.startdate'|trans }}</th>
+        <th>{{ 'reservation.enddate'|trans }}</th>
+        <th>{{ 'customer.lastname'|trans }}</th>
+    </tr>
+    {% for reservation in reservations %}
+    <tr onclick="return selectReservation({{ reservation.id }})">
+        <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+        <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+        <td>{{ reservation.booker.lastname }}</td>
+        {% endfor %}
+</table>

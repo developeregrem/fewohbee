@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+             <trans-unit id="1">
+                <source>journal.title</source>
+                <target>Kassenbuch</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>journal.description</source>
+                <target>Kassenbuch</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>journal.add</source>
+                <target>Kassenblatt hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>journal.flash.create.success</source>
+                <target>Kassenblatt erfolgreich hinzugefügt</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>journal.year</source>
+                <target>Jahr</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>journal.month</source>
+                <target>Monat</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>journal.cash.start</source>
+                <target>Bestand Anfang</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>journal.cash.end</source>
+                <target>Bestand Ende</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>journal.action</source>
+                <target>Aktion</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>journal.cash.closed</source>
+                <target>Geschlossen</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>journal.cash.booked</source>
+                <target>Gebucht</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>journal.entry.add</source>
+                <target>Eintrag hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>journal.entry.incomes</source>
+                <target>Einnahmen</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>journal.entry.expenses</source>
+                <target>Ausgaben</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>journal.entry.counteraccount</source>
+                <target>Gegenkonto</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>journal.entry.invoicenumber</source>
+                <target>Rg. Nummer</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>journal.entry.documentnumber</source>
+                <target>Belegnummer</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>journal.entry.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>journal.entry.remark</source>
+                <target>Bemerkung</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>journal.entry.number</source>
+                <target>#</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>journal.entry.inventory</source>
+                <target>Bestand</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>journal.entry.edit</source>
+                <target>Eintrag bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>journal.entry.flash.create.success</source>
+                <target>Eintrag erfolgreich hinzugfügt.</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>journal.entry.flash.edit.success</source>
+                <target>Eintrag erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>journal.entry.delete.ask</source>
+                <target>Soll der Eintrag wirklich gelöscht werden?</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>journal.entry.flash.delete.success</source>
+                <target>Eintrag erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>journal.edit</source>
+                <target>Eintrag bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>journal.cash.end.info</source>
+                <target>Der Endbestand wird automatisch berechnet und muss nicht ausgefüllt werden.</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>journal.flash.edit.success</source>
+                <target>Eintrag erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>journal.flash.edit.status.success</source>
+                <target>Der Status wurde erfolgreich geändert.</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>journal.flash.edit.status.warning</source>
+                <target>Der Status konnte nicht geändert werden.</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>journal.delete.ask</source>
+                <target>Soll das Kassenblatt mit allen Einträgen gelöscht werden?</target>
+            </trans-unit>
+            <trans-unit id="33">
+                <source>journal.template</source>
+                <target>Exportvorlage</target>
+            </trans-unit>
+            <trans-unit id="34">
+                <source>journal.single</source>
+                <target>Kassenblatt</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

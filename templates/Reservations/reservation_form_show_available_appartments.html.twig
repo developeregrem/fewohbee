@@ -1,0 +1,25 @@
+<table class="table table-hover">
+    <tr>
+        <th>{{ 'appartment.number'|trans }}</th>
+        <th>{{ 'appartment.bedsmin'|trans }}</th>
+        <th>{{ 'appartment.bedsmax'|trans }}</th>
+        <th>{{ 'appartment.description'|trans }}</th>
+    </tr>
+    {% for appartment in appartments %}
+        <tr onclick="return toggleAppartmentOptions({{ appartment.id }})">
+            <td>{{ appartment.number }}</td>
+            <td>{{ appartment.bedsmin }}</td>
+            <td>{{ appartment.bedsmax }}</td>
+            <td>{{ appartment.description }}</td>
+        </tr>
+        <tr>
+            <td colspan="4" id="appartment-{{ appartment.id }}" class="hidden appartment-options">
+                <form class="form-inline" id="appartment-options-{{ appartment.id }}">
+                    {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
+                    <button class="btn btn-default" type="button"
+                            onclick="return addAppartmentToSelection({{ appartment.id }})">{{ 'button.continue'|trans }}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+</table>

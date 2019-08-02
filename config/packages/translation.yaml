@@ -1,0 +1,20 @@
+framework:
+    default_locale: '%locale%'
+    translator:
+        paths:
+            - '%kernel.project_dir%/translations/Base'
+            - '%kernel.project_dir%/translations/Appartments'
+            - '%kernel.project_dir%/translations/CashJournal'
+            - '%kernel.project_dir%/translations/Customers'
+            - '%kernel.project_dir%/translations/Invoices'
+            - '%kernel.project_dir%/translations/Login'
+            - '%kernel.project_dir%/translations/Prices'
+            - '%kernel.project_dir%/translations/RegistrationBook'
+            - '%kernel.project_dir%/translations/ReservationOrigin'
+            - '%kernel.project_dir%/translations/Reservations'
+            - '%kernel.project_dir%/translations/Statistics'
+            - '%kernel.project_dir%/translations/Subsidiary'
+            - '%kernel.project_dir%/translations/Templates'
+            - '%kernel.project_dir%/translations/Users'
+        fallbacks:
+            - '%locale%'

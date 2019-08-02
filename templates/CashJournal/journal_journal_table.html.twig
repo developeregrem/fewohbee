@@ -1,0 +1,53 @@
+<table class="table table-responsive table-bordered table-hover">
+    <tr>
+        <th>{{ 'journal.month'|trans }}</th>
+        <th>{{ 'journal.cash.start'|trans }}</th>
+        <th>{{ 'journal.cash.end'|trans }}</th>
+        <th>{{ 'journal.cash.closed'|trans }} | {{ 'journal.cash.booked'|trans }}</th>
+        <th>{{ 'journal.action'|trans }}</th>
+    </tr>
+    {% for journal in journals %}
+        <tr>
+            <td>{{ getLocalizedMonth(journal.cashMonth, 'MMMM', app.request.locale) }}</td>
+            <td>{{ journal.cashStart|number_format(2, ',', '.') }}</td>
+            <td>{{ journal.cashEnd|number_format(2, ',', '.') }}</td>
+            <td>
+                <a href="#" title="{{ 'journal.cash.closed'|trans }}?">
+                    <i onclick="editJournalStatus({{ journal.id }}, 'closed')" class="fas fa-lock{% if journal.isClosed == 0 %}-open{% endif %}"></i>
+                </a>
+                | 
+                <a href="#" title="{{ 'journal.cash.booked'|trans }}?">
+                    <i onclick="editJournalStatus({{ journal.id }}, 'booked')" class="fas fa-folder{% if journal.isBooked == 0 %}-open{% endif %}"></i>
+                </a>
+            </td>
+            <td>
+                <a href="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}" title="{{ 'button.details'|trans }}"><span
+                            class="glyphicon glyphicon-eye-open"></span></a>
+                {% if not journal.isClosed %}
+                <a href="#" title="{{ 'button.edit'|trans }}"><span
+                            onclick="getJournal({{ journal.id }})" class="glyphicon glyphicon-pencil"
+                            data-toggle="modal" data-target="#showModal"></span></a>
+                
+                <a href="#" title="{{ 'button.add'|trans }}"><span
+                            onclick="addJournalEntry({{ journal.id }}, true)" class="glyphicon glyphicon-plus"
+                            data-toggle="modal" data-target="#showModal"></span></a>
+                {% endif %}
+                <a class="export-link"
+                   href="{{ path('cashjournal.journal.export.pdf', {'id': journal.id, 'templateId': 0 }) }}"
+                   title="{{ 'button.export.pdf'|trans }}"><span
+                            class="glyphicon glyphicon-print"></span></a>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+<input id="page" type="hidden" name="page" value="{{ page }}" />
+{% include 'paginator.html.twig' with { 'url' : path('cashjournal.overview') } %}
+
+<script>
+    $(document).ready(function() {
+        $("#pagination a").click(function() {
+            getJournalTable($(this).attr("data-page"));
+            return false;
+        });
+    });
+</script>

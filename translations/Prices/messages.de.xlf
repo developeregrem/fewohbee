@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>price.description</source>
+                <target>Beschreibung</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>price.seasonstart</source>
+                <target>Saison Start</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>price.seasonend</source>
+                <target>Saison Ende</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>price.daysinweek</source>
+                <target>Gültigkeit Wochentage</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>price.price</source>
+                <target>Preis</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>price.vat</source>
+                <target>Steuer</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>price.collapsable.group.1.description</source>
+                <target>Allgemein</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>price.collapsable.group.2.description</source>
+                <target>Saisonale Informationen</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>price.collapsable.group.3.description</source>
+                <target>Appartment spezifisch</target>
+            </trans-unit>
+            <trans-unit id="10">
+                <source>price.season</source>
+                <target>Saison</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>price.monday</source>
+                <target>Montag</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>price.tuesday</source>
+                <target>Dienstag</target>
+            </trans-unit>
+            <trans-unit id="13">
+                <source>price.wednesday</source>
+                <target>Mittwoch</target>
+            </trans-unit>
+            <trans-unit id="14">
+                <source>price.thursday</source>
+                <target>Donnerstag</target>
+            </trans-unit>
+            <trans-unit id="15">
+                <source>price.friday</source>
+                <target>Freitag</target>
+            </trans-unit>
+            <trans-unit id="16">
+                <source>price.saturday</source>
+                <target>Samstag</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>price.sunday</source>
+                <target>Sonntag</target>
+            </trans-unit>
+            <trans-unit id="18">
+                <source>price.alldays</source>
+                <target>Immer</target>
+            </trans-unit>
+            <trans-unit id="19">
+                <source>price.abbreviation.monday</source>
+                <target>Mo</target>
+            </trans-unit>
+            <trans-unit id="20">
+                <source>price.abbreviation.tuesday</source>
+                <target>Di</target>
+            </trans-unit>
+            <trans-unit id="21">
+                <source>price.abbreviation.wednesday</source>
+                <target>Mi</target>
+            </trans-unit>
+            <trans-unit id="22">
+                <source>price.abbreviation.thursday</source>
+                <target>Do</target>
+            </trans-unit>
+            <trans-unit id="23">
+                <source>price.abbreviation.friday</source>
+                <target>Fr</target>
+            </trans-unit>
+            <trans-unit id="24">
+                <source>price.abbreviation.saturday</source>
+                <target>Sa</target>
+            </trans-unit>
+            <trans-unit id="25">
+                <source>price.abbreviation.sunday</source>
+                <target>So</target>
+            </trans-unit>
+            <trans-unit id="26">
+                <source>price.abbreviation.alldays</source>
+                <target>Immer</target>
+            </trans-unit>
+            <trans-unit id="27">
+                <source>price.type</source>
+                <target>Typ</target>
+            </trans-unit>
+            <trans-unit id="28">
+                <source>price.flash.edit.success</source>
+                <target>Der Preis wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="29">
+                <source>price.from</source>
+                <target>Von</target>
+            </trans-unit>
+            <trans-unit id="30">
+                <source>price.end</source>
+                <target>Bis</target>
+            </trans-unit>
+            <trans-unit id="31">
+                <source>price.numberofpersons</source>
+                <target>Anzahl der Personen</target>
+            </trans-unit>
+            <trans-unit id="32">
+                <source>price.numberofbeds</source>
+                <target>Anzahl der Betten</target>
+            </trans-unit>
+            <trans-unit id="33">
+                <source>price.minstay</source>
+                <target>Mindestübernachtungen</target>
+            </trans-unit>
+            <trans-unit id="34">
+                <source>price.active</source>
+                <target>Aktiv</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>price.delete.ask</source>
+                <target>Wollen Sie diesen Preis wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>price.appartment</source>
+                <target>Zimmerpreis</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>price.miscellaneous</source>
+                <target>Sonstiger Preis</target>
+            </trans-unit>
+            <trans-unit id="38">
+                <source>price.inactive</source>
+                <target>Nicht Aktiv</target>
+            </trans-unit>
+            <trans-unit id="39">
+                <source>price.flash.create.success</source>
+                <target>Der Preis wurde erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="40">
+                <source>price.origin</source>
+                <target>gültig für Herkunft</target>
+            </trans-unit>
+            <trans-unit id="41">
+                <source>price.flash.delete.success</source>
+                <target>Preisklasse erfolgreich gelöscht.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

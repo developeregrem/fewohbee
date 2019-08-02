@@ -1,0 +1,236 @@
+{% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
+
+<table class="table table-hover table-bordered small table-reservation" id="reservation-table">
+    <thead>
+    <tr>
+        <th class="text-center">Zimmer</th>
+        {% set firstWasSummer = today|date('I') %}
+        {% for i in 0..intervall %}
+            {% set addToDate = "+" ~ i ~ "day" %}
+            {% set tmpDate = today|date_modify(addToDate) %}
+            {# if there is a change from summer to winter time #}
+            {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+            {% endif %}
+            {# check for weekend #}
+            {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
+                {% set weekendCss = ' reservation-table-weekend' %}
+            {% else %}
+                {% set weekendCss = '' %}
+            {% endif %}
+            <th class="text-center{{ weekendCss }}" colspan="2"
+                style="width: {{ 100 / (intervall+1) }}%">{{ tmpDate|date('d') }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for appartment in appartments %}
+        {% set reservations = get_reservations_for_period(today, intervall, appartment) %}
+        {% set j = 0 %}
+        {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
+        {% set emptyTdNr = 0 %}
+        <tr>
+            <td class="text-center">{{ appartment.number }}</td>
+            {% for i in 0..intervall if i >= j %}
+                {% set addToDate = "+" ~ i ~ "day" %}
+                {% set curDate = today|date_modify(addToDate) %}
+                {# if there is a change from summer to winter time #}
+                {% if firstWasSummer == 1 and curDate|date('I') == 0 %}
+                    {% set curDate = curDate|date_modify("+1 hour") %}
+                {% endif %}
+                {% set tmpDate = curDate|date("Y-m-d") %}
+                {% set periodFilled = 0 %}
+                {% for reservation in reservations %}
+                    {# mark the displayed startdate for reservation #}
+                    {% if (reservation_date_compare(today, reservation, 'start')) %}
+                        {% set startDate = today %}
+                    {% else %}
+                        {% set startDate = reservation.startdate %}
+                    {% endif %}
+                    {# mark the displayed enddate for reservation #}
+                    {% if (reservation_date_compare(displayEndDate, reservation, 'end')) %}
+                        {% set endDate = displayEndDate %}
+                    {% else %}
+                        {% set endDate = reservation.enddate %}
+                    {% endif %}
+                    {% if startDate|date('d.m.Y') ==  curDate|date('d.m.Y') %}
+                        {% set periodFilled = 1 %}
+                        {% set period = date_difference(startDate|date('d.m.Y'), endDate|date_modify("+1 day")|date('d.m.Y')) %}
+                        {% set colspan = (2 * period) - 2 %}
+                        {# if we found a reservation for that day, jump in the loop to the enddate of the reservation #}
+                        {% set j = i + period %}
+                        {% set printSpacerBefore = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'start') %}
+                        {% set printSpacerAfter = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'end') %}
+
+                        {% if printSpacerBefore %}
+                            <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                                data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" 
+                                data-tdnumber="{{ emptyTdNr }}"></td>
+                        {% endif %}
+                        {# if whe have 2 reservations at one day we must decrase j in order to look at this date twice
+                        but only if reservation is not at the end of the displayed period, otherwise we draw two unneeded tds in the last col #}
+                        {% if printSpacerAfter != true and reservation.enddate.timestamp <= displayEndDate %}
+                            {% set j = j - 1 %}
+                        {% endif %}
+                        {# we have to add one colspan if reservation started earlier or ends later than the displayed period #}
+                        {% if reservation.startDate.timestamp < today %}
+                            {% set colspan = colspan + 1 %}
+                        {% endif %}
+                        {% if reservation.endDate.timestamp > displayEndDate %}
+                            {% set colspan = colspan + 1 %}
+                        {% endif %}
+
+                        {% if reservation.status == 1 %}
+                            {% set status = 'confirmed' %}
+                        {% elseif reservation.status == 2 %}
+                            {% set status = 'option' %}
+                        {% endif %}
+
+                        {% set letterCount = get_letter_count_for_display(period, intervall) %}
+                        {% set name = reservation.booker.salutation ~ " " ~ reservation.booker.lastname %}
+                        {% set shortName = name|slice(0, letterCount) %}
+                        {% if shortName != name %}
+                            {% set shortName = shortName ~ "..." %}
+                        {% endif %}
+                        {# popover #}
+                        {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname %}
+                        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
+                        {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}
+                        {% for address in reservation.booker.customerAddresses %} 
+                            {% if address.phone|length > 0 %}
+                                {% set phones = phones ~ address.phone %}
+                                {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
+                            {% endif %}
+                            {% if address.mobilePhone|length > 0 %}
+                                {% set mobiles = mobiles ~ address.mobilePhone %}
+                                {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
+                            {% endif %}
+                            {% if address.email|length > 0 %}
+                                {% set mails = mails ~ address.email %}
+                                {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
+                            {% endif %}                           
+                        {% endfor %}
+                        {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
+                        {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
+                        {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
+
+                        <td class="reservation text-center" colspan="{{ colspan }}">
+                            <div onclick="return getReservation({{ reservation.id }});"
+                                 class="reservation-inner reservation-{{ status }} text-center"
+                                 data-title="{{ popTitle }}" data-content="{{ popBody }}">{{ shortName }}</div>
+                        </td>
+
+                        {% if printSpacerAfter %}
+                            <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                                data-day="{{ reservation.enddate|date('Y-m-d')  }}" data-appartment="{{ appartment.id }}" 
+                                data-tdnumber="{{ emptyTdNr + 1 }}"></td>
+                        {% endif %}
+                        {% set emptyTdNr = emptyTdNr + 1 %}{# now we must increase the number #}
+                    {% endif %}
+                {% endfor %}
+                {% if reservations|length == 0 or periodFilled == 0 %}
+                    {#  50 / (intervall+1) means
+                        100% total width for all cells,
+                        1 day consist of two cells, therefore we have ((100% / 2) = 50 / number of days) for each cell
+                        we have to add +1 for the first col (Zimmer)
+                         #}
+                    <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                        data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
+                    <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                        data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<script type="text/javascript">
+    var tdStartDate = "";
+    var tdEndDate = "";
+    var tdStartAppartment = "";
+    var lastTdNumber = "";
+    $('.reservation-inner').popover({
+        placement: 'top',
+        html: true,
+        trigger: 'hover'
+    });
+
+    $( ".table-reservation" ).selectable({
+        filter:'.td-empty',
+        cancel:'.reservation',
+        selected: function(event, ui){
+
+        },
+        selecting: function( event, ui ) {
+            if(tdStartDate === "") {
+                tdStartDate = $(ui.selecting).attr("data-day");
+                tdStartAppartment = $(ui.selecting).attr("data-appartment");
+                lastTdNumber = $(ui.selecting).attr("data-tdnumber");
+            } else {                
+                var curAppartment = $(ui.selecting).attr("data-appartment");
+                // check if its not the same row
+                if(curAppartment !== tdStartAppartment) {
+                    $(ui.selecting).removeClass("ui-selectee");
+                    $(ui.selecting).removeClass("ui-selecting");
+                } else if($(ui.selecting).attr("data-tdnumber") !== lastTdNumber) {
+                    // check if user selects over an existing reservation
+                    $(ui.selecting).removeClass("ui-selectee");
+                    $(ui.selecting).removeClass("ui-selecting");                    
+                } else if($(ui.selecting).attr("data-day") !== tdStartDate) {
+                    // only if end is not the same day as start
+                    tdEndDate = $(ui.selecting).attr("data-day");
+                }
+            }            
+        },
+        unselecting: function( event, ui ) {
+            // only between an existing reservation
+            if($(ui.unselecting).attr("data-tdnumber") === lastTdNumber){
+                var curDay = $(ui.unselecting).attr("data-day");
+                // if selection starts from left
+                if(curDay > tdStartDate) {
+                    // we take the privios field
+                    tdEndDate = $(ui.unselecting).prev().attr("data-day");
+                } else if(curDay < tdStartDate) { // if selection starts from right
+                    tdEndDate = $(ui.unselecting).next().attr("data-day");
+                }
+            }
+        },
+        start: function( event, ui ) {
+            $(".table-reservation").removeClass("table-hover");
+        },
+        stop: function( event, ui ) {
+            if(tdStartDate !== "" && tdEndDate !== "" && tdStartAppartment !== "" && tdStartDate !== tdEndDate) {
+                selectableAddAppartmentToSelection(tdStartAppartment, tdStartDate, tdEndDate);
+                $('#newReservationModal').modal('toggle');
+            }
+            tdStartDate = "";
+            tdEndDate = "";
+            tdStartAppartment = "";
+            reservationFollows = false;
+            lastTdNumber = "";
+            $(".table-reservation").addClass("table-hover");
+            $(".td-empty").removeClass("ui-selectee");
+            $(".td-empty").removeClass("ui-selected");
+        }
+    });
+    {#var lastRowDate = "";
+    $( ".reservation-inner" ).draggable({
+        revert: true,
+        containment: "#reservation-table",
+        stop( event, ui ) {
+            console.log(lastRowDate);
+        }
+    });
+    
+    $( ".td-empty" ).droppable({
+        accept: ".reservation-inner",
+        //activeClass: "ui-state-hover",
+        //hoverClass: "ui-state-hover",
+        tolerance: "touch",
+        drop: function( event, ui ) {
+            console.log( $(this).attr("data-day") );
+            lastRowDate = $(this).attr("data-day");
+           
+        },
+    });#}
+</script>

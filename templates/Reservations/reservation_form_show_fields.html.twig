@@ -1,0 +1,266 @@
+<!-- Nav tabs -->
+<ul class="nav nav-tabs">
+    <li{% if tab is defined and tab == 'booker' %} class="active"{% endif %}><a href="#reservation"
+                                                                                data-toggle="tab">{{ 'reservation.details'|trans }}</a>
+    </li>
+    <li{% if tab is defined and tab == 'guest' %} class="active"{% endif %}><a href="#guests"
+                                                                               data-toggle="tab">{{ 'reservation.preview.customer.inroom'|trans }}</a>
+    </li>
+    <li{% if tab is defined and tab == 'correspondence' %} class="active"{% endif %}><a href="#correspondence"
+                                                                               data-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
+    </li>
+</ul>
+
+<!-- Tab panes -->
+<div class="tab-content">
+    <div class="tab-pane{% if tab is defined and tab == 'booker' %} active{% endif %}" id="reservation">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    <div class="page-header">
+                        <h4>{{ 'reservation.preview.booker'|trans }}
+                            {% if mode is defined and mode == 'edit' %}
+                                <form id="actions-booker-{{ booker.id }}" class="hidden">
+                                    <input id="reservation-id" type="hidden" value="{{ reservationId }}"
+                                           name="reservation-id"/>
+                                    <input id="customer-id" type="hidden" value="{{ booker.id }}"
+                                           name="customer-id"/>
+                                    <input id="tab" type="hidden" value="booker" name="tab"/>
+                                    <input name="_csrf_token" value="{{ token }}" type="hidden">
+                                </form>
+                                <a href="#" onclick="return editReservationCustomerEdit({{ booker.id }}, '#actions-booker-{{ booker.id }}');"
+                                   title="{{ 'button.edit'|trans }}" class="pull-right small"><span
+                                            class="glyphicon glyphicon-pencil"></span></a>
+                                <a href="#" onclick="return changeReservationCustomer({{ reservationId }}, 'booker', 0);"
+                                   title="{{ 'reservation.button.changeBooker'|trans }}" class="pull-right small"><span
+                                            class="glyphicon glyphicon-user" style="margin-right: 5px;"></span></a>
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <dl>
+                                <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
+                                <dd>{{ booker.salutation }} {{ booker.firstname }} {{ booker.lastname }}</dd>
+                                <dt>{{ 'customer.remark'|trans }}</dt>
+                                <dd>{% if booker.remark %}{{ booker.remark|nl2br }}{% else %} -{% endif %}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-sm-6">
+                            <dl>
+                                <dt>{{ 'customer.birthday'|trans }}</dt>
+                                <dd>{% if booker.birthday %} {{ booker.birthday|date('d.m.Y') }} {% endif %}</dd>
+                            </dl>
+                        </div>
+                    </div>                        
+                    <div class="panel-group" id="addressAccordion" role="tablist" aria-multiselectable="true">
+                        {% for address in booker.customerAddresses %}
+                        <div class="page-header" style="margin-top: 5px;">                                
+                            <h6 class="panel-title">
+                                <a role="button" data-toggle="collapse" href="#address-{{ address.id }}" aria-expanded="false" aria-controls="address-{{ address.id }}">
+                                {{ 'customer.contact'|trans }} ({{ address.type|trans }})
+                                </a>
+                            </h6>                                
+                        </div>
+                        <div class="collapse" id="address-{{ address.id }}">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <dl>
+                                        {% if address.company %}
+                                        <dt>{{ 'customer.company'|trans }}</dt>
+                                        <dd>{{ address.company }}</dd>
+                                        {% endif %}
+                                        <dt>{{ 'reservation.preview.customer.address'|trans }}</dt>
+                                        <dd>{{ address.address }}<br>{{ address.zip }} {{ address.city }}<br />{{ address.country }}</dd>
+                                        <dt>{{ 'customer.email'|trans }}</dt>
+                                        <dd>{% if address.email %}{{ address.email }}{% else %} -{% endif %}</dd>                                                
+                                    </dl>
+                                </div>
+                                <div class="col-sm-6">
+                                    <dl>
+                                        <dt>{{ 'customer.phone'|trans }}</dt>
+                                        <dd>{% if address.phone %}{{ address.phone }}{% else %} -{% endif %}</dd>
+                                        <dt>{{ 'customer.fax'|trans }}</dt>
+                                        <dd>{% if address.fax %}{{ address.fax }}{% else %} -{% endif %}</dd>
+                                        <dt>{{ 'customer.mobilephone'|trans }}</dt>
+                                        <dd>{% if address.mobilephone %}{{ address.mobilephone }}{% else %} -{% endif %}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>                            
+                        {% endfor %}
+                    </div>
+
+                    <div class="page-header">
+                        <h4>{{ 'reservation.preview.appartments.selected'|trans }}
+                            {% if mode is defined and mode == 'edit' %}
+                                <a href="#" onclick="return editReservation({{ reservationId }});"
+                                   title="{{ 'button.edit'|trans }}" class="pull-right small"><span
+                                            class="glyphicon glyphicon-pencil"></span></a>
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <th>{{ 'appartment.number'|trans }}</th>
+                            <th>{{ 'appartment.description'|trans }}</th>
+                            <th>{{ 'reservation.persons'|trans }}</th>
+                            <th>{{ 'reservation.status'|trans }}</th>
+                            <th>{{ 'reservation.startdate'|trans }}</th>
+                            <th>{{ 'reservation.enddate'|trans }}</th>
+                        </tr>
+                        {% for reservation in reservations %}
+                            <tr>
+                                <td>{{ reservation.appartment.number }}</td>
+                                <td>{{ reservation.appartment.description }}</td>
+                                <td>{{ reservation.persons }}</td>
+                                <td>
+                                    {% if reservation.status == 1 %}
+                                        {{ 'reservation.confirm'|trans }}
+                                    {% elseif reservation.status == 2 %}
+                                        {{ 'reservation.option'|trans }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+                                <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="reservation-remark"
+                                   class="col-sm-3 control-label">{{ 'customer.remark'|trans }}</label>
+
+                            <div class="col-sm-9">
+                                <textarea id="reservation-remark" class="form-control"
+                                          name="remark">{{ attribute(reservations, 0).remark }}</textarea>
+                            </div>
+                        </div>
+                    </div><br />
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="reservation-origin"
+                                   class="col-sm-3 control-label">{{ 'reservation.origin'|trans }}</label>
+                            <div class="col-sm-6">
+                                <select id="reservation-origin" name="reservation-origin" class="form-control"{% if mode is defined and mode == 'edit' %} disabled{% endif %}>
+                                    {% for origin in origins %}
+                                        <option value="{{ origin.id }}" {% if attribute(reservations, 0).reservationOrigin and origin.id == attribute(reservations, 0).reservationOrigin.id  %} selected {% endif %}>
+                                            {{ origin.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="tab-pane{% if tab is defined and tab == 'guest' %} active{% endif %}" id="guests">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    {% for reservation in reservations %}
+                    <div class="page-header">
+                        <h4>{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
+                                <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
+                                   title="{{ 'button.add'|trans }}" class="pull-right small"><span
+                                            class="glyphicon glyphicon-plus"></span></a>
+                        </h4>
+                    </div>                       
+                    
+                    <table class="table table-hover">
+                        <tr>
+                            <th>{{ 'reservation.preview.customer.name'|trans }}</th>                            
+                            <th>{{ 'customer.birthday'|trans }}</th>
+                            <th>{{ 'customer.action'|trans }}</th>
+                        </tr>
+                        {% for customer in customers %}
+                            {% if mode is defined and mode == 'new' %}                                
+                                {% if customer.appartmentId == reservation.appartment.id %}
+                                    {% set customer = customer.c %}
+                                {% endif %}
+                            {% endif %}
+                            {% if customer.salutation is defined %}
+                            <tr>
+                                <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>                            
+                                <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
+                                <td>
+                                    <form id="actions-customer-{{ customer.id }}">
+                                        <input id="reservation-id" type="hidden" value="{{ reservationId }}"
+                                               name="reservation-id"/>
+                                        <input id="customer-id" type="hidden" value="{{ customer.id }}"
+                                               name="customer-id"/>
+                                        <input id="tab" type="hidden" value="guest" name="tab"/>
+                                        <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
+                                        <input name="_csrf_token" value="{{ token }}" type="hidden">
+                                    </form>
+                                    <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
+                                       title="{{ 'button.edit'|trans }}"><span
+                                                class="glyphicon glyphicon-pencil"></span></a>
+                                    <a href="#" onclick="return deleteReservationCustomer(this, {{ customer.id }});"
+                                       title="{{ 'button.delete'|trans }}"><span
+                                                class="glyphicon glyphicon-remove"></span></a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </table>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-pane{% if tab is defined and tab == 'correspondence' %} active{% endif %}" id="correspondence">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                <div class="col-sm-12">
+                    <div class="page-header">
+                        <h4>{{ 'reservation.correspondences.reservation'|trans }}
+                            {% if mode is defined and mode == 'edit' %}
+                                <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
+                                   title="{{ 'button.add'|trans }}" class="pull-right small"><span
+                                            class="glyphicon glyphicon-plus"></span></a>
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <th></th>
+                            <th>{{ 'templates.correspondence.created'|trans }}</th>
+                            <th>{{ 'templates.correspondence.name'|trans }}</th>
+                            <th></th>
+                            <th>{{ 'base.action'|trans }}</th>
+                        </tr>
+                            {% for correspondence in correspondences %}
+                            <tr>
+                                <td style="width:10.0pt"><span class="glyphicon {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></span></td>
+                                <td>{{ correspondence.created|date('d.m.Y H:i') }}</td>
+                                <td>{{ correspondence.name }}</td>
+                                <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<span class="glyphicon glyphicon-paperclip"></span>{% endif %}</td>
+                                <td>
+                                    {% if 'PDF' in correspondence.template.templateType.name %}
+                                    <a href="#" onclick="return exportPDFCorrespondence({{ correspondence.id }})"
+                                       title="{{ 'button.download'|trans }}"><span class="glyphicon glyphicon-download-alt"></span></a>
+                                    {% elseif 'EMAIL' in correspondence.template.templateType.name %}
+                                    <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                                       title="{{ 'button.details'|trans }}"><span class="glyphicon glyphicon-eye-open"></span></a>
+                                    {% endif %}
+                                    <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                                       title="{{ 'button.delete'|trans }}"><span class="glyphicon glyphicon-remove"></span></a>                                    
+                                </td>
+                            </tr>
+                            {% endfor %}
+                    </table>
+                    
+                    <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+

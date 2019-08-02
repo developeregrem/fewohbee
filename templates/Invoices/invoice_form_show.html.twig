@@ -1,0 +1,498 @@
+<form id="invoice-form-show" class="form-horizontal" role="form" onsubmit="">
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row" id="flash-message-overlay">
+                <div class="row">
+                    {% include 'Invoices/invoice_feedback.html.twig' with {'error': error, 'app': app } %}
+                </div>
+            </div>
+            <div class="row">                
+                <div class="col-md-4">
+                    <h4 class="invoice-edit-field hidden">{{ 'invoice.guest'|trans }}&nbsp;
+                    <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
+                       title="{{ 'button.edit'|trans }}" class="small"><span
+                                class="glyphicon glyphicon-pencil"></span></a>
+                    </h4>
+                    {{ invoice.salutation }}</div>
+                <div class=".col-md-4 .col-md-offset-4 text-right">
+                    <h4 class="invoice-edit-field hidden">
+                    <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
+                       title="{{ 'button.edit'|trans }}" class="small"><span
+                                class="glyphicon glyphicon-pencil"></span></a>
+                    </h4>
+                    <strong>{{ 'invoice.number'|trans }}</strong></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">{{ invoice.firstname }} {{ invoice.lastname }}
+                    {% if invoice.company is not empty %}
+                        <br/>{{ invoice.company }}
+                    {% endif %}
+                </div>
+                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.number }}</div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">{{ invoice.address }}</div>
+                <div class=".col-md-4 .col-md-offset-4 text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">{{ invoice.zip }} {{ invoice.city }}</div>
+                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.date|date('d.m.Y') }}</div>
+            </div>
+            <p>&nbsp;</p>
+            <table class="table table-responsive table-hover">
+                <tr>
+                    <th>{{ 'invoice.position.appartment'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                    <th class="invoice-edit-field hidden text-right">{{ 'invoice.action'|trans }}</th>
+                </tr>
+                {% set appartmentSum = 0 %}
+                {% for appartment in invoice.appartments %}
+                    {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
+                    <tr>
+                        <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
+                            <br/>{{ appartment.startDate|date('d.m.Y') }}
+                            - {{ appartment.endDate|date('d.m.Y') }}</td>
+                        <td class="text-right">{{ appartment.amount }}</td>
+                        <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
+                        <td class="text-right">
+                            {% if is_decimal_place_0(appartment.vat) %}
+                                {{ appartment.vat|number_format(0, ',', '.') }}
+                            {% else %}
+                                {{ appartment.vat|number_format(2, ',', '.') }}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
+                        <td class="invoice-edit-field hidden text-right">
+                            <a href="#" title="{{ 'button.edit'|trans }}"><span
+                                    onclick="return showEditAppartmentInvoicePosition({{ appartment.id }})"
+                                    class="glyphicon glyphicon-pencil"></span></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                    onclick="return removeAppartmentPositionFromInvoicePositions({{ appartment.id }})"
+                                    class="glyphicon glyphicon-remove"></span></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})"><span
+                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.appartment'|trans }}</button></th>
+                    <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
+                </tr>
+            </table>
+            <p></p>
+            <table class="table table-responsive table-hover">
+                <tr>
+                    <th>{{ 'invoice.position.additional'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                    <th class="invoice-edit-field hidden text-right">{{ 'invoice.action'|trans }}</th>
+                </tr>
+                {% set positionSum = 0 %}
+                {% for position in invoice.positions %}
+                    {% set positionSum = positionSum + (position.price * position.amount) %}
+                    <tr>
+                        <td>{{ position.description }}</td>
+                        <td class="text-right">{{ position.amount }}</td>
+                        <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                        <td class="text-right">
+                            {% if is_decimal_place_0(position.vat) %}
+                                {{ position.vat|number_format(0, ',', '.') }}
+                            {% else %}
+                                {{ position.vat|number_format(2, ',', '.') }}
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
+                        <td class="invoice-edit-field hidden text-right">
+                            <a href="#" title="{{ 'button.edit'|trans }}"><span
+                                    onclick="return showEditMiscellaneousInvoicePosition({{ position.id }})"
+                                    class="glyphicon glyphicon-pencil"></span></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}"><span
+                                    onclick="return removeMiscellaneousPositionFromInvoicePositions({{ position.id }})"
+                                    class="glyphicon glyphicon-remove"></span></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})"><span
+                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
+                    <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
+                </tr>
+            </table>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    {{ 'invoice.containing.vat'|trans }}<br/>
+                    <table>
+                        {% for key, value in vats %}
+                            <tr>
+                                <td class="text-right">
+                                    {% if is_decimal_place_0(key) %}
+                                        {{ key|number_format(0, ',', '.') }}
+                                    {% else %}
+                                        {{ key|number_format(2, ',', '.') }}
+                                    {% endif %} %:
+                                </td>
+                                <td>&nbsp;&nbsp;</td>
+                                <td class="text-right">{{ value.netto|number_format(2, ',', '.') }} €</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                <div class="col-md-2">
+
+                </div>
+                <div class="col-md-2 col-md-offset-2 text-right">{{ 'invoice.netto'|trans }}
+                    <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
+                <div class="col-md-2 text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
+                    <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>{{ 'invoice.remark'|trans }}&nbsp;
+                        <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field hidden"><span
+                                    class="glyphicon glyphicon-pencil"></span></a>
+                    </h4>
+                    <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    <input name="_csrf_token" value="{{ token }}" type="hidden">
+</form>
+<div class="modal-footer">
+    <div id="boxDefault">
+        <form id="invoice-form-status" class="form-inline pull-left" role="form">       
+            <select id="invoce-status" name="invoice-status" class="form-control col-xs-6">
+                <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.notpayed'|trans }}</option>
+                <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.payed'|trans }}</option>
+            </select>
+            &nbsp;
+            <button id="save-status" type="button" class="btn btn-default hidden"
+                    onclick="return updateInvoiceStatus({{ invoice.id }});">{{ 'button.save'|trans }}</button>
+            <input name="_csrf_token" value="{{ token }}" type="hidden">
+        </form>
+        <button type="button" class="btn btn-default" id="invoiceEditButton" 
+                onclick="return toggleInvoiceEditFields();">{{ 'button.edit'|trans }}</button>
+        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}" class="btn btn-default">{{ 'button.export.pdf'|trans }}</a>
+        {% if is_granted('ROLE_ADMIN') %}
+        <button type="button" class="btn btn-danger"
+                    onclick="return toggleInvoiceDelete();">{{ 'button.delete'|trans }}</button>
+        {% endif %}
+    </div>
+    {% if is_granted('ROLE_ADMIN') %}
+    <div id="boxDelete" class="hide">
+        <form id="invoiceDeleteForm" role="form">
+            {{ 'invoice.delete.ask'|trans }}
+            <button class="btn btn-danger" onclick="return doDeleteInvoice();">{{ 'button.delete'|trans }}</button>
+            <button class="btn btn-default"
+                    onclick="return toggleInvoiceDelete();">{{ 'button.cancel'|trans }}</button>
+            <input type="hidden" name="id" value="{{ invoice.id }}"/>
+            <input name="_csrf_token" value="{{ token }}" type="hidden">
+        </form>
+    </div>
+    {% endif %}
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        fromOptions = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                $("#end").datepicker("option", "minDate", selectedDate);
+
+                if ($("#end").val().length === 0) {
+                    var from = $(this).datepicker("getDate");
+                    $("#end").datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+                    $("#from").datepicker("option", "maxDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
+                }
+            }
+        };
+        endOptions = {
+            changeMonth: true,
+            numberOfMonths: 2,
+            regional: "{{ app.request.locale }}",
+            onClose: function (selectedDate) {
+                $("#from").datepicker("option", "maxDate", selectedDate);
+            }
+        }
+        
+        $("#invoce-status").change(function () {
+            $("#save-status").fadeIn().removeClass("hidden");
+        });
+    });
+
+    function updateInvoiceStatus(id) {
+        var url = "{{ path('invoices.update.status', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $("#invoice-form-status").serialize(),
+            beforeSend: function () {
+                $("#save-status").prop("disabled", true);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#save-status").prop("disabled", false);
+                $("#save-status").addClass("hidden");
+            }
+        });
+
+        return false;
+    }
+    
+    function toggleInvoiceEditFields() {
+        var fields = $(".invoice-edit-field");
+        if(fields.hasClass("hidden")) {
+            fields.removeClass("hidden");
+            $("#invoiceEditButton").hide();
+        } else {
+            fields.addClass("hidden");
+        }
+    }
+    
+    function changeInvoiceCustomer(id) {
+        var url = "{{ path('invoices.get.invoice.customer.change', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "get",
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function changeInvoiceNumber(id) {
+        var url = "{{ path('invoices.edit.invoice.number.show', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "get",
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function showCreateAppartmentInvoicePosition(id) {
+        var url = "{{ path('invoices.show.create.appartment.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { invoiceid: id },
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+
+    function showEditAppartmentInvoicePosition(id) {
+        var url = "{{ path('invoices.show.edit.appartment.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { appartmentpositioneditid: id },
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+                $("#from").datepicker(fromOptions);
+                $("#end").datepicker(endOptions);
+            }
+        });
+
+        return false;
+    }
+
+    function removeAppartmentPositionFromInvoicePositions(id) {
+        var url = "{{ path('invoices.delete.appartment.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {appartmentInvoicePositionEditId: id},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function showCreateMiscellaneousInvoicePosition(id) {
+        var url = "{{ path('invoices.show.create.miscellaneous.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { invoiceid: id },
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function showEditMiscellaneousInvoicePosition(id) {
+        var url = "{{ path('invoices.show.edit.miscellaneous.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: { miscellaneouspositionEditId: id },
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+
+    function removeMiscellaneousPositionFromInvoicePositions(id) {
+        var url = "{{ path('invoices.delete.miscellaneous.invoice.position') }}";
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: {miscellaneousInvoicePositionEditId: id},
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function changeInvoiceRemark(id) {
+        var url = "{{ path('invoices.edit.invoice.remark.show', {'id': 'placeholder'}) }}";
+        url = url.replace("placeholder", id);
+        var content = '<div class="modal-body">' +
+                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
+                '</div>';
+
+        $.ajax({
+            url: url,
+            type: "get",
+            beforeSend: function () {
+                $("#modal-content-ajax").html(content);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                $("#modal-content-ajax").html(data);
+            }
+        });
+
+        return false;
+    }
+    
+    function toggleInvoiceDelete() {
+        if ($("#boxDelete").is(":hidden")) {
+            $("#boxDelete").fadeIn().removeClass('hide');
+            $("#boxDefault").hide();
+        }
+        else {
+            $("#boxDelete").hide();
+            $("#boxDefault").fadeIn();
+        }
+        return false;
+    }
+</script>

@@ -1,0 +1,40 @@
+<table class="table table-responsive table-bordered table-hover">
+    <tr>
+        <th>{{ 'registrationbook.year'|trans }}</th>
+        <th>{{ 'registrationbook.appartment'|trans }}</th>
+        <th>{{ 'registrationbook.lastname'|trans }}, {{ 'registrationbook.firstname'|trans }}</th>
+        <th>{{ 'registrationbook.birthday'|trans }}</th>
+        <th>{{ 'registrationbook.country'|trans }}</th>
+        <th>{{ 'registrationbook.address'|trans }}</th>
+        <th>{{ 'registrationbook.period'|trans }}</th>
+        <th>{{ 'registrationbook.stays'|trans }}</th>
+        {% if is_granted('ROLE_ADMIN') %}<th>{{ 'base.action'|trans }}</th>{% endif %}
+    </tr>
+    {% for bookEntry in bookEntries %}
+        <tr>
+            <td>{{ bookEntry.year }}</td>
+            <td>{{ bookEntry.reservation.appartment.number }}</td>
+            <td>{{ bookEntry.lastname }}, {{ bookEntry.firstname }}</td>
+            <td>{% if bookEntry.birthday %} {{ bookEntry.birthday|date('d.m.Y') }} {% endif %}</td>
+            <td>{{ bookEntry.country }}</td>
+            <td>{{ bookEntry.address }}, {{ bookEntry.zip }} {{ bookEntry.city }}</td>
+            <td>{{ bookEntry.reservation.startDate|date('d.m.Y') }}
+                - {{ bookEntry.reservation.endDate|date('d.m.Y') }}</td>
+            <td>{{ bookEntry.reservation.amount }}</td>
+            {% if is_granted('ROLE_ADMIN') %}
+            <td>                             
+                <a href="#" title="{{ 'button.delete'|trans }}"><span
+                            onclick="deleteEntry({{ bookEntry.id }})"
+                            class="glyphicon glyphicon-remove"></span></a>
+            </td>
+            {% endif %}
+        </tr>
+        <tr id="entry-{{ bookEntry.id }}" hidden="true">
+            <td colspan="2" id="entry-cell-{{ bookEntry.id }}">
+                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+            </td>
+        </tr>        
+    {% endfor %}
+</table>
+
+{% include 'paginator.html.twig' with { 'url' : path('registrationbook.overview') } %}

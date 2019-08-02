@@ -1,0 +1,15 @@
+<form id="template-form-new" class="form-horizontal" role="form" onsubmit="return createNewEntity()">
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row" id="flash-message-overlay">
+                <div class="row">
+                </div>
+            </div>
+            {% include 'Templates/templates_form_input_fields.html.twig' %}
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
+    </div>
+</form>
