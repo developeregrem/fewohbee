@@ -22,7 +22,11 @@ class InvoiceRepository extends EntityRepository
             ->where("i.id=(SELECT MAX(i2.id) FROM App\Entity\Invoice i2)")
             ->getQuery();
 
-        return $q->getSingleScalarResult();
+        try {
+            return $q->getSingleScalarResult();
+        } catch (NoResultException $ex) {
+            return "";
+        }
     }
 
     public function findByFilter($search, $page = 1, $limit = 20)

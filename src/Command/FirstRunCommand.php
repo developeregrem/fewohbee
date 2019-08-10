@@ -143,7 +143,7 @@ class FirstRunCommand extends Command
         $t1 = new TemplateType();
         $t1->setIcon('glyphicon-envelope');
         $t1->setName('TEMPLATE_RESERVATION_EMAIL');
-        $t1->setService('');
+        $t1->setService('ReservationService');
         $t2 = new TemplateType();
         $t2->setIcon('glyphicon-file');
         $t2->setName('TEMPLATE_FILE_PDF');
@@ -151,19 +151,19 @@ class FirstRunCommand extends Command
         $t3 = new TemplateType();
         $t3->setIcon('glyphicon-file');
         $t3->setName('TEMPLATE_INVOICE_PDF');
-        $t3->setService('');
+        $t3->setService('InvoiceService');
         $t4 = new TemplateType();
         $t4->setIcon('glyphicon-file');
         $t4->setName('TEMPLATE_RESERVATION_PDF');
-        $t4->setService('');
+        $t4->setService('ReservationService');
         $t5 = new TemplateType();
         $t5->setIcon('glyphicon-file');
         $t5->setName('TEMPLATE_CASHJOURNAL_PDF');
-        $t5->setService('');
+        $t5->setService('CashJournalService');
         $t6 = new TemplateType();
         $t6->setIcon('glyphicon-file');
         $t6->setName('TEMPLATE_GDPR_PDF');
-        $t6->setService('');
+        $t6->setService('CustomerService');
         
         $this->em->persist($t1);
         $this->em->persist($t2);
