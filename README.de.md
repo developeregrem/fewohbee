@@ -6,6 +6,8 @@ Kleine Pensionen oder Unterkünfte verwalten ihre Zimmer oder Appartements in de
 
 Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den handgeschriebenen Ansatz zur Raumverwaltung zu ersetzen und die Produktivität durch das Zusammenführen aller Informationen zu verbessern, was schließlich in einer Zeitersparnis bei der Verwaltung des Gästehauses oder Pension resultiert.
 
+*Für eine ausführliche Dokumentation nutzen sie bitte das [Wiki](https://github.com/developeregrem/pve/wiki).*
+
 ## Funktionen
 
  - Reservierungsübersicht (einfache Möglichkeit, Reservierungen hinzuzufügen und zu verwalten)
