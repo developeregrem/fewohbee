@@ -6,6 +6,8 @@
 The guesthouse administration tool is a PHP project based on the amazing PHP framework Symfony in Version 4.
 Small guesthouses or accommodations usually manage their rooms or apartments the old way by using a pen and a sheet of paper or using a spreadsheet. The goal of this open-source tool is to help smaller accommodations to replace the hand written approach to manage rooms, to improve productivity by combining all information which, finally, ends in a time reduction to manage the guesthouse.
 
+*For a detailed documentation please refer to the [Wiki](https://github.com/developeregrem/pve/wiki).*
+
 
 ## Features
 
