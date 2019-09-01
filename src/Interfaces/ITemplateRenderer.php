@@ -15,7 +15,7 @@ interface ITemplateRenderer {
     
     /**
      * Every Service can tell which information are provided to render a template
-     * @param \Pensionsverwaltung\Database\Entity\Template $template
+     * @param \App\Entity\\Template $template
      * @param mixed $param
      */
     public function getRenderParams($template, $param);

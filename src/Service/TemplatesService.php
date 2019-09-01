@@ -114,8 +114,9 @@ class TemplatesService
             // each service must implement the ITemplateRenderer interface
             $params = $serviceObj->getRenderParams($template, $param);
         }        
-
-        $templateStr = $this->twig->createTemplate($template->getText());
+        
+        $str = $this->replaceTwigSyntax($template->getText());
+        $templateStr = $this->twig->createTemplate($str);
         
         return $templateStr->render($params);        
     }
@@ -222,5 +223,20 @@ class TemplatesService
         }
 
         return null;
+    }
+    
+    private function replaceTwigSyntax(string $string) : string {
+        $t1 = str_replace("[[", "{{", $string);
+        $t2 = str_replace("]]", "}}", $t1);
+        
+        $t3 = str_replace("[%", "{%", $t2);
+        $t4 = str_replace("%]", "%}", $t3);
+        
+        $t5 = str_replace("[#", "{#", $t4);
+        $t6 = str_replace("#]", "#}", $t5);
+        
+        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", "<htmlpagefooter name=\"footer\">$1</htmlpagefooter><sethtmlpagefooter name=\"footer\" value=\"on\"></sethtmlpagefooter>", $t6);
+        
+        return $t7;
     }
 }

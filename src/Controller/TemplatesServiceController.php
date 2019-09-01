@@ -241,7 +241,7 @@ class TemplatesServiceController extends AbstractController
             $selectedReservationIds = $session->get("selectedReservationIds");
         }
 
-        if (sizeof($selectedReservationIds) == 0) {
+        if (count($selectedReservationIds) == 0) {
             $objectContainsReservations = "false";
         } else {
             $objectContainsReservations = "true";
@@ -587,5 +587,19 @@ class TemplatesServiceController extends AbstractController
              );
         }
         return new Response("no mail");
+    }
+    
+    public function getTemplatesForEditor($templateTypeId) {
+        $em = $this->getDoctrine()->getManager();
+        /* @var $type TemplateType */
+        $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
+        if($type instanceof TemplateType && !empty($type->getEditorTemplate())) {
+            $response = $this->render('Templates/' . $type->getEditorTemplate());
+            $response->headers->set('Content-Type', 'application/json');
+        } else {
+            $response = $this->json([]);
+        }
+
+        return $response;
     }
 }

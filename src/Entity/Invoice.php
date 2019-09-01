@@ -120,6 +120,11 @@ class Invoice
     {
         return $this->remark;
     }
+    
+    public function getRemarkF()
+    {
+        return nl2br($this->remark);
+    }
 
     public function getPositions()
     {

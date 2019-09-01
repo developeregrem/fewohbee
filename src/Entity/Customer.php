@@ -250,6 +250,11 @@ class Customer
     {
         return $this->remark;
     }
+    
+    public function getRemarkF()
+    {
+        return nl2br($this->remark);
+    }
 
     public function setRemark($remark)
     {

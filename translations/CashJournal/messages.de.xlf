@@ -60,15 +60,15 @@
             </trans-unit>
             <trans-unit id="15">
                 <source>journal.entry.counteraccount</source>
-                <target>Gegenkonto</target>
+                <target>Gegenkto.</target>
             </trans-unit>
             <trans-unit id="16">
                 <source>journal.entry.invoicenumber</source>
-                <target>Rg. Nummer</target>
+                <target>Rg.Nr.</target>
             </trans-unit>
             <trans-unit id="17">
                 <source>journal.entry.documentnumber</source>
-                <target>Belegnummer</target>
+                <target>Bel.Nr.</target>
             </trans-unit>
             <trans-unit id="18">
                 <source>journal.entry.date</source>
@@ -137,6 +137,30 @@
             <trans-unit id="34">
                 <source>journal.single</source>
                 <target>Kassenblatt</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>journal.month.desc</source>
+                <target>Monat des Kassenblattes</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>journal.year.desc</source>
+                <target>Jahr des Kassenblattes</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>journal.cash.start.desc</source>
+                <target>Gibt den Anfangsbestand aus.</target>
+            </trans-unit>
+            <trans-unit id="38">
+                <source>journal.cash.end.desc</source>
+                <target>Gibt den Endbestand aus.</target>
+            </trans-unit>
+            <trans-unit id="39">
+                <source>journal.positions</source>
+                <target>Positionen</target>
+            </trans-unit>
+            <trans-unit id="40">
+                <source>journal.positions.desc</source>
+                <target>Fügt eine Tabelle hinzu mit allen Kassenblattpositionen. Bei einem Export werden alle Zeilen sichtbar, hier in der Vorlage ist nur eine sichtbar.</target>
             </trans-unit>
         </body>
     </file>

@@ -4,3 +4,5 @@ nbproject/
 .idea/
 .env
 public/resources/images/export/
+.DS_Store
+node_modules

@@ -615,6 +615,11 @@ settings.templates.correspondence.show:
     methods: [POST] 
     controller: App\Controller\TemplatesServiceController::showMailCorrespondenceAction 
     defaults: { id: '0' } 
+settings.templates.editor.template: 
+    path: '/settings/templates/editortemplate/{templateTypeId}' 
+    methods: [GET] 
+    controller: App\Controller\TemplatesServiceController::getTemplatesForEditor 
+    defaults: { templateTypeId: '0' } 
 
 cashjournal.overview: 
     path: /cashjournal/ 

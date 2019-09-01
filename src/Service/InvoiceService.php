@@ -28,11 +28,13 @@ class InvoiceService implements ITemplateRenderer
         $this->em = $em;
     }
 
-    public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto)
+    public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
     {
         $vats = Array();
         $brutto = 0;
         $netto = 0;
+        $appartmentTotal = 0;
+        $miscTotal = 0;
 
         /* @var $apps \Pensionsverwaltung\Database\Entity\InvoiceAppartment */
         //$apps = $invoice->getAppartments();
@@ -45,6 +47,7 @@ class InvoiceService implements ITemplateRenderer
                 $vats[$appartment->getVat()]['sum'] = $appartment->getAmount() * $appartment->getPrice();
                 $vats[$appartment->getVat()]['netto'] = ((($appartment->getAmount() * $appartment->getPrice()) * $appartment->getVat()) / (100 + $appartment->getVat()));
             }
+            $appartmentTotal += $appartment->getAmount() * $appartment->getPrice();
         }
 
         foreach ($poss as $pos) {
@@ -55,11 +58,13 @@ class InvoiceService implements ITemplateRenderer
                 $vats[$pos->getVat()]['sum'] = $pos->getAmount() * $pos->getPrice();
                 $vats[$pos->getVat()]['netto'] = ((($pos->getAmount() * $pos->getPrice()) * $pos->getVat()) / (100 + $pos->getVat()));
             }
+            $miscTotal += $pos->getAmount() * $pos->getPrice();
         }
         
-        foreach($vats as $vat) {
+        foreach($vats as $key=>$vat) {
             $brutto += round($vat['sum'], 2);
             $netto += round($vat['netto'], 2);
+            $vats[$key]['nettoFormated'] = number_format(round($vat['netto'], 2), 2, ',', '.');
         }
         ksort($vats);
     }
@@ -237,6 +242,8 @@ class InvoiceService implements ITemplateRenderer
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
+        $appartmantTotal = 0;
+        $miscTotal = 0;
         // calculate needed values for template
         $this->calculateSums(
             $invoice,
@@ -244,19 +251,25 @@ class InvoiceService implements ITemplateRenderer
             $invoice->getPositions(),
             $vatSums,
             $brutto,
-            $netto
+            $netto,
+            $appartmantTotal,
+            $miscTotal
         );
 
         $periods = $this->getUniqueReservationPeriods($invoice);
         $appartmentNumbers = $this->getUniqueAppartmentsNumber($invoice);
 
         $params = array(
-                'invoice' => $invoice,
-                'vats' => $vatSums,
-                'brutto' => $brutto,
-                'netto' => $netto,
-                'periods' => $periods,
-                'numbers' => $appartmentNumbers                    
+            'invoice' => $invoice,
+            'vats' => $vatSums,
+            'brutto' => $brutto,
+            'netto' => $netto,
+            'bruttoFormated' => number_format($brutto, 2, ',', '.'),
+            'nettoFormated' => number_format($brutto-$netto, 2, ',', '.'),
+            'periods' => $periods,
+            'numbers' => $appartmentNumbers,
+            'appartmentTotal' => number_format($appartmantTotal, 2, ',', '.'),
+            'miscTotal' => number_format($miscTotal, 2, ',', '.')
             );
         return $params;
     }

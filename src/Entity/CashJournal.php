@@ -140,6 +140,16 @@ class CashJournal
     {
         return $this->cashStart;
     }
+    
+    /**
+     * Get cashStart
+     *
+     * @return string
+     */
+    public function getCashStartF()
+    {
+        return number_format($this->cashStart, 2, ',', '.');
+    }
 
     /**
      * Set cashEnd
@@ -163,6 +173,16 @@ class CashJournal
     public function getCashEnd()
     {
         return $this->cashEnd;
+    }
+    
+    /**
+     * Get cashStart
+     *
+     * @return string
+     */
+    public function getCashEndF()
+    {
+        return number_format($this->cashEnd, 2, ',', '.');
     }
 
     /**

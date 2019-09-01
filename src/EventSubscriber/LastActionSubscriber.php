@@ -20,7 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 
 /**
- * Subscrition to update the last user action time
+ * Subscription to update the last user action time
  *
  * @author Alex
  */

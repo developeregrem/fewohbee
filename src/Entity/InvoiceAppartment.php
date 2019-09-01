@@ -97,6 +97,16 @@ class InvoiceAppartment
         $interval = $this->startDate->diff($this->endDate);
         return $interval->format('%a');
     }
+    
+    public function getTotalPrice()
+    {
+        return number_format($this->price * $this->getAmount(), 2, ',', '.');
+    }
+    
+    public function getPriceFormated()
+    {
+        return number_format($this->price, 2, ',', '.');
+    }
 
     public function setId($id)
     {
