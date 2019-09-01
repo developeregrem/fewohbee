@@ -6,3 +6,4 @@ nbproject/
 public/resources/images/export/
 .DS_Store
 node_modules
+package-lock.json
