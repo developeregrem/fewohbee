@@ -22,10 +22,12 @@
     </ul>   
 </div>
 <script>
-    // Replace the <textarea id="editor1"> with a CKEditor
-    // instance, using default configuration.
-    editor = CKEDITOR.replace( 'editor1', {
+    if(tinymce.get("editor1") !== null)
+        tinymce.get("editor1").remove();
+    tinymce.init({
+        selector: '#editor1',
         language: '{{ app.request.locale }}',
-        allowedContent: true
+        branding: false,
+        plugins: ['fullpage']
     });
 </script>

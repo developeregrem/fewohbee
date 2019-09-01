@@ -58,6 +58,16 @@ class InvoicePosition
     {
         return $this->amount;
     }
+    
+    public function getTotalPrice()
+    {
+        return number_format($this->price * $this->getAmount(), 2, ',', '.');
+    }
+    
+    public function getPriceFormated()
+    {
+        return number_format($this->price, 2, ',', '.');
+    }
 
     public function setId($id)
     {

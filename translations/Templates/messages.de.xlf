@@ -134,6 +134,118 @@
                 <source>TEMPLATE_GDPR_PDF</source>
                 <target>PDF für DSGVO Export</target>
             </trans-unit>
+            <trans-unit id="34">
+                <source>templates.editor.company</source>
+                <target>Firma</target>
+            </trans-unit>
+            <trans-unit id="35">
+                <source>templates.editor.address</source>
+                <target>Anschrift</target>
+            </trans-unit>
+            <trans-unit id="36">
+                <source>templates.editor.zip</source>
+                <target>PLZ</target>
+            </trans-unit>
+            <trans-unit id="37">
+                <source>templates.editor.city</source>
+                <target>Stadt</target>
+            </trans-unit>
+            <trans-unit id="38">
+                <source>templates.editor.phone</source>
+                <target>Telefon</target>
+            </trans-unit>
+            <trans-unit id="39">
+                <source>templates.editor.footer</source>
+                <target>Fußzeile</target>
+            </trans-unit>
+            <trans-unit id="40">
+                <source>templates.editor.footer.desc</source>
+                <target>Fügt eine Fußzeile hinzu, die auf jeder Seite am unteren Rand der Seite erscheint.</target>
+            </trans-unit>
+            <trans-unit id="41">
+                <source>templates.editor.invoice.number</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="42">
+                <source>templates.editor.invoice.number.desc</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="43">
+                <source>templates.editor.invoice.date</source>
+                <target>Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="44">
+                <source>templates.editor.invoice.date.desc</source>
+                <target>Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="45">
+                <source>templates.editor.firstname</source>
+                <target>Vorname</target>
+            </trans-unit>
+            <trans-unit id="46">
+                <source>templates.editor.lastname</source>
+                <target>Nachname</target>
+            </trans-unit>
+            <trans-unit id="47">
+                <source>templates.editor.remarks</source>
+                <target>Bemerkungen</target>
+            </trans-unit>
+            <trans-unit id="48">
+                <source>templates.editor.price.total</source>
+                <target>Gesamtpreis aller Zimmerpositionen</target>
+            </trans-unit>
+            <trans-unit id="49">
+                <source>templates.editor.price.total.desc</source>
+                <target>Gibt den Gesamtpreis aller Zimmerpositionen aus.</target>
+            </trans-unit>
+            <trans-unit id="50">
+                <source>templates.editor.misc.total</source>
+                <target>Gesamtpreis aller Sonstigepositionen</target>
+            </trans-unit>
+            <trans-unit id="51">
+                <source>templates.editor.misc.total.desc</source>
+                <target>Gibt den Gesamtpreis aller Sonstigepositionen aus.</target>
+            </trans-unit>
+            <trans-unit id="52">
+                <source>templates.editor.brutto</source>
+                <target>Gesamt Brutto</target>
+            </trans-unit>
+            <trans-unit id="53">
+                <source>templates.editor.brutto.desc</source>
+                <target>Gesamtsumme Brutto</target>
+            </trans-unit>
+            <trans-unit id="54">
+                <source>templates.editor.netto</source>
+                <target>Gesamt Netto</target>
+            </trans-unit>
+            <trans-unit id="55">
+                <source>templates.editor.netto.desc</source>
+                <target>Gesamtsumme (Netto)</target>
+            </trans-unit>
+            <trans-unit id="56">
+                <source>templates.editor.vat</source>
+                <target>enthaltene MwSt.</target>
+            </trans-unit>
+            <trans-unit id="57">
+                <source>templates.editor.vat.desc</source>
+                <target>Fügt eine Liste mit Einzelpositionen der enthaltenen MwSt. ein.</target>
+            </trans-unit>
+            <trans-unit id="58">
+                <source>templates.editor.appartment.positions</source>
+                <target>Zimmerpositionen</target>
+            </trans-unit>
+            <trans-unit id="59">
+                <source>templates.editor.appartment.positions.desc</source>
+                <target>Fügt eine Tabelle mit allen Zimmerpositionen ein. Wenn mehrere Zimmer ausgewählt wurden, werden alle Zimmer aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
+            </trans-unit>
+            <trans-unit id="60">
+                <source>templates.editor.misc.positions</source>
+                <target>Sonstigepositionen</target>
+            </trans-unit>
+            <trans-unit id="61">
+                <source>templates.editor.misc.positions.desc</source>
+                <target>Fügt eine Tabelle mit allen Sonstigepositionen ein. Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

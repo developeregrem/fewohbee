@@ -25,7 +25,12 @@ class TemplateType
      * @ORM\OneToMany(targetEntity="Template", mappedBy="templateType")
      */
     
-    private $templates;    
+    private $templates;
+
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     */
+    private $editorTemplate;    
     
     /**
      * Constructor
@@ -150,5 +155,17 @@ class TemplateType
     public function getTemplates()
     {
         return $this->templates;
+    }
+
+    public function getEditorTemplate(): ?string
+    {
+        return $this->editorTemplate;
+    }
+
+    public function setEditorTemplate(?string $editorTemplate): self
+    {
+        $this->editorTemplate = $editorTemplate;
+
+        return $this;
     }
 }

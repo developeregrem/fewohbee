@@ -275,9 +275,29 @@ class CashJournalEntry
 
         return $this;
     }
+    
+    /**
+     * Get incomes formatted
+     *
+     * @return string
+     */
+    public function getIncomesF()
+    {
+        return number_format($this->incomes, 2, ',', '.');
+    }
+    
+    /**
+     * Get expenses formatted
+     *
+     * @return string
+     */
+    public function getExpensesF()
+    {
+        return number_format($this->expenses, 2, ',', '.');
+    }
 
     /**
-     * Get inventory
+     * Get inventory formatted
      *
      * @return string
      */
@@ -285,4 +305,20 @@ class CashJournalEntry
     {
         return $this->inventory;
     }
+    
+    public function getInventoryF()
+    {
+        return number_format($this->inventory, 2, ',', '.');
+    }
+    
+    /**
+     * Get documentNumber formatted
+     *
+     * @return integer
+     */
+    public function getDocumentNumberF()
+    {
+        return sprintf("%04d", $this->documentNumber);
+    }
+    
 }

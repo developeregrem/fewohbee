@@ -126,7 +126,7 @@ class ReservationServiceController extends AbstractController
             $newReservationsInformationArray = $session->get("reservationInCreation");
         }
 
-        if (sizeof($newReservationsInformationArray) != 0) {
+        if (count($newReservationsInformationArray) != 0) {
             $objectHasAppartments = true;
         } else {
             $objectHasAppartments = false;
@@ -155,10 +155,10 @@ class ReservationServiceController extends AbstractController
         $end = $request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->get("object"));
 
-        $newReservationsInformationArray = $session->get("reservationInCreation");
+        $newReservationsInformationArray = $session->get("reservationInCreation", array());
 
 
-        if (sizeof($newReservationsInformationArray) != 0) {
+        if (count($newReservationsInformationArray) != 0) {
             foreach ($appartmentsDb as $appartment) {
                 if (!($rs->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $appartment, $start, $end))) {
                     $availableAppartments[] = $appartment;

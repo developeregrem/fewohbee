@@ -107,13 +107,17 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
+        $appartmentTotal = 0;
+        $miscTotal = 0;
         $is->calculateSums(
             $invoice,
             $invoice->getAppartments(),
             $invoice->getPositions(),
             $vatSums,
             $brutto,
-            $netto
+            $netto,
+            $appartmentTotal,
+            $miscTotal
         );
 
         $templates = $em->getRepository(Template::class)->loadByTypeName(array('TEMPLATE_INVOICE_PDF'));
@@ -157,7 +161,7 @@ class InvoiceServiceController extends AbstractController
             $newInvoiceInformationArray = $session->get("invoiceInCreation");
         }
 
-        if (sizeof($newInvoiceInformationArray) == 0) {
+        if (count($newInvoiceInformationArray) == 0) {
             $objectContainsReservations = "false";
         } else {
             $objectContainsReservations = "true";
@@ -255,7 +259,7 @@ class InvoiceServiceController extends AbstractController
             $reservations[] = $em->getRepository(Reservation::class)->find($reservationid);
         }
 
-        if (sizeof($newInvoiceInformationArray) > 0) {
+        if (count($newInvoiceInformationArray) > 0) {
             $arrayContainsReservations = true;
         }
         
@@ -285,7 +289,7 @@ class InvoiceServiceController extends AbstractController
             )[0];
         }
 
-        if (sizeof($newInvoiceInformationArray) > 0) {
+        if (count($newInvoiceInformationArray) > 0) {
             $arrayContainsReservations = true;
         } else {
             $arrayContainsReservations = false;
@@ -835,13 +839,17 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
+        $appartmentTotal = 0;
+        $miscTotal = 0;
         $is->calculateSums(
             $invoice,
             $newInvoicePositionsAppartmentsArray,
             $newInvoicePositionsMiscellaneousArray,
             $vatSums,
             $brutto,
-            $netto
+            $netto,
+            $appartmentTotal,
+            $miscTotal
         );
 
         return $this->render(

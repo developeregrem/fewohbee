@@ -12,7 +12,7 @@
         <label for="name-{{ template.id }}" class="col-sm-4 control-label">{{ 'templates.type'|trans }}
             *</label>
         <div class="col-sm-8">
-            <select name="type-{{ template.id }}" class="form-control">
+            <select name="type-{{ template.id }}" class="form-control" id="template-type">
                 {% for type in types %}
                     <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
                 {% endfor %}
@@ -47,24 +47,54 @@
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
 <script>
-    // Replace the <textarea id="editor1"> with a CKEditor
-    // instance, using default configuration.
-    editor = CKEDITOR.replace( 'editor1', {
-        language: '{{ app.request.locale }}',
-        basicEntities: true,
-        entities: true,
-        entities_greek: false,
-        entities_latin: false,
-        htmlEncodeOutput: false,
-        entities_processNumerical: false,
-        allowedContent: true,
-        startupMode: 'source'
-    });
-    // Allow and preserve twig syntax @see http://stackoverflow.com/questions/20977910/editing-twig-templates-in-ckeditor
-    // Can also be coupled with this plugin : http://ckeditor.com/addon/showprotected
-    CKEDITOR.config.protectedSource.push(/\{\{[\s\S]*?\}\}/g);
-    CKEDITOR.config.protectedSource.push(/\{\%[\s\S]*?%\}/g);
-    CKEDITOR.config.protectedSource.push(/\{\#[\s\S]*?#\}/g);
-    CKEDITOR.config.protectedSource.push(/<\/?.*htmlpageheader.*?>/g);
-    CKEDITOR.config.protectedSource.push(/<\/?.*htmlpagefooter.*?>/g);
+    
+    var templateUrl = "{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}";
+    
+    var newTemplateUrl = templateUrl.replace("placeholder", $("#template-type").val());
+    
+    if(tinymce.get("editor1") !== null)
+        tinymce.get("editor1").remove();
+    tinymce.init({
+    selector: '#editor1',
+    language: '{{ app.request.locale }}',
+    toolbar_drawer: 'sliding',
+    plugins: [
+        'advlist autolink lists link image charmap print preview anchor',
+        'searchreplace visualblocks code fullscreen',
+        'insertdatetime media table paste code help wordcount table noneditable template fullpage'
+      ],
+    toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor | alignleft aligncenter alignright alignjustify | template | bullist numlist outdent indent |  table | removeformat | code | preview | help',
+    menubar: false,
+    protect: [
+       /\{\%[\s\S]*?%\}/g, // Allow TWIG control codes
+       ///\{\{[\s\S]*?\}\}/g, // Allow TWIG output codes
+       /\{\#[\s\S]*?#\}/g, // Allow TWIG comment codes
+       /<\/?.*(html)?pageheader.*?>/g,
+       /<\/?.*(html)?pagefooter.*?>/g
+    ],
+    templates: newTemplateUrl,
+    entity_encoding: "raw",
+    branding: false,
+    content_css: [
+        '{{ app.request.basepath }}/resources/css/editor.css'
+    ],
+    fontsize_formats: "8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt",
+    // for the moment we define a different class name. fields are therefore editable because they use the original class name
+    // reason: formats can not be applied to noneditable fields at the moment (https://github.com/tinymce/tinymce/issues/3355)
+    // when the issue is resolved we can remove this line here
+    noneditable_noneditable_class: "mceNonEditable2",   
+    setup : function(ed)
+            {
+                ed.on('init', function() 
+                {
+                    //this.getDoc().body.style.fontSize = '12';
+                    //this.getDoc().body.style.fontFamily = 'Arial';
+                });
+            },
+  });
+  
+  $("#template-type").change(function() {
+    let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
+    tinymce.activeEditor.settings.templates = newTemplateUrl;
+  });
 </script>

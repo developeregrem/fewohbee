@@ -187,6 +187,8 @@ class ReservationService implements ITemplateRenderer
     public function getRenderParams($template, $param) {
         // params need to be an array containing a list of Reservation Objects
         $params = array(
+                'reservation1' => $param[0],
+                'address' => (count($param[0]->getBooker()->getCustomerAddresses()) == 0 ? null : $param[0]->getBooker()->getCustomerAddresses()[0]),
                 'reservations' => $param                 
             );
         return $params;

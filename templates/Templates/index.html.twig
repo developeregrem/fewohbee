@@ -68,7 +68,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/ckeditor/ckeditor.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
     <script>
 
     $.ajaxSetup({
@@ -122,7 +122,7 @@
         var form = "#template-form-" + id;
         var url = "{{ path('settings.templates.edit', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
-        $("#editor1").val(editor.getData());
+        $("#editor1").val(tinymce.get("editor1").getContent());
 
         $.ajax({
             url: url,
@@ -198,7 +198,7 @@
 
     function createNewEntity() {
         var url = "{{ path('settings.templates.create')}}";
-        $("#editor1").val(editor.getData());
+        $("#editor1").val(tinymce.get("editor1").getContent());
         $.ajax({
             url: url,
             type: "post",

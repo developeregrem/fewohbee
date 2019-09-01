@@ -83,7 +83,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/ckeditor/ckeditor.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
     <script>
     $.ajaxSetup({
         cache: false
@@ -922,7 +922,7 @@
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
         // set current content of editor as value, otherwise changes in editor are not taken
-        $(form).find("#editor1").val(CKEDITOR.instances.editor1.getData());
+        $(form).find("#editor1").val(tinymce.get("editor1").getContent());
         $.ajax({
             url: url,
             type: "post",
@@ -952,7 +952,7 @@
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
         // set current content of editor as value, otherwise changes in editor are not taken
-        $(form).find("#editor1").val(CKEDITOR.instances.editor1.getData());
+        $(form).find("#editor1").val(tinymce.get("editor1").getContent());
         $.ajax({
             url: url,
             type: "post",

@@ -1,0 +1,13 @@
+[
+  {"title": "{{ 'customer.salutation'|trans }}", "description": "{{ 'customer.salutation'|trans }}", "content": "<span class=\"mceNonEditable\">[[reservation1.booker.salutation]]</span>"},
+  {"title": "{{ 'customer.firstname'|trans }}", "description": "{{ 'customer.firstname'|trans }}", "content": "<span class=\"mceNonEditable\">[[reservation1.booker.firstname]]</span>"},
+  {"title": "{{ 'customer.lastname'|trans }}", "description": "{{ 'customer.lastname'|trans }}", "content": "<span class=\"mceNonEditable\">[[reservation1.booker.lastname]]</span>"},
+  {"title": "{{ 'customer.birthday'|trans }}", "description": "{{ 'customer.birthday'|trans }}", "content": "<span class=\"mceNonEditable\">[[reservation1.booker.birthday|date('d.m.Y')]]</span>"},
+  {"title": "{{ 'templates.editor.company'|trans }}", "description": "{{ 'templates.editor.company'|trans }}", "content": "<span class=\"mceNonEditable\">[[address.company]]</span>"},
+  {"title": "{{ 'templates.editor.address'|trans }}", "description": "{{ 'templates.editor.address'|trans }}", "content": "<span class=\"mceNonEditable\">[[address.address]]</span>"},
+  {"title": "{{ 'templates.editor.zip'|trans }}", "description": "{{ 'templates.editor.zip'|trans }}", "content": "<span class=\"mceNonEditable\">[[address.zip]]</span>"},
+  {"title": "{{ 'templates.editor.city'|trans }}", "description": "{{ 'templates.editor.city'|trans }}", "content": "<span class=\"mceNonEditable\">[[address.city]]</span>"},
+  {"title": "{{ 'templates.editor.phone'|trans }}", "description": "{{ 'templates.editor.phone'|trans }}", "content": "<span class=\"mceNonEditable\">[[address.phone]]</span>"},
+  {"title": "Liste der Reservierungen", "description": "Gibt eine Liste aller Reservierungen aus.", "content": "<table border=\"0\"><tr><th>{{'reservation.startdate'|trans}}</th><th>{{'reservation.enddate'|trans}}</th><th>{{'reservation.appartment.name'|trans}}</th><th>{{'reservation.persons'|trans}}</th><th>{{'reservation.price'|trans}}</th></tr><!-- [% for reservation in reservations %] --><tr><td><span class=\"mceNonEditable\">[[reservation.startDate|date('d.m.Y')]]</span></td><td><span class=\"mceNonEditable\">[[reservation.endDate|date('d.m.Y')]]</span></td><td><span class=\"mceNonEditable\">[[reservation.appartment.description]]</span></td><td><span class=\"mceNonEditable\">[[reservation.persons]]</span></td><td> €</td></tr><!-- [% endfor %] --></table>"},
+  {% include 'Templates/editor_template_base.twig' %}
+]
