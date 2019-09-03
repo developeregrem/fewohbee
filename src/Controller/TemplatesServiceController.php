@@ -345,7 +345,7 @@ class TemplatesServiceController extends AbstractController
                     ->setFrom(array($this->fromMail => $this->fromName))
                     ->setTo(array($to))
                     ->setBcc(array($this->fromMail => $this->fromName))
-                    ->setBody('<html><meta http-equiv="content-type" content="text/html; charset=utf-8"><body>'.$msg.'</body></html>', 'text/html')
+                    ->setBody($msg, 'text/html')
                     ->addPart(strip_tags($msg), 'text/plain')
                     ->setId(uniqid()."@".$this->mailHost)
                     //->setEncoder((Swift_Encoding::get8BitEncoding())
