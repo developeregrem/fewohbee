@@ -1,7 +1,9 @@
 
 # Pensionsverwaltung (PVE)
 
-Das **P**ensions**ve**rwaltungtool ist ein PHP-Projekt, das auf dem PHP-Framework Symfony in Version 4 basiert.
+Die Hotelsoftware für kleine bis mittelgroße Pensionen und Hotels - Open Source und kostenlos.
+
+Das **P**ensions**ve**rwaltungtool ist ein PHP-Projekt, das auf dem PHP-Framework Symfony basiert.
 Kleine Pensionen oder Unterkünfte verwalten ihre Zimmer oder Appartements in der Regel auf die alte Art und Weise mit einem Stift und einem Blatt Papier oder mit einem Tabellenverwaltungsprogramm. 
 
 Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den handgeschriebenen Ansatz zur Raumverwaltung zu ersetzen und die Produktivität durch das Zusammenführen aller Informationen zu verbessern, was schließlich in einer Zeitersparnis bei der Verwaltung des Gästehauses oder Pension resultiert.
