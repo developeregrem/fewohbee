@@ -4,12 +4,14 @@ parameters:
     # environment variables are not available yet.
     # You should not need to change this value.
     env(DATABASE_URL): ''
+     # define default server version when env variable is not defined
+    env(DB_SERVER_VERSION): '5.6'
 
 doctrine:
     dbal:
         # configure these for your database server
         driver: 'pdo_mysql'
-        server_version: '5.6'
+        server_version: '%env(resolve:DB_SERVER_VERSION)%'
         charset: utf8mb4
         default_table_options:
             charset: utf8mb4
