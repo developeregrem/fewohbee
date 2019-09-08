@@ -6,6 +6,7 @@ parameters:
     fromName: '%env(FROM_NAME)%'
     returnPath: '%env(RETURN_PATH)%'
     mailHost:  '%env(MAIL_HOST)%'
+    version: '1.1.0'
 
 services:
     # default configuration for services in *this* file
