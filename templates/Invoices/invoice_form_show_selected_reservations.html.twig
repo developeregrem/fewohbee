@@ -28,9 +28,8 @@
                                         <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                                         <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                                         <td>
-                                            <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                                        onclick="return deleteReservationFromSelection({{ key }})"
-                                                        class="glyphicon glyphicon-remove"></span></a>
+                                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                                <i onclick="return deleteReservationFromSelection({{ key }})" class="fas fa-trash-alt"></i></a>
                                         </td>
                                     </tr>
                                 {% endfor %}

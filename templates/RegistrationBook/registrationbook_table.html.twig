@@ -23,9 +23,8 @@
             <td>{{ bookEntry.reservation.amount }}</td>
             {% if is_granted('ROLE_ADMIN') %}
             <td>                             
-                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                            onclick="deleteEntry({{ bookEntry.id }})"
-                            class="glyphicon glyphicon-remove"></span></a>
+                <a href="#" title="{{ 'button.delete'|trans }}">
+                    <i onclick="deleteEntry({{ bookEntry.id }})" class="fas fa-trash-alt"></i></a>
             </td>
             {% endif %}
         </tr>

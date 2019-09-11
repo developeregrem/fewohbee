@@ -21,21 +21,19 @@
                 </a>
             </td>
             <td>
-                <a href="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}" title="{{ 'button.details'|trans }}"><span
-                            class="glyphicon glyphicon-eye-open"></span></a>
+                <a href="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}" title="{{ 'button.details'|trans }}">
+                    <i class="fas fa-info-circle"></i></a>
                 {% if not journal.isClosed %}
-                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                            onclick="getJournal({{ journal.id }})" class="glyphicon glyphicon-pencil"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.edit'|trans }}">
+                    <i onclick="getJournal({{ journal.id }})" class="fas fa-edit" data-toggle="modal" data-target="#showModal"></i></a>
                 
-                <a href="#" title="{{ 'button.add'|trans }}"><span
-                            onclick="addJournalEntry({{ journal.id }}, true)" class="glyphicon glyphicon-plus"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.add'|trans }}">
+                    <i onclick="addJournalEntry({{ journal.id }}, true)" class="fas fa-plus" data-toggle="modal" data-target="#showModal"></i></a>
                 {% endif %}
                 <a class="export-link"
                    href="{{ path('cashjournal.journal.export.pdf', {'id': journal.id, 'templateId': 0 }) }}"
-                   title="{{ 'button.export.pdf'|trans }}"><span
-                            class="glyphicon glyphicon-print"></span></a>
+                   title="{{ 'button.export.pdf'|trans }}">
+                    <i class="fas fa-download"></i></a>
             </td>
         </tr>
     {% endfor %}

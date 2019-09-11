@@ -10,15 +10,15 @@
                 <div class="col-md-4">
                     <h4 class="invoice-edit-field hidden">{{ 'invoice.guest'|trans }}&nbsp;
                     <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
-                       title="{{ 'button.edit'|trans }}" class="small"><span
-                                class="glyphicon glyphicon-pencil"></span></a>
+                       title="{{ 'button.edit'|trans }}" class="small">
+                        <i class="fas fa-edit"></i></a>
                     </h4>
                     {{ invoice.salutation }}</div>
                 <div class=".col-md-4 .col-md-offset-4 text-right">
                     <h4 class="invoice-edit-field hidden">
                     <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
-                       title="{{ 'button.edit'|trans }}" class="small"><span
-                                class="glyphicon glyphicon-pencil"></span></a>
+                       title="{{ 'button.edit'|trans }}" class="small">
+                        <i class="fas fa-edit"></i></a>
                     </h4>
                     <strong>{{ 'invoice.number'|trans }}</strong></div>
             </div>
@@ -66,18 +66,17 @@
                         </td>
                         <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
                         <td class="invoice-edit-field hidden text-right">
-                            <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditAppartmentInvoicePosition({{ appartment.id }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                            <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeAppartmentPositionFromInvoicePositions({{ appartment.id }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                <i onclick="return showEditAppartmentInvoicePosition({{ appartment.id }})" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="return removeAppartmentPositionFromInvoicePositions({{ appartment.id }})"
+                                    class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.appartment'|trans }}</button></th>
+                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
+                            <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
                 </tr>
             </table>
@@ -107,18 +106,17 @@
                         </td>
                         <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
                         <td class="invoice-edit-field hidden text-right">
-                            <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditMiscellaneousInvoicePosition({{ position.id }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                            <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeMiscellaneousPositionFromInvoicePositions({{ position.id }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                <i onclick="return showEditMiscellaneousInvoicePosition({{ position.id }})" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ position.id }})"
+                                    class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
+                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
+                            <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
                 </tr>
             </table>
@@ -156,8 +154,8 @@
                 <div class="col-md-8">
                     <h4>{{ 'invoice.remark'|trans }}&nbsp;
                         <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field hidden"><span
-                                    class="glyphicon glyphicon-pencil"></span></a>
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field hidden">
+                            <i class="fas fa-edit"></i></a>
                     </h4>
                     <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
                 </div>

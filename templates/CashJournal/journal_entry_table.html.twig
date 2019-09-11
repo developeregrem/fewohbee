@@ -24,9 +24,8 @@
             <td>{{ entry.remark }}</td>
             <td>
                 {% if not journal.isClosed %}
-                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                            onclick="getEntry({{ entry.id }})" class="glyphicon glyphicon-pencil"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.edit'|trans }}">
+                    <i onclick="getEntry({{ entry.id }})" class="fas fa-edit" data-toggle="modal" data-target="#showModal"></i></a>
                 {% endif %}
             </td>
         </tr>

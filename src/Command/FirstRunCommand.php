@@ -141,32 +141,32 @@ class FirstRunCommand extends Command
     private function createTemplateTypes()
     {
         $t1 = new TemplateType();
-        $t1->setIcon('glyphicon-envelope');
+        $t1->setIcon('fa-envelope');
         $t1->setName('TEMPLATE_RESERVATION_EMAIL');
         $t1->setService('ReservationService');
         $t1->setEditorTemplate('editor_template_reservation.json.twig');
         $t2 = new TemplateType();
-        $t2->setIcon('glyphicon-file');
+        $t2->setIcon('fa-file-pdf');
         $t2->setName('TEMPLATE_FILE_PDF');
         $t2->setService('');
         $t2->setEditorTemplate('editor_template_default.json.twig');
         $t3 = new TemplateType();
-        $t3->setIcon('glyphicon-file');
+        $t3->setIcon('fa-file-pdf');
         $t3->setName('TEMPLATE_INVOICE_PDF');
         $t3->setService('InvoiceService');
         $t3->setEditorTemplate('editor_template_invoice.json.twig');
         $t4 = new TemplateType();
-        $t4->setIcon('glyphicon-file');
+        $t4->setIcon('fa-file-pdf');
         $t4->setName('TEMPLATE_RESERVATION_PDF');
         $t4->setService('ReservationService');
         $t4->setEditorTemplate('editor_template_reservation.json.twig');
         $t5 = new TemplateType();
-        $t5->setIcon('glyphicon-file');
+        $t5->setIcon('fa-file-pdf');
         $t5->setName('TEMPLATE_CASHJOURNAL_PDF');
         $t5->setService('CashJournalService');
         $t5->setEditorTemplate('editor_template_cashjournal.json.twig');
         $t6 = new TemplateType();
-        $t6->setIcon('glyphicon-file');
+        $t6->setIcon('fa-file-pdf');
         $t6->setName('TEMPLATE_GDPR_PDF');
         $t6->setService('CustomerService');
         $t6->setEditorTemplate('editor_template_customer.json.twig');

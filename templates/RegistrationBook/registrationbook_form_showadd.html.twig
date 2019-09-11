@@ -63,8 +63,8 @@
                                                             {{ 'reservation.preview.customer.inroom'|trans }}<a href="#"
                                                                                                                 onclick="return addReservationCustomer({{ reservation.id }}, 'guest');"
                                                                                                                 title="{{ 'button.add'|trans }}"
-                                                                                                                class="pull-right small"><span
-                                                                        class="glyphicon glyphicon-plus"></span></a>
+                                                                                                                class="pull-right small">
+                                                                <i class="fas fa-plus"></i></a>
 
                                                             <br/><br/>
                                                             <table class="table">
@@ -90,13 +90,12 @@
                                                                                 <input name="_csrf_token" value="{{ token }}"
                                                                                        type="hidden">
                                                                             </form>
-                                                                            <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                                                                        onclick="editReservationCustomer({{ customer.id }})"
-                                                                                        class="glyphicon glyphicon-pencil"></span></a>
+                                                                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                                                                <i onclick="editReservationCustomer({{ customer.id }})" class="fas fa-edit"></i></a>
                                                                             <a href="#"
                                                                                onclick="return deleteReservationCustomer({{ customer.id }});"
-                                                                               title="{{ 'button.delete'|trans }}"><span
-                                                                                        class="glyphicon glyphicon-remove"></span></a>
+                                                                               title="{{ 'button.delete'|trans }}">
+                                                                                <i class="fas fa-trash-alt"></i></a>
                                                                         </td>
                                                                     </tr>
                                                                 {% endfor %}
@@ -128,7 +127,7 @@
 </div>
 <input name="_csrf_token" value="{{ token }}" type="hidden" id="_csrf_token">
 <div class="modal-footer">
-    <span class="text-info pull-left small"><span class="glyphicon glyphicon-info-sign"></span> {{ 'registrationbook.help.message'|trans }}</span>
+    <span class="text-info pull-left small"><i class="fas fa-info-circle"></i> {{ 'registrationbook.help.message'|trans }}</span>
 </div>
 <script>
     $(document).ready(function () {

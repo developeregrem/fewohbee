@@ -30,11 +30,10 @@
                                             <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                                             <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                                             <td>
-                                                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                                            class="glyphicon glyphicon-pencil"></span></a>
-                                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                                            onclick="return deleteAppartmentFromSelection({{ key }})"
-                                                            class="glyphicon glyphicon-remove"></span></a>
+                                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                                    <i class="fas fa-edit"></i></a>
+                                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                                    <i onclick="return deleteAppartmentFromSelection({{ key }})" class="fas fa-trash-alt"></i></a>
                                             </td>
                                         </tr>
                                         <tr>

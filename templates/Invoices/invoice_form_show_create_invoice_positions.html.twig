@@ -26,8 +26,8 @@
     <div class="col-md-10 col-md-offset-1">
         <h4>{{ 'invoice.guest'|trans }}&nbsp;
             <a href="#" onclick="return changeInvoiceCustomer();"
-               title="{{ 'button.edit'|trans }}" class="small"><span
-                        class="glyphicon glyphicon-pencil"></span></a>
+               title="{{ 'button.edit'|trans }}" class="small">
+                <i class="fas fa-edit"></i></a>
         </h4>
         {{ customer.salutation }} <br />
         {{ customer.firstname }} {{ customer.lastname }}<br />
@@ -71,18 +71,16 @@
                     </td>
                     <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
                     <td>
-                        <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditAppartmentInvoicePosition({{ key }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                        <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
+                        <a href="#" title="{{ 'button.edit'|trans }}">
+                            <i onclick="return showEditAppartmentInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}">
+                            <i onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
                     </td>
                 </tr>
             {% endfor %}
         </table>
-        <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.appartment'|trans }}</button>
+        <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()">
+            <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
         </p>
     </div>
 </div>
@@ -112,18 +110,16 @@
                     </td>
                     <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
                     <td>
-                        <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditMiscellaneousInvoicePosition({{ key }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                        <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
+                        <a href="#" title="{{ 'button.edit'|trans }}">
+                            <i onclick="return showEditMiscellaneousInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}">
+                            <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
                     </td>
                 </tr>
             {% endfor %}
         </table>
-        <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
+        <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()">
+            <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
         </p>
     </div>
 </div>

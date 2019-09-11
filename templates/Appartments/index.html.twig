@@ -34,8 +34,8 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showCreateAppartmentForm()"
-                            data-toggle="modal" data-target="#newAppartmentModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.appartment.add'|trans }}</button>
+                            data-toggle="modal" data-target="#newAppartmentModal">
+                        <i class="fas fa-plus"></i> {{ 'nav.appartment.add'|trans }}</button>
                 </div>
                 </p>
                 <table class="table table-responsive table-bordered table-hover">
@@ -51,15 +51,12 @@
                             <td>{{ appartment.bedsmin }}</td>
                             <td>{{ appartment.bedsmax }}</td>
                             <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span
-                                            onclick="showAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                            onclick="editAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
+                                <a href="#" title="{{ 'button.details'|trans }}">
+                                    <i onclick="showAppartment({{ appartment.id }})" class="fas fa-info-circle"></i></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i onclick="editAppartment({{ appartment.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="deleteAppartment({{ appartment.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
                         <tr id="appartment-{{ appartment.id }}" hidden="true">

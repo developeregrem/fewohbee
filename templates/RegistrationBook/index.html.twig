@@ -38,8 +38,8 @@
                             <input type="search" class="form-control" id="search" name="search"
                                    placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                         <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" onclick="doSearch();"><span
-                                        class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
+                            <button class="btn btn-default" type="button" onclick="doSearch();">
+                                <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                             </button>
                         </span>
                         </div>
@@ -50,8 +50,8 @@
             <div class="col-md-4 text-right">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showAddReservationsForm()"
-                            data-toggle="modal" data-target="#newRegistrationBookModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'registrationbook.addreservations'|trans }}
+                            data-toggle="modal" data-target="#newRegistrationBookModal">
+                        <i class="fas fa-plus"></i> {{ 'registrationbook.addreservations'|trans }}
                     </button>
                 </div>
             </div>

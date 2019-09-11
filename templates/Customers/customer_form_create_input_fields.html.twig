@@ -1,8 +1,8 @@
     <br />
 <div class="form-group">
     <div class="col-sm-3">
-                <button type="button" class="btn btn-default" onclick="addAddressFields()" >
-                    <span class="glyphicon glyphicon-plus"></span> {{ 'customer.address.add'|trans }}
+                <button type="button" class="btn btn-default" onclick="addAddressFields()">
+                    <i class="fas fa-plus"></i> {{ 'customer.address.add'|trans }}
                 </button>
     </div>
     <div class="col-sm-4"></div>
@@ -62,9 +62,9 @@
                 <a data-toggle="collapse" href="#address{{ loop.index }}">
                     {{ 'customer.contactdata'|trans }} <span class="caret"></span>
                 </a>
-                <span class="glyphicon glyphicon-trash pull-right mouse-pointer" 
+                <i class="fas fa-trash-alt pull-right mouse-pointer" 
                       title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></span>
+                      onclick="deleteAddress(this);"></i>
             </h4>
             
         </div>
@@ -217,9 +217,9 @@
                 <a data-toggle="collapse" href="#addressXX">
                     {{ 'customer.contactdata'|trans }} <span class="caret"></span>
                 </a>
-                <span class="glyphicon glyphicon-trash pull-right mouse-pointer" 
+                <i class="fas fa-trash-alt pull-right mouse-pointer" 
                       title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></span>
+                      onclick="deleteAddress(this);"></i>
             </h4>
         </div>
         <div id="addressXX" class="panel-collapse collapse">

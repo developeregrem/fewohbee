@@ -32,8 +32,8 @@
             <div class="col-md-10 col-md-offset-1">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
-                            data-toggle="modal" data-target="#showInvoiceModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.invoice.add'|trans }}</button>
+                            data-toggle="modal" data-target="#showInvoiceModal">
+                        <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
                 </div>
                 <div class="form-group form-inline pull-right">{{ 'invoice.template'|trans }}:
                     <select id="template" name="template" class="form-control">
@@ -52,8 +52,8 @@
                             <input type="search" class="form-control" id="search" name="search"
                                    placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                         <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" onclick="doSearch();"><span
-                                        class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
+                            <button class="btn btn-default" type="button" onclick="doSearch();">
+                                <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                             </button>
                         </span>
                         </div>
