@@ -22,16 +22,16 @@
     </ul>   
 </div>
 <script>
-    if(tinymce.get("editor1") !== null)
-        tinymce.get("editor1").remove();
-    // ugly workaround for firefox, editor content disappears immediately after loading
-    setTimeout(initTiny, 1);
-    function initTiny() {
+    $(function()
+    {
+        if(tinymce.get("editor1") !== null)
+            tinymce.get("editor1").remove();
+
         tinymce.init({
             selector: '#editor1',
             language: '{{ app.request.locale }}',
             branding: false,
             plugins: ['fullpage']
         });
-    }
+    });
 </script>
