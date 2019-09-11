@@ -13,7 +13,7 @@
     {% endblock %}
     {% block javascripts %}
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.1.0.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas_5.9.0.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-5.10.2.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.3.3.7.js"></script>
         <script type="text/javascript"
                 src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
@@ -54,29 +54,28 @@
                 <ul class="nav navbar-nav navbar-right">
                     {% if is_granted('ROLE_ADMIN') %}
                         <li class="dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span
-                                        class="glyphicon glyphicon-wrench"></span> {{ 'nav.settings'|trans }} <b
-                                        class="caret"></b></a>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fas fa-tools"></i> {{ 'nav.settings'|trans }} <b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 <li{% if activeRouteName starts with "users" %} class="active"{% endif %}>
-                                    <a href="{{ path('users.overview') }}"><span class="glyphicon glyphicon-user"></span> {{ 'nav.user'|trans }}</a></li>
+                                    <a href="{{ path('users.overview') }}"><i class="fas fa-users"></i> {{ 'nav.user'|trans }}</a></li>
                                 <li{% if activeRouteName starts with "appartments" %} class="active"{% endif %}>
-                                    <a href="{{ path('appartments.overview') }}"><span class="glyphicon glyphicon-th-list"></span> {{ 'nav.appartment'|trans }}</a></li>
+                                    <a href="{{ path('appartments.overview') }}"><i class="fas fa-bed"></i> {{ 'nav.appartment'|trans }}</a></li>
                                 <li{% if activeRouteName starts with "objects" %} class="active"{% endif %}>
-                                    <a href="{{ path('objects.overview') }}"><span class="glyphicon glyphicon-home"></span> {{ 'nav.object'|trans }}</a></li>
+                                    <a href="{{ path('objects.overview') }}"><i class="fas fa-home"></i> {{ 'nav.object'|trans }}</a></li>
                                 <li{% if activeRouteName starts with "prices" %} class="active"{% endif %}>
-                                    <a href="{{ path('prices.overview') }}"><span class="glyphicon glyphicon-euro"></span> {{ 'nav.prices'|trans }}</a></li>
+                                    <a href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt"></i> {{ 'nav.prices'|trans }}</a></li>
                                 <li{% if activeRouteName starts with "reservationorigin" %} class="active"{% endif %}>
-                                    <a href="{{ path('reservationorigin.overview') }}"><span class="glyphicon glyphicon-log-in"></span> {{ 'nav.reservationorigin'|trans }}</a></li>
+                                    <a href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt"></i> {{ 'nav.reservationorigin'|trans }}</a></li>
                                 <li{% if activeRouteName starts with "settings.templates" %} class="active"{% endif %}>
-                                    <a href="{{ path('settings.templates.overview') }}"><span class="glyphicon glyphicon-file"></span> {{ 'nav.templates'|trans }}</a></li>
+                                    <a href="{{ path('settings.templates.overview') }}"><i class="fas fa-file"></i> {{ 'nav.templates'|trans }}</a></li>
                             </ul>
                         </li>
                     {% endif %}
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }} <b class="caret"></b></a>
                         <ul class="dropdown-menu">
-                            <li><a href="{{ path('logout') }}"><span class="glyphicon glyphicon-off"></span> {{ 'nav.logout'|trans }}</a></li>
+                            <li><a href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a></li>
                         </ul>
                     </li>
                 </ul>

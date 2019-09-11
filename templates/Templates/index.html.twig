@@ -30,8 +30,8 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showCreateForm()" data-toggle="modal"
-                            data-target="#newObjectModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'templates.add'|trans }}</button>
+                            data-target="#newObjectModal">
+                        <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
                 </div>
                 </p>
                 <table class="table table-responsive table-bordered table-hover">
@@ -46,12 +46,11 @@
                             <td>{{ template.name }}</td>
                             <td>
                                 {#<a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#newObjectModal">
-                                    <span onclick="previewEntity({{ template.id }})" class="glyphicon glyphicon-eye-open"></span></a>#}
+                                    <i onclick="previewEntity({{ template.id }})" class="fas fa-info-circle"></i></a>#}
                                 <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#newObjectModal">
-                                    <span onclick="editEntity({{ template.id }})" class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteEntity({{ template.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
+                                    <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="deleteEntity({{ template.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
                         <tr id="entity-{{ template.id }}" hidden="true">

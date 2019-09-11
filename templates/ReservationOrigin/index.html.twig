@@ -30,8 +30,8 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showCreateOriginForm()" data-toggle="modal"
-                            data-target="#newObjectModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'reservationorigin.add'|trans }}</button>
+                            data-target="#newObjectModal">
+                        <i class="fas fa-plus"></i> {{ 'reservationorigin.add'|trans }}</button>
                 </div>
                 </p>
                 <table class="table table-responsive table-bordered table-hover">
@@ -43,14 +43,12 @@
                         <tr>
                             <td>{{ origin.name }}</td>
                             <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span
-                                            onclick="showOrigin({{ origin.id }})"
-                                            class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span onclick="editOrigin({{ origin.id }})"
-                                                                                    class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteOrigin({{ origin.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
+                                <a href="#" title="{{ 'button.details'|trans }}">
+                                    <i onclick="showOrigin({{ origin.id }})" class="fas fa-info-circle"></i></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i onclick="editOrigin({{ origin.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="deleteOrigin({{ origin.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
                         <tr id="origin-{{ origin.id }}" hidden="true">

@@ -30,8 +30,8 @@
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-toggle="modal"
-                            data-target="#newUserModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.user.add'|trans }}</button>
+                            data-target="#newUserModal">
+                        <i class="fas fa-plus"></i> {{ 'nav.user.add'|trans }}</button>
                 </div>
                 </p>
                 <table class="table table-responsive table-bordered table-hover">
@@ -47,13 +47,12 @@
                             <td>{{ user.firstname }}</td>
                             <td>{{ user.lastname }}</td>
                             <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span onclick="showUser({{ user.id }})"
-                                                                                       class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span onclick="editUser({{ user.id }})"
-                                                                                    class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteUser({{ user.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
+                                <a href="#" title="{{ 'button.details'|trans }}">
+                                    <i onclick="showUser({{ user.id }})" class="fas fa-info-circle"></i></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i onclick="editUser({{ user.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="deleteUser({{ user.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
                         <tr id="user-{{ user.id }}" hidden="true">

@@ -38,7 +38,8 @@
                         <div class="panel panel-primary">
                             <div class="panel-heading">
                                 {{ 'statistics.origin.monthly'|trans }}
-                                 <span id="refreshMonthly" class="glyphicon glyphicon-refresh pull-right" aria-hidden="true" style="cursor: pointer;"></span>
+                                 <i id="refreshMonthly" class="fas fa-sync-alt pull-right" aria-hidden="true" 
+                                    style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
                             </div>
                             <div class="panel-body">
                                 <div id="monthlyChart" style="height: 300px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
@@ -80,7 +81,8 @@
                         <div class="panel panel-primary">
                             <div class="panel-heading">
                                 {{ 'statistics.origin.yearly'|trans }}
-                                 <span id="refreshYearly" class="glyphicon glyphicon-refresh pull-right" aria-hidden="true" style="cursor: pointer;"></span>
+                                 <i id="refreshYearly" class="fas fa-sync-alt pull-right" aria-hidden="true" 
+                                    style="cursor: pointer;" onclick="drawYearlyChart();"></i>
                             </div>
                             <div class="panel-body">
                                 <div id="yearlyChart" style="height: 300px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
