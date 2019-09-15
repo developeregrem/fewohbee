@@ -9,76 +9,44 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newReservationModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">
-                        {{ 'nav.reservation.add'|trans }}
-                    </h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
+<div class="container">
+<br />
+    <form id="table-filter" class="form-inline" role="form" onsubmit="return getNewTable()">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
+            <input type="date" class="form-control mb-2 mr-sm-2 " id="start" name="start" value="{{ today|date('Y-m-d') }}" />
+            <select name="intervall" class="custom-select mb-2 mr-sm-2">
+                <option value="8"{% if "8" == interval %} selected{% endif %}>
+                    8 {{ 'reservation.days'|trans }}</option>
+                <option value="15"{% if "15" == interval %} selected{% endif %}>
+                    15 {{ 'reservation.days'|trans }}</option>
+                <option value="22"{% if "22" == interval %} selected{% endif %}>
+                    22 {{ 'reservation.days'|trans }}</option>
+                <option value="30"{% if "30" == interval %} selected{% endif %}>
+                    30 {{ 'reservation.days'|trans }}</option>
+            </select>
 
-                <form id="table-filter" class="form-inline" role="form" onsubmit="return getNewTable()">
-                    <div class="btn-group">
-                        <div class="form-group">
-                            <input type="input" class="form-control" id="start" name="start" placeholder="from"
-                                   value="{{ today|date('d.m.Y') }}">
-                        </div>
-                        <div class="form-group">
-                            <select name="intervall" class="form-control">
-                                <option value="8"{% if "8" == interval %} selected{% endif %}>
-                                    8 {{ 'reservation.days'|trans }}</option>
-                                <option value="15"{% if "15" == interval %} selected{% endif %}>
-                                    15 {{ 'reservation.days'|trans }}</option>
-                                <option value="22"{% if "22" == interval %} selected{% endif %}>
-                                    22 {{ 'reservation.days'|trans }}</option>
-                                <option value="30"{% if "30" == interval %} selected{% endif %}>
-                                    30 {{ 'reservation.days'|trans }}</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-default">
-                                <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
-                            </button>
-                            <button type="button" class="btn btn-default" onclick="return selectAppartment(true)"
-                                    data-toggle="modal" data-target="#newReservationModal">
-                                <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group pull-right">
-                        <select id="objects" name="object" class="form-control">
-                            <option value="all">{{ 'reservation.objects.all'|trans }}</option>
-                            {% for object in objects %}
-                                <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
-                </p>
-                <div id="table-ajax">
-                    <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                </div>
-            </div>
+            <button type="submit" class="btn btn-secondary mb-2 mr-sm-2">
+                <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
+            </button>
+            <button type="button" class="btn btn-secondary mb-2 mr-sm-2" onclick="return selectAppartment(true)"
+                    data-toggle="modal" data-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
+            </button>
         </div>
+        <div class="row ml-auto float-right">
+            <select id="objects" name="object" class="custom-select mb-2 mr-sm-2">
+                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                {% for object in objects %}
+                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <div class="row" id="table-ajax">
+        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
     </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -93,13 +61,6 @@
     $(document).ready(function () {
         // load initial table
         getNewTable();
-
-        $("#start").datepicker({
-            changeMonth: true,
-            changeYear: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-        });
 
         $("#objects").change(function () {
             getNewTable();
@@ -208,7 +169,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.add'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.add'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -591,8 +552,8 @@
                     '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                     '</div>';
             $("#modal-content-ajax").html(content);
-            $('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
-            $('#newReservationModal').modal('show')
+            $('#modalCenter .modal-title').text("{{ 'reservation.details'|trans }}");
+            $('#modalCenter').modal('show')
 
             $.ajax({
                 url: url,
@@ -623,7 +584,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -719,7 +680,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                //$('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
+                //$('#modalCenter .modal-title').text("{{ 'reservation.details'|trans }}");
                 $("#modal-content-ajax").html(data);
                 if(tab == 'booker') {
                     getNewTable();
@@ -875,7 +836,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.select.template'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.select.template'|trans }}");
                 $("#modal-content-ajax").html(data);
 
             }
@@ -906,7 +867,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.edit'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.edit'|trans }}");
                 $("#modal-content-ajax").html(data);
 
             }
@@ -1006,7 +967,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.preview'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.preview'|trans }}");
                 $("#modal-content-ajax").html(data);
             }
         });
