@@ -42,7 +42,7 @@
                     </tr>
                     {% for template in templates %}
                         <tr>
-                            <td style="width:10.0pt"><span class="glyphicon {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></span></td>
+                            <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
                             <td>{{ template.name }}</td>
                             <td>
                                 {#<a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#newObjectModal">

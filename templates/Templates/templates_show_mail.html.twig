@@ -26,7 +26,7 @@
                         <table class="table">
                             {% for attachment in correspondence.children %}
                             <tr id="aid-{{ attachment.id }}">
-                                <td style="width:10.0pt"><span class="glyphicon {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></span></td>
+                                <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                                 <td>{{ attachment.name }}</td>
                                 <td class="text-right">
                                     <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"

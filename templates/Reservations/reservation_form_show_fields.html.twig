@@ -237,7 +237,7 @@
                         </tr>
                             {% for correspondence in correspondences %}
                             <tr>
-                                <td style="width:10.0pt"><span class="glyphicon {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></span></td>
+                                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
                                 <td>{{ correspondence.created|date('d.m.Y H:i') }}</td>
                                 <td>{{ correspondence.name }}</td>
                                 <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
@@ -247,7 +247,7 @@
                                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                                     {% elseif 'EMAIL' in correspondence.template.templateType.name %}
                                     <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
-                                       title="{{ 'button.details'|trans }}"><i class="fas fa-info-circle"></i></a>
+                                       title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
                                     {% endif %}
                                     <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
                                        title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>                                    

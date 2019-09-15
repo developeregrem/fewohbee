@@ -17,7 +17,7 @@
                         {# do not allow other mails #}
                         {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
                             <tr onclick="return addAsAttachment({{ correspondence.id }});" class="mouse-pointer">
-                                <td style="width:10.0pt"><span class="glyphicon {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></span></td>
+                                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
                                 <td>{{ correspondence.name }}</td>
                             </tr>
                         {% endif %}
@@ -36,7 +36,7 @@
                     </tr>
                     {% for template in templates %}
                             <tr onclick="return previewTemplateForReservation({{ template.id }}, {{ inProcess }});" class="mouse-pointer">
-                                <td style="width:10.0pt"><span class="glyphicon {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></span></td>
+                                <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
                                 <td>{{ template.name }}</td>
                             </tr>
                     {% endfor %}
