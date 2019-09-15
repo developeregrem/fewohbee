@@ -1,6 +1,5 @@
 {% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
-
-<table class="table table-hover table-bordered small table-reservation" id="reservation-table">
+<table class="table table-hover table-bordered table-reservation" id="reservation-table">
     <thead>
     <tr>
         <th class="text-center">Zimmer</th>
@@ -31,7 +30,8 @@
         {% set emptyTdNr = 0 %}
         <tr>
             <td class="text-center">{{ appartment.number }}</td>
-            {% for i in 0..intervall if i >= j %}
+            {% for i in 0..intervall %}
+              {% if i >= j %}
                 {% set addToDate = "+" ~ i ~ "day" %}
                 {% set curDate = today|date_modify(addToDate) %}
                 {# if there is a change from summer to winter time #}
@@ -139,6 +139,7 @@
                     <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%" 
                         data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
                 {% endif %}
+              {% endif %}
             {% endfor %}
         </tr>
     {% endfor %}
@@ -201,7 +202,7 @@
         stop: function( event, ui ) {
             if(tdStartDate !== "" && tdEndDate !== "" && tdStartAppartment !== "" && tdStartDate !== tdEndDate) {
                 selectableAddAppartmentToSelection(tdStartAppartment, tdStartDate, tdEndDate);
-                $('#newReservationModal').modal('toggle');
+                $('#modalCenter').modal('toggle');
             }
             tdStartDate = "";
             tdEndDate = "";
