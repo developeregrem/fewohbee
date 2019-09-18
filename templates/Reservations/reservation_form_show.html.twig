@@ -1,7 +1,7 @@
 <div class="modal-body">
-    <div class="container-fluid">
+    <div class="container">
         <div class="row" id="flash-message-overlay">
-            <div class="row">
+            <div class="col">
                 {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
         </div>
@@ -10,26 +10,27 @@
 </div>
 <form id="reservationShowForm">
     <div class="modal-footer">
-        <div id="boxDefault">
-            <div class="dropup pull-left">
-                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownInvoice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <div class="col" id="boxDefault">
+            <div class="btn-group dropup float-left">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownInvoice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   {{ 'reservation.invoices'|trans }} <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownInvoice">
+                <div class="dropdown-menu">
                     {% for invoice in attribute(reservations, 0).invoices %}
-                        <li><a href="#" onclick="return showInvoice({{ invoice.id }});">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a></li>
+                        <a class="dropdown-item" href="#" onclick="return showInvoice({{ invoice.id }});">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a>
                     {% endfor %}
                     {% if attribute(reservations, 0).invoices|length > 0 %}
-                    <li role="separator" class="divider"></li>
+                    <div class="dropdown-divider"></div>
                     {% endif %}
-                    <li><a href="#" onclick="return selectReservatioForInvoice({{ attribute(reservations, 0).id }})">{{ 'reservation.button.create.invoice'|trans }}</a></li>
-                </ul>
+                    <a class="dropdown-item" href="#" onclick="return selectReservatioForInvoice({{ attribute(reservations, 0).id }})">{{ 'reservation.button.create.invoice'|trans }}</a>
+                </div>                
             </div>
-            <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-            <button type="button" class="btn btn-danger"
+            
+            <button type="button" class="btn btn-danger float-right"
                     onclick="return toggleReservationDelete();">{{ 'button.delete'|trans }}</button>
+            <button type="button" class="btn btn-default float-right mr-1" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         </div>
-        <div id="boxDelete" class="hide">
+        <div id="boxDelete" class="d-none">
             {{ 'reservation.delete.ask'|trans }}
             <button class="btn btn-danger" onclick="return doDeleteReservation();">{{ 'button.delete'|trans }}</button>
             <button class="btn btn-default"
@@ -42,11 +43,11 @@
 <script>
     function toggleReservationDelete() {
         if ($("#boxDelete").is(":hidden")) {
-            $("#boxDelete").fadeIn().removeClass('hide');
+            $("#boxDelete").fadeIn().removeClass('d-none');
             $("#boxDefault").hide();
         }
         else {
-            $("#boxDelete").hide();
+            $("#boxDelete").addClass('d-none');
             $("#boxDefault").fadeIn();
         }
         return false;
