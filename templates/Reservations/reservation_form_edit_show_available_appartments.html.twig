@@ -1,10 +1,13 @@
 <table class="table table-hover">
-    <tr>
-        <th>{{ 'appartment.number'|trans }}</th>
-        <th>{{ 'appartment.bedsmin'|trans }}</th>
-        <th>{{ 'appartment.bedsmax'|trans }}</th>
-        <th>{{ 'appartment.description'|trans }}</th>
+    <thead>
+    <tr>        
+        <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
+        <th class="border-top-0">{{ 'appartment.bedsmin'|trans }}</th>
+        <th class="border-top-0">{{ 'appartment.bedsmax'|trans }}</th>
+        <th class="border-top-0">{{ 'appartment.description'|trans }}</th>
     </tr>
+    </thead>
+    <tbody>
     {% for appartment in appartments %}
         <tr onclick="return toggleAppartmentOptions({{ appartment.id }})">
             <td>{{ appartment.number }}</td>
@@ -13,13 +16,18 @@
             <td>{{ appartment.description }}</td>
         </tr>
         <tr>
-            <td colspan="4" id="appartment-{{ appartment.id }}" class="hidden appartment-options">
-                <form class="form-inline" id="appartment-options-{{ appartment.id }}">
-                    {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
-                    <button class="btn btn-default" type="button"
-                            onclick="return editUpdateReservation({{ appartment.id }}, 'changeAppartment')">{{ 'button.save'|trans }}</button>
+            <td colspan="4" id="appartment-{{ appartment.id }}" class="d-none appartment-options">
+                <form id="appartment-options-{{ appartment.id }}">
+                    <div class="row">
+                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
+                        <div class="col-sm-3">
+                        <button class="btn btn-default" type="button"
+                                onclick="return editUpdateReservation({{ appartment.id }}, 'changeAppartment')">{{ 'button.save'|trans }}</button>
+                        </div>
+                    </div>
                 </form>
             </td>
         </tr>
     {% endfor %}
+    </tbody>
 </table>

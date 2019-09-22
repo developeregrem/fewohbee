@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <div class="row" id="flash-message-overlay">
             <div class="row">
-                {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
+                {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
         </div>
         {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'new', 'reservationId':  'new'} %}

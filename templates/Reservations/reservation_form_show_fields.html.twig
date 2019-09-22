@@ -16,7 +16,7 @@
     <div class="tab-pane{% if tab is defined and tab == 'booker' %} active{% endif %}" id="reservation" role="tabpanel" aria-labelledby="booker-tab">
         <div class="row">
             <div class="col">                    
-                <h4  class="border-bottom">{{ 'reservation.preview.booker'|trans }}
+                <h4 class="border-bottom pb-2">{{ 'reservation.preview.booker'|trans }}
                     {% if mode is defined and mode == 'edit' %}
                         <form id="actions-booker-{{ booker.id }}" class="d-none">
                             <input id="reservation-id" type="hidden" value="{{ reservationId }}"
@@ -59,7 +59,7 @@
         <div class="card shadow-none p-2">
             {% for address in booker.customerAddresses %}
             <div class="card-body p-0">
-              <h6 class="card-title border-bottom text-secondary mouse-pointer" data-toggle="collapse" data-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
+              <h6 class="card-title border-bottom text-secondary mouse-pointer pb-2" data-toggle="collapse" data-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
                   {{ 'customer.contact'|trans }} ({{ address.type|trans }})
               </h6>
               <div class="collapse" id="address-{{ address.id }}">
@@ -92,8 +92,7 @@
             {% endfor %}
         </div>
 
-
-        <h4 class="mt-4">{{ 'reservation.preview.appartments.selected'|trans }}
+        <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}
             <small>
                 <a href="#" onclick="return editReservation({{ reservationId }});"
