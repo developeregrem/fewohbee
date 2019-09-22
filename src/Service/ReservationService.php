@@ -123,6 +123,12 @@ class ReservationService implements ITemplateRenderer
 
         $reservation = $this->em->getRepository(Reservation::class)->findById($id)[0];
         $appartment = $this->em->getRepository(Appartment::class)->findById($appartmentId)[0];
+        
+        if($start > $end) {
+            $tmp = $start;
+            $start = $end;
+            $end = $tmp;
+        }
 
         $reservationsArray = Array(); // holds the reservations that are in conflict with current reservation
         $reservationsForAppartment = $this->em->getRepository(Reservation::class)

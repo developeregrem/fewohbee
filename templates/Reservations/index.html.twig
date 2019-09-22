@@ -182,9 +182,6 @@
             success: function (data) {
                 $("#modal-content-ajax").html(data);
 
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
-
                 if (from != null && end != null) {
                     //$("#from").val(from);
                     //$("#end").val(end);
@@ -498,12 +495,12 @@
     ;
 
     function toggleAppartmentOptions(id) {
-        if ($("#appartment-" + id).hasClass("hidden")) {
+        if ($("#appartment-" + id).hasClass("d-none")) {
             // close all other opened
-            $(".appartment-options").addClass("hidden");
-            $("#appartment-" + id).removeClass("hidden");
+            $(".appartment-options").addClass("d-none");
+            $("#appartment-" + id).removeClass("d-none");
         } else {
-            $("#appartment-" + id).addClass("hidden");
+            $("#appartment-" + id).addClass("d-none");
         }
 
         return false;
@@ -596,10 +593,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from, .dateFrom").datepicker(fromOptions);
-
-                $("#end, .dateEnd").datepicker(endOptions);
             }
         });
 
