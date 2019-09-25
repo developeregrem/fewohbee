@@ -253,9 +253,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -284,9 +281,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -311,9 +305,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -339,9 +330,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -373,7 +361,7 @@
                 beforeSend: function () {
                     $("#modal-content-ajax").html(content);
                     $("#breadcrumb-appartments").wrap('<a href="#" />');
-                    $("#breadcrumb-customer").removeClass("hidden");
+                    $("#breadcrumb-customer").removeClass("d-none");
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     alert(xhr.status);
@@ -403,7 +391,7 @@
             data: $("#lastname").serialize() + "&tab=" + tab + "&page=" + page + "&appartmentId=" + appartmentId,
             beforeSend: function () {
                 $("#customers").html(content);
-                $("#customer-selection .btn-primary").addClass("hidden");
+                $("#customer-selection .btn-primary").addClass("d-none");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(xhr.status);
@@ -434,7 +422,7 @@
             },
             success: function (data) {
                 $("#customers").html(data);
-                $("#customer-selection .btn-primary").removeClass("hidden");
+                $("#customer-selection .btn-primary").removeClass("d-none");
             }
         });
 
