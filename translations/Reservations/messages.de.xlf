@@ -68,7 +68,7 @@
             </trans-unit>
             <trans-unit id="17">
                 <source>reservation.customer</source>
-                <target>Kunden auswählen</target>
+                <target>Gast auswählen</target>
             </trans-unit>
             <trans-unit id="18">
                 <source>reservation.appartment</source>
@@ -205,6 +205,10 @@
             <trans-unit id="51">
                 <source>reservation.price</source>
                 <target>Preis</target>
+            </trans-unit>
+            <trans-unit id="52">
+                <source>reservation.custumer.selected</source>
+                <target>Bereits ausgewählt:</target>
             </trans-unit>
         </body>
     </file>

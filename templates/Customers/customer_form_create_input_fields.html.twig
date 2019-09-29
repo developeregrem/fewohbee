@@ -1,30 +1,28 @@
-    <br />
-<div class="form-group">
-    <div class="col-sm-3">
-                <button type="button" class="btn btn-default" onclick="addAddressFields()">
-                    <i class="fas fa-plus"></i> {{ 'customer.address.add'|trans }}
-                </button>
+<div class="row mb-3">
+    <div class="col">
+        <button type="button" class="btn btn-default" onclick="addAddressFields()">
+            <i class="fas fa-plus"></i> {{ 'customer.address.add'|trans }}
+        </button>
     </div>
-    <div class="col-sm-4"></div>
-    <div class="col-sm-5">
-        <input name="customer-address" id="customer-address" class="form-control" placeholder="{{ 'customer.search.addresses'|trans }}" />
+    <div class="col">
+        <input name="customer-address" id="customer-address" class="form-control ml-auto" placeholder="{{ 'customer.search.addresses'|trans }}" />
     </div>
 </div>
 
-<div class="panel-group" id="accordion">
-    <div id="firstPanel" class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapseOne">
-                    {{ 'customer.person'|trans }} <span class="caret"></span>
-                </a>
-            </h4>
+<div id="accordion">
+    <div id="firstPanel" class="card">
+        <div class="card-header p-0" id="headingOne">
+            <h6 class="border-bottom mb-0">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    {{ 'customer.person'|trans }}
+                </button>
+            </h6>
         </div>
-        <div id="collapseOne" class="panel-collapse collapse in">
-            <div class="panel-body">
-                <div class="form-group">
+        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+            <div class="card-body">
+                <div class="form-group row">
                     <label for="salutation-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.salutation'|trans }} *</label>
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.salutation'|trans }} *</label>
 
                     <div class="col-sm-8">
                         <select name="salutation-{{ customer.id }}" class="form-control">
@@ -34,18 +32,18 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row p-0">
                     <label for="firstname-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.firstname'|trans }}</label>
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.firstname'|trans }}</label>
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="firstname-{{ customer.id }}"
                                value="{{ customer.firstname }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="lastname-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.lastname'|trans }} *</label>
+                           class="col-sm-4 col-form-label col-form-label text-right text-right">{{ 'customer.lastname'|trans }} *</label>
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="lastname-{{ customer.id }}"
@@ -56,23 +54,22 @@
         </div>
     </div>
     {% for address in customer.customerAddresses %}                
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#address{{ loop.index }}">
-                    {{ 'customer.contactdata'|trans }} <span class="caret"></span>
-                </a>
-                <i class="fas fa-trash-alt pull-right mouse-pointer" 
+    <div class="card">
+        <div class="card-header p-0" id="headingTwo">
+            <h6 class="border-bottom mb-0">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#address{{ loop.index }}" aria-expanded="true" aria-controls="address{{ loop.index }}">
+                    {{ 'customer.contactdata'|trans }}
+                </button>
+                <i class="fas fa-trash-altmouse-pointer mr-3" 
                       title="{{ 'customer.address.delete'|trans }}"
                       onclick="deleteAddress(this);"></i>
-            </h4>
-            
+            </h6>           
         </div>
-        <div id="address{{ loop.index }}" class="panel-collapse collapse addressfields">
-            <div class="panel-body">
-                <div class="form-group">
+        <div id="address{{ loop.index }}" class="collapse addressfields" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div class="card-body">
+                <div class="form-group row">
                     <label for="addresstype-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.addresstype'|trans }}</label>
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.addresstype'|trans }}</label>
 
                     <div class="col-sm-8">
                         <select name="addresstype-{{ customer.id }}[]" class="form-control">
@@ -85,78 +82,69 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="company-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.company'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.company'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="company-{{ customer.id }}[]"
                                value="{{ address.company }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="phone-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.phone'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.phone'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="phone-{{ customer.id }}[]"
                                value="{{ address.phone }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="mobilephone-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.mobilephone'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.mobilephone'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="mobilephone-{{ customer.id }}[]"
                                value="{{ address.mobilephone }}">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="fax-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.fax'|trans }}</label>
-
+                <div class="form-group row">
+                    <label for="fax-{{ customer.id }}" class="col-sm-4 col-form-label text-right">{{ 'customer.fax'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="{{ address.fax }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="email-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.email'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.email'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="email-{{ customer.id }}[]"
                                value="{{ address.email }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="address-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.address'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.address'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="address-{{ customer.id }}[]"
                                value="{{ address.address }}">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="zip-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.zip'|trans }}</label>
-
+                <div class="form-group row">
+                    <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-right">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="city-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.city'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.city'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]"
                                value="{{ address.city }}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="country-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.country'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
                         <select name="country-{{ customer.id }}[]" class="form-control">
                             {% for key, country in countries %}
@@ -175,19 +163,19 @@
         <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="{{ address.id }}" />
     </div>    
     {% endfor %}
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapseThree">
-                    {{ 'customer.additional'|trans }} <span class="caret"></span>
-                </a>
-            </h4>
+    <div class="card">
+        <div class="card-header p-0" id="headingThree">
+            <h6 class="border-bottom mb-0">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                    {{ 'customer.additional'|trans }}
+                </button>
+            </h6>
         </div>
-        <div id="collapseThree" class="panel-collapse collapse">
-            <div class="panel-body">
-                <div class="form-group">
+        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+            <div class="card-body">
+                <div class="form-group row">
                     <label for="birthday-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.birthday'|trans }}</label>
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.birthday'|trans }}</label>
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" id="birthday-{{ customer.id }}"
@@ -195,10 +183,9 @@
                                value="{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="remark-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.remark'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.remark'|trans }}</label>
                     <div class="col-sm-8">
                         <textarea class="form-control" name="remark-{{ customer.id }}">{{ customer.remark }}</textarea>
                     </div>
@@ -210,24 +197,23 @@
 
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
-<div class="hidden" id="address-forms">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#addressXX">
-                    {{ 'customer.contactdata'|trans }} <span class="caret"></span>
-                </a>
-                <i class="fas fa-trash-alt pull-right mouse-pointer" 
+<div class="d-none" id="address-forms">
+    <div class="card">
+        <div class="card-header p-0">
+            <h6 class="border-bottom mb-0">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
+                    {{ 'customer.contactdata'|trans }}
+                </button>
+                <i class="fas fa-trash-alt mouse-pointer mr-3" 
                       title="{{ 'customer.address.delete'|trans }}"
                       onclick="deleteAddress(this);"></i>
-            </h4>
+            </h6> 
         </div>
-        <div id="addressXX" class="panel-collapse collapse">
-            <div class="panel-body">
-                <div class="form-group">
+        <div id="addressXX" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+            <div class="card-body">
+                <div class="form-group row">
                     <label for="addresstype-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.addresstype'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.addresstype'|trans }}</label>
                     <div class="col-sm-8">
                         <select name="addresstype-{{ customer.id }}[]" class="form-control">
                             {% for type in addresstypes %}
@@ -236,75 +222,66 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="company-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.company'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.company'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="company-{{ customer.id }}[]"
                                value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="phone-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.phone'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.phone'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="phone-{{ customer.id }}[]"
                                value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="mobilephone-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.mobilephone'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.mobilephone'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="mobilephone-{{ customer.id }}[]"
                                value="">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="fax-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.fax'|trans }}</label>
-
+                <div class="form-group row">
+                    <label for="fax-{{ customer.id }}" class="col-sm-4 col-form-label text-right">{{ 'customer.fax'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="email-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.email'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.email'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="email-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="address-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.address'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.address'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="address-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="zip-{{ customer.id }}" class="col-sm-4 control-label">{{ 'customer.zip'|trans }}</label>
-
+                <div class="form-group row">
+                    <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-right">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="city-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.city'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.city'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group row">
                     <label for="country-{{ customer.id }}"
-                           class="col-sm-4 control-label">{{ 'customer.country'|trans }}</label>
-
+                           class="col-sm-4 col-form-label text-right">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
                         <select name="country-{{ customer.id }}[]" class="form-control">
                             {% for key, country in countries %}
@@ -392,7 +369,8 @@
         $addressForms = $("#address-forms").children().clone(false);        
         $newId = $(".addressfields").length + 1;                        // count existing addresses
         $addressForms.find("#addressXX").prop("id", "address"+$newId);  // change id
-        $addressForms.find("a:first").prop("href", "#address"+$newId);  // change id
+        $addressForms.find(".btn").attr("data-target", "#address"+$newId);  // change id
+        $addressForms.find(".btn").attr("aria-controls", "address"+$newId);  // change id
         $addressForms.find(":input").prop('disabled', false);
         $("#firstPanel").after($addressForms);
         
@@ -401,8 +379,7 @@
     }
     
     function deleteAddress(elm) {
-        $panel = $(elm).parents(".panel-default");
-        //alert($panel.attr("class"));
+        $panel = $(elm).parents(".card");
         $panel.remove();
     }
     
@@ -449,7 +426,7 @@
             var out = (item.company.length > 0 ? 'Firma: ' + item.company + "<br>" : '');
             out += item.address + ", " + item.zip + " " + item.city;
             return $( "<li>" )
-              .append( '<div class="text-muted">' + out + "</div>" )
+              .append( '<div class="text-secondary">' + out + "</div>" )
               .appendTo( ul );
           };
         } );
