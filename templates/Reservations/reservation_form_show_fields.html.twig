@@ -158,108 +158,109 @@
 
     </div>
     <div class="tab-pane{% if tab is defined and tab == 'guest' %} active{% endif %}" id="guests" role="tabpanel" aria-labelledby="guests-tab">
+        {% for reservation in reservations %}
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="col-sm-12">
-                    {% for reservation in reservations %}
-                    <div class="page-header">
-                        <h4>{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
-                                <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
-                                   title="{{ 'button.add'|trans }}" class="pull-right small">
-                                    <i class="fas fa-plus"></i></a>
-                        </h4>
-                    </div>                       
-                    
-                    <table class="table table-hover">
-                        <tr>
-                            <th>{{ 'reservation.preview.customer.name'|trans }}</th>                            
-                            <th>{{ 'customer.birthday'|trans }}</th>
-                            <th>{{ 'customer.action'|trans }}</th>
-                        </tr>
-                        {% for customer in customers %}
-                            {% if mode is defined and mode == 'new' %}                                
-                                {% if customer.appartmentId == reservation.appartment.id %}
-                                    {% set customer = customer.c %}
-                                {% endif %}
-                            {% endif %}
-                            {% if customer.salutation is defined %}
-                            <tr>
-                                <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>                            
-                                <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
-                                <td>
-                                    <form id="actions-customer-{{ customer.id }}">
-                                        <input id="reservation-id" type="hidden" value="{{ reservationId }}"
-                                               name="reservation-id"/>
-                                        <input id="customer-id" type="hidden" value="{{ customer.id }}"
-                                               name="customer-id"/>
-                                        <input id="tab" type="hidden" value="guest" name="tab"/>
-                                        <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
-                                        <input name="_csrf_token" value="{{ token }}" type="hidden">
-                                    </form>
-                                    <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
-                                       title="{{ 'button.edit'|trans }}">
-                                        <i class="fas fa-edit"></i></a>
-                                    <a href="#" onclick="return deleteReservationCustomer(this, {{ customer.id }});"
-                                       title="{{ 'button.delete'|trans }}">
-                                        <i class="fas fa-trash-alt"></i></a>
-                                </td>
-                            </tr>
-                            {% endif %}
-                        {% endfor %}
-                    </table>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+            <div class="col">            
+                <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
+                    <small>
+                    <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
+                       title="{{ 'button.add'|trans }}" class="float-right text-secondary">
+                        <i class="fas fa-plus"></i></a>
+                    </small>
+                </h4>
+            </div> 
+        </div>                           
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>{{ 'reservation.preview.customer.name'|trans }}</th>                            
+                <th>{{ 'customer.birthday'|trans }}</th>
+                <th>{{ 'customer.action'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for customer in customers %}
+                {% if mode is defined and mode == 'new' %}                                
+                    {% if customer.appartmentId == reservation.appartment.id %}
+                        {% set customer = customer.c %}
+                    {% endif %}
+                {% endif %}
+                {% if customer.salutation is defined %}
+                <tr>
+                    <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>                            
+                    <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
+                    <td>
+                        <form id="actions-customer-{{ customer.id }}">
+                            <input id="reservation-id" type="hidden" value="{{ reservationId }}"
+                                   name="reservation-id"/>
+                            <input id="customer-id" type="hidden" value="{{ customer.id }}"
+                                   name="customer-id"/>
+                            <input id="tab" type="hidden" value="guest" name="tab"/>
+                            <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
+                            <input name="_csrf_token" value="{{ token }}" type="hidden">
+                        </form>
+                        <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
+                           title="{{ 'button.edit'|trans }}">
+                            <i class="fas fa-edit"></i></a>
+                        <a href="#" onclick="return deleteReservationCustomer(this, {{ customer.id }});"
+                           title="{{ 'button.delete'|trans }}">
+                            <i class="fas fa-trash-alt"></i></a>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}        
     </div>
     
     <div class="tab-pane{% if tab is defined and tab == 'correspondence' %} active{% endif %}" id="correspondence" role="tabpanel" aria-labelledby="correspondence-tab">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="col-sm-12">
-                    <div class="page-header">
-                        <h4>{{ 'reservation.correspondences.reservation'|trans }}
-                            {% if mode is defined and mode == 'edit' %}
-                                <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
-                                   title="{{ 'button.add'|trans }}" class="pull-right small">
-                                    <i class="fas fa-plus"></i></a>
-                            {% endif %}
-                        </h4>
-                    </div>
-                    <table class="table">
-                        <tr>
-                            <th></th>
-                            <th>{{ 'templates.correspondence.created'|trans }}</th>
-                            <th>{{ 'templates.correspondence.name'|trans }}</th>
-                            <th></th>
-                            <th>{{ 'base.action'|trans }}</th>
-                        </tr>
-                            {% for correspondence in correspondences %}
-                            <tr>
-                                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
-                                <td>{{ correspondence.created|date('d.m.Y H:i') }}</td>
-                                <td>{{ correspondence.name }}</td>
-                                <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
-                                <td>
-                                    {% if 'PDF' in correspondence.template.templateType.name %}
-                                    <a href="#" onclick="return exportPDFCorrespondence({{ correspondence.id }})"
-                                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                                    {% elseif 'EMAIL' in correspondence.template.templateType.name %}
-                                    <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
-                                       title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
-                                    {% endif %}
-                                    <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
-                                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>                                    
-                                </td>
-                            </tr>
-                            {% endfor %}
-                    </table>
-                    
-                    <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
-                </div>
+            <div class="col">
+                <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
+                    {% if mode is defined and mode == 'edit' %}
+                        <small>
+                            <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
+                               title="{{ 'button.add'|trans }}" class="float-right text-secondary">
+                                <i class="fas fa-plus"></i></a>
+                        </small>
+                    {% endif %}
+                </h4>
             </div>
         </div>
-
+        <table class="table">
+            <thead>
+            <tr>
+                <th></th>
+                <th>{{ 'templates.correspondence.created'|trans }}</th>
+                <th>{{ 'templates.correspondence.name'|trans }}</th>
+                <th></th>
+                <th>{{ 'base.action'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for correspondence in correspondences %}
+            <tr>
+                <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
+                <td>{{ correspondence.created|date('d.m.Y H:i') }}</td>
+                <td>{{ correspondence.name }}</td>
+                <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
+                <td>
+                    {% if 'PDF' in correspondence.template.templateType.name %}
+                    <a href="#" onclick="return exportPDFCorrespondence({{ correspondence.id }})"
+                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                    {% elseif 'EMAIL' in correspondence.template.templateType.name %}
+                    <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                       title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
+                    {% endif %}
+                    <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>                                    
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>                    
+        <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
     </div>
 </div>
 
