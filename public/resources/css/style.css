@@ -103,3 +103,8 @@
 .ui-front { 
     z-index: 9999; 
 }
+
+/* allow icons in card headers to be alligned right*/
+.card-header {
+    text-align-last:justify;
+}
