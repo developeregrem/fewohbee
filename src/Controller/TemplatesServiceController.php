@@ -286,7 +286,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $this->render(
-            'Templates/templates_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )
@@ -299,11 +299,11 @@ class TemplatesServiceController extends AbstractController
         $reservations = Array();
         $selectedReservationIds = $session->get("selectedReservationIds");
 
-        $customer = $em->getRepository(Customer::class)->findByLastname(
+        $customer = $em->getRepository(Customer::class)->findOneByLastname(
             $request->get("lastname")
-        )[0];
+        );
 
-        if ($customer) {
+        if ($customer instanceof Customer) {
             $potentialReservations = $em->getRepository(
                 Reservation::class
             )->loadReservationsWithoutInvoiceForCustomer($customer);
@@ -316,7 +316,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $this->render(
-            'Templates/templates_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )

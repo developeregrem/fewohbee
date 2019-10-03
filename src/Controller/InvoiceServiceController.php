@@ -193,7 +193,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         return $this->render(
-            'Invoices/invoice_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )
@@ -206,11 +206,11 @@ class InvoiceServiceController extends AbstractController
         $reservations = Array();
         $newInvoiceInformationArray = $session->get("invoiceInCreation");
 
-        $customer = $em->getRepository(Customer::class)->findByLastname(
+        $customer = $em->getRepository(Customer::class)->findOneByLastname(
             $request->get("lastname")
-        )[0];
+        );
 
-        if ($customer) {
+        if ($customer instanceof Customer) {
             $potentialReservations = $em->getRepository(
                 Reservation::class
             )->loadReservationsWithoutInvoiceForCustomer($customer);
@@ -225,7 +225,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         return $this->render(
-            'Invoices/invoice_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )
