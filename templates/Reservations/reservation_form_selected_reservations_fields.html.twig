@@ -1,0 +1,42 @@
+<div class="modal-body">
+    <div class="pl-5 pr-5">
+        <div class="row" id="flash-message-overlay">
+            <div class="col">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <table class="table" id="selectedAppartments">
+                    <thead>
+                    <tr>
+                        <th>{{ 'appartment.number'|trans }}</th>
+                        <th>{{ 'appartment.description'|trans }}</th>
+                        <th>{{ 'customer.firstname'|trans }}</th>
+                        <th>{{ 'customer.lastname'|trans }}</th>
+                        <th>{{ 'reservation.startdate'|trans }}</th>
+                        <th>{{ 'reservation.enddate'|trans }}</th>
+                        <th>{{ 'base.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,reservation in reservations %}
+                        <tr>
+                            <td>{{ reservation.appartment.number }}</td>
+                            <td>{{ reservation.appartment.description }}</td>
+                            <td>{{ reservation.booker.firstname }}</td>
+                            <td>{{ reservation.booker.lastname }}</td>
+                            <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+                            <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.delete'|trans }}" onclick="return deleteReservationFromSelection({{ key }})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
