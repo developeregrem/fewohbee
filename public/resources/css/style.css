@@ -11,14 +11,6 @@
     visibility: hidden;
 }
 
-.ui-widget {
-    font-size: 1.0em;
-}
-
-.modal-wide {
-    width: 800px;
-}
-
 .two-td-left {
     border-right: none !important;
 }
@@ -51,37 +43,6 @@
 
 .reservation-table-weekend {
     background-color: #EEE;
-}
-
-#newReservationPreview .pager,
-#editCustomerSaveButtons .pager {
-    float: left;
-}
-
-#newReservationPreview button,
-#newReservationPreview input,
-#editCustomerSaveButtons button,
-#editCustomerSaveButtons input {
-    margin-top: inherit;
-}
-
-#newInvoicePreview .pager {
-    float: left;
-}
-
-#newInvoicePreview button,
-#newInvoicePreview input {
-    margin-top: inherit;
-}
-
-#customer-selection .btn-primary {
-    margin-right: 15px;
-}
-
-.dl-horizontal > dd:after {
-  display: table;
-  content: "";
-  clear: both;
 }
 
 .mouse-pointer {

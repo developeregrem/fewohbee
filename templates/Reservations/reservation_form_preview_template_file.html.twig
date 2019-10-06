@@ -1,10 +1,10 @@
 <form id="template-form" class="form-horizontal" role="form" onsubmit="return saveTemplateFile('#template-form');">
     <fieldset id="template-form-fieldset-primary-">
-        <div class="form-group">
-            <label for="subject" class="col-sm-2 control-label">Bezeichnung
+        <div class="form-group row">
+            <label for="subject" class="col-sm-3 col-form-label">Bezeichnung
                 *</label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <input type="text" class="form-control" name="subject"
                        value="{{ template.name }}" required>
             </div>
@@ -16,7 +16,7 @@
 
     <input name="_csrf_token" value="{{ token }}" type="hidden">
     <input name="templateId" value="{{ template.id }}" type="hidden">
-    <div class="pull-right">
+    <div class="float-right">
         <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>

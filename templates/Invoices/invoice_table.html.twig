@@ -1,4 +1,5 @@
-<table class="table table-responsive table-bordered table-hover">
+<table class="table table-bordered table-hover">
+    <thead>
     <tr>
         <th>{{ 'invoice.number'|trans }}</th>
         <th>{{ 'invoice.date'|trans }}</th>
@@ -7,6 +8,8 @@
         <th>{{ 'invoice.status'|trans }}</th>
         <th>{{ 'invoice.action'|trans }}</th>
     </tr>
+    </thead>
+    <tbody>
     {% for invoice in invoices %}
         <tr>
             <td>{{ invoice.number }}</td>
@@ -23,9 +26,9 @@
             <td>
                 <a href="#" title="{{ 'button.details'|trans }}">
                     <i onclick="showInvoice({{ invoice.id }})" class="fas fa-info-circle" 
-                       data-toggle="modal" data-target="#showInvoiceModal"></i></a>
+                       data-toggle="modal" data-target="#modalCenter"></i></a>
                 <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="showInvoice({{ invoice.id }}, true)" class="fas fa-edit" data-toggle="modal" data-target="#showInvoiceModal"></i></a>
+                    <i onclick="showInvoice({{ invoice.id }}, true)" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
                 <a class="export-link"
                    href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}"
                    title="{{ 'button.export.pdf'|trans }}">
@@ -33,6 +36,7 @@
             </td>
         </tr>
     {% endfor %}
+    </tbody>
 </table>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
 {% include 'paginator.html.twig' with { 'url' : path('invoices.overview') } %}

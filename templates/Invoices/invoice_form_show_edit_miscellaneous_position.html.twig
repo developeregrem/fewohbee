@@ -1,25 +1,21 @@
 <form id="edit-miscellaneous-position" class="form-horizontal" role="form"
       onsubmit="return saveMiscellaneousInvoicePosition({{ key }})">
-    <div class="row">
-        <div class="col-md-10 col-md-offset-1">
+    <div class="modal-body">
+        <div class="pl-5 pr-5">
             <div class="row">
                 <div class="col-md-7">
-                    <p>
-
-                    <div class="form-group">
+                    <div class="form-group row">
                         <label for="amount"
-                               class="col-sm-3 control-label">{{ 'invoice.miscellaneous.position.amount'|trans }}</label>
-
-                        <div class="col-sm-9">
+                               class="col-sm-4 col-form-label text-right">{{ 'invoice.miscellaneous.position.amount'|trans }}</label>
+                        <div class="col-sm">
                             <input type="text" class="form-control" id="amount" name="amount"
                                    value="{{ position.amount }}" required>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group row">
                         <label for="inputAppartmentPriceCategory"
-                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
-
-                        <div class="col-sm-9">
+                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
+                        <div class="col-sm">
                             <select id="pricecategory" name="pricecategory" class="form-control"
                                     onchange="return setVatPriceAndDescription()">
                                 <option value="0|0" selected></option>
@@ -29,66 +25,45 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group row">
                         <label for="inputDescription"
-                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.description'|trans }}</label>
-
-                        <div class="col-sm-9">
+                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.description'|trans }}</label>
+                        <div class="col-sm">
                             <input type="text" class="form-control" id="inputDescription" name="description"
                                    value="{{ position.description }}" required>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="inputVat" class="col-sm-3 control-label">{{ 'invoice.vat'|trans }}</label>
-
-                        <div class="col-sm-9">
+                    <div class="form-group row">
+                        <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'invoice.vat'|trans }}</label>
+                        <div class="col-sm">
                             <input type="text" class="form-control" id="inputVat" name="vat" value="{{ position.vat }}"
                                    required>
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group row">
                         <label for="inputPrice"
-                               class="col-sm-3 control-label">{{ 'invoice.appartment.position.price'|trans }}</label>
-
-                        <div class="col-sm-9">
+                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.price'|trans }}</label>
+                        <div class="col-sm">
                             <input type="text" class="form-control" id="inputPrice" name="price"
                                    value="{{ position.price }}" required>
                         </div>
                     </div>
-                    </p>
                 </div>
                 <div class="col-md-5">
-                    {% for reservation in reservations %}
-                        <p>
-                        <dl class="dl-horizontal">
-                            <dt>{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
-                            <dd></dd>
-                            <dt>{{ 'invoice.startdate'|trans }}</dt>
-                            <dd>{{ reservation.startdate|date('d.m.Y') }}</dd>
-                            <dt>{{ 'invoice.enddate'|trans }}</dt>
-                            <dd>{{ reservation.enddate|date('d.m.Y') }}</dd>
-                            <dt>{{ 'invoice.position.stays'|trans }}</dt>
-                            <dd>{{ get_date_diff_amount(reservation.startdate, reservation.enddate) }}</dd>
-                            <dt>{{ 'invoice.appartment.position.persons'|trans }}</dt>
-                            <dd>{{ reservation.persons }}</dd>
-                            <dt>{{ 'invoice.appartment.position.beds'|trans }}</dt>
-                            <dd>{{ reservation.appartment.bedsmax }}</dd>
-                        </dl>
-                        </p>
-                    {% endfor %}
+                    {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}
                 </div>
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <ul class="pager pull-left">
-            <li class="previous" onclick="
+        <ul class="pagination mr-auto">
+            <li class="page-item " onclick="
                 {% if positionId == -1 %}
                     return showCreateInvoicePositions('false')
                 {% else %}
                     return showInvoice({{ position.invoice.id }}, true)
-                {% endif %}
-                    "><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+                {% endif %}">
+                <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
     </div>

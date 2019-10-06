@@ -7,39 +7,14 @@
     </ul>
 </div>
 <script>
-    $(document).ready(function () {
-        fromOptions = {
-            changeMonth: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {
-                $("#end").datepicker("option", "minDate", selectedDate);
-
-                if ($("#end").val().length === 0) {
-                    var from = $(this).datepicker("getDate");
-                    $("#end").datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                    $("#from").datepicker("option", "maxDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                }
-                getReservationsInPeriod();
-            }
-        };
-        endOptions = {
-            changeMonth: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {
-                $("#from").datepicker("option", "maxDate", selectedDate);
-                getReservationsInPeriod();
-            }
-        }
-    });
-
     function getReservationsInPeriod() {
         var url = "{{ path('settings.templates.get.reservations.in.period') }}";
         var form = "#invoice-filter-reservations-period";
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
+        
+        iniStartOrEndDate('from', 'end', 1);
 
         $.ajax({
             url: url,

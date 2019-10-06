@@ -1,11 +1,11 @@
-<form id="create-new-invoice" class="form-horizontal" role="form" onsubmit="return createNewInvoice()">
+<form id="create-new-invoice" role="form" onsubmit="return createNewInvoice()">
     <div class="modal-body">
-        <div class="container-fluid">
+        <div class="pl-4 pr-4">
             <div class="row" id="flash-message-overlay">
             </div>
             <div class="row">
                 <div class="col-md-4">{{ invoice.salutation }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right"><strong>{{ 'invoice.number'|trans }}</strong></div>
+                <div class="col-md text-right"><strong>{{ 'invoice.number'|trans }}</strong></div>
             </div>
             <div class="row">
                 <div class="col-md-4">{{ invoice.firstname }} {{ invoice.lastname }}
@@ -13,78 +13,88 @@
                         <br/>{{ invoice.company }}
                     {% endif %}
                 </div>
-                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.number }}</div>
+                <div class="col-md text-right">{{ invoice.number }}</div>
             </div>
             <div class="row">
                 <div class="col-md-4">{{ invoice.address }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
+                <div class="col-md  text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
             </div>
             <div class="row">
                 <div class="col-md-4">{{ invoice.zip }} {{ invoice.city }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.date|date('d.m.Y') }}</div>
+                <div class="col-md text-right">{{ invoice.date|date('d.m.Y') }}</div>
             </div>
-            <p>&nbsp;</p>
-            <table class="table table-responsive table-hover">
-                <tr>
-                    <th>{{ 'invoice.position.appartment'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                </tr>
-                {% set appartmentSum = 0 %}
-                {% for appartment in appartments %}
-                    {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
+            <div class="row mt-5">
+                <table class="table table-hover">
+                    <thead>
                     <tr>
-                        <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
-                            <br/>{{ appartment.startDate|date('d.m.Y') }}
-                            - {{ appartment.endDate|date('d.m.Y') }}</td>
-                        <td class="text-right">{{ appartment.amount }}</td>
-                        <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
-                        <td class="text-right">
-                            {% if is_decimal_place_0(appartment.vat) %}
-                                {{ appartment.vat|number_format(0, ',', '.') }}
-                            {% else %}
-                                {{ appartment.vat|number_format(2, ',', '.') }}
-                            {% endif %}
-                        </td>
-                        <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
+                        <th>{{ 'invoice.position.appartment'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
                     </tr>
-                {% endfor %}
-                <tr>
-                    <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
-                </tr>
-            </table>
-            <p></p>
-            <table class="table table-responsive table-hover">
-                <tr>
-                    <th>{{ 'invoice.position.additional'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                </tr>
-                {% set positionSum = 0 %}
-                {% for position in positions %}
-                    {% set positionSum = positionSum + (position.price * position.amount) %}
+                    </thead>
+                    <tbody>
+                    {% set appartmentSum = 0 %}
+                    {% for appartment in appartments %}
+                        {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
+                        <tr>
+                            <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
+                                <br/>{{ appartment.startDate|date('d.m.Y') }}
+                                - {{ appartment.endDate|date('d.m.Y') }}</td>
+                            <td class="text-right">{{ appartment.amount }}</td>
+                            <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(appartment.vat) %}
+                                    {{ appartment.vat|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ appartment.vat|number_format(2, ',', '.') }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
+                        </tr>
+                    {% endfor %}
                     <tr>
-                        <td>{{ position.description }}</td>
-                        <td class="text-right">{{ position.amount }}</td>
-                        <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                        <td class="text-right">
-                            {% if is_decimal_place_0(position.vat) %}
-                                {{ position.vat|number_format(0, ',', '.') }}
-                            {% else %}
-                                {{ position.vat|number_format(2, ',', '.') }}
-                            {% endif %}
-                        </td>
-                        <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
+                        <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
                     </tr>
-                {% endfor %}
-                <tr>
-                    <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
-                </tr>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+            <div class="row mt-5">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>{{ 'invoice.position.additional'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% set positionSum = 0 %}
+                    {% for position in positions %}
+                        {% set positionSum = positionSum + (position.price * position.amount) %}
+                        <tr>
+                            <td>{{ position.description }}</td>
+                            <td class="text-right">{{ position.amount }}</td>
+                            <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(position.vat) %}
+                                    {{ position.vat|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ position.vat|number_format(2, ',', '.') }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="row">
                 <div class="col-md-4">
                     {{ 'invoice.containing.vat'|trans }}<br/>
@@ -104,36 +114,30 @@
                         {% endfor %}
                     </table>
                 </div>
-                <div class="col-md-2">
-                </div>
-                <div class="col-md-2 col-md-offset-2 text-right">{{ 'invoice.netto'|trans }}
+                <div class="col-md-6 text-right">{{ 'invoice.netto'|trans }}
                     <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-                <div class="col-md-2 text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
+                <div class="col-md text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
                     <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
                 </div>
             </div>
 
-            <div class="row">
-                <p>
-
-                <div class="form-group">
-                    <label for="invoice-remark" class="col-sm-3 control-label">{{ 'invoice.remark'|trans }}</label>
-
-                    <div class="col-sm-9">
-                        <textarea id="invoice-remark" class="form-control" name="remark">{{ invoice.remark }}</textarea>
-                    </div>
+            <div class="row mt-4">
+                <div class="col-sm-3 text-right">
+                    <label for="invoice-remark">{{ 'invoice.remark'|trans }}</label>
                 </div>
-                </p>
+                <div class="col-sm-9">
+                    <textarea id="invoice-remark" class="form-control" name="remark">{{ invoice.remark }}</textarea>
+                </div>
             </div>
             <input name="_csrf_token" value="{{ token }}" type="hidden">
         </div>
     </div>
     <div class="modal-footer" id="newInvoicePreview">
-        <ul class="pager">
-            <li class="previous" onclick="return showCreateInvoicePositions(false)"><a
-                        href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <ul class="pagination mr-auto">
+            <li class="page-item " onclick="return showCreateInvoicePositions(false)">
+                <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"
                onclick="return createNewInvoice()"/>
     </div>
