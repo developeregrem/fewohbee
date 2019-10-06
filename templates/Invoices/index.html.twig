@@ -9,61 +9,39 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="showInvoiceModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'invoice.details'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
+    <div class="container">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
-                            data-toggle="modal" data-target="#showInvoiceModal">
-                        <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
-                </div>
-                <div class="form-group form-inline pull-right">{{ 'invoice.template'|trans }}:
+            <div class="col-md-4">
+                <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
+                        data-toggle="modal" data-target="#modalCenter">
+                    <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
+            </div>
+            <div class="col-md-5 text-right col-form-label col-form-label-sm">
+                {{ 'invoice.template'|trans }}:
+            </div>
+            <div class="col text-right">                
                     <select id="template" name="template" class="form-control">
                         {% for template in templates %}
                             <option value="{{ template.id }}"{% if template.id == templateId %} selected{% endif %}>{{ template.name }}</option>
                         {% endfor %}
                     </select>
+            </div>
+        </div>
+        <form class="form" id="invoices-search-form" onsubmit="return false;">
+            <div class="row">
+                <div class="col-md-5">
+                    <input type="search" class="form-control" id="search" name="search"
+                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </div>
+                <div class="col-md pl-0">
+                    <button class="btn btn-default" type="button" onclick="doSearch();">
+                        <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
+                    </button>
+                </div>                
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 col-md-offset-1">
-                <form class="form" id="invoices-search-form" onsubmit="return false;">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="search" class="form-control" id="search" name="search"
-                                   placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" onclick="doSearch();">
-                                <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
-                            </button>
-                        </span>
-                        </div>
-                        <!-- /input-group -->
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="row">
-            <div id="invoice-table" class="col-md-10 col-md-offset-1">
+        </form>
+        <div class="row mt-4">
+            <div id="invoice-table" class="col">
                 {% include 'Invoices/invoice_table.html.twig' %}
             </div>
         </div>
@@ -124,9 +102,6 @@
                 },
                 success: function (data) {
                     $("#modal-content-ajax").html(data);
-
-                    $("#from").datepicker(fromOptions);
-                    $("#end").datepicker(endOptions);
                 }
             });
 
