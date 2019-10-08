@@ -8,14 +8,14 @@
             </div>
             <div class="row">                
                 <div class="col-md-4">
-                    <h4 class="invoice-edit-field hidden">{{ 'invoice.guest'|trans }}&nbsp;
+                    <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
                     <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
                        title="{{ 'button.edit'|trans }}" class="small">
                         <i class="fas fa-edit"></i></a>
                     </h4>
                     {{ invoice.salutation }}</div>
                 <div class=".col-md-4 .col-md-offset-4 text-right">
-                    <h4 class="invoice-edit-field hidden">
+                    <h4 class="invoice-edit-field d-none">
                     <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
                        title="{{ 'button.edit'|trans }}" class="small">
                         <i class="fas fa-edit"></i></a>
@@ -46,7 +46,7 @@
                     <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
                     <th class="text-right">{{ 'invoice.vat'|trans }}</th>
                     <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                    <th class="invoice-edit-field hidden text-right">{{ 'invoice.action'|trans }}</th>
+                    <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
                 </tr>
                 {% set appartmentSum = 0 %}
                 {% for appartment in invoice.appartments %}
@@ -65,7 +65,7 @@
                             {% endif %}
                         </td>
                         <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
-                        <td class="invoice-edit-field hidden text-right">
+                        <td class="invoice-edit-field d-none text-right">
                             <a href="#" title="{{ 'button.edit'|trans }}">
                                 <i onclick="return showEditAppartmentInvoicePosition({{ appartment.id }})" class="fas fa-edit"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
@@ -75,7 +75,7 @@
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
+                    <th><button type="button" class="btn btn-default invoice-edit-field d-none" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
                             <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
                 </tr>
@@ -88,7 +88,7 @@
                     <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
                     <th class="text-right">{{ 'invoice.vat'|trans }}</th>
                     <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                    <th class="invoice-edit-field hidden text-right">{{ 'invoice.action'|trans }}</th>
+                    <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
                 </tr>
                 {% set positionSum = 0 %}
                 {% for position in invoice.positions %}
@@ -105,7 +105,7 @@
                             {% endif %}
                         </td>
                         <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
-                        <td class="invoice-edit-field hidden text-right">
+                        <td class="invoice-edit-field d-none text-right">
                             <a href="#" title="{{ 'button.edit'|trans }}">
                                 <i onclick="return showEditMiscellaneousInvoicePosition({{ position.id }})" class="fas fa-edit"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
@@ -115,7 +115,7 @@
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field hidden" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
+                    <th><button type="button" class="btn btn-default invoice-edit-field d-none" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
                             <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
                 </tr>
@@ -154,7 +154,7 @@
                 <div class="col-md-8">
                     <h4>{{ 'invoice.remark'|trans }}&nbsp;
                         <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field hidden">
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none">
                             <i class="fas fa-edit"></i></a>
                     </h4>
                     <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
@@ -166,31 +166,39 @@
     <input name="_csrf_token" value="{{ token }}" type="hidden">
 </form>
 <div class="modal-footer">
-    <div id="boxDefault">
-        <form id="invoice-form-status" class="form-inline pull-left" role="form">       
-            <select id="invoce-status" name="invoice-status" class="form-control col-xs-6">
+    <div class="col p-0" id="boxDefault">
+        <form id="invoice-form-status"  role="form">   
+           <div class="form-row"> 
+                <div class="col-sm-2">
+            <select id="invoce-status" name="invoice-status" class="form-control mr-sm-2">
                 <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.notpayed'|trans }}</option>
                 <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.payed'|trans }}</option>
             </select>
-            &nbsp;
-            <button id="save-status" type="button" class="btn btn-default hidden"
+                </div>
+            <div class="col-sm-3">
+            <button id="save-status" type="button" class="btn btn-secondary d-none"
                     onclick="return updateInvoiceStatus({{ invoice.id }});">{{ 'button.save'|trans }}</button>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
-        <button type="button" class="btn btn-default" id="invoiceEditButton" 
+            </div>
+            <div class="col text-right">
+       
+        <button type="button" class="btn btn-secondary " id="invoiceEditButton" 
                 onclick="return toggleInvoiceEditFields();">{{ 'button.edit'|trans }}</button>
-        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}" class="btn btn-default">{{ 'button.export.pdf'|trans }}</a>
+        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}" class="btn btn-secondary">{{ 'button.export.pdf'|trans }}</a>
         {% if is_granted('ROLE_ADMIN') %}
         <button type="button" class="btn btn-danger"
                     onclick="return toggleInvoiceDelete();">{{ 'button.delete'|trans }}</button>
         {% endif %}
+            </div>
+           </div>
+        <input name="_csrf_token" value="{{ token }}" type="hidden">
+        </form>
     </div>
     {% if is_granted('ROLE_ADMIN') %}
-    <div id="boxDelete" class="hide">
+    <div id="boxDelete" class="d-none">
         <form id="invoiceDeleteForm" role="form">
             {{ 'invoice.delete.ask'|trans }}
             <button class="btn btn-danger" onclick="return doDeleteInvoice();">{{ 'button.delete'|trans }}</button>
-            <button class="btn btn-default"
+            <button class="btn btn-secondary"
                     onclick="return toggleInvoiceDelete();">{{ 'button.cancel'|trans }}</button>
             <input type="hidden" name="id" value="{{ invoice.id }}"/>
             <input name="_csrf_token" value="{{ token }}" type="hidden">
@@ -224,7 +232,7 @@
         }
         
         $("#invoce-status").change(function () {
-            $("#save-status").fadeIn().removeClass("hidden");
+            $("#save-status").fadeIn().removeClass("d-none");
         });
     });
 
@@ -244,7 +252,7 @@
             },
             success: function (data) {
                 $("#save-status").prop("disabled", false);
-                $("#save-status").addClass("hidden");
+                $("#save-status").addClass("d-none");
             }
         });
 
@@ -253,11 +261,11 @@
     
     function toggleInvoiceEditFields() {
         var fields = $(".invoice-edit-field");
-        if(fields.hasClass("hidden")) {
-            fields.removeClass("hidden");
-            $("#invoiceEditButton").hide();
+        if(fields.hasClass("d-none")) {
+            fields.removeClass("d-none");
+            $("#invoiceEditButton").addClass("d-none");
         } else {
-            fields.addClass("hidden");
+            fields.addClass("d-none");
         }
     }
     
@@ -354,8 +362,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -484,12 +490,12 @@
     
     function toggleInvoiceDelete() {
         if ($("#boxDelete").is(":hidden")) {
-            $("#boxDelete").fadeIn().removeClass('hide');
-            $("#boxDefault").hide();
+            $("#boxDelete").fadeIn().removeClass('d-none');
+            $("#boxDefault").addClass("d-none");
         }
         else {
-            $("#boxDelete").hide();
-            $("#boxDefault").fadeIn();
+            $("#boxDelete").addClass("d-none");
+            $("#boxDefault").fadeIn().removeClass('d-none');;
         }
         return false;
     }
