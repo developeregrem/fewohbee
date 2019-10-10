@@ -913,7 +913,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         return $this->render(
-            'Invoices/invoice_feedback.html.twig',
+            'feedback.html.twig',
             array(
                 "error" => $error
             )
