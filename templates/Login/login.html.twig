@@ -11,42 +11,41 @@
             window.location.href = "{{ path('start') }}";
         } else {
             $(document).ready(function () {
-                $("body div").removeClass("hidden");
-                $("body p").removeClass("hidden");
+                $("body div").removeClass("d-none");
+                $("body p").removeClass("d-none");
             });
         }
     </script>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <div class="row hidden" style="padding-top: 90px;">
-        <div class="col-md-2 col-md-offset-5 well">
-            <legend>{{ 'login.application.title'|trans }}</legend>
-            {% if error %}
-                <div class="alert alert-danger alert-dismissable">
-                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    {{ error.messageKey|trans(error.messageData, 'security') }}
-                </div>
-            {% endif %}
-            <form class="" action="{{ path('login_check') }}" method="post">
-                <div class="form-group">
-                    <input class="form-control" type="text" name="_username" value="{{ last_username }}"
-                           placeholder="{{ 'login.username.placeholder'|trans }}"/>
-                </div>
-                <div class="form-group">
-                    <input class="form-control" type="password" name="_password" value=""
-                           placeholder="{{ 'login.password.placeholder'|trans }}"/>
-                </div>
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" name="_remember_me"/> {{ 'login.rememberme'|trans }}
-                    </label>
-                </div>
-                <input class="btn btn-primary btn-block" type="submit" value="{{ 'login.submit.value'|trans }}"/>
-            </form>
+<div class="container">
+    <div class="row justify-content-md-center d-none" style="padding-top: 90px;">
+        <div class="col-md-auto card">
+            <div class="card-body">
+                <legend>{{ 'login.application.title'|trans }}</legend>
+                {% if error %}
+                    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                {% endif %}
+                <form class="" action="{{ path('login_check') }}" method="post">
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="_username" value="{{ last_username }}"
+                               placeholder="{{ 'login.username.placeholder'|trans }}"/>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="password" name="_password" value=""
+                               placeholder="{{ 'login.password.placeholder'|trans }}"/>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="_remember_me"/> {{ 'login.rememberme'|trans }}
+                        </label>
+                    </div>
+                    <input class="btn btn-primary btn-block" type="submit" value="{{ 'login.submit.value'|trans }}"/>
+                </form>
+            </div>
         </div>
     </div>
-    <p class="text-center muted hidden">&copy; Copyright 2014 - {{ 'login.copy'|trans }}</p>
+    <p class="text-center text-secondary d-none mt-3">&copy; Copyright 2019 - {{ 'login.copy'|trans }}</p>
 </div>
 {% endblock %}

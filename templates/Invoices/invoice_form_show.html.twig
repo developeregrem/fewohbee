@@ -2,44 +2,52 @@
     <div class="modal-body">
         <div class="container-fluid">
             <div class="row" id="flash-message-overlay">
-                <div class="row">
-                    {% include 'Invoices/invoice_feedback.html.twig' with {'error': error, 'app': app } %}
+                <div class="col">
+                    {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
                 </div>
             </div>
             <div class="row">                
-                <div class="col-md-4">
+                <div class="col">
                     <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
-                    <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
-                       title="{{ 'button.edit'|trans }}" class="small">
-                        <i class="fas fa-edit"></i></a>
+                        <small>
+                        <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
+                           title="{{ 'button.edit'|trans }}" class="text-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        </small>
                     </h4>
-                    {{ invoice.salutation }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right">
+                    {{ invoice.salutation }}
+                </div>
+                <div class="col text-right">
                     <h4 class="invoice-edit-field d-none">
-                    <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
-                       title="{{ 'button.edit'|trans }}" class="small">
-                        <i class="fas fa-edit"></i></a>
+                        <small>
+                            <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
+                               title="{{ 'button.edit'|trans }}" class="text-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </small>
                     </h4>
                     <strong>{{ 'invoice.number'|trans }}</strong></div>
             </div>
             <div class="row">
-                <div class="col-md-4">{{ invoice.firstname }} {{ invoice.lastname }}
+                <div class="col">{{ invoice.firstname }} {{ invoice.lastname }}
                     {% if invoice.company is not empty %}
                         <br/>{{ invoice.company }}
                     {% endif %}
                 </div>
-                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.number }}</div>
+                <div class="col text-right">{{ invoice.number }}</div>
             </div>
             <div class="row">
-                <div class="col-md-4">{{ invoice.address }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
+                <div class="col">{{ invoice.address }}</div>
+                <div class="col text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
             </div>
             <div class="row">
-                <div class="col-md-4">{{ invoice.zip }} {{ invoice.city }}</div>
-                <div class=".col-md-4 .col-md-offset-4 text-right">{{ invoice.date|date('d.m.Y') }}</div>
+                <div class="col">{{ invoice.zip }} {{ invoice.city }}</div>
+                <div class="col text-right">{{ invoice.date|date('d.m.Y') }}</div>
             </div>
-            <p>&nbsp;</p>
-            <table class="table table-responsive table-hover">
+            
+            <table class="table table-hover mt-4">
+                <thead>
                 <tr>
                     <th>{{ 'invoice.position.appartment'|trans }}</th>
                     <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
@@ -48,6 +56,8 @@
                     <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
                     <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% set appartmentSum = 0 %}
                 {% for appartment in invoice.appartments %}
                     {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
@@ -75,13 +85,14 @@
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field d-none" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
+                    <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
                             <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
                 </tr>
+                </tbody>
             </table>
-            <p></p>
-            <table class="table table-responsive table-hover">
+            <table class="table table-hover mt-4">
+                <thead>
                 <tr>
                     <th>{{ 'invoice.position.additional'|trans }}</th>
                     <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
@@ -90,6 +101,8 @@
                     <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
                     <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% set positionSum = 0 %}
                 {% for position in invoice.positions %}
                     {% set positionSum = positionSum + (position.price * position.amount) %}
@@ -115,10 +128,11 @@
                     </tr>
                 {% endfor %}
                 <tr>
-                    <th><button type="button" class="btn btn-default invoice-edit-field d-none" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
+                    <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
                             <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
                     <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
                 </tr>
+                </tbody>
             </table>
             
             <div class="row">
@@ -140,22 +154,22 @@
                         {% endfor %}
                     </table>
                 </div>
-                <div class="col-md-2">
-
-                </div>
-                <div class="col-md-2 col-md-offset-2 text-right">{{ 'invoice.netto'|trans }}
+                <div class="col-md-6 text-right">{{ 'invoice.netto'|trans }}
                     <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-                <div class="col-md-2 text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
+                <div class="col text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
                     <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
                 </div>
             </div>
             <br/>
             <div class="row">
-                <div class="col-md-8">
+                <div class="col">
                     <h4>{{ 'invoice.remark'|trans }}&nbsp;
-                        <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
-                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none">
-                            <i class="fas fa-edit"></i></a>
+                        <small>
+                            <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
+                               title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </small>
                     </h4>
                     <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
                 </div>
