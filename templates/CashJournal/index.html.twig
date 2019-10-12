@@ -9,57 +9,37 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="showModal">
-        <div class="modal-dialog">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'invoice.details'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
+    <div class="container">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateForm()"
-                            data-toggle="modal" data-target="#showModal">
+            <div class="col-md-4">
+                <button type="button" class="btn btn-default" onclick="showCreateForm()"
+                            data-toggle="modal" data-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'journal.add'|trans }}</button>
-                </div>
-                <div class="form-group form-inline pull-right">{{ 'journal.template'|trans }}:
+            </div>
+            <div class="col-md-5 text-right col-form-label col-form-label-sm">
+                {{ 'journal.template'|trans }}:
+            </div>
+            <div class="col text-right">                
                     <select id="template" name="template" class="form-control">
                         {% for template in templates %}
                             <option value="{{ template.id }}"{% if template.id == templateId %} selected{% endif %}>{{ template.name }}</option>
                         {% endfor %}
                     </select>
-                </div>
             </div>
         </div>
         <div class="row">
-            <div class="col-md-2 col-md-offset-1">
-                <form id="table-filter" class="form-inline" role="form">
-                    <div class="form-group-md">                      
-                        <select id="cashJournalYear" name="search" class="form-control">
-                        {% for journal in journalYears %}
-                            <option value="{{ journal.cashYear }}"{% if journal.cashYear == "Y"|date or search == journal.cashYear %} selected{% endif %}>{{ journal.cashYear }}</option>
-                        {% endfor %}
-                        </select>                        
-                    </div>                             
+            <div class="col-md-1">
+                <form id="table-filter" role="form">                     
+                    <select id="cashJournalYear" name="search" class="form-control">
+                    {% for journal in journalYears %}
+                        <option value="{{ journal.cashYear }}"{% if journal.cashYear == "Y"|date or search == journal.cashYear %} selected{% endif %}>{{ journal.cashYear }}</option>
+                    {% endfor %}
+                    </select>                                                 
                 </form>
             </div>
         </div>
-        <br />
-        <div class="row">
-            <div id="table-ajax" class="col-md-10 col-md-offset-1">
+        <div class="row mt-4">
+            <div id="table-ajax" class="col">
             </div>
         </div>
     </div>
@@ -68,7 +48,8 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
-        $(document).ready(function () {
+        $(function()
+        {
             getJournalTable();
             
             $("#cashJournalYear").change(function() {
@@ -78,8 +59,11 @@
             $("#template").change(function () {
                 changeTemplateId();
             });
+            // the default modal width is used here
+            $("#modalCenter .modal-dialog").removeClass('modal-lg');
         });
-
+        
+        
         $.ajaxSetup({
             cache: false
         });
