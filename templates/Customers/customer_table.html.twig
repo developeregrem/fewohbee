@@ -1,4 +1,5 @@
-<table class="table table-responsive table-bordered table-hover">
+<table class="table table-bordered table-hover">
+    <thead>
     <tr>
         <th>{{ 'customer.firstname'|trans }}</th>
         <th>{{ 'customer.lastname'|trans }}</th>
@@ -6,21 +7,24 @@
         <th>{{ 'customer.count.books'|trans }}</th>
         <th>{{ 'customer.action'|trans }}</th>
     </tr>
+    </thead>
+    <tbody>
     {% for customer in customers %}
         {% if customer.id != 0 %}
             <tr>
                 <td>{{ customer.firstname }}</td>
                 <td>{{ customer.lastname }}</td>
                 <td>
-                    {% for address in customer.customerAddresses if address.company|length > 0%}
-                        {{ address.company }}
+                    {% for address in customer.customerAddresses %}
+                        {% if address.company|length > 0 %}
+                            {{ address.company }}
+                        {% endif %}
                     {% endfor %}
                 </td>
                 <td>{{ customer.bookedReservations|length }}</td>
                 <td>
                     <a href="#" title="{{ 'button.details'|trans }}"><i onclick="getCustomer({{ customer.id }})" class="fas fa-info-circle"></i></a>
                     <a href="#" title="{{ 'button.edit'|trans }}"><i onclick="editCustomer({{ customer.id }})" class="fas fa-edit"></i></a>
-                    <a href="#" title="{{ 'button.delete'|trans }}"><i onclick="deleteCustomer({{ customer.id }})" class="fas fa-trash-alt"></i></a>
                     <a href="{{ path('customers.gdpr.customer', {'id': customer.id}) }}" title="{{ 'button.gdpr'|trans }}">
                         <i class="fas fa-balance-scale-left"></i></a>                                                                          
                 </td>
@@ -32,6 +36,7 @@
             </tr>
         {% endif %}
     {% endfor %}
+    </tbody>
 </table>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
 {% include 'paginator.html.twig' with { 'url' : path('customers.overview') } %}
