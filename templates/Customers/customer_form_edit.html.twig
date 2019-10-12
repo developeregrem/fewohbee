@@ -1,26 +1,16 @@
 <form id="customer-form-{{ customer.id }}" class="form-horizontal" role="form"
       onsubmit="return saveCustomer({{ customer.id }})">
-<div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
-                <div class="col-md-10 col-md-offset-1">
-
-                        <fieldset id="customer-form-fieldset-{{ customer.id }}">
-                            {% include 'Customers/customer_form_create_input_fields.html.twig' %}
-                        </fieldset>
-
+    <div class="modal-body pl-5 pr-5">
+        <div class="container-fluid">
+            <div class="row" id="flash-message-overlay">
+                <div class="col">
                 </div>
             </div>
+            {% include 'Customers/customer_form_create_input_fields.html.twig' %}
         </div>
     </div>
-</div>
-<div id="editCustomerSaveButtons" class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return getCustomer({{ customer.id }}, 'guest')"><a
-                    href="#">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
-    <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-    <input type="submit" value="{{ 'button.save'|trans }}" id="customer-submit-{{ customer.id }}" class="btn btn-primary">
-</div>
+    <div id="editCustomerSaveButtons" class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" id="customer-submit-{{ customer.id }}" class="btn btn-primary">
+    </div>
 </form>

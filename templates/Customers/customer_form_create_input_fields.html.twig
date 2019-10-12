@@ -54,7 +54,7 @@
         </div>
     </div>
     {% for address in customer.customerAddresses %}                
-    <div class="card">
+    <div class="card mt-1">
         <div class="card-header p-0" id="headingTwo">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#address{{ loop.index }}" aria-expanded="true" aria-controls="address{{ loop.index }}">
@@ -163,7 +163,7 @@
         <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="{{ address.id }}" />
     </div>    
     {% endfor %}
-    <div class="card">
+    <div class="card mt-1">
         <div class="card-header p-0" id="headingThree">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
@@ -198,7 +198,7 @@
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
 <div class="d-none" id="address-forms">
-    <div class="card">
+    <div class="card mt-1">
         <div class="card-header p-0">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#addressXX" aria-expanded="true" aria-controls="addressXX">

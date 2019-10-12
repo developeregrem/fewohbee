@@ -56,41 +56,7 @@
                 </dl>
             </div>
         </div>                        
-        <div class="card shadow-none p-2">
-            {% for address in booker.customerAddresses %}
-            <div class="card-body p-0">
-              <h6 class="card-title border-bottom text-secondary mouse-pointer pb-2" data-toggle="collapse" data-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
-                  {{ 'customer.contact'|trans }} ({{ address.type|trans }})
-              </h6>
-              <div class="collapse" id="address-{{ address.id }}">
-                <div class="row">
-                    <div class="col-sm-6">
-                            <dl>
-                                {% if address.company %}
-                                <dt>{{ 'customer.company'|trans }}</dt>
-                                <dd>{{ address.company }}</dd>
-                                {% endif %}
-                                <dt>{{ 'reservation.preview.customer.address'|trans }}</dt>
-                                <dd>{{ address.address }}<br>{{ address.zip }} {{ address.city }}<br />{{ address.country }}</dd>
-                                <dt>{{ 'customer.email'|trans }}</dt>
-                                <dd>{% if address.email %}{{ address.email }}{% else %} -{% endif %}</dd>                                                
-                            </dl>
-                        </div>
-                        <div class="col-sm-6">
-                            <dl>
-                                <dt>{{ 'customer.phone'|trans }}</dt>
-                                <dd>{% if address.phone %}{{ address.phone }}{% else %} -{% endif %}</dd>
-                                <dt>{{ 'customer.fax'|trans }}</dt>
-                                <dd>{% if address.fax %}{{ address.fax }}{% else %} -{% endif %}</dd>
-                                <dt>{{ 'customer.mobilephone'|trans }}</dt>
-                                <dd>{% if address.mobilephone %}{{ address.mobilephone }}{% else %} -{% endif %}</dd>
-                            </dl>
-                        </div>
-                  </div>
-              </div>
-            </div>
-            {% endfor %}
-        </div>
+        {% include 'Customers/customer_show_address_fields.html.twig' with {'customer' : booker} %}
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}

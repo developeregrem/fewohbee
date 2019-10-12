@@ -146,7 +146,7 @@ class CustomerServiceController extends AbstractController
             }
         }
 
-        return $this->render('Customers/customer_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -187,7 +187,7 @@ class CustomerServiceController extends AbstractController
             }
         }
 
-        return $this->render('Customers/customer_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
