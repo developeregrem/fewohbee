@@ -22,7 +22,7 @@
 .reservation {
     border-left: none !important;
     border-right: none !important;
-    padding: 4px 2px !important;
+    padding: 8px 2px !important;
 }
 
 .reservation-inner {
@@ -68,4 +68,9 @@
 /* allow icons in card headers to be alligned right*/
 .card-header {
     text-align-last:justify;
+}
+
+/* reduce default font size of labels in modals */
+.modal-body .col-form-label {
+    font-size: 14px;
 }

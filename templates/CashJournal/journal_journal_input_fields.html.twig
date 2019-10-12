@@ -2,17 +2,15 @@
 {% for i in 1..12 %}
     {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
 {% endfor %}
-<div class="form-group">
-    <label for="year" class="col-sm-4 control-label">{{ 'journal.year'|trans }} *</label>
-
-    <div class="col-sm-8">
+<div class="form-group row">
+    <label for="year" class="col-sm-5 col-form-label text-right">{{ 'journal.year'|trans }} *</label>
+    <div class="col-sm">
         <input type="text" class="form-control" name="year" value="{{ journal.cashYear }}" required>
     </div>
 </div>
-<div class="form-group">
-    <label for="month" class="col-sm-4 control-label">{{ 'journal.month'|trans }} *</label>
-
-    <div class="col-sm-8">
+<div class="form-group row">
+    <label for="month" class="col-sm-5 col-form-label text-right">{{ 'journal.month'|trans }} *</label>
+    <div class="col-sm">
         <select name="month" class="form-control">
             {% set currentMonth = journal.cashMonth %}
             {% for month in monthList %}
@@ -21,19 +19,23 @@
         </select>
     </div>
 </div>
-<div class="form-group">
-    <label for="cashStart" class="col-sm-4 control-label">{{ 'journal.cash.start'|trans }} *</label>
-
-    <div class="col-sm-8">
+<div class="form-group row">
+    <label for="cashStart" class="col-sm-5 col-form-label text-right">{{ 'journal.cash.start'|trans }} *</label>
+    <div class="col-sm">
         <input type="text" class="form-control" name="cashStart" value="{{ journal.cashStart }}" required>
     </div>
 </div>
-<div class="form-group">
-    <label for="cashEnd" class="col-sm-4 control-label">{{ 'journal.cash.end'|trans }}</label>
-
-    <div class="col-sm-8">
-        <input type="text" class="form-control" name="cashEnd" value="{{ journal.cashEnd }}"><br />
-        <span class="text-muted small">{{ 'journal.cash.end.info'|trans }}</span>
+<div class="form-group row">
+    <label for="cashEnd" class="col-sm-5 col-form-label text-right">{{ 'journal.cash.end'|trans }}</label>
+    <div class="col-sm">
+        <input type="text" class="form-control" name="cashEnd" value="{{ journal.cashEnd }}">        
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm pl-5">
+        <small>
+            <span class="text-secondary">{{ 'journal.cash.end.info'|trans }}</span>
+        </small>
     </div>
 </div>
 <input name="_csrf_token" value="{{ token }}" type="hidden">
