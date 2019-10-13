@@ -1,30 +1,23 @@
-<div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
-            </div>
+<div class="modal-body pl-5 pr-5">
+    <div class="row" id="flash-message-overlay">
+        <div class="col">
         </div>
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <form id="customer-form2-{{ customer.id }}" class="form-horizontal" role="form"
-                      onsubmit="return saveCustomer({{ customer.id }}, this)">
-                    <fieldset id="customer-form-fieldset-{{ customer.id }}">
-                        {% include 'Customers/customer_form_create_input_fields.html.twig' %}
-                    </fieldset>
-                    <div class="form-group">
-                        <div class="col-md-12 text-right">
-                            <input type="submit" class="btn btn-primary" value="{{ 'button.save'|trans }}">
-                        </div>
-                    </div>
-                    <input type="hidden" name="customer-id" value="{{ customer.id }}"/>
-                </form>
-            </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <form id="customer-form2-{{ customer.id }}" class="form-horizontal" role="form" onsubmit="return saveCustomer({{ customer.id }}, this)">
+                <fieldset id="customer-form-fieldset-{{ customer.id }}">
+                    {% include 'Customers/customer_form_create_input_fields.html.twig' %}
+                </fieldset>
+                <input type="submit" class="btn btn-primary float-right mt-3" value="{{ 'button.save'|trans }}">
+                <input type="hidden" name="customer-id" value="{{ customer.id }}"/>
+            </form>
         </div>
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return showAddReservationsForm()"><a href="#">&larr; {{ 'button.back'|trans }}</a>
-        </li>
+    <ul class="pagination mr-auto">
+        <li class="page-item " onclick="return showAddReservationsForm()">
+            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>

@@ -1,45 +1,42 @@
-<div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
-            </div>
+<div class="modal-body pl-5 pr-5">
+    <div class="row" id="flash-message-overlay">
+        <div class="col">
         </div>
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="lastname" name="lastname"
-                                   placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
-                          <span class="input-group-btn">
-                              <button class="btn btn-default" type="button" onclick="getCustomers(1, 'edit')">
-                                  <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
-                              </button>
-                              <button class="btn btn-default" type="button" onclick="getFormForNewCustomer()">
-                                  <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
-                              </button>
-                          </span>
-                        </div>
-                        <!-- /input-group -->
-                    </div>
-                </div>
-                <form id="customer-selection" class="form-horizontal" role="form"
-                      onsubmit="return editReservationNewCustomer({{ reservation.id }})">
+    </div>
+    <div class="row">
+        <div class="col">                
+            <input type="text" class="form-control" id="lastname" name="lastname"
+                   placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
+        </div>
+        <div class="col text-right">
+            <span class="input-group-btn">
+                <button class="btn btn-secondary" type="button" onclick="getCustomers(1, 'edit')">
+                    <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
+                </button>
+                <button class="btn btn-secondary" type="button" onclick="getFormForNewCustomer()">
+                    <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
+                </button>
+            </span>
+        </div>
+    </div>
+    <div class="row mt-4">   
+        <div class="col">
+            <form id="customer-selection" class="form-horizontal" role="form"
+                  onsubmit="return editReservationNewCustomer({{ reservation.id }})">
 
-                    <div class="col-sm-12" id="customers">
-                    </div>
-                    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary pull-right hidden"/>
-                    <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
-                    <input id="tab" type="hidden" value="guest" name="tab"/>
-                </form>
-            </div>
+                <div id="customers">
+                </div>
+                <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-right mt-3 d-none"/>
+                <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
+                <input id="tab" type="hidden" value="guest" name="tab"/>
+            </form>
         </div>
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return showAddReservationsForm()"><a href="#">&larr; {{ 'button.back'|trans }}</a>
-        </li>
+    <ul class="pagination mr-auto">
+        <li class="page-item " onclick="return showAddReservationsForm()">
+            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>
 <script type="text/javascript">

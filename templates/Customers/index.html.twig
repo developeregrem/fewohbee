@@ -12,20 +12,15 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6">
-                <form class="form" id="customers-search-form" onsubmit="return false;">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="search" class="form-control" id="search" name="search"
-                                   placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" onclick="doSearch();">
-                                <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
-                            </button>
-                        </span>
-                        </div>
-                        <!-- /input-group -->
-                    </div>
+                <form class="form" id="customers-search-form" onsubmit="return false;">                    
+                    <input type="search" class="form-control" id="search" name="search"
+                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </form>
+            </div>
+            <div class="col-md pl-0">
+                <button class="btn btn-secondary" type="button" onclick="doSearch();">
+                    <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
+                </button>
             </div>
             <div class="col-md text-right">
                 <div class="btn-group">
@@ -36,7 +31,7 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="row mt-3">
             <div id="customers-table" class="col">
                 {% include 'Customers/customer_table.html.twig' %}
             </div>

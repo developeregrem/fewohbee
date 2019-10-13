@@ -78,6 +78,10 @@
                 <source>registrationbook.delete.ask</source>
                 <target>Eintrag wirklich löschen?</target>
             </trans-unit>
+            <trans-unit id="20">
+                <source>registrationbook.period</source>
+                <target>Zeitraum</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
