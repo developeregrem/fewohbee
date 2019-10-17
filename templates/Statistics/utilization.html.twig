@@ -17,7 +17,7 @@
 {% block content %}
     <div class="container">
         <div class="row justify-content-end">
-            <div class="col-md-auto">
+            <div class="col-md-3">
                 <form id="table-filter" role="form">                   
                     <select id="objects" name="object" class="form-control">
                         <option value="all">{{ 'reservation.objects.all'|trans }}</option>
@@ -37,36 +37,44 @@
                             style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
                     </div>
                     <div class="card-body">
-                        <div id="monthlyChart" style="height: 200px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
+                        <div id="monthlyChart" style="height: 200px" class="h"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
                     </div>
-                    <div class="card-footer">
-                        <form class="form-inline" role="form">
-                            <div class="form-group">
-                            </div>
-                            <div class="form-group">
-                                <select id="monthlyStart" name="monthtlyStart" class="form-control">
-                                    {% set currentMonth = 'now'|date('n') %}
-                                    {% for month in monthList %}
-                                        <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                    {% endfor %}
-                                </select>
-                                <select id="monthlyStartYear" name="monthtlyStartYear" class="form-control">
-                                    {% set currentYear = 'now'|date('Y') %}
-                                    {% for i in minYear..maxYear %}
-                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                    {% endfor %}
-                                </select>
-                                &nbsp;-&nbsp; 
-                                <select id="monthlyEnd" name="monthtlyEnd" class="form-control">
-                                    {% for month in monthList %}
-                                        <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                    {% endfor %}
-                                </select>
-                                <select id="monthlyEndYear" name="monthtlyEndYear" class="form-control">
-                                    {% for i in minYear..maxYear %}
-                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                    {% endfor %}
-                                </select>
+                    <div class="card-footer pt-0">
+                        <form role="form">
+                            <div class="row justify-content-md-center">
+                                <div class="col-md-3">
+                                    <select id="monthlyStart" name="monthtlyStart" class="form-control">
+                                        {% set currentMonth = 'now'|date('n') %}
+                                        {% for month in monthList %}
+                                            <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-control">
+                                        {% set currentYear = 'now'|date('Y') %}
+                                        {% for i in minYear..maxYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1 col-form-label text-center">
+                                    -
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-control">
+                                        {% for month in monthList %}
+                                            <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-control">
+                                        {% for i in minYear..maxYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -82,22 +90,26 @@
                     <div class="card-body">
                         <div id="yearlyChart" style="height: 200px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
                     </div>
-                    <div class="card-footer">
-                        <form class="form-inline" role="form">
-                            <div class="form-group">
-                            </div>
-                            <div class="form-group">
-                                <select id="yearlyStartYear" name="yearlyStartYear" class="form-control">
-                                    {% for i in minYear..maxYear %}
-                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                    {% endfor %}
-                                </select>
-                                &nbsp;-&nbsp; 
-                                <select id="yearlyEndYear" name="yearlyEndYear" class="form-control">
-                                    {% for i in minYear..maxYear %}
-                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                    {% endfor %}
-                                </select>
+                    <div class="card-footer pt-0">
+                        <form role="form">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-control">
+                                        {% for i in minYear..maxYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1 col-form-label text-center">
+                                    -
+                                </div>
+                                <div class="col-md-2">
+                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-control">
+                                        {% for i in minYear..maxYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
                             </div>
                         </form>
                     </div>
