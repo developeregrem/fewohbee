@@ -118,7 +118,7 @@ class TemplatesServiceController extends AbstractController
             }
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -149,7 +149,7 @@ class TemplatesServiceController extends AbstractController
             }
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -172,7 +172,7 @@ class TemplatesServiceController extends AbstractController
             return new Response('ok');
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Templates/templates_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));
@@ -399,7 +399,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error,
         ));
     }
@@ -457,7 +457,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error,
             'attachment' => $isAttachment
         ));
@@ -504,7 +504,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }
@@ -532,7 +532,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }
@@ -550,7 +550,7 @@ class TemplatesServiceController extends AbstractController
         $ts->addFileAsAttachment($cId, $reservations);
 
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }

@@ -7,4 +7,10 @@
             </div>
         {% endfor %}
     {% endfor %}
+    {% if attachment is defined %}
+    {#  required when creating a new file as mail attachment in reservation conversations  #}
+    <script>
+        var isTemplateAttachment = true;
+    </script>
+    {% endif %}
 {% endif %}

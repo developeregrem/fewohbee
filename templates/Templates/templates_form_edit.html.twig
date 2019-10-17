@@ -1,12 +1,10 @@
 <form id="template-form-{{ template.id }}" class="form-horizontal" role="form" onsubmit="return saveEntity({{ template.id }})">
-    <div class="modal-body">
-        <div class="container-fluid">
-            <div class="row" id="flash-message-overlay">
-                <div class="row">
-                </div>
+    <div class="modal-body pl-5 pr-5">
+        <div class="row" id="flash-message-overlay">
+            <div class="col">
             </div>
-            {% include 'Templates/templates_form_input_fields.html.twig' %}
         </div>
+            {% include 'Templates/templates_form_input_fields.html.twig' %}
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
