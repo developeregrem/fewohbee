@@ -9,141 +9,80 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newObjectModal">
-        <div class="modal-dialog">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'reservationorigin.add'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax"></div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateOriginForm()" data-toggle="modal"
-                            data-target="#newObjectModal">
-                        <i class="fas fa-plus"></i> {{ 'reservationorigin.add'|trans }}</button>
-                </div>
-                </p>
-                <table class="table table-responsive table-bordered table-hover">
-                    <tr>
-                        <th>{{ 'reservationorigin.name'|trans }}</th>
-                        <th>{{ 'base.action'|trans }}</th>
-                    </tr>
-                    {% for origin in origins %}
-                        <tr>
-                            <td>{{ origin.name }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.details'|trans }}">
-                                    <i onclick="showOrigin({{ origin.id }})" class="fas fa-info-circle"></i></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}">
-                                    <i onclick="editOrigin({{ origin.id }})" class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="deleteOrigin({{ origin.id }})" class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                        <tr id="origin-{{ origin.id }}" hidden="true">
-                            <td colspan="2" id="origin-cell-{{ origin.id }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-secondary" onclick="showCreateOriginForm()" data-toggle="modal"
+                    data-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'reservationorigin.add'|trans }}</button>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'reservationorigin.name'|trans }}</th>
+                    <th>{{ 'base.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for origin in origins %}
+                    <tr>
+                        <td>{{ origin.name }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="getEntity({{ origin.id }})" class="fas fa-info-circle"></i></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="editEntry({{ origin.id }})" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="deleteOrigin({{ origin.id }})" class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    <tr id="entry-{{ origin.id }}" class="d-none">
+                        <td colspan="2" id="entry-cell-{{ origin.id }}">
+                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
     <script>
 
     $.ajaxSetup({
         cache: false
     });
+    </script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
+    <script>
+    $(function() {
+        // the default modal width is used here
+        $("#modalCenter .modal-dialog").removeClass('modal-lg');
+    });
 
-    function collapseOrigin(id) {
-        var row = "#origin-" + id;
-        var cell = "#origin-cell-" + id;
-
-        if ($(row).is(':hidden')) {
-            $(row).show();
-            return true;
-        } else {
-            $(row).hide();
-            $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-            return false;
-        }
+    function getEntity(id) {
+        let url = replacePlaceholder("{{ path('reservationorigin.get.origin', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url);
+        
     }
-    ;
-
-    function enableOriginForm(id) {
-        var formFieldsetPrimary = "#origin-form-fieldset-primary-" + id;
-        var formFieldsetSecondary = "#origin-form-fieldset-secondary-" + id;
-        var cancelButton = "#origin-cancel-" + id;
-        var editButton = "#origin-edit-" + id;
-        var saveButton = "#origin-submit-" + id;
-        $(cancelButton).html('{{ 'button.cancel'|trans }}');
-        $(editButton).addClass('button-hidden');
-        $(saveButton).removeClass('button-hidden');
-        $(formFieldsetPrimary).removeAttr('disabled');
-        $(formFieldsetSecondary).removeAttr('disabled');
-
-        return false;
-    }
-    ;
-
-    function getOrigin(id, enableForm) {
-        var cell = "#origin-cell-" + id;
-        var url = "{{ path('reservationorigin.get.origin', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "get",
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $(cell).html(data);
-
-                if (enableForm) {
-                    enableOriginForm(id);
-                }
-            }
+    
+    function editEntry(id) {
+        let url = replacePlaceholder("{{ path('reservationorigin.get.origin', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "", function() {
+            enableEditForm(id);
         });
-
-
-        return false;
+        
     }
-    ;
-
-    function showOrigin(id) {
-        if (collapseOrigin(id)) {
-            getOrigin(id, false);
-        }
-
-        return false;
-    }
-    ;
-
-    function editOrigin(id) {
-        if (collapseOrigin(id)) {
-            getOrigin(id, true);
-        }
-
-        return false;
-    }
-    ;
 
     function saveOrigin(id) {
         var form = "#origin-form-" + id;
@@ -164,11 +103,10 @@
 
         return false;
     }
-    ;
 
     function deleteOrigin(id) {
-        if (collapseOrigin(id)) {
-            var cell = "#origin-cell-" + id;
+        if (collapseEntry(id)) {
+            var cell = "#entry-cell-" + id;
             var url = "{{ path('reservationorigin.delete.origin', {'id': 'placeholder'}) }}";
             url = url.replace("placeholder", id);
 
@@ -180,10 +118,9 @@
 
         return false;
     }
-    ;
 
-    function doDeleteOrigin(id) {
-        var form = "#origin-form-" + id;
+    function doDeleteEntry(id) {
+        var form = "#entry-form-" + id;
         var url = "{{ path('reservationorigin.dodelete.origin', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
 
@@ -201,20 +138,10 @@
 
         return false;
     }
-    ;
 
     function showCreateOriginForm() {
-        var url = "{{ path('reservationorigin.new.origin') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $("#modal-content-ajax").html(content);
-        $("#modal-content-ajax").load(url, function (response, status, xhr) {
-        });
-
-        return false;
+        getContentForModal("{{ path('reservationorigin.new.origin') }}");
     }
-    ;
 
     function createNewOrigin() {
         var url = "{{ path('reservationorigin.create.origin')}}";

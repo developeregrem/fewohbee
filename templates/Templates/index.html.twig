@@ -57,12 +57,18 @@
 {% block javascripts %}
     {{ parent() }}
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
     <script>
 
     $.ajaxSetup({
         cache: false
     });
-
+    </script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
+    <script>
+        console.log(config.basePath);
     function collapseEntry(id) {
         var row = "#entity-" + id;
         var cell = "#entity-cell-" + id;
@@ -78,33 +84,15 @@
     }
     
     function previewEntity(id) {
-        var url = "{{ path('settings.templates.preview', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-        $("#modalCenter .modal-title").text("{{ 'templates.preview'|trans }}");
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $("#modal-content-ajax").html(content);
-        $("#modal-content-ajax").load(url, function (response, status, xhr) {
-        });
-
-        return false;
+        let url = replacePlaceholder("{{ path('settings.templates.preview', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "{{ 'templates.preview'|trans }}");
     }
     
     function editEntity(id) {
-        var url = "{{ path('settings.templates.get', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-        $("#modalCenter .modal-title").text("{{ 'templates.edit'|trans }}");
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $("#modal-content-ajax").html(content);
-        $("#modal-content-ajax").load(url, function (response, status, xhr) {
-        });
-
-        return false;
+        let url = replacePlaceholder("{{ path('settings.templates.get', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "{{ 'templates.edit'|trans }}");
     }
-    ;
+
 
     function saveEntity(id) {
         var form = "#template-form-" + id;

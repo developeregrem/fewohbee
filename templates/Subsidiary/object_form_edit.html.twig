@@ -1,39 +1,25 @@
-<div class="row">
-    <div class="col-md-11">
-        <form id="object-form-{{ object.id }}" class="form-horizontal" role="form"
-              onsubmit="return saveObject({{ object.id }})">
-            <fieldset id="object-form-fieldset-{{ object.id }}" disabled>
-                <div class="form-group">
-                    <label for="inputName" class="col-sm-2 control-label">{{ 'object.name'|trans }} *</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="name-{{ object.id }}" value="{{ object.name }}"
-                               required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputFirstname" class="col-sm-2 control-label">{{ 'object.description'|trans }}
-                        *</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="description-{{ object.id }}"
-                               value="{{ object.description }}" required>
-                    </div>
-                </div>
-            </fieldset>
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <input type="button" id="object-cancel-{{ object.id }}"
-                           onclick="return collapseObject({{ object.id }})" class="btn btn-default"
-                           value="{{ 'button.hide'|trans }}">
-                    <input type="button" id="object-edit-{{ object.id }}"
-                           onclick="return enableObjectForm({{ object.id }})" class="btn btn-default"
-                           value="{{ 'button.edit'|trans }}">
-                    <input type="submit" value="{{ 'button.save'|trans }}" id="object-submit-{{ object.id }}"
-                           class="btn btn-default button-hidden">
-                </div>
+<form id="object-form-{{ object.id }}" role="form" onsubmit="return saveObject({{ object.id }})">
+    <div class="modal-body pl-5 pr-5">
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ object.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
             </div>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
+        </div>
+        <div class="row">
+            <div class="col">                
+                {% include 'Subsidiary/object_form_input_fields.html.twig' %}
+            </div>
+        </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ object.id }}"
+                class="btn btn-primary d-none">
+    </div>
+</form>

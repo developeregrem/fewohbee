@@ -1,35 +1,32 @@
 <div class="modal-body pl-5 pr-5">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col">
-                <h4 class="border-bottom pb-2">{{ 'reservation.preview.customer'|trans }}
-                    <small>
-                    <a href="#" onclick="return editCustomer({{ customer.id }});"
-                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
-                            <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-            </div>
-        </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <dl>
-                        <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
-                        <dd>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</dd>
-                        <dt>{{ 'customer.remark'|trans }}</dt>
-                        <dd>{% if customer.remark %}{{ customer.remark|nl2br }}{% else %} -{% endif %}</dd>
-                    </dl>
-                </div>
-                <div class="col-sm-6">
-                    <dl>
-                        <dt>{{ 'customer.birthday'|trans }}</dt>
-                        <dd>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</dd>
-                    </dl>
-                </div>
-            </div>
-              {% include 'Customers/customer_show_address_fields.html.twig' with {'customer' : customer} %}          
+    <div class="row">
+        <div class="col">
+            <h4 class="border-bottom pb-2">{{ 'reservation.preview.customer'|trans }}
+                <small>
+                <a href="#" onclick="return editCustomer({{ customer.id }});"
+                   title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                        <i class="fas fa-edit"></i></a>
+                </small>
+            </h4>
         </div>
     </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <dl>
+                <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
+                <dd>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</dd>
+                <dt>{{ 'customer.remark'|trans }}</dt>
+                <dd>{% if customer.remark %}{{ customer.remark|nl2br }}{% else %} -{% endif %}</dd>
+            </dl>
+        </div>
+        <div class="col-sm-6">
+            <dl>
+                <dt>{{ 'customer.birthday'|trans }}</dt>
+                <dd>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</dd>
+            </dl>
+        </div>
+    </div>
+          {% include 'Customers/customer_show_address_fields.html.twig' with {'customer' : customer} %}          
 </div>
 
 <form id="customer-form-{{ customer.id }}">
