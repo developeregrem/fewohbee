@@ -1,10 +1,11 @@
+<div id="accordion" class="accordion">
 <div class="card shadow-none p-2">
     {% for address in customer.customerAddresses %}
     <div class="card-body p-0">
       <h6 class="card-title border-bottom text-secondary mouse-pointer pb-2" data-toggle="collapse" data-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
           {{ 'customer.contact'|trans }} ({{ address.type|trans }})
       </h6>
-      <div class="collapse" id="address-{{ address.id }}">
+      <div class="collapse" id="address-{{ address.id }}" data-parent="#accordion">
         <div class="row">
             <div class="col-sm-6">
                     <dl>
@@ -32,4 +33,5 @@
       </div>
     </div>
     {% endfor %}
+</div>
 </div>

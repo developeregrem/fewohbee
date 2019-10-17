@@ -80,7 +80,6 @@
             $(editButton).addClass('button-hidden');
             $(saveButton).removeClass('button-hidden');
             $(formFieldset).removeAttr('disabled');
-            $(birthdayInput).datepicker($.datepicker.regional["{{ app.request.locale }}"]);
 
             return false;
         }
@@ -207,7 +206,7 @@
             $("#modal-content-ajax").html(content);
             $("#modal-content-ajax").load(url, function (response, status, xhr) {
                 if (status == "success") {
-                    $("#birthday-new").datepicker($.datepicker.regional["{{ app.request.locale }}"]);
+                    
                 }
             });
 
