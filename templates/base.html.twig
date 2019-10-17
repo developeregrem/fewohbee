@@ -119,6 +119,19 @@
     {% endblock %}
 
     {% block content %}{% endblock %}
+    <script>
+        class Config {
+            constructor() {
+                this.basePath = '{{ app.request.basepath }}';
+
+                Object.seal(this);
+            }
+        }
+        var config = new Config();
+        var loader = '<img src="'+config.basePath+'/resources/images/ajax-loader.gif" />';
+        var modalLoader = '<div class="modal-body">' + loader + '</div>';
+    </script>
+    {% block bodyjs %}{% endblock %}
 
 {% endblock %}
 </body>

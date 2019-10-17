@@ -56,11 +56,12 @@ class SubsidiaryServiceController extends AbstractController
     public function newObjectAction(CSRFProtectionService $csrf)
     {
         $em = $this->getDoctrine()->getManager();
-
+        $sub = new Subsidiary();
+        $sub->setId("new");
         return $this->render(
             'Subsidiary/object_form_create.html.twig',
             array(
-                'object' => new Subsidiary(),
+                'object' => $sub,
                 'token' => $csrf->getCSRFTokenForForm()
             )
         );
@@ -88,7 +89,7 @@ class SubsidiaryServiceController extends AbstractController
         }
 
         return $this->render(
-            'Subsidiary/object_feedback.html.twig',
+            'feedback.html.twig',
             array(
                 "error" => $error
             )
@@ -117,7 +118,7 @@ class SubsidiaryServiceController extends AbstractController
         }
 
         return $this->render(
-            'Subsidiary/object_feedback.html.twig',
+            'feedback.html.twig',
             array(
                 "error" => $error
             )
@@ -141,7 +142,7 @@ class SubsidiaryServiceController extends AbstractController
         } else {
             // initial get load (ask for deleting)           
             return $this->render(
-                'Subsidiary/object_form_delete.html.twig',
+                'common/form_delete_entry.html.twig',
                 array(
                     "id" => $id,
                     'token' => $csrf->getCSRFTokenForForm()

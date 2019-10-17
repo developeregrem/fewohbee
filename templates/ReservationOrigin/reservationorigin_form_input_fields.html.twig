@@ -1,7 +1,6 @@
-<fieldset
-        id="origin-form-fieldset-primary-{{ origin.id }}" {% if origin.id != "new" %} disabled {% endif %}>
-    <div class="form-group">
-        <label for="name-{{ origin.id }}" class="col-sm-4 control-label">{{ 'reservationorigin.name'|trans }}
+<fieldset id="entry-form-fieldset-{{ origin.id }}" {% if origin.id != "new" %} disabled {% endif %}>
+    <div class="form-group row">
+        <label for="name-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.name'|trans }}
             *</label>
 
         <div class="col-sm-8">
