@@ -9,60 +9,49 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newObjectModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'templates.add'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax"></div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateForm()" data-toggle="modal"
-                            data-target="#newObjectModal">
-                        <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
-                </div>
-                </p>
-                <table class="table table-responsive table-bordered table-hover">
-                    <tr>
-                        <th></th>
-                        <th>{{ 'templates.name'|trans }}</th>
-                        <th>{{ 'base.action'|trans }}</th>
-                    </tr>
-                    {% for template in templates %}
-                        <tr>
-                            <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
-                            <td>{{ template.name }}</td>
-                            <td>
-                                {#<a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#newObjectModal">
-                                    <i onclick="previewEntity({{ template.id }})" class="fas fa-info-circle"></i></a>#}
-                                <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#newObjectModal">
-                                    <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="deleteEntity({{ template.id }})" class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                        <tr id="entity-{{ template.id }}" hidden="true">
-                            <td colspan="2" id="entity-cell-{{ template.id }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+                <button type="button" class="btn btn-default" onclick="showCreateForm()" data-toggle="modal"
+                        data-target="#modalCenter">
+                    <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>{{ 'templates.name'|trans }}</th>
+                    <th>{{ 'base.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for template in templates %}
+                <tr>
+                    <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
+                    <td>{{ template.name }}</td>
+                    <td>
+                        {#<a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                            <i onclick="previewEntity({{ template.id }})" class="fas fa-info-circle"></i></a>#}
+                        <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                            <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}">
+                            <i onclick="deleteEntity({{ template.id }})" class="fas fa-trash-alt"></i></a>
+                    </td>
+                </tr>
+                <tr id="entity-{{ template.id }}" class="d-none">
+                    <td colspan="3" id="entity-cell-{{ template.id }}">
+                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -74,15 +63,15 @@
         cache: false
     });
 
-    function collapseEntity(id) {
+    function collapseEntry(id) {
         var row = "#entity-" + id;
         var cell = "#entity-cell-" + id;
 
         if ($(row).is(':hidden')) {
-            $(row).show();
+            $(row).removeClass('d-none');
             return true;
         } else {
-            $(row).hide();
+            $(row).addClass('d-none');
             $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
             return false;
         }
@@ -91,7 +80,7 @@
     function previewEntity(id) {
         var url = "{{ path('settings.templates.preview', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
-        $("#newObjectModal .modal-title").text("{{ 'templates.preview'|trans }}");
+        $("#modalCenter .modal-title").text("{{ 'templates.preview'|trans }}");
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
@@ -105,7 +94,7 @@
     function editEntity(id) {
         var url = "{{ path('settings.templates.get', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
-        $("#newObjectModal .modal-title").text("{{ 'templates.edit'|trans }}");
+        $("#modalCenter .modal-title").text("{{ 'templates.edit'|trans }}");
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
@@ -145,7 +134,7 @@
     ;
 
     function deleteEntity(id) {
-        if (collapseEntity(id)) {
+        if (collapseEntry(id)) {
             var cell = "#entity-cell-" + id;
             var url = "{{ path('settings.templates.delete', {'id': 'placeholder'}) }}";
             url = url.replace("placeholder", id);
@@ -160,8 +149,8 @@
     }
     ;
 
-    function doDelete(id) {
-        var form = "#entity-form-" + id;
+    function doDeleteEntry(id) {
+        var form = "#entry-form-" + id;
         var url = "{{ path('settings.templates.dodelete', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
 
@@ -186,7 +175,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $("#newObjectModal .modal-title").text("{{ 'templates.add'|trans }}");
+        $("#modalCenter .modal-title").text("{{ 'templates.add'|trans }}");
         $("#modal-content-ajax").html(content);
         $("#modal-content-ajax").load(url, function (response, status, xhr) {
         });
