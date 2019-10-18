@@ -34,7 +34,6 @@ function getContentForModal(url, title, successFunc) {
 function collapseEntry(id) {
     var row = "#entry-" + id;
     var cell = "#entry-cell-" + id;
-
     if ($(row).is(':hidden')) {
         $(row).removeClass('d-none');
         return true;
@@ -58,4 +57,34 @@ function enableEditForm(id) {
     $(formFieldsetPrimary).removeAttr('disabled');
 }
 
+function _deleteEntry(id, url) {
+    if (collapseEntry(id)) {
+        var cell = "#entry-cell-" + id;
+        $(cell).load(url, function (response, status, xhr) {
+            //if(status == "success") location.reload();
+        });
+    }
+    return false;
+}
 
+function _doPost(formId, url, successUrl) {
+    successUrl = successUrl || "";
+    $.ajax({
+        url: url,
+        type: "POST",
+        data: $(formId).serialize(),
+        error: function (xhr, ajaxOptions, thrownError) {
+            alert(xhr.status);
+        },
+        success: function (data) {
+            if(successUrl.length > 0 ) {
+                location.href = successUrl;
+            } else {
+                location.reload();
+            }
+            
+            
+        }
+    });
+    return false;
+}
