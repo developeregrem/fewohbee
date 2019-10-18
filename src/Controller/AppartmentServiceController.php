@@ -55,10 +55,12 @@ class AppartmentServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $appartment = new Appartment();
+        $appartment->setId('new');
 
         return $this->render('Appartments/appartment_form_create.html.twig', array(
             'objects' => $objects,
-            "appartment" => new Appartment(),
+            "appartment" => $appartment,
             'token' => $csrf->getCSRFTokenForForm()
         ));
     }
@@ -86,7 +88,7 @@ class AppartmentServiceController extends AbstractController
             }
         }
 
-        return $this->render('Appartments/appartment_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -115,7 +117,7 @@ class AppartmentServiceController extends AbstractController
             }
         }
 
-        return $this->render('Appartments/appartment_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -135,7 +137,7 @@ class AppartmentServiceController extends AbstractController
             return new Response("ok");
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Appartments/appartment_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

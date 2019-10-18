@@ -1,68 +1,25 @@
-<div class="row">
-    <div class="col-md-11">
-        <form id="appartment-form-{{ appartment.id }}" class="form-horizontal" role="form">
-            <fieldset id="appartment-form-fieldset-{{ appartment.id }}" disabled>
-                <div class="form-group">
-                    <label for="inputFirstname" class="col-sm-2 control-label">{{ 'appartment.number'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="number-{{ appartment.id }}"
-                               value="{{ appartment.number }}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputLastname" class="col-sm-2 control-label">{{ 'appartment.bedsmin'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="bedsmin-{{ appartment.id }}"
-                               value="{{ appartment.bedsmin }}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputEmail" class="col-sm-2 control-label">{{ 'appartment.bedsmax'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="bedsmax-{{ appartment.id }}"
-                               value="{{ appartment.bedsmax }}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputEmail" class="col-sm-2 control-label">{{ 'appartment.description'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="description-{{ appartment.id }}"
-                               value="{{ appartment.description }}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">{{ 'appartment.object'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <select name="object-{{ appartment.id }}" class="form-control">
-                            {% for object in objects %}
-                                {% if object.name == appartment.object %}
-                                    <option value="{{ object.id }}" selected>{{ object.name }}</option>
-                                {% else %}
-                                    <option value="{{ object.id }}">{{ object.name }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </fieldset>
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <input type="button" id="appartment-cancel-{{ appartment.id }}"
-                           onclick="return collapseAppartment({{ appartment.id }})" class="btn btn-default"
-                           value="{{ 'button.hide'|trans }}">
-                    <input type="button" id="appartment-edit-{{ appartment.id }}"
-                           onclick="return enableAppartmentForm({{ appartment.id }})" class="btn btn-default"
-                           value="{{ 'button.edit'|trans }}">
-                    <button id="appartment-submit-{{ appartment.id }}" class="btn btn-default button-hidden"
-                            onclick="return saveAppartment({{ appartment.id }})">{{ 'button.save'|trans }}</button>
-                </div>
+<form id="entry-form-{{ appartment.id }}" role="form" onsubmit="return saveAppartment({{ appartment.id }})">
+    <div class="modal-body pl-5 pr-5">
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ appartment.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
             </div>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
+        </div>
+        <div class="row mt-3">
+            <div class="col"> 
+                {% include 'Appartments/appartment_form_input_fields.html.twig' %}
+            </div>
+        </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ appartment.id }}"
+                class="btn btn-primary d-none">
+    </div>            
+</form>
