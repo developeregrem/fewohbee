@@ -12,7 +12,7 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-default" onclick="showCreatePriceForm()" data-toggle="modal"
+            <button type="button" class="btn btn-secondary" onclick="showCreatePriceForm()" data-toggle="modal"
                     data-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'nav.price.add'|trans }}</button>
         </div>
@@ -117,12 +117,13 @@
         $(formFieldsetPrimary).removeAttr('disabled');
         $(formFieldsetSecondary).removeAttr('disabled');
 
-        $("#seasonstart-" + id).datepicker(fromOptions(id));
-        $("#seasonend-" + id).datepicker(endOptions(id));
-
         return false;
     }
     ;
+    
+    function showCreatePriceForm() {
+        getContentForModal("{{ path('prices.new.price') }}");
+    }
     
     function getEntity(id) {
         let url = replacePlaceholder("{{ path('prices.get.price', {'id': 'placeholder'}) }}", id);
@@ -149,10 +150,6 @@
     function doDeleteEntry(id) {
         let url = replacePlaceholder("{{ path('prices.dodelete.price', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
-    }
-
-    function showCreatePriceForm() {
-        getContentForModal("{{ path('prices.new.price') }}");
     }
 
     function createNewPrice() {
