@@ -36,7 +36,7 @@
                             <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
                                 <i onclick="editEntry({{ object.id }})" class="fas fa-edit"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="deleteObject({{ object.id }})" class="fas fa-trash-alt"></i></a>
+                                <i onclick="deleteEntry({{ object.id }})" class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>
                     <tr id="entry-{{ object.id }}" class="d-none">
@@ -81,60 +81,20 @@
         });
         
     }
-
+    
     function saveObject(id) {
-        var form = "#object-form-" + id;
-        var url = "{{ path('objects.edit.object', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                location.reload();
-            }
-        });
-
-        return false;
+        let url = replacePlaceholder("{{ path('objects.edit.object', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
     }
 
-    function deleteObject(id) {
-        if (collapseEntry(id)) {
-            var cell = "#entry-cell-" + id;
-            var url = "{{ path('objects.delete.object', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $(cell).load(url, function (response, status, xhr) {
-                //if(status == "success") location.reload();
-            });
-        }
-
-
-        return false;
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('objects.delete.object', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
     }
 
     function doDeleteEntry(id) {
-        var form = "#entry-form-" + id;
-        var url = "{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                location.reload();
-            }
-        });
-
-        return false;
+        let url = replacePlaceholder("{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
     }
 
     function showCreateObjectForm() {
@@ -147,7 +107,7 @@
         $.ajax({
             url: url,
             type: "post",
-            data: $("#object-form-new").serialize(),
+            data: $("#entry-form-new").serialize(),
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(xhr.status);
             },

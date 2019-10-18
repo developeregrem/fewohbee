@@ -101,7 +101,7 @@ class PriceServiceController extends AbstractController
             }
         }
 
-        return $this->render('Prices/price_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -127,7 +127,7 @@ class PriceServiceController extends AbstractController
             }
         }
 
-        return $this->render('Prices/price_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -142,7 +142,7 @@ class PriceServiceController extends AbstractController
             return new Response("ok");
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Prices/price_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

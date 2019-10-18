@@ -38,11 +38,11 @@
                         <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
                             <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
                         <a href="#" title="{{ 'button.delete'|trans }}">
-                            <i onclick="deleteEntity({{ template.id }})" class="fas fa-trash-alt"></i></a>
+                            <i onclick="deleteEntry({{ template.id }})" class="fas fa-trash-alt"></i></a>
                     </td>
                 </tr>
-                <tr id="entity-{{ template.id }}" class="d-none">
-                    <td colspan="3" id="entity-cell-{{ template.id }}">
+                <tr id="entry-{{ template.id }}" class="d-none">
+                    <td colspan="3" id="entry-cell-{{ template.id }}">
                         <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                     </td>
                 </tr>
@@ -67,20 +67,10 @@
 {% endblock %}
 {% block bodyjs %}
     {{ parent() }}
-    <script>
-        console.log(config.basePath);
-    function collapseEntry(id) {
-        var row = "#entity-" + id;
-        var cell = "#entity-cell-" + id;
-
-        if ($(row).is(':hidden')) {
-            $(row).removeClass('d-none');
-            return true;
-        } else {
-            $(row).addClass('d-none');
-            $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-            return false;
-        }
+    <script>    
+        
+    function showCreateForm() {
+        getContentForModal("{{ path('settings.templates.new') }}");
     }
     
     function previewEntity(id) {
@@ -93,7 +83,16 @@
         getContentForModal(url, "{{ 'templates.edit'|trans }}");
     }
 
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('settings.templates.delete', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
+    }
 
+    function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('settings.templates.dodelete', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
+    
     function saveEntity(id) {
         var form = "#template-form-" + id;
         var url = "{{ path('settings.templates.edit', {'id': 'placeholder'}) }}";
@@ -119,58 +118,6 @@
 
         return false;
     }
-    ;
-
-    function deleteEntity(id) {
-        if (collapseEntry(id)) {
-            var cell = "#entity-cell-" + id;
-            var url = "{{ path('settings.templates.delete', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $(cell).load(url, function (response, status, xhr) {
-                //if(status == "success") location.reload();
-            });
-        }
-
-
-        return false;
-    }
-    ;
-
-    function doDeleteEntry(id) {
-        var form = "#entry-form-" + id;
-        var url = "{{ path('settings.templates.dodelete', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                location.reload();
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function showCreateForm() {
-        var url = "{{ path('settings.templates.new') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $("#modalCenter .modal-title").text("{{ 'templates.add'|trans }}");
-        $("#modal-content-ajax").html(content);
-        $("#modal-content-ajax").load(url, function (response, status, xhr) {
-        });
-
-        return false;
-    }
-    ;
 
     function createNewEntity() {
         var url = "{{ path('settings.templates.create')}}";
@@ -178,7 +125,7 @@
         $.ajax({
             url: url,
             type: "post",
-            data: $("#template-form-new").serialize(),
+            data: $("#entry-form-new").serialize(),
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(xhr.status);
             },

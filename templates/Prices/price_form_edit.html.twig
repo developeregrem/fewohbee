@@ -1,19 +1,25 @@
-<div class="row">
-    <div class="col-sm-7">
-        <form id="price-form-{{ price.id }}" class="form-horizontal" role="form"
-              onsubmit="return savePrice({{ price.id }})">
-            {% include 'Prices/price_form_input_fields.html.twig' %}
-
-            <div class="form-group">
-                <div class="col-sm-10">
-                    <input type="button" id="price-cancel-{{ price.id }}" onclick="return collapsePrice({{ price.id }})"
-                           class="btn btn-default" value="{{ 'button.hide'|trans }}">
-                    <input type="button" id="price-edit-{{ price.id }}" onclick="return enablePriceForm({{ price.id }})"
-                           class="btn btn-default" value="{{ 'button.edit'|trans }}">
-                    <input type="submit" value="{{ 'button.save'|trans }}" id="price-submit-{{ price.id }}"
-                           class="btn btn-primary button-hidden">
-                </div>
+<form id="entry-form-{{ price.id }}" role="form" onsubmit="return savePrice({{ price.id }})">
+<div class="modal-body pl-5 pr-5">
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ price.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
             </div>
-        </form>
+        </div>
+        <div class="row mt-3">
+            <div class="col"> 
+                {% include 'Prices/price_form_input_fields.html.twig' %}
+            </div>
+        </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ price.id }}"
+                class="btn btn-primary d-none">
+    </div>
+</form>
