@@ -53,11 +53,13 @@ class UserServiceController extends AbstractController
     public function newUserAction(CSRFProtectionService $csrf)
     {
         $em = $this->getDoctrine()->getManager();
-		$roles = $em->getRepository(Role::class)->findAll();
+        $roles = $em->getRepository(Role::class)->findAll();
+        $user = new User();
+        $user->setId('new');
 
         return $this->render('Users/user_form_create.html.twig', array(
             'roles' => $roles,
-            'user' => new User(),
+            'user' => $user,
             'token' => $csrf->getCSRFTokenForForm()
         ));
     }
@@ -76,11 +78,13 @@ class UserServiceController extends AbstractController
                 $this->addFlash('warning', 'user.flash.username.na');
                 $error = true;
             } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0
-                || strlen($user->getEmail()) == 0 || strlen($user->getPassword()) == 0
-            ) {
+                || strlen($user->getEmail()) == 0 || strlen($user->getPassword()) == 0) {
                 // check for mandatory fields
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
+            } else if(!$userService->checkPassword($request->get("password-new"))) {
+                $error = true;
+                $this->addFlash('warning', 'user.password.error');
             } else {
                 $em->persist($user);
                 $em->flush();
@@ -90,29 +94,40 @@ class UserServiceController extends AbstractController
             }
         }
 
-        return $this->render('Users/user_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
 
     public function editUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
-    {
-        $em = $this->getDoctrine()->getManager();
-		$error = false;
+    {        
+        $error = false;
         if (($csrf->validateCSRFToken($request))) {
-            $userem = $em->getRepository(User::class);
-
             $user = $userService->getUserFromForm($request, $id);
+            $em = $this->getDoctrine()->getManager();
+            
+            if(!$userService->checkPassword($request->get("password-".$id))) {
+                $error = true;
+                $this->addFlash('warning', 'user.password.error');
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($user);
+                // check for mandatory fields
+            } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0
+                || strlen($user->getEmail()) == 0) {        
+                $error = true;
+                $this->addFlash('warning', 'flash.mandatory');
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($user);
+            } else {
+                $em->persist($user);
+                $em->flush();
 
-            $em->persist($user);
-            $em->flush();
-
-            // add succes message
-            $this->addFlash('success', 'user.flash.edit.success');
-
+                // add succes message
+                $this->addFlash('success', 'user.flash.edit.success');
+            }
         }
 
-        return $this->render('Users/user_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -127,7 +142,7 @@ class UserServiceController extends AbstractController
             return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)
-            return $this->render('Users/user_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

@@ -65,6 +65,19 @@ class User implements UserInterface, \Serializable, EquatableInterface
     {
         return $this->id;
     }
+    
+    /**
+     * Set id
+     *
+     * @param int $id
+     * @return User
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
 
     public function setUsername($username)
     {
@@ -134,7 +147,7 @@ class User implements UserInterface, \Serializable, EquatableInterface
     public function getRole()
     {
 
-        return $this->role->getName();
+        return $this->role;
     }
 
     public function setRole($role)

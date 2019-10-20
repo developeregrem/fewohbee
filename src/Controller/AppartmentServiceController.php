@@ -104,8 +104,7 @@ class AppartmentServiceController extends AbstractController
 
             // check for mandatory fields
             if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMin()) == 0 || strlen($appartment->getBedsMax()) == 0
-                || strlen($appartment->getDescription()) == 0
-            ) {
+                || strlen($appartment->getDescription()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values

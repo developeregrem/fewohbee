@@ -1,0 +1,78 @@
+<fieldset id="entry-form-fieldset-{{ user.id }}" {% if user.id != "new" %} disabled {% endif %}>
+    
+    <div class="form-group row">
+        <label for="inputUsername" class="col-sm-4 col-form-label text-right">{{ 'user.username'|trans }} *</label>
+        <div class="col-sm">
+            {% if user.id != "new" %}            
+            <input type="text" class="form-control-plaintext" name="username-new" value="{{ user.username }}" readonly>
+            {% else %}
+            <input type="text" class="form-control" name="username-{{ user.id }}" required>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="form-group row">
+        <label for="firstname-{{ user.id }}" class="col-sm-4 col-form-label text-right">{{ 'user.firstname'|trans }} *</label>
+        <div class="col-sm">
+            <input type="text" class="form-control" name="firstname-{{ user.id }}"
+                   value="{{ user.firstname }}" required>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="lastname-{{ user.id }}" class="col-sm-4 col-form-label text-right">{{ 'user.lastname'|trans }} *</label>
+        <div class="col-sm">
+            <input type="text" class="form-control" name="lastname-{{ user.id }}"
+                   value="{{ user.lastname }}" required>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="email-{{ user.id }}" class="col-sm-4 col-form-label text-right">{{ 'user.email'|trans }} *</label>
+        <div class="col-sm">
+            <input type="email" class="form-control" name="email-{{ user.id }}" value="{{ user.email }}"
+                   required>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="password-{{ user.id }}" class="col-sm-4 col-form-label text-right">{{ 'user.password'|trans }}</label>
+        <div class="col-sm">
+            <input type="password" class="form-control" name="password-{{ user.id }}" placeholder="{{ 'user.password'|trans }}" aria-describedby="passwordHelpBlock">
+            <small id="passwordHelpBlock" class="form-text text-muted">
+                {{ 'user.password.hint'|trans }}
+            </small>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label for="role-{{ user.id }}" class="col-sm-4 col-form-label text-right">{{ 'user.role'|trans }}</label>
+        <div class="col-sm">
+            <select name="role-{{ user.id }}" class="form-control">
+                {% for role in roles %}
+                    {% if user.id != "new" and role.name == user.role.name %}
+                        <option value="{{ role.id }}" selected>{{ role.name }}</option>
+                    {% else %}
+                        <option value="{{ role.id }}">{{ role.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% if user.id != "new" %}
+    <div class="form-group row">
+        <label for="inputPassword" class="col-sm-4 col-form-label text-right">{{ 'user.lastaction'|trans }}</label>
+        <div class="col-sm">
+            {% if user.lastaction != null %}
+                <label class="col-form-label text-right">{{ user.lastaction|date('Y-m-d H:i:s') }}</label>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    <div class="form-group row">
+        <div class="col-sm-4"></div>
+        <div class="col-sm">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" name="active-{{ user.id }}" id="active-{{ user.id }}" 
+                   class="custom-control-input"{% if user.active == true %} checked {% endif %} value="1">
+            <label class="custom-control-label " for="active-{{ user.id }}">{{ 'user.active'|trans }}</label>
+        </div>
+    </div>
+    <input name="_csrf_token" value="{{ token }}" type="hidden">
+</fieldset>

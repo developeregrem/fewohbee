@@ -1,89 +1,27 @@
-<div class="row">
-    <div class="col-md-11">
-        <form id="user-form-{{ user.id }}" class="form-horizontal" role="form"
-              onsubmit="return saveUser({{ user.id }})">
-            <div class="form-group">
-                <label for="inputUsername" class="col-sm-2 control-label">{{ 'user.username'|trans }}</label>
-
-                <div class="col-sm-5">
-                    <input type="text" class="form-control" name="username-{{ user.id }}" value="{{ user.username }}"
-                           disabled>
-                </div>
+<form id="entry-form-{{ user.id }}" role="form" onsubmit="return saveUser({{ user.id }})">
+    <div class="modal-body pl-5 pr-5">
+        <div class="row" id="flash-message-overlay">
+        </div>
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ user.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
             </div>
-            <fieldset id="user-form-fieldset-{{ user.id }}" disabled>
-                <div class="form-group">
-                    <label for="inputFirstname" class="col-sm-2 control-label">{{ 'user.firstname'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="firstname-{{ user.id }}"
-                               value="{{ user.firstname }}" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputLastname" class="col-sm-2 control-label">{{ 'user.lastname'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="text" class="form-control" name="lastname-{{ user.id }}"
-                               value="{{ user.lastname }}" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputEmail" class="col-sm-2 control-label">{{ 'user.email'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="email" class="form-control" name="email-{{ user.id }}" value="{{ user.email }}"
-                               required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputPassword" class="col-sm-2 control-label">{{ 'user.password'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <input type="password" class="form-control" name="password-{{ user.id }}"
-                               placeholder="Passwort">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">{{ 'user.role'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        <select name="role-{{ user.id }}" class="form-control">
-                            {% for role in roles %}
-                                {% if role.name == user.role %}
-                                    <option value="{{ role.id }}" selected>{{ role.name }}</option>
-                                {% else %}
-                                    <option value="{{ role.id }}">{{ role.name }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputPassword" class="col-sm-2 control-label">{{ 'user.lastaction'|trans }}</label>
-
-                    <div class="col-sm-5">
-                        {% if user.lastaction != null %}
-                            <label class="control-label">{{ user.lastaction|date('Y-m-d H:i:s') }}</label>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputPassword" class="col-sm-2 control-label">{{ 'user.active'|trans }}</label>
-                    <input name="active-{{ user.id }}" type="checkbox"
-                           value="1" {% if user.active == true %} checked {% endif %}>
-                </div>
-            </fieldset>
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <input type="button" id="user-cancel-{{ user.id }}" onclick="return collapseUser({{ user.id }})"
-                           class="btn btn-default" value="{{ 'button.hide'|trans }}">
-                    <input type="button" id="user-edit-{{ user.id }}" onclick="return enableUserForm({{ user.id }})"
-                           class="btn btn-default" value="{{ 'button.edit'|trans }}">
-                    <input type="submit" value="{{ 'button.save'|trans }}" id="user-submit-{{ user.id }}"
-                           class="btn btn-default button-hidden">
-                </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col"> 
+                {% include 'Users/user_form_input_fields.html.twig' %}
             </div>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
+        </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ user.id }}"
+                class="btn btn-primary d-none">
+    </div>
+</form>
