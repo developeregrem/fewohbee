@@ -1,7 +1,7 @@
 <fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
     <div id="accordion" class="accordion">
         <div class="card">
-            <div class="card-header p-0 text-dark" id="headingOne-{{ price.id }}">
+            <div class="card-header p-0" id="headingOne-{{ price.id }}">
                 <h6 class="border-bottom mb-0">
                     <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
                         {{ 'price.collapsable.group.1.description'|trans }}

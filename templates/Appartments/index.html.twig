@@ -104,25 +104,8 @@
     }
 
     function createNewAppartment() {
-        var url = "{{ path('appartments.create.appartment')}}";
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#entry-form-new").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('appartments.overview') }}";
-                }
-            }
-        });
-
+        let url = "{{ path('appartments.create.appartment')}}";
+        _doPost('#entry-form-new', url, '{{ path('appartments.overview') }}');
         return false;
     }
     </script>

@@ -134,13 +134,15 @@ class TemplatesServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $template = $ts->getEntityFromForm($request, $id);
+            $em = $this->getDoctrine()->getManager();
 
             // check for mandatory fields
             if (strlen($template->getName()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $em = $this->getDoctrine()->getManager();
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($template);
+            } else {                
                 $em->persist($template);
                 $em->flush();
 
@@ -169,7 +171,7 @@ class TemplatesServiceController extends AbstractController
                     $this->addFlash('success', 'templates.flash.delete.success');
                 }
             }
-            return new Response('ok');
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
             return $this->render('common/form_delete_entry.html.twig', array(
