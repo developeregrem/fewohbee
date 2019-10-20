@@ -162,13 +162,15 @@
         <div class="card mt-1">
             <div class="card-header p-0" id="headingThree-{{ price.id }}">
                 <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
+                    <button type="button" class="btn btn-link {% if price.id == "new" or price.type != 2 %} disabled {% endif %}" 
+                            data-toggle="collapse" data-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
                         {{ 'price.collapsable.group.3.description'|trans }}
                     </button>
                 </h6>
             </div>
             <div id="collapseThree-{{ price.id }}" class="collapse" aria-labelledby="headingThree-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
+                    <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
                     <div class="form-group row">
                         <label for="inputNumberOfPersons"
                                class="col-sm-4 col-form-label text-right">{{ 'price.numberofpersons'|trans }} *</label>
@@ -195,6 +197,8 @@
                                    value="{{ price.minstay }}">
                         </div>
                     </div>
+                    <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'price.appartment.hint'|trans }}</span>
+                    </fieldset>
                 </div>
             </div>
         </div>    
