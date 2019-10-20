@@ -57,6 +57,12 @@ function enableEditForm(id) {
     $(formFieldsetPrimary).removeAttr('disabled');
 }
 
+/**
+ * Initiates the delete process and shows the question whether to delete the entry or not
+ * @param {int} id
+ * @param {string} url
+ * @returns {Boolean}
+ */
 function _deleteEntry(id, url) {
     if (collapseEntry(id)) {
         var cell = "#entry-cell-" + id;
@@ -67,6 +73,15 @@ function _deleteEntry(id, url) {
     return false;
 }
 
+/**
+ * Performs a post request with data from the given form id
+ * if a validation error occurs the warning will be displayed in the modal itself
+ * if success a realod is performed
+ * @param {string} formId
+ * @param {string} url
+ * @param {string} successUrl
+ * @returns {Boolean}
+ */
 function _doPost(formId, url, successUrl) {
     successUrl = successUrl || "";
     $.ajax({

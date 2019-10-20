@@ -58,6 +58,14 @@
                 <source>user.lastaction</source>
                 <target>Letzte Aktion</target>
             </trans-unit>
+            <trans-unit id="16">
+                <source>user.password.hint</source>
+                <target>Das Passwort muss mind. 8 Zeichen lang sein.</target>
+            </trans-unit>
+            <trans-unit id="17">
+                <source>user.password.error</source>
+                <target>Dein Passwort ist möglicherweise zu kurz.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

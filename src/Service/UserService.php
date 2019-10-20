@@ -23,7 +23,7 @@ class UserService
 
     private $em = null;
     private $app;
-	private $encoder;
+    private $encoder;
 
     public function __construct(UserPasswordEncoderInterface $encoder, EntityManagerInterface $em)
     {
@@ -45,7 +45,7 @@ class UserService
 
         $formPassword = $request->get("password-" . $id);
         if (!empty($formPassword)) {
-			$encoded = $this->encoder->encodePassword($user, $request->get("password-" . $id));
+            $encoded = $this->encoder->encodePassword($user, $request->get("password-" . $id));
             $user->setPassword($encoded);
         }
 
@@ -63,6 +63,15 @@ class UserService
         $user->setRole($role);
 
         return $user;
+    }
+    
+    public function checkPassword($password) {
+        if (!empty($password)) {
+            if(strlen($password) < 8) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public function deleteUser($id)
