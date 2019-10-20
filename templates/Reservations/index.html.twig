@@ -8,42 +8,65 @@
     {{ parent() }} -  Reservierungsverwaltung
 {% endblock %}
 
-{% block content %}
-<div class="container">
-    <form id="table-filter" class="form-inline" role="form" onsubmit="return getNewTable()">
-        <div class="row">
-            <input type="date" class="form-control mb-2 mr-sm-2 " id="start" name="start" value="{{ today|date('Y-m-d') }}" />
-            <select name="intervall" class="custom-select mb-2 mr-sm-2">
-                <option value="8"{% if "8" == interval %} selected{% endif %}>
-                    8 {{ 'reservation.days'|trans }}</option>
-                <option value="15"{% if "15" == interval %} selected{% endif %}>
-                    15 {{ 'reservation.days'|trans }}</option>
-                <option value="22"{% if "22" == interval %} selected{% endif %}>
-                    22 {{ 'reservation.days'|trans }}</option>
-                <option value="30"{% if "30" == interval %} selected{% endif %}>
-                    30 {{ 'reservation.days'|trans }}</option>
-            </select>
-
-            <button type="submit" class="btn btn-secondary mb-2 mr-sm-2">
-                <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
-            </button>
-            <button type="button" class="btn btn-secondary mb-2 mr-sm-2" onclick="return selectAppartment(true)"
-                    data-toggle="modal" data-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
-            </button>
+{% block flashMessage %}
+    <div class="container-fluid mt-3">
+        <div class="row" id="flash-message-container">
+            {% for type, flashMessages in app.flashes %}
+                {% for flashMessage in flashMessages %}
+                    <div class="col">
+                        <div class="alert alert-{{ type }} alert-dismissable">
+                            <button type="button" class="close" data-dismiss="alert"
+                                    aria-hidden="true">&times;</button>
+                            {{ flashMessage|trans }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
         </div>
-        <div class="row ml-auto">
-            <select id="objects" name="object" class="custom-select mb-2 mr-sm-2">
+    </div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <form id="table-filter" role="form" onsubmit="return getNewTable()">
+        <div class="row">
+            <div class="col-md-auto">
+                <input type="date" class="form-control mb-2 mr-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
+            </div>
+                <div class="col-md-auto">
+                <select name="intervall" class="custom-select mb-2 mr-sm-2">
+                    <option value="8"{% if "8" == interval %} selected{% endif %}>
+                        8 {{ 'reservation.days'|trans }}</option>
+                    <option value="15"{% if "15" == interval %} selected{% endif %}>
+                        15 {{ 'reservation.days'|trans }}</option>
+                    <option value="22"{% if "22" == interval %} selected{% endif %}>
+                        22 {{ 'reservation.days'|trans }}</option>
+                    <option value="30"{% if "30" == interval %} selected{% endif %}>
+                        30 {{ 'reservation.days'|trans }}</option>
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-secondary mb-2 mr-sm-2 float-left">
+                    <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
+                </button>
+                <button type="button" class="btn btn-secondary mb-2 mr-sm-2" onclick="return selectAppartment(true)"
+                        data-toggle="modal" data-target="#modalCenter">
+                    <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
+                </button>
+            </div>
+            <div class="col-md-2 text-right ml-auto">
+                <select id="objects" name="object" class="form-control">
                 <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                 {% for object in objects %}
                     <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
                 {% endfor %}
             </select>
+            </div>
         </div>
     </form>
-
-    <div class="row" id="table-ajax">
-        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+    <div class="row mt-2" >
+        <div class="col" id="table-ajax">
+            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+        </div>
     </div>
 </div>
 {% endblock %}

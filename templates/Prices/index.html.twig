@@ -103,23 +103,6 @@
     $.ajaxSetup({
         cache: false
     });
-
-
-    function enablePriceForm(id) {
-        var formFieldsetPrimary = "#price-form-fieldset-primary-" + id;
-        var formFieldsetSecondary = "#price-form-fieldset-secondary-" + id;
-        var cancelButton = "#price-cancel-" + id;
-        var editButton = "#price-edit-" + id;
-        var saveButton = "#price-submit-" + id;
-        $(cancelButton).html('Abbrechen');
-        $(editButton).addClass('button-hidden');
-        $(saveButton).removeClass('button-hidden');
-        $(formFieldsetPrimary).removeAttr('disabled');
-        $(formFieldsetSecondary).removeAttr('disabled');
-
-        return false;
-    }
-    ;
     
     function showCreatePriceForm() {
         getContentForModal("{{ path('prices.new.price') }}");
@@ -159,15 +142,17 @@
     }
 
     function checkIfTypeIsAppartment(id) {
-        if ($('#type-' + id).val() === 2) {
+        if ($('#type-' + id).val() === "2") {
             $('#price-form-fieldset-type-appartment-' + id).removeAttr('disabled');
             $('#collapseThree-' + id).removeClass('collapse');
+            $('#headingThree-' + id + ' button').removeClass('disabled');
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').attr('required', true);
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').attr('required', true);
             $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').attr('required', true);
         } else {
             $('#price-form-fieldset-type-appartment-' + id).attr('disabled', true);
             $('#collapseThree-' + id).addClass('collapse');
+            $('#headingThree-' + id + ' button').addClass('disabled');
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').removeAttr('required');
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').removeAttr('required');
             $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').removeAttr('required');

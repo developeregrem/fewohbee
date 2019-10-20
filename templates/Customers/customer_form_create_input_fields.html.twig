@@ -347,7 +347,7 @@
                     type: "post",
                     data: {plz: $elm.val()},
                     beforeSend: function () {
-                        $elm.parents(".panel-body").find("input[name^='city-']")
+                        $elm.parents(".card-body").find("input[name^='city-']")
                                 .parent().parent().find('label').prepend(content);
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
@@ -357,7 +357,7 @@
                         if($("#lookUpWait").length > 0) {
                             $("#lookUpWait").remove();
                         }
-                        $elm.parents(".panel-body").find("input[name^='city-']").val(data);
+                        $elm.parents(".card-body").find("input[name^='city-']").val(data);
                     }
                 });
             }
