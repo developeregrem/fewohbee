@@ -102,13 +102,15 @@ class SubsidiaryServiceController extends AbstractController
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
             $object = $sub->getObjectFromForm($request, $id);
-
+            $em = $this->getDoctrine()->getManager();
+            
             // check for mandatory fields
             if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $em = $this->getDoctrine()->getManager();
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($object);
+            } else {                
                 $em->persist($object);
                 $em->flush();
 
@@ -138,7 +140,7 @@ class SubsidiaryServiceController extends AbstractController
                 }
             }
 
-            return new Response("ok");
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
             return $this->render(

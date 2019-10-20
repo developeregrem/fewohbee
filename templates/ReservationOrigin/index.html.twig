@@ -102,25 +102,8 @@
     }
 
     function createNewOrigin() {
-        var url = "{{ path('reservationorigin.create.origin')}}";
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#entry-form-new").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('reservationorigin.overview') }}";
-                }
-            }
-        });
-
+        let url = "{{ path('reservationorigin.create.origin')}}";
+        _doPost('#entry-form-new', url, '{{ path('reservationorigin.overview') }}');
         return false;
     }
     </script>

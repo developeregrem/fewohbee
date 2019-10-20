@@ -102,25 +102,8 @@
     }
 
     function createNewObject() {
-        var url = "{{ path('objects.create.object')}}";
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#entry-form-new").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('objects.overview') }}";
-                }
-            }
-        });
-
+        let url = "{{ path('objects.create.object')}}";
+        _doPost('#entry-form-new', url, '{{ path('objects.overview') }}');
         return false;
     }
     </script>

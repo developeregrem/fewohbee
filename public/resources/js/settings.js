@@ -77,13 +77,14 @@ function _doPost(formId, url, successUrl) {
             alert(xhr.status);
         },
         success: function (data) {
-            if(successUrl.length > 0 ) {
+            if (data && data.length > 0) {
+                $("#flash-message-overlay").empty();
+                $("#flash-message-overlay").append(data);
+            } else if(successUrl.length > 0 ) {
                 location.href = successUrl;
             } else {
                 location.reload();
             }
-            
-            
         }
     });
     return false;

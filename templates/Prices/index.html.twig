@@ -153,28 +153,10 @@
     }
 
     function createNewPrice() {
-        var url = "{{ path('prices.create.price')}}";
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#entry-form-new").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('prices.overview') }}";
-                }
-            }
-        });
-
+        let url = "{{ path('prices.create.price')}}";
+        _doPost('#entry-form-new', url, '{{ path('prices.overview') }}');
         return false;
     }
-    ;
 
     function checkIfTypeIsAppartment(id) {
         if ($('#type-' + id).val() === 2) {

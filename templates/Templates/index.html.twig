@@ -94,51 +94,16 @@
     }
     
     function saveEntity(id) {
-        var form = "#template-form-" + id;
-        var url = "{{ path('settings.templates.edit', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
+        let url = replacePlaceholder("{{ path('settings.templates.edit', {'id': 'placeholder'}) }}", id);
         $("#editor1").val(tinymce.get("editor1").getContent());
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('settings.templates.overview') }}";
-                }
-            }
-        });
-
+        _doPost('#entry-form-' + id, url, '{{ path('settings.templates.overview') }}');
         return false;
     }
 
     function createNewEntity() {
         var url = "{{ path('settings.templates.create')}}";
         $("#editor1").val(tinymce.get("editor1").getContent());
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#entry-form-new").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('settings.templates.overview') }}";
-                }
-            }
-        });
-
+        _doPost('#entry-form-new', url, '{{ path('settings.templates.overview') }}');
         return false;
     }
     </script>

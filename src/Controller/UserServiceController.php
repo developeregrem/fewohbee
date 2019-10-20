@@ -124,7 +124,7 @@ class UserServiceController extends AbstractController
                 $user = $userService->deleteUser($id);
                 $this->addFlash('success', 'user.flash.delete.success');
             }
-            return new Response("ok");
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)
             return $this->render('Users/user_form_delete.html.twig', array(

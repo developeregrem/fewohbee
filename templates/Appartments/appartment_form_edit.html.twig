@@ -1,5 +1,7 @@
 <form id="entry-form-{{ appartment.id }}" role="form" onsubmit="return saveAppartment({{ appartment.id }})">
     <div class="modal-body pl-5 pr-5">
+        <div class="row" id="flash-message-overlay">
+        </div>
         <div class="row" id="edit-button-area">
             <div class="col">
                 <h4 class="pb-2">
