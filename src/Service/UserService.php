@@ -44,7 +44,7 @@ class UserService
         }
 
         $formPassword = $request->get("password-" . $id);
-        if (!empty($formPassword)) {
+        if (!empty($formPassword) && $this->checkPassword($formPassword)) {
             $encoded = $this->encoder->encodePassword($user, $request->get("password-" . $id));
             $user->setPassword($encoded);
         }
