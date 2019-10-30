@@ -109,15 +109,14 @@ class UserServiceController extends AbstractController
             if(!$userService->checkPassword($request->get("password-".$id))) {
                 $error = true;
                 $this->addFlash('warning', 'user.password.error');
-                // stop auto commit of doctrine with invalid field values
-                $em->detach($user);
                 // check for mandatory fields
             } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0
                 || strlen($user->getEmail()) == 0) {        
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($user);
+                // this results in an error when the current user edit themself
+                //$em->detach($user);
             } else {
                 $em->persist($user);
                 $em->flush();
