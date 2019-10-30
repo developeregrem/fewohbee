@@ -56,6 +56,10 @@ Now, you are ready to open a browser, navigate to the installation folder e.g.
 http://localhost/pve/public/index.php
 and login with the user created in the step before.
 
+## Using Docker
+
+To run the application using docker a pre-configured docker-compose setup is available. Please refer to the documentation in the Wiki: [Docker-Setup](https://github.com/developeregrem/pve/wiki/Docker-Setup)
+
 ## i18n
 
 The tool has multi language support by design. However, at the moment there is only a German translation available. Some features like the cash book are optimized for the use in Germany.
