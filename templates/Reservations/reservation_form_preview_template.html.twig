@@ -1,11 +1,11 @@
 <div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
+    <div class="pl-5 pr-5">
+        <div class="row">
+            <div class="col" id="flash-message-overlay">
             </div>
         </div>
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
+            <div class="col">
                 {% if template.templateType.name == 'TEMPLATE_RESERVATION_EMAIL' %}
                     {% include 'Reservations/reservation_form_preview_template_email.html.twig' %}
                 {% elseif template.templateType.name == 'TEMPLATE_FILE_PDF' or template.templateType.name == 'TEMPLATE_RESERVATION_PDF'%}
@@ -16,10 +16,10 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return selectTemplateForReservations()"><a
-                    href="#">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>   
+    <ul class="pagination mr-auto">
+        <li class="page-item " onclick="return selectTemplateForReservations()">
+            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+    </ul>  
 </div>
 <script>
     $(function()

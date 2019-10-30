@@ -11,14 +11,6 @@
     visibility: hidden;
 }
 
-.ui-widget {
-    font-size: 1.0em;
-}
-
-.modal-wide {
-    width: 800px;
-}
-
 .two-td-left {
     border-right: none !important;
 }
@@ -30,7 +22,7 @@
 .reservation {
     border-left: none !important;
     border-right: none !important;
-    padding: 4px 2px !important;
+    padding: 8px 2px !important;
 }
 
 .reservation-inner {
@@ -53,37 +45,6 @@
     background-color: #EEE;
 }
 
-#newReservationPreview .pager,
-#editCustomerSaveButtons .pager {
-    float: left;
-}
-
-#newReservationPreview button,
-#newReservationPreview input,
-#editCustomerSaveButtons button,
-#editCustomerSaveButtons input {
-    margin-top: inherit;
-}
-
-#newInvoicePreview .pager {
-    float: left;
-}
-
-#newInvoicePreview button,
-#newInvoicePreview input {
-    margin-top: inherit;
-}
-
-#customer-selection .btn-primary {
-    margin-right: 15px;
-}
-
-.dl-horizontal > dd:after {
-  display: table;
-  content: "";
-  clear: both;
-}
-
 .mouse-pointer {
     cursor: pointer;
 }
@@ -102,4 +63,9 @@
 /* fix for autocomplete not  shown */
 .ui-front { 
     z-index: 9999; 
+}
+
+/* reduce default font size of labels in modals */
+.modal-body .col-form-label {
+    font-size: 14px;
 }

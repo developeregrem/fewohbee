@@ -1,67 +1,11 @@
-<form id="appartment-form-new" class="form-horizontal" role="form" onsubmit="return createNewAppartment()">
-    <div class="modal-body">
-        <div class="container-fluid">
-            <div class="row" id="flash-message-overlay">
-                <div class="row">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-10 col-md-offset-1">
-                    <div class="form-group">
-                        <label for="inputFirstname" class="col-sm-4 control-label">{{ 'appartment.number'|trans }}
-                            *</label>
-
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="number-new" value="{{ appartment.number }}"
-                                   required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputLastname" class="col-sm-4 control-label">{{ 'appartment.bedsmin'|trans }}
-                            *</label>
-
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="bedsmin-new" value="{{ appartment.bedsmin }}"
-                                   required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputEmail" class="col-sm-4 control-label">{{ 'appartment.bedsmax'|trans }}
-                            *</label>
-
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="bedsmax-new" value="{{ appartment.bedsmax }}"
-                                   required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputEmail" class="col-sm-4 control-label">{{ 'appartment.description'|trans }}
-                            *</label>
-
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="description-new"
-                                   value="{{ appartment.description }}" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputPassword3"
-                               class="col-sm-4 control-label">{{ 'appartment.object'|trans }}</label>
-
-                        <div class="col-sm-8">
-                            <select name="object-new" class="form-control">
-                                {% for object in objects %}
-                                    <option value="{{ object.id }}">{{ object.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <input name="_csrf_token" value="{{ token }}" type="hidden">
-                </div>
-            </div>
+<form id="entry-form-new" role="form" onsubmit="return createNewAppartment()">
+    <div class="modal-body pl-5 pr-5">
+        <div id="flash-message-overlay">
         </div>
+        {% include 'Appartments/appartment_form_input_fields.html.twig' %}
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
 </form>

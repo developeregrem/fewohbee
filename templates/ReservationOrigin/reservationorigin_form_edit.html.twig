@@ -1,19 +1,28 @@
-<div class="row">
-    <div class="col-md-6">
-        <form id="origin-form-{{ origin.id }}" class="form-horizontal" role="form"
-              onsubmit="return saveOrigin({{ origin.id }})">
-            {% include 'ReservationOrigin/reservationorigin_form_input_fields.html.twig' %}
-
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <input type="button" id="origin-cancel-{{ origin.id }}" onclick="return collapseOrigin({{ origin.id }})"
-                           class="btn btn-default" value="{{ 'button.hide'|trans }}">
-                    <input type="button" id="origin-edit-{{ origin.id }}" onclick="return enableOriginForm({{ origin.id }})"
-                           class="btn btn-default" value="{{ 'button.edit'|trans }}">
-                    <input type="submit" value="{{ 'button.save'|trans }}" id="origin-submit-{{ origin.id }}"
-                           class="btn btn-primary button-hidden">
-                </div>
+<form id="entry-form-{{ origin.id }}" role="form" onsubmit="return saveOrigin({{ origin.id }})">
+    <div class="modal-body pl-5 pr-5">
+        <div id="flash-message-overlay">
+        </div>
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ origin.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
             </div>
-        </form>
+        </div>
+        <div class="row">
+            <div class="col">        
+                {% include 'ReservationOrigin/reservationorigin_form_input_fields.html.twig' %}      
+            </div>
+        </div>
     </div>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ origin.id }}"
+                class="btn btn-primary d-none">
+    </div>
+</form>
+

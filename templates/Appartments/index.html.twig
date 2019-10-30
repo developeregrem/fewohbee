@@ -9,65 +9,47 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newAppartmentModal">
-        <div class="modal-dialog">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'nav.appartment.add'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
+    <div class="container">
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateAppartmentForm()"
-                            data-toggle="modal" data-target="#newAppartmentModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.appartment.add'|trans }}</button>
-                </div>
-                </p>
-                <table class="table table-responsive table-bordered table-hover">
+            <div class="col">
+                <button type="button" class="btn btn-secondary" onclick="showCreateAppartmentForm()"
+                        data-toggle="modal" data-target="#modalCenter">
+                    <i class="fas fa-plus"></i> {{ 'nav.appartment.add'|trans }}</button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">    
+                <table class="table table-bordered table-hover">
+                    <thead>
                     <tr>
                         <th>{{ 'appartment.number'|trans }}</th>
                         <th>{{ 'appartment.bedsmin'|trans }}</th>
                         <th>{{ 'appartment.bedsmax'|trans }}</th>
                         <th>{{ 'appartment.action'|trans }}</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     {% for appartment in appartments %}
                         <tr>
                             <td>{{ appartment.number }}</td>
                             <td>{{ appartment.bedsmin }}</td>
                             <td>{{ appartment.bedsmax }}</td>
                             <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span
-                                            onclick="showAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                            onclick="editAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteAppartment({{ appartment.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
+                                <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                    <i onclick="getEntry({{ appartment.id }})" class="fas fa-info-circle"></i></a>
+                                <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                    <i onclick="editEntry({{ appartment.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="deleteEntry({{ appartment.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
-                        <tr id="appartment-{{ appartment.id }}" hidden="true">
-                            <td colspan="6" id="appartment-cell-{{ appartment.id }}">
+                        <tr id="entry-{{ appartment.id }}" class="d-none">
+                            <td colspan="6" id="entry-cell-{{ appartment.id }}">
                                 <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                             </td>
                         </tr>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -76,166 +58,55 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
     <script>
+    $(function() {
         $.ajaxSetup({
             cache: false
         });
+        
+        // the default modal width is used here
+        $("#modalCenter .modal-dialog").removeClass('modal-lg');
+    });        
 
-        function collapseAppartment(id) {
-            var row = "#appartment-" + id;
-            var cell = "#appartment-cell-" + id;
+    function showCreateAppartmentForm() {
+        getContentForModal("{{ path('appartments.new.appartment') }}");
+    }
+    
+    function getEntry(id) {
+        let url = replacePlaceholder("{{ path('appartments.get.appartment', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url);        
+    }
+    
+    function editEntry(id) {
+        let url = replacePlaceholder("{{ path('appartments.get.appartment', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "", function() {
+            enableEditForm(id);
+        });        
+    }
 
-            if ($(row).is(':hidden')) {
-                $(row).show();
-                return true;
-            } else {
-                $(row).hide();
-                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-                return false;
-            }
-        }
-        ;
+    function saveAppartment(id) {
+        let url = replacePlaceholder("{{ path('appartments.edit.appartment', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-        function enableAppartmentForm(id) {
-            var formFieldset = "#appartment-form-fieldset-" + id;
-            var cancelButton = "#appartment-cancel-" + id;
-            var editButton = "#appartment-edit-" + id;
-            var saveButton = "#appartment-submit-" + id;
-            $(cancelButton).html('Abbrechen');
-            $(editButton).addClass('button-hidden');
-            $(saveButton).removeClass('button-hidden');
-            $(formFieldset).removeAttr('disabled');
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
+    }
 
-            return false;
-        }
-        ;
+    function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('appartments.dodelete.appartment', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-        function getAppartment(id, enableForm) {
-            var cell = "#appartment-cell-" + id;
-            var url = "{{ path('appartments.get.appartment', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            if (enableForm) {
-                $(cell).load(url, function (response, status, xhr) {
-                    if (status == "success") enableAppartmentForm(id);
-                });
-            } else {
-                $(cell).load(url);
-            }
-
-            return false;
-        }
-        ;
-
-        function showAppartment(id) {
-            if (collapseAppartment(id)) {
-                getAppartment(id, false);
-            }
-
-            return false;
-        }
-        ;
-
-        function editAppartment(id) {
-            if (collapseAppartment(id)) {
-                getAppartment(id, true);
-            }
-
-            return false;
-        }
-        ;
-
-        function saveAppartment(id) {
-            var form = "#appartment-form-" + id;
-            var url = "{{ path('appartments.edit.appartment', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function deleteAppartment(id) {
-            if (collapseAppartment(id)) {
-                var cell = "#appartment-cell-" + id;
-                var url = "{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}";
-                url = url.replace("placeholder", id);
-
-                $(cell).load(url, function (response, status, xhr) {
-                    //if(status == "success") location.reload();
-                });
-            }
-            return false;
-        }
-        ;
-
-        function doDeleteAppartment(id) {
-            var form = "#appartment-form-" + id;
-            var url = "{{ path('appartments.dodelete.appartment', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function showCreateAppartmentForm() {
-            var url = "{{ path('appartments.new.appartment') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $("#modal-content-ajax").load(url, function (response, status, xhr) {
-            });
-
-            return false;
-        }
-        ;
-
-        function createNewAppartment() {
-            var url = "{{ path('appartments.create.appartment')}}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#appartment-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        window.location.href = "{{ path('appartments.overview') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-        ;
+    function createNewAppartment() {
+        let url = "{{ path('appartments.create.appartment')}}";
+        _doPost('#entry-form-new', url, '{{ path('appartments.overview') }}');
+        return false;
+    }
     </script>
 {% endblock %}

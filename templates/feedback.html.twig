@@ -1,0 +1,20 @@
+{% if error %}    
+    {% for type, flashMessages in app.flashes %}
+        {% for flashMessage in flashMessages %}
+        <div class="row">
+            <div class="col-md">
+                <div class="alert alert-{{ type }} alert-dismissable">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    {{ flashMessage|trans }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endfor %}    
+    {% if attachment is defined %}
+    {#  required when creating a new file as mail attachment in reservation conversations  #}
+    <script>
+        var isTemplateAttachment = true;
+    </script>
+    {% endif %}
+{% endif %}

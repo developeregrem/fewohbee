@@ -1,102 +1,21 @@
-<div class="row">
-    <div class="col-md-10 col-md-offset-1">
-        <p>
-
-        <div class="btn-group btn-group-justified">
-            <div class="btn-group">
-                <button type="button" id="button-filter-time" class="btn btn-primary"
-                        onclick="return showTimeFilter()">{{ 'invoice.open.reservations.filter.time'|trans }}</button>
-            </div>
-            <div class="btn-group">
-                <button type="button" id="button-filter-customer" class="btn btn-default"
-                        onclick="return showCustomerFilter()">{{ 'invoice.open.reservations.filter.customer'|trans }}</button>
-            </div>
-        </div>
-        </p>
-    </div>
-</div>
-<div class="row">
-    <div id="container-invoice-filter-reservations-period" class="col-md-10 col-md-offset-1">
-        <p>
-
-        <form id="invoice-filter-reservations-period" role="form">
-            <div class="form-group col-md-6">
-                <div class="col-md-12">
-                    <input type="input" class="form-control" id="from" name="from"
-                           placeholder="{{ 'invoice.startdate'|trans }}">
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="col-md-12 col-md-6">
-                    <input type="input" class="form-control" id="end" name="end"
-                           placeholder="{{ 'invoice.enddate'|trans }}">
-                </div>
-            </div>
-        </form>
-        </p>
-    </div>
-</div>
-<div class="row">
-    <div id="container-invoice-filter-reservations-customer" class="col-md-10 col-md-offset-1 hidden">
-        <p>
-
-        <form id="invoice-filter-reservations-customer-name" role="form"
-              onsubmit="return getReservationsByCustomerName()">
-            <div class="form-group">
-                <div class="form-group col-md-12">
-                    <div class="col-md-12">
-                        <input type="input" class="form-control" id="lastname" name="lastname"
-                               placeholder="{{ 'invoice.select.customer.search.input.placeholder'|trans }}"
-                               onchange="return getReservationsByCustomerName()">
-                    </div>
-                </div>
-            </div>
-        </form>
-        </p>
-    </div>
-</div>
-<div class="row">
-    <div id="container-invoice-filter-reservations-result" class="col-md-10 col-md-offset-1">
-    </div>
-</div>
-<div class="modal-footer {% if objectContainsReservations == "false" %} hidden {% endif %}">
-    <ul class="pager">
-        <li class="next" onclick="return selectReservation()"><a href="#">{{ 'button.continue'|trans }} &rarr;</a></li>
+{% include 'Reservations/reservation_form_select_reservation_fields.html.twig' %}
+<div class="modal-footer {% if objectContainsReservations == "false" %} d-none {% endif %}">
+    <ul class="pagination ml-auto">
+        <li class="page-item" onclick="return selectReservation()">
+            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
+        </li>
     </ul>
 </div>
 <script>
-    fromOptions = {
-        changeMonth: true,
-        numberOfMonths: 2,
-        regional: "{{ app.request.locale }}",
-        onClose: function (selectedDate) {
-            $("#end").datepicker("option", "minDate", selectedDate);
-
-            if ($("#end").val().length === 0) {
-                var from = $(this).datepicker("getDate");
-                $("#end").datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                $("#from").datepicker("option", "maxDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-            }
-            getReservationsInPeriod();
-        }
-    };
-    endOptions = {
-        changeMonth: true,
-        numberOfMonths: 2,
-        regional: "{{ app.request.locale }}",
-        onClose: function (selectedDate) {
-            $("#from").datepicker("option", "maxDate", selectedDate);
-            getReservationsInPeriod();
-        }
-    }
-
     function getReservationsInPeriod() {
         var url = "{{ path('invoices.get.reservations.in.period') }}";
         var form = "#invoice-filter-reservations-period";
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-
+        
+        iniStartOrEndDate('from', 'end', 1);
+        
         $.ajax({
             url: url,
             type: "post",
@@ -170,29 +89,29 @@
         if ($('#button-filter-time').hasClass('btn-primary')) {
             return false;
         } else {
+            $('#button-filter-time').removeClass('btn-secondary');
             $('#button-filter-time').addClass('btn-primary');
-            $('#container-invoice-filter-reservations-period').removeClass('hidden');
-            $('#container-invoice-filter-reservations-customer').addClass('hidden');
+            $('#container-invoice-filter-reservations-period').removeClass('d-none');
+            $('#container-invoice-filter-reservations-customer').addClass('d-none');
             $('#button-filter-customer').removeClass('btn-primary');
-            $('#button-filter-customer').addClass('btn-default');
+            $('#button-filter-customer').addClass('btn-secondary');
 
             return false;
         }
     }
-    ;
 
     function showCustomerFilter() {
         if ($('#button-filter-customer').hasClass('btn-primary')) {
             return false;
         } else {
+            $('#button-filter-customer').removeClass('btn-secondary');
             $('#button-filter-customer').addClass('btn-primary');
-            $('#container-invoice-filter-reservations-customer').removeClass('hidden');
-            $('#container-invoice-filter-reservations-period').addClass('hidden');
+            $('#container-invoice-filter-reservations-customer').removeClass('d-none');
+            $('#container-invoice-filter-reservations-period').addClass('d-none');
             $('#button-filter-time').removeClass('btn-primary');
-            $('#button-filter-time').addClass('btn-default');
+            $('#button-filter-time').addClass('btn-secondary');
 
             return false;
         }
     }
-    ;
 </script>

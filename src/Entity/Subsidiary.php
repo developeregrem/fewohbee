@@ -24,6 +24,19 @@ class Subsidiary
      * @ORM\OneToMany(targetEntity="Appartment", mappedBy="object")
      */
     private $appartments;
+    
+    /**
+     * Set id
+     *
+     * @param int $id
+     * @return Subsidiary
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
 
     public function getId()
     {

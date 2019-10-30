@@ -1,58 +1,39 @@
 <form id="invoice-number-form" class="form-horizontal" role="form"
       onsubmit="return changeInvoiceNumberSave()">
-    <div class="row">
-        <div class="col-md-10 col-md-offset-1">
-            <div class="row">
-                <div class="col-md-7">
-                    <p>
-                    <div class="form-group">
-                        <label for="salutation" class="col-sm-3 control-label">{{ 'invoice.number.short'|trans }} *</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" id="salutatinumberon" name="number" value="{{ invoice.number }}" required>
-                        </div>
+    <div class="modal-body pl-5 pr-5">
+        <div class="row">
+            <div class="col-md-7">
+                <p>
+                <div class="form-group row">
+                    <label for="salutation" class="col-sm-4 col-form-label">{{ 'invoice.number.short'|trans }} *</label>
+                    <div class="col-sm">
+                        <input type="text" class="form-control" id="salutatinumberon" name="number" value="{{ invoice.number }}" required>
                     </div>
-                    <div class="form-group">
-                        <label for="firstname" class="col-sm-3 control-label">{{ 'invoice.date2'|trans }} *</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" id="date" name="date" value="{{ invoice.date|date("d.m.Y") }}" required>
-                        </div>
+                </div>
+                <div class="form-group row">
+                    <label for="firstname" class="col-sm-4 col-form-label">{{ 'invoice.date2'|trans }} *</label>
+                    <div class="col-sm">
+                        <input type="text" class="form-control" id="date" name="date" value="{{ invoice.date|date("d.m.Y") }}" required>
                     </div>
-                    </p>
                 </div>
-                <div class="col-md-5">
-                    {% for reservation in reservations %}
-                        <p>
-                        <dl class="dl-horizontal">
-                            <dt>{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
-                            <dd></dd>
-                            <dt>{{ 'invoice.startdate'|trans }}</dt>
-                            <dd>{{ reservation.startdate|date('d.m.Y') }}</dd>
-                            <dt>{{ 'invoice.enddate'|trans }}</dt>
-                            <dd>{{ reservation.enddate|date('d.m.Y') }}</dd>
-                            <dt>{{ 'invoice.position.stays'|trans }}</dt>
-                            <dd>{{ get_date_diff_amount(reservation.startdate, reservation.enddate) }}</dd>
-                            <dt>{{ 'invoice.appartment.position.persons'|trans }}</dt>
-                            <dd>{{ reservation.persons }}</dd>
-                            <dt>{{ 'invoice.appartment.position.beds'|trans }}</dt>
-                            <dd>{{ reservation.appartment.bedsmax }}</dd>
-                        </dl>
-                        </p>
-                    {% endfor %}
-                </div>
+                </p>
+            </div>
+            <div class="col-md-5">
+                {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <ul class="pager pull-left">
-            <li class="previous" onclick="
+        <ul class="pagination mr-auto">
+            <li class="page-item " onclick="
                 {% if invoiceId == 'new' %}
                     //return showCreateInvoicePositions('false')
                 {% else %}
                     return showInvoice({{ invoiceId }}, true)
-                {% endif %}
-                    "><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
+                {% endif %}">
+                <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
-        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>
     <input type="hidden" name="invoice-id" value="{{ invoiceId }}" />
     <input name="_csrf_token" value="{{ token }}" type="hidden">

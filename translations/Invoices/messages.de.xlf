@@ -100,7 +100,7 @@
             </trans-unit>
             <trans-unit id="25">
                 <source>invoice.appartment.position.number</source>
-                <target>Zimmernummer</target>
+                <target>Zimmer</target>
             </trans-unit>
             <trans-unit id="26">
                 <source>invoice.appartment.position.description</source>

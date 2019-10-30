@@ -70,6 +70,19 @@ class Appartment
         return $this->reservations;
     }
 
+    /**
+     * Set id
+     *
+     * @param int $id
+     * @return Appartment
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+    
     public function setNumber($number)
     {
         $this->number = $number;
@@ -92,7 +105,7 @@ class Appartment
 
     public function getObject()
     {
-        return $this->object->getName();
+        return $this->object;
     }
 
     public function setObject($object)

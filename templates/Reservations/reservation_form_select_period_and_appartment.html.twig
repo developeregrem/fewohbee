@@ -1,120 +1,111 @@
+<div class="modal-body">
+    <div class="pl-5 pr-5">
 {% if reservations|length > 0 %}
-    <p>
         <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="form-group">
-                    <div class="col-sm-12">
-                            <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
-                            <ul class="list-group">
-                                <table class="table" id="selectedAppartments">
-                                        <th>{{ 'appartment.number'|trans }}</th>
-                                        <th>{{ 'appartment.description'|trans }}</th>
-                                        <th>{{ 'reservation.persons'|trans }}</th>
-                                        <th>{{ 'reservation.status'|trans }}</th>
-                                        <th>{{ 'reservation.startdate'|trans }}</th>
-                                        <th>{{ 'reservation.enddate'|trans }}</th>
-                                        <th>{{ 'base.action'|trans }}</th>
-                                    </tr>
-                                    {% for key, reservation in reservations %}
-                                        <tr onclick="return toggleAppartmentOptions({{ key }})">
-                                            <td>{{ reservation.appartment.number }}</td>
-                                            <td>{{ reservation.appartment.description }}</td>
-                                            <td>{{ reservation.persons }}</td>
-                                            <td>
-                                                {% if reservation.status == 1 %}
-                                                    {{ 'reservation.confirm'|trans }}
-                                                {% elseif reservation.status == 2 %}
-                                                    {{ 'reservation.option'|trans }}
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-                                            <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-                                            <td>
-                                                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                                            class="glyphicon glyphicon-pencil"></span></a>
-                                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                                            onclick="return deleteAppartmentFromSelection({{ key }})"
-                                                            class="glyphicon glyphicon-remove"></span></a>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="7" id="appartment-{{ key }}" class="hidden">
-                                                <form class="form-inline"
-                                                      id="appartment-options-{{ key }}">
-                                                    {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
-                                                    <button class="btn btn-default" type="button"
-                                                            onclick="return saveAppartmentOptions({{ key }})">{{ 'button.save'|trans }}</button>
-                                                </form>
-
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </table>
-                            </ul>
-
-                    </div>
-                </div>
+            <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
+        </div>
+        <div class="row">
+            <div class="col">
+                <table class="table" id="selectedAppartments">
+                    <thead>
+                    <tr>
+                        <th>{{ 'appartment.number'|trans }}</th>
+                        <th>{{ 'appartment.description'|trans }}</th>
+                        <th>{{ 'reservation.persons'|trans }}</th>
+                        <th>{{ 'reservation.status'|trans }}</th>
+                        <th>{{ 'reservation.startdate'|trans }}</th>
+                        <th>{{ 'reservation.enddate'|trans }}</th>
+                        <th>{{ 'base.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key, reservation in reservations %}
+                        <tr onclick="return toggleAppartmentOptions({{ key }})">
+                            <td>{{ reservation.appartment.number }}</td>
+                            <td>{{ reservation.appartment.description }}</td>
+                            <td>{{ reservation.persons }}</td>
+                            <td>
+                                {% if reservation.status == 1 %}
+                                    {{ 'reservation.confirm'|trans }}
+                                {% elseif reservation.status == 2 %}
+                                    {{ 'reservation.option'|trans }}
+                                {% endif %}
+                            </td>
+                            <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+                            <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="return deleteAppartmentFromSelection({{ key }})" class="fas fa-trash-alt"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="7" id="appartment-{{ key }}" class="d-none">
+                                <form id="appartment-options-{{ key }}">
+                                    <div class="row">
+                                        {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
+                                        <div class="col-sm-3">                                        
+                                            <button class="btn btn-default" type="button"
+                                                onclick="return saveAppartmentOptions({{ key }})">{{ 'button.save'|trans }}</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-    </p>
     <hr>
 {% endif %}
 
-<form id="reservation-period" class="form-inline" role="form" onsubmit="return selectCustomer()">
-    <div class="modal-body">
-        <div class="container-fluid">
-            <div class="row" id="flash-message-overlay">
-                <div class="row">
-                </div>
-            </div>
-            
+        <form id="reservation-period" role="form" onsubmit="return selectCustomer()">
             <div class="row">
-                <div class="col-md-10 col-md-offset-1">
-                    <h4>{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h4>
-                    <div class="form-group">
-                        <div class="col-sm-12">
-                            <input type="input" class="form-control" id="from" name="from"
-                                   placeholder="{{ 'reservation.startdate'|trans }}"
-                                   onchange="getAvailableAppartmentsForPeriod()">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-12">
-                            <input type="input" class="form-control" id="end" name="end"
-                                   placeholder="{{ 'reservation.enddate'|trans }}"
-                                   onchange="getAvailableAppartmentsForPeriod()">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-group pull-right">
-                            <select id="objects" name="object" class="form-control"
-                                    onchange="getAvailableAppartmentsForPeriod()">
-                                <option value="all"
-                                        {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
-                                {% for object in objects %}
-                                    <option value="{{ object.id }}"
-                                            {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <p>
-
-                    <div class="col-sm-12" id="available-appartments"></div>
-                    </p>
+                <div class="col" id="flash-message-overlay">
                 </div>
             </div>
-        </div>
+
+            <div class="row">
+                <h4>{{ 'reservation.new.reservation.appartments.addmore'|trans }}</h4>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <input type="date" class="form-control" id="from" name="from"
+                           placeholder="{{ 'reservation.startdate'|trans }}"
+                           onchange="getAvailableAppartmentsForPeriod()">
+                </div>            
+                <div class="col">
+                    <input type="date" class="form-control" id="end" name="end"
+                           placeholder="{{ 'reservation.enddate'|trans }}"
+                           onchange="getAvailableAppartmentsForPeriod()">
+                </div>
+                <div class="col text-right">
+                    <select id="objects" name="object" class="form-control"
+                            onchange="getAvailableAppartmentsForPeriod()">
+                        <option value="all"
+                                {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
+                        {% for object in objects %}
+                            <option value="{{ object.id }}"
+                                    {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col mt-4" id="available-appartments"></div>
+        </form>
     </div>
-</form>
+</div>
+
 
 {% if reservations|length > 0 %}
-    <div class="modal-footer">
-        {% if objectHasAppartments %}
-            <ul class="pager">
-                <li class="next" onclick="return selectCustomer()"><a
-                            href="#">{{ 'button.continue'|trans }} &rarr;</a></li>
-            </ul>
-        {% endif %}
-    </div>
+<div class="modal-footer">
+    {% if objectHasAppartments %}
+    <ul class="pagination">
+        <li class="page-item" onclick="return selectCustomer()">
+            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a></li>
+    </ul>
+    {% endif %}
+</div>
 {% endif %}

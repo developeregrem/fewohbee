@@ -1,4 +1,5 @@
-<table class="table table-responsive table-bordered table-hover">
+<table class="table table-bordered table-hover">
+    <thead>
     <tr>
         <th>{{ 'registrationbook.year'|trans }}</th>
         <th>{{ 'registrationbook.appartment'|trans }}</th>
@@ -10,6 +11,8 @@
         <th>{{ 'registrationbook.stays'|trans }}</th>
         {% if is_granted('ROLE_ADMIN') %}<th>{{ 'base.action'|trans }}</th>{% endif %}
     </tr>
+    </thead>
+    <tbody>
     {% for bookEntry in bookEntries %}
         <tr>
             <td>{{ bookEntry.year }}</td>
@@ -23,18 +26,18 @@
             <td>{{ bookEntry.reservation.amount }}</td>
             {% if is_granted('ROLE_ADMIN') %}
             <td>                             
-                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                            onclick="deleteEntry({{ bookEntry.id }})"
-                            class="glyphicon glyphicon-remove"></span></a>
+                <a href="#" title="{{ 'button.delete'|trans }}">
+                    <i onclick="deleteEntry({{ bookEntry.id }})" class="fas fa-trash-alt"></i></a>
             </td>
             {% endif %}
         </tr>
-        <tr id="entry-{{ bookEntry.id }}" hidden="true">
-            <td colspan="2" id="entry-cell-{{ bookEntry.id }}">
+        <tr id="entry-{{ bookEntry.id }}" class="d-none">
+            <td colspan="9" id="entry-cell-{{ bookEntry.id }}">
                 <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
             </td>
         </tr>        
     {% endfor %}
+    </tbody>
 </table>
 
 {% include 'paginator.html.twig' with { 'url' : path('registrationbook.overview') } %}

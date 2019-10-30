@@ -1,32 +1,15 @@
-<form id="object-form-new" class="form-horizontal" role="form" onsubmit="return createNewObject()">
-    <div class="modal-body">
-        <div class="container-fluid">
-            <div class="row" id="flash-message-overlay">
-                <div class="row">
-                </div>
-            </div>
-            <div class="col-md-11">
-                <div class="form-group">
-                    <label for="inputName" class="col-sm-4 control-label">{{ 'object.name'|trans }} *</label>
-
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="name-new" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputDescription" class="col-sm-4 control-label">{{ 'object.description'|trans }}
-                        *</label>
-
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="description-new" required>
-                    </div>
-                </div>
-                <input name="_csrf_token" value="{{ token }}" type="hidden">
+<form id="entry-form-new" role="form" onsubmit="return createNewObject()">
+    <div class="modal-body pl-5 pr-5">
+        <div id="flash-message-overlay">
+        </div>
+        <div class="row">
+            <div class="col">                
+                {% include 'Subsidiary/object_form_input_fields.html.twig' %}
             </div>
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
 </form>

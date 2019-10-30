@@ -1,139 +1,144 @@
-<div class="row">
-    <form id="new-invoice-id" class="form" role="form"
-          onsubmit="return showCreateInvoicePositions(null)">
-    <div id="invoice-id" class="col-md-4 col-md-offset-1">
-        <p>
-            <div class="form-group">
+<div class="modal-body">
+    <div class="pl-5 pr-5">
+        <form id="new-invoice-id" class="form" role="form" onsubmit="return showCreateInvoicePositions(null)">
+        <div class="row">            
+            <div id="invoice-id" class="col">
                 <input type="text" name="invoiceid" class="form-control"
                        placeholder="{{ 'invoice.id'|trans }} ({{ 'invoice.id.last'|trans }} {{ lastinvoiceid }})"
-                       value="{{ invoiceid }}">
+                       value="{{ invoiceid }}">                    
             </div>
-            <button type="submit" class="btn btn-default"
-                    type="button">{{ 'invoice.button.save.numberanddate'|trans }}</button>
-        </p>
-    </div>
-    <div id="invoice-id" class="col-md-4">
-        <p>
-            <div class="form-group">
+            <div id="invoice-id" class="col">
                 <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"                       
                        value="{{ invoiceDate|date("Y-m-d") }}">
             </div>
-        </p>
-    </div>
-</form>
-</div>
-<div class="row">
-    <div class="col-md-10 col-md-offset-1">
-        <h4>{{ 'invoice.guest'|trans }}&nbsp;
-            <a href="#" onclick="return changeInvoiceCustomer();"
-               title="{{ 'button.edit'|trans }}" class="small"><span
-                        class="glyphicon glyphicon-pencil"></span></a>
-        </h4>
-        {{ customer.salutation }} <br />
-        {{ customer.firstname }} {{ customer.lastname }}<br />
-        {% if customer.company is not empty %}
-            {{ customer.company }}<br/>
-        {% endif %}
-        {{ customer.address }}<br />
-        {{ customer.zip }} {{ customer.city }}
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-10 col-md-offset-1">
-        <p>
-        <h4>{{ 'invoice.appartment'|trans }}</h4>
-        <table class="table">
-            <tr>
-                <th>{{ 'invoice.appartment.position.number'|trans }}</th>
-                <th>{{ 'invoice.appartment.position.description'|trans }}</th>
-                <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
-                <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
-                <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
-                <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
-                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
-                <th>{{ 'invoice.action'|trans }}</th>
-            </tr>
-            {% for key,position in positionsAppartment %}
-                <tr>
-                    <td>{{ position.number }}</td>
-                    <td>{{ position.description }}</td>
-                    <td>{{ position.beds }}</td>
-                    <td>{{ position.persons }}</td>
-                    <td>{{ position.startdate|date("d.m.Y") }}</td>
-                    <td>{{ position.enddate|date("d.m.Y") }}</td>
-                    <td class="text-right">
-                        {% if is_decimal_place_0(position.vat) %}
-                            {{ position.vat|number_format(0, ',', '.') }}
-                        {% else %}
-                            {{ position.vat|number_format(2, ',', '.') }}
-                        {% endif %}
-                    </td>
-                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                    <td>
-                        <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditAppartmentInvoicePosition({{ key }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                        <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.appartment'|trans }}</button>
-        </p>
-    </div>
-</div>
+        </div>
+        <div class="row mt-4">
+            <button type="submit" class="btn btn-secondary" type="button">{{ 'invoice.button.save.numberanddate'|trans }}</button>
+        </div>        
+        </form>
+        <div class="row">
+            <div class="col">
+                <h4 class="mt-4">{{ 'invoice.guest'|trans }}&nbsp;
+                    <small>
+                    <a href="#" onclick="return changeInvoiceCustomer();"
+                       title="{{ 'button.edit'|trans }}" class="text-secondary">
+                        <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
+                {{ customer.salutation }} <br />
+                {{ customer.firstname }} {{ customer.lastname }}<br />
+                {% if customer.company is not empty %}
+                    {{ customer.company }}<br/>
+                {% endif %}
+                {{ customer.address }}<br />
+                {{ customer.zip }} {{ customer.city }}
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col">
+                <h4>{{ 'invoice.appartment'|trans }}</h4>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>{{ 'invoice.appartment.position.number'|trans }}</th>
+                        <th>{{ 'invoice.appartment.position.description'|trans }}</th>
+                        <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
+                        <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
+                        <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
+                        <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
+                        <th>{{ 'invoice.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,position in positionsAppartment %}
+                        <tr>
+                            <td>{{ position.number }}</td>
+                            <td>{{ position.description }}</td>
+                            <td>{{ position.beds }}</td>
+                            <td>{{ position.persons }}</td>
+                            <td>{{ position.startdate|date("d.m.Y") }}</td>
+                            <td>{{ position.enddate|date("d.m.Y") }}</td>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(position.vat) %}
+                                    {{ position.vat|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ position.vat|number_format(2, ',', '.') }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i onclick="return showEditAppartmentInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()">
+                    <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
+            </div>
+        </div>
 
-<div class="row">
-    <div class="col-md-10 col-md-offset-1">
-        <p>
-        <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
-        <table class="table">
-            <tr>
-                <th>{{ 'invoice.appartment.position.description'|trans }}</th>
-                <th>{{ 'invoice.position.amount'|trans }}</th>
-                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                <th>{{ 'invoice.action'|trans }}</th>
-            </tr>
-            {% for key,position in positionsMiscellaneous %}
-                <tr>
-                    <td>{{ position.description }}</td>
-                    <td>{{ position.amount }}</td>
-                    <td class="text-right">
-                        {% if is_decimal_place_0(position.vat) %}
-                            {{ position.vat|number_format(0, ',', '.') }}
-                        {% else %}
-                            {{ position.vat|number_format(2, ',', '.') }}
-                        {% endif %}
-                    </td>
-                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                    <td>
-                        <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                    onclick="return showEditMiscellaneousInvoicePosition({{ key }})"
-                                    class="glyphicon glyphicon-pencil"></span></a>
-                        <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                    onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})"
-                                    class="glyphicon glyphicon-remove"></span></a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()"><span
-                    class="glyphicon glyphicon-plus"></span> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
-        </p>
+        <div class="row mt-4">
+            <div class="col">
+                <p>
+                <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>{{ 'invoice.appartment.position.description'|trans }}</th>
+                        <th>{{ 'invoice.position.amount'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                        <th>{{ 'invoice.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for key,position in positionsMiscellaneous %}
+                        <tr>
+                            <td>{{ position.description }}</td>
+                            <td>{{ position.amount }}</td>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(position.vat) %}
+                                    {{ position.vat|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ position.vat|number_format(2, ',', '.') }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.edit'|trans }}">
+                                    <i onclick="return showEditMiscellaneousInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()">
+                    <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return selectReservation()"><a href="#">&larr; {{ 'button.back'|trans }}</a></li>
-        {% if appartmentPositionExists %}
-            <li class="next" onclick="return showNewInvoicePreview()"><a
-                    href="#">{{ 'button.continue'|trans }} &rarr;</a></li>{% endif %}
+    <ul class="pagination mr-auto">
+        <li class="page-item " onclick="return selectReservation()">
+            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
+    {% if appartmentPositionExists %}
+    <ul class="pagination">
+        <li class="page-item" onclick="return showNewInvoicePreview()">
+            <a class="page-link" href="#">{{ 'button.continue'|trans }}&rarr;</a>
+        </li>
+    </ul>
+    {% endif %} 
 </div>
 <script>
 function saveNewInvoiceId() {
@@ -177,9 +182,6 @@ function showCreateAppartmentInvoicePosition() {
         },
         success: function (data) {
             $("#modal-content-ajax").html(data);
-
-            $("#from").datepicker(fromOptions);
-            $("#end").datepicker(endOptions);
         }
     });
 
@@ -204,9 +206,6 @@ function showEditAppartmentInvoicePosition(key) {
         },
         success: function (data) {
             $("#modal-content-ajax").html(data);
-
-            $("#from").datepicker(fromOptions);
-            $("#end").datepicker(endOptions);
         }
     });
 

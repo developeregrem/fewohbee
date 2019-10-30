@@ -98,7 +98,7 @@ class ReservationOriginServiceController extends AbstractController
             }
         }
 
-        return $this->render('ReservationOrigin/reservationorigin_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -114,13 +114,15 @@ class ReservationOriginServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $origin = $ros->getOriginFromForm($request, $id);
-
+            $em = $this->getDoctrine()->getManager();
+            
             // check for mandatory fields
             if (strlen($origin->getName()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $em = $this->getDoctrine()->getManager();
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($origin);
+            } else {                
                 $em->persist($origin);
                 $em->flush();
 
@@ -129,7 +131,7 @@ class ReservationOriginServiceController extends AbstractController
             }
         }
 
-        return $this->render('ReservationOrigin/reservationorigin_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -149,12 +151,11 @@ class ReservationOriginServiceController extends AbstractController
                 if($origin) {
                     $this->addFlash('success', 'reservationorigin.flash.delete.success');
                 }
-
             }
-            return new Response("ok");
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('ReservationOrigin/reservationorigin_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

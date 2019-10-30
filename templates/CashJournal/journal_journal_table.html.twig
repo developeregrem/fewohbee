@@ -1,4 +1,5 @@
-<table class="table table-responsive table-bordered table-hover">
+<table class="table table-bordered table-hover">
+    <thead>
     <tr>
         <th>{{ 'journal.month'|trans }}</th>
         <th>{{ 'journal.cash.start'|trans }}</th>
@@ -6,6 +7,8 @@
         <th>{{ 'journal.cash.closed'|trans }} | {{ 'journal.cash.booked'|trans }}</th>
         <th>{{ 'journal.action'|trans }}</th>
     </tr>
+    </thead>
+    <tbody>
     {% for journal in journals %}
         <tr>
             <td>{{ getLocalizedMonth(journal.cashMonth, 'MMMM', app.request.locale) }}</td>
@@ -21,24 +24,23 @@
                 </a>
             </td>
             <td>
-                <a href="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}" title="{{ 'button.details'|trans }}"><span
-                            class="glyphicon glyphicon-eye-open"></span></a>
+                <a href="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}" title="{{ 'button.details'|trans }}">
+                    <i class="fas fa-info-circle"></i></a>
                 {% if not journal.isClosed %}
-                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                            onclick="getJournal({{ journal.id }})" class="glyphicon glyphicon-pencil"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.edit'|trans }}">
+                    <i onclick="getJournal({{ journal.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
                 
-                <a href="#" title="{{ 'button.add'|trans }}"><span
-                            onclick="addJournalEntry({{ journal.id }}, true)" class="glyphicon glyphicon-plus"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.add'|trans }}">
+                    <i onclick="addJournalEntry({{ journal.id }}, true)" class="fas fa-plus" data-toggle="modal" data-target="#modalCenter"></i></a>
                 {% endif %}
                 <a class="export-link"
                    href="{{ path('cashjournal.journal.export.pdf', {'id': journal.id, 'templateId': 0 }) }}"
-                   title="{{ 'button.export.pdf'|trans }}"><span
-                            class="glyphicon glyphicon-print"></span></a>
+                   title="{{ 'button.export.pdf'|trans }}">
+                    <i class="fas fa-download"></i></a>
             </td>
         </tr>
     {% endfor %}
+    </tbody>
 </table>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
 {% include 'paginator.html.twig' with { 'url' : path('cashjournal.overview') } %}

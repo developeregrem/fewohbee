@@ -486,7 +486,7 @@ class ReservationServiceController extends AbstractController
             $this->addFlash('success', 'reservation.flash.create.success');
         }
 
-        return $this->render('Reservations/reservation_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -651,7 +651,7 @@ class ReservationServiceController extends AbstractController
             }
         }
 
-        return $this->render('Reservations/reservation_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error,
         ));
     }

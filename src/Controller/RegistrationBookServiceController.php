@@ -239,7 +239,7 @@ class RegistrationBookServiceController extends AbstractController
                 return new Response("ok");
             } else {
                 // initial get load (ask for deleting)           
-                return $this->render('RegistrationBook/registrationbook_form_delete.html.twig', array(
+                return $this->render('common/form_delete_entry.html.twig', array(
                     "id" => $id,
                     'token' => $csrf->getCSRFTokenForForm()
                 ));

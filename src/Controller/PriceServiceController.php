@@ -101,7 +101,7 @@ class PriceServiceController extends AbstractController
             }
         }
 
-        return $this->render('Prices/price_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -111,14 +111,16 @@ class PriceServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
-
+            $em = $this->getDoctrine()->getManager();
+            
             // check for mandatory fields
             if (strlen($price->getDescription()) == 0 || strlen($price->getPrice()) == 0 || strlen($price->getVat()) == 0
                 || count($price->getReservationOrigins()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $em = $this->getDoctrine()->getManager();
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($price);
+            } else {                
                 $em->persist($price);
                 $em->flush();
 
@@ -127,7 +129,7 @@ class PriceServiceController extends AbstractController
             }
         }
 
-        return $this->render('Prices/price_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -139,10 +141,10 @@ class PriceServiceController extends AbstractController
                 $price = $ps->deletePrice($id);
                 $this->addFlash('success', 'price.flash.delete.success');
             }
-            return new Response("ok");
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Prices/price_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

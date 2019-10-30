@@ -166,6 +166,10 @@
                 <source>price.flash.delete.success</source>
                 <target>Preisklasse erfolgreich gelöscht.</target>
             </trans-unit>
+            <trans-unit id="42">
+                <source>price.appartment.hint</source>
+                <target>Nur auszufüllen, wenn Typ: Zimmerpreis gewählt.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

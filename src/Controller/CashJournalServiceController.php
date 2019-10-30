@@ -166,7 +166,7 @@ class CashJournalServiceController extends AbstractController
             }
         }
 
-        return $this->render('CashJournal/journal_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -206,7 +206,7 @@ class CashJournalServiceController extends AbstractController
             }
         }
 
-        return $this->render('CashJournal/journal_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -320,7 +320,7 @@ class CashJournalServiceController extends AbstractController
             }
         }
 
-        return $this->render('CashJournal/journal_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -389,7 +389,7 @@ class CashJournalServiceController extends AbstractController
             }
         }
 
-        return $this->render('CashJournal/journal_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }

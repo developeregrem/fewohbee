@@ -9,229 +9,103 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newUserModal">
-        <div class="modal-dialog">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'nav.user.add'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax"></div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-toggle="modal"
-                            data-target="#newUserModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.user.add'|trans }}</button>
-                </div>
-                </p>
-                <table class="table table-responsive table-bordered table-hover">
-                    <tr>
-                        <th>{{ 'user.username'|trans }}</th>
-                        <th>{{ 'user.firstname'|trans }}</th>
-                        <th>{{ 'user.lastname'|trans }}</th>
-                        <th>{{ 'user.action'|trans }}</th>
-                    </tr>
-                    {% for user in users %}
-                        <tr>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.firstname }}</td>
-                            <td>{{ user.lastname }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span onclick="showUser({{ user.id }})"
-                                                                                       class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span onclick="editUser({{ user.id }})"
-                                                                                    class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteUser({{ user.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
-                            </td>
-                        </tr>
-                        <tr id="user-{{ user.id }}" hidden="true">
-                            <td colspan="6" id="user-cell-{{ user.id }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-toggle="modal"
+                    data-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'nav.user.add'|trans }}</button>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'user.username'|trans }}</th>
+                    <th>{{ 'user.firstname'|trans }}</th>
+                    <th>{{ 'user.lastname'|trans }}</th>
+                    <th>{{ 'user.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.firstname }}</td>
+                        <td>{{ user.lastname }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="getEntry({{ user.id }})" class="fas fa-info-circle"></i></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                <i onclick="editEntry({{ user.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="deleteEntry({{ user.id }})" class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    <tr id="entry-{{ user.id }}" class="d-none">
+                        <td colspan="6" id="entry-cell-{{ user.id }}">
+                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
     <script>
+    $(function() {
         $.ajaxSetup({
             cache: false
         });
+        
+        // the default modal width is used here
+        $("#modalCenter .modal-dialog").removeClass('modal-lg');
+    }); 
 
-        function collapseUser(id) {
-            var row = "#user-" + id;
-            var cell = "#user-cell-" + id;
+    function showCreateUserForm() {
+        getContentForModal("{{ path('users.new.user') }}");
+    }
+    
+    function getEntry(id) {
+        let url = replacePlaceholder("{{ path('users.get.user', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url);        
+    }
+    
+    function editEntry(id) {
+        let url = replacePlaceholder("{{ path('users.get.user', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "", function() {
+            enableEditForm(id);
+        });        
+    }
 
-            if ($(row).is(':hidden')) {
-                $(row).show();
-                return true;
-            } else {
-                $(row).hide();
-                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-                return false;
-            }
-        }
-        ;
+    function saveUser(id) {
+        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-        function enableUserForm(id) {
-            var formFieldset = "#user-form-fieldset-" + id;
-            var cancelButton = "#user-cancel-" + id;
-            var editButton = "#user-edit-" + id;
-            var saveButton = "#user-submit-" + id;
-            $(cancelButton).html('Abbrechen');
-            $(editButton).addClass('button-hidden');
-            $(saveButton).removeClass('button-hidden');
-            $(formFieldset).removeAttr('disabled');
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('users.delete.user', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
+    }
 
-            return false;
-        }
-        ;
+    function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('users.dodelete.user', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-        function getUser(id, enableForm) {
-            var cell = "#user-cell-" + id;
-            var url = "{{ path('users.get.user', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            if (enableForm) {
-                $(cell).load(url, function (response, status, xhr) {
-                    if (status == "success") enableUserForm(id);
-                });
-            } else {
-                $(cell).load(url);
-            }
-
-            return false;
-        }
-        ;
-
-        function showUser(id) {
-            if (collapseUser(id)) {
-                getUser(id, false);
-            }
-
-            return false;
-        }
-        ;
-
-        function editUser(id) {
-            if (collapseUser(id)) {
-                getUser(id, true);
-            }
-
-            return false;
-        }
-        ;
-
-        function saveUser(id) {
-            var form = "#user-form-" + id;
-            var url = "{{ path('users.edit.user', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function deleteUser(id) {
-            if (collapseUser(id)) {
-                var cell = "#user-cell-" + id;
-                var url = "{{ path('users.delete.user', {'id': 'placeholder'}) }}";
-                url = url.replace("placeholder", id);
-
-                $(cell).load(url, function (response, status, xhr) {
-                    //if(status == "success") location.reload();
-                });
-            }
-
-
-            return false;
-        }
-        ;
-
-        function doDeleteUser(id) {
-            var form = "#user-form-" + id;
-            var url = "{{ path('users.dodelete.user', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function showCreateUserForm() {
-            var url = "{{ path('users.new.user') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $("#modal-content-ajax").load(url, function (response, status, xhr) {
-            });
-
-            return false;
-        }
-        ;
-
-        function createNewUser() {
-            var url = "{{ path('users.create.user')}}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#user-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        window.location.href = "{{ path('users.overview') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-        ;
+    function createNewUser() {
+        let url = "{{ path('users.create.user')}}";
+        return _doPost('#entry-form-new', url, '{{ path('users.overview') }}');
+    }
     </script>
 {% endblock %}
