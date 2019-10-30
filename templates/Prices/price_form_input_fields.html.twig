@@ -1,183 +1,187 @@
-<div class="panel-group" id="accordion">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapseOne-{{ price.id }}">
-                    {{ 'price.collapsable.group.1.description'|trans }}
-                </a>
-            </h4>
-        </div>
-        <div id="collapseOne-{{ price.id }}" class="panel-collapse collapse in">
-            <div class="panel-body">
-                <fieldset
-                        id="price-form-fieldset-primary-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
-                    <div class="form-group">
-                        <label for="inputDescription" class="col-sm-4 control-label">{{ 'price.description'|trans }}
-                            *</label>
+<fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
+    <div id="accordion" class="accordion">
+        <div class="card">
+            <div class="card-header p-0" id="headingOne-{{ price.id }}">
+                <h6 class="border-bottom mb-0">
+                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
+                        {{ 'price.collapsable.group.1.description'|trans }}
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseOne-{{ price.id }}" class="collapse show" aria-labelledby="headingOne-{{ price.id }}" data-parent="#accordion">
+                <div class="card-body">
+                        <div class="form-group row">
+                            <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.description'|trans }}
+                                *</label>
 
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="description-{{ price.id }}"
-                                   value="{{ price.description }}" required>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="description-{{ price.id }}"
+                                       value="{{ price.description }}" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputVat" class="col-sm-4 control-label">{{ 'price.price'|trans }} *</label>
+                        <div class="form-group row">
+                            <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'price.price'|trans }} *</label>
 
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="price-{{ price.id }}"
-                                   value="{{ price.price|number_format(2, ',', '.') }}" required>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="price-{{ price.id }}"
+                                       value="{{ price.price|number_format(2, ',', '.') }}" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputVat" class="col-sm-4 control-label">{{ 'price.vat'|trans }} *</label>
+                        <div class="form-group row">
+                            <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'price.vat'|trans }} *</label>
 
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" name="vat-{{ price.id }}"
-                                   value="{{ price.vat|number_format(2, ',', '.') }}" required>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="vat-{{ price.id }}"
+                                       value="{{ price.vat|number_format(2, ',', '.') }}" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="type-{{ price.id }}" class="col-sm-4 control-label">{{ 'price.type'|trans }} *</label>
+                        <div class="form-group row">
+                            <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'price.type'|trans }} *</label>
 
-                        <div class="col-sm-8">
-                            <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-control"
-                                    onchange="return checkIfTypeIsAppartment('{{ price.id }}')">
-                                <option value="1" {% if price.type == 1 %} selected {% endif %}>{{ 'price.miscellaneous'|trans }}</option>
-                                <option value="2" {% if price.type == 2 %} selected {% endif %}>{{ 'price.appartment'|trans }}</option>
-                            </select>
+                            <div class="col-sm-8">
+                                <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-control"
+                                        onchange="return checkIfTypeIsAppartment('{{ price.id }}')">
+                                    <option value="1" {% if price.type == 1 %} selected {% endif %}>{{ 'price.miscellaneous'|trans }}</option>
+                                    <option value="2" {% if price.type == 2 %} selected {% endif %}>{{ 'price.appartment'|trans }}</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="origin-{{ price.id }}" class="col-sm-4 control-label">{{ 'price.origin'|trans }} *</label>
-                        <div class="col-sm-8">
-                            <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-control" multiple>
-                                {% for origin in origins %}
-                                    <option value="{{ origin.id }}" {% if origin.id in originPricesIds %} selected {% endif %}>{{ origin.name }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="form-group row">
+                            <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'price.origin'|trans }} *</label>
+                            <div class="col-sm-8">
+                                <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-control" multiple>
+                                    {% for origin in origins %}
+                                        <option value="{{ origin.id }}" {% if origin.id in originPricesIds %} selected {% endif %}>{{ origin.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox col-sm-offset-4">
-                            <label>
-                                <input type="checkbox" name="active-{{ price.id }}"
-                                       value="1" {% if price.active == 1 %} checked {% endif %}> {{ 'price.active'|trans }}
-                            </label>
+                        <div class="form-group row">
+                            <div class="col-sm-4"></div>
+                            <div class="col">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="active-{{ price.id }}" id="active-{{ price.id }}" class="custom-control-input"{% if price.active == 1 %} checked {% endif %} value="1">
+                                    <label class="custom-control-label" for="active-{{ price.id }}">{{ 'price.active'|trans }}</label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </fieldset>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapseTwo-{{ price.id }}">
-                    {{ 'price.collapsable.group.2.description'|trans }}
-                </a>
-            </h4>
-        </div>
-        <div id="collapseTwo-{{ price.id }}" class="panel-collapse collapse">
-            <div class="panel-body">
-                <fieldset
-                        id="price-form-fieldset-secondary-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
-                    <div class="form-group">
-                        <label for="inputDescription" class="col-sm-4 control-label">{{ 'price.season'|trans }}
-                            *</label>
-
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" id="seasonstart-{{ price.id }}"
-                                   name="seasonstart-{{ price.id }}"
-                                   value="{% if price.seasonstart %} {{ price.seasonstart|date('d.m.Y') }} {% endif %}"
-                                   placeholder="{{ 'price.from'|trans }}">
+        <div class="card mt-1">
+            <div class="card-header p-0" id="headingTwo-{{ price.id }}">
+                <h6 class="border-bottom mb-0">
+                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo-{{ price.id }}" aria-expanded="false" aria-controls="collapseTwo-{{ price.id }}">
+                        {{ 'price.collapsable.group.2.description'|trans }}
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
+                <div class="card-body">
+                        <div class="form-group row">
+                            <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.season'|trans }} *</label>
+                            <div class="col-sm-4">
+                                <input type="date" class="form-control" id="seasonstart-{{ price.id }}"
+                                       name="seasonstart-{{ price.id }}"
+                                       value="{% if price.seasonstart %} {{ price.seasonstart|date('Y-m-d') }} {% endif %}"
+                                       placeholder="{{ 'price.from'|trans }}">
+                            </div>
+                            <div class="col-sm-4">
+                                <input type="date" class="form-control" id="seasonend-{{ price.id }}"
+                                       name="seasonend-{{ price.id }}"
+                                       value="{% if price.seasonend %} {{ price.seasonend|date('Y-m-d') }} {% endif %}"
+                                       placeholder="{{ 'price.end'|trans }}">
+                            </div>
                         </div>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" id="seasonend-{{ price.id }}"
-                                   name="seasonend-{{ price.id }}"
-                                   value="{% if price.seasonend %} {{ price.seasonend|date('d.m.Y') }} {% endif %}"
-                                   placeholder="{{ 'price.end'|trans }}">
+                        <div class="form-group row">
+                            <div class="col-sm-3"></div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox col-sm-2 col-sm-offset-4">
-                            <label>
-                                <input type="checkbox" name="monday-{{ price.id }}"
-                                       value="1" {% if price.monday == true or price.alldays == true %} checked {% endif %}> {{ 'price.monday'|trans }}
-                            </label>
+                        <div class="form-group row">
+                            <div class="col-sm-3"></div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="custom-control-input"
+                                           {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
+                                </div>
+                            </div>
+                            <div class="checkbox col-sm-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="custom-control-input"
+                                           onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
+                                    <label class="custom-control-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" name="tuesday-{{ price.id }}"
-                                       value="1" {% if price.tuesday == true or price.alldays == true %} checked {% endif %}> {{ 'price.tuesday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" name="wednesday-{{ price.id }}"
-                                       value="1" {% if price.wednesday == true or price.alldays == true %} checked {% endif %}> {{ 'price.wednesday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" name="thursday-{{ price.id }}"
-                                       value="1" {% if price.thursday == true or price.alldays == true %} checked {% endif %}> {{ 'price.thursday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2 col-sm-offset-4">
-                            <label>
-                                <input type="checkbox" name="friday-{{ price.id }}"
-                                       value="1" {% if price.friday == true or price.alldays == true %} checked {% endif %}> {{ 'price.friday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" name="saturday-{{ price.id }}"
-                                       value="1" {% if price.saturday == true or price.alldays == true %} checked {% endif %}> {{ 'price.saturday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" name="sunday-{{ price.id }}"
-                                       value="1" {% if price.sunday == true or price.alldays == true %} checked {% endif %}> {{ 'price.sunday'|trans }}
-                            </label>
-                        </div>
-                        <div class="checkbox col-sm-2">
-                            <label>
-                                <input type="checkbox" id="alldays-{{ price.id }}" name="alldays-{{ price.id }}"
-                                       value="1"
-                                       onclick="checkAllCheckboxes({{ price.id }})" {% if price.alldays == true or price.alldays == true %} checked {% endif %}> {{ 'price.alldays'|trans }}
-                            </label>
-                        </div>
-                    </div>
-                </fieldset>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="panel panel-default">
-
-        <div class="panel-heading">
-            <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapseThree-{{ price.id }}">
-                    {{ 'price.collapsable.group.3.description'|trans }}
-                </a>
-            </h4>
-        </div>
-        <div id="collapseThree-{{ price.id }}" class="panel-collapse collapse">
-            <fieldset
-                    id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.type != 2 %} disabled {% endif %}>
-                <div class="panel-body">
-                    <div class="form-group">
+        <div class="card mt-1">
+            <div class="card-header p-0" id="headingThree-{{ price.id }}">
+                <h6 class="border-bottom mb-0">
+                    <button type="button" class="btn btn-link {% if price.id == "new" or price.type != 2 %} disabled {% endif %}" 
+                            data-toggle="collapse" data-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
+                        {{ 'price.collapsable.group.3.description'|trans }}
+                    </button>
+                </h6>
+            </div>
+            <div id="collapseThree-{{ price.id }}" class="collapse" aria-labelledby="headingThree-{{ price.id }}" data-parent="#accordion">
+                <div class="card-body">
+                    <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
+                    <div class="form-group row">
                         <label for="inputNumberOfPersons"
-                               class="col-sm-4 control-label">{{ 'price.numberofpersons'|trans }} *</label>
+                               class="col-sm-4 col-form-label text-right">{{ 'price.numberofpersons'|trans }} *</label>
 
                         <div class="col-sm-8">
                             <input type="text" id="number-of-persons" class="form-control"
                                    name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="inputNumberOfBeds" class="col-sm-4 control-label">{{ 'price.numberofbeds'|trans }}
+                    <div class="form-group row">
+                        <label for="inputNumberOfBeds" class="col-sm-4 col-form-label text-right">{{ 'price.numberofbeds'|trans }}
                             *</label>
 
                         <div class="col-sm-8">
@@ -185,17 +189,19 @@
                                    name="number-of-beds-{{ price.id }}" value="{{ price.numberofbeds }}">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="inputMinStay" class="col-sm-4 control-label">{{ 'price.minstay'|trans }} *</label>
+                    <div class="form-group row">
+                        <label for="inputMinStay" class="col-sm-4 col-form-label text-right">{{ 'price.minstay'|trans }} *</label>
 
                         <div class="col-sm-8">
                             <input type="text" id="min-stay" class="form-control" name="min-stay-{{ price.id }}"
                                    value="{{ price.minstay }}">
                         </div>
                     </div>
+                    <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'price.appartment.hint'|trans }}</span>
+                    </fieldset>
                 </div>
-        </div>
-        </fieldset>
+            </div>
+        </div>    
     </div>
     <input name="_csrf_token" value="{{ token }}" type="hidden">
-</div>
+</fieldset>

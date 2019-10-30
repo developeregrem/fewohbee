@@ -33,7 +33,6 @@ class CustomerService implements ITemplateRenderer
 
     public function getCustomerFromForm(Request $request, $id = 'new')
     {
-
         $customer = null;
 
         if ($id === 'new') {

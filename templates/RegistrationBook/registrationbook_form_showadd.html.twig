@@ -1,158 +1,120 @@
-<div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
-                {% include 'Reservations/reservation_feedback.html.twig' with {'error': error, 'app': app } %}
-            </div>
+<div class="modal-body pl-5 pr-5">
+    <div id="flash-message-overlay">
+        <div class="col">
+            {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
         </div>
-        <form id="registration-period" class="form-inline" role="form" onsubmit="return getAvailableBookEntries()">
-        <div class="row">
-            <div class="col-md-12"><span class="text-muted">Zeitraum:</span>
-                <div class="form-group">
-                    <div class="col-md-4">
-                        <input type="input" class="form-control" id="start" name="start" value="{{ start|date('d.m.Y') }}"
-                               placeholder="{{ 'reservation.startdate'|trans }}"
-                               onchange="getAvailableBookEntries(this)">
-                    </div>
-                </div>
-                -
-                <div class="form-group">
-                    <div class="col-md-4">
-                        <input type="input" class="form-control" id="end" name="end" value="{{ end|date('d.m.Y') }}"
-                               placeholder="{{ 'reservation.enddate'|trans }}"
-                               onchange="getAvailableBookEntries()">
-                    </div>
-                </div>
-            </div>
+    </div>
+    <form id="registration-period" role="form" onsubmit="return getAvailableBookEntries()">
+    <div class="row justify-content-md-center">        
+        <div class="col-md-4 text-center">
+            <input type="date" class="form-control" id="start" name="start" value="{{ start|date('Y-m-d') }}"
+                   placeholder="{{ 'reservation.startdate'|trans }}"
+                   onchange="getAvailableBookEntries(this)">
         </div>
-        </form>
-        <p>&nbsp;</p>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="col-md-4">
-                    <h4>{{ 'registrationbook.departures'|trans }}</h4>
-
-                    <table class="table table-hover" id="selectedAppartments">
-                        {% for reservation in reservations %}
-                        <tr class="mouse-pointer" onclick="return toggleReservationCustomers(this)">
-                            <td>{{ 'registrationbook.appartment'|trans }}: {{ reservation.appartment.number }}<br />
-                                <span class="text-muted small">({{ reservation.startdate|date('d.m.Y') }} - {{ reservation.enddate|date('d.m.Y') }})</span>
-                                <div class="hidden">
-                                    <br /><br />
-                                    <table class="table" id="selectedAppartments">
-                                        <tr>
-                                            <th>{{ 'registrationbook.appartment'|trans }}</th>
-                                            <th>{{ 'appartment.description'|trans }}</th>
-                                            <th>{{ 'reservation.persons'|trans }}</th>
-                                            <th>{{ 'reservation.startdate'|trans }}</th>
-                                            <th>{{ 'reservation.enddate'|trans }}</th>
-                                        </tr>
-                                            <tr onclick="return toggleReservationCustomers({{ reservation.id }})">
-                                                <td>{{ reservation.appartment.number }}</td>
-                                                <td>{{ reservation.appartment.description }}</td>
-                                                <td>{{ reservation.persons }}</td>
-                                                <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-                                                <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td colspan="6" id="reservation-{{ reservation.id }}" class="reservation-customers">
-                                                    <br/>
-
-                                                    <div class="row">
-                                                        <div class="col-md-12">
-                                                            {{ 'reservation.preview.customer.inroom'|trans }}<a href="#"
-                                                                                                                onclick="return addReservationCustomer({{ reservation.id }}, 'guest');"
-                                                                                                                title="{{ 'button.add'|trans }}"
-                                                                                                                class="pull-right small"><span
-                                                                        class="glyphicon glyphicon-plus"></span></a>
-
-                                                            <br/><br/>
-                                                            <table class="table">
-                                                                <tr>
-                                                                    <th>{{ 'reservation.preview.customer.name'|trans }}</th>
-                                                                    <th>{{ 'customer.birthday'|trans }}</th>
-                                                                    <th class="text-center">{{ 'customer.action'|trans }}</th>
-                                                                </tr>
-                                                                {% for customer in reservation.customers %}
-                                                                    <tr>
-                                                                        <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>
-                                                                        <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
-                                                                        <td class="text-center">
-                                                                            <form id="delete-customer-{{ customer.id }}">
-                                                                                <input id="reservation-id" type="hidden"
-                                                                                       value="{{ reservation.id }}"
-                                                                                       name="reservation-id"/>
-                                                                                <input id="customer-id" type="hidden"
-                                                                                       value="{{ customer.id }}"
-                                                                                       name="customer-id"/>
-                                                                                <input id="tab" type="hidden" value="guest"
-                                                                                       name="tab"/>
-                                                                                <input name="_csrf_token" value="{{ token }}"
-                                                                                       type="hidden">
-                                                                            </form>
-                                                                            <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                                                                        onclick="editReservationCustomer({{ customer.id }})"
-                                                                                        class="glyphicon glyphicon-pencil"></span></a>
-                                                                            <a href="#"
-                                                                               onclick="return deleteReservationCustomer({{ customer.id }});"
-                                                                               title="{{ 'button.delete'|trans }}"><span
-                                                                                        class="glyphicon glyphicon-remove"></span></a>
-                                                                        </td>
-                                                                    </tr>
-                                                                {% endfor %}
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                    </table>
-                                        <div class="pull-right">
-                                        <button class="btn btn-primary" onclick="addReservationToBook({{ reservation.id }}, false)">{{ 'button.accept'|trans }}</button>
-                                        </div>
+        <div class="col-md-4 text-center">
+                <input type="date" class="form-control" id="end" name="end" value="{{ end|date('Y-m-d') }}"
+                       placeholder="{{ 'reservation.enddate'|trans }}"
+                       onchange="getAvailableBookEntries()">
+        </div>
+    </div>
+    </form>
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <h4>{{ 'registrationbook.departures'|trans }}</h4>
+            <table class="table table-hover" id="selectedAppartments">
+                {% for reservation in reservations %}
+                <tr class="mouse-pointer" onclick="return toggleReservationCustomers(this)">
+                    <td>{{ 'registrationbook.appartment'|trans }}: {{ reservation.appartment.number }}<br />
+                        <span class="text-secondary">({{ reservation.startdate|date('d.m.Y') }} - {{ reservation.enddate|date('d.m.Y') }})</span>
+                        <div class="d-none">
+                            <table class="table mt-4" id="selectedAppartments">
+                                <tr>
+                                    <th>{{ 'registrationbook.appartment'|trans }}</th>
+                                    <th>{{ 'appartment.description'|trans }}</th>
+                                    <th>{{ 'reservation.persons'|trans }}</th>
+                                    <th>{{ 'reservation.startdate'|trans }}</th>
+                                    <th>{{ 'reservation.enddate'|trans }}</th>
+                                </tr>
+                                <tr onclick="return toggleReservationCustomers({{ reservation.id }})">
+                                    <td>{{ reservation.appartment.number }}</td>
+                                    <td>{{ reservation.appartment.description }}</td>
+                                    <td>{{ reservation.persons }}</td>
+                                    <td>{{ reservation.startdate|date('d.m.Y') }}</td>
+                                    <td>{{ reservation.enddate|date('d.m.Y') }}</td>
+                                </tr>
+                            </table>
+                            <div class="row mt-4">
+                                <div class="col">
+                                    {{ 'reservation.preview.customer.inroom'|trans }}
+                                    <a href="#" onclick="return addReservationCustomer({{ reservation.id }}, 'guest');"
+                                                title="{{ 'button.add'|trans }}" class="float-right">
+                                        <i class="fas fa-plus"></i></a>
                                 </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                            <tr>
-                                <td><span class="text-muted"><i>{{ 'registrationbook.noentries'|trans }}</i></span></td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                <div id="book-entry" class="col-md-8 border-left-thick">
+                            </div>
+                                    {#<tr>
+                                        <td colspan="6" id="reservation-{{ reservation.id }}" class="reservation-customers">
+                                            <div class="row mt-4">
+                                                <div class="col-md-12">
+                                    #}                
 
-                </div>
-            </div>
+                            <table class="table mt-4">
+                                <tr>
+                                    <th>{{ 'reservation.preview.customer.name'|trans }}</th>
+                                    <th>{{ 'customer.birthday'|trans }}</th>
+                                    <th class="text-center">{{ 'customer.action'|trans }}</th>
+                                </tr>
+                                {% for customer in reservation.customers %}
+                                    <tr>
+                                        <td>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</td>
+                                        <td>{% if customer.birthday %}{{ customer.birthday|date('d.m.Y') }}{% endif %}</td>
+                                        <td class="text-center">
+                                            <form id="delete-customer-{{ customer.id }}">
+                                                <input id="reservation-id" type="hidden"
+                                                       value="{{ reservation.id }}"
+                                                       name="reservation-id"/>
+                                                <input id="customer-id" type="hidden"
+                                                       value="{{ customer.id }}"
+                                                       name="customer-id"/>
+                                                <input id="tab" type="hidden" value="guest"
+                                                       name="tab"/>
+                                                <input name="_csrf_token" value="{{ token }}"
+                                                       type="hidden">
+                                            </form>
+                                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                                <i onclick="editReservationCustomer({{ customer.id }})" class="fas fa-edit"></i></a>
+                                            <a href="#"
+                                               onclick="return deleteReservationCustomer({{ customer.id }});"
+                                               title="{{ 'button.delete'|trans }}">
+                                                <i class="fas fa-trash-alt"></i></a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+
+                            <div class="float-right">
+                                <button class="btn btn-primary" onclick="addReservationToBook({{ reservation.id }}, false)">{{ 'button.accept'|trans }}</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                    <tr>
+                        <td><span class="text-secondary"><i>{{ 'registrationbook.noentries'|trans }}</i></span></td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div id="book-entry" class="col-md-8 border-left-thick">
         </div>
     </div>
 </div>
 <input name="_csrf_token" value="{{ token }}" type="hidden" id="_csrf_token">
 <div class="modal-footer">
-    <span class="text-info pull-left small"><span class="glyphicon glyphicon-info-sign"></span> {{ 'registrationbook.help.message'|trans }}</span>
+    <span class="text-info mr-auto"><i class="fas fa-info-circle"></i> {{ 'registrationbook.help.message'|trans }}</span>
 </div>
 <script>
     $(document).ready(function () {
-        toggleReservationCustomers($("#selectedAppartments tr:first"));
-        fromOptions = {
-            changeMonth: true,
-            numberOfMonths: 1,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {                
-                if ($("#end").val().length === 0) {
-                    
-                }
-            }
-        };
-        endOptions = {
-            changeMonth: true,
-            numberOfMonths: 1,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {
-                
-            }    
-        }
-        $("#start").datepicker(fromOptions);
-        $("#end").datepicker(endOptions);
+        toggleReservationCustomers($("#selectedAppartments tr:first"));        
     });
     function toggleReservationCustomers(elm) {
         $("#selectedAppartments tr").removeClass("cell-selected");

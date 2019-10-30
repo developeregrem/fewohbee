@@ -55,10 +55,12 @@ class AppartmentServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $appartment = new Appartment();
+        $appartment->setId('new');
 
         return $this->render('Appartments/appartment_form_create.html.twig', array(
             'objects' => $objects,
-            "appartment" => new Appartment(),
+            "appartment" => $appartment,
             'token' => $csrf->getCSRFTokenForForm()
         ));
     }
@@ -86,7 +88,7 @@ class AppartmentServiceController extends AbstractController
             }
         }
 
-        return $this->render('Appartments/appartment_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -98,15 +100,16 @@ class AppartmentServiceController extends AbstractController
         if (($csrf->validateCSRFToken($request))) {
             /* @var $appartment Appartment */
             $appartment = $as->getAppartmentFromForm($request, $id);
+            $em = $this->getDoctrine()->getManager();
 
             // check for mandatory fields
             if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMin()) == 0 || strlen($appartment->getBedsMax()) == 0
-                || strlen($appartment->getDescription()) == 0
-            ) {
+                || strlen($appartment->getDescription()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($appartment);
             } else {
-                $em = $this->getDoctrine()->getManager();
                 $em->persist($appartment);
                 $em->flush();
 
@@ -115,7 +118,7 @@ class AppartmentServiceController extends AbstractController
             }
         }
 
-        return $this->render('Appartments/appartment_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -132,10 +135,10 @@ class AppartmentServiceController extends AbstractController
                     $this->addFlash('warning', 'appartment.flash.delete.error.still.in.use');
                 }
             }
-            return new Response("ok");
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Appartments/appartment_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));

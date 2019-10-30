@@ -1,54 +1,14 @@
-<div class="modal-body">
-    <div class="container-fluid">
-        <div class="row" id="flash-message-overlay">
-            <div class="row">
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        <ul class="list-group">
-                            <table class="table" id="selectedAppartments">
-                                <tr>
-                                    <th>{{ 'appartment.number'|trans }}</th>
-                                    <th>{{ 'appartment.description'|trans }}</th>
-                                    <th>{{ 'customer.firstname'|trans }}</th>
-                                    <th>{{ 'customer.lastname'|trans }}</th>
-                                    <th>{{ 'reservation.startdate'|trans }}</th>
-                                    <th>{{ 'reservation.enddate'|trans }}</th>
-                                    <th>{{ 'base.action'|trans }}</th>
-                                </tr>
-                                {% for key,reservation in reservations %}
-                                    <tr>
-                                        <td>{{ reservation.appartment.number }}</td>
-                                        <td>{{ reservation.appartment.description }}</td>
-                                        <td>{{ reservation.booker.firstname }}</td>
-                                        <td>{{ reservation.booker.lastname }}</td>
-                                        <td>{{ reservation.startdate|date('d.m.Y') }}</td>
-                                        <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-                                        <td>
-                                            <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                                        onclick="return deleteReservationFromSelection({{ key }})"
-                                                        class="glyphicon glyphicon-remove"></span></a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </table>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'Reservations/reservation_form_selected_reservations_fields.html.twig' %}
 <div class="modal-footer">
-    <ul class="pager">
-        <li class="previous" onclick="return showGetReservations('false')"><a
-                    href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a></li>
+    <ul class="pagination ml-auto">
+        <li class="page-item" onclick="return showGetReservations('false')">
+            <a class="page-link" href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a>
+        </li>
         {% if reservations|length > 0 %}
-            <li class="next" onclick="return selectTemplateForReservations()"><a
-                    href="#">{{ 'button.continue'|trans }} &rarr;</a></li>{% endif %}
+        <li class="page-item" onclick="return selectTemplateForReservations()">
+            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
+        </li>
+        {% endif %}
     </ul>
 </div>
 <script>
@@ -75,9 +35,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 

@@ -9,227 +9,102 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newObjectModal">
-        <div class="modal-dialog">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">{{ 'nav.object.add'|trans }}</h4>
-                </div>
-                <div id="modal-content-ajax"></div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateObjectForm()" data-toggle="modal"
-                            data-target="#newObjectModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'nav.object.add'|trans }}</button>
-                </div>
-                </p>
-                <table class="table table-responsive table-bordered table-hover">
-                    <tr>
-                        <th>{{ 'object.name'|trans }}</th>
-                        <th>{{ 'object.action'|trans }}</th>
-                    </tr>
-                    {% for object in objects %}
-                        <tr>
-                            <td>{{ object.name }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.details'|trans }}"><span
-                                            onclick="showObject({{ object.id }})"
-                                            class="glyphicon glyphicon-eye-open"></span></a>
-                                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                                            onclick="editObject({{ object.id }})"
-                                            class="glyphicon glyphicon-pencil"></span></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}"><span
-                                            onclick="deleteObject({{ object.id }})"
-                                            class="glyphicon glyphicon-remove"></span></a>
-                            </td>
-                        </tr>
-                        <tr id="object-{{ object.id }}" hidden="true">
-                            <td colspan="6" id="object-cell-{{ object.id }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-default" onclick="showCreateObjectForm()" data-toggle="modal"
+                    data-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'nav.object.add'|trans }}</button>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'object.name'|trans }}</th>
+                    <th>{{ 'object.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for object in objects %}
+                    <tr>
+                        <td>{{ object.name }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="getEntity({{ object.id }})" class="fas fa-info-circle"></i></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="editEntry({{ object.id }})" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="deleteEntry({{ object.id }})" class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    <tr id="entry-{{ object.id }}" class="d-none">
+                        <td colspan="6" id="entry-cell-{{ object.id }}">
+                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+{% endblock %}
+{% block bodyjs %}
     {{ parent() }}
     <script>
         $.ajaxSetup({
             cache: false
         });
+        
+     $(function() {
+        // the default modal width is used here
+        $("#modalCenter .modal-dialog").removeClass('modal-lg');
+    });
 
-        function collapseObject(id) {
-            var row = "#object-" + id;
-            var cell = "#object-cell-" + id;
+    function getEntity(id) {
+        let url = replacePlaceholder("{{ path('objects.get.object', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url);
+        
+    }
+    
+    function editEntry(id) {
+        let url = replacePlaceholder("{{ path('objects.get.object', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "", function() {
+            enableEditForm(id);
+        });
+        
+    }
+    
+    function saveObject(id) {
+        let url = replacePlaceholder("{{ path('objects.edit.object', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-            if ($(row).is(':hidden')) {
-                $(row).show();
-                return true;
-            } else {
-                $(row).hide();
-                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-                return false;
-            }
-        }
-        ;
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('objects.delete.object', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
+    }
 
-        function enableObjectForm(id) {
-            var formFieldset = "#object-form-fieldset-" + id;
-            var cancelButton = "#object-cancel-" + id;
-            var editButton = "#object-edit-" + id;
-            var saveButton = "#object-submit-" + id;
-            $(cancelButton).html('Abbrechen');
-            $(editButton).addClass('button-hidden');
-            $(saveButton).removeClass('button-hidden');
-            $(formFieldset).removeAttr('disabled');
+    function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
 
-            return false;
-        }
-        ;
+    function showCreateObjectForm() {
+        getContentForModal("{{ path('objects.new.object') }}");
+    }
 
-        function getObject(id, enableForm) {
-            var cell = "#object-cell-" + id;
-            var url = "{{ path('objects.get.object', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            if (enableForm) {
-                $(cell).load(url, function (response, status, xhr) {
-                    if (status == "success") enableObjectForm(id);
-                });
-            } else {
-                $(cell).load(url);
-            }
-
-            return false;
-        }
-        ;
-
-        function showObject(id) {
-            if (collapseObject(id)) {
-                getObject(id, false);
-            }
-
-            return false;
-        }
-        ;
-
-        function editObject(id) {
-            if (collapseObject(id)) {
-                getObject(id, true);
-            }
-
-            return false;
-        }
-        ;
-
-        function saveObject(id) {
-            var form = "#object-form-" + id;
-            var url = "{{ path('objects.edit.object', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function deleteObject(id) {
-            if (collapseObject(id)) {
-                var cell = "#object-cell-" + id;
-                var url = "{{ path('objects.delete.object', {'id': 'placeholder'}) }}";
-                url = url.replace("placeholder", id);
-
-                $(cell).load(url, function (response, status, xhr) {
-                    //if(status == "success") location.reload();
-                });
-            }
-
-
-            return false;
-        }
-        ;
-
-        function doDeleteObject(id) {
-            var form = "#object-form-" + id;
-            var url = "{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function showCreateObjectForm() {
-            var url = "{{ path('objects.new.object') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $("#modal-content-ajax").load(url, function (response, status, xhr) {
-            });
-
-            return false;
-        }
-        ;
-
-        function createNewObject() {
-            var url = "{{ path('objects.create.object')}}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#object-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        window.location.href = "{{ path('objects.overview') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-        ;
+    function createNewObject() {
+        let url = "{{ path('objects.create.object')}}";
+        _doPost('#entry-form-new', url, '{{ path('objects.overview') }}');
+        return false;
+    }
     </script>
 {% endblock %}

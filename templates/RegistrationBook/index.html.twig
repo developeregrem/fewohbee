@@ -9,59 +9,32 @@
 {% endblock %}
 
 {% block content %}
-    <div class="modal fade" id="newRegistrationBookModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">
-                        {{ 'registrationbook.addreservations'|trans }}
-                    </h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
+    <div class="container">
         <div class="row">
-            <div class="col-md-6 col-md-offset-1">
+            <div class="col-md-6 pr-2">
                 <form class="form" id="registrationbook-search-form" onsubmit="return false;">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input type="search" class="form-control" id="search" name="search"
-                                   placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
-                        <span class="input-group-btn">
-                            <button class="btn btn-default" type="button" onclick="doSearch();"><span
-                                        class="glyphicon glyphicon-search"></span> {{ 'nav.customer.search'|trans }}
-                            </button>
-                        </span>
-                        </div>
-                        <!-- /input-group -->
-                    </div>
+                    <input type="search" class="form-control" id="search" name="search"
+                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </form>
             </div>
-            <div class="col-md-4 text-right">
+            <div class="col-md pl-0">
+                <button class="btn btn-secondary" type="button" onclick="doSearch();">
+                    <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
+                </button>
+            </div>
+            <div class="col-md text-right">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showAddReservationsForm()"
-                            data-toggle="modal" data-target="#newRegistrationBookModal"><span
-                                class="glyphicon glyphicon-plus"></span> {{ 'registrationbook.addreservations'|trans }}
+                    <button type="button" class="btn btn-secondary" onclick="showAddReservationsForm()"
+                            data-toggle="modal" data-target="#modalCenter">
+                        <i class="fas fa-plus"></i> {{ 'registrationbook.addreservations'|trans }}
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <div id="reservationbook-table">
-                    {% include 'RegistrationBook/registrationbook_table.html.twig' %}
-                </div>
+        <div class="row mt-3">
+            <div id="reservationbook-table" class="col">
+                {% include 'RegistrationBook/registrationbook_table.html.twig' %}
             </div>
         </div>
     </div>
@@ -86,10 +59,10 @@
         var cell = "#entry-cell-" + id;
 
         if ($(row).is(':hidden')) {
-            $(row).show();
+            $(row).removeClass("d-none");
             return true;
         } else {
-            $(row).hide();
+            $(row).addClass("d-none");
             $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
             return false;
         }
@@ -188,7 +161,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -253,7 +226,7 @@
             },
             success: function (data) {
                 $("#customers").html(data);
-                $("#customer-selection .btn-primary").removeClass("hidden");
+                $("#customer-selection .btn-primary").removeClass("d-none");
             }
         });
 
@@ -288,10 +261,10 @@
 
     function toggleMoreInfo(fieldId) {
         if ($("#" + fieldId).is(":hidden")) {
-            $("#" + fieldId).fadeIn().removeClass('hide');
+            $("#" + fieldId).fadeIn().removeClass('d-none');
         }
         else {
-            $("#" + fieldId).hide();
+            $("#" + fieldId).addClass('d-none');
         }
         return false;
     }
@@ -330,7 +303,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -377,7 +350,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        
+        iniStartOrEndDate('start', 'end', 1);
         $.ajax({
             url: url,
             type: "get",

@@ -1,22 +1,20 @@
 <form id="template-form" class="form-horizontal" role="form" onsubmit="return sendEmail('#template-form');">
     <fieldset id="template-form-fieldset-primary-">
-        <div class="form-group">
-            <label for="to" class="col-sm-2 control-label">{{ 'templates.recipient'|trans }}
-                *</label>
+        <div class="form-group row">
+            <label for="to" class="col-sm-3 col-form-label">{{ 'templates.recipient'|trans }} *</label>
             {% set mail = "" %}
             {% for address in attribute(reservations, 0).booker.customerAddresses %}
                 {% if address.email|length > 0 %}{% set mail = address.email %}{% endif %}
             {% endfor %}
-            <div class="col-sm-10">
-                <input type="email" class="form-control" name="to"
-                       value="{{ mail }}" required>
+            <div class="col-sm-9">
+                <input type="email" class="form-control" name="to" value="{{ mail }}" required>
             </div>
         </div>
-        <div class="form-group">
-            <label for="subject" class="col-sm-2 control-label">{{ 'templates.subject'|trans }}
+        <div class="form-group row">
+            <label for="subject" class="col-sm-3 col-form-label">{{ 'templates.subject'|trans }}
                 *</label>
 
-            <div class="col-sm-10">
+            <div class="col-sm-9">
                 <input type="text" class="form-control" name="subject"
                        value="" required>
             </div>
@@ -28,22 +26,24 @@
     <div class="row">
         <div class="col-sm-10">{{ 'templates.attachment'|trans }}</div>
         <div class="col-sm-2">
+            <small>
             <a href="#" onclick="return selectTemplateForReservations({{ template.id }}, true);"
-               title="{{ 'button.add'|trans }}" class="pull-right small"><span class="glyphicon glyphicon-plus"></span></a>
+               title="{{ 'button.add'|trans }}" class="float-right"><i class="fas fa-plus"></i></a>
+            </small>
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-12">
+        <div class="col-sm">
             <table class="table">
                 {% for attachment in attachments %}
                 <tr id="aid-{{ attachment.id }}">
-                    <td style="width:10.0pt"><span class="glyphicon {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></span></td>
+                    <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
                     <td class="text-right">
                         <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
-                                       title="{{ 'button.download'|trans }}"><span class="glyphicon glyphicon-download-alt"></span></a>
+                                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                         <a href="#" onclick="return deleteAttachment({{ attachment.id }})"
-                            title="{{ 'button.delete'|trans }}"><span class="glyphicon glyphicon-remove"></span></a>
+                            title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -53,7 +53,7 @@
     <br />
     <input name="_csrf_token" value="{{ token }}" type="hidden">
     <input name="templateId" value="{{ template.id }}" type="hidden">
-    <div class="pull-right">
+    <div class="float-right">
         <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>

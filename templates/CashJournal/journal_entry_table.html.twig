@@ -1,4 +1,5 @@
-<table class="table table-responsive table-bordered table-hover">
+<table class="table table-bordered table-hover">
+    <thead>
     <tr>
         <th>{{ 'journal.entry.number'|trans }}</th>
         <th>{{ 'journal.entry.incomes'|trans }}</th>
@@ -11,6 +12,8 @@
         <th>{{ 'journal.entry.remark'|trans }}</th>
         <th>{{ 'journal.action'|trans }}</th>
     </tr>
+    </thead>
+    <tbody>
     {% for entry in entries %}
         <tr>
             <td>{{ loop.index + startIdx }}</td>
@@ -24,13 +27,13 @@
             <td>{{ entry.remark }}</td>
             <td>
                 {% if not journal.isClosed %}
-                <a href="#" title="{{ 'button.edit'|trans }}"><span
-                            onclick="getEntry({{ entry.id }})" class="glyphicon glyphicon-pencil"
-                            data-toggle="modal" data-target="#showModal"></span></a>
+                <a href="#" title="{{ 'button.edit'|trans }}">
+                    <i onclick="getEntry({{ entry.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
                 {% endif %}
             </td>
         </tr>
     {% endfor %}
+    </tbody>
 </table>
 <div class="row">
     <div class="col-md-11 text-right">{{ 'journal.cash.start'|trans }}:</div>

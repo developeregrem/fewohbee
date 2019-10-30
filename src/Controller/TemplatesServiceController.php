@@ -118,7 +118,7 @@ class TemplatesServiceController extends AbstractController
             }
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -134,13 +134,15 @@ class TemplatesServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $template = $ts->getEntityFromForm($request, $id);
+            $em = $this->getDoctrine()->getManager();
 
             // check for mandatory fields
             if (strlen($template->getName()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $em = $this->getDoctrine()->getManager();
+                // stop auto commit of doctrine with invalid field values
+                $em->detach($template);
+            } else {                
                 $em->persist($template);
                 $em->flush();
 
@@ -149,7 +151,7 @@ class TemplatesServiceController extends AbstractController
             }
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             "error" => $error
         ));
     }
@@ -169,10 +171,10 @@ class TemplatesServiceController extends AbstractController
                     $this->addFlash('success', 'templates.flash.delete.success');
                 }
             }
-            return new Response('ok');
+            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
-            return $this->render('Templates/templates_form_delete.html.twig', array(
+            return $this->render('common/form_delete_entry.html.twig', array(
                 "id" => $id,
                 'token' => $csrf->getCSRFTokenForForm()
             ));
@@ -286,7 +288,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $this->render(
-            'Templates/templates_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )
@@ -299,11 +301,11 @@ class TemplatesServiceController extends AbstractController
         $reservations = Array();
         $selectedReservationIds = $session->get("selectedReservationIds");
 
-        $customer = $em->getRepository(Customer::class)->findByLastname(
+        $customer = $em->getRepository(Customer::class)->findOneByLastname(
             $request->get("lastname")
-        )[0];
+        );
 
-        if ($customer) {
+        if ($customer instanceof Customer) {
             $potentialReservations = $em->getRepository(
                 Reservation::class
             )->loadReservationsWithoutInvoiceForCustomer($customer);
@@ -316,7 +318,7 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $this->render(
-            'Templates/templates_matching_reservations.html.twig',
+            'Reservations/reservation_matching_reservations.html.twig',
             array(
                 'reservations' => $reservations
             )
@@ -399,7 +401,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error,
         ));
     }
@@ -457,7 +459,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error,
             'attachment' => $isAttachment
         ));
@@ -504,7 +506,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }
@@ -532,7 +534,7 @@ class TemplatesServiceController extends AbstractController
             $error = true;
         }
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }
@@ -550,7 +552,7 @@ class TemplatesServiceController extends AbstractController
         $ts->addFileAsAttachment($cId, $reservations);
 
 
-        return $this->render('Templates/templates_feedback.html.twig', array(
+        return $this->render('feedback.html.twig', array(
             'error' => $error
         ));
     }

@@ -8,77 +8,67 @@
     {{ parent() }} -  Reservierungsverwaltung
 {% endblock %}
 
-{% block content %}
-    <div class="modal fade" id="newReservationModal">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title">
-                        {{ 'nav.reservation.add'|trans }}
-                    </h4>
-                </div>
-                <div id="modal-content-ajax">
-                    <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                    </div>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div><!-- /.modal -->
-
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-                <p>
-
-                <form id="table-filter" class="form-inline" role="form" onsubmit="return getNewTable()">
-                    <div class="btn-group">
-                        <div class="form-group">
-                            <input type="input" class="form-control" id="start" name="start" placeholder="from"
-                                   value="{{ today|date('d.m.Y') }}">
-                        </div>
-                        <div class="form-group">
-                            <select name="intervall" class="form-control">
-                                <option value="8"{% if "8" == interval %} selected{% endif %}>
-                                    8 {{ 'reservation.days'|trans }}</option>
-                                <option value="15"{% if "15" == interval %} selected{% endif %}>
-                                    15 {{ 'reservation.days'|trans }}</option>
-                                <option value="22"{% if "22" == interval %} selected{% endif %}>
-                                    22 {{ 'reservation.days'|trans }}</option>
-                                <option value="30"{% if "30" == interval %} selected{% endif %}>
-                                    30 {{ 'reservation.days'|trans }}</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-default"><span
-                                        class="glyphicon glyphicon-refresh"></span> {{ 'reservation.table.reload'|trans }}
-                            </button>
-                            <button type="button" class="btn btn-default" onclick="return selectAppartment(true)"
-                                    data-toggle="modal" data-target="#newReservationModal"><span
-                                        class="glyphicon glyphicon-plus"></span> {{ 'nav.reservation.add'|trans }}
-                            </button>
+{% block flashMessage %}
+    <div class="container-fluid mt-3">
+        <div class="row" id="flash-message-container">
+            {% for type, flashMessages in app.flashes %}
+                {% for flashMessage in flashMessages %}
+                    <div class="col">
+                        <div class="alert alert-{{ type }} alert-dismissable">
+                            <button type="button" class="close" data-dismiss="alert"
+                                    aria-hidden="true">&times;</button>
+                            {{ flashMessage|trans }}
                         </div>
                     </div>
-                    <div class="form-group pull-right">
-                        <select id="objects" name="object" class="form-control">
-                            <option value="all">{{ 'reservation.objects.all'|trans }}</option>
-                            {% for object in objects %}
-                                <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </form>
-                </p>
-                <div id="table-ajax">
-                    <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                </div>
-            </div>
+                {% endfor %}
+            {% endfor %}
         </div>
     </div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <form id="table-filter" role="form" onsubmit="return getNewTable()">
+        <div class="row">
+            <div class="col-md-auto">
+                <input type="date" class="form-control mb-2 mr-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
+            </div>
+                <div class="col-md-auto">
+                <select name="intervall" class="custom-select mb-2 mr-sm-2">
+                    <option value="8"{% if "8" == interval %} selected{% endif %}>
+                        8 {{ 'reservation.days'|trans }}</option>
+                    <option value="15"{% if "15" == interval %} selected{% endif %}>
+                        15 {{ 'reservation.days'|trans }}</option>
+                    <option value="22"{% if "22" == interval %} selected{% endif %}>
+                        22 {{ 'reservation.days'|trans }}</option>
+                    <option value="30"{% if "30" == interval %} selected{% endif %}>
+                        30 {{ 'reservation.days'|trans }}</option>
+                </select>
+            </div>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-secondary mb-2 mr-sm-2 float-left">
+                    <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
+                </button>
+                <button type="button" class="btn btn-secondary mb-2 mr-sm-2" onclick="return selectAppartment(true)"
+                        data-toggle="modal" data-target="#modalCenter">
+                    <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
+                </button>
+            </div>
+            <div class="col-md-2 text-right ml-auto">
+                <select id="objects" name="object" class="form-control">
+                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                {% for object in objects %}
+                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                {% endfor %}
+            </select>
+            </div>
+        </div>
+    </form>
+    <div class="row mt-2" >
+        <div class="col" id="table-ajax">
+            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -94,40 +84,9 @@
         // load initial table
         getNewTable();
 
-        $("#start").datepicker({
-            changeMonth: true,
-            changeYear: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-        });
-
         $("#objects").change(function () {
             getNewTable();
         });
-
-        fromOptions = {
-            changeMonth: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {
-                var from = $(this).datepicker("getDate");
-                $("#end").datepicker("option", "minDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                // add + 1 day in end form only if field is empty
-                if ($("#end").val().length === 0) {
-                    $("#end").datepicker("setDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                    //$("#from").datepicker("option", "maxDate", new Date(from.getFullYear(), from.getMonth(), (from.getDate() + 1)));
-                    getAvailableAppartmentsForPeriod();
-                }
-            }
-        };
-        endOptions = {
-            changeMonth: true,
-            numberOfMonths: 2,
-            regional: "{{ app.request.locale }}",
-            onClose: function (selectedDate) {
-                //$("#from").datepicker("option", "maxDate", selectedDate);
-            }
-        }
     });
 
     function selectReservatioForInvoice(id) {
@@ -208,7 +167,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.add'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.add'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -220,9 +179,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
 
                 if (from != null && end != null) {
                     //$("#from").val(from);
@@ -239,7 +195,7 @@
 
     function getAvailableAppartmentsForPeriod(mode) {
         $("#available-appartments").html("");
-
+        iniStartOrEndDate('from', 'end', 1);
         if (($("#from").val() !== '') && ($("#end").val() !== '')) {
             if (mode === 'edit')
                 var url = "{{ path('reservations.get.edit.available.appartments') }}";
@@ -248,7 +204,7 @@
             var content = '<div class="modal-body">' +
                     '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                     '</div>';
-
+            
             $.ajax({
                 url: url,
                 type: "post",
@@ -295,9 +251,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -326,9 +279,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -353,9 +303,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -381,9 +328,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
             }
         });
 
@@ -415,7 +359,7 @@
                 beforeSend: function () {
                     $("#modal-content-ajax").html(content);
                     $("#breadcrumb-appartments").wrap('<a href="#" />');
-                    $("#breadcrumb-customer").removeClass("hidden");
+                    $("#breadcrumb-customer").removeClass("d-none");
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     alert(xhr.status);
@@ -445,7 +389,7 @@
             data: $("#lastname").serialize() + "&tab=" + tab + "&page=" + page + "&appartmentId=" + appartmentId,
             beforeSend: function () {
                 $("#customers").html(content);
-                $("#customer-selection .btn-primary").addClass("hidden");
+                $("#customer-selection .btn-primary").addClass("d-none");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(xhr.status);
@@ -476,7 +420,7 @@
             },
             success: function (data) {
                 $("#customers").html(data);
-                $("#customer-selection .btn-primary").removeClass("hidden");
+                $("#customer-selection .btn-primary").removeClass("d-none");
             }
         });
 
@@ -537,12 +481,12 @@
     ;
 
     function toggleAppartmentOptions(id) {
-        if ($("#appartment-" + id).hasClass("hidden")) {
+        if ($("#appartment-" + id).hasClass("d-none")) {
             // close all other opened
-            $(".appartment-options").addClass("hidden");
-            $("#appartment-" + id).removeClass("hidden");
+            $(".appartment-options").addClass("d-none");
+            $("#appartment-" + id).removeClass("d-none");
         } else {
-            $("#appartment-" + id).addClass("hidden");
+            $("#appartment-" + id).addClass("d-none");
         }
 
         return false;
@@ -591,8 +535,8 @@
                     '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                     '</div>';
             $("#modal-content-ajax").html(content);
-            $('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
-            $('#newReservationModal').modal('show')
+            $('#modalCenter .modal-title').text("{{ 'reservation.details'|trans }}");
+            $('#modalCenter').modal('show')
 
             $.ajax({
                 url: url,
@@ -623,7 +567,7 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-        $('#newReservationModal .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
+        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
         $("#modal-content-ajax").html(content);
 
         $.ajax({
@@ -635,10 +579,6 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
-
-                $("#from, .dateFrom").datepicker(fromOptions);
-
-                $("#end, .dateEnd").datepicker(endOptions);
             }
         });
 
@@ -719,7 +659,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                //$('#newReservationModal .modal-title').text("{{ 'reservation.details'|trans }}");
+                //$('#modalCenter .modal-title').text("{{ 'reservation.details'|trans }}");
                 $("#modal-content-ajax").html(data);
                 if(tab == 'booker') {
                     getNewTable();
@@ -875,7 +815,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.select.template'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.select.template'|trans }}");
                 $("#modal-content-ajax").html(data);
 
             }
@@ -906,7 +846,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.edit'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.edit'|trans }}");
                 $("#modal-content-ajax").html(data);
 
             }
@@ -1006,7 +946,7 @@
                 alert(xhr.status);
             },
             success: function (data) {
-                $('#newReservationModal .modal-title').text("{{ 'templates.preview'|trans }}");
+                $('#modalCenter .modal-title').text("{{ 'templates.preview'|trans }}");
                 $("#modal-content-ajax").html(data);
             }
         });
