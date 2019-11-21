@@ -71,13 +71,13 @@ class PriceService
 
         if ($request->get("alldays-" . $id) != null) {
             $price->setAllDays(true);
-            $price->setMonday(false);
-            $price->setTuesday(false);
-            $price->setWednesday(false);
-            $price->setThursday(false);
-            $price->setFriday(false);
-            $price->setSaturday(false);
-            $price->setSunday(false);
+            $price->setMonday(true);
+            $price->setTuesday(true);
+            $price->setWednesday(true);
+            $price->setThursday(true);
+            $price->setFriday(true);
+            $price->setSaturday(true);
+            $price->setSunday(true);
         } else {
             $noDaySelected = true;
 
@@ -148,6 +148,18 @@ class PriceService
         }
 
         return $price;
+    }
+    
+    public function findConflictingPrices(Price $price) {
+        $conflicts = [];
+        if($price->getSeasonStart() === null and $price->getSeasonEnd() === null) {
+            $prices = $this->em->getRepository(Price::class)->findConflictingPricesWithoutPeriod($price);
+            /* @var $p Price */
+            foreach($prices as $p) {
+                //echo $p->getDescription().'<br>';
+            }
+        }
+        return $conflicts;
     }
 
     public function deletePrice($id)
