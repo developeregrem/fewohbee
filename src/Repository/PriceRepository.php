@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
+use App\Entity\Price;
 
 /**
  * PriceRepository
@@ -37,6 +38,53 @@ class PriceRepository extends EntityRepository
             ->createQueryBuilder('p')
             ->select('p')
             ->where('p.type = 1 AND p.active = true')
+            ->getQuery();
+
+        $prices = null;
+        try {
+            $prices = $q->getResult();
+        } catch (NoResultException $e) {
+
+        }
+
+        return $prices;
+    }
+    
+    /**
+     * Find all prices that conflicts with the current one
+     * @param Price $price
+     * @return array
+     */
+    public function findConflictingPricesWithoutPeriod(Price $price)
+    {
+        $q = $this
+            ->createQueryBuilder('p')
+            ->select('p, ro')
+            ->leftJoin('p.reservationOrigins', 'ro') 
+                /* select only room type and active prices*/
+            ->where('p.type = 2 AND p.active = true') 
+                /* make sure that all room specific fields match */
+            ->andWhere('p.numberOfBeds = :nob and p.numberOfPersons = :nop and p.minStay = :ms')
+                /* select only proces where start and and is not set (valid for the whole year) */
+            ->andWhere('p.seasonStart IS NULL and p.seasonEnd IS NULL')
+                /* select only prices for the given reservation origin */
+            ->andWhere(':ros MEMBER OF p.reservationOrigins')
+                /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
+            ->andWhere('((:ad = true AND p.allDays = true) OR (:mo = true AND p.monday = true) OR (:tu = true AND p.tuesday = true)'
+                    . ' OR (:we = true AND p.wednesday = true) OR (:th = true AND p.thursday = true)  OR (:fr = true AND p.friday = true)'
+                    . ' OR (:sa = true AND p.saturday = true) OR (:su = true AND p.sunday = true))')
+            ->setParameter('nob', $price->getNumberOfBeds())
+            ->setParameter('nop', $price->getNumberOfPersons())
+            ->setParameter('ms', $price->getMinStay())
+            ->setParameter('ros', $price->getReservationOrigins())
+            ->setParameter('ad', $price->getAllDays())
+            ->setParameter('mo', $price->getMonday())
+            ->setParameter('tu', $price->getTuesday())
+            ->setParameter('we', $price->getWednesday())
+            ->setParameter('th', $price->getThursday())
+            ->setParameter('fr', $price->getFriday())
+            ->setParameter('sa', $price->getSaturday())
+            ->setParameter('su', $price->getSunday())
             ->getQuery();
 
         $prices = null;

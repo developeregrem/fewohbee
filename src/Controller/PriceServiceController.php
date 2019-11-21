@@ -92,6 +92,7 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
+                //$ps->findConflictingPrices($price);
                 $em = $this->getDoctrine()->getManager();
                 $em->persist($price);
                 $em->flush();
