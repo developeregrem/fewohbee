@@ -170,6 +170,14 @@
                 <source>price.appartment.hint</source>
                 <target>Nur auszufüllen, wenn Typ: Zimmerpreis gewählt.</target>
             </trans-unit>
+            <trans-unit id="43">
+                <source>price.season.hint</source>
+                <target>Kategorien mit einem Zeitraum haben eine höhere Wertigkeit als Kategorien ohne.</target>
+            </trans-unit>
+            <trans-unit id="44">
+                <source>price.flash.create.conflict</source>
+                <target>Konflikt mit mind. einer aktiven Kategorie. Bitte passe deine Enstellungen an.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

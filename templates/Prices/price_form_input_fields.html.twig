@@ -78,83 +78,86 @@
             </div>
             <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
-                        <div class="form-group row">
-                            <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.season'|trans }} *</label>
-                            <div class="col-sm-4">
-                                <input type="date" class="form-control" id="seasonstart-{{ price.id }}"
-                                       name="seasonstart-{{ price.id }}"
-                                       value="{% if price.seasonstart %} {{ price.seasonstart|date('Y-m-d') }} {% endif %}"
-                                       placeholder="{{ 'price.from'|trans }}">
-                            </div>
-                            <div class="col-sm-4">
-                                <input type="date" class="form-control" id="seasonend-{{ price.id }}"
-                                       name="seasonend-{{ price.id }}"
-                                       value="{% if price.seasonend %} {{ price.seasonend|date('Y-m-d') }} {% endif %}"
-                                       placeholder="{{ 'price.end'|trans }}">
+                    <div class="form-group row">
+                        <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.season'|trans }}</label>
+                        <div class="col-sm-4">
+                            <input type="date" class="form-control" id="seasonstart-{{ price.id }}"
+                                   name="seasonstart-{{ price.id }}"
+                                   value="{% if price.seasonStart %}{{ price.seasonStart|date('Y-m-d') }}{% endif %}"
+                                   placeholder="{{ 'price.from'|trans }}"
+                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);">
+                        </div>
+                        <div class="col-sm-4">
+                            <input type="date" class="form-control" id="seasonend-{{ price.id }}"
+                                   name="seasonend-{{ price.id }}"
+                                   value="{% if price.seasonEnd %}{{ price.seasonEnd|date('Y-m-d') }}{% endif %}"
+                                   placeholder="{{ 'price.end'|trans }}"
+                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-sm-3"></div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <div class="col-sm-3"></div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
-                                </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <div class="col-sm-3"></div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="custom-control-input"
-                                           onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
-                                </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
                             </div>
                         </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-sm-3"></div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="custom-control-input"
+                                       onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'price.season.hint'|trans }}</span>
                 </div>
             </div>
         </div>

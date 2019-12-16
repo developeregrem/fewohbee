@@ -150,16 +150,21 @@ class PriceService
         return $price;
     }
     
+    /**
+     * Returns a list of conflicting prices
+     * @param Price $price
+     * @return Price[]
+     */
     public function findConflictingPrices(Price $price) {
-        $conflicts = [];
-        if($price->getSeasonStart() === null and $price->getSeasonEnd() === null) {
+        $prices = [];
+        // find conflicts when no season is given
+        if($price->getSeasonStart() === null or $price->getSeasonEnd() === null) {
             $prices = $this->em->getRepository(Price::class)->findConflictingPricesWithoutPeriod($price);
-            /* @var $p Price */
-            foreach($prices as $p) {
-                //echo $p->getDescription().'<br>';
-            }
+        } else {
+            // // find conflicts when a season is given 
+            $prices = $this->em->getRepository(Price::class)->findConflictingPricesWithPeriod($price);
         }
-        return $conflicts;
+        return $prices;
     }
 
     public function deletePrice($id)

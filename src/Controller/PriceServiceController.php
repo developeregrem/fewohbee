@@ -92,13 +92,18 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                //$ps->findConflictingPrices($price);
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($price);
-                $em->flush();
+                $conflicts = $ps->findConflictingPrices($price);
 
-                // add succes message
-                $this->addFlash('success', 'price.flash.create.success');
+                if(count($conflicts) === 0) {
+                    $em = $this->getDoctrine()->getManager();
+                    $em->persist($price);
+                    $em->flush();
+                    // add succes message
+                    $this->addFlash('success', 'price.flash.create.success');
+                } else {
+                    $error = true;
+                    $this->addFlash('warning', 'price.flash.create.conflict');
+                }         
             }
         }
 

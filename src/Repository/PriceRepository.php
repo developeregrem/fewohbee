@@ -51,12 +51,59 @@ class PriceRepository extends EntityRepository
     }
     
     /**
-     * Find all prices that conflicts with the current one
+     * Find all prices that conflicts with the current one that are valid the whole year
      * @param Price $price
-     * @return array
+     * @return Price[]|null
      */
     public function findConflictingPricesWithoutPeriod(Price $price)
     {
+        $q = $this->conflictingBaseQuery($price)
+            /* select only proces where start and and is not set (valid for the whole year) */
+            ->andWhere('p.seasonStart IS NULL and p.seasonEnd IS NULL')
+            ->getQuery();
+
+        $prices = null;
+        try {
+            $prices = $q->getResult();
+        } catch (NoResultException $e) {
+
+        }
+
+        return $prices;
+    }
+    
+    /**
+     * Find all prices that conflicts with the current one based on a given season
+     * @param Price $price
+     * @return Price[]|null
+     */
+    public function findConflictingPricesWithPeriod(Price $price) {
+        $q = $this->conflictingBaseQuery($price)
+                /* find overlapping periods */
+            ->andWhere("((p.seasonStart >= :start AND p.seasonEnd <= :end) OR"
+                . "(p.seasonStart < :start AND p.seasonEnd >= :start) OR"
+                . "(p.seasonStart <= :end AND p.seasonEnd > :end) OR"
+                . "(p.seasonStart < :start AND p.seasonEnd > :end))")
+            ->setParameter(":start", $price->getSeasonStart())
+            ->setParameter(":end", $price->getSeasonEnd())
+            ->getQuery();
+
+        $prices = null;
+        try {
+            $prices = $q->getResult();
+        } catch (NoResultException $e) {
+
+        }
+
+        return $prices;
+    }
+    
+    /**
+     * 
+     * @param Price $price
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    private function conflictingBaseQuery(Price $price) {
         $q = $this
             ->createQueryBuilder('p')
             ->select('p, ro')
@@ -64,9 +111,7 @@ class PriceRepository extends EntityRepository
                 /* select only room type and active prices*/
             ->where('p.type = 2 AND p.active = true') 
                 /* make sure that all room specific fields match */
-            ->andWhere('p.numberOfBeds = :nob and p.numberOfPersons = :nop and p.minStay = :ms')
-                /* select only proces where start and and is not set (valid for the whole year) */
-            ->andWhere('p.seasonStart IS NULL and p.seasonEnd IS NULL')
+            ->andWhere('p.numberOfBeds = :nob and p.numberOfPersons = :nop and p.minStay = :ms')   
                 /* select only prices for the given reservation origin */
             ->andWhere(':ros MEMBER OF p.reservationOrigins')
                 /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
@@ -84,17 +129,9 @@ class PriceRepository extends EntityRepository
             ->setParameter('th', $price->getThursday())
             ->setParameter('fr', $price->getFriday())
             ->setParameter('sa', $price->getSaturday())
-            ->setParameter('su', $price->getSunday())
-            ->getQuery();
-
-        $prices = null;
-        try {
-            $prices = $q->getResult();
-        } catch (NoResultException $e) {
-
-        }
-
-        return $prices;
+            ->setParameter('su', $price->getSunday());
+        
+        return $q;
     }
 
     public function supportsClass($class)
