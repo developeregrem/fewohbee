@@ -40,14 +40,17 @@
                         <td>{% if price.seasonstart %}{{ price.seasonstart|date('d.m.Y') }}{% endif %}</td>
                         <td>{% if price.seasonend %}{{ price.seasonend|date('d.m.Y') }}{% endif %}</td>
                         <td>
-                            {% if price.alldays == true %}{{ 'price.abbreviation.alldays'|trans }}{% endif %}
-                            {% if price.monday == true %}{{ 'price.abbreviation.monday'|trans }}{% endif %}
-                            {% if price.tuesday == true %}{{ 'price.abbreviation.tuesday'|trans }}{% endif %}
-                            {% if price.wednesday == true %}{{ 'price.abbreviation.wednesday'|trans }}{% endif %}
-                            {% if price.thursday == true %}{{ 'price.abbreviation.thursday'|trans }}{% endif %}
-                            {% if price.friday == true %}{{ 'price.abbreviation.friday'|trans }}{% endif %}
-                            {% if price.saturday == true %}{{ 'price.abbreviation.saturday'|trans }}{% endif %}
-                            {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
+                            {% if price.alldays == true %}
+                                {{ 'price.abbreviation.alldays'|trans }}                            
+                            {% else %}
+                                {% if price.monday == true %}{{ 'price.abbreviation.monday'|trans }}{% endif %}
+                                {% if price.tuesday == true %}{{ 'price.abbreviation.tuesday'|trans }}{% endif %}
+                                {% if price.wednesday == true %}{{ 'price.abbreviation.wednesday'|trans }}{% endif %}
+                                {% if price.thursday == true %}{{ 'price.abbreviation.thursday'|trans }}{% endif %}
+                                {% if price.friday == true %}{{ 'price.abbreviation.friday'|trans }}{% endif %}
+                                {% if price.saturday == true %}{{ 'price.abbreviation.saturday'|trans }}{% endif %}
+                                {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
+                            {% endif %}
                         </td>
                         <td class="text-right">{{ price.price|number_format(2, ',', '.') }}</td>
                         <td class="text-right">
