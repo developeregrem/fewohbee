@@ -83,6 +83,7 @@ class PriceServiceController extends AbstractController
     public function createPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request)
     {
         $error = false;
+        $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, "new");
 
@@ -93,8 +94,9 @@ class PriceServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
                 $conflicts = $ps->findConflictingPrices($price);
-
-                if(count($conflicts) === 0) {
+                
+                // complain conflicts only when current price is marked as acitve
+                if(!$price->getActive() || count($conflicts) === 0) {
                     $em = $this->getDoctrine()->getManager();
                     $em->persist($price);
                     $em->flush();
@@ -107,14 +109,16 @@ class PriceServiceController extends AbstractController
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
+        return $this->render('Prices/feedback.html.twig', array(
+            "error" => $error,
+            'conflicts' => $conflicts
         ));
     }
 
     public function editPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         $error = false;
+        $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
             $em = $this->getDoctrine()->getManager();
@@ -126,17 +130,30 @@ class PriceServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->detach($price);
-            } else {                
-                $em->persist($price);
-                $em->flush();
+            } else {  
+                $conflicts = $ps->findConflictingPrices($price);
+                // during edit we need to remove the current item from the list
+                $conflicts->removeElement($price);
+                
+                // complain conflicts only when current price is marked as acitve
+                if(!$price->getActive() || count($conflicts) === 0) {
+                    $em->persist($price);
+                    $em->flush();
 
-                // add succes message           
-                $this->addFlash('success', 'price.flash.edit.success');
+                    // add succes message           
+                    $this->addFlash('success', 'price.flash.edit.success');
+                } else {
+                    $error = true;
+                    $this->addFlash('warning', 'price.flash.create.conflict');
+                    // stop auto commit of doctrine with invalid field values
+                    $em->detach($price);
+                }  
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
+        return $this->render('Prices/feedback.html.twig', array(
+            'error' => $error,
+            'conflicts' => $conflicts
         ));
     }
 

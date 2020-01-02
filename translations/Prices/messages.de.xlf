@@ -176,7 +176,7 @@
             </trans-unit>
             <trans-unit id="44">
                 <source>price.flash.create.conflict</source>
-                <target>Konflikt mit mind. einer aktiven Kategorie. Bitte passe deine Enstellungen an.</target>
+                <target>Die Preiskategorie konnte nicht gespeichert werden, da es Konflikte mit den folgenden aktiven Kategorien gibt:</target>
             </trans-unit>
         </body>
     </file>

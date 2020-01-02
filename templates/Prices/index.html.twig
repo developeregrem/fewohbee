@@ -35,7 +35,7 @@
                 </thead>
                 <tbody>
                 {% for price in prices %}
-                    <tr>
+                    <tr{% if price.active == false %} class="text-secondary"{% endif %}>
                         <td>{{ price.description }}</td>
                         <td>{% if price.seasonstart %}{{ price.seasonstart|date('d.m.Y') }}{% endif %}</td>
                         <td>{% if price.seasonend %}{{ price.seasonend|date('d.m.Y') }}{% endif %}</td>
@@ -167,9 +167,22 @@
     function checkAllCheckboxes(id) {
         
         if ($('#collapseTwo-' + id + ' #alldays-' + id).is(':checked')) {
-            $('#collapseTwo-' + id + ' :checkbox').prop('checked', true);
+            $('.days-control :checkbox').prop('checked', true);
         } else {
-            $('#collapseTwo-' + id + ' :checkbox').prop('checked', false);
+            $('.days-control :checkbox').prop('checked', false);
+        }
+
+        return false;
+    }
+    
+    function toggleStartEnd(id) {
+        
+        if ($('#collapseTwo-' + id + ' #allseason-' + id).is(':checked')) {
+            $('#seasonstart-'+ id).prop('disabled', true);
+            $('#seasonend-'+ id).prop('disabled', true);
+        } else {
+            $('#seasonstart-'+ id).prop('disabled', false);
+            $('#seasonend-'+ id).prop('disabled', false);
         }
 
         return false;

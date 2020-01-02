@@ -80,22 +80,31 @@
                 <div class="card-body">
                     <div class="form-group row">
                         <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.season'|trans }}</label>
-                        <div class="col-sm-4">
+                        <div class="col-sm-3">
                             <input type="date" class="form-control" id="seasonstart-{{ price.id }}"
                                    name="seasonstart-{{ price.id }}"
                                    value="{% if price.seasonStart %}{{ price.seasonStart|date('Y-m-d') }}{% endif %}"
                                    placeholder="{{ 'price.from'|trans }}"
-                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);">
+                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);"
+                                   {% if price.seasonStart is null %} disabled{% endif %}>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-3">
                             <input type="date" class="form-control" id="seasonend-{{ price.id }}"
                                    name="seasonend-{{ price.id }}"
                                    value="{% if price.seasonEnd %}{{ price.seasonEnd|date('Y-m-d') }}{% endif %}"
                                    placeholder="{{ 'price.end'|trans }}"
-                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);">
+                                   onchange="iniStartOrEndDate('seasonstart-{{ price.id }}', 'seasonend-{{ price.id }}', 1);"
+                                   {% if price.seasonEnd is null %} disabled{% endif %}>
+                        </div>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="allseason-{{ price.id }}" id="allseason-{{ price.id }}" class="custom-control-input"
+                                       onclick="toggleStartEnd('{{ price.id }}')" {% if price.seasonStart is null %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="allseason-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="form-group row days-control">
                         <div class="col-sm-3"></div>
                         <div class="checkbox col-sm-2">
                             <div class="custom-control custom-checkbox">
@@ -126,7 +135,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="form-group row days-control">
                         <div class="col-sm-3"></div>
                         <div class="checkbox col-sm-2">
                             <div class="custom-control custom-checkbox">

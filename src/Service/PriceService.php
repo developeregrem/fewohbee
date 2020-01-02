@@ -13,6 +13,7 @@ namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Doctrine\Common\Collections\ArrayCollection;
 
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
@@ -153,7 +154,7 @@ class PriceService
     /**
      * Returns a list of conflicting prices
      * @param Price $price
-     * @return Price[]
+     * @return Doctrine\Common\Collections\ArrayCollection
      */
     public function findConflictingPrices(Price $price) {
         $prices = [];
@@ -164,7 +165,7 @@ class PriceService
             // // find conflicts when a season is given 
             $prices = $this->em->getRepository(Price::class)->findConflictingPricesWithPeriod($price);
         }
-        return $prices;
+        return new ArrayCollection($prices);
     }
 
     public function deletePrice($id)
