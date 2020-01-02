@@ -8,3 +8,4 @@ public/resources/images/export/
 node_modules
 package-lock.json
 composer.lock
+symfony.lock
