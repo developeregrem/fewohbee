@@ -105,6 +105,14 @@
         $("#editor1").val(tinymce.get("editor1").getContent());
         _doPost('#entry-form-new', url, '{{ path('settings.templates.overview') }}');
         return false;
-    }
+    }    
+            
+    // workaround for tinymce in a bootstrap modal, when opening a tinymce modal, events are not working anymore 
+    // like dropdown in the template plugin or selecting text in the code plugin
+    $(document).on('focusin', function(e) {
+        if ($(e.target).closest(".tox-dialog").length) {    
+            e.stopImmediatePropagation();
+        }
+    });
     </script>
 {% endblock %}

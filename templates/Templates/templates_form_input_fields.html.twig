@@ -97,9 +97,9 @@
                 },
       });
 
-      $("#template-type").change(function() {
-        let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
-        tinymce.activeEditor.settings.templates = newTemplateUrl;
-      });
-  });
+        $("#template-type").change(function() {
+          let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
+          tinymce.activeEditor.settings.templates = newTemplateUrl;
+        });
+  });  
 </script>
