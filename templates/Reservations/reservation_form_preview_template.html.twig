@@ -31,7 +31,11 @@
             selector: '#editor1',
             language: '{{ app.request.locale }}',
             branding: false,
-            plugins: ['fullpage']
+            plugins: ['fullpage'],
+            protect: [
+                /<\/?.*(html)?pageheader.*?>/g, // allow page header and footer
+                /<\/?.*(html)?pagefooter.*?>/g
+            ]
         });
     });
 </script>
