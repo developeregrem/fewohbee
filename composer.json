@@ -6,7 +6,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "doctrine/doctrine-bundle": "^1.10",
-        "mpdf/mpdf": "^7.0",
+        "mpdf/mpdf": "^8.0",
         "symfony/asset": "^4.3",
         "symfony/console": "^4.3",
         "symfony/dotenv": "^4.3",
@@ -77,7 +77,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "4.3.*"
+            "require": "4.4.*"
         }
     }
 }
