@@ -14,7 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Intl\Intl;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
@@ -184,7 +184,7 @@ class RegistrationBookServiceController extends AbstractController
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
-        $countries = Intl::getRegionBundle()->getCountryNames($request->getLocale());
+        $countries = Countries::getNames($request->getLocale());
         
         return $this->render('RegistrationBook/registrationbook_form_edit_customer.html.twig', array(
             'customer' => $customer,
