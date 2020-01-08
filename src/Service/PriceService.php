@@ -17,6 +17,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
+use App\Entity\Reservation;
 
 class PriceService
 {
@@ -176,5 +177,94 @@ class PriceService
         $this->em->flush();
 
         return true;
+    }
+    
+    public function getPrices(Reservation $reservation, int $type) : array {
+        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        
+        $prices = $this->em->getRepository(Price::class)->findPrices($reservation, $type, $days);
+
+        $result = [];
+        $curDate = $reservation->getStartDate();
+        for($i = 0; $i < $days; $i++) {
+            $curDate = $curDate->add(new \DateInterval("P".$i."D"));
+
+            /* @var $price Price */
+            foreach($prices as $price) {
+                // prices are already sorted by priority, therefore we can accept the first matching one
+                // first we need to check if the current date is in between the price season
+                if( $price->getSeasonStart() == null || $this->isDateBetween($curDate, $price->getSeasonStart(), $price->getSeasonEnd()) ) {
+                    // second, we need to check if the weekday match         
+                    if($this->isWeekDayMatch($price, $curDate)) {
+                        $result[$i] = $price;
+                       // found one, go to next day
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return $result;
+    }
+    
+    private function getDateDiff(\DateTime $start, \DateTime $end) : int {
+        $interval = date_diff($start, $end);
+		
+        // return number of days
+        return $interval->format('%a');
+    }
+    
+    private function isDateBetween(\DateTime $cur, \DateTime $start, \DateTime $end) {
+        if(($cur >= $start) && ($cur <= $end)) {
+            return true;
+        }
+        return false;
+    }
+    
+    private function isWeekDayMatch(Price $price, \DateTime $curr) {        
+        if($price->getAllDays()) {
+            return true;
+        }
+        
+        $dayOfWeek = $curr->format("N"); // 1 = Mon, 7 = Sun
+        echo 'W'.$dayOfWeek;
+        switch ($dayOfWeek) {
+            case 1:
+                if($price->getMonday()) {
+                    return true;
+                }
+                break;
+            case 2:
+                if($price->getTuesday()) {
+                    return true;
+                }
+                break;
+            case 3:
+                if($price->getWednesday()) {
+                    return true;
+                }
+                break;
+            case 4:
+                if($price->getThursday()) {
+                    return true;
+                }
+                break;
+            case 5:
+                if($price->getFriday()) {
+                    return true;
+                }
+                break;
+            case 6:
+                if($price->getSaturday()) {
+                    return true;
+                }
+                break;
+            case 7:
+                if($price->getSunday()) {
+                    return true;
+                }
+                break;            
+        }
+        return false;
     }
 }

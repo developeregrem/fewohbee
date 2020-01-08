@@ -125,6 +125,10 @@ class Reservation
         return $this->reservationDate;
     }
 
+    /**
+     * 
+     * @return Appartment
+     */
     public function getAppartment()
     {
         return $this->appartment;
