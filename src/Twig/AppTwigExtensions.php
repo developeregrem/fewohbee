@@ -51,7 +51,7 @@ class AppTwigExtensions extends AbstractExtension
         $interval = date_diff($start, $end);
 		
         // return number of days
-        return $interval->format('%a');;
+        return $interval->format('%a');
     }
 	/**
      * compares the reservation start and end date with the displayed period. if start or end lies inside displayed period or not
