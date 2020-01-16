@@ -12,20 +12,27 @@
 namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 use App\Entity\Invoice;
 use App\Entity\Customer;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\CustomerAddresses;
+use App\Entity\InvoiceAppartment;
+use App\Service\PriceService;
+use App\Entity\Reservation;
+use App\Entity\Price;
 
 class InvoiceService implements ITemplateRenderer
 {
 
     private $em = null;
+    private $ps = null;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em, PriceService $ps)
     {
         $this->em = $em;
+        $this->ps = $ps;
     }
 
     public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
@@ -272,5 +279,79 @@ class InvoiceService implements ITemplateRenderer
             'miscTotal' => number_format($miscTotal, 2, ',', '.')
             );
         return $params;
+    }
+    
+    /**
+     * Retrieves valid prices for each day of stay and prefills the appartment position for the reservation
+     * @param Reservation $reservation
+     * @param SessionInterface $session
+     */
+    public function prefillAppartmentPositions(Reservation $reservation, SessionInterface $session) {
+        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        $prices = $this->ps->getPrices($reservation, 2);
+        
+        $curDate = clone $reservation->getStartDate();
+        $lastPrice = $prices[0];
+        $start = clone $reservation->getStartDate();        
+        $i = 0;
+        // loop through each day and create the position based on the retrieved price for this day
+        do {      
+            if($i < $days) {
+                $price = $prices[$i];
+            } else {
+                $price = $lastPrice;
+            }
+            
+            $curDate = (clone $curDate)->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
+            if($price !== null && $lastPrice !== null && ($lastPrice->getId() !== $price->getId() || $i == $days)) {
+                $position = $this->makePosition($start, $curDate, $reservation, $lastPrice);
+                $this->saveNewAppartmentPosition($position, $session);
+                $start = clone $curDate;
+            }
+            
+            $lastPrice = $price;
+            $i++;
+        } while($i <= $days);   // loop must run one more time to add the position for the last day of stay
+    }
+    
+    /**
+     * Stores a new appartment position in the session
+     * @param InvoiceAppartment $position
+     * @param SessionInterface $session
+     */
+    public function saveNewAppartmentPosition(InvoiceAppartment $position, SessionInterface $session) {
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");                
+        $newInvoicePositionsAppartmentsArray[] = $position;
+
+        $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+    }
+    
+    /**
+     * Creates a new InvoicePosition object based on the input
+     * @param \DateTime $start
+     * @param \DateTime $end
+     * @param Reservation $reservation
+     * @param Price $price
+     * @return InvoiceAppartment
+     */
+    private function makePosition(\DateTime $start, \DateTime $end, Reservation $reservation, Price $price) : InvoiceAppartment {
+        $positionAppartment = new InvoiceAppartment();
+        $positionAppartment->setDescription($reservation->getAppartment()->getDescription());
+        $positionAppartment->setNumber($reservation->getAppartment()->getNumber());
+        $positionAppartment->setStartDate($start);
+        $positionAppartment->setEndDate($end);
+        $positionAppartment->setVat($price->getVat());
+        $positionAppartment->setPrice($price->getPrice());
+        $positionAppartment->setPersons($reservation->getPersons());
+        $positionAppartment->setBeds($reservation->getAppartment()->getBedsMin());
+        
+        return $positionAppartment;
+    }
+    
+    private function getDateDiff(\DateTime $start, \DateTime $end) : int {
+        $interval = date_diff($start, $end);
+		
+        // return number of days
+        return $interval->format('%a');
     }
 }
