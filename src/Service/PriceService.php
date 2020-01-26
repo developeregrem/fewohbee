@@ -187,7 +187,11 @@ class PriceService
      */
     public function getPrices(Reservation $reservation, int $type) : array {
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
-        $prices = $this->em->getRepository(Price::class)->findPrices($reservation, $type, $days);
+        if($type === 1) {
+            $prices = $this->em->getRepository(Price::class)->findMiscPrices($reservation);
+        } else {
+            $prices = $this->em->getRepository(Price::class)->findApartmentPrices($reservation, $days);
+        }        
         
         $result = [];
         $curDate = clone $reservation->getStartDate();

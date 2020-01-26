@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
 use \Doctrine\ORM\Query\Expr;
 use App\Entity\Price;
+use App\Entity\Reservation;
 
 /**
  * PriceRepository
@@ -135,7 +136,54 @@ class PriceRepository extends EntityRepository
         return $q;
     }
     
-    public function findPrices(\App\Entity\Reservation $reservation, int $type, int $stays) {
+    /**
+     * Find apartment prices for a reservation. The Array is already ordered by priority.
+     * @param Reservation $reservation
+     * @param int $stays
+     * @return Price[]
+     */
+    public function findApartmentPrices(Reservation $reservation, int $stays) {
+        
+        $q = $this->getFindBaseQuery($reservation)
+                /* select only room type */
+            ->andWhere('p.type = 2') 
+                /* make sure that all room specific fields match */
+            ->andWhere('p.numberOfPersons = :nop AND p.numberOfBeds = :nob And p.minStay <= :ms')   
+            ->addOrderBy('p.minStay', 'DESC')
+            ->setParameter('nob', $reservation->getAppartment()->getBedsMin())
+            ->setParameter('nop', $reservation->getPersons())
+            ->setParameter('ms', $stays);           
+        
+        try {
+            return $q->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Find misc prices for a reservation. The Array is already ordered by priority.
+     * @param Reservation $reservation
+     * @return Price[]
+     */
+    public function findMiscPrices(Reservation $reservation) {
+        $q = $this->getFindBaseQuery($reservation)
+                /* select only room type */
+            ->andWhere('p.type = 1');           
+        
+        try {
+            return $q->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Base Query to find prices for a reservation
+     * @param Reservation $reservation
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    private function getFindBaseQuery(Reservation $reservation) {
         $q = $this
             ->createQueryBuilder('p');
         $q->select('p, ro')
@@ -143,30 +191,20 @@ class PriceRepository extends EntityRepository
             ->addSelect('CASE WHEN p.seasonStart IS NULL THEN 1 ELSE 0 END as HIDDEN start_is_null')
             ->join('p.reservationOrigins', 'ro', Expr\Join::WITH, $q->expr()->eq('ro.id', ':roid')) 
                 /* select only room type and active prices*/
-            ->where('p.type = 2 AND p.active = true') 
+            ->where('p.active = true') 
                 /* make sure that all room specific fields match */
-            ->andWhere('p.numberOfBeds = :nob and p.numberOfPersons = :nop and p.minStay <= :ms')  
             ->andWhere("(p.seasonStart IS NULL and p.seasonEnd IS NULL) or ((p.seasonStart >= :start AND p.seasonEnd <= :end) OR"
                 . "(p.seasonStart < :start AND p.seasonEnd >= :start) OR"
                 . "(p.seasonStart <= :end AND p.seasonEnd > :end) OR"
                 . "(p.seasonStart < :start AND p.seasonEnd > :end))")
                 /* select only prices for the given reservation origin */
-            ->addOrderBy('start_is_null', 'ASC')
-            ->addOrderBy('p.minStay', 'DESC')            
-            ->setParameter('nob', $reservation->getAppartment()->getBedsMin())
-            ->setParameter('nop', $reservation->getAppartment()->getBedsMax())
-            ->setParameter('ms', $stays)
-            ->setParameter(":start", $reservation->getStartDate())
-            ->setParameter(":end", $reservation->getEndDate())
-            ->setParameter('roid', $reservation->getReservationOrigin()->getId());            
+            ->addOrderBy('start_is_null', 'ASC')          
+            ->setParameter("start", $reservation->getStartDate())
+            ->setParameter("end", $reservation->getEndDate())
+            ->setParameter('roid', $reservation->getReservationOrigin()->getId());
         
-        try {
-            return $q->getQuery()->getResult();
-        } catch (NoResultException $e) {
-            return [];
-        }
-
-    }
+        return $q;
+    }           
 
     public function supportsClass($class)
     {
