@@ -319,7 +319,7 @@ class InvoiceServiceController extends AbstractController
         
         if(!$session->has("invoicePositionsAppartments")) {
             $newInvoicePositionsAppartmentsArray = array();
-            $session->set("invoicePositionsAppartments", $newInvoicePositionsMiscellaneousArray);
+            $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
             // prefill positions for all selected reservations
             foreach($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);

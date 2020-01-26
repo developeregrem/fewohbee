@@ -19,6 +19,7 @@ use App\Entity\Customer;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\CustomerAddresses;
 use App\Entity\InvoiceAppartment;
+use App\Entity\InvoicePosition;
 use App\Service\PriceService;
 use App\Entity\Reservation;
 use App\Entity\Price;
@@ -287,8 +288,17 @@ class InvoiceService implements ITemplateRenderer
      * @param SessionInterface $session
      */
     public function prefillAppartmentPositions(Reservation $reservation, SessionInterface $session) {
-        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
         $prices = $this->ps->getPrices($reservation, 2);
+        $this->prefillPositions($reservation, $prices, $session, 2);
+    }
+    
+    public function prefillMiscPositions(Reservation $reservation, SessionInterface $session) {
+        $prices = $this->ps->getPrices($reservation, 1);
+        $this->prefillPositions($reservation, $prices, $session, 1);
+    }
+    
+    private function prefillPositions(Reservation $reservation, array $prices, SessionInterface $session, int $type) {
+        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
         
         $curDate = clone $reservation->getStartDate();
         $lastPrice = $prices[0];
@@ -304,8 +314,14 @@ class InvoiceService implements ITemplateRenderer
             
             $curDate = (clone $curDate)->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
             if($price !== null && $lastPrice !== null && ($lastPrice->getId() !== $price->getId() || $i == $days)) {
-                $position = $this->makePosition($start, $curDate, $reservation, $lastPrice);
-                $this->saveNewAppartmentPosition($position, $session);
+                if($type === 1) {
+                    $position = $this->makeMiscPosition($start, $curDate, $reservation, $lastPrice);
+                    $this->saveNewMiscPosition($position, $session);
+                } else {
+                    $position = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
+                    $this->saveNewAppartmentPosition($position, $session);
+                }
+                
                 $start = clone $curDate;
             }
             
@@ -326,6 +342,13 @@ class InvoiceService implements ITemplateRenderer
         $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
     }
     
+    public function saveNewMiscPosition(InvoicePosition $position, SessionInterface $session) {
+        $newInvoicePositionsMiscArray = $session->get("invoicePositionsMiscellaneous");                
+        $newInvoicePositionsMiscArray[] = $position;
+
+        $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscArray);
+    }
+    
     /**
      * Creates a new InvoicePosition object based on the input
      * @param \DateTime $start
@@ -334,7 +357,7 @@ class InvoiceService implements ITemplateRenderer
      * @param Price $price
      * @return InvoiceAppartment
      */
-    private function makePosition(\DateTime $start, \DateTime $end, Reservation $reservation, Price $price) : InvoiceAppartment {
+    private function makeAparmtentPosition(\DateTime $start, \DateTime $end, Reservation $reservation, Price $price) : InvoiceAppartment {
         $positionAppartment = new InvoiceAppartment();
         $positionAppartment->setDescription($reservation->getAppartment()->getDescription());
         $positionAppartment->setNumber($reservation->getAppartment()->getNumber());
@@ -346,6 +369,12 @@ class InvoiceService implements ITemplateRenderer
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMin());
         
         return $positionAppartment;
+    }
+    
+     private function makeMiscPosition(\DateTime $start, \DateTime $end, Reservation $reservation, Price $price) : InvoiceAppartment {
+        $position = new InvoicePosition();
+                
+        return $position;
     }
     
     private function getDateDiff(\DateTime $start, \DateTime $end) : int {
