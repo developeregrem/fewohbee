@@ -195,9 +195,10 @@ class PriceService
         
         $result = [];
         $curDate = clone $reservation->getStartDate();
-        for($i = 0; $i < $days; $i++) {
+        for($i = 0; $i <= $days; $i++) {
             $result[$i] = null;
             $curDate = $curDate->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
+            //echo $curDate->format("Y-m-d");
             /* @var $price Price */
             foreach($prices as $price) {
                 // prices are already sorted by priority, therefore we can accept the first matching one
@@ -205,9 +206,11 @@ class PriceService
                 if( $price->getSeasonStart() == null || $this->isDateBetween($curDate, $price->getSeasonStart(), $price->getSeasonEnd()) ) {
                     // second, we need to check if the weekday match                   
                     if($this->isWeekDayMatch($price, $curDate)) {
-                        $result[$i] = $price;
-                       // found one, go to next day
-                        break;
+                        $result[$i][] = $price;
+                        if($type === 2) {
+                            // found one, go to next day
+                            break;
+                        }                       
                     }
                 }
             }
