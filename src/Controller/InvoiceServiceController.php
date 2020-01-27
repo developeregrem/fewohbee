@@ -310,12 +310,14 @@ class InvoiceServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $newInvoiceReservationsArray = $session->get("invoiceInCreation");
         
-        if(!$session->has("invoicePositionsMiscellaneous")) {
+        if(!$session->has("invoicePositionsMiscellaneous")) {            
             $newInvoicePositionsMiscellaneousArray = array();
             $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
-        } else {
-            $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
+            
+            // prefill positions for all selected reservations
+            $is->prefillMiscPositions($newInvoiceReservationsArray, $session);           
         }
+        $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
         
         if(!$session->has("invoicePositionsAppartments")) {
             $newInvoicePositionsAppartmentsArray = array();
@@ -324,11 +326,9 @@ class InvoiceServiceController extends AbstractController
             foreach($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);
                 $is->prefillAppartmentPositions($reservation, $session);
-            }
-            $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
-        } else {
-            $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
+            }            
         }
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
 
         if(!$session->has("invoiceCustomer")) {
             $customer = $em->getRepository(Reservation::class)->find(
@@ -710,7 +710,7 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function createMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function createMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, Request $request)
     {
         $id = $request->get('invoice-id');
         
@@ -723,11 +723,8 @@ class InvoiceServiceController extends AbstractController
             
             // during create process
             if($id === 'new') {
-                $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
-                
-                $newInvoicePositionsMiscellaneousArray[] = $positionMiscellaneous;
+                $is->saveNewMiscPosition($positionMiscellaneous, $session);
 
-                $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
                 $em = $this->getDoctrine()->getManager();
