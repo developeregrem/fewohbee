@@ -346,7 +346,7 @@ class InvoiceService implements ITemplateRenderer
                     } else {
                         $tmpMiscArr[$price->getId()] = [
                             'price' => $price,
-                            'amount' => 1
+                            'amount' => 1 * $reservation->getPersons()
                         ];
                     }
                 }
