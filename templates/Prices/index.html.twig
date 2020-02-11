@@ -120,6 +120,7 @@
         let url = replacePlaceholder("{{ path('prices.get.price', {'id': 'placeholder'}) }}", id);
         getContentForModal(url, "", function() {
             enableEditForm(id);
+            toggleStartEnd(id);
         });        
     }
 
@@ -176,13 +177,12 @@
     }
     
     function toggleStartEnd(id) {
-        
-        if ($('#collapseTwo-' + id + ' #allseason-' + id).is(':checked')) {
-            $('#seasonstart-'+ id).prop('disabled', true);
-            $('#seasonend-'+ id).prop('disabled', true);
+        if ($('#collapseTwo-' + id + ' #allperiods-' + id).is(':checked')) {
+            $('#periodstart-'+ id).prop('disabled', true);
+            $('#periodend-'+ id).prop('disabled', true);
         } else {
-            $('#seasonstart-'+ id).prop('disabled', false);
-            $('#seasonend-'+ id).prop('disabled', false);
+            $('#periodstart-'+ id).prop('disabled', false);
+            $('#periodend-'+ id).prop('disabled', false);
         }
 
         return false;

@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -74,11 +76,23 @@ class Price
     private $reservationOrigins;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true)
+     */
+    private $pricePeriods;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $allPeriods;
+
+    /**
      * Constructor
      */
     public function __construct()
     {
         $this->reservationOrigins = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->pricePeriods = new ArrayCollection();
+        $this->allPeriods = true;
     }
 
     public function getId()
@@ -302,5 +316,48 @@ class Price
     public function getReservationOrigins()
     {
         return $this->reservationOrigins;
+    }
+
+    /**
+     * @return Collection|PricePeriod[]
+     */
+    public function getPricePeriods(): Collection
+    {
+        return $this->pricePeriods;
+    }
+
+    public function addPricePeriod(PricePeriod $pricePeriod): self
+    {
+        if (!$this->pricePeriods->contains($pricePeriod)) {
+            $this->pricePeriods[] = $pricePeriod;
+            $pricePeriod->setPrice($this);
+        }
+
+        return $this;
+    }
+
+    public function removePricePeriod(PricePeriod $pricePeriod): self
+    {
+        if ($this->pricePeriods->contains($pricePeriod)) {
+            $this->pricePeriods->removeElement($pricePeriod);
+            // set the owning side to null (unless already changed)
+            if ($pricePeriod->getPrice() === $this) {
+                $pricePeriod->setPrice(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getAllPeriods(): ?bool
+    {
+        return $this->allPeriods;
+    }
+
+    public function setAllPeriods(bool $allPeriods): self
+    {
+        $this->allPeriods = $allPeriods;
+
+        return $this;
     }
 }

@@ -18,6 +18,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Entity\Reservation;
+use App\Entity\PricePeriod;
 
 class PriceService
 {
@@ -57,12 +58,11 @@ class PriceService
             }
         }
 
-        if (strlen($request->get("seasonstart-" . $id)) != 0) {
-            $price->setSeasonStart(new \DateTime($request->get("seasonstart-" . $id)));
-            $price->setSeasonEnd(new \DateTime($request->get("seasonend-" . $id)));
+        if( $request->get("allperiods-". $id) == null ) {            
+            $this->setPeriods($request, $price, $id);
+            $price->setAllPeriods(false);
         } else {
-            $price->setSeasonStart(null);
-            $price->setSeasonEnd(null);
+            $price->setAllPeriods(true);
         }
 
         if ($request->get("active-" . $id) != null) {
@@ -160,7 +160,7 @@ class PriceService
     public function findConflictingPrices(Price $price) {
         $prices = [];
         // find conflicts when no season is given
-        if($price->getSeasonStart() === null or $price->getSeasonEnd() === null) {
+        if($price->getAllPeriods()) {
             $prices = $this->em->getRepository(Price::class)->findConflictingPricesWithoutPeriod($price);
         } else {
             // // find conflicts when a season is given 
@@ -200,19 +200,35 @@ class PriceService
             $curDate = $curDate->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
             //echo $curDate->format("Y-m-d");
             /* @var $price Price */
-            foreach($prices as $price) {
-                // prices are already sorted by priority, therefore we can accept the first matching one
-                // first we need to check if the current date is in between the price season
-                if( $price->getSeasonStart() == null || $this->isDateBetween($curDate, $price->getSeasonStart(), $price->getSeasonEnd()) ) {
-                    // second, we need to check if the weekday match                   
+            foreach($prices as $price) {                
+                // without periods
+                if($price->getAllPeriods()) {
                     if($this->isWeekDayMatch($price, $curDate)) {
                         $result[$i][] = $price;
+                        // apartment prices can have only one price per day, others can have more than one
                         if($type === 2) {
                             // found one, go to next day
                             break;
                         }                       
                     }
                 }
+                // with periods
+                $periods = $price->getPricePeriods();
+                foreach($periods as $pricePeriod) {
+                    // prices are already sorted by priority, therefore we can accept the first matching one
+                    // first we need to check if the current date is in between the price season
+                    if($this->isDateBetween($curDate, $pricePeriod->getStart(), $pricePeriod->getEnd())) {
+                        // second, we need to check if the weekday match                   
+                        if($this->isWeekDayMatch($price, $curDate)) {
+                            $result[$i][] = $price;
+                            // apartment prices can have only one price per day, others can have more than one
+                            if($type === 2) {
+                                // found one, go to next day and break outer price loop
+                                break 2;
+                            }                       
+                        }
+                    }
+                }                
             }
         }
         
@@ -277,5 +293,48 @@ class PriceService
                 break;            
         }
         return false;
+    }
+    
+    /**
+     * Helper function to set posted periods, if a period exists the existing one is used otherwise a new one is created
+     * @param Request $request
+     * @param Price $price
+     * @param type $id
+     */
+    private function setPeriods(Request $request, Price $price, $id) {
+        $allAddedPeriods = new ArrayCollection();
+        $periodIds = array_unique( $request->get("period-". $id, []) );
+        // loop over all posted periods (new and existing ones)
+        foreach($periodIds as $id) {
+            $starts = $request->get("periodstart-". $id, []);
+            $ends = $request->get("periodend-". $id, []);
+            
+            foreach($starts as $key => $start) {
+                if ($id !== 'new') {
+                    /* @var $pricePeriod PricePeriod */
+                    $pricePeriod = $this->em->getRepository(PricePeriod::class)->find($id);
+                    // check if the period exists and the period is part of the current price category 
+                    if(!$pricePeriod instanceof PricePeriod || $pricePeriod->getPrice() !== $price) {
+                        $pricePeriod = new PricePeriod();
+                    }
+                } else {
+                    $pricePeriod = new PricePeriod();
+                }
+                $pricePeriod->setStart(new \DateTime($start));
+                $pricePeriod->setEnd(new \DateTime($ends[$key]));
+                
+                $allAddedPeriods->add($pricePeriod);
+                $this->em->persist($pricePeriod);
+                $price->addPricePeriod($pricePeriod);
+            }            
+        }
+        
+        // when a period is deleted in the frontend it is not in the post body anymore, therefore we need to find it and remove it from db
+        $allAndRemovablePeriods = $price->getPricePeriods();
+        foreach($allAndRemovablePeriods as $period) {
+            if(! $allAddedPeriods->contains($period) ) {
+                $price->removePricePeriod($period);
+            }
+        }
     }
 }
