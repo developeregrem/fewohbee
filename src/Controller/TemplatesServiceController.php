@@ -141,7 +141,7 @@ class TemplatesServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($template);
+               $em->clear(Template::class);
             } else {                
                 $em->persist($template);
                 $em->flush();
@@ -391,7 +391,7 @@ class TemplatesServiceController extends AbstractController
                     }
                     $em->persist($mail);
                     $em->flush();
-                    $em->detach($mail);                     // to make sure we always insert new entry and no update
+                    $em->clear(MailCorrespondence::class);                     // to make sure we always insert new entry and no update
                 }                
                 
                 $this->addFlash('success', 'templates.sendemail.success');
@@ -442,7 +442,7 @@ class TemplatesServiceController extends AbstractController
                     $file->setReservation($reservation);                    
                     $em->persist($file);
                     $em->flush();
-                    $em->detach($file);                     // to make sure we always insert new entry and no update
+                    $em->clear(FileCorrespondence::class);                     // to make sure we always insert new entry and no update
                 }
                 
                 $isAttachment = false;
