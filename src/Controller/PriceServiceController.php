@@ -129,7 +129,7 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($price);
+                $em->clear(Price::class);
             } else {  
                 $conflicts = $ps->findConflictingPrices($price);
                 // during edit we need to remove the current item from the list
@@ -146,7 +146,7 @@ class PriceServiceController extends AbstractController
                     $error = true;
                     $this->addFlash('warning', 'price.flash.create.conflict');
                     // stop auto commit of doctrine with invalid field values
-                    $em->detach($price);
+                    $em->clear(Price::class);
                 }  
             }
         }
