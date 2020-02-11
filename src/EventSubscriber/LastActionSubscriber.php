@@ -51,7 +51,6 @@ class LastActionSubscriber implements EventSubscriberInterface {
             if($user instanceof User) {
                 $user->setLastAction(new \DateTime());
                 $this->em->persist($user);
-                $this->em->flush();
             }
         }
     }

@@ -69,3 +69,15 @@
 .modal-body .col-form-label {
     font-size: 14px;
 }
+
+.price-period .badge {
+    font-size: 90%;
+    margin: 4px;
+}
+
+.badge .close {
+    margin-left: .25rem;
+    color: inherit;
+    font-size: medium;
+    font-weight: bold;
+}

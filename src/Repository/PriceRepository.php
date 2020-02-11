@@ -61,7 +61,7 @@ class PriceRepository extends EntityRepository
     {
         $q = $this->conflictingBaseQuery($price)
             /* select only proces where start and and is not set (valid for the whole year) */
-            ->andWhere('p.seasonStart IS NULL and p.seasonEnd IS NULL')
+            ->andWhere('p.allPeriods = true')
             ->getQuery();
 
         $prices = null;
@@ -82,21 +82,25 @@ class PriceRepository extends EntityRepository
     public function findConflictingPricesWithPeriod(Price $price) {
         $q = $this->conflictingBaseQuery($price)
                 /* find overlapping periods */
-            ->andWhere("((p.seasonStart >= :start AND p.seasonEnd <= :end) OR"
-                . "(p.seasonStart < :start AND p.seasonEnd >= :start) OR"
-                . "(p.seasonStart <= :end AND p.seasonEnd > :end) OR"
-                . "(p.seasonStart < :start AND p.seasonEnd > :end))")
-            ->setParameter(":start", $price->getSeasonStart())
-            ->setParameter(":end", $price->getSeasonEnd())
-            ->getQuery();
+            ->andWhere("((pp.start >= :start AND pp.end <= :end) OR"
+                . "(pp.start < :start AND pp.end >= :start) OR"
+                . "(pp.start <= :end AND pp.end > :end) OR"
+                . "(pp.start < :start AND pp.end > :end))");
+            
+        $prices = [];    
+        $periods = $price->getPricePeriods();
+        foreach($periods as $pricePeriod) {
+            $q = $q->setParameter(":start", $pricePeriod->getStart())
+                    ->setParameter(":end", $pricePeriod->getEnd())
+                    ->getQuery();
+            try {
+                $res = $q->getResult();
+                $prices = array_merge($prices, $res);
+            } catch (NoResultException $e) {
 
-        $prices = null;
-        try {
-            $prices = $q->getResult();
-        } catch (NoResultException $e) {
-
+            }
         }
-
+        
         return $prices;
     }
     
@@ -108,7 +112,8 @@ class PriceRepository extends EntityRepository
     private function conflictingBaseQuery(Price $price) {
         $q = $this
             ->createQueryBuilder('p')
-            ->select('p, ro')
+            ->select('p, ro, pp')
+            ->leftJoin('p.pricePeriods', 'pp')
             ->leftJoin('p.reservationOrigins', 'ro') 
                 /* select only room type and active prices*/
             ->where('p.type = 2 AND p.active = true') 
@@ -143,7 +148,6 @@ class PriceRepository extends EntityRepository
      * @return Price[]
      */
     public function findApartmentPrices(Reservation $reservation, int $stays) {
-        
         $q = $this->getFindBaseQuery($reservation)
                 /* select only room type */
             ->andWhere('p.type = 2') 
@@ -186,17 +190,18 @@ class PriceRepository extends EntityRepository
     private function getFindBaseQuery(Reservation $reservation) {
         $q = $this
             ->createQueryBuilder('p');
-        $q->select('p, ro')
+        $q->select('p, ro, pp')
                 /* workaround to have prices with no period at the end of the result list */
-            ->addSelect('CASE WHEN p.seasonStart IS NULL THEN 1 ELSE 0 END as HIDDEN start_is_null')
+            ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
+            ->leftJoin('p.pricePeriods', 'pp')
             ->join('p.reservationOrigins', 'ro', Expr\Join::WITH, $q->expr()->eq('ro.id', ':roid')) 
                 /* select only room type and active prices*/
             ->where('p.active = true') 
                 /* make sure that all room specific fields match */
-            ->andWhere("(p.seasonStart IS NULL and p.seasonEnd IS NULL) or ((p.seasonStart >= :start AND p.seasonEnd <= :end) OR"
-                . "(p.seasonStart < :start AND p.seasonEnd >= :start) OR"
-                . "(p.seasonStart <= :end AND p.seasonEnd > :end) OR"
-                . "(p.seasonStart < :start AND p.seasonEnd > :end))")
+            ->andWhere("(p.allPeriods = true) or ((pp.start >= :start AND pp.end <= :end) OR"
+                . "(pp.start < :start AND pp.end >= :start) OR"
+                . "(pp.start <= :end AND pp.end > :end) OR"
+                . "(pp.start < :start AND pp.end > :end))")
                 /* select only prices for the given reservation origin */
             ->addOrderBy('start_is_null', 'ASC')          
             ->setParameter("start", $reservation->getStartDate())
