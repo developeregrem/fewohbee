@@ -19,6 +19,7 @@ use App\Service\CSRFProtectionService;
 use App\Service\AppartmentService;
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
+use App\Entity\RoomCategory;
 
 class AppartmentServiceController extends AbstractController
 {
@@ -42,9 +43,11 @@ class AppartmentServiceController extends AbstractController
 
         $appartment = $em->getRepository(Appartment::class)->find($id);
         $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
 
         return $this->render('Appartments/appartment_form_edit.html.twig', array(
             'objects' => $objects,
+            'categories' => $categories,
             'appartment' => $appartment,
             'token' => $csrf->getCSRFTokenForForm()
         ));
@@ -55,11 +58,13 @@ class AppartmentServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
         $appartment = new Appartment();
         $appartment->setId('new');
 
         return $this->render('Appartments/appartment_form_create.html.twig', array(
             'objects' => $objects,
+            'categories' => $categories,
             "appartment" => $appartment,
             'token' => $csrf->getCSRFTokenForForm()
         ));
@@ -73,7 +78,7 @@ class AppartmentServiceController extends AbstractController
             $appartment = $as->getAppartmentFromForm($request, "new");
 
             // check for mandatory fields
-            if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMin()) == 0 || strlen($appartment->getBedsMax()) == 0
+            if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMax()) == 0
                 || strlen($appartment->getDescription()) == 0
             ) {
                 $error = true;
@@ -103,7 +108,7 @@ class AppartmentServiceController extends AbstractController
             $em = $this->getDoctrine()->getManager();
 
             // check for mandatory fields
-            if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMin()) == 0 || strlen($appartment->getBedsMax()) == 0
+            if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMax()) == 0
                 || strlen($appartment->getDescription()) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');

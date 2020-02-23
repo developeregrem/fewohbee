@@ -46,12 +46,12 @@ class AppartmentRepository extends EntityRepository
     {
         if($objectId === "all") {
             $query = $this->createQueryBuilder('u')
-            ->select('SUM(u.beds_min)')
+            ->select('SUM(u.beds_max)')
             //->addGroupBy('u.object')
             ->getQuery();
         } else {
             $query = $this->createQueryBuilder('u')
-            ->select('SUM(u.beds_min)')
+            ->select('SUM(u.beds_max)')
             ->where('u.object = :id')
             //->addGroupBy('u.object')
             ->setParameter('id', $objectId)

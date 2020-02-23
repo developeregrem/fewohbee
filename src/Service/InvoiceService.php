@@ -396,7 +396,7 @@ class InvoiceService implements ITemplateRenderer
         $positionAppartment->setVat($price->getVat());
         $positionAppartment->setPrice($price->getPrice());
         $positionAppartment->setPersons($reservation->getPersons());
-        $positionAppartment->setBeds($reservation->getAppartment()->getBedsMin());
+        $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
         
         return $positionAppartment;
     }

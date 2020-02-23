@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="de" datatype="plaintext" original="file.ext">
+        <body>
+            <trans-unit id="1">
+                <source>category.title</source>
+                <target>Zimmerkategorieverwaltung</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>category.description</source>
+                <target>Verwalung der Zimmerkategorien</target>
+            </trans-unit>
+            <trans-unit id="3">
+                <source>category.name</source>
+                <target>Bezeichnung</target>
+            </trans-unit>
+            <trans-unit id="4">
+                <source>category.action</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="5">
+                <source>category.delete.ask</source>
+                <target>Diese Kategorie wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="6">
+                <source>category.flash.delete.success</source>
+                <target>Kategorie wurde erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="7">
+                <source>category.flash.create.success</source>
+                <target>Kategorie wurde erfolgreich angelegt.</target>
+            </trans-unit>
+            <trans-unit id="8">
+                <source>category.flash.edit.success</source>
+                <target>Kategorie wurde erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="9">
+                <source>category.flash.delete.error.still.in.use</source>
+                <target>Kategorie kann nicht gelöscht werden, da ihr noch Zimmer oder Preisklassen zugeordnet sind.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

@@ -19,6 +19,7 @@ use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Entity\Reservation;
 use App\Entity\PricePeriod;
+use App\Entity\RoomCategory;
 
 class PriceService
 {
@@ -140,11 +141,12 @@ class PriceService
         }
 
         if ($price->getType() == 2) {
-            $price->setNumberOfBeds($request->get("number-of-beds-" . $id));
             $price->setNumberOfPersons($request->get("number-of-persons-" . $id));
             $price->setMinStay($request->get("min-stay-" . $id));
+            $category = $this->em->getRepository(RoomCategory::class)->find($request->get("category-" . $id));
+            $price->setRoomCategory($category);
         } else {
-            $price->setNumberOfBeds(null);
+            $price->setRoomCategory(null);
             $price->setNumberOfPersons(null);
             $price->setMinStay(null);
         }

@@ -194,6 +194,14 @@
                 <source>button.gdpr</source>
                 <target>DSGVO Übersicht</target>
             </trans-unit>
+            <trans-unit id="49">
+                <source>nav.category</source>
+                <target>Zimmerkategorien</target>
+            </trans-unit>
+            <trans-unit id="50">
+                <source>nav.category.add</source>
+                <target>Zimmerkategorie anlegen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

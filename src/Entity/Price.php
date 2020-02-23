@@ -25,9 +25,6 @@ class Price
     private $description;
 
     /** @ORM\Column(type="smallint", nullable=true) * */
-    private $numberOfBeds;
-
-    /** @ORM\Column(type="smallint", nullable=true) * */
     private $numberOfPersons;
 
     /** @ORM\Column(type="smallint", nullable=true) * */
@@ -86,6 +83,12 @@ class Price
     private $allPeriods;
 
     /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\RoomCategory", inversedBy="prices")
+     * @ORM\JoinColumn(nullable=true)
+     */
+    private $roomCategory;
+
+    /**
      * Constructor
      */
     public function __construct()
@@ -113,11 +116,6 @@ class Price
     public function getDescription()
     {
         return $this->description;
-    }
-
-    public function getNumberOfBeds()
-    {
-        return $this->numberOfBeds;
     }
 
     public function getNumberOfPersons()
@@ -203,11 +201,6 @@ class Price
     public function setDescription($description)
     {
         $this->description = $description;
-    }
-
-    public function setNumberOfBeds($numberOfBeds)
-    {
-        $this->numberOfBeds = $numberOfBeds;
     }
 
     public function setNumberOfPersons($numberOfPersons)
@@ -357,6 +350,18 @@ class Price
     public function setAllPeriods(bool $allPeriods): self
     {
         $this->allPeriods = $allPeriods;
+
+        return $this;
+    }
+
+    public function getRoomCategory(): ?RoomCategory
+    {
+        return $this->roomCategory;
+    }
+
+    public function setRoomCategory(?RoomCategory $roomCategory): self
+    {
+        $this->roomCategory = $roomCategory;
 
         return $this;
     }

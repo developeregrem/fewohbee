@@ -19,6 +19,7 @@ use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
+use App\Entity\RoomCategory;
 
 class PriceServiceController extends AbstractController
 {
@@ -29,7 +30,7 @@ class PriceServiceController extends AbstractController
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-        $prices = $em->getRepository(Price::class)->findAll();
+        $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', array(
             "prices" => $prices
@@ -42,6 +43,7 @@ class PriceServiceController extends AbstractController
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
 
         $originIds = Array();
         // extract ids for twig template
@@ -53,7 +55,8 @@ class PriceServiceController extends AbstractController
             'price' => $price,
             'token' => $csrf->getCSRFTokenForForm(),
             'origins' => $origins,
-            'originPricesIds' => $originIds
+            'originPricesIds' => $originIds,
+            'categories' => $categories
         ));
     }
 
@@ -62,6 +65,7 @@ class PriceServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
 
         $originIds = Array();
         // extract ids for twig template, all origins will be preselected
@@ -76,7 +80,8 @@ class PriceServiceController extends AbstractController
             'price' => $price,
             'token' => $csrf->getCSRFTokenForForm(),
             'origins' => $origins,
-            'originPricesIds' => $originIds
+            'originPricesIds' => $originIds,
+            'categories' => $categories
         ));
     }
 
