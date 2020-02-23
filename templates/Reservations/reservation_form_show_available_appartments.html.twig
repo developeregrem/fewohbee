@@ -2,7 +2,6 @@
 <thead>
     <tr>
         <th>{{ 'appartment.number'|trans }}</th>
-        <th>{{ 'appartment.bedsmin'|trans }}</th>
         <th>{{ 'appartment.bedsmax'|trans }}</th>
         <th>{{ 'appartment.description'|trans }}</th>
     </tr>
@@ -11,7 +10,6 @@
     {% for appartment in appartments %}
         <tr onclick="return toggleAppartmentOptions({{ appartment.id }})">
             <td>{{ appartment.number }}</td>
-            <td>{{ appartment.bedsmin }}</td>
             <td>{{ appartment.bedsmax }}</td>
             <td>{{ appartment.description }}</td>
         </tr>

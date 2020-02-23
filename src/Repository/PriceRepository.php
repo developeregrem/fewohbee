@@ -33,6 +33,21 @@ class PriceRepository extends EntityRepository
 
         return $prices;
     }
+    
+    public function findAllOrdered() {
+        $q = $this->createQueryBuilder('p')
+                ->addSelect('CASE WHEN p.roomCategory is null THEN 1 ELSE 0 END as HIDDEN cat_is_null')
+                ->addOrderBy('cat_is_null', 'ASC')
+                ->addOrderBy('p.roomCategory', 'ASC')
+                ->addOrderBy('p.active', 'DESC')
+                ->getQuery();
+        
+        try {
+           return $q->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
 
     public function getActiveMiscellaneousPrices()
     {
@@ -79,22 +94,21 @@ class PriceRepository extends EntityRepository
      * @param Price $price
      * @return Price[]|null
      */
-    public function findConflictingPricesWithPeriod(Price $price) {
-        $q = $this->conflictingBaseQuery($price)
+    public function findConflictingPricesWithPeriod(Price $price) {     
+        $prices = [];    
+        $periods = $price->getPricePeriods();
+        foreach($periods as $pricePeriod) {
+            $q = $this->conflictingBaseQuery($price)
                 /* find overlapping periods */
             ->andWhere("((pp.start >= :start AND pp.end <= :end) OR"
                 . "(pp.start < :start AND pp.end >= :start) OR"
                 . "(pp.start <= :end AND pp.end > :end) OR"
                 . "(pp.start < :start AND pp.end > :end))");
-            
-        $prices = [];    
-        $periods = $price->getPricePeriods();
-        foreach($periods as $pricePeriod) {
-            $q = $q->setParameter(":start", $pricePeriod->getStart())
+            $resQ = $q->setParameter(":start", $pricePeriod->getStart())
                     ->setParameter(":end", $pricePeriod->getEnd())
                     ->getQuery();
             try {
-                $res = $q->getResult();
+                $res = $resQ->getResult();
                 $prices = array_merge($prices, $res);
             } catch (NoResultException $e) {
 
@@ -118,14 +132,14 @@ class PriceRepository extends EntityRepository
                 /* select only room type and active prices*/
             ->where('p.type = 2 AND p.active = true') 
                 /* make sure that all room specific fields match */
-            ->andWhere('p.numberOfBeds = :nob and p.numberOfPersons = :nop and p.minStay = :ms')   
+            ->andWhere('p.roomCategory = :rc and p.numberOfPersons = :nop and p.minStay = :ms')   
                 /* select only prices for the given reservation origin */
             ->andWhere(':ros MEMBER OF p.reservationOrigins')
                 /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
             ->andWhere('((:ad = true AND p.allDays = true) OR (:mo = true AND p.monday = true) OR (:tu = true AND p.tuesday = true)'
                     . ' OR (:we = true AND p.wednesday = true) OR (:th = true AND p.thursday = true)  OR (:fr = true AND p.friday = true)'
                     . ' OR (:sa = true AND p.saturday = true) OR (:su = true AND p.sunday = true))')
-            ->setParameter('nob', $price->getNumberOfBeds())
+            ->setParameter('rc', $price->getRoomCategory())
             ->setParameter('nop', $price->getNumberOfPersons())
             ->setParameter('ms', $price->getMinStay())
             ->setParameter('ros', $price->getReservationOrigins())
@@ -152,9 +166,9 @@ class PriceRepository extends EntityRepository
                 /* select only room type */
             ->andWhere('p.type = 2') 
                 /* make sure that all room specific fields match */
-            ->andWhere('p.numberOfPersons = :nop AND p.numberOfBeds = :nob And p.minStay <= :ms')   
+            ->andWhere('p.numberOfPersons = :nop AND p.roomCategory = :rc And p.minStay <= :ms')   
             ->addOrderBy('p.minStay', 'DESC')
-            ->setParameter('nob', $reservation->getAppartment()->getBedsMin())
+            ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
             ->setParameter('ms', $stays);           
         

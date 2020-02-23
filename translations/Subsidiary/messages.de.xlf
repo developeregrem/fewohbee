@@ -38,6 +38,10 @@
                 <source>object.flash.edit.success</source>
                 <target>Niederlassung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="10">
+                <source>object.flash.delete.error.still.in.use</source>
+                <target>Niederlassung kann nicht gelöscht werden, da ihr noch Zimmer zugeordnet sind.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

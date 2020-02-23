@@ -182,6 +182,10 @@
                 <source>price.weekdays</source>
                 <target>Wochentage</target>
             </trans-unit>
+            <trans-unit id="46">
+                <source>price.category</source>
+                <target>Zimmerkategorie</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
