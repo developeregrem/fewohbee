@@ -391,7 +391,7 @@ class TemplatesServiceController extends AbstractController
                     }
                     $em->persist($mail);
                     $em->flush();
-                    $em->clear(MailCorrespondence::class);                     // to make sure we always insert new entry and no update
+                    $em->clear(Correspondence::class);                     // to make sure we always insert new entry and no update
                 }                
                 
                 $this->addFlash('success', 'templates.sendemail.success');
@@ -442,7 +442,7 @@ class TemplatesServiceController extends AbstractController
                     $file->setReservation($reservation);                    
                     $em->persist($file);
                     $em->flush();
-                    $em->clear(FileCorrespondence::class);                     // to make sure we always insert new entry and no update
+                    $em->clear(Correspondence::class);                     // to make sure we always insert new entry and no update
                 }
                 
                 $isAttachment = false;
