@@ -242,6 +242,10 @@
                 <source>invoice.appartment.persons</source>
                 <target>{1} %count% Person|]1,Inf] %count% Personen</target>
             </trans-unit>
+            <trans-unit id="61">
+                <source>invoice.appartment.position.category</source>
+                <target>Kategorie</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

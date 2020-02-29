@@ -20,7 +20,7 @@
         <dd class="col">{{ reservation.persons }}</dd>
         </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.appartment.position.beds'|trans }}</dt>
-        <dd class="col">{{ reservation.appartment.bedsmax }}</dd>
+        <dt class="col text-right">{{ 'invoice.appartment.position.category'|trans }}</dt>
+        <dd class="col">{{ reservation.appartment.roomCategory.name }}</dd>
     </dl>
 {% endfor %}

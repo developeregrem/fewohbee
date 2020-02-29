@@ -1,6 +1,7 @@
 <table class="table table-hover">
     <thead>
     <tr>        
+        <th class="border-top-0">{{ 'reservation.appartment.name'|trans }}</th>
         <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
         <th class="border-top-0">{{ 'appartment.bedsmax'|trans }}</th>
         <th class="border-top-0">{{ 'appartment.description'|trans }}</th>
@@ -9,6 +10,7 @@
     <tbody>
     {% for appartment in appartments %}
         <tr onclick="return toggleAppartmentOptions({{ appartment.id }})">
+            <td>{{ appartment.number }}</td>
             <td>{{ appartment.number }}</td>
             <td>{{ appartment.bedsmax }}</td>
             <td>{{ appartment.description }}</td>
