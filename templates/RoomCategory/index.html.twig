@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'category.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'category.description'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-default" onclick="showCreateForm()" data-toggle="modal"
+                    data-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'nav.category.add'|trans }}</button>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'category.name'|trans }}</th>
+                    <th>{{ 'category.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for category in room_categories %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="getEntity({{ category.id }})" class="fas fa-info-circle"></i></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                                <i onclick="editEntry({{ category.id }})" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="deleteEntry({{ category.id }})" class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    <tr id="entry-{{ category.id }}" class="d-none">
+                        <td colspan="6" id="entry-cell-{{ category.id }}">
+                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
+    <script>
+        $.ajaxSetup({
+            cache: false
+        });
+        
+     $(function() {
+        // the default modal width is used here
+        $("#modalCenter .modal-dialog").removeClass('modal-lg');
+    });
+
+    function getEntity(id) {
+        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url);
+        
+    }
+    
+    function editEntry(id) {
+        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+        getContentForModal(url, "", function() {
+            enableEditForm(id);
+        });
+        
+    }
+    
+    function saveCategory(id) {
+        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
+
+    function deleteEntry(id) {
+        let url = replacePlaceholder("{{ path('room_category_delete', {'id': 'placeholder'}) }}", id);
+        _deleteEntry(id, url);        
+    }
+
+    function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('room_category_delete', {'id': 'placeholder'}) }}", id);
+        return _doPost('#entry-form-'+id, url);
+    }
+
+    function showCreateForm() {
+        getContentForModal("{{ path('room_category_new') }}");
+    }
+
+    function createNew() {
+        let url = "{{ path('room_category_new')}}";
+        _doPost('#entry-form-new', url, '{{ path('room_category_index') }}');
+        return false;
+    }
+    </script>
+{% endblock %}

@@ -78,83 +78,117 @@
             </div>
             <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
-                        <div class="form-group row">
-                            <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.season'|trans }} *</label>
-                            <div class="col-sm-4">
-                                <input type="date" class="form-control" id="seasonstart-{{ price.id }}"
-                                       name="seasonstart-{{ price.id }}"
-                                       value="{% if price.seasonstart %} {{ price.seasonstart|date('Y-m-d') }} {% endif %}"
-                                       placeholder="{{ 'price.from'|trans }}">
-                            </div>
-                            <div class="col-sm-4">
-                                <input type="date" class="form-control" id="seasonend-{{ price.id }}"
-                                       name="seasonend-{{ price.id }}"
-                                       value="{% if price.seasonend %} {{ price.seasonend|date('Y-m-d') }} {% endif %}"
-                                       placeholder="{{ 'price.end'|trans }}">
+                    <div class="form-group row">
+                        <label for="inputDescription" class="col-sm-3 col-form-label text-right">{{ 'price.season'|trans }}:</label>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="allperiods-{{ price.id }}" id="allperiods-{{ price.id }}" class="custom-control-input"
+                                       onclick="toggleStartEnd('{{ price.id }}')" {% if price.allPeriods %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="allperiods-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <div class="col-sm-3"></div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
-                                </div>
+                        <div class="col-sm-3">
+                            <input type="date" class="form-control" id="periodstart-{{ price.id }}"
+                                   name="periodstart"
+                                   value=""
+                                   placeholder="{{ 'price.from'|trans }}"
+                                   onchange="iniStartOrEndDate('periodstart-{{ price.id }}', 'periodend-{{ price.id }}', 1);"
+                                   {% if price.seasonStart is null %} disabled{% endif %}>
+                        </div>
+                        <div class="col-sm-3">
+                            <input type="date" class="form-control" id="periodend-{{ price.id }}"
+                                   name="periodend"
+                                   value=""
+                                   placeholder="{{ 'price.end'|trans }}"
+                                   onchange="iniStartOrEndDate('periodstart-{{ price.id }}', 'periodend-{{ price.id }}', 1);"
+                                   {% if price.seasonEnd is null %} disabled{% endif %}>
+                        </div>
+                        <div class="col-sm-1 align-self-center">    
+                            <a href="#" class="text-primary" title="{{ 'button.add'|trans }}" onclick="addPeriod(this, '{{ price.id }}')">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3"></div>                        
+                        <div class="col" id="periods-field">
+                        {% for pricePeriod in price.pricePeriods %}
+                            <div class="price-period float-left">
+                                <span class="badge .badge-pill badge-info">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
+                                    <button type="button" class="close align-center" aria-label="Dismiss">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </span>                                 
+                                <input type="hidden" name="periodstart-{{ pricePeriod.id }}[]" value="{{ pricePeriod.start|date('Y-m-d') }}" />
+                                <input type="hidden" name="periodend-{{ pricePeriod.id }}[]" value="{{ pricePeriod.end|date('Y-m-d') }}" />
+                                <input type="hidden" name="period-{{ price.id }}[]" value="{{ pricePeriod.id }}" />
                             </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
-                                </div>
+                        {% endfor %}
+                        </div>
+                    </div>
+                    <div class="form-group row days-control">
+                        <label for="inputDescription" class="col-sm-3 col-form-label text-right">{{ 'price.weekdays'|trans }}:</label>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <div class="col-sm-3"></div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="custom-control-input"
-                                           {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
-                                </div>
-                            </div>
-                            <div class="checkbox col-sm-2">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="custom-control-input"
-                                           onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
-                                    <label class="custom-control-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
-                                </div>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
                             </div>
                         </div>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2 align-self-center">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row days-control">
+                        <div class="col-sm-3"></div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="custom-control-input"
+                                       {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
+                            </div>
+                        </div>
+                        <div class="checkbox col-sm-2">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="custom-control-input"
+                                       onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
+                                <label class="custom-control-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'price.season.hint'|trans }}</span>
                 </div>
             </div>
         </div>
@@ -181,12 +215,18 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="inputNumberOfBeds" class="col-sm-4 col-form-label text-right">{{ 'price.numberofbeds'|trans }}
-                            *</label>
+                        <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'appartment.category'|trans }}</label>
 
-                        <div class="col-sm-8">
-                            <input type="text" id="number-of-beds" class="form-control"
-                                   name="number-of-beds-{{ price.id }}" value="{{ price.numberofbeds }}">
+                        <div class="col-sm">
+                            <select name="category-{{ price.id }}" class="form-control">
+                                {% for category in categories %}
+                                    {% if price.id != "new" and price.roomCategory != null and category.id == price.roomCategory.id %}
+                                        <option value="{{ category.id }}" selected>{{ category.name }}</option>
+                                    {% else %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="form-group row">
@@ -205,3 +245,55 @@
     </div>
     <input name="_csrf_token" value="{{ token }}" type="hidden">
 </fieldset>
+<div id="pricePeriodTemplate" class="d-none">
+    <div class="price-period float-left">
+        <span class="badge .badge-pill badge-info"><span class="period-text"></span>
+            <button type="button" class="close align-center" aria-label="Dismiss">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </span> 
+        <input type="hidden" name="periodstart-new[]" value="" disabled />
+        <input type="hidden" name="periodend-new[]" value="" disabled />        
+        <input type="hidden" name="period-{{ price.id }}[]" value="new" disabled />
+    </div>
+</div>
+<script>
+    makeDismissable();
+    function makeDismissable() {
+        document.querySelectorAll('.price-period .close').forEach(item => {
+            item.addEventListener('click', event => {
+              let pDiv = item.closest(".price-period");
+              pDiv.remove();
+            });
+        });
+    }
+    
+    
+    function addPeriod(elm, priceId) {
+        let parent = elm.closest(".row");
+        let start = parent.querySelector("#periodstart-"+priceId);
+        let end = parent.querySelector("#periodend-"+priceId);
+        if(start.value !== '' && end.value !== '') {
+            let template = document.getElementById("pricePeriodTemplate").querySelector(".price-period").cloneNode(true);
+            let dStart = new Date(start.value);
+            let dEnd = new Date(end.value);
+            let txtStart = ('0' + dStart.getDate()).slice(-2) + '.' + ('0' + (dStart.getMonth()+1)).slice(-2) + '.' + dStart.getFullYear();
+            let txtEnd = ('0' + dEnd.getDate()).slice(-2) + '.' + ('0' + (dEnd.getMonth()+1)).slice(-2) + '.' + dEnd.getFullYear();
+            let periodTxt = document.createTextNode(txtStart + ' - ' + txtEnd);
+            
+            template.querySelectorAll("input[type=hidden]").forEach(item => {
+                item.removeAttribute("disabled");
+            });
+            template.querySelector("input[type=hidden][name='periodstart-new[]']").value = start.value;
+            template.querySelector("input[type=hidden][name='periodend-new[]']").value = end.value;
+            template.querySelector(".period-text").appendChild(periodTxt);
+            
+            document.getElementById("periods-field").prepend(template);
+
+            start.value = '';
+            end.value = '';
+            
+            makeDismissable();
+        }
+    }
+</script>

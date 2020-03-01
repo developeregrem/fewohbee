@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -21,9 +23,6 @@ class Price
 
     /** @ORM\Column(type="string", length=100) * */
     private $description;
-
-    /** @ORM\Column(type="smallint", nullable=true) * */
-    private $numberOfBeds;
 
     /** @ORM\Column(type="smallint", nullable=true) * */
     private $numberOfPersons;
@@ -74,11 +73,29 @@ class Price
     private $reservationOrigins;
 
     /**
+     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true)
+     */
+    private $pricePeriods;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $allPeriods;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\RoomCategory", inversedBy="prices")
+     * @ORM\JoinColumn(nullable=true)
+     */
+    private $roomCategory;
+
+    /**
      * Constructor
      */
     public function __construct()
     {
         $this->reservationOrigins = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->pricePeriods = new ArrayCollection();
+        $this->allPeriods = true;
     }
 
     public function getId()
@@ -99,11 +116,6 @@ class Price
     public function getDescription()
     {
         return $this->description;
-    }
-
-    public function getNumberOfBeds()
-    {
-        return $this->numberOfBeds;
     }
 
     public function getNumberOfPersons()
@@ -189,11 +201,6 @@ class Price
     public function setDescription($description)
     {
         $this->description = $description;
-    }
-
-    public function setNumberOfBeds($numberOfBeds)
-    {
-        $this->numberOfBeds = $numberOfBeds;
     }
 
     public function setNumberOfPersons($numberOfPersons)
@@ -302,5 +309,60 @@ class Price
     public function getReservationOrigins()
     {
         return $this->reservationOrigins;
+    }
+
+    /**
+     * @return Collection|PricePeriod[]
+     */
+    public function getPricePeriods(): Collection
+    {
+        return $this->pricePeriods;
+    }
+
+    public function addPricePeriod(PricePeriod $pricePeriod): self
+    {
+        if (!$this->pricePeriods->contains($pricePeriod)) {
+            $this->pricePeriods[] = $pricePeriod;
+            $pricePeriod->setPrice($this);
+        }
+
+        return $this;
+    }
+
+    public function removePricePeriod(PricePeriod $pricePeriod): self
+    {
+        if ($this->pricePeriods->contains($pricePeriod)) {
+            $this->pricePeriods->removeElement($pricePeriod);
+            // set the owning side to null (unless already changed)
+            if ($pricePeriod->getPrice() === $this) {
+                $pricePeriod->setPrice(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getAllPeriods(): ?bool
+    {
+        return $this->allPeriods;
+    }
+
+    public function setAllPeriods(bool $allPeriods): self
+    {
+        $this->allPeriods = $allPeriods;
+
+        return $this;
+    }
+
+    public function getRoomCategory(): ?RoomCategory
+    {
+        return $this->roomCategory;
+    }
+
+    public function setRoomCategory(?RoomCategory $roomCategory): self
+    {
+        $this->roomCategory = $roomCategory;
+
+        return $this;
     }
 }

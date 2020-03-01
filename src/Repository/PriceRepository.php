@@ -4,6 +4,9 @@ namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
+use \Doctrine\ORM\Query\Expr;
+use App\Entity\Price;
+use App\Entity\Reservation;
 
 /**
  * PriceRepository
@@ -30,6 +33,21 @@ class PriceRepository extends EntityRepository
 
         return $prices;
     }
+    
+    public function findAllOrdered() {
+        $q = $this->createQueryBuilder('p')
+                ->addSelect('CASE WHEN p.roomCategory is null THEN 1 ELSE 0 END as HIDDEN cat_is_null')
+                ->addOrderBy('cat_is_null', 'ASC')
+                ->addOrderBy('p.roomCategory', 'ASC')
+                ->addOrderBy('p.active', 'DESC')
+                ->getQuery();
+        
+        try {
+           return $q->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
 
     public function getActiveMiscellaneousPrices()
     {
@@ -48,6 +66,164 @@ class PriceRepository extends EntityRepository
 
         return $prices;
     }
+    
+    /**
+     * Find all prices that conflicts with the current one that are valid the whole year
+     * @param Price $price
+     * @return Price[]|null
+     */
+    public function findConflictingPricesWithoutPeriod(Price $price)
+    {
+        $q = $this->conflictingBaseQuery($price)
+            /* select only proces where start and and is not set (valid for the whole year) */
+            ->andWhere('p.allPeriods = true')
+            ->getQuery();
+
+        $prices = null;
+        try {
+            $prices = $q->getResult();
+        } catch (NoResultException $e) {
+
+        }
+
+        return $prices;
+    }
+    
+    /**
+     * Find all prices that conflicts with the current one based on a given season
+     * @param Price $price
+     * @return Price[]|null
+     */
+    public function findConflictingPricesWithPeriod(Price $price) {     
+        $prices = [];    
+        $periods = $price->getPricePeriods();
+        foreach($periods as $pricePeriod) {
+            $q = $this->conflictingBaseQuery($price)
+                /* find overlapping periods */
+            ->andWhere("((pp.start >= :start AND pp.end <= :end) OR"
+                . "(pp.start < :start AND pp.end >= :start) OR"
+                . "(pp.start <= :end AND pp.end > :end) OR"
+                . "(pp.start < :start AND pp.end > :end))");
+            $resQ = $q->setParameter(":start", $pricePeriod->getStart())
+                    ->setParameter(":end", $pricePeriod->getEnd())
+                    ->getQuery();
+            try {
+                $res = $resQ->getResult();
+                $prices = array_merge($prices, $res);
+            } catch (NoResultException $e) {
+
+            }
+        }
+        
+        return $prices;
+    }
+    
+    /**
+     * 
+     * @param Price $price
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    private function conflictingBaseQuery(Price $price) {
+        $q = $this
+            ->createQueryBuilder('p')
+            ->select('p, ro, pp')
+            ->leftJoin('p.pricePeriods', 'pp')
+            ->leftJoin('p.reservationOrigins', 'ro') 
+                /* select only room type and active prices*/
+            ->where('p.type = 2 AND p.active = true') 
+                /* make sure that all room specific fields match */
+            ->andWhere('p.roomCategory = :rc and p.numberOfPersons = :nop and p.minStay = :ms')   
+                /* select only prices for the given reservation origin */
+            ->andWhere(':ros MEMBER OF p.reservationOrigins')
+                /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
+            ->andWhere('((:ad = true AND p.allDays = true) OR (:mo = true AND p.monday = true) OR (:tu = true AND p.tuesday = true)'
+                    . ' OR (:we = true AND p.wednesday = true) OR (:th = true AND p.thursday = true)  OR (:fr = true AND p.friday = true)'
+                    . ' OR (:sa = true AND p.saturday = true) OR (:su = true AND p.sunday = true))')
+            ->setParameter('rc', $price->getRoomCategory())
+            ->setParameter('nop', $price->getNumberOfPersons())
+            ->setParameter('ms', $price->getMinStay())
+            ->setParameter('ros', $price->getReservationOrigins())
+            ->setParameter('ad', $price->getAllDays())
+            ->setParameter('mo', $price->getMonday())
+            ->setParameter('tu', $price->getTuesday())
+            ->setParameter('we', $price->getWednesday())
+            ->setParameter('th', $price->getThursday())
+            ->setParameter('fr', $price->getFriday())
+            ->setParameter('sa', $price->getSaturday())
+            ->setParameter('su', $price->getSunday());
+        
+        return $q;
+    }
+    
+    /**
+     * Find apartment prices for a reservation. The Array is already ordered by priority.
+     * @param Reservation $reservation
+     * @param int $stays
+     * @return Price[]
+     */
+    public function findApartmentPrices(Reservation $reservation, int $stays) {
+        $q = $this->getFindBaseQuery($reservation)
+                /* select only room type */
+            ->andWhere('p.type = 2') 
+                /* make sure that all room specific fields match */
+            ->andWhere('p.numberOfPersons = :nop AND p.roomCategory = :rc And p.minStay <= :ms')   
+            ->addOrderBy('p.minStay', 'DESC')
+            ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
+            ->setParameter('nop', $reservation->getPersons())
+            ->setParameter('ms', $stays);           
+        
+        try {
+            return $q->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Find misc prices for a reservation. The Array is already ordered by priority.
+     * @param Reservation $reservation
+     * @return Price[]
+     */
+    public function findMiscPrices(Reservation $reservation) {
+        $q = $this->getFindBaseQuery($reservation)
+                /* select only room type */
+            ->andWhere('p.type = 1');           
+        
+        try {
+            return $q->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+    
+    /**
+     * Base Query to find prices for a reservation
+     * @param Reservation $reservation
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    private function getFindBaseQuery(Reservation $reservation) {
+        $q = $this
+            ->createQueryBuilder('p');
+        $q->select('p, ro, pp')
+                /* workaround to have prices with no period at the end of the result list */
+            ->addSelect('CASE WHEN p.allPeriods = true THEN 1 ELSE 0 END as HIDDEN start_is_null')
+            ->leftJoin('p.pricePeriods', 'pp')
+            ->join('p.reservationOrigins', 'ro', Expr\Join::WITH, $q->expr()->eq('ro.id', ':roid')) 
+                /* select only room type and active prices*/
+            ->where('p.active = true') 
+                /* make sure that all room specific fields match */
+            ->andWhere("(p.allPeriods = true) or ((pp.start >= :start AND pp.end <= :end) OR"
+                . "(pp.start < :start AND pp.end >= :start) OR"
+                . "(pp.start <= :end AND pp.end > :end) OR"
+                . "(pp.start < :start AND pp.end > :end))")
+                /* select only prices for the given reservation origin */
+            ->addOrderBy('start_is_null', 'ASC')          
+            ->setParameter("start", $reservation->getStartDate())
+            ->setParameter("end", $reservation->getEndDate())
+            ->setParameter('roid', $reservation->getReservationOrigin()->getId());
+        
+        return $q;
+    }           
 
     public function supportsClass($class)
     {

@@ -121,7 +121,7 @@ class ReservationOriginServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($origin);
+                $em->clear(ReservationOrigin::class);
             } else {                
                 $em->persist($origin);
                 $em->flush();

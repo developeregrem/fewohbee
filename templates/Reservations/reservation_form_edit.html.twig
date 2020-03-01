@@ -27,7 +27,6 @@
                         <thead>
                         <tr>
                             <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
-                            <th class="border-top-0">{{ 'appartment.bedsmin'|trans }}</th>
                             <th class="border-top-0">{{ 'appartment.bedsmax'|trans }}</th>
                             <th class="border-top-0">{{ 'appartment.description'|trans }}</th>
                         </tr>
@@ -35,7 +34,6 @@
                         <tbody>
                         <tr onclick="return toggleAppartmentOptions({{ reservation.appartment.id }})">
                             <td>{{ reservation.appartment.number }}</td>
-                            <td>{{ reservation.appartment.bedsmin }}</td>
                             <td>{{ reservation.appartment.bedsmax }}</td>
                             <td>{{ reservation.appartment.description }}</td>
                         </tr>

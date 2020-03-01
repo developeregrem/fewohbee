@@ -310,19 +310,25 @@ class InvoiceServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $newInvoiceReservationsArray = $session->get("invoiceInCreation");
         
-        if(!$session->has("invoicePositionsMiscellaneous")) {
+        if(!$session->has("invoicePositionsMiscellaneous")) {            
             $newInvoicePositionsMiscellaneousArray = array();
             $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
-        } else {
-            $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
+            
+            // prefill positions for all selected reservations
+            $is->prefillMiscPositions($newInvoiceReservationsArray, $session);           
         }
+        $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
         
         if(!$session->has("invoicePositionsAppartments")) {
             $newInvoicePositionsAppartmentsArray = array();
-            $session->set("invoicePositionsAppartments", $newInvoicePositionsMiscellaneousArray);
-        } else {
-            $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
+            $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+            // prefill positions for all selected reservations
+            foreach($newInvoiceReservationsArray as $resId) {
+                $reservation = $em->getRepository(Reservation::class)->find($resId);
+                $is->prefillAppartmentPositions($reservation, $session);
+            }            
         }
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
 
         if(!$session->has("invoiceCustomer")) {
             $customer = $em->getRepository(Reservation::class)->find(
@@ -357,7 +363,7 @@ class InvoiceServiceController extends AbstractController
             $invoiceDate = new \DateTime($request->get("invoiceDate"));
             $session->set("invoiceDate", $invoiceDate);
         }
-
+        
         if (count($newInvoicePositionsAppartmentsArray) != 0 && $invoiceid != null) {
             $appartmentPositionExists = true;
         } else {
@@ -490,7 +496,7 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function createAppartmentInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function createAppartmentInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, Request $request)
     {
         $id = $request->get('invoice-id');
         
@@ -507,11 +513,7 @@ class InvoiceServiceController extends AbstractController
             
             // during create process
             if($id === 'new') {
-                $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
-                
-                $newInvoicePositionsAppartmentsArray[] = $positionAppartment;
-
-                $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+                $is->saveNewAppartmentPosition($positionAppartment, $session);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction', array());
             } else { // during edit process
@@ -708,7 +710,7 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function createMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function createMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, Request $request)
     {
         $id = $request->get('invoice-id');
         
@@ -721,11 +723,8 @@ class InvoiceServiceController extends AbstractController
             
             // during create process
             if($id === 'new') {
-                $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
-                
-                $newInvoicePositionsMiscellaneousArray[] = $positionMiscellaneous;
+                $is->saveNewMiscPosition($positionMiscellaneous, $session);
 
-                $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
                 $em = $this->getDoctrine()->getManager();

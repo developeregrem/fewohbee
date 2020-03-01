@@ -17,70 +17,25 @@
                 <i class="fas fa-plus"></i> {{ 'nav.price.add'|trans }}</button>
         </div>
     </div>
+        
+
+        
+    {% set lastRoomCategory = null %}
     <div class="row mt-3">
         <div class="col">
-            <table class="table table-bordered table-hover">
-                <thead>
-                <tr>
-                    <th>{{ 'price.description'|trans }}</th>
-                    <th>{{ 'price.seasonstart'|trans }}</th>
-                    <th>{{ 'price.seasonend'|trans }}</th>
-                    <th>{{ 'price.daysinweek'|trans }}</th>
-                    <th>{{ 'price.price'|trans }}</th>
-                    <th>{{ 'price.vat'|trans }}</th>
-                    <th>{{ 'price.type'|trans }}</th>
-                    <th>{{ 'price.active'|trans }}</th>
-                    <th>{{ 'base.action'|trans }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for price in prices %}
-                    <tr>
-                        <td>{{ price.description }}</td>
-                        <td>{% if price.seasonstart %}{{ price.seasonstart|date('d.m.Y') }}{% endif %}</td>
-                        <td>{% if price.seasonend %}{{ price.seasonend|date('d.m.Y') }}{% endif %}</td>
-                        <td>
-                            {% if price.alldays == true %}{{ 'price.abbreviation.alldays'|trans }}{% endif %}
-                            {% if price.monday == true %}{{ 'price.abbreviation.monday'|trans }}{% endif %}
-                            {% if price.tuesday == true %}{{ 'price.abbreviation.tuesday'|trans }}{% endif %}
-                            {% if price.wednesday == true %}{{ 'price.abbreviation.wednesday'|trans }}{% endif %}
-                            {% if price.thursday == true %}{{ 'price.abbreviation.thursday'|trans }}{% endif %}
-                            {% if price.friday == true %}{{ 'price.abbreviation.friday'|trans }}{% endif %}
-                            {% if price.saturday == true %}{{ 'price.abbreviation.saturday'|trans }}{% endif %}
-                            {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
-                        </td>
-                        <td class="text-right">{{ price.price|number_format(2, ',', '.') }}</td>
-                        <td class="text-right">
-                            {% if is_decimal_place_0(price.vat) %}
-                                {{ price.vat|number_format(0, ',', '.') }}
-                            {% else %}
-                                {{ price.vat|number_format(2, ',', '.') }}
-                            {% endif %}
-                        </td>
-                        <td>{% if price.type == 1 %}
-                                {{ 'price.miscellaneous'|trans }}
-                            {% elseif price.type == 2 %}
-                                {{ 'price.appartment'|trans }}
-                            {% endif %}
-                        </td>
-                        <td>{% if price.active == true %}{{ 'price.active'|trans }} {% else %} {{ 'price.inactive'|trans }}{% endif %}</td>
-                        <td>
-                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
-                                <i onclick="getEntity({{ price.id }})" class="fas fa-info-circle"></i></a>
-                            <a href="#" title="{{ 'button.edit'|trans }}">
-                                <i onclick="editEntry({{ price.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="deleteEntry({{ price.id }})" class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                    <tr id="entry-{{ price.id }}" class="d-none">
-                        <td colspan="9" id="entry-cell-{{ price.id }}">
-                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+        {% for price in prices %}
+            {% if lastRoomCategory != price.roomCategory %}
+            <div class="card mb-3">
+                <div class="card-header">
+                  {% if price.roomCategory != null %}{{ 'price.category'|trans }}: <strong>{{ price.roomCategory.name }}</strong>{% endif %}
+                </div>
+                <div class="card-body">
+                    {% include 'Prices/price_table.html.twig' with {'currentPrice': price} %}
+                </div>
+            </div>       
+            {% set lastRoomCategory = price.roomCategory  %}
+            {% endif %}
+        {% endfor %}
         </div>
     </div>
 </div>
@@ -117,6 +72,7 @@
         let url = replacePlaceholder("{{ path('prices.get.price', {'id': 'placeholder'}) }}", id);
         getContentForModal(url, "", function() {
             enableEditForm(id);
+            toggleStartEnd(id);
         });        
     }
 
@@ -164,9 +120,21 @@
     function checkAllCheckboxes(id) {
         
         if ($('#collapseTwo-' + id + ' #alldays-' + id).is(':checked')) {
-            $('#collapseTwo-' + id + ' :checkbox').prop('checked', true);
+            $('.days-control :checkbox').prop('checked', true);
         } else {
-            $('#collapseTwo-' + id + ' :checkbox').prop('checked', false);
+            $('.days-control :checkbox').prop('checked', false);
+        }
+
+        return false;
+    }
+    
+    function toggleStartEnd(id) {
+        if ($('#collapseTwo-' + id + ' #allperiods-' + id).is(':checked')) {
+            $('#periodstart-'+ id).prop('disabled', true);
+            $('#periodend-'+ id).prop('disabled', true);
+        } else {
+            $('#periodstart-'+ id).prop('disabled', false);
+            $('#periodend-'+ id).prop('disabled', false);
         }
 
         return false;

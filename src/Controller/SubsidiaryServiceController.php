@@ -109,7 +109,7 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($object);
+                $em->clear(Subsidiary::class);
             } else {                
                 $em->persist($object);
                 $em->flush();

@@ -12,7 +12,7 @@
             </trans-unit>
             <trans-unit id="3">
                 <source>appartment.bedsmin</source>
-                <target>Betten</target>
+                <target>normale Belegung</target>
             </trans-unit>
             <trans-unit id="4">
                 <source>appartment.bedsmax</source>
@@ -45,6 +45,10 @@
             <trans-unit id="11">
                 <source>appartment.flash.delete.error.still.in.use</source>
                 <target>Zimmer kann nicht gelöscht werden da es bereits reserviert wurde.</target>
+            </trans-unit>
+            <trans-unit id="12">
+                <source>appartment.category</source>
+                <target>Zimmerkategorie</target>
             </trans-unit>
         </body>
     </file>

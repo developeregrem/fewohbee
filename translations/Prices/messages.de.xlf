@@ -40,7 +40,7 @@
             </trans-unit>
             <trans-unit id="10">
                 <source>price.season</source>
-                <target>Saison</target>
+                <target>Zeitraum</target>
             </trans-unit>
             <trans-unit id="11">
                 <source>price.monday</source>
@@ -169,6 +169,22 @@
             <trans-unit id="42">
                 <source>price.appartment.hint</source>
                 <target>Nur auszufüllen, wenn Typ: Zimmerpreis gewählt.</target>
+            </trans-unit>
+            <trans-unit id="43">
+                <source>price.season.hint</source>
+                <target>Kategorien mit einem Zeitraum haben eine höhere Wertigkeit als Kategorien ohne.</target>
+            </trans-unit>
+            <trans-unit id="44">
+                <source>price.flash.create.conflict</source>
+                <target>Die Preiskategorie konnte nicht gespeichert werden, da es Konflikte mit den folgenden aktiven Kategorien gibt:</target>
+            </trans-unit>
+            <trans-unit id="45">
+                <source>price.weekdays</source>
+                <target>Wochentage</target>
+            </trans-unit>
+            <trans-unit id="46">
+                <source>price.category</source>
+                <target>Zimmerkategorie</target>
             </trans-unit>
         </body>
     </file>
