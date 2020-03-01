@@ -8,11 +8,11 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="inputLastname" class="col-sm-4 col-form-label text-right">{{ 'appartment.bedsmin'|trans }} *</label>
+        <label for="inputEmail" class="col-sm-4 col-form-label text-right">{{ 'appartment.description'|trans }} *</label>
 
         <div class="col-sm">
-            <input type="text" class="form-control" name="bedsmin-{{ appartment.id }}"
-                   value="{{ appartment.bedsmin }}">
+            <input type="text" class="form-control" name="description-{{ appartment.id }}"
+                   value="{{ appartment.description }}">
         </div>
     </div>
     <div class="form-group row">
@@ -24,11 +24,18 @@
         </div>
     </div>
     <div class="form-group row">
-        <label for="inputEmail" class="col-sm-4 col-form-label text-right">{{ 'appartment.description'|trans }} *</label>
+        <label for="category-{{ appartment.id }}" class="col-sm-4 col-form-label text-right">{{ 'appartment.category'|trans }}</label>
 
         <div class="col-sm">
-            <input type="text" class="form-control" name="description-{{ appartment.id }}"
-                   value="{{ appartment.description }}">
+            <select name="category-{{ appartment.id }}" class="form-control">
+                {% for category in categories %}
+                    {% if appartment.id != "new" and appartment.roomCategory != null and category.id == appartment.roomCategory.id %}
+                        <option value="{{ category.id }}" selected>{{ category.name }}</option>
+                    {% else %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
         </div>
     </div>
     <div class="form-group row">

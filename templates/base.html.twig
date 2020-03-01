@@ -7,15 +7,15 @@
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.4.3.1.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.4.4.1.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style.css">
     {% endblock %}
     {% block javascripts %}
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.4.1.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-5.11.2.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min.1.15.0.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.4.3.1.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-5.12.1.min.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-1.16.0.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.4.4.1.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
     {% endblock %}
@@ -57,7 +57,8 @@
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users"></i> {{ 'nav.user'|trans }}</a>
-                                <a class="dropdown-item{% if activeRouteName starts with "appartments" %} active{% endif %}" href="{{ path('appartments.overview') }}"><i class="fas fa-bed"></i> {{ 'nav.appartment'|trans }}</a>
+                                <a class="dropdown-item{% if activeRouteName starts with "category" %} active{% endif %}" href="{{ path('room_category_index') }}"><i class="fas fa-bed"></i> {{ 'nav.category'|trans }}</a>
+                                <a class="dropdown-item{% if activeRouteName starts with "appartments" %} active{% endif %}" href="{{ path('appartments.overview') }}"><i class="fas fa-door-open"></i> {{ 'nav.appartment'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "objects" %} active{% endif %}" href="{{ path('objects.overview') }}"><i class="fas fa-home"></i> {{ 'nav.object'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "prices" %} active{% endif %}" href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt"></i> {{ 'nav.prices'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt"></i> {{ 'nav.reservationorigin'|trans }}</a>

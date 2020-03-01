@@ -116,7 +116,7 @@ class UserServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 // this results in an error when the current user edit themself
-                //$em->detach($user);
+                //$em->clear(User::class);
             } else {
                 $em->persist($user);
                 $em->flush();

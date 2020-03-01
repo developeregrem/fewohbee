@@ -17,9 +17,6 @@ class Appartment
     private $number;
 
     /** @ORM\Column(type="smallint") * */
-    private $beds_min;
-
-    /** @ORM\Column(type="smallint") * */
     private $beds_max;
 
     /** @ORM\Column(type="string", length=255) * */
@@ -35,6 +32,12 @@ class Appartment
      */
     private $reservations;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\RoomCategory", inversedBy="apartments")
+     * @ORM\JoinColumn(nullable=true)
+     */
+    private $roomCategory;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -48,11 +51,6 @@ class Appartment
     public function getNumber()
     {
         return $this->number;
-    }
-
-    public function getBedsMin()
-    {
-        return $this->beds_min;
     }
 
     public function getBedsMax()
@@ -86,11 +84,6 @@ class Appartment
     public function setNumber($number)
     {
         $this->number = $number;
-    }
-
-    public function setBedsMin($beds_min)
-    {
-        $this->beds_min = $beds_min;
     }
 
     public function setBedsMax($beds_max)
@@ -127,5 +120,17 @@ class Appartment
     public function removeReservation(\App\Entity\Reservation $reservation)
     {
         $this->reservations->removeElement($reservation);
+    }
+
+    public function getRoomCategory(): ?RoomCategory
+    {
+        return $this->roomCategory;
+    }
+
+    public function setRoomCategory(?RoomCategory $roomCategory): self
+    {
+        $this->roomCategory = $roomCategory;
+
+        return $this;
     }
 }

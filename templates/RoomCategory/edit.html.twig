@@ -1,0 +1,27 @@
+{{ form_start(form, {'attr': {'id':'entry-form-'~category.id, 'onsubmit':'return saveCategory('~ category.id ~');'} }) }}
+    <div class="modal-body pl-5 pr-5">
+        <div id="flash-message-overlay">
+        </div>
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#" onclick="return enableEditForm({{ category.id }})"
+                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">                             
+                {{ include('RoomCategory/_form.html.twig') }}
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ category.id }}" 
+               class="btn btn-primary d-none"/>
+    </div>
+{{ form_end(form) }}

@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\Intl\Intl;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 use App\Controller\CustomerServiceController;
@@ -207,10 +207,10 @@ class ReservationServiceController extends AbstractController
             $session->set("reservationInCreation", $newReservationsInformationArray);
         }
 
-        $request = new Request();
-        $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
 
-        return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -243,10 +243,10 @@ class ReservationServiceController extends AbstractController
             $session->set("reservationInCreation", $newReservationsInformationArray);
         }
         
-        $request = new Request();
-        $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
-
-        return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
+        
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -261,10 +261,10 @@ class ReservationServiceController extends AbstractController
         unset($newReservationsInformationArray[$request->get("appartmentid")]);
         $session->set("reservationInCreation", $newReservationsInformationArray);
 
-        $request = new Request();
-        $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
 
-        return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -283,10 +283,10 @@ class ReservationServiceController extends AbstractController
 
         $session->set("reservationInCreation", $newReservationsInformationArray);
 
-        $request = new Request();
-        $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
 
-        return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
     }
 
     /**
@@ -347,7 +347,7 @@ class ReservationServiceController extends AbstractController
     {
         $em = $this->getDoctrine()->getManager();
         // Get the country names for a locale
-        $countries = Intl::getRegionBundle()->getCountryNames($request->getLocale());
+        $countries = Countries::getNames($request->getLocale());
 
         $customer = new Customer();
         $customer->setId('new');
@@ -380,11 +380,11 @@ class ReservationServiceController extends AbstractController
 
         //$request->request->set("customerid", $customer->getId());
         //$subRequest = Request::create('/reservations/reservation/new/preview', 'POST', $request->request->all());
-        $request = new Request();
-        $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-        $request->request->add(Array('customerid' => $customer->getId()));
+        $request2 = $request->duplicate([], []);
+        $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+        $request2->request->add(Array('customerid' => $customer->getId()));
 
-        return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+        return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
 
     }
 
@@ -727,12 +727,12 @@ class ReservationServiceController extends AbstractController
                 $session->set("customersInReservation", $customersInReservation);
             }
 
-            $request = new Request();
-            $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request->request->add(Array(
+            $request2 = $request->duplicate([], []);
+            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+            $request2->request->add(Array(
                 'tab' => $tab
             ));
-            return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }
         
         
@@ -799,13 +799,13 @@ class ReservationServiceController extends AbstractController
                 }
             }
 
-            $request = new Request();
-            $request->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
-            $request->request->add(Array(
+            $request2 = $request->duplicate([], []);
+            $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::previewNewReservationAction');
+            $request2->request->add(Array(
                 'tab' => $tab
             ));
             
-            return $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
+            return $kernel->handle($request2, HttpKernelInterface::SUB_REQUEST);
         }        
     }
 
@@ -829,7 +829,7 @@ class ReservationServiceController extends AbstractController
         }
 
         // Get the country names for a locale
-        $countries = Intl::getRegionBundle()->getCountryNames($request->getLocale());
+        $countries = Countries::getNames($request->getLocale());
 
         return $this->render('Reservations/reservation_form_edit_customer_edit.html.twig', array(
             'customer' => $customer,

@@ -19,7 +19,7 @@ use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use Symfony\Component\Intl\Intl;
+use Symfony\Component\Intl\Countries;
 use App\Service\TemplatesService;
 use App\Entity\Template;
 
@@ -109,7 +109,7 @@ class CustomerServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         // Get the country names for a locale
-        $countries = Intl::getRegionBundle()->getCountryNames($request->getLocale());
+        $countries = Countries::getNames($request->getLocale());
 
         $customer = new Customer();
         $customer->setId('new');
@@ -156,7 +156,7 @@ class CustomerServiceController extends AbstractController
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
-        $countries = Intl::getRegionBundle()->getCountryNames($request->getLocale());
+        $countries = Countries::getNames($request->getLocale());
 
         return $this->render('Customers/customer_form_edit.html.twig', array(
             'customer' => $customer,
@@ -288,7 +288,7 @@ class CustomerServiceController extends AbstractController
         $files = array();
         $customers = array();
         $countries = array();
-        $countries2 = Intl::getRegionBundle()->getCountryNames('de');
+        $countries = Countries::getNames($request->getLocale());
 
         $dirhandle = opendir($path);
         if ($dirhandle) {

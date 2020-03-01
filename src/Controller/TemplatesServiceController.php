@@ -141,7 +141,7 @@ class TemplatesServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($template);
+               $em->clear(Template::class);
             } else {                
                 $em->persist($template);
                 $em->flush();
@@ -370,19 +370,19 @@ class TemplatesServiceController extends AbstractController
 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
-                $mail = new MailCorrespondence();
-                $mail->setRecipient($to)
-                     ->setName($subject)
-                     ->setSubject($subject)
-                     ->setText($msg)
-                     ->setTemplate($template);
-                
+                                
                 // associate with reservations
                 $reservations = $ts->getReferencedReservationsInSession();  
                 
                 // save correspondence for each reservation
-                foreach($reservations as $reservation) {                    
-                    $mail->setReservation($reservation);                   
+                foreach($reservations as $reservation) { 
+                    $mail = new MailCorrespondence();
+                    $mail->setRecipient($to)
+                         ->setName($subject)
+                         ->setSubject($subject)
+                         ->setText($msg)
+                         ->setTemplate($template)
+                        ->setReservation($reservation);                   
                     
                     // add connection to attachments
                     foreach($attachmentIds as $attId) {
@@ -391,7 +391,6 @@ class TemplatesServiceController extends AbstractController
                     }
                     $em->persist($mail);
                     $em->flush();
-                    $em->detach($mail);                     // to make sure we always insert new entry and no update
                 }                
                 
                 $this->addFlash('success', 'templates.sendemail.success');
@@ -426,23 +425,21 @@ class TemplatesServiceController extends AbstractController
                 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
-                $file = new FileCorrespondence();
-                $file->setFileName($subject)
-                     ->setName($subject)
-                     ->setText($msg)
-                     ->setTemplate($template);
-                
-                
+                                             
                 // associate with reservations
                 $reservations = $ts->getReferencedReservationsInSession();  
                 $fileIds = Array();
                 
                 // save correspondence for each reservation
                 foreach($reservations as $reservation) {
-                    $file->setReservation($reservation);                    
+                    $file = new FileCorrespondence();
+                    $file->setFileName($subject)
+                         ->setName($subject)
+                         ->setText($msg)
+                         ->setTemplate($template)
+                         ->setReservation($reservation);                    
                     $em->persist($file);
                     $em->flush();
-                    $em->detach($file);                     // to make sure we always insert new entry and no update
                 }
                 
                 $isAttachment = false;

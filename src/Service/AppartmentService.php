@@ -17,6 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 
 class AppartmentService
 {
@@ -39,12 +40,13 @@ class AppartmentService
         }
 
         $appartment->setNumber($request->get("number-" . $id));
-        $appartment->setBedsMin($request->get("bedsmin-" . $id));
         $appartment->setBedsMax($request->get("bedsmax-" . $id));
         $appartment->setDescription($request->get("description-" . $id));
 
         $object = $this->em->getRepository(Subsidiary::class)->find($request->get("object-" . $id));
         $appartment->setObject($object);
+        $category = $this->em->getRepository(RoomCategory::class)->find($request->get("category-" . $id));
+        $appartment->setRoomCategory($category);
 
         return $appartment;
     }

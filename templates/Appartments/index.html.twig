@@ -23,7 +23,7 @@
                     <thead>
                     <tr>
                         <th>{{ 'appartment.number'|trans }}</th>
-                        <th>{{ 'appartment.bedsmin'|trans }}</th>
+                        <th>{{ 'appartment.description'|trans }}</th>
                         <th>{{ 'appartment.bedsmax'|trans }}</th>
                         <th>{{ 'appartment.action'|trans }}</th>
                     </tr>
@@ -32,7 +32,7 @@
                     {% for appartment in appartments %}
                         <tr>
                             <td>{{ appartment.number }}</td>
-                            <td>{{ appartment.bedsmin }}</td>
+                            <td>{{ appartment.description }}</td>
                             <td>{{ appartment.bedsmax }}</td>
                             <td>
                                 <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">

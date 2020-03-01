@@ -19,6 +19,7 @@ use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
+use App\Entity\RoomCategory;
 
 class PriceServiceController extends AbstractController
 {
@@ -29,7 +30,7 @@ class PriceServiceController extends AbstractController
     public function indexAction()
     {
         $em = $this->getDoctrine()->getManager();
-        $prices = $em->getRepository(Price::class)->findAll();
+        $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', array(
             "prices" => $prices
@@ -42,6 +43,7 @@ class PriceServiceController extends AbstractController
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
 
         $originIds = Array();
         // extract ids for twig template
@@ -53,7 +55,8 @@ class PriceServiceController extends AbstractController
             'price' => $price,
             'token' => $csrf->getCSRFTokenForForm(),
             'origins' => $origins,
-            'originPricesIds' => $originIds
+            'originPricesIds' => $originIds,
+            'categories' => $categories
         ));
     }
 
@@ -62,6 +65,7 @@ class PriceServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $categories = $em->getRepository(RoomCategory::class)->findAll();
 
         $originIds = Array();
         // extract ids for twig template, all origins will be preselected
@@ -76,13 +80,15 @@ class PriceServiceController extends AbstractController
             'price' => $price,
             'token' => $csrf->getCSRFTokenForForm(),
             'origins' => $origins,
-            'originPricesIds' => $originIds
+            'originPricesIds' => $originIds,
+            'categories' => $categories
         ));
     }
 
     public function createPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request)
     {
         $error = false;
+        $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, "new");
 
@@ -92,23 +98,32 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
-                $em->persist($price);
-                $em->flush();
-
-                // add succes message
-                $this->addFlash('success', 'price.flash.create.success');
+                $conflicts = $ps->findConflictingPrices($price);
+                
+                // complain conflicts only when current price is marked as acitve
+                if(!$price->getActive() || count($conflicts) === 0) {
+                    $em = $this->getDoctrine()->getManager();
+                    $em->persist($price);
+                    $em->flush();
+                    // add succes message
+                    $this->addFlash('success', 'price.flash.create.success');
+                } else {
+                    $error = true;
+                    $this->addFlash('warning', 'price.flash.create.conflict');
+                }         
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
+        return $this->render('Prices/feedback.html.twig', array(
+            "error" => $error,
+            'conflicts' => $conflicts
         ));
     }
 
     public function editPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         $error = false;
+        $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
             $em = $this->getDoctrine()->getManager();
@@ -119,18 +134,31 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->detach($price);
-            } else {                
-                $em->persist($price);
-                $em->flush();
+                $em->clear(Price::class);
+            } else {  
+                $conflicts = $ps->findConflictingPrices($price);
+                // during edit we need to remove the current item from the list
+                $conflicts->removeElement($price);
+                
+                // complain conflicts only when current price is marked as acitve
+                if(!$price->getActive() || count($conflicts) === 0) {
+                    $em->persist($price);
+                    $em->flush();
 
-                // add succes message           
-                $this->addFlash('success', 'price.flash.edit.success');
+                    // add succes message           
+                    $this->addFlash('success', 'price.flash.edit.success');
+                } else {
+                    $error = true;
+                    $this->addFlash('warning', 'price.flash.create.conflict');
+                    // stop auto commit of doctrine with invalid field values
+                    $em->clear(Price::class);
+                }  
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
+        return $this->render('Prices/feedback.html.twig', array(
+            'error' => $error,
+            'conflicts' => $conflicts
         ));
     }
 
