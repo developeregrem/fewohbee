@@ -25,9 +25,9 @@ Small guesthouses or accommodations usually manage their rooms or apartments the
 
 ## Requirements
 
-In order to use the tool, you need to have a small web server fulfilling the Symfony 4 [requirements](https://symfony.com/doc/current/reference/requirements.html). This means:
+In order to use the tool, you need to have a small web server fulfilling the Symfony 5 [requirements](https://symfony.com/doc/current/reference/requirements.html). This means:
 
- - PHP 7.1.3 or higher
+ - PHP 7.2.5 or higher
  - php-intl extension installed and activated
  - a web server e.g. nginx or apache
  - a database server (recommended is mysql or mariadb)
