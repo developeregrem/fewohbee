@@ -64,11 +64,13 @@
         toolbar_drawer: 'sliding',
         plugins: [
             'advlist autolink lists link image charmap print preview anchor',
-            'searchreplace visualblocks code fullscreen',
+            'searchreplace visualblocks code fullscreen image',
             'insertdatetime media table paste code help wordcount table noneditable template fullpage'
           ],
-        toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor | template | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |  table | removeformat | code | preview | help',
+        toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor image | template | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |  table | removeformat | code | preview | help',
         menubar: false,
+        images_upload_url: '{{ path('templates.upload') }}',
+        relative_urls: false,
         protect: [
            /\{\%[\s\S]*?%\}/g, // Allow TWIG control codes
            ///\{\{[\s\S]*?\}\}/g, // Allow TWIG output codes

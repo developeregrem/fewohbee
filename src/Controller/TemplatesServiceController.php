@@ -15,6 +15,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 use App\Service\CSRFProtectionService;
 use App\Service\TemplatesService;
@@ -25,6 +27,7 @@ use App\Entity\Customer;
 use App\Entity\Correspondence;
 use App\Entity\FileCorrespondence;
 use App\Entity\MailCorrespondence;
+use App\Service\FileUploader;
 
 class TemplatesServiceController extends AbstractController
 {
@@ -600,5 +603,28 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $response;
+    }
+    
+    /**
+     * @Route("/settings/templates/upload", name="templates.upload", methods={"POST"})
+     */
+    public function uploadImage(Request $request, FileUploader $fos) {
+        /** @var UploadedFile $imageFile */
+        $imageFile = $request->files->get('file');
+        if (!$fos->isValidImage($imageFile)) {
+            return new Response('moo', Response::HTTP_UNSUPPORTED_MEDIA_TYPE);            
+        }
+        
+        try {
+            $name = $fos->upload($imageFile);
+        } catch (\Symfony\Component\HttpFoundation\File\Exception\FileException $ex) {
+            return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);   
+        }
+
+        $path = rtrim( $request->getBasePath(), '/' ) . '/' . $fos->getPublicDirecotry() . '/' . $name;
+
+        return $this->json([
+            'location' => $path
+            ]);
     }
 }
