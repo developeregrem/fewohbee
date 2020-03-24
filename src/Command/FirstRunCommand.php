@@ -136,6 +136,8 @@ class FirstRunCommand extends Command
         $this->em->flush();
         
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
+        
+        return 0;
     }
     
     private function createTemplateTypes()
