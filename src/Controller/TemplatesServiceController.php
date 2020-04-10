@@ -612,7 +612,7 @@ class TemplatesServiceController extends AbstractController
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');
         if (!$fos->isValidImage($imageFile)) {
-            return new Response('moo', Response::HTTP_UNSUPPORTED_MEDIA_TYPE);            
+            return new Response('', Response::HTTP_UNSUPPORTED_MEDIA_TYPE);            
         }
         
         try {

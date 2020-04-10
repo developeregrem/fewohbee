@@ -52,7 +52,7 @@ class FirstRunCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title("This process will ask you questions in order to prepare the app fo its first use.");
+        $io->title("This process will ask you questions in order to prepare the app for its first use.");
         
         $users = $this->em->getRepository(User::class)->findAll();
         
