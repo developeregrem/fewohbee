@@ -66,4 +66,4 @@ Das Tool ist grundlegend mehrsprachige aufgebaut. Aktuell liegt jedoch nur eine 
 
 Alexander Elchlepp
 
-Das Projekt wird durch mich seit 2014 in der Freizeit entwickelt. Wenn Fragen aufkommen, kann ein Ticket angelegt oder mich direkt per mail kontaktiert werden (alex.pensionsverwaltung (at) gmail.com)
+Das Projekt wird durch mich seit 2014 in der Freizeit entwickelt. Wenn Fragen aufkommen, kann ein Ticket angelegt oder mich direkt per mail kontaktiert werden (info (at) fewohbee.de)
