@@ -3,7 +3,7 @@
 /*
  * This file is part of the guesthouse administration package.
  *
- * (c) Alexander Elchlepp <alex.pensionsverwaltung@gmail.com>
+ * (c) Alexander Elchlepp <info@fewohbee.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -52,7 +52,7 @@ class FirstRunCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title("This process will ask you questions in order to prepare the app fo its first use.");
+        $io->title("This process will ask you questions in order to prepare the app for its first use.");
         
         $users = $this->em->getRepository(User::class)->findAll();
         
@@ -136,6 +136,8 @@ class FirstRunCommand extends Command
         $this->em->flush();
         
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
+        
+        return 0;
     }
     
     private function createTemplateTypes()

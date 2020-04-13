@@ -8,7 +8,7 @@ Kleine Pensionen oder Unterkünfte verwalten ihre Zimmer oder Appartements in de
 
 Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den handgeschriebenen Ansatz zur Raumverwaltung zu ersetzen und die Produktivität durch das Zusammenführen aller Informationen zu verbessern, was schließlich in einer Zeitersparnis bei der Verwaltung des Gästehauses oder Pension resultiert.
 
-*Für eine ausführliche Dokumentation nutzen sie bitte das [Wiki](https://github.com/developeregrem/pve/wiki).*
+*Für eine ausführliche Dokumentation nutzen sie bitte das [Wiki](https://github.com/developeregrem/fewohbee/wiki).*
 
 ## Funktionen
 
@@ -33,9 +33,11 @@ Um das Tool nutzen zu können, benötigen man einen kleinen Webserver, der die A
 
 ## Quick Start
 
+> Es wird empfohlen das docker-compose Setup zu verwenden: [fewohbee-dockerized](https://github.com/developeregrem/fewohbee-dockerized)
+
 Erstellen einer Datenbank für das Tool:
 
-    CREATE DATABASE pve CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE fewohbee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
  Kopiere die Datei `.env.dist` und benenne die kopierte Datei in `.env` um.
 
@@ -53,7 +55,7 @@ Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialis
     php bin/console app:first-run
 
 Anschließend kann mit einem Webbrowser zu dem Installationsordner gewechselt werden  z.B.
-http://localhost/pve/public/index.php
+http://localhost/fewohbee/public/index.php
 um sich mit den zuvor angelegten Logindaten anzumelden.
 
 ## i18n
