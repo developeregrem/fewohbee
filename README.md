@@ -34,6 +34,8 @@ In order to use the tool, you need to have a small web server fulfilling the Sym
 
 ## Quick Start
 
+> It's recommended to use the docker-compose setup: [pve-dockerized](https://github.com/developeregrem/pve-dockerized)
+
 Create a database for the tool:
 
     CREATE DATABASE pve CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
