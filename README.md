@@ -1,14 +1,14 @@
 
 # guesthouse and hotel management software FewohBee
 
-*For german version see: [README.de.md](https://github.com/developeregrem/pve/blob/master/README.de.md)*
+*For german version see: [README.de.md](https://github.com/developeregrem/fewohbee/blob/master/README.de.md)*
 
 The hotel management software for small to medium-sized pensions and hotels - open source and free of charge.
 
 The guesthouse management tool or property managment system (PMS) is a PHP project based on the amazing PHP framework Symfony.
 Small guesthouses or accommodations usually manage their rooms or apartments the old way by using a pen and a sheet of paper or using a spreadsheet. The goal of this open-source tool is to help smaller accommodations to replace the hand written approach to manage rooms, to improve productivity by combining all information which, finally, ends in a time reduction to manage the guesthouse.
 
-*For a detailed documentation please refer to the [Wiki](https://github.com/developeregrem/pve/wiki).*
+*For a detailed documentation please refer to the [Wiki](https://github.com/developeregrem/fewohbee/wiki).*
 
 
 ## Features
@@ -34,11 +34,11 @@ In order to use the tool, you need to have a small web server fulfilling the Sym
 
 ## Quick Start
 
-> It's recommended to use the docker-compose setup: [pve-dockerized](https://github.com/developeregrem/pve-dockerized)
+> It's recommended to use the docker-compose setup: [fewohbee-dockerized](https://github.com/developeregrem/fewohbee-dockerized)
 
 Create a database for the tool:
 
-    CREATE DATABASE pve CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE fewohbee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
  Copy the file `.env.dist` and name the new file `.env`.
 
@@ -55,12 +55,12 @@ Run the following command to initialize the database and the application:
     php bin/console app:first-run
 
 Now, you are ready to open a browser, navigate to the installation folder e.g. 
-http://localhost/pve/public/index.php
+http://localhost/fewohbee/public/index.php
 and login with the user created in the step before.
 
 ## Using Docker
 
-To run the application using docker a pre-configured docker-compose setup is available. Please refer to the documentation in the Wiki: [Docker-Setup](https://github.com/developeregrem/pve/wiki/Docker-Setup)
+To run the application using docker a pre-configured docker-compose setup is available. Please refer to the documentation in the Wiki: [Docker-Setup](https://github.com/developeregrem/fewohbee/wiki/Docker-Setup)
 
 ## i18n
 
