@@ -6,7 +6,10 @@ parameters:
     fromName: '%env(FROM_NAME)%'
     returnPath: '%env(RETURN_PATH)%'
     mailHost:  '%env(MAIL_HOST)%'
-    version: '2.0.0'
+    webHost: '%env(WEB_HOST)%'
+    publicUploadDirectory: 'resources/images/export'
+    uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
+    version: '2.1.0'
 
 services:
     # default configuration for services in *this* file
@@ -37,3 +40,12 @@ services:
             - '%fromName%'
             - '%mailHost%'
             - '%returnPath%'
+    
+    App\Service\TemplatesService:
+        arguments:
+            - '%webHost%'
+            
+    App\Service\FileUploader:
+        arguments:
+            $publicDirectory: '%publicUploadDirectory%'
+            $targetDirectory: '%uploadDirectory%'

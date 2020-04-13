@@ -3,7 +3,7 @@
 /*
  * This file is part of the guesthouse administration package.
  *
- * (c) Alexander Elchlepp <alex.pensionsverwaltung@gmail.com>
+ * (c) Alexander Elchlepp <info@fewohbee.de>
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -33,16 +33,18 @@ class TemplatesService
     private $session;
     private $mpdfs;
     private $twig;
+    private $webHost;
 
     /**
      * @param Application $app
      */
-    public function __construct(\Twig_Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs)
+    public function __construct(string $webHost, \Twig_Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs)
     {
         $this->em = $em;
 	$this->session = $session;
         $this->mpdfs = $mpdfs;
         $this->twig = $twig;
+        $this->webHost = $webHost;
     }
 
     /**
@@ -198,16 +200,32 @@ class TemplatesService
             $params->marginBottom,
             $params->marginHeader,
             $params->marginFooter);
-
+        
+        $inputMapped = $this->mapImageSrc($input);
+        
         /*
          * mode
          * 0 - Use this (default) if the text you pass is a complete HTML page including head and body and style definitions.
          * 1 - Use this when you want to set a CSS stylesheet 
          * 2 - Write HTML code without the <head> information. Does not need to be contained in <body>
          */
-        $mpdf->WriteHTML($input, 0);
+        $mpdf->WriteHTML($inputMapped, 0);
 
         return $mpdf->Output($name . '.pdf', $dest);
+    }
+    
+    /**
+     * This maps the src of images to the real web host.
+     * This is sometimes needed e.g. when using it with docker. 
+     * The docker web host is "web" when the application is requested via "localhost" in the browser, 
+     * mpdf uses the host from the request, which is localhost. But there is no web server listening on localhost in the php container. 
+     * That's why we need to change the src to the real host "web".
+     * @param string $input
+     * @return string
+     */
+    private function mapImageSrc($input) {
+        $host = rtrim($this->webHost, '/').'/';
+        return preg_replace('/src="\/(.*)"/i', 'src="'.$host.'$1"', $input);
     }
     
     /**
