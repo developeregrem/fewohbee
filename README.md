@@ -70,4 +70,4 @@ The tool has multi language support by design. However, at the moment there is o
 
 Alexander Elchlepp
 
-This project is a one man show at the moment and developed in my free time since 2014. If you have questions open a ticket or contact me at alex.pensionsverwaltung (at) gmail.com
+This project is a one man show at the moment and developed in my free time since 2014. If you have questions open a ticket or contact me at info (at) fewohbee.de
