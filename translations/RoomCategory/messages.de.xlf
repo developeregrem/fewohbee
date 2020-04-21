@@ -38,6 +38,14 @@
                 <source>category.flash.delete.error.still.in.use</source>
                 <target>Kategorie kann nicht gelöscht werden, da ihr noch Zimmer oder Preisklassen zugeordnet sind.</target>
             </trans-unit>
+            <trans-unit id="10">
+                <source>category.single</source>
+                <target>Einzelzimmer</target>
+            </trans-unit>
+            <trans-unit id="11">
+                <source>category.double</source>
+                <target>Doppelzimmer</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
