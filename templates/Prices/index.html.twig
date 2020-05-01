@@ -77,6 +77,8 @@
     }
 
     function savePrice(id) {
+        // when the user forgot to click the + button, add the entered period automatically
+        addPeriod(document.querySelector("#addperiodbutton"), id);
         let url = replacePlaceholder("{{ path('prices.edit.price', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
@@ -92,6 +94,8 @@
     }
 
     function createNewPrice() {
+        // when the user forgot to click the + button, add the entered period automatically
+        addPeriod(document.querySelector("#addperiodbutton"), 'new');
         let url = "{{ path('prices.create.price')}}";
         _doPost('#entry-form-new', url, '{{ path('prices.overview') }}');
         return false;
