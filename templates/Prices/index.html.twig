@@ -132,6 +132,7 @@
         return false;
     }
     
+    // enable or disable the fields to add a period depending whether the allperiods checkbox is checked or not
     function toggleStartEnd(id) {
         if ($('#collapseTwo-' + id + ' #allperiods-' + id).is(':checked')) {
             $('#periodstart-'+ id).prop('disabled', true);

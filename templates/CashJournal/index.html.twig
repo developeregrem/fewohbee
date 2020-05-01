@@ -10,17 +10,16 @@
 
 {% block content %}
     <div class="container">
-        <div class="row">
+        <div class="row justify-content-between">
             <div class="col-md-4">
                 <button type="button" class="btn btn-default" onclick="showCreateForm()"
                             data-toggle="modal" data-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'journal.add'|trans }}</button>
             </div>
-            <div class="col-md-5 text-right col-form-label col-form-label-sm">
-                {{ 'journal.template'|trans }}:
-            </div>
-            <div class="col text-right">                
+            <div class="col-md-3">                
                     <select id="template" name="template" class="form-control">
+                        <option disabled>{{ 'journal.template'|trans }}:</option>
+                        <option disabled>──────────</option>
                         {% for template in templates %}
                             <option value="{{ template.id }}"{% if template.id == templateId %} selected{% endif %}>{{ template.name }}</option>
                         {% endfor %}
