@@ -186,6 +186,18 @@
                 <source>price.category</source>
                 <target>Zimmerkategorie</target>
             </trans-unit>
+            <trans-unit id="47">
+                <source>price.breakfast</source>
+                <target>Frühstück</target>
+            </trans-unit>
+            <trans-unit id="48">
+                <source>price.single</source>
+                <target>Einzelzimmer (1 Nacht)</target>
+            </trans-unit>
+            <trans-unit id="49">
+                <source>price.double</source>
+                <target>Doppelzimmer (1 Nacht)</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

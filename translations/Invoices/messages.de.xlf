@@ -188,7 +188,7 @@
             </trans-unit>
             <trans-unit id="47">
                 <source>invoice.template</source>
-                <target>Rechnungstemplate</target>
+                <target>Rechnungstemplate wählen</target>
             </trans-unit>
             <trans-unit id="48">
                 <source>invoice.position.service</source>
