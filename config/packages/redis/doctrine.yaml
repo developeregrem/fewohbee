@@ -9,15 +9,12 @@ doctrine:
     orm:
         metadata_cache_driver:
             type: service
-#            id: doctrine.system_cache_provider
             id: redis_cache_service
         query_cache_driver:
             type: service
-#            id: doctrine.system_cache_provider
             id: redis_cache_service
         result_cache_driver:
             type: service
-#            id: doctrine.result_cache_provider
             id: redis_cache_service
 
 services:
