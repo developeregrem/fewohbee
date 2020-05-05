@@ -104,7 +104,7 @@
                                    {% if price.seasonEnd is null %} disabled{% endif %}>
                         </div>
                         <div class="col-sm-1 align-self-center">    
-                            <a href="#" class="text-primary" title="{{ 'button.add'|trans }}" onclick="addPeriod(this, '{{ price.id }}')">
+                            <a href="#" class="text-primary" id="addperiodbutton" title="{{ 'button.add'|trans }}" onclick="addPeriod(this, '{{ price.id }}')">
                                 <i class="fas fa-plus"></i>
                             </a>
                         </div>
@@ -247,7 +247,7 @@
 </fieldset>
 <div id="pricePeriodTemplate" class="d-none">
     <div class="price-period float-left">
-        <span class="badge .badge-pill badge-info"><span class="period-text"></span>
+        <span class="badge badge-pill badge-info"><span class="period-text"></span>
             <button type="button" class="close align-center" aria-label="Dismiss">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -258,6 +258,11 @@
     </div>
 </div>
 <script>
+    {% if price.id == 'new' %}
+    // initialy check all checkboces for days
+    $('#collapseTwo-new #alldays-new').prop('checked', true);
+    checkAllCheckboxes('new');
+    {% endif %}
     makeDismissable();
     function makeDismissable() {
         document.querySelectorAll('.price-period .close').forEach(item => {
@@ -294,6 +299,28 @@
             end.value = '';
             
             makeDismissable();
+        }
+    }
+    
+    // when a day is checked, uncheck the alldays checkbox
+    document.querySelectorAll('.days-control input[type="checkbox"]').forEach(item => {        
+        let allDay = "alldays";
+        if( item.name.substring(0, allDay.length) !== allDay ) {
+            item.addEventListener('click', event => {
+                if( ! item.checked ) {
+                    document.querySelector('input[name="alldays-{{ price.id }}"]').checked = false;
+                } else {
+                    checkIfAllChecked();   
+                }
+            })
+        }        
+    });
+    
+    // when all days are checked, check the alldays checkbox as well
+    function checkIfAllChecked() {
+        let count = document.querySelectorAll('.days-control input[type="checkbox"]:not([name^="alldays-"]):checked').length;
+        if ( count === 7 ) {
+            document.querySelector('input[name="alldays-{{ price.id }}"]').checked = true;   
         }
     }
 </script>

@@ -132,7 +132,7 @@
             </trans-unit>
             <trans-unit id="33">
                 <source>journal.template</source>
-                <target>Exportvorlage</target>
+                <target>Exportvorlage wählen</target>
             </trans-unit>
             <trans-unit id="34">
                 <source>journal.single</source>
