@@ -149,7 +149,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         $address->setCity("Musterhausen");
         $address->setCountry("DE");
         $address->setEmail("max.mustermann@muster.de");
-        $address->setType(1);
+        $address->setType('CUSTOMER_ADDRESS_TYPE_PRIVATE');
         $address->setFax("123456789");
         $address->setMobilePhone("0176123456");
         $address->setPhone("987654321");
