@@ -47,7 +47,7 @@ Generate a random value and update the property `APP_SECRET` (you can use the fo
 
 If not already available download the PHP dependency manager [composer](https://getcomposer.org/download/) in order to install project dependencies. Afterwards run the following command within the root folder of the project:
 
-    composer update
+    composer install
 
 Run the following command to initialize the database and the application:
 
