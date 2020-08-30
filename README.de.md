@@ -47,7 +47,7 @@ Erzeuge einen zufällig und sicheren Wert für `APP_SECRET` (man kann einen Wert
 
 Wenn noch nicht vorhanden, lade den PHP dependency manager [composer](https://getcomposer.org/download/) herunter, um die Pensionsverwaltungstool Abhängigkeiten installieren zu können. Führe anschließend den folgenden Befehl im root-Ordner des Projekts aus:
 
-    composer update
+    composer install
 
 Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialisieren:
 

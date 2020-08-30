@@ -9,7 +9,7 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '2.1.0'
+    version: '2.2.0'
 
 services:
     # default configuration for services in *this* file
