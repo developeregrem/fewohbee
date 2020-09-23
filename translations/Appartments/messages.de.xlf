@@ -1,52 +1,52 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="appartment.delete.ask">
                 <source>appartment.delete.ask</source>
                 <target>Dieses Zimmer wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="appartment.number">
                 <source>appartment.number</source>
                 <target>Zimmernummer</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="appartment.bedsmin">
                 <source>appartment.bedsmin</source>
                 <target>normale Belegung</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="appartment.bedsmax">
                 <source>appartment.bedsmax</source>
                 <target>max. Personen</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="appartment.action">
                 <source>appartment.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="appartment.description">
                 <source>appartment.description</source>
                 <target>Beschreibung</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="appartment.flash.delete.success">
                 <source>appartment.flash.delete.success</source>
                 <target>Zimmer wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="appartment.flash.create.success">
                 <source>appartment.flash.create.success</source>
                 <target>Zimmer wurde erfolgreich angelegt.</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="appartment.object">
                 <source>appartment.object</source>
                 <target>Niederlassung</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="appartment.flash.edit.success">
                 <source>appartment.flash.edit.success</source>
                 <target>Zimmer wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="appartment.flash.delete.error.still.in.use">
                 <source>appartment.flash.delete.error.still.in.use</source>
                 <target>Zimmer kann nicht gelöscht werden da es bereits reserviert wurde.</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="appartment.category">
                 <source>appartment.category</source>
                 <target>Zimmerkategorie</target>
             </trans-unit>

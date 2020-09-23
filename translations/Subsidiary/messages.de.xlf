@@ -1,44 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xliff xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 http://docs.oasis-open.org/xliff/v1.2/os/xliff-core-1.2-strict.xsd" xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
-  <file original="file.ext" datatype="plaintext" source-language="ar" target-language="de">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="object.title">
                 <source>object.title</source>
                 <target>Niederlassungsverwaltung</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="object.description">
                 <source>object.description</source>
                 <target>Niederlassungsverwaltung</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="object.name">
                 <source>object.name</source>
                 <target>Niederlassung</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="object.action">
                 <source>object.action</source>
                 <target>Aktionen</target>
             </trans-unit>
-            <trans-unit id="5">
-                <source>object.description</source>
-                <target>Beschreibung</target>
-            </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="object.delete.ask">
                 <source>object.delete.ask</source>
                 <target>Diese Niederlassung wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="object.flash.delete.success">
                 <source>object.flash.delete.success</source>
                 <target>Niederlassung wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="object.flash.create.success">
                 <source>object.flash.create.success</source>
                 <target>Niederlassung wurde erfolgreich angelegt.</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="object.flash.edit.success">
                 <source>object.flash.edit.success</source>
                 <target>Niederlassung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="object.flash.delete.error.still.in.use">
                 <source>object.flash.delete.error.still.in.use</source>
                 <target>Niederlassung kann nicht gelöscht werden, da ihr noch Zimmer zugeordnet sind.</target>
             </trans-unit>

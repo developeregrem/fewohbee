@@ -1,6 +1,7 @@
 framework:
     default_locale: '%locale%'
     translator:
+        fallbacks: ['de']
         paths:
             - '%kernel.project_dir%/translations/Base'
             - '%kernel.project_dir%/translations/Appartments'
@@ -17,5 +18,3 @@ framework:
             - '%kernel.project_dir%/translations/Templates'
             - '%kernel.project_dir%/translations/Users'
             - '%kernel.project_dir%/translations/RoomCategory'
-        fallbacks:
-            - '%locale%'

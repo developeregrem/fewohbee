@@ -1,48 +1,48 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="reservationorigin.title">
                 <source>reservationorigin.title</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="reservationorigin.description">
                 <source>reservationorigin.description</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="reservationorigin.add">
                 <source>reservationorigin.add</source>
                 <target>Herkunft hinzufügen</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="reservationorigin.name">
                 <source>reservationorigin.name</source>
                 <target>Bezeichnung</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="reservationorigin.flash.edit.success">
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="reservationorigin.flash.delete.success">
                 <source>reservationorigin.flash.delete.success</source>
                 <target>Reservierungsherkunft erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="reservationorigin.delete.ask">
                 <source>reservationorigin.delete.ask</source>
                 <target>Reservierungsherkunft wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="reservationorigin.flash.delete.inuse.reservations">
                 <source>reservationorigin.flash.delete.inuse.reservations</source>
                 <target>Reservierungsherkunft kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="reservationorigin.private">
                 <source>reservationorigin.private</source>
                 <target>privat</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="reservationorigin.business">
                 <source>reservationorigin.business</source>
                 <target>geschäftlich</target>
             </trans-unit>
