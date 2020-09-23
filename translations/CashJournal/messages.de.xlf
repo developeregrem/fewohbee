@@ -1,164 +1,164 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-             <trans-unit id="1">
+             <trans-unit id="journal.title">
                 <source>journal.title</source>
                 <target>Kassenbuch</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="journal.description">
                 <source>journal.description</source>
                 <target>Kassenbuch</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="journal.add">
                 <source>journal.add</source>
                 <target>Kassenblatt hinzufügen</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="journal.flash.create.success">
                 <source>journal.flash.create.success</source>
                 <target>Kassenblatt erfolgreich hinzugefügt</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="journal.year">
                 <source>journal.year</source>
                 <target>Jahr</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="journal.month">
                 <source>journal.month</source>
                 <target>Monat</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="journal.cash.start">
                 <source>journal.cash.start</source>
                 <target>Bestand Anfang</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="journal.cash.end">
                 <source>journal.cash.end</source>
                 <target>Bestand Ende</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="journal.action">
                 <source>journal.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="journal.cash.closed">
                 <source>journal.cash.closed</source>
                 <target>Geschlossen</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="journal.cash.booked">
                 <source>journal.cash.booked</source>
                 <target>Gebucht</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="journal.entry.add">
                 <source>journal.entry.add</source>
                 <target>Eintrag hinzufügen</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="journal.entry.incomes">
                 <source>journal.entry.incomes</source>
                 <target>Einnahmen</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="journal.entry.expenses">
                 <source>journal.entry.expenses</source>
                 <target>Ausgaben</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="journal.entry.counteraccount">
                 <source>journal.entry.counteraccount</source>
                 <target>Gegenkto.</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="journal.entry.invoicenumber">
                 <source>journal.entry.invoicenumber</source>
                 <target>Rg.Nr.</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="journal.entry.documentnumber">
                 <source>journal.entry.documentnumber</source>
                 <target>Bel.Nr.</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="journal.entry.date">
                 <source>journal.entry.date</source>
                 <target>Datum</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="journal.entry.remark">
                 <source>journal.entry.remark</source>
                 <target>Bemerkung</target>
             </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="journal.entry.number">
                 <source>journal.entry.number</source>
                 <target>#</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="journal.entry.inventory">
                 <source>journal.entry.inventory</source>
                 <target>Bestand</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="journal.entry.edit">
                 <source>journal.entry.edit</source>
                 <target>Eintrag bearbeiten</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="journal.entry.flash.create.success">
                 <source>journal.entry.flash.create.success</source>
                 <target>Eintrag erfolgreich hinzugfügt.</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="journal.entry.flash.edit.success">
                 <source>journal.entry.flash.edit.success</source>
                 <target>Eintrag erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="journal.entry.delete.ask">
                 <source>journal.entry.delete.ask</source>
                 <target>Soll der Eintrag wirklich gelöscht werden?</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="journal.entry.flash.delete.success">
                 <source>journal.entry.flash.delete.success</source>
                 <target>Eintrag erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="journal.edit">
                 <source>journal.edit</source>
                 <target>Eintrag bearbeiten</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="journal.cash.end.info">
                 <source>journal.cash.end.info</source>
                 <target>Der Endbestand wird automatisch berechnet und muss nicht ausgefüllt werden.</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="journal.flash.edit.success">
                 <source>journal.flash.edit.success</source>
                 <target>Eintrag erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="journal.flash.edit.status.success">
                 <source>journal.flash.edit.status.success</source>
                 <target>Der Status wurde erfolgreich geändert.</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="journal.flash.edit.status.warning">
                 <source>journal.flash.edit.status.warning</source>
                 <target>Der Status konnte nicht geändert werden.</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="journal.delete.ask">
                 <source>journal.delete.ask</source>
                 <target>Soll das Kassenblatt mit allen Einträgen gelöscht werden?</target>
             </trans-unit>
-            <trans-unit id="33">
+            <trans-unit id="journal.template">
                 <source>journal.template</source>
                 <target>Exportvorlage wählen</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="journal.single">
                 <source>journal.single</source>
                 <target>Kassenblatt</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="journal.month.desc">
                 <source>journal.month.desc</source>
                 <target>Monat des Kassenblattes</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="journal.year.desc">
                 <source>journal.year.desc</source>
                 <target>Jahr des Kassenblattes</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="journal.cash.start.desc">
                 <source>journal.cash.start.desc</source>
                 <target>Gibt den Anfangsbestand aus.</target>
             </trans-unit>
-            <trans-unit id="38">
+            <trans-unit id="journal.cash.end.desc">
                 <source>journal.cash.end.desc</source>
                 <target>Gibt den Endbestand aus.</target>
             </trans-unit>
-            <trans-unit id="39">
+            <trans-unit id="journal.positions">
                 <source>journal.positions</source>
                 <target>Positionen</target>
             </trans-unit>
-            <trans-unit id="40">
+            <trans-unit id="journal.positions.desc">
                 <source>journal.positions.desc</source>
                 <target>Fügt eine Tabelle hinzu mit allen Kassenblattpositionen. Bei einem Export werden alle Zeilen sichtbar, hier in der Vorlage ist nur eine sichtbar.</target>
             </trans-unit>

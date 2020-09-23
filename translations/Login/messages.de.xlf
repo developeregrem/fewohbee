@@ -1,32 +1,32 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="login.title">
                 <source>login.title</source>
                 <target>Anmelden</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="login.description">
                 <source>login.description</source>
                 <target>Bitte anmelden</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="login.submit.value">
                 <source>login.submit.value</source>
                 <target>Anmelden</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="login.username.placeholder">
                 <source>login.username.placeholder</source>
                 <target>Benutzername</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="login.password.placeholder">
                 <source>login.password.placeholder</source>
                 <target>Passwort</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="login.rememberme">
                 <source>login.rememberme</source>
                 <target>Angemeldet bleiben</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="login.copy">
                 <source>login.copy</source>
                 <target>Pensionsverwaltung</target>
             </trans-unit>

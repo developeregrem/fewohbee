@@ -1,68 +1,68 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="user.flash.create.success">
                 <source>user.flash.create.success</source>
                 <target>Nutzer wurde erfolgreich hinzugefügt.</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="user.flash.edit.success">
                 <source>user.flash.edit.success</source>
                 <target>Nutzer wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="user.flash.delete.success">
                 <source>user.flash.delete.success</source>
                 <target>Nutzer wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="user.firstname">
                 <source>user.firstname</source>
                 <target>Vorname</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="user.lastname">
                 <source>user.lastname</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="user.username">
                 <source>user.username</source>
                 <target>Anmeldename</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="user.action">
                 <source>user.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="user.email">
                 <source>user.email</source>
                 <target>eMail</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="user.password">
                 <source>user.password</source>
                 <target>Passwort</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="user.role">
                 <source>user.role</source>
                 <target>Rolle</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="user.active">
                 <source>user.active</source>
                 <target>Aktiv</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="user.flash.username.na">
                 <source>user.flash.username.na</source>
                 <target>Der gewählte Anmeldename ist bereits vergeben!</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="user.delete.ask">
                 <source>user.delete.ask</source>
                 <target>Diesen Nutzer wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="user.lastaction">
                 <source>user.lastaction</source>
                 <target>Letzte Aktion</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="user.password.hint">
                 <source>user.password.hint</source>
                 <target>Das Passwort muss mind. 8 Zeichen lang sein.</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="user.password.error">
                 <source>user.password.error</source>
                 <target>Dein Passwort ist möglicherweise zu kurz.</target>
             </trans-unit>

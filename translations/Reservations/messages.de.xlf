@@ -1,212 +1,208 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="reservation.table.reload">
                 <source>reservation.table.reload</source>
                 <target>Aktualisieren</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="reservation.days">
                 <source>reservation.days</source>
                 <target>Tage</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="reservation.objects.all">
                 <source>reservation.objects.all</source>
                 <target>Alle Niederlassungen</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="nav.reservation.add">
                 <source>nav.reservation.add</source>
                 <target>Reservierung hinzufügen</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="reservation.select.customer.search.input.placeholder">
                 <source>reservation.select.customer.search.input.placeholder</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="nav.customer.search">
                 <source>nav.customer.search</source>
                 <target>Suchen</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="reservation.add.another.appartment">
                 <source>reservation.add.another.appartment</source>
                 <target>Zimmer hinzufügen</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="reservation.preview.customer">
                 <source>reservation.preview.customer</source>
                 <target>Gast</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="reservation.preview.appartments.selected">
                 <source>reservation.preview.appartments.selected</source>
                 <target>Gewählte Zimmer</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="reservation.preview.customer.name">
                 <source>reservation.preview.customer.name</source>
                 <target>Name</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="reservation.preview.customer.address">
                 <source>reservation.preview.customer.address</source>
                 <target>Adresse</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="reservation.startdate">
                 <source>reservation.startdate</source>
                 <target>Von</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="reservation.enddate">
                 <source>reservation.enddate</source>
                 <target>Bis</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="reservation.person">
                 <source>reservation.person</source>
                 <target>Person</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="reservation.persons">
                 <source>reservation.persons</source>
                 <target>Personen</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="reservation.status">
                 <source>reservation.status</source>
                 <target>Status</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="reservation.customer">
                 <source>reservation.customer</source>
                 <target>Gast auswählen</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="reservation.appartment">
                 <source>reservation.appartment</source>
                 <target>Zimmer auswählen</target>
             </trans-unit>
-            <trans-unit id="19">
-                <source>reservation.details</source>
-                <target>Reservierungsübersicht</target>
-            </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="reservation.confirm">
                 <source>reservation.confirm</source>
                 <target>Bestätigt</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="reservation.option">
                 <source>reservation.option</source>
                 <target>Option</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="reservation.flash.delete.success">
                 <source>reservation.flash.delete.success</source>
                 <target>Reservierung wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="reservation.flash.create.success">
                 <source>reservation.flash.create.success</source>
                 <target>Reservierung wurde erfolgreich hinzugefügt.</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="reservation.delete.ask">
                 <source>reservation.delete.ask</source>
                 <target>Diese Reservierung wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="reservation.appartment.available">
                 <source>reservation.appartment.available</source>
                 <target>verfügbare Zimmer</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="reservation.edit.change.appartment">
                 <source>reservation.edit.change.appartment</source>
                 <target>neues Zimmer zuweisen</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="reservation.flash.update.conflict">
                 <source>reservation.flash.update.conflict</source>
                 <target>Bitte Zeitraum anpassen. Der gewählte Zeitraum steht im Konflikt mit einer anderen Reservierung dieses Zimmers.</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="reservation.flash.update.success">
                 <source>reservation.flash.update.success</source>
                 <target>Reservierung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="reservation.button.change.customer">
                 <source>reservation.button.change.customer</source>
                 <target>Gast zuweisen</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="reservation.button.show.invoice">
                 <source>reservation.button.show.invoice</source>
                 <target>Rechnung anzeigen</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="reservation.button.create.invoice">
                 <source>reservation.button.create.invoice</source>
                 <target>Rechnung erstellen</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="reservation.preview.customer.inroom">
                 <source>reservation.preview.customer.inroom</source>
                 <target>Gäste in diesem Zimmer</target>
             </trans-unit>
-            <trans-unit id="33">
+            <trans-unit id="reservation.details">
                 <source>reservation.details</source>
                 <target>Reservierungsdetails</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="reservation.preview.booker">
                 <source>reservation.preview.booker</source>
                 <target>Reserviert durch</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="reservation.flash.update.toomuchcustomers">
                 <source>reservation.flash.update.toomuchcustomers</source>
                 <target>Es können nicht mehr Gäste zugewiesen werden!</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="reservation.preview.contact">
                 <source>reservation.preview.contact</source>
                 <target>Kontakt</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="reservation.flash.delete.customer.success">
                 <source>reservation.flash.delete.customer.success</source>
                 <target>Der Gast wurde erfolgreich aus dem Zimmer gelöscht.</target>
             </trans-unit>
-            <trans-unit id="38">
+            <trans-unit id="reservation.flash.delete.not.possible">
                 <source>reservation.flash.delete.not.possible</source>
                 <target>Die Reservierung kann nicht mehr gelöscht werden (Besitzt sie bereits eine Rechnung?).</target>
             </trans-unit>
-            <trans-unit id="39">
+            <trans-unit id="reservation.flash.update.customeralreadyinlist">
                 <source>reservation.flash.update.customeralreadyinlist</source>
                 <target>Der Kunde wurde bereits zu dem Zimmer hinzugefügt.</target>
             </trans-unit>
-            <trans-unit id="40">
+            <trans-unit id="reservation.new.reservation.appartments.selected.heading">
                 <source>reservation.new.reservation.appartments.selected.heading</source>
                 <target>Ausgewählte(s) Zimmer</target>
             </trans-unit>
-            <trans-unit id="41">
+            <trans-unit id="reservation.origin">
                 <source>reservation.origin</source>
                 <target>Herkunft</target>
             </trans-unit>
-            <trans-unit id="42">
+            <trans-unit id="reservation.new.reservation.appartments.addmore">
                 <source>reservation.new.reservation.appartments.addmore</source>
                 <target>Zimmer der Reservierung hinzufügen</target>
             </trans-unit>
-            <trans-unit id="43">
+            <trans-unit id="reservation.button.changeBooker">
                 <source>reservation.button.changeBooker</source>
                 <target>neu zuweisen</target>
             </trans-unit>
-            <trans-unit id="44">
+            <trans-unit id="reservation.appartment.name">
                 <source>reservation.appartment.name</source>
                 <target>Zimmer</target>
             </trans-unit>
-            <trans-unit id="45">
+            <trans-unit id="reservation.correspondences">
                 <source>reservation.correspondences</source>
                 <target>Konversationen</target>
             </trans-unit>
-            <trans-unit id="46">
+            <trans-unit id="reservation.correspondences.reservation">
                 <source>reservation.correspondences.reservation</source>
                 <target>Konversationen dieser Reservierung</target>
             </trans-unit>
-            <trans-unit id="47">
+            <trans-unit id="reservation.correspondences.available">
                 <source>reservation.correspondences.available</source>
                 <target>vorhandene Konversationen</target>
             </trans-unit>
-            <trans-unit id="48">
+            <trans-unit id="reservation.invoices">
                 <source>reservation.invoices</source>
                 <target>Rechnungen</target>
             </trans-unit>
-            <trans-unit id="49">
+            <trans-unit id="reservation.invoice">
                 <source>reservation.invoice</source>
                 <target>Rechnung</target>
             </trans-unit>
-            <trans-unit id="50">
+            <trans-unit id="reservation.no.selected.appartments">
                 <source>reservation.no.selected.appartments</source>
                 <target>Keine Reservierung ausgewählt.</target>
             </trans-unit>
-            <trans-unit id="51">
+            <trans-unit id="reservation.price">
                 <source>reservation.price</source>
                 <target>Preis</target>
             </trans-unit>
-            <trans-unit id="52">
+            <trans-unit id="reservation.custumer.selected">
                 <source>reservation.custumer.selected</source>
                 <target>Bereits ausgewählt:</target>
             </trans-unit>

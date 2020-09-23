@@ -1,204 +1,204 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="login.application.title">
                 <source>login.application.title</source>
                 <target>Pensionsverwaltung</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="nav.user">
                 <source>nav.user</source>
                 <target>Benutzer</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="nav.user.overview">
                 <source>nav.user.overview</source>
                 <target>Benutzer Übersicht</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="nav.user.add">
                 <source>nav.user.add</source>
                 <target>Benutzer anlegen</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="nav.logout">
                 <source>nav.logout</source>
                 <target>Abmelden</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="nav.welcome">
                 <source>nav.welcome</source>
                 <target>Willkommen, %user%</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="button.cancel">
                 <source>button.cancel</source>
                 <target>Abbrechen</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="button.delete">
                 <source>button.delete</source>
                 <target>Löschen</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="nav.appartment">
                 <source>nav.appartment</source>
                 <target>Zimmer</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="nav.appartment.overview">
                 <source>nav.appartment.overview</source>
                 <target>Zimmer Übersicht</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="nav.appartment.add">
                 <source>nav.appartment.add</source>
                 <target>Zimmer anlegen</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="nav.settings">
                 <source>nav.settings</source>
                 <target>Einstellungen</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="button.hide">
                 <source>button.hide</source>
                 <target>Ausblenden</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="button.edit">
                 <source>button.edit</source>
                 <target>Bearbeiten</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="button.save">
                 <source>button.save</source>
                 <target>Speichern</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="button.close">
                 <source>button.close</source>
                 <target>Schließen</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="nav.object">
                 <source>nav.object</source>
                 <target>Niederlassungen</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="nav.object.overview">
                 <source>nav.object.overview</source>
                 <target>Niederlassungs Übersicht</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="nav.object.add">
                 <source>nav.object.add</source>
                 <target>Niederlassung anlegen</target>
             </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="flash.mandatory">
                 <source>flash.mandatory</source>
                 <target>Bitte alle Pflichtfelder ausfüllen.</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="nav.customer.overview">
                 <source>nav.customer.overview</source>
                 <target>Gästeübersicht</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="nav.customer.add">
                 <source>nav.customer.add</source>
                 <target>Gast anlegen</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="nav.customers">
                 <source>nav.customers</source>
                 <target>Gäste</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="nav.invoices">
                 <source>nav.invoices</source>
                 <target>Rechnungsübersicht</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="button.continue">
                 <source>button.continue</source>
                 <target>Weiter</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="base.action">
                 <source>base.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="button.back">
                 <source>button.back</source>
                 <target>Zurück</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="button.continue.with">
                 <source>button.continue.with</source>
                 <target>Weiter mit</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="nav.prices">
                 <source>nav.prices</source>
                 <target>Preisliste</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="nav.price.add">
                 <source>nav.price.add</source>
                 <target>Preis hinzufügen</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="nav.reservation.edit">
                 <source>nav.reservation.edit</source>
                 <target>Reservierung bearbeiten</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="nav.registrationbook">
                 <source>nav.registrationbook</source>
                 <target>Meldebuch</target>
             </trans-unit>            
-            <trans-unit id="33">
+            <trans-unit id="nav.invoice.add">
                 <source>nav.invoice.add</source>
                 <target>Neue Rechnung erstellen</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="button.details">
                 <source>button.details</source>
                 <target>Details Anzeigen</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="button.export.pdf">
                 <source>button.export.pdf</source>
                 <target>als PDF exportieren</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="button.add">
                 <source>button.add</source>
                 <target>Hinzufügen</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="button.accept">
                 <source>button.accept</source>
                 <target>Übernehmen</target>
             </trans-unit>
-            <trans-unit id="38">
+            <trans-unit id="nav.reservation.overview">
                 <source>nav.reservation.overview</source>
                 <target>Reservierungsübersicht</target>
             </trans-unit>
-            <trans-unit id="39">
+            <trans-unit id="nav.reservationorigin">
                 <source>nav.reservationorigin</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
-            <trans-unit id="40">
+            <trans-unit id="nav.statistics">
                 <source>nav.statistics</source>
                 <target>Statistik</target>
             </trans-unit>
-            <trans-unit id="41">
+            <trans-unit id="nav.utilization">
                 <source>nav.utilization</source>
                 <target>Auslastung</target>
             </trans-unit>
-            <trans-unit id="42">
+            <trans-unit id="nav.origin">
                 <source>nav.origin</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
-            <trans-unit id="43">
+            <trans-unit id="nav.templates">
                 <source>nav.templates</source>
                 <target>Vorlagen</target>
             </trans-unit>
-            <trans-unit id="44">
+            <trans-unit id="flash.invalidtoken">
                 <source>flash.invalidtoken</source>
                 <target>Ungültiges Token.</target>
             </trans-unit>
-            <trans-unit id="45">
+            <trans-unit id="button.download">
                 <source>button.download</source>
                 <target>Herunterladen</target>
             </trans-unit>
-            <trans-unit id="46">
+            <trans-unit id="nav.cashjournal">
                 <source>nav.cashjournal</source>
                 <target>Kassenbuch</target>
             </trans-unit>
-            <trans-unit id="47">
+            <trans-unit id="flash.access.denied">
                 <source>flash.access.denied</source>
                 <target>Zugriff verweigert.</target>
             </trans-unit>
-            <trans-unit id="48">
+            <trans-unit id="button.gdpr">
                 <source>button.gdpr</source>
                 <target>DSGVO Übersicht</target>
             </trans-unit>
-            <trans-unit id="49">
+            <trans-unit id="nav.category">
                 <source>nav.category</source>
                 <target>Zimmerkategorien</target>
             </trans-unit>
-            <trans-unit id="50">
+            <trans-unit id="nav.category.add">
                 <source>nav.category.add</source>
                 <target>Zimmerkategorie anlegen</target>
             </trans-unit>
