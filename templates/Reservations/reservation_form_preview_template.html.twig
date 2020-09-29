@@ -32,6 +32,7 @@
             language: '{{ app.request.locale }}',
             branding: false,
             plugins: ['fullpage'],
+            relative_urls: false,
             protect: [
                 /<\/?.*(html)?pageheader.*?>/g, // allow page header and footer
                 /<\/?.*(html)?pagefooter.*?>/g
