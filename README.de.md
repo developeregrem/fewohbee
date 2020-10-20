@@ -54,6 +54,9 @@ Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialis
     php bin/console doctrine:migration:migrate
     php bin/console app:first-run
 
+    // optional: Testdaten hinzufügen
+    php bin/console doctrine:fixtures:load --append
+
 Anschließend kann mit einem Webbrowser zu dem Installationsordner gewechselt werden  z.B.
 http://localhost/fewohbee/public/index.php
 um sich mit den zuvor angelegten Logindaten anzumelden.
