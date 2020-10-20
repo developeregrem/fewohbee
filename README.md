@@ -54,6 +54,9 @@ Run the following command to initialize the database and the application:
     php bin/console doctrine:migration:migrate
     php bin/console app:first-run
 
+    // optional: add some test data
+    php bin/console doctrine:fixtures:load --append
+
 Now, you are ready to open a browser, navigate to the installation folder e.g. 
 http://localhost/fewohbee/public/index.php
 and login with the user created in the step before.
