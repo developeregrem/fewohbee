@@ -953,5 +953,24 @@
 
         return false;
     }
+    {% if is_granted('ROLE_ADMIN') %}
+    function doDeleteInvoice() {
+        var form = "#invoiceDeleteForm";
+        var url = "{{ path('invoices.dodelete.invoice') }}";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+        return false;
+    }
+    {% endif %}
     </script>
 {% endblock %}
