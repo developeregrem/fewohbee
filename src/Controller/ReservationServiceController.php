@@ -52,7 +52,7 @@ class ReservationServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
-        $today = mktime(0, 0, 0, date("m"), date("d") - 2, date("Y"));
+        $today = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
         $start = $session->get("reservation-overview-start", $today);
         $interval = $session->get("reservation-overview-interval", 15);
         $objectId = $session->get("reservation-overview-objectid", "all");
@@ -79,9 +79,9 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->get("object");
 
         if ($date == null) {
-            $date = mktime(0, 0, 0, date("m"), date("d") - 2, date("Y"));
+            $date = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
         } else {
-            $date = strtotime($date);
+            $date = strtotime($date .' UTC');   // set timezone to UTC to ignore daylight saving changes
         }
 
         if ($intervall == null) {
