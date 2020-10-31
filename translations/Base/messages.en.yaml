@@ -1,0 +1,50 @@
+base.action: Action
+button.accept: Accept
+button.add: Add
+button.back: Back
+button.cancel: Cancel
+button.close: Close
+button.continue: Continue
+button.continue.with: Continue with
+button.delete: Delete
+button.details: Details
+button.download: Download
+button.edit: Edit
+button.export.pdf: Export as PDF
+button.gdpr: GDPR overview
+button.hide: Hide
+button.save: Save
+flash.access.denied: Access denied.
+flash.invalidtoken: Invalid Token.
+flash.mandatory: Please fill in all required fields.
+login.application.title: Guesthouse management
+nav.appartment: Room
+nav.appartment.add: Create Room
+nav.appartment.overview: Room Overview
+nav.cashjournal: Cash Book
+nav.category: Room Categories
+nav.category.add: Create Room Categories
+nav.customer.add: Create Guest
+nav.customer.overview: Guest Overview
+nav.customers: Guests
+nav.invoice.add: Create Invoice
+nav.invoices: Invoice Overview
+nav.logout: Logout
+nav.object: Branch
+nav.object.add: Create Branch
+nav.object.overview: Branch Overview
+nav.origin: Reservation Origin
+nav.price.add: Add Price
+nav.prices: Prices
+nav.registrationbook: Registration Book
+nav.reservation.edit: Edit Reservation
+nav.reservation.overview: Reservation Overview
+nav.reservationorigin: Reservation Origin
+nav.settings: Settings
+nav.statistics: Statistics
+nav.templates: Templates
+nav.user: Users
+nav.user.add: Add User
+nav.user.overview: Users Overview
+nav.utilization: Utilization
+nav.welcome: 'Welcome, %user%'

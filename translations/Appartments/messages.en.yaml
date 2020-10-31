@@ -1,0 +1,12 @@
+appartment.action: Action
+appartment.bedsmax: Max. people
+appartment.bedsmin: Normal occupancy
+appartment.category: Room Category
+appartment.delete.ask: Are you sure you want to delete this room?
+appartment.description: Description
+appartment.flash.create.success: Room was successfully created .
+appartment.flash.delete.error.still.in.use: Room cannot be deleted because it has already been booked.
+appartment.flash.delete.success: Room was successfully deleted.
+appartment.flash.edit.success: Room was successfully processed.
+appartment.number: Room Number
+appartment.object: Branch

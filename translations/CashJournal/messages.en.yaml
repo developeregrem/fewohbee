@@ -1,0 +1,44 @@
+journal.action: Action
+journal.add: Add  Journal
+journal.cash.booked: Booked
+journal.cash.closed: Closed
+journal.cash.end: Stock End
+journal.cash.end.desc: Outputs the final stock.
+journal.cash.end.info: >-
+  The closing balance is calculated automatically and does not have to be filled
+  out.
+journal.cash.start: Stock Start
+journal.cash.start.desc: Outputs the initial stock.
+journal.delete.ask: Do you want to delete the journal with all entries?
+journal.description: Journal
+journal.edit: Edit entry
+journal.entry.add: Add entry
+journal.entry.counteraccount: Counter Acc.
+journal.entry.date: Date
+journal.entry.delete.ask: Do you really want to delete the entry?
+journal.entry.documentnumber: Doc. No.
+journal.entry.edit: Edit entry
+journal.entry.expenses: Expenses
+journal.entry.flash.create.success: Entry successfully added .
+journal.entry.flash.delete.success: Entry successfully deleted.
+journal.entry.flash.edit.success: Entry successfully updated.
+journal.entry.incomes: Incomes
+journal.entry.inventory: Inventory
+journal.entry.invoicenumber: 'Inv. No. '
+journal.entry.number: '#'
+journal.entry.remark: Remark
+journal.flash.create.success: Journal successfully added
+journal.flash.edit.status.success: The status was successfully changed .
+journal.flash.edit.status.warning: The status could not be changed.
+journal.flash.edit.success: Entry successfully processed .
+journal.month: Month
+journal.month.desc: Month of Journal
+journal.positions: Positions
+journal.positions.desc: >-
+  Adds a table with all cash sheet lines. All rows will be visible during
+  export, but only one is visible here in the template.
+journal.single: Journal
+journal.template: Select export template
+journal.title: Journal
+journal.year: Year
+journal.year.desc: Year of the journal
