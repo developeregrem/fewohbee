@@ -423,7 +423,8 @@
           }
         })
         .autocomplete( "instance" )._renderItem = function( ul, item ) {
-            var out = (item.company.length > 0 ? 'Firma: ' + item.company + "<br>" : '');
+            let company = item.company || "";
+            var out = (company.length > 0 ? 'Firma: ' + company + "<br>" : '');
             out += item.address + ", " + item.zip + " " + item.city;
             return $( "<li>" )
               .append( '<div class="text-secondary">' + out + "</div>" )
