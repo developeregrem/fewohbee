@@ -1,0 +1,9 @@
+object.action: Action
+object.delete.ask: Are you sure you want to delete this branch?
+object.description: Description
+object.flash.create.success: Branch was created successfully.
+object.flash.delete.error.still.in.use: Branch cannot be deleted because it still has rooms assigned to it.
+object.flash.delete.success: Branch has been successfully deleted.
+object.flash.edit.success: Branch has been updated successfully.
+object.name: Branch
+object.title: Branch management

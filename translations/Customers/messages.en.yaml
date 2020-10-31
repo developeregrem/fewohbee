@@ -1,0 +1,41 @@
+CUSTOMER_ADDRESS_TYPE_ADDITIONAL: other
+CUSTOMER_ADDRESS_TYPE_BUSINESS: Business
+CUSTOMER_ADDRESS_TYPE_PRIVATE: Private
+customer.action: Action
+customer.additional: Additional
+customer.address: Address
+customer.address.add: Add new address
+customer.address.delete: Remove Address
+customer.addresstype: Type
+customer.birthday: Birthday
+customer.city: City
+customer.company: Company
+customer.contact: Contact
+customer.contactdata: Contact Data
+customer.count.books: Number of Bookings
+customer.country: Country
+customer.delete.ask: >-
+  Confirm delete this guest? Note: All previous bookings were then made by a
+  "deleted" guest.
+customer.details: Guest Details
+customer.email: E-Mail
+customer.family: Family
+customer.fax: Fax
+customer.firstname: First Name
+customer.flash.create.success: Guest was created successfully.
+customer.flash.delete.error.still.in.use: >-
+  Guest cannot be deleted because it is still in use in a future or current
+  reservation.
+customer.flash.delete.success: Guest was deleted successfully.
+customer.flash.edit.success: Guest has been edited successfully.
+customer.lastname: Last Name
+customer.mobilephone: Mobile Phone
+customer.mr: Mr
+customer.ms: Ms
+customer.person: Person
+customer.phone: Phone
+customer.remark: Remark
+customer.salutation: Title
+customer.search.addresses: Search addresses ...
+customer.template: Template
+customer.zip: Zip code

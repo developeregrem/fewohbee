@@ -1,0 +1,53 @@
+nav.customer.search: Search
+nav.reservation.add: Add reservation
+reservation.add.another.appartment: Add rooms
+reservation.appartment: Select room
+reservation.appartment.available: Available rooms
+reservation.appartment.name: Room
+reservation.button.change.customer: Change guest
+reservation.button.changeBooker: Change Booker
+reservation.button.create.invoice: Create an invoice
+reservation.button.show.invoice: View invoice
+reservation.confirm: Confirmed
+reservation.correspondences: Conversations
+reservation.correspondences.available: Available conversations
+reservation.correspondences.reservation: Conversations of this reservation
+reservation.customer: Select guest
+reservation.custumer.selected: 'Selected guests:'
+reservation.days: Days
+reservation.delete.ask: Are you sure you want to delete this reservation?
+reservation.details: Reservation details
+reservation.edit.change.appartment: Assign new room
+reservation.enddate: To
+reservation.flash.create.success: Reservation has been successfully added.
+reservation.flash.delete.customer.success: The guest was successfully deleted from the room.
+reservation.flash.delete.not.possible: The reservation can no longer be deleted (does it already have an invoice?).
+reservation.flash.delete.success: Reservation has been successfully deleted.
+reservation.flash.update.conflict: >-
+  Please adjust the period. The selected period conflicts with another
+  reservation of this room.
+reservation.flash.update.customeralreadyinlist: The guest has already been added to the room.
+reservation.flash.update.success: Reservation has been successfully updated.
+reservation.flash.update.toomuchcustomers: No more guests can be assigned!
+reservation.invoice: Invoice
+reservation.invoices: Invoices
+reservation.new.reservation.appartments.addmore: Add rooms to the reservation
+reservation.new.reservation.appartments.selected.heading: Selected room(s)
+reservation.no.selected.appartments: No reservation selected.
+reservation.objects.all: All branches
+reservation.option: Option
+reservation.origin: Origin
+reservation.person: Person
+reservation.persons: Persons
+reservation.preview.appartments.selected: Selected room
+reservation.preview.booker: Reserved by
+reservation.preview.contact: Contact
+reservation.preview.customer: Guest
+reservation.preview.customer.address: Address
+reservation.preview.customer.inroom: Guests in this room
+reservation.preview.customer.name: Name
+reservation.price: Price
+reservation.select.customer.search.input.placeholder: Surname
+reservation.startdate: From
+reservation.status: Status
+reservation.table.reload: Update
