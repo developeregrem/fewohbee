@@ -1,248 +1,248 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-             <trans-unit id="1">
+             <trans-unit id="invoice.title">
                 <source>invoice.title</source>
                 <target>Rechnungsverwaltung</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="invoice.description">
                 <source>invoice.description</source>
                 <target>Rechnungsverwaltung</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="invoice.number">
                 <source>invoice.number</source>
                 <target>Rechnungsnr.</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="invoice.date">
                 <source>invoice.date</source>
                 <target>Rechnungsdatum</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="invoice.lastname">
                 <source>invoice.lastname</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="invoice.company">
                 <source>invoice.company</source>
                 <target>Firma</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="invoice.action">
                 <source>invoice.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="invoice.details">
                 <source>invoice.details</source>
                 <target>Rechnungsdetails</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="invoice.open.reservations.filter.time">
                 <source>invoice.open.reservations.filter.time</source>
                 <target>Reservierungen in Zeitraum durchsuchen</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="invoice.open.reservations.filter.customer">
                 <source>invoice.open.reservations.filter.customer</source>
                 <target>Reservierungen nach Kunden durchsuchen</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="invoice.startdate">
                 <source>invoice.startdate</source>
                 <target>Von</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="invoice.enddate">
                 <source>invoice.enddate</source>
                 <target>Bis</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="invoice.select.open.reservation">
                 <source>invoice.select.open.reservation</source>
                 <target>Reservierung ohne Rechnung auswählen</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="invoice.position.appartment">
                 <source>invoice.position.appartment</source>
                 <target>Zimmer</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="invoice.position.stays">
                 <source>invoice.position.stays</source>
                 <target>Übernachtungen</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="invoice.price.single">
                 <source>invoice.price.single</source>
                 <target>Einzelpreis</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="invoice.vat">
                 <source>invoice.vat</source>
                 <target>MwSt.</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="invoice.price.total">
                 <source>invoice.price.total</source>
                 <target>Gesamt</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="invoice.position.additional">
                 <source>invoice.position.additional</source>
                 <target>weitere Leistungen</target>
             </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="invoice.position.amount">
                 <source>invoice.position.amount</source>
                 <target>Anzahl</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="invoice.netto">
                 <source>invoice.netto</source>
                 <target>Netto</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="invoice.brutto">
                 <source>invoice.brutto</source>
                 <target>Brutto</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="invoice.containing.vat">
                 <source>invoice.containing.vat</source>
                 <target>enthaltene Mehrwersteuer</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="invoice.remark">
                 <source>invoice.remark</source>
                 <target>Bemerkungen</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="invoice.appartment.position.number">
                 <source>invoice.appartment.position.number</source>
                 <target>Zimmer</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="invoice.appartment.position.description">
                 <source>invoice.appartment.position.description</source>
                 <target>Beschreibung</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="invoice.appartment.position.beds">
                 <source>invoice.appartment.position.beds</source>
                 <target>Betten</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="invoice.appartment.position.persons">
                 <source>invoice.appartment.position.persons</source>
                 <target>Personen</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="invoice.appartment.position.startdate">
                 <source>invoice.appartment.position.startdate</source>
                 <target>Von</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="invoice.appartment.position.enddate">
                 <source>invoice.appartment.position.enddate</source>
                 <target>Bis</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="invoice.appartment.position.vat">
                 <source>invoice.appartment.position.vat</source>
                 <target>Steuer</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="invoice.appartment.position.price">
                 <source>invoice.appartment.position.price</source>
                 <target>Preis</target>
             </trans-unit>
-            <trans-unit id="33">
+            <trans-unit id="invoice.appartment">
                 <source>invoice.appartment</source>
                 <target>Zimmerpositionen</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="invoice.miscellaneous">
                 <source>invoice.miscellaneous</source>
                 <target>Sonstige Positionen</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="invoice.reservation">
                 <source>invoice.reservation</source>
                 <target>Reservierung</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="invoice.appartment.position.pricecategory">
                 <source>invoice.appartment.position.pricecategory</source>
                 <target>Preiskategorie</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="invoice.miscellaneous.position.amount">
                 <source>invoice.miscellaneous.position.amount</source>
                 <target>Anzahl</target>
             </trans-unit>
-            <trans-unit id="38">
+            <trans-unit id="invoice.position.add.miscellaneous">
                 <source>invoice.position.add.miscellaneous</source>
                 <target>Sonstige Position hinzufügen</target>
             </trans-unit>
-            <trans-unit id="39">
+            <trans-unit id="invoice.position.add.appartment">
                 <source>invoice.position.add.appartment</source>
                 <target>Zimmer Position hinzufügen</target>
             </trans-unit>
-            <trans-unit id="40">
+            <trans-unit id="invoice.add.another.reservation">
                 <source>invoice.add.another.reservation</source>
                 <target>Weitere Reservierung hinzufügen</target>
             </trans-unit>
-            <trans-unit id="41">
+            <trans-unit id="invoice.flash.create.success">
                 <source>invoice.flash.create.success</source>
                 <target>Rechnung wurde erfolgreich erstellt.</target>
             </trans-unit>
-            <trans-unit id="42">
+            <trans-unit id="invoice.id">
                 <source>invoice.id</source>
                 <target>Rechnungsnummer</target>
             </trans-unit>
-            <trans-unit id="43">
+            <trans-unit id="invoice.id.last">
                 <source>invoice.id.last</source>
                 <target>letzte:</target>
             </trans-unit>
-            <trans-unit id="44">
+            <trans-unit id="invoice.status.notpayed">
                 <source>invoice.status.notpayed</source>
                 <target>offen</target>
             </trans-unit>
-            <trans-unit id="45">
+            <trans-unit id="invoice.status.payed">
                 <source>invoice.status.payed</source>
                 <target>bezahlt</target>
             </trans-unit>
-            <trans-unit id="46">
+            <trans-unit id="invoice.select.customer.search.input.placeholder">
                 <source>invoice.select.customer.search.input.placeholder</source>
                 <target>Nachname Kunde</target>
             </trans-unit>
-            <trans-unit id="47">
+            <trans-unit id="invoice.template">
                 <source>invoice.template</source>
                 <target>Rechnungstemplate wählen</target>
             </trans-unit>
-            <trans-unit id="48">
+            <trans-unit id="invoice.position.service">
                 <source>invoice.position.service</source>
                 <target>Leistung</target>
             </trans-unit>
-            <trans-unit id="49">
+            <trans-unit id="invoice.appartment.position.person">
                 <source>invoice.appartment.position.person</source>
                 <target>Person</target>
             </trans-unit>
-            <trans-unit id="50">
+            <trans-unit id="invoice.date2">
                 <source>invoice.date2</source>
                 <target>Datum</target>
             </trans-unit>
-            <trans-unit id="51">
+            <trans-unit id="invoice.guest">
                 <source>invoice.guest</source>
                 <target>Gast</target>
             </trans-unit>
-            <trans-unit id="52">
+            <trans-unit id="invoice.customer.recommendation">
                 <source>invoice.customer.recommendation</source>
                 <target>Vorauswahl</target>
             </trans-unit>
-            <trans-unit id="53">
+            <trans-unit id="invoice.button.save.numberanddate">
                 <source>invoice.button.save.numberanddate</source>
                 <target>Rechnungsnummer und Datum Speichern</target>
             </trans-unit>
-            <trans-unit id="54">
+            <trans-unit id="invoice.status">
                 <source>invoice.status</source>
                 <target>Status</target>
             </trans-unit>
-            <trans-unit id="55">
+            <trans-unit id="invoice.number.short">
                 <source>invoice.number.short</source>
                 <target>Rechnung</target>
             </trans-unit>
-            <trans-unit id="56">
+            <trans-unit id="invoice.flash.edit.success">
                 <source>invoice.flash.edit.success</source>
                 <target>Rechnung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="57">
+            <trans-unit id="invoice.delete.ask">
                 <source>invoice.delete.ask</source>
                 <target>Diese Rechnung unwiderruflich löschen?</target>
             </trans-unit>
-            <trans-unit id="58">
+            <trans-unit id="invoice.flash.delete.success">
                 <source>invoice.flash.delete.success</source>
                 <target>Die Rechnung wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="59">
+            <trans-unit id="invoice.flash.delete.not.possible">
                 <source>invoice.flash.delete.not.possible</source>
                 <target>Die Rechnung konnte nicht gelöscht werden.</target>
             </trans-unit>
-            <trans-unit id="60">
+            <trans-unit id="invoice.appartment.persons">
                 <source>invoice.appartment.persons</source>
                 <target>{1} %count% Person|]1,Inf] %count% Personen</target>
             </trans-unit>
-            <trans-unit id="61">
+            <trans-unit id="invoice.appartment.position.category">
                 <source>invoice.appartment.position.category</source>
                 <target>Kategorie</target>
             </trans-unit>

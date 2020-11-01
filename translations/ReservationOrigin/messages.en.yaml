@@ -1,0 +1,11 @@
+reservationorigin.add: Add origin
+reservationorigin.business: Business
+reservationorigin.delete.ask: Are you sure you want to delete the reservation origin?
+reservationorigin.description: Reservation origin
+reservationorigin.flash.create.success: Reservation origin created successfully.
+reservationorigin.flash.delete.inuse.reservations: Reservation origin cannot be deleted as it is used in existing reservations.
+reservationorigin.flash.delete.success: Reservation origin successfully deleted.
+reservationorigin.flash.edit.success: Reservation origin successfully processed.
+reservationorigin.name: Description
+reservationorigin.private: Private
+reservationorigin.title: Reservation origin

@@ -1,0 +1,51 @@
+price.abbreviation.alldays: All days
+price.abbreviation.friday: Fr
+price.abbreviation.monday: Mo
+price.abbreviation.saturday: Sa
+price.abbreviation.sunday: Su
+price.abbreviation.thursday: Th
+price.abbreviation.tuesday: Tu
+price.abbreviation.wednesday: Wed
+price.active: Active
+price.alldays: All days
+price.appartment: Room
+price.appartment.hint: 'Only to be filled in if type: room price selected.'
+price.breakfast: Breakfast
+price.category: Category
+price.collapsable.group.1.description: General
+price.collapsable.group.2.description: Seasonal information
+price.collapsable.group.3.description: Room specific
+price.daysinweek: Validity days of the week
+price.delete.ask: Do you really want to delete this price?
+price.description: Description
+price.double: Double room (1 night)
+price.end: To
+price.flash.create.conflict: >-
+  The price category could not be saved because there are conflicts with the
+  following active categories:
+price.flash.create.success: The price was successfully created .
+price.flash.delete.success: Price category successfully deleted.
+price.flash.edit.success: The price was successfully processed.
+price.friday: Friday
+price.from: From
+price.inactive: Not active
+price.minstay: Minimum nights
+price.miscellaneous: Other price
+price.monday: Monday
+price.numberofbeds: Number of beds
+price.numberofpersons: Number of persons
+price.origin: Origin
+price.price: Price
+price.saturday: Saturday
+price.season: Period
+price.season.hint: Categories with a period have a higher value than categories without.
+price.seasonend: Season end
+price.seasonstart: Season start
+price.single: Single room (1 night)
+price.sunday: Sunday
+price.thursday: Thursday
+price.tuesday: Tuesday
+price.type: Type
+price.vat: Tax
+price.wednesday: Wednesday
+price.weekdays: Weekdays

@@ -1,152 +1,152 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="customer.firstname">
                 <source>customer.firstname</source>
                 <target>Vorname</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="customer.lastname">
                 <source>customer.lastname</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="customer.company">
                 <source>customer.company</source>
                 <target>Firma</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="customer.email">
                 <source>customer.email</source>
                 <target>E-Mail</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="customer.action">
                 <source>customer.action</source>
                 <target>Aktion</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="customer.salutation">
                 <source>customer.salutation</source>
                 <target>Anrede</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="customer.birthday">
                 <source>customer.birthday</source>
                 <target>Geburtsdatum</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="customer.zip">
                 <source>customer.zip</source>
                 <target>PLZ</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="customer.city">
                 <source>customer.city</source>
                 <target>Stadt</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="customer.country">
                 <source>customer.country</source>
                 <target>Land</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="customer.phone">
                 <source>customer.phone</source>
                 <target>Festnetz</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="customer.fax">
                 <source>customer.fax</source>
                 <target>Fax</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="customer.mobilephone">
                 <source>customer.mobilephone</source>
                 <target>Mobil</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="customer.address">
                 <source>customer.address</source>
                 <target>Adresse</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="customer.mr">
                 <source>customer.mr</source>
                 <target>Herr</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="customer.ms">
                 <source>customer.ms</source>
                 <target>Frau</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="customer.flash.delete.success">
                 <source>customer.flash.delete.success</source>
                 <target>Gast wurde erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="customer.flash.create.success">
                 <source>customer.flash.create.success</source>
                 <target>Gast wurde erfolgreich angelegt.</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="customer.flash.edit.success">
                 <source>customer.flash.edit.success</source>
                 <target>Gast wurde erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="customer.delete.ask">
                 <source>customer.delete.ask</source>
                 <target>Diesen Gast wirklich löschen? Hinweis: Alle bisherigen Buchungen wurden dann von einem "gelöschten" Gast getätigt.</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="customer.family">
                 <source>customer.family</source>
                 <target>Familie</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="customer.remark">
                 <source>customer.remark</source>
                 <target>Bemerkungen</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="customer.person">
                 <source>customer.person</source>
                 <target>Person</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="customer.contactdata">
                 <source>customer.contactdata</source>
                 <target>Kontaktdaten</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="customer.additional">
                 <source>customer.additional</source>
                 <target>weitere Angaben</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="customer.flash.delete.error.still.in.use">
                 <source>customer.flash.delete.error.still.in.use</source>
                 <target>Gast kann nicht gelöscht werden, da er noch in einer zukünftigen oder aktuellen Reservierung verwendet wird.</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="customer.details">
                 <source>customer.details</source>
                 <target>Gastdetails</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="customer.template">
                 <source>customer.template</source>
                 <target>Vorlage</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="customer.addresstype">
                 <source>customer.addresstype</source>
                 <target>Typ</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="CUSTOMER_ADDRESS_TYPE_PRIVATE">
                 <source>CUSTOMER_ADDRESS_TYPE_PRIVATE</source>
                 <target>privat</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="CUSTOMER_ADDRESS_TYPE_BUSINESS">
                 <source>CUSTOMER_ADDRESS_TYPE_BUSINESS</source>
                 <target>geschäftlich</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="CUSTOMER_ADDRESS_TYPE_ADDITIONAL">
                 <source>CUSTOMER_ADDRESS_TYPE_ADDITIONAL</source>
                 <target>weitere</target>
             </trans-unit>
-            <trans-unit id="33">
+            <trans-unit id="customer.address.add">
                 <source>customer.address.add</source>
                 <target>neue Anschrift hinzufügen</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="customer.address.delete">
                 <source>customer.address.delete</source>
                 <target>Anschrift entfernen</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="customer.contact">
                 <source>customer.contact</source>
                 <target>Kontakt</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="customer.search.addresses">
                 <source>customer.search.addresses</source>
                 <target>Anschriften suchen ...</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="customer.count.books">
                 <source>customer.count.books</source>
                 <target>Anzahl Buchungen</target>
             </trans-unit>
