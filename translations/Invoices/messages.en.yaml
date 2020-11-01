@@ -1,0 +1,61 @@
+invoice.action: Action
+invoice.add.another.reservation: Add another Reservation
+invoice.appartment: Room positions
+invoice.appartment.persons: '{1} %count% Person|]1,Inf] %count% people'
+invoice.appartment.position.beds: Beds
+invoice.appartment.position.category: Category
+invoice.appartment.position.description: Description
+invoice.appartment.position.enddate: To
+invoice.appartment.position.number: Room
+invoice.appartment.position.person: Person
+invoice.appartment.position.persons: People
+invoice.appartment.position.price: Price
+invoice.appartment.position.pricecategory: Price category
+invoice.appartment.position.startdate: From
+invoice.appartment.position.vat: Tax
+invoice.brutto: Gross
+invoice.button.save.numberanddate: Save Invoice number and date
+invoice.company: Company
+invoice.containing.vat: VAT included
+invoice.customer.recommendation: Preselection
+invoice.date: Invoice Date
+invoice.date2: Date
+invoice.delete.ask: Delete this invoice?
+invoice.description: Invoice Management
+invoice.details: Invoice Details
+invoice.enddate: To
+invoice.flash.create.success: Invoice was created successfully.
+invoice.flash.delete.not.possible: The invoice could not be deleted.
+invoice.flash.delete.success: The invoice was deleted successfully .
+invoice.flash.edit.success: Invoice was processed successfully.
+invoice.guest: Guest
+invoice.id: Invoice ID
+invoice.id.last: 'Latest: '
+invoice.lastname: Last Name
+invoice.miscellaneous: Miscellaneous
+invoice.miscellaneous.position.amount: Number
+invoice.netto: Net
+invoice.number: Invoice number
+invoice.number.short: Inv. no.
+invoice.open.reservations.filter.customer: Browse reservations for customers
+invoice.open.reservations.filter.time: Search reservations in period
+invoice.position.add.appartment: Add room position
+invoice.position.add.miscellaneous: Add miscellaneous position
+invoice.position.additional: Additional services
+invoice.position.amount: Number
+invoice.position.appartment: Room
+invoice.position.service: Service
+invoice.position.stays: Overnight stays
+invoice.price.single: Unit Price
+invoice.price.total: Total
+invoice.remark: Remarks
+invoice.reservation: Reservation
+invoice.select.customer.search.input.placeholder: Customer Last Name
+invoice.select.open.reservation: Select reservation without invoice
+invoice.startdate: From
+invoice.status: Status
+invoice.status.notpayed: Open
+invoice.status.payed: Paid
+invoice.template: Select invoice template
+invoice.title: Invoice management
+invoice.vat: VAT

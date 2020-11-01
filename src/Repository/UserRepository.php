@@ -4,7 +4,7 @@ namespace App\Repository;
 
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
+use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Doctrine\ORM\NoResultException;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
@@ -36,10 +36,10 @@ class UserRepository extends EntityRepository implements UserLoaderInterface
             $user = $q->getSingleResult();
         } catch (NoResultException $e) {
             $message = sprintf(
-                'Unable to find an active admin LificityDataBaseBundle:User object identified by "%s".',
+                'Unable to find an active User object identified by "%s".',
                 $username
             );
-            throw new UsernameNotFoundException($message, 0, $e);
+            throw new BadCredentialsException($message, 0, $e);
         }
 
         return $user;

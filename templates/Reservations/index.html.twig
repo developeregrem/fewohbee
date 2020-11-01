@@ -80,7 +80,12 @@
     });
     var lastClickedReservationId = 0;
     
-    $(document).ready(function () {
+    $(document).ready(function () {        
+        let intervall = localStorage.getItem('reservations-intervall');        
+        if(intervall !== null) {
+             $("#table-filter select[name='intervall']").val(parseInt(intervall));
+        }
+
         // load initial table
         getNewTable();
 
@@ -144,9 +149,13 @@
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
-
+        
+        // save selected intervall for reuse
+        let intervall = parseInt($(form + " select[name='intervall']").val());
+        localStorage.setItem('reservations-intervall', intervall);
+        
         $("#table-ajax").html(content);
-
+        
         $.ajax({
             url: url,
             type: "get",
@@ -953,5 +962,24 @@
 
         return false;
     }
+    {% if is_granted('ROLE_ADMIN') %}
+    function doDeleteInvoice() {
+        var form = "#invoiceDeleteForm";
+        var url = "{{ path('invoices.dodelete.invoice') }}";
+
+        $.ajax({
+            url: url,
+            type: "post",
+            data: $(form).serialize(),
+            error: function (xhr, ajaxOptions, thrownError) {
+                alert(xhr.status);
+            },
+            success: function (data) {
+                location.reload();
+            }
+        });
+        return false;
+    }
+    {% endif %}
     </script>
 {% endblock %}

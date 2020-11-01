@@ -1,5 +1,3 @@
-vendor/
-var/
 nbproject/
 .idea/
 .env
@@ -9,3 +7,19 @@ node_modules
 package-lock.json
 composer.lock
 symfony.lock
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> symfony/phpunit-bridge ###
+.phpunit
+.phpunit.result.cache
+/phpunit.xml
+###< symfony/phpunit-bridge ###

@@ -1,86 +1,78 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="registrationbook.number">
                 <source>registrationbook.number</source>
                 <target>lfd. Nr.</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="registrationbook.appartment">
                 <source>registrationbook.appartment</source>
                 <target>Zi.</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="registrationbook.lastname">
                 <source>registrationbook.lastname</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="registrationbook.firstname">
                 <source>registrationbook.firstname</source>
                 <target>Vorname</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="registrationbook.birthday">
                 <source>registrationbook.birthday</source>
                 <target>Geburtstag</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="registrationbook.country">
                 <source>registrationbook.country</source>
                 <target>Land</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="registrationbook.address">
                 <source>registrationbook.address</source>
                 <target>Anschrift</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="registrationbook.period">
                 <source>registrationbook.period</source>
                 <target>Aufenthalt</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="registrationbook.stays">
                 <source>registrationbook.stays</source>
                 <target>Übern.</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="registrationbook.addreservations">
                 <source>registrationbook.addreservations</source>
                 <target>Einträge hinzufügen</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="reservationbook.flash.add.success">
                 <source>reservationbook.flash.add.success</source>
                 <target>Eintrag erfolgreich übernommen.</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="registrationbook.year">
                 <source>registrationbook.year</source>
                 <target>Jahr</target>
             </trans-unit>
-            <trans-unit id="13">
-                <source>registrationbook.appartment</source>
-                <target>Zimmer</target>
-            </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="registrationbook.departures">
                 <source>registrationbook.departures</source>
                 <target>Abreisen</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="registrationbook.help.message">
                 <source>registrationbook.help.message</source>
                 <target>In dieser Übersicht werden alle Einträge gelistet, die noch nicht in das Meldebuch übernommen wurden.</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="registrationbook.entry.skip">
                 <source>registrationbook.entry.skip</source>
                 <target>Eintrag überspringen</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="registrationbook.noentries">
                 <source>registrationbook.noentries</source>
                 <target>- keine Einträge vorhanden -</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="registrationbook.flash.delete.success">
                 <source>registrationbook.flash.delete.success</source>
                 <target>Eintrag erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="registrationbook.delete.ask">
                 <source>registrationbook.delete.ask</source>
                 <target>Eintrag wirklich löschen?</target>
-            </trans-unit>
-            <trans-unit id="20">
-                <source>registrationbook.period</source>
-                <target>Zeitraum</target>
             </trans-unit>
         </body>
     </file>

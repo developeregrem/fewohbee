@@ -1,0 +1,20 @@
+registrationbook.addreservations: Add Reservations
+registrationbook.address: Address
+registrationbook.appartment: Room
+registrationbook.birthday: Birthday
+registrationbook.country: Country
+registrationbook.delete.ask: Delete this item?
+registrationbook.departures: Leave
+registrationbook.entry.skip: Skip Entry
+registrationbook.firstname: First Name
+registrationbook.flash.delete.success: The entry was deleted successfully.
+registrationbook.help.message: >-
+  In this overview, all entries that have not yet been transferred to the
+  registration book are listed.
+registrationbook.lastname: Last Name
+registrationbook.noentries: '- No Entries Available -'
+registrationbook.number: No.
+registrationbook.period: Period
+registrationbook.stays: Stays
+registrationbook.year: Year
+reservationbook.flash.add.success: Entry added successfully.

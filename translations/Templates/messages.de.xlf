@@ -1,250 +1,254 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="templates.title">
                 <source>templates.title</source>
                 <target>Vorlagen</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="templates.description">
                 <source>templates.description</source>
                 <target>Vorlagen für eMails, Rechnungen usw.</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="templates.add">
                 <source>templates.add</source>
                 <target>Vorlage hinzufügen</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="templates.name">
                 <source>templates.name</source>
                 <target>Name</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="templates.flash.create.success">
                 <source>templates.flash.create.success</source>
                 <target>Vorlage erfolgreich angelegt.</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="templates.flash.edit.success">
                 <source>templates.flash.edit.success</source>
                 <target>Vorlage erfolgreich bearbeitet.</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="templates.flash.delete.success">
                 <source>templates.flash.delete.success</source>
                 <target>Vorlage erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="templates.delete.ask">
                 <source>templates.delete.ask</source>
                 <target>Vorlage wirklich löschen?</target>
             </trans-unit>
-            <trans-unit id="9">
+            <trans-unit id="templates.flash.delete.inuse.reservations">
                 <source>templates.flash.delete.inuse.reservations</source>
                 <target>Vorlage kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.</target>
             </trans-unit>
-            <trans-unit id="10">
+            <trans-unit id="templates.preview">
                 <source>templates.preview</source>
                 <target>Vorschau</target>
             </trans-unit>
-            <trans-unit id="11">
+            <trans-unit id="templates.edit">
                 <source>templates.edit</source>
                 <target>Vorlage bearbeiten</target>
             </trans-unit>
-            <trans-unit id="12">
+            <trans-unit id="templates.type">
                 <source>templates.type</source>
                 <target>Vorlagentyp</target>
             </trans-unit>
-            <trans-unit id="13">
+            <trans-unit id="TEMPLATE_RESERVATION_EMAIL">
                 <source>TEMPLATE_RESERVATION_EMAIL</source>
                 <target>E-Mail Vorlage für Reservierungen</target>
             </trans-unit>
-            <trans-unit id="14">
+            <trans-unit id="TEMPLATE_FILE_PDF">
                 <source>TEMPLATE_FILE_PDF</source>
                 <target>PDF Datei</target>
             </trans-unit>
-            <trans-unit id="15">
+            <trans-unit id="templates.select.reservations">
                 <source>templates.select.reservations</source>
                 <target>Reservierung auswählen</target>
             </trans-unit>
-            <trans-unit id="16">
+            <trans-unit id="templates.select.template">
                 <source>templates.select.template</source>
                 <target>Vorlage auswählen</target>
             </trans-unit>
-            <trans-unit id="17">
+            <trans-unit id="templates.sendemail.success">
                 <source>templates.sendemail.success</source>
                 <target>Die Nachricht wurde erfolgreich versendet.</target>
             </trans-unit>
-            <trans-unit id="18">
+            <trans-unit id="templates.sendemail.preview">
                 <source>templates.sendemail.preview</source>
                 <target>Nachricht versenden</target>
             </trans-unit>
-            <trans-unit id="19">
+            <trans-unit id="templates.savefile.success">
                 <source>templates.savefile.success</source>
                 <target>Datei wurde erfolgreich gespeichert.</target>
             </trans-unit>
-            <trans-unit id="20">
+            <trans-unit id="templates.correspondence.created">
                 <source>templates.correspondence.created</source>
                 <target>Datum</target>
             </trans-unit>
-            <trans-unit id="21">
+            <trans-unit id="templates.correspondence.name">
                 <source>templates.correspondence.name</source>
                 <target>Name</target>
             </trans-unit>
-            <trans-unit id="22">
+            <trans-unit id="templates.attachment.notfound">
                 <source>templates.attachment.notfound</source>
                 <target>Der Anhang konnte nicht gefunden werden.</target>
             </trans-unit>
-            <trans-unit id="23">
+            <trans-unit id="templates.correspondence.delete.ok">
                 <source>templates.correspondence.delete.ok</source>
                 <target>Eintrag erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="24">
+            <trans-unit id="templates.correspondence.notfound">
                 <source>templates.correspondence.notfound</source>
                 <target>Der Eintrag konnte nicht gefunden werden.</target>
             </trans-unit>
-            <trans-unit id="25">
+            <trans-unit id="templates.params">
                 <source>templates.params</source>
                 <target>zusätzliche Paramater (JSON-String)</target>
             </trans-unit>
-            <trans-unit id="26">
+            <trans-unit id="templates.default">
                 <source>templates.default</source>
                 <target>Standardvorlage für Typ</target>
             </trans-unit>
-            <trans-unit id="27">
+            <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>
                 <target>Empfänger</target>
             </trans-unit>
-            <trans-unit id="28">
+            <trans-unit id="templates.subject">
                 <source>templates.subject</source>
                 <target>Betreff</target>
             </trans-unit>
-            <trans-unit id="29">
+            <trans-unit id="templates.attachment">
                 <source>templates.attachment</source>
                 <target>Anhang</target>
             </trans-unit>
-            <trans-unit id="30">
+            <trans-unit id="TEMPLATE_INVOICE_PDF">
                 <source>TEMPLATE_INVOICE_PDF</source>
                 <target>PDF Rechnung</target>
             </trans-unit>
-            <trans-unit id="31">
+            <trans-unit id="TEMPLATE_RESERVATION_PDF">
                 <source>TEMPLATE_RESERVATION_PDF</source>
                 <target>PDF Vorlage für Reservierungen</target>
             </trans-unit>
-            <trans-unit id="32">
+            <trans-unit id="TEMPLATE_CASHJOURNAL_PDF">
                 <source>TEMPLATE_CASHJOURNAL_PDF</source>
                 <target>PDF Kassenblatt</target>
             </trans-unit>
-            <trans-unit id="33">
+            <trans-unit id="TEMPLATE_GDPR_PDF">
                 <source>TEMPLATE_GDPR_PDF</source>
                 <target>PDF für DSGVO Export</target>
             </trans-unit>
-            <trans-unit id="34">
+            <trans-unit id="templates.editor.company">
                 <source>templates.editor.company</source>
                 <target>Firma</target>
             </trans-unit>
-            <trans-unit id="35">
+            <trans-unit id="templates.editor.address">
                 <source>templates.editor.address</source>
                 <target>Anschrift</target>
             </trans-unit>
-            <trans-unit id="36">
+            <trans-unit id="templates.editor.zip">
                 <source>templates.editor.zip</source>
                 <target>PLZ</target>
             </trans-unit>
-            <trans-unit id="37">
+            <trans-unit id="templates.editor.city">
                 <source>templates.editor.city</source>
                 <target>Stadt</target>
             </trans-unit>
-            <trans-unit id="38">
+            <trans-unit id="templates.editor.phone">
                 <source>templates.editor.phone</source>
                 <target>Telefon</target>
             </trans-unit>
-            <trans-unit id="39">
+            <trans-unit id="templates.editor.footer">
                 <source>templates.editor.footer</source>
                 <target>Fußzeile</target>
             </trans-unit>
-            <trans-unit id="40">
+            <trans-unit id="templates.editor.footer.desc">
                 <source>templates.editor.footer.desc</source>
                 <target>Fügt eine Fußzeile hinzu, die auf jeder Seite am unteren Rand der Seite erscheint.</target>
             </trans-unit>
-            <trans-unit id="41">
+            <trans-unit id="templates.editor.invoice.number">
                 <source>templates.editor.invoice.number</source>
                 <target>Rechnungsnummer</target>
             </trans-unit>
-            <trans-unit id="42">
+            <trans-unit id="templates.editor.invoice.number.desc">
                 <source>templates.editor.invoice.number.desc</source>
                 <target>Rechnungsnummer</target>
             </trans-unit>
-            <trans-unit id="43">
+            <trans-unit id="templates.editor.invoice.date">
                 <source>templates.editor.invoice.date</source>
                 <target>Rechnungsdatum</target>
             </trans-unit>
-            <trans-unit id="44">
+            <trans-unit id="templates.editor.invoice.date.desc">
                 <source>templates.editor.invoice.date.desc</source>
                 <target>Rechnungsdatum</target>
             </trans-unit>
-            <trans-unit id="45">
+            <trans-unit id="templates.editor.firstname">
                 <source>templates.editor.firstname</source>
                 <target>Vorname</target>
             </trans-unit>
-            <trans-unit id="46">
+            <trans-unit id="templates.editor.lastname">
                 <source>templates.editor.lastname</source>
                 <target>Nachname</target>
             </trans-unit>
-            <trans-unit id="47">
+            <trans-unit id="templates.editor.remarks">
                 <source>templates.editor.remarks</source>
                 <target>Bemerkungen</target>
             </trans-unit>
-            <trans-unit id="48">
+            <trans-unit id="templates.editor.price.total">
                 <source>templates.editor.price.total</source>
                 <target>Gesamtpreis aller Zimmerpositionen</target>
             </trans-unit>
-            <trans-unit id="49">
+            <trans-unit id="templates.editor.price.total.desc">
                 <source>templates.editor.price.total.desc</source>
                 <target>Gibt den Gesamtpreis aller Zimmerpositionen aus.</target>
             </trans-unit>
-            <trans-unit id="50">
+            <trans-unit id="templates.editor.misc.total">
                 <source>templates.editor.misc.total</source>
                 <target>Gesamtpreis aller Sonstigepositionen</target>
             </trans-unit>
-            <trans-unit id="51">
+            <trans-unit id="templates.editor.misc.total.desc">
                 <source>templates.editor.misc.total.desc</source>
                 <target>Gibt den Gesamtpreis aller Sonstigepositionen aus.</target>
             </trans-unit>
-            <trans-unit id="52">
+            <trans-unit id="templates.editor.brutto">
                 <source>templates.editor.brutto</source>
                 <target>Gesamt Brutto</target>
             </trans-unit>
-            <trans-unit id="53">
+            <trans-unit id="templates.editor.brutto.desc">
                 <source>templates.editor.brutto.desc</source>
                 <target>Gesamtsumme Brutto</target>
             </trans-unit>
-            <trans-unit id="54">
+            <trans-unit id="templates.editor.netto">
                 <source>templates.editor.netto</source>
                 <target>Gesamt Netto</target>
             </trans-unit>
-            <trans-unit id="55">
+            <trans-unit id="templates.editor.netto.desc">
                 <source>templates.editor.netto.desc</source>
                 <target>Gesamtsumme (Netto)</target>
             </trans-unit>
-            <trans-unit id="56">
+            <trans-unit id="templates.editor.vat">
                 <source>templates.editor.vat</source>
                 <target>enthaltene MwSt.</target>
             </trans-unit>
-            <trans-unit id="57">
+            <trans-unit id="templates.editor.vat.desc">
                 <source>templates.editor.vat.desc</source>
                 <target>Fügt eine Liste mit Einzelpositionen der enthaltenen MwSt. ein.</target>
             </trans-unit>
-            <trans-unit id="58">
+            <trans-unit id="templates.editor.appartment.positions">
                 <source>templates.editor.appartment.positions</source>
                 <target>Zimmerpositionen</target>
             </trans-unit>
-            <trans-unit id="59">
+            <trans-unit id="templates.editor.appartment.positions.desc">
                 <source>templates.editor.appartment.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Zimmerpositionen ein. Wenn mehrere Zimmer ausgewählt wurden, werden alle Zimmer aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
             </trans-unit>
-            <trans-unit id="60">
+            <trans-unit id="templates.editor.misc.positions">
                 <source>templates.editor.misc.positions</source>
                 <target>Sonstigepositionen</target>
             </trans-unit>
-            <trans-unit id="61">
+            <trans-unit id="templates.editor.misc.positions.desc">
                 <source>templates.editor.misc.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Sonstigepositionen ein. Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.listreservations">
+                <source>templates.editor.listreservations</source>
+                <target>Liste der Reservierungen</target>
             </trans-unit>
         </body>
     </file>

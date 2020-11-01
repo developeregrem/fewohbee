@@ -1,0 +1,16 @@
+user.action: Action
+user.active: Active
+user.delete.ask: Are you sure you want to delete this user?
+user.email: E-mail
+user.firstname: First name
+user.flash.create.success: User was successfully added.
+user.flash.delete.success: User was successfully deleted.
+user.flash.edit.success: User was successfully edited.
+user.flash.username.na: The selected login name is already taken!
+user.lastaction: Last action
+user.lastname: Last name
+user.password: Password
+user.password.error: Your password may be too short.
+user.password.hint: The password must be at least 8 characters long.
+user.role: Role
+user.username: Username

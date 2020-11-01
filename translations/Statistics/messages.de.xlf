@@ -1,36 +1,36 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="de" datatype="plaintext" original="file.ext">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
-            <trans-unit id="1">
+            <trans-unit id="statistics.utilization.title">
                 <source>statistics.utilization.title</source>
                 <target>Auslastung</target>
             </trans-unit>
-            <trans-unit id="2">
+            <trans-unit id="statistics.utilization.description">
                 <source>statistics.utilization.description</source>
                 <target>Auslastung</target>
             </trans-unit>
-            <trans-unit id="3">
+            <trans-unit id="statistics.utilization.monthly">
                 <source>statistics.utilization.monthly</source>
                 <target>monatliche Auslastung</target>
             </trans-unit>
-            <trans-unit id="4">
+            <trans-unit id="statistics.utilization.yearly">
                 <source>statistics.utilization.yearly</source>
                 <target>jährliche Auslastung</target>
             </trans-unit>
-            <trans-unit id="5">
+            <trans-unit id="statistics.origin.title">
                 <source>statistics.origin.title</source>
                 <target>Herkunft</target>
             </trans-unit>
-            <trans-unit id="6">
+            <trans-unit id="statistics.origin.description">
                 <source>statistics.origin.description</source>
                 <target>Herkunft</target>
             </trans-unit>
-            <trans-unit id="7">
+            <trans-unit id="statistics.origin.monthly">
                 <source>statistics.origin.monthly</source>
                 <target>monatliche Herkunftsübersicht</target>
             </trans-unit>
-            <trans-unit id="8">
+            <trans-unit id="statistics.origin.yearly">
                 <source>statistics.origin.yearly</source>
                 <target>jährliche Herkunftsübersicht</target>
             </trans-unit>
