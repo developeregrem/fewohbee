@@ -67,7 +67,7 @@ To run the application using docker a pre-configured docker-compose setup is ava
 
 ## i18n
 
-The tool has multi language support by design. However, at the moment there is only a German translation available. Some features like the cash book are optimized for the use in Germany.
+The tool has multi language support by design and is available in german and english. If you have a langaugae request to support other languages, please open a ticket. 
 
 ## Author
 
