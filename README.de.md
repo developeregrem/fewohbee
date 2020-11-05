@@ -63,7 +63,7 @@ um sich mit den zuvor angelegten Logindaten anzumelden.
 
 ## i18n
 
-Das Tool ist grundlegend mehrsprachige aufgebaut. Aktuell liegt jedoch nur eine deutsche Übersetzung vor. Einige Features wie das Kassenbuch sind für den Einsatz in Deutschland optimiert.
+Das Tool ist grundlegend mehrsprachige aufgebaut und ist derzeit in deutsch und englisch verfügbar. Wenn eine neue Sprache unterstützt werden soll, bitte ein Ticket anlegen.
 
 ## Author
 
