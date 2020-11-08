@@ -70,3 +70,6 @@ Das Tool ist grundlegend mehrsprachige aufgebaut und ist derzeit in deutsch und 
 Alexander Elchlepp
 
 Das Projekt wird durch mich seit 2014 in der Freizeit entwickelt. Wenn Fragen aufkommen, kann ein Ticket angelegt oder mich direkt per mail kontaktiert werden (info (at) fewohbee.de)
+
+Wenn Sie dieses Projekt unterstützen wollen und Sie denken, dass das Projekt für Sie nützlich ist, würde ich mich über eine kleine Spende sehr freuen :)
+[![Spenden](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=ZQPG864PB4TBE)
