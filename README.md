@@ -74,3 +74,6 @@ The tool has multi language support by design and is available in german and eng
 Alexander Elchlepp
 
 This project is a one man show at the moment and developed in my free time since 2014. If you have questions open a ticket or contact me at info (at) fewohbee.de
+
+If you want to support this project and you think the project is useful for you I would be very happy about a small donation :)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=ZQPG864PB4TBE)
