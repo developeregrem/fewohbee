@@ -8,681 +8,709 @@ logout:
     
 start: 
     path: / 
-    methods: [GET] 
+    methods: GET
     controller: App\Controller\ReservationServiceController::indexAction
     
 users.overview: 
     path: /users/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\UserServiceController::indexAction
 users.get.user: 
     path: /users/{id}/get
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\UserServiceController::getUserAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 users.new.user: 
     path: /users/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\UserServiceController::newUserAction
 users.create.user: 
     path: /users/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\UserServiceController::createUserAction
 users.edit.user: 
-    path: '/users/{id}/edit' 
-    methods: [POST] 
+    path: /users/{id}/edit 
+    methods: POST 
     controller: App\Controller\UserServiceController::editUserAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 users.delete.user: 
-    path: '/users/{id}/delete' 
-    methods: [GET] 
+    path: /users/{id}/delete 
+    methods: GET 
     controller: App\Controller\UserServiceController::deleteUserAction
 users.dodelete.user: 
-    path: '/users/{id}/delete' 
-    methods: [POST] 
+    path: /users/{id}/delete 
+    methods: POST 
     controller: App\Controller\UserServiceController::deleteUserAction
     
 appartments.overview:
     path: /appartments/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\AppartmentServiceController::indexAction 
 appartments.get.appartment: 
-    path: '/appartments/{id}/get' 
-    methods: [GET] 
+    path: /appartments/{id}/get 
+    methods: GET 
     controller: App\Controller\AppartmentServiceController::getAppartmentAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 appartments.new.appartment: 
     path: /appartments/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\AppartmentServiceController::newAppartmentAction 
 appartments.create.appartment: 
     path: /appartments/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\AppartmentServiceController::createAppartmentAction 
 appartments.edit.appartment: 
-    path: '/appartments/{id}/edit' 
-    methods: [POST] 
+    path: /appartments/{id}/edit 
+    methods: POST 
     controller: App\Controller\AppartmentServiceController::editAppartmentAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 appartments.delete.appartment: 
-    path: '/appartments/{id}/delete' 
-    methods: [GET] 
+    path: /appartments/{id}/delete 
+    methods: GET 
     controller: App\Controller\AppartmentServiceController::deleteAppartmentAction 
 appartments.dodelete.appartment: 
-    path: '/appartments/{id}/delete' 
-    methods: [POST] 
+    path: /appartments/{id}/delete 
+    methods: POST 
     controller: App\Controller\AppartmentServiceController::deleteAppartmentAction 
 
 objects.overview: 
     path: /objects/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\SubsidiaryServiceController::indexAction 
 objects.get.object: 
-    path: '/objects/{id}/get' 
-    methods: [GET] 
+    path: /objects/{id}/get 
+    methods: GET 
     controller: App\Controller\SubsidiaryServiceController::getObjectAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 objects.new.object: 
     path: /objects/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\SubsidiaryServiceController::newObjectAction 
 objects.create.object: 
     path: /objects/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\SubsidiaryServiceController::createObjectAction 
 objects.edit.object: 
-    path: '/objects/{id}/edit' 
-    methods: [POST] 
+    path: /objects/{id}/edit 
+    methods: POST 
     controller: App\Controller\SubsidiaryServiceController::editObjectAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 objects.delete.object: 
-    path: '/objects/{id}/delete' 
-    methods: [GET] 
+    path: /objects/{id}/delete 
+    methods: GET 
     controller: App\Controller\SubsidiaryServiceController::deleteObjectAction 
 objects.dodelete.object: 
-    path: '/objects/{id}/delete' 
-    methods: [POST] 
+    path: /objects/{id}/delete 
+    methods: POST 
     controller: App\Controller\SubsidiaryServiceController::deleteObjectAction 
 
 prices.overview: 
     path: /prices/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\PriceServiceController::indexAction 
 prices.get.price: 
-    path: '/prices/{id}/get' 
-    methods: [GET] 
+    path: /prices/{id}/get 
+    methods: GET 
     controller: App\Controller\PriceServiceController::getPriceAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 prices.new.price: 
     path: /prices/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\PriceServiceController::newPriceAction 
 prices.create.price: 
     path: /prices/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\PriceServiceController::createPriceAction 
 prices.edit.price: 
-    path: '/prices/{id}/edit' 
-    methods: [POST] 
+    path: /prices/{id}/edit 
+    methods: POST 
     controller: App\Controller\PriceServiceController::editPriceAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 prices.delete.price: 
-    path: '/prices/{id}/delete' 
-    methods: [GET] 
+    path: /prices/{id}/delete 
+    methods: GET 
     controller: App\Controller\PriceServiceController::deletePriceAction 
 prices.dodelete.price: 
-    path: '/prices/{id}/delete' 
-    methods: [POST] 
+    path: /prices/{id}/delete 
+    methods: POST 
     controller: App\Controller\PriceServiceController::deletePriceAction 
 
 customers.overview: 
     path: /customers/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::indexAction 
 customers.get.customer: 
-    path: '/customers/{id}/get' 
-    methods: [GET] 
+    path: /customers/{id}/get 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::getCustomerAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 customers.new.customer: 
     path: /customers/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::newCustomerAction 
 customers.create.customer: 
     path: /customers/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\CustomerServiceController::createCustomerAction 
 customers.edit.customer: 
-    path: '/customers/{id}/edit' 
-    methods: [POST] 
+    path: /customers/{id}/edit 
+    methods: POST 
     controller: App\Controller\CustomerServiceController::editCustomerAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 customers.edit.customer.show: 
-    path: '/customers/{id}/edit/show' 
-    methods: [GET] 
+    path: /customers/{id}/edit/show 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::showEditCustomerAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 customers.delete.customer: 
-    path: '/customers/{id}/delete' 
-    methods: [GET] 
+    path: /customers/{id}/delete 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::deleteCustomerAction 
 customers.dodelete.customer: 
-    path: '/customers/{id}/delete' 
-    methods: [POST] 
+    path: /customers/{id}/delete 
+    methods: POST 
     controller: App\Controller\CustomerServiceController::deleteCustomerAction 
 customers.search: 
     path: /customers/search 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\CustomerServiceController::searchCustomersAction 
 customers.citylookup: 
     path: /customers/citylookup 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\CustomerServiceController::cityLookUpAction 
 customers.import.csv: 
     path: /customers/import/csv 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::importCsvAction 
 customers.search.address: 
-    path: '/customers/search/address/{address}' 
-    methods: [GET] 
+    path: /customers/search/address/{address} 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::searchAddressAction 
-    defaults: { address: '' } 
+    defaults:
+        address: ''
 customers.gdpr.customer: 
-    path: '/customers/{id}/gdpr' 
-    methods: [GET] 
+    path: /customers/{id}/gdpr 
+    methods: GET 
     controller: App\Controller\CustomerServiceController::exportGDPRToPdfAction 
 
 invoices.overview: 
     path: /invoices/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::indexAction 
 invoices.new.invoice: 
     path: /invoices/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::newInvoiceAction 
 invoices.get.reservations.in.period: 
     path: /invoices/get/reservations/in/period 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::getReservationsInPeriodAction 
 invoices.get.reservations.for.customer: 
     path: /invoices/get/reservations/for/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::getReservationsForCustomerAction 
 invoices.select.reservation: 
     path: /invoices/select/reservation 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::selectReservationAction 
 invoices.remove.reservation.from.selection: 
     path: /invoices/remove/reservation/from/selection 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::removeReservationFromSelectionAction 
 invoices.create.invoice.positions: 
     path: /invoices/create/invoice/positions 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction 
 invoices.show.change.customer: 
     path: /invoices/create/invoice/customer/change 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showChangeCustomerInvoiceFormAction 
 invoices.show.change.customer.save: 
     path: /invoices/create/invoice/customer/change/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::saveChangeCustomerInvoiceFormAction 
 invoices.show.create.appartment.invoice.position: 
     path: /invoices/create/invoice/appartment/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showCreateAppartmentInvoicePositionFormAction 
 invoices.create.appartment.invoice.position: 
     path: /invoices/create/new/invoice/appartment/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::createAppartmentInvoicePositionAction 
 invoices.show.edit.appartment.invoice.position: 
     path: /invoices/edit/invoice/appartment/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showEditAppartmentInvoicePositionFormAction 
 invoices.save.appartment.invoice.position: 
     path: /invoices/save/new/invoice/appartment/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::saveAppartmentInvoicePositionAction 
 invoices.delete.appartment.invoice.position: 
     path: /invoices/delete/invoice/appartment/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::deleteAppartmentInvoicePositionAction 
 invoices.show.create.miscellaneous.invoice.position: 
     path: /invoices/create/invoice/miscellaneous/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showCreateMiscellaneousInvoicePositionFormAction 
 invoices.create.miscellaneous.invoice.position: 
     path: /invoices/create/new/invoice/miscellaneous/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::createMiscellaneousInvoicePositionAction 
 invoices.show.edit.miscellaneous.invoice.position: 
     path: /invoices/edit/invoice/miscellaneous/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showEditMiscellaneousInvoicePositionFormAction 
 invoices.save.miscellaneous.invoice.position: 
     path: /invoices/save/new/invoice/miscellaneous/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::saveMiscellaneousInvoicePositionAction 
 invoices.delete.miscellaneous.invoice.position: 
     path: /invoices/delete/invoice/miscellaneous/position 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::deleteMiscellaneousInvoicePositionAction 
 invoices.show.new.invoice.preview: 
     path: /invoices/new/invoice/preview 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::showNewInvoicePreviewAction 
 invoices.create.invoice: 
     path: /invoices/create/new/invoice 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::createNewInvoiceAction 
 invoices.get.invoice: 
-    path: '/invoices/{id}/' 
-    methods: [GET] 
+    path: /invoices/{id}/ 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::getInvoiceAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 invoices.export.pdf: 
-    path: '/invoices/export/pdf/{id}/{templateId}' 
-    methods: [GET] 
+    path: /invoices/export/pdf/{id}/{templateId} 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::exportToPdfAction 
 invoices.update.status: 
-    path: '/invoices/update/{id}/status' 
-    methods: [POST] 
+    path: /invoices/update/{id}/status 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::updateStatusAction 
 invoices.search: 
     path: /invoices/search 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::searchInvoicesAction 
 invoices.get.invoice.customer.change: 
-    path: '/invoices/{id}/edit/customer/change' 
-    methods: [GET] 
+    path: /invoices/{id}/edit/customer/change 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::showChangeCustomerInvoiceEditAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 invoices.edit.invoice.number.show: 
-    path: '/invoices/{id}/edit/number/show' 
-    methods: [GET] 
+    path: /invoices/{id}/edit/number/show 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::showChangeNumberInvoiceEditAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 invoices.edit.invoice.number.save: 
     path: /invoices/edit/number/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::saveChangeNumberInvoiceEditAction 
 invoices.edit.invoice.remark.show: 
-    path: '/invoices/{id}/edit/remark/show' 
-    methods: [GET] 
+    path: /invoices/{id}/edit/remark/show 
+    methods: GET 
     controller: App\Controller\InvoiceServiceController::showChangeRemarkInvoiceEditAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 invoices.edit.invoice.remark.save: 
     path: /invoices/edit/remark/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::saveChangeRemarkInvoiceEditAction 
 invoices.dodelete.invoice: 
     path: /invoices/invoice/delete 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\InvoiceServiceController::deleteInvoiceAction 
 
 reservations.get.table: 
     path: /reservations/get/table 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\ReservationServiceController::getTableAction 
 reservations.get.reservation: 
-    path: '/reservations/get/{id}' 
-    methods: [GET] 
+    path: /reservations/get/{id} 
+    methods: GET 
     controller: App\Controller\ReservationServiceController::getReservationAction 
 reservations.select.appartment: 
     path: /reservations/select/appartment 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\ReservationServiceController::showSelectAppartmentsFormAction 
 reservations.get.available.appartments: 
     path: /reservations/appartments/available/get 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::getAvailableAppartmentsAction 
 reservations.add.appartment.to.reservation: 
     path: /reservations/appartments/add/to/reservation 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::addAppartmentToReservationAction 
 reservations.add.appartment.to.reservation.selectable: 
     path: /reservations/appartments/selectable/add/to/reservation 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::addAppartmentToReservationSelectableAction 
 reservations.remove.appartment.from.reservation: 
     path: /reservations/appartments/remove/from/reservation 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::removeAppartmentFromReservationAction 
 reservations.modify.appartment.options: 
     path: /reservations/appartments/modify/options 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::modifyAppartmentOptionsAction 
 reservations.select.customer: 
     path: /reservations/select/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::selectCustomerAction 
 reservations.get.customers: 
     path: /reservations/customers/get 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::getCustomersAction 
 reservations.get.customer.new.form: 
     path: /reservations/customers/new 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::getNewCustomerFormAction 
 reservations.get.customer.create: 
     path: /reservations/customers/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::createNewCustomerAction 
 reservations.create.preview: 
     path: /reservations/reservation/new/preview 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::previewNewReservationAction 
 reservations.create.reservations: 
     path: /reservations/reservation/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::createNewReservationAction 
 reservations.dodelete.reservation: 
     path: /reservations/reservation/delete 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::deleteReservationAction 
 reservations.edit.reservation: 
-    path: '/reservations/edit/{id}' 
-    methods: [GET] 
+    path: /reservations/edit/{id} 
+    methods: GET 
     controller: App\Controller\ReservationServiceController::editReservationAction 
 reservations.edit.reservation.customer: 
-    path: '/reservations/edit/{id}/customer' 
-    methods: [GET] 
+    path: /reservations/edit/{id}/customer 
+    methods: GET 
     controller: App\Controller\ReservationServiceController::editReservationCustomerAction 
 reservations.edit.reservation.customer.create: 
-    path: '/reservations/edit/{id}/customer/create' 
-    methods: [POST] 
+    path: /reservations/edit/{id}/customer/create 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::editReservationCustomerCreateAction 
 reservations.edit.customers.get: 
     path: /reservations/edit/customers/get 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::editReservationCustomersGetAction 
 reservations.edit.customer.change: 
-    path: '/reservations/edit/{id}/customer/change' 
-    methods: [POST] 
+    path: /reservations/edit/{id}/customer/change 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::editReservationCustomerChangeAction 
 reservations.get.edit.available.appartments: 
     path: /reservations/edit/available/get 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::getEditAvailableAppartmentsAction 
 reservations.edit.appartment.change: 
     path: /reservations/edit/appartment/change 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::editChangeAppartmentAction 
 reservations.edit.reservation.change: 
     path: /reservations/edit/reservation/change 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::editChangeReservationAction 
 reservations.edit.delete.customer: 
     path: /reservations/edit/delete/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::deleteReservationCustomerAction 
 reservations.edit.customer.edit: 
     path: /reservations/edit/customer/edit 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::getEditCustomerAction 
 reservations.edit.customer.edit.save: 
     path: /reservations/edit/customer/edit/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::saveEditCustomerAction 
 reservations.select.template: 
     path: /reservations/select/template 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::selectTemplateAction 
 reservations.select.template.preview: 
-    path: '/reservations/select/template/{id}' 
-    methods: [POST] 
+    path: /reservations/select/template/{id} 
+    methods: POST 
     controller: App\Controller\ReservationServiceController::previewTemplateAction 
     
 registrationbook.overview: 
     path: /registrationbook/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\RegistrationBookServiceController::indexAction 
 registrationbook.showadd.reservations: 
     path: /registrationbook/showadd/reservations 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\RegistrationBookServiceController::showAddReservationsAction 
 registrationbook.add.registration: 
     path: /registrationbook/add/registration 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::addRegistrationAction 
 registrationbook.search: 
     path: /registrationbook/search 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::searchAction 
 registrationbook.add.delete.customer: 
     path: /registrationbook/add/delete/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::deleteRegistrationBookCustomerAction 
 registrationbook.add.add.customer: 
     path: /registrationbook/add/add/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::showAddReservationCustomerAction 
 registrationbook.add.edit.customer: 
     path: /registrationbook/add/edit/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::getEditCustomerAction 
 registrationbook.add.edit.customer.save: 
     path: /registrationbook/add/edit/customer/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::saveEditCustomerAction 
 registrationbook.delete.origin: 
-    path: '/registrationbook/{id}/delete' 
-    methods: [GET] 
+    path: /registrationbook/{id}/delete 
+    methods: GET 
     controller: App\Controller\RegistrationBookServiceController::deleteAction 
 registrationbook.dodelete.origin: 
-    path: '/registrationbook/{id}/delete' 
-    methods: [POST] 
+    path: /registrationbook/{id}/delete 
+    methods: POST 
     controller: App\Controller\RegistrationBookServiceController::deleteAction 
 
 reservationorigin.overview: 
     path: /reservationorigin/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\ReservationOriginServiceController::indexAction 
 reservationorigin.get.origin: 
-    path: '/reservationorigin/{id}/get' 
-    methods: [GET] 
+    path: /reservationorigin/{id}/get 
+    methods: GET 
     controller: App\Controller\ReservationOriginServiceController::getAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 reservationorigin.new.origin: 
     path: /reservationorigin/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\ReservationOriginServiceController::newAction 
 reservationorigin.create.origin: 
     path: /reservationorigin/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\ReservationOriginServiceController::createAction 
 reservationorigin.edit.origin: 
-    path: '/reservationorigin/{id}/edit' 
-    methods: [POST] 
+    path: /reservationorigin/{id}/edit 
+    methods: POST 
     controller: App\Controller\ReservationOriginServiceController::editAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 reservationorigin.delete.origin: 
-    path: '/reservationorigin/{id}/delete' 
-    methods: [GET] 
+    path: /reservationorigin/{id}/delete 
+    methods: GET 
     controller: App\Controller\ReservationOriginServiceController::deleteAction 
 reservationorigin.dodelete.origin: 
-    path: '/reservationorigin/{id}/delete' 
-    methods: [POST] 
+    path: /reservationorigin/{id}/delete 
+    methods: POST 
     controller: App\Controller\ReservationOriginServiceController::deleteAction 
 
 statistics.utilization: 
     path: /statistics/utilization 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::utilizationAction 
 statistics.utilization.monthtly: 
     path: /statistics/utilization/monthtly 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::getUtilizationForMonthAction 
 statistics.utilization.yearly: 
     path: /statistics/utilization/yearly 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::getUtilizationForYearAction 
 statistics.origin: 
     path: /statistics/origin 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::originAction 
 statistics.origin.monthtly: 
     path: /statistics/origin/monthtly 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::getOriginForMonthAction 
 statistics.origin.yearly: 
     path: /statistics/origin/yearly 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\StatisticsController::getOriginForYearAction 
 
 settings.templates.overview: 
     path: /settings/templates/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::indexAction 
 settings.templates.get: 
-    path: '/settings/templates/{id}/get' 
-    methods: [GET] 
+    path: /settings/templates/{id}/get 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::getAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 settings.templates.new: 
     path: /settings/templates/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::newAction 
 settings.templates.create: 
     path: /settings/templates/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::createAction 
 settings.templates.edit: 
-    path: '/settings/templates/{id}/edit' 
-    methods: [POST] 
+    path: /settings/templates/{id}/edit 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::editAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 settings.templates.delete: 
-    path: '/settings/templates/{id}/delete' 
-    methods: [GET] 
+    path: /settings/templates/{id}/delete 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::deleteAction 
 settings.templates.dodelete: 
-    path: '/settings/templates/{id}/delete' 
-    methods: [POST] 
+    path: /settings/templates/{id}/delete 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::deleteAction 
 settings.templates.preview: 
-    path: '/settings/templates/{id}/preview' 
-    methods: [GET] 
+    path: /settings/templates/{id}/preview 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::previewAction 
 settings.templates.get.reservations: 
     path: /settings/templates/get/reservations 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::getReservationsAction 
 settings.templates.get.reservations.in.period: 
     path: /settings/templates/get/reservations/in/period 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::getReservationsInPeriodAction 
 settings.templates.get.reservations.for.customer: 
     path: /settings/templates/get/reservations/for/customer 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::getReservationsForCustomerAction 
 settings.templates.select.reservation: 
     path: /settings/templates/select/reservation 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::selectReservationAction 
 settings.templates.remove.reservation.from.selection: 
     path: /settings/templates/remove/reservation/from/selection 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::removeReservationFromSelectionAction 
 settings.templates.email.send: 
     path: /settings/templates/email/send 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::sendEmailAction 
 settings.templates.file.save: 
     path: /settings/templates/file/save 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::saveFileAction 
 settings.templates.attachment.remove: 
     path: /settings/templates/attachment/remove 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::deleteAttachmentAction 
 settings.templates.correspondence.remove: 
     path: /settings/templates/correspondence/remove 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::deleteCorrespondenceAction 
 settings.templates.attachment.add: 
     path: /settings/templates/attachment/add 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::addAttachmentAction 
 settings.templates.correspondence.export.pdf: 
-    path: '/settings/templates/correspondence/export/pdf/{id}/' 
-    methods: [GET] 
+    path: /settings/templates/correspondence/export/pdf/{id}/ 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::exportPDFCorrespondenceAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 settings.templates.correspondence.show: 
-    path: '/settings/templates/correspondence/show/{id}' 
-    methods: [POST] 
+    path: /settings/templates/correspondence/show/{id} 
+    methods: POST 
     controller: App\Controller\TemplatesServiceController::showMailCorrespondenceAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 settings.templates.editor.template: 
-    path: '/settings/templates/editortemplate/{templateTypeId}' 
-    methods: [GET] 
+    path: /settings/templates/editortemplate/{templateTypeId} 
+    methods: GET 
     controller: App\Controller\TemplatesServiceController::getTemplatesForEditor 
-    defaults: { templateTypeId: '0' } 
+    defaults:
+        templateTypeId: 1
 
 cashjournal.overview: 
     path: /cashjournal/ 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::indexAction 
 cashjournal.table.get: 
     path: /cashjournal/journal/list 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::getJournalTableAction 
 cashjournal.journal.new: 
     path: /cashjournal/journal/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::newJournalAction 
 cashjournal.journal.create: 
     path: /cashjournal/journal/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::createJournalAction 
 cashjournal.journal: 
-    path: '/cashjournal/journal/{id}' 
-    methods: [GET] 
+    path: /cashjournal/journal/{id} 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::getJournalAction 
 cashjournal.journal.edit: 
-    path: '/cashjournal/journal/{id}/edit' 
-    methods: [POST] 
+    path: /cashjournal/journal/{id}/edit 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::editJournalAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 cashjournal.journal.edit.status: 
-    path: '/cashjournal/journal/{id}/edit/status' 
-    methods: [POST] 
+    path: /cashjournal/journal/{id}/edit/status 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::editJournalStatusAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 cashjournal.journal.delete: 
-    path: '/cashjournal/journal/{id}/delete' 
-    methods: [POST] 
+    path: /cashjournal/journal/{id}/delete 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::deleteJournalAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 cashjournal.journal.entry.new: 
     path: /cashjournal/journal/entry/new 
-    methods: [GET] 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::newJournalEntryAction 
 cashjournal.journal.entry.create: 
     path: /cashjournal/journal/entry/create 
-    methods: [POST] 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::createJournalEntryAction
 cashjournal.journal.export.pdf: 
-    path: '/cashjournal/journal/{id}/export/pdf/{templateId}' 
-    methods: [GET] 
+    path: /cashjournal/journal/{id}/export/pdf/{templateId} 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::exportJournalToPdfAction 
 cashjournal.journal.entry.index: 
-    path: '/cashjournal/journal/overview/{id}' 
-    methods: [GET] 
+    path: /cashjournal/journal/overview/{id} 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::indexEntryAction 
 cashjournal.journal.entry: 
-    path: '/cashjournal/journal/entry/{id}' 
-    methods: [GET] 
+    path: /cashjournal/journal/entry/{id} 
+    methods: GET 
     controller: App\Controller\CashJournalServiceController::getEntryAction 
 cashjournal.journal.entry.edit: 
-    path: '/cashjournal/journal/entry/{id}/edit' 
-    methods: [POST] 
+    path: /cashjournal/journal/entry/{id}/edit 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::editEntryAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
 cashjournal.journal.entry.delete: 
-    path: '/cashjournal/journal/entry/{id}/delete' 
-    methods: [POST] 
+    path: /cashjournal/journal/entry/{id}/delete 
+    methods: POST 
     controller: App\Controller\CashJournalServiceController::deleteEntryAction 
-    defaults: { id: '0' } 
+    defaults:
+        id: 0
