@@ -14,8 +14,7 @@ namespace App\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Templating\PhpEngine;
-use Symfony\Component\Templating\TemplateNameParser;
+use Twig\Environment;
 
 use App\Service\MpdfService;
 use App\Entity\Template;
@@ -27,7 +26,6 @@ use App\Interfaces\ITemplateRenderer;
 
 class TemplatesService
 {
-
     private $em = null;
     private $app = null;
     private $session;
@@ -38,7 +36,7 @@ class TemplatesService
     /**
      * @param Application $app
      */
-    public function __construct(string $webHost, \Twig_Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs)
+    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs)
     {
         $this->em = $em;
 	$this->session = $session;
