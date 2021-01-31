@@ -30,6 +30,90 @@
                 <source>login.copy</source>
                 <target>Pensionsverwaltung</target>
             </trans-unit>
+            <trans-unit id="login.pwforgotten.link">
+                <source>login.pwforgotten.link</source>
+                <target>Passwort vergessen?</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.title">
+                <source>login.pwforgotten.title</source>
+                <target>Neues Passwort anfordern</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.description">
+                <source>login.pwforgotten.description</source>
+                <target>Sollten Sie ihr Passwort vergessen haben, können Sie auf dieser Seite ein neues anfordern. </target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.hint">
+                <source>login.pwforgotten.hint</source>
+                <target>Geben Sie ihre E-Mail Adresse ein und wir senden Ihnen ein neues Passwort zu.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.button">
+                <source>login.pwforgotten.button</source>
+                <target>Passwort anfordern</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.email">
+                <source>login.pwforgotten.email</source>
+                <target>E-Mail</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.flash.error">
+                <source>login.pwforgotten.flash.error</source>
+                <target>Bitte geben Sie ihre E-Mail Adressen ein.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.mail.subject">
+                <source>login.pwforgotten.mail.subject</source>
+                <target>Ihre Anfrage zum Zurücksetzen des Passworts</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.mail.greeting">
+                <source>login.pwforgotten.mail.greeting</source>
+                <target>Sehr geehrte(r) Nutzer/in von FewohBee,</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.mail.text1">
+                <source>login.pwforgotten.mail.text1</source>
+                <target>um Ihr Passwort zurückzusetzen, besuchen Sie bitte den folgenden Link.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.mail.valid">
+                <source>login.pwforgotten.mail.valid</source>
+                <target>Dieser Link wird in %validity% ablaufen.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.mail.end">
+                <source>login.pwforgotten.mail.end</source>
+                <target>Ihr FewohBee</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.sent.title">
+                <source>login.pwforgotten.sent.title</source>
+                <target>Neues Passwort gesendet</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.sent.description">
+                <source>login.pwforgotten.sent.description</source>
+                <target>Sofern uns Ihre E-Mail Adresse bekannt ist, wurde eine E-Mail zu der angegebenen Adresse gesendet. Diese E-Mail entählt einen Link, mit dem Sie Ihr Passwort zurücksetzen können.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.sent.hint">
+                <source>login.pwforgotten.sent.hint</source>
+                <target>Wenn Sie keine E-Mail erhalten, überprüfen Sie bitte Ihren Spam-Ordner.</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.sent.back">
+                <source>login.pwforgotten.sent.back</source>
+                <target>Zurück zum Login</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.reset.title">
+                <source>login.pwforgotten.reset.title</source>
+                <target>Passwort zurücksetzen</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.reset.description">
+                <source>login.pwforgotten.reset.description</source>
+                <target>Passwort zurücksetzen</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.reset.button">
+                <source>login.pwforgotten.reset.button</source>
+                <target>Passwort zurücksetzen</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.reset.password">
+                <source>login.pwforgotten.reset.password</source>
+                <target>Neues Passwort</target>
+            </trans-unit>
+            <trans-unit id="login.pwforgotten.reset.passwordrepeat">
+                <source>login.pwforgotten.reset.passwordrepeat</source>
+                <target>Passwort wiederholen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
