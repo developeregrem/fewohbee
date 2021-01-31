@@ -41,6 +41,11 @@ services:
             - '%mailHost%'
             - '%returnPath%'
     
+    App\Service\MailService:
+        arguments:
+            - '%fromMail%'
+            - '%fromName%'
+    
     App\Service\TemplatesService:
         arguments:
             - '%webHost%'

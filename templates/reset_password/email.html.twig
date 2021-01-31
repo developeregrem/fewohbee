@@ -1,0 +1,9 @@
+<p>{{ 'login.pwforgotten.mail.greeting'|trans }}</p>
+
+<p>{{ 'login.pwforgotten.mail.text1'|trans }}</p>
+
+<a href="{{ url('app_reset_password', {token: resetToken.token}) }}">{{ url('app_reset_password', {token: resetToken.token}) }}</a>
+
+<p>{{ 'login.pwforgotten.mail.valid'|trans({'%validity%': resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle')}) }}</p>
+
+<p>{{ 'login.pwforgotten.mail.end'|trans }}</p>
