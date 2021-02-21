@@ -228,10 +228,6 @@ invoices.remove.reservation.from.selection:
     path: /invoices/remove/reservation/from/selection 
     methods: POST 
     controller: App\Controller\InvoiceServiceController::removeReservationFromSelectionAction 
-invoices.create.invoice.positions: 
-    path: /invoices/create/invoice/positions 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction 
 invoices.show.change.customer: 
     path: /invoices/create/invoice/customer/change 
     methods: POST 
@@ -240,42 +236,10 @@ invoices.show.change.customer.save:
     path: /invoices/create/invoice/customer/change/save 
     methods: POST 
     controller: App\Controller\InvoiceServiceController::saveChangeCustomerInvoiceFormAction 
-invoices.show.create.appartment.invoice.position: 
-    path: /invoices/create/invoice/appartment/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::showCreateAppartmentInvoicePositionFormAction 
-invoices.create.appartment.invoice.position: 
-    path: /invoices/create/new/invoice/appartment/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::createAppartmentInvoicePositionAction 
-invoices.show.edit.appartment.invoice.position: 
-    path: /invoices/edit/invoice/appartment/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::showEditAppartmentInvoicePositionFormAction 
-invoices.save.appartment.invoice.position: 
-    path: /invoices/save/new/invoice/appartment/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::saveAppartmentInvoicePositionAction 
 invoices.delete.appartment.invoice.position: 
     path: /invoices/delete/invoice/appartment/position 
     methods: POST 
     controller: App\Controller\InvoiceServiceController::deleteAppartmentInvoicePositionAction 
-invoices.show.create.miscellaneous.invoice.position: 
-    path: /invoices/create/invoice/miscellaneous/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::showCreateMiscellaneousInvoicePositionFormAction 
-invoices.create.miscellaneous.invoice.position: 
-    path: /invoices/create/new/invoice/miscellaneous/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::createMiscellaneousInvoicePositionAction 
-invoices.show.edit.miscellaneous.invoice.position: 
-    path: /invoices/edit/invoice/miscellaneous/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::showEditMiscellaneousInvoicePositionFormAction 
-invoices.save.miscellaneous.invoice.position: 
-    path: /invoices/save/new/invoice/miscellaneous/position 
-    methods: POST 
-    controller: App\Controller\InvoiceServiceController::saveMiscellaneousInvoicePositionAction 
 invoices.delete.miscellaneous.invoice.position: 
     path: /invoices/delete/invoice/miscellaneous/position 
     methods: POST 

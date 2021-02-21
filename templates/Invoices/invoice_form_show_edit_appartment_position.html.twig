@@ -1,118 +1,9 @@
-<form id="edit-appartment-position" class="form-horizontal" role="form"
-      onsubmit="return saveAppartmentInvoicePosition({{ key }})">
+{{ form_start(form, {'attr': {'onsubmit': 'return editApartmentInvoicePosition(this)', 'id': 'edit-apartment-position'}}) }}
     <div class="modal-body">
         <div class="pl-5 pr-5">
             <div class="row">
                 <div class="col-md-7">
-                    <div class="form-group row">
-                        <label for="inputAppartmentNumber"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.number'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select name="number" class="form-control">
-                                {% for reservation in reservations %}
-                                    <option value="{{ reservation.appartment.number }}" {% if reservation.appartment.number == position.number %} selected {% endif %}>{{ reservation.appartment.number }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputAppartmentDescription"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.description'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select name="description" class="form-control">
-                                {% for reservation in reservations %}
-                                    <option value="{{ reservation.appartment.description }}" {% if reservation.appartment.description == position.description %} selected {% endif %}>{{ reservation.appartment.description }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputStart"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.startdate'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="from" name="from"
-                                   value="{{ position.startdate|date("d.m.Y") }}" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputEnd"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.enddate'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="end" name="end"
-                                   value="{{ position.enddate|date("d.m.Y") }}" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputAppartmentPersons"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.persons'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select name="persons" class="form-control">
-                                {% set maxPersons = 0 %}
-                                {% for reservation in reservations %}
-                                    {% if maxPersons < reservation.persons %}
-                                        {% set maxPersons = reservation.persons %}
-                                    {% endif %}
-                                {% endfor %}
-                                {% for i in 1..maxPersons %}
-                                    <option value="{{ i }}" {% if i == position.persons %} selected {% endif %}>{{ i }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputAppartmentBeds"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.beds'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select name="beds" class="form-control">
-                                {% set maxBeds = 0 %}
-                                {% for reservation in reservations %}
-                                    {% if maxBeds < reservation.appartment.bedsmax %}
-                                        {% set maxBeds = reservation.appartment.bedsmax %}
-                                    {% endif %}
-                                {% endfor %}
-                                {% for i in 1..maxBeds %}
-                                    <option value="{{ i }}" {% if i == position.beds %} selected {% endif %}>{{ i }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputAppartmentPriceCategory"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select id="pricecategory" name="pricecategory" class="form-control"
-                                    onchange="return setVatAndPrice()">
-                                <option value="0|0" selected></option>
-                                {% for price in prices %}
-                                    <option value="{{ price.vat }}|{{ price.price }}" {% if price.vat == position.vat and price.price == position.price %} selected {% endif %}>{{ price.description }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'invoice.vat'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="inputVat" name="vat" value="{{ position.vat }}"
-                                   required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputPrice"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.price'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="inputPrice" name="price"
-                                   value="{{ position.price }}" required>
-                        </div>
-                    </div>
+                    {% include 'Invoices/_apartment_form.html.twig' %}
                 </div>
                 <div class="col-md-5">
                     {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}
@@ -123,74 +14,13 @@
     <div class="modal-footer">
         <ul class="pagination mr-auto">
             <li class="page-item " onclick="
-                {% if positionId == -1 %}
-                    return showCreateInvoicePositions('false')
+                {% if invoiceId == 'new' %}
+                    return getContentForModal('{{ path('invoices.create.invoice.positions') }}')
                 {% else %}
-                    return showInvoice({{ position.invoice.id }}, true)
+                    return showInvoice({{ invoiceId }}, true)
                 {% endif %}">
                 <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
     </div>
-    <input type="hidden" name="position-id" value="{{ positionId }}" />
-    <input name="_csrf_token" value="{{ token }}" type="hidden">
-</form>
-<script>
-    function showCreateInvoicePositions(createNewPositionsSessionObject) {
-        var url = "{{ path('invoices.create.invoice.positions') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#new-invoice-id").serialize() + "&createInvoicePositions=" + createNewPositionsSessionObject,
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-
-    function setVatAndPrice() {
-        var vat = $("#pricecategory").val().split("|")[0];
-        var price = $("#pricecategory").val().split("|")[1];
-
-        $("#inputVat").val(vat);
-        $("#inputPrice").val(price);
-
-        return false;
-    }
-
-    function saveAppartmentInvoicePosition(key) {
-        var url = "{{ path('invoices.save.appartment.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#edit-appartment-position").serialize() + "&key=" + key,
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-</script>
+{{ form_end(form) }}

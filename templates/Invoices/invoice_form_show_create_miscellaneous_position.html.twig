@@ -1,54 +1,9 @@
-<form id="new-miscellaneous-position" class="form-horizontal" role="form"
-      onsubmit="return createMiscellaneousInvoicePosition()">
+{{ form_start(form, {'attr': {'onsubmit': 'return createMiscellaneousInvoicePosition(this)', 'id': 'new-miscellaneous-position'}}) }}
     <div class="modal-body">
         <div class="pl-5 pr-5">
             <div class="row">
                 <div class="col-md-7">
-                    <div class="form-group row">
-                        <label for="amount"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.miscellaneous.position.amount'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="amount" name="amount" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputAppartmentPriceCategory"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select id="pricecategory" name="pricecategory" class="form-control"
-                                    onchange="return setVatPriceAndDescription()">
-                                <option value="0|0" selected></option>
-                                {% for price in prices %}
-                                    <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.description }}">{{ price.description }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputDescription"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.description'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="inputDescription" name="description" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'invoice.vat'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="inputVat" name="vat" required>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputPrice"
-                               class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.price'|trans }}</label>
-
-                        <div class="col-sm">
-                            <input type="text" class="form-control" id="inputPrice" name="price" required>
-                        </div>
-                    </div>
+                    {% include 'Invoices/_miscellaneous_form.html.twig' %}
                 </div>
                 <div class="col-md-5">
                     {% include 'Invoices/invoice_form_reservation_list_fields.html.twig' %}
@@ -60,7 +15,7 @@
         <ul class="pagination mr-auto">
             <li class="page-item " onclick="
                 {% if invoiceId == 'new' %}
-                    return showCreateInvoicePositions('false')
+                    return getContentForModal('{{ path('invoices.create.invoice.positions') }}')
                 {% else %}
                     return showInvoice({{ invoiceId }}, true)
                 {% endif %}">
@@ -68,67 +23,4 @@
         </ul>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>
     </div>
-    <input type="hidden" name="invoice-id" value="{{ invoiceId }}" />
-    <input name="_csrf_token" value="{{ token }}" type="hidden">
-</form>
-<script>
-    function showCreateInvoicePositions(createNewPositionsSessionObject) {
-        var url = "{{ path('invoices.create.invoice.positions') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#new-invoice-id").serialize() + "&createInvoicePositions=" + createNewPositionsSessionObject,
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-
-    function setVatPriceAndDescription() {
-        var vat = $("#pricecategory").val().split("|")[0];
-        var price = $("#pricecategory").val().split("|")[1];
-        var description = $("#pricecategory").val().split("|")[2];
-
-        $("#inputVat").val(vat);
-        $("#inputPrice").val(price);
-        $("#inputDescription").val(description);
-
-        return false;
-    }
-
-    function createMiscellaneousInvoicePosition() {
-        var url = "{{ path('invoices.create.miscellaneous.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#new-miscellaneous-position").serialize(),
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-</script>
+{{ form_end(form) }}
