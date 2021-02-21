@@ -505,8 +505,9 @@ class InvoiceServiceController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             
-            $invoicePosition->setPrice(str_replace(",", ".", $invoicePosition->getPrice()));
-            $invoicePosition->setVat(str_replace(",", ".", $invoicePosition->getVat()));
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
             
             // during invoice create process
             if($invoiceId === 'new') {
@@ -573,9 +574,10 @@ class InvoiceServiceController extends AbstractController
         
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $invoicePosition->setPrice(str_replace(",", ".", $invoicePosition->getPrice()));
-            $invoicePosition->setVat(str_replace(",", ".", $invoicePosition->getVat()));
+        if ($form->isSubmitted() && $form->isValid()) { 
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
             
             // during invoice create process
             if($invoiceId === 'new') {
@@ -645,8 +647,9 @@ class InvoiceServiceController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             
-            $invoicePosition->setPrice(str_replace(",", ".", $invoicePosition->getPrice()));
-            $invoicePosition->setVat(str_replace(",", ".", $invoicePosition->getVat()));
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
             
             // during invoice create process
             if($invoiceId === 'new') {
@@ -717,8 +720,9 @@ class InvoiceServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $positionMiscellaneous->setPrice(str_replace(",", ".", $positionMiscellaneous->getPrice()));
-            $positionMiscellaneous->setVat(str_replace(",", ".", $positionMiscellaneous->getVat()));
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $positionMiscellaneous->setPrice(number_format($positionMiscellaneous->getPrice(), 2));
+            $positionMiscellaneous->setVat(number_format($positionMiscellaneous->getVat(), 2));
             
             // during invoice create process
             if($invoiceId === 'new') {
