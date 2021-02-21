@@ -89,6 +89,16 @@ class Price
     private $roomCategory;
 
     /**
+     * @ORM\Column(type="boolean")
+     */
+    private $includesVat;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $isFlatPrice;
+
+    /**
      * Constructor
      */
     public function __construct()
@@ -96,6 +106,8 @@ class Price
         $this->reservationOrigins = new \Doctrine\Common\Collections\ArrayCollection();
         $this->pricePeriods = new ArrayCollection();
         $this->allPeriods = true;
+        $this->includesVat = true;
+        $this->isFlatPrice = false;
     }
 
     public function getId()
@@ -362,6 +374,30 @@ class Price
     public function setRoomCategory(?RoomCategory $roomCategory): self
     {
         $this->roomCategory = $roomCategory;
+
+        return $this;
+    }
+
+    public function getIncludesVat(): ?bool
+    {
+        return $this->includesVat;
+    }
+
+    public function setIncludesVat(bool $includesVat): self
+    {
+        $this->includesVat = $includesVat;
+
+        return $this;
+    }
+
+    public function getIsFlatPrice(): ?bool
+    {
+        return $this->isFlatPrice;
+    }
+
+    public function setIsFlatPrice(bool $isFlatPrice): self
+    {
+        $this->isFlatPrice = $isFlatPrice;
 
         return $this;
     }
