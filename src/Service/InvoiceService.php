@@ -13,6 +13,8 @@ namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 use App\Entity\Invoice;
 use App\Entity\Customer;
@@ -44,7 +46,7 @@ class InvoiceService implements ITemplateRenderer
         $appartmentTotal = 0;
         $miscTotal = 0;
 
-        /* @var $apps \Pensionsverwaltung\Database\Entity\InvoiceAppartment */
+        /* @var $appartment \Pensionsverwaltung\Database\Entity\InvoiceAppartment */
         //$apps = $invoice->getAppartments();
         //$poss = $invoice->getPositions();
         foreach ($apps as $appartment) {
@@ -289,7 +291,7 @@ class InvoiceService implements ITemplateRenderer
      * @param SessionInterface $session
      */
     public function prefillAppartmentPositions(Reservation $reservation, SessionInterface $session) {
-        $prices = $this->ps->getPrices($reservation, 2);
+        $prices = $this->ps->getPricesForReservationDays($reservation, 2);
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
         
         $curDate = clone $reservation->getStartDate();
@@ -319,16 +321,44 @@ class InvoiceService implements ITemplateRenderer
     /**
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category
-     * @param Reservation $reservation
+     * @param array $reservations a list of reservations
      * @param SessionInterface $session
+     * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
-    public function prefillMiscPositions(array $reservationIds, SessionInterface $session) {
-        $tmpMiscArr = [];
-        // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
+    public function prefillMiscPositionsWithReservations(array $reservations, SessionInterface $session, bool $useExistingPrices = false) {
+        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+    }
+    
+    /**
+     * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
+     * each day can have more than one active price category
+     * @param array $reservationIds a list of reservation IDs
+     * @param SessionInterface $session
+     * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     */
+    public function prefillMiscPositionsWithReservationIds(array $reservationIds, SessionInterface $session, bool $useExistingPrices = false) {
+        $reservations = [];
         foreach($reservationIds as $resId) {
-            $reservation = $this->em->getRepository(Reservation::class)->find($resId);                
-             
-            $prices = $this->ps->getPrices($reservation, 1);  
+            $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
+        }
+        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+    }
+    /**
+     * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
+     * each day can have more than one active price category
+     * @param array $reservations
+     * @param SessionInterface $session
+     * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
+     */
+    private function prefillMiscPositions(array $reservations, SessionInterface $session, bool $useExistingPrices = false) {
+        $tmpMiscArr = [];
+        $existingPrices = null;
+        // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
+        foreach($reservations as $reservation) {    
+            if($useExistingPrices) {
+                $existingPrices = $reservation->getPrices();
+            }
+            $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);  
 
             $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
 
@@ -361,7 +391,7 @@ class InvoiceService implements ITemplateRenderer
      * @param SessionInterface $session
      */
     public function saveNewAppartmentPosition(InvoiceAppartment $position, SessionInterface $session) {
-        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");                
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments", []);                
         $newInvoicePositionsAppartmentsArray[] = $position;
 
         $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
@@ -373,7 +403,7 @@ class InvoiceService implements ITemplateRenderer
      * @param SessionInterface $session
      */
     public function saveNewMiscPosition(InvoicePosition $position, SessionInterface $session) {
-        $newInvoicePositionsMiscArray = $session->get("invoicePositionsMiscellaneous");                
+        $newInvoicePositionsMiscArray = $session->get("invoicePositionsMiscellaneous", []);                
         $newInvoicePositionsMiscArray[] = $position;
 
         $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscArray);
@@ -397,6 +427,8 @@ class InvoiceService implements ITemplateRenderer
         $positionAppartment->setPrice($price->getPrice());
         $positionAppartment->setPersons($reservation->getPersons());
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
+        $positionAppartment->setIncludesVat($price->getIncludesVat());
+        $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
         
         return $positionAppartment;
     }
@@ -415,6 +447,8 @@ class InvoiceService implements ITemplateRenderer
             $position->setDescription( $tmpPrice['price']->getDescription() );
             $position->setPrice( $tmpPrice['price']->getPrice() );
             $position->setVat( $tmpPrice['price']->getVat() );
+            $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
+            $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
             
             $this->saveNewMiscPosition($position, $session);
         }

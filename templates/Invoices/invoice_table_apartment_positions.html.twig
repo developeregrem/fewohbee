@@ -1,0 +1,46 @@
+<table class="table">
+    <thead>
+        <tr>
+            <th>{{ 'invoice.appartment.position.number'|trans }}</th>
+            <th>{{ 'invoice.appartment.position.description'|trans }}</th>
+            <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
+            <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
+            <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
+            <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
+            <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+            <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
+            {% if mode is defined and mode == 'edit' %}
+            <th>{{ 'invoice.action'|trans }}</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for key,position in positionsAppartment %}
+            <tr>
+                <td>{{ position.number }}</td>
+                <td>{{ position.description }}</td>
+                <td>{{ position.beds }}</td>
+                <td>{{ position.persons }}</td>
+                <td>{{ position.startdate|date("d.m.Y") }}</td>
+                <td>{{ position.enddate|date("d.m.Y") }}</td>
+                <td class="text-right">
+                    {% if is_decimal_place_0(position.vat) %}
+                        {{ position.vat|number_format(0, ',', '.') }}
+                    {% else %}
+                        {{ position.vat|number_format(2, ',', '.') }}
+                    {% endif %}
+                </td>
+                <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                {% if mode is defined and mode == 'edit' %}
+                <td>
+                    <a href="#" title="{{ 'button.edit'|trans }}">
+                        <i onclick="return getContentForModal('{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}')" class="fas fa-edit"></i></a>
+                    <a href="#" title="{{ 'button.delete'|trans }}">
+                        <i onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
+                </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    

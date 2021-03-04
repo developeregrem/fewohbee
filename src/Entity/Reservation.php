@@ -2,6 +2,7 @@
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -71,6 +72,11 @@ class Reservation
      */
     private $correspondences;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Price::class)
+     */
+    private $prices;
+
     public function __construct()
     {
         $this->reservationDate = new \DateTime('now');
@@ -78,6 +84,7 @@ class Reservation
         $this->customers = new ArrayCollection();
         $this->correspondences = new ArrayCollection();
         $this->invoices = new ArrayCollection();
+        $this->prices = new ArrayCollection();
     }
 
     public function getId()
@@ -366,5 +373,29 @@ class Reservation
     public function getInvoices()
     {
         return $this->invoices;
+    }
+
+    /**
+     * @return Collection|Price[]
+     */
+    public function getPrices(): Collection
+    {
+        return $this->prices;
+    }
+
+    public function addPrice(Price $price): self
+    {
+        if (!$this->prices->contains($price)) {
+            $this->prices[] = $price;
+        }
+
+        return $this;
+    }
+
+    public function removePrice(Price $price): self
+    {
+        $this->prices->removeElement($price);
+
+        return $this;
     }
 }

@@ -9,6 +9,9 @@
     <li class="nav-item">
         <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
+    </li>
 </ul>
 
 <!-- Tab panes -->
@@ -227,6 +230,47 @@
             </tbody>
         </table>                    
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
+    </div>
+    
+    <div class="tab-pane{% if tab is defined and tab == 'prices' %} active{% endif %}" id="prices" role="tabpanel" aria-labelledby="prices-tab">
+        <div class="row">
+            <div class="col">
+                <h4 class="pb-2">{{ 'reservation.prices.misc'|trans }}</h4>
+            </div>
+        </div>    
+        <div id="reservation-price-misc-options" class="row justify-content-start">    
+        {% set reservationPrices =  attribute(reservations, 0).prices %}
+        {% for price in miscPrices %}
+            <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">
+                <div class="col-md-3">                    
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
+                               data-reservationid="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
+                        <label class="custom-control-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
+                    </div>
+                </div>
+                <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
+            </form>
+        {% endfor %}            
+        </div>
+        <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">        
+            
+        <div class="row mt-4">
+            <div class="col">
+                <h5>{{ 'invoice.appartment'|trans }}</h5>
+                {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'read'} %}
+            </div>
+        </div>
+            
+        <div class="row mt-4">
+            <div class="col">
+                <h5>{{ 'invoice.miscellaneous'|trans }}</h5>
+                {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'read'} %}
+            </div>
+        </div>
+        <div class="row">
+            <span class="text-info mr-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span>
+        </div>
     </div>
 </div>
 
