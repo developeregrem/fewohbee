@@ -14,6 +14,7 @@ namespace App\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
@@ -21,6 +22,9 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Service\ReservationObject;
 use App\Interfaces\ITemplateRenderer;
+use App\Entity\Price;
+use App\Service\InvoiceService;
+use App\Service\PriceService;
 
 
 class ReservationService implements ITemplateRenderer
@@ -188,6 +192,78 @@ class ReservationService implements ITemplateRenderer
         } else {
             $this->session->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
         }
+    }
+    
+    /**
+     * Toggles a selected or deselected price for reservations in creation and stores them in the session
+     * @param Price $price
+     * @param SessionInterface $session
+     */
+    public function toggleInCreationPrice(Price $price, SessionInterface $session) {
+        $prices = $session->get("reservatioInCreationPrices", new ArrayCollection()); 
+        
+        $exists = $prices->exists(function($key, $value) use ($price) {
+                    return $value->getId() === $price->getId();
+                });
+
+        if(!$exists) {
+            $prices[] = $price;
+        } else {
+            $toDeleteKeys = $prices->filter(function($element) use ($price) {
+                return $element->getId() === $price->getId();
+            })
+            ->getKeys();
+            $prices->remove($toDeleteKeys[0]);
+        }
+        
+        $session->set("reservatioInCreationPrices", $prices);
+    }
+    
+    /**
+     * Returns an array of prices for reservations in creation
+     * @param InvoiceService $is
+     * @param array $reservations
+     * @param PriceService $ps
+     * @param SessionInterface $session
+     * @return type
+     */
+    public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, SessionInterface $session) {
+        // prices will be filles based on already selected prices
+        if($session->get("reservatioInCreationPrices", null) !== null) {
+            $prices = $session->get("reservatioInCreationPrices");
+            $session->set("invoicePositionsMiscellaneous", []);
+            
+            // assign selected prices to reservations for getting the invoice price positions based on that prices
+            $reservations = $this->setPricesToReservations($prices, $reservations);
+            $is->prefillMiscPositionsWithReservations($reservations, $session, true);
+            
+            return $session->get("invoicePositionsMiscellaneous");
+        } else { // initial load of preview new reservation, prices will be filled based on price categories     
+            $prices = $ps->getUniquePricesForReservations($reservations, 1);
+            // prefill reservatioInCreationPrices session
+            foreach($prices as $price) {
+                $this->toggleInCreationPrice($price, $session);
+            }
+            $session->set("invoicePositionsMiscellaneous", []);
+            $is->prefillMiscPositionsWithReservations($reservations, $session);    
+            
+            return $session->get("invoicePositionsMiscellaneous");
+        }
+    }
+    
+    /**
+     * Adds the given prices to the reservations
+     * @param ArrayCollection $prices
+     * @param array $reservations
+     * @return array
+     */
+    private function setPricesToReservations(Collection $prices, array $reservations) {
+        foreach($reservations as $reservation) {
+            foreach($prices as $price) {
+                $reservation->addPrice($price);
+            }
+        }
+        return $reservations;
     }
     
     public function getRenderParams($template, $param) {

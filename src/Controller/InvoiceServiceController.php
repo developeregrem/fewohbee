@@ -324,7 +324,7 @@ class InvoiceServiceController extends AbstractController
             $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
             
             // prefill positions for all selected reservations
-            $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $session);           
+            $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $session, true);           
         }
         $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
         

@@ -26,29 +26,44 @@ function getContentForModal(url, title, successFunc) {
  * @param {string} successUrl
  * @returns {Boolean}
  */
-function _doPost(formId, url, successUrl) {
+function _doPost(formId, url, successUrl, type, successFunc) {
     successUrl = successUrl || "";
+    type = type || "POST";
+    successFunc = successFunc || null;
+
     $.ajax({
         url: url,
-        type: "POST",
+        type: type,
         data: $(formId).serialize(),
         error: function (xhr, ajaxOptions, thrownError) {
             alert(xhr.status);
         },
         success: function (data) {
-            // if the whole modal content is returned
-            if($(data).filter('.modal-body').length > 0 || $(data).find('.modal-body').length > 0) {
-                $("#modal-content-ajax").html(data);
-            // if only flash messages are returned
-            } else if (data && data.length > 0) {   
-                $("#flash-message-overlay").empty();
-                $("#flash-message-overlay").append(data);
-            } else if(successUrl.length > 0 ) {
-                location.href = successUrl;
+            if(successFunc !== null) {
+                successFunc();
             } else {
-                location.reload();
+                // if the whole modal content is returned
+                if($(data).filter('.modal-body').length > 0 || $(data).find('.modal-body').length > 0) {
+                    $("#modal-content-ajax").html(data);
+                // if only flash messages are returned
+                } else if (data && data.length > 0) {   
+                    $("#flash-message-overlay").empty();
+                    $("#flash-message-overlay").append(data);
+                } else if(successUrl.length > 0 ) {
+                    location.href = successUrl;
+                } else {
+                    location.reload();
+                }
             }
         }
     });
     return false;
+}
+
+function _doDelete(formId, url, successUrl, successFunc) {
+    return _doPost(formId, url, successUrl, "DELETE", successFunc);
+}
+
+function _doPut(formId, url, successUrl, successFunc) {
+    return _doPost(formId, url, successUrl, "PUT", successFunc);
 }

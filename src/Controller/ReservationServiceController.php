@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -24,16 +25,20 @@ use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\CustomerService;
 use App\Service\TemplatesService;
+use App\Service\PriceService;
+use App\Service\InvoiceService;
 use App\Entity\ReservationOrigin;
 use App\Entity\Reservation;
-use App\Entity\User;
 use App\Entity\Customer;
 use App\Entity\Subsidiary;
 use App\Entity\Appartment;
 use App\Entity\Template;
 use App\Entity\Correspondence;
+use App\Entity\Price;
 
-
+/**
+ * @Route("/reservation")
+ */
 class ReservationServiceController extends AbstractController
 {
     private $perPage = 15;
@@ -122,6 +127,7 @@ class ReservationServiceController extends AbstractController
             $session->set("reservationInCreation", $newReservationsInformationArray);
             $session->set("customersInReservation", Array());
             $session->remove("customersInReservation");    // unset
+            $session->remove('reservatioInCreationPrices');
         } else {
             $newReservationsInformationArray = $session->get("reservationInCreation");
         }
@@ -225,6 +231,7 @@ class ReservationServiceController extends AbstractController
             $newReservationsInformationArray = array();
             $session->set("reservationInCreation", $newReservationsInformationArray);
             $session->remove("customersInReservation");
+            $session->remove('reservatioInCreationPrices');
         }
 
         if ($request->get("appartmentid") != null) {
@@ -394,7 +401,7 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function previewNewReservationAction(CSRFProtectionService $csrf, SessionInterface $session, ReservationService $rs, Request $request)
+    public function previewNewReservationAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, ReservationService $rs, PriceService $ps, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $tab = $request->get('tab', 'booker');
@@ -431,16 +438,39 @@ class ReservationServiceController extends AbstractController
         }
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        if(count($origins) > 0) {
+            foreach ($reservations as $reservation) {
+                $reservation->setReservationOrigin($origins[0]);
+            }
+        }        
+        
+        $miscPricePositions = $rs->getMiscPricesInCreation($is, $reservations, $ps, $session);
+        $pricesInCreation = $session->get("reservatioInCreationPrices", []);
+
+        $session->set("invoicePositionsAppartments", []);
+        foreach($reservations as $reservation) {
+            $is->prefillAppartmentPositions($reservation, $session);
+            
+            // add selected misc prices to reservation
+            foreach($pricesInCreation as $priceInCreation) {
+                $reservation->addPrice($priceInCreation);
+            }
+            
+        } 
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
 
         return $this->render('Reservations/reservation_form_show_preview.html.twig', array(
             'booker' => $booker,
             'customers' => $customers,
-            "reservations" => $reservations,
+            'reservations' => $reservations,
             'token' => $csrf->getCSRFTokenForForm(),
             'tab' => $tab,
             'error' => true,
             'origins' => $origins,
-            'correspondences' => Array()
+            'correspondences' => Array(),
+            'miscPrices' => $ps->getActiveMiscellaneousPrices(),
+            'positionsMiscellaneous' => $miscPricePositions,
+            'positionsAppartment' => $newInvoicePositionsAppartmentsArray
         ));
     }
 
@@ -465,6 +495,8 @@ class ReservationServiceController extends AbstractController
             $customersInReservation = $session->get("customersInReservation");
 
             $origin = $em->getRepository(ReservationOrigin::class)->find($request->get('reservation-origin'));
+            
+            $pricesInCreation = $session->get("reservatioInCreationPrices", []);
 
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->get('remark'));
@@ -475,10 +507,15 @@ class ReservationServiceController extends AbstractController
                     if($guest['appartmentId'] == $reservation->getAppartment()->getId()) {
                         $guest = $em->getRepository(Customer::class)->find($guest['id']);
                         $reservation->addCustomer($guest);
-                    }
-                    
+                    }                    
                 }
-
+                
+                // add selected misc prices to reservation
+                foreach($pricesInCreation as $priceInCreation) {
+                    // we need to fetch the entity again because it is not managed anymore by the entitymanager when loading from the session
+                    $price = $em->getRepository(Price::class)->find($priceInCreation->getId());                    
+                    $reservation->addPrice($price);
+                }
                 $em->persist($reservation);
             }
             $em->flush();
@@ -498,7 +535,7 @@ class ReservationServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function getReservationAction(CSRFProtectionService $csrf, Request $request, $id)
+    public function getReservationAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, PriceService $ps, Request $request, $id)
     {
         $tab = $request->get('tab', 'booker');
         $em = $this->getDoctrine()->getManager();
@@ -510,6 +547,14 @@ class ReservationServiceController extends AbstractController
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
+        $session->set("invoicePositionsMiscellaneous", []);
+        $is->prefillMiscPositionsWithReservations([$reservation], $session, true);
+        $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
+
+        $session->set("invoicePositionsAppartments", []);
+        $is->prefillAppartmentPositions($reservation, $session);
+        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
+
         return $this->render('Reservations/reservation_form_show.html.twig', array(
             'booker' => $reservation->getBooker(),
             'customers' => $reservation->getCustomers(),
@@ -518,7 +563,10 @@ class ReservationServiceController extends AbstractController
             'error' => true,
             'tab' => $tab,
             'origins' => $origins,
-            'correspondences' => $correspondences
+            'correspondences' => $correspondences,
+            'miscPrices' => $ps->getActiveMiscellaneousPrices(),
+            'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
+            'positionsAppartment' => $newInvoicePositionsAppartmentsArray
         ));
     }
 
@@ -951,5 +999,35 @@ class ReservationServiceController extends AbstractController
             'attachmentIds' => $session->get("templateAttachmentIds"),
             'attachments' => $attachments
         ));
+    }
+    
+    /**
+     * @Route("/{reservationId}/edit/prices/{id}/update", name="reservations.update.misc.price", methods={"POST"})
+     */
+    public function updateMiscPriceForReservation($reservationId, Price $price, ReservationService $rs, SessionInterface $session, Request $request): Response
+    {        
+        if ($this->isCsrfTokenValid('reservation-update-misc-price', $request->request->get('_token'))) {          
+              
+            // during reservation create process
+            if($reservationId === 'new') {
+                $rs->toggleInCreationPrice($price, $session);
+            } else { // during reservation edit process
+                $em = $this->getDoctrine()->getManager();
+                /* @var $reservation Reservation */
+                $reservation = $em->getRepository(Reservation::class)->find($reservationId);
+                $prices = $reservation->getPrices();
+
+                if($prices->contains($price)) {
+                    $reservation->removePrice($price);
+                } else {
+                    $reservation->addPrice($price);
+                }
+                
+                $em->persist($reservation);
+                $em->flush();
+            }
+        }
+
+        return new Response('', Response::HTTP_OK);
     }
 }
