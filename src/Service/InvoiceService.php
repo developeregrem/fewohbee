@@ -46,33 +46,45 @@ class InvoiceService implements ITemplateRenderer
         $appartmentTotal = 0;
         $miscTotal = 0;
 
-        /* @var $appartment \Pensionsverwaltung\Database\Entity\InvoiceAppartment */
+        /* @var $appartment InvoiceAppartment */
         //$apps = $invoice->getAppartments();
         //$poss = $invoice->getPositions();
         foreach ($apps as $appartment) {
-            if (array_key_exists($appartment->getVat(), $vats)) {
-                $vats[$appartment->getVat()]['sum'] += $appartment->getAmount() * $appartment->getPrice();
-                $vats[$appartment->getVat()]['netto'] += ((($appartment->getAmount() * $appartment->getPrice()) * $appartment->getVat()) / (100 + $appartment->getVat()));
-            } else {
-                $vats[$appartment->getVat()]['sum'] = $appartment->getAmount() * $appartment->getPrice();
-                $vats[$appartment->getVat()]['netto'] = ((($appartment->getAmount() * $appartment->getPrice()) * $appartment->getVat()) / (100 + $appartment->getVat()));
+            $apartmentPrice = $appartment->getAmount() * $appartment->getPrice();
+            
+            if($appartment->getIncludesVat()) { // price includes vat
+                $vatAmount = (($apartmentPrice * $appartment->getVat()) / (100 + $appartment->getVat()));
+                
+                $vats[$appartment->getVat()]['brutto'] = ($vats[$appartment->getVat()]['brutto'] ?? 0) + $apartmentPrice;                
+            } else { // price does not include vat
+                $vatAmount = (($apartmentPrice * $appartment->getVat()) / (100));
+                
+                $vats[$appartment->getVat()]['brutto'] = ($vats[$appartment->getVat()]['brutto'] ?? 0) + $apartmentPrice + $vatAmount;
             }
-            $appartmentTotal += $appartment->getAmount() * $appartment->getPrice();
+            
+            $vats[$appartment->getVat()]['netto'] = ($vats[$appartment->getVat()]['netto'] ?? 0) + $vatAmount;
+            $appartmentTotal += $apartmentPrice;
         }
 
         foreach ($poss as $pos) {
-            if (array_key_exists($pos->getVat(), $vats)) {
-                $vats[$pos->getVat()]['sum'] += $pos->getAmount() * $pos->getPrice();
-                $vats[$pos->getVat()]['netto'] += ((($pos->getAmount() * $pos->getPrice()) * $pos->getVat()) / (100 + $pos->getVat()));
-            } else {
-                $vats[$pos->getVat()]['sum'] = $pos->getAmount() * $pos->getPrice();
-                $vats[$pos->getVat()]['netto'] = ((($pos->getAmount() * $pos->getPrice()) * $pos->getVat()) / (100 + $pos->getVat()));
+            $miscPrice = $pos->getAmount() * $pos->getPrice();
+            
+            if($pos->getIncludesVat()) { // price includes vat
+                $vatAmount = (($miscPrice * $pos->getVat()) / (100 + $pos->getVat()));
+                
+                $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $miscPrice;                
+            } else { // price does not include vat
+                $vatAmount = (($miscPrice * $pos->getVat()) / (100));
+                
+                $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $miscPrice + $vatAmount;
             }
-            $miscTotal += $pos->getAmount() * $pos->getPrice();
+            
+            $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
+            $miscTotal += $miscPrice;
         }
         
         foreach($vats as $key=>$vat) {
-            $brutto += round($vat['sum'], 2);
+            $brutto += round($vat['brutto'], 2);
             $netto += round($vat['netto'], 2);
             $vats[$key]['nettoFormated'] = number_format(round($vat['netto'], 2), 2, ',', '.');
         }
