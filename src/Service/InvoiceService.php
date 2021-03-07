@@ -38,6 +38,17 @@ class InvoiceService implements ITemplateRenderer
         $this->ps = $ps;
     }
 
+    /**
+     * Calculates the sums and vats for an invoice
+     * @param Invoice $invoice
+     * @param array $apps The invoice positions for apartment prices
+     * @param array $poss The invoice positions for miscellaneous prices
+     * @param array $vats Returns array of all vat values
+     * @param type $brutto Returns the total price including vat
+     * @param type $netto Returns the toal price for all vats
+     * @param type $appartmentTotal Returns the total sum for all apartment prices
+     * @param type $miscTotal Returns the total price for all miscellaneous prices
+     */
     public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
     {
         $vats = Array();
