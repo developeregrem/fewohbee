@@ -35,6 +35,10 @@
                     </tr>
                     </thead>
                     <tbody>
+                    {# variable that contains the status whether prices are used that includes vat and does not include vats
+                    this will lead to price sums that are displayed incorrect #}
+                    {% set lastIncludesVat = null %}
+                    {% set vatWarning = false %}
                     {% set appartmentSum = 0 %}
                     {% for appartment in appartments %}
                         {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
@@ -53,6 +57,11 @@
                             </td>
                             <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
                         </tr>
+                        {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
+                        {% if lastIncludesVat is not null and lastIncludesVat != appartment.includesVat %}
+                            {% set vatWarning = true %}
+                        {% endif %}
+                        {% set lastIncludesVat = appartment.includesVat %}
                     {% endfor %}
                     <tr>
                         <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
@@ -88,6 +97,11 @@
                             </td>
                             <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
                         </tr>
+                        {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
+                        {% if lastIncludesVat is not null and lastIncludesVat != position.includesVat %}
+                            {% set vatWarning = true %}
+                        {% endif %}
+                        {% set lastIncludesVat = position.includesVat %}
                     {% endfor %}
                     <tr>
                         <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
@@ -120,7 +134,13 @@
                     <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
                 </div>
             </div>
-
+            {% if vatWarning %}
+            <div class="row mt-3">
+                <div class="col text-center">
+                <span class="text-warning mr-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.vatwarning'|trans }}</span>
+                </div>
+            </div>
+            {% endif %}
             <div class="row mt-4">
                 <div class="col-sm-3 text-right">
                     <label for="invoice-remark">{{ 'invoice.remark'|trans }}</label>
