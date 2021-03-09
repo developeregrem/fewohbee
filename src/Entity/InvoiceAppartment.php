@@ -137,13 +137,18 @@ class InvoiceAppartment
 
     public function getAmount()
     {
+        if($this->isFlatPrice) {
+            return 1;
+        }
+        // else
         $interval = $this->startDate->diff($this->endDate);
         return $interval->format('%a');
     }
     
     public function getTotalPrice()
     {
-        return number_format($this->price * $this->getAmount(), 2, ',', '.');
+        $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
+        return number_format($price, 2, ',', '.');
     }
     
     public function getPriceFormated()

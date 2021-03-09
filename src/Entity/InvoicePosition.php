@@ -92,7 +92,8 @@ class InvoicePosition
     
     public function getTotalPrice()
     {
-        return number_format($this->price * $this->getAmount(), 2, ',', '.');
+        $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
+        return number_format($price, 2, ',', '.');
     }
     
     public function getPriceFormated()

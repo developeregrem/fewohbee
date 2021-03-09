@@ -57,28 +57,28 @@ class InvoiceService implements ITemplateRenderer
         $appartmentTotal = 0;
         $miscTotal = 0;
 
-        /* @var $appartment InvoiceAppartment */
+        /* @var $apartment InvoiceAppartment */
         //$apps = $invoice->getAppartments();
         //$poss = $invoice->getPositions();
-        foreach ($apps as $appartment) {
-            $apartmentPrice = $appartment->getAmount() * $appartment->getPrice();
+        foreach ($apps as $apartment) {
+            $apartmentPrice = ($apartment->getIsFlatPrice() ? $apartment->getPrice() : $apartment->getAmount() * $apartment->getPrice());
             
-            if($appartment->getIncludesVat()) { // price includes vat
-                $vatAmount = (($apartmentPrice * $appartment->getVat()) / (100 + $appartment->getVat()));
+            if($apartment->getIncludesVat()) { // price includes vat
+                $vatAmount = (($apartmentPrice * $apartment->getVat()) / (100 + $apartment->getVat()));
                 
-                $vats[$appartment->getVat()]['brutto'] = ($vats[$appartment->getVat()]['brutto'] ?? 0) + $apartmentPrice;                
+                $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $apartmentPrice;                
             } else { // price does not include vat
-                $vatAmount = (($apartmentPrice * $appartment->getVat()) / (100));
+                $vatAmount = (($apartmentPrice * $apartment->getVat()) / (100));
                 
-                $vats[$appartment->getVat()]['brutto'] = ($vats[$appartment->getVat()]['brutto'] ?? 0) + $apartmentPrice + $vatAmount;
+                $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $apartmentPrice + $vatAmount;
             }
             
-            $vats[$appartment->getVat()]['netto'] = ($vats[$appartment->getVat()]['netto'] ?? 0) + $vatAmount;
+            $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
             $appartmentTotal += $apartmentPrice;
         }
 
         foreach ($poss as $pos) {
-            $miscPrice = $pos->getAmount() * $pos->getPrice();
+            $miscPrice = ($pos->getIsFlatPrice() ? $pos->getPrice() : $pos->getAmount() * $pos->getPrice());
             
             if($pos->getIncludesVat()) { // price includes vat
                 $vatAmount = (($miscPrice * $pos->getVat()) / (100 + $pos->getVat()));
