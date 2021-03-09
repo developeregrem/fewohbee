@@ -28,7 +28,7 @@
                     <thead>
                     <tr>
                         <th>{{ 'invoice.position.appartment'|trans }}</th>
-                        <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
+                        <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
                         <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
                         <th class="text-right">{{ 'invoice.vat'|trans }}</th>
                         <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
@@ -39,9 +39,7 @@
                     this will lead to price sums that are displayed incorrect #}
                     {% set lastIncludesVat = null %}
                     {% set vatWarning = false %}
-                    {% set appartmentSum = 0 %}
                     {% for appartment in appartments %}
-                        {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
                         <tr>
                             <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
                                 <br/>{{ appartment.startDate|date('d.m.Y') }}
@@ -55,7 +53,7 @@
                                     {{ appartment.vat|number_format(2, ',', '.') }}
                                 {% endif %}
                             </td>
-                            <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
+                            <td class="text-right">{{ appartment.totalPrice }}</td>
                         </tr>
                         {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
                         {% if lastIncludesVat is not null and lastIncludesVat != appartment.includesVat %}
@@ -64,7 +62,7 @@
                         {% set lastIncludesVat = appartment.includesVat %}
                     {% endfor %}
                     <tr>
-                        <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
+                        <th colspan="5" class="text-right">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
                     </tr>
                     </tbody>
                 </table>
@@ -81,9 +79,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% set positionSum = 0 %}
                     {% for position in positions %}
-                        {% set positionSum = positionSum + (position.price * position.amount) %}
                         <tr>
                             <td>{{ position.description }}</td>
                             <td class="text-right">{{ position.amount }}</td>
@@ -95,7 +91,7 @@
                                     {{ position.vat|number_format(2, ',', '.') }}
                                 {% endif %}
                             </td>
-                            <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
+                            <td class="text-right">{{ position.totalPrice }}</td>
                         </tr>
                         {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
                         {% if lastIncludesVat is not null and lastIncludesVat != position.includesVat %}
@@ -104,7 +100,7 @@
                         {% set lastIncludesVat = position.includesVat %}
                     {% endfor %}
                     <tr>
-                        <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
+                        <th colspan="5" class="text-right">{{ miscTotal|number_format(2, ',', '.') }}</th>
                     </tr>
                     </tbody>
                 </table>

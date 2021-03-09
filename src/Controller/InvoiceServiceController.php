@@ -113,7 +113,7 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
-        $appartmentTotal = 0;
+        $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
             $invoice,
@@ -122,7 +122,7 @@ class InvoiceServiceController extends AbstractController
             $vatSums,
             $brutto,
             $netto,
-            $appartmentTotal,
+            $apartmentTotal,
             $miscTotal
         );
 
@@ -145,6 +145,8 @@ class InvoiceServiceController extends AbstractController
                 'netto' => $netto,
                 'token' => $csrf->getCSRFTokenForForm(),
                 'templateId' => $templateId,
+                'apartmentTotal' => $apartmentTotal,
+                'miscTotal' => $miscTotal,
                 'error' => true
             )
         );
@@ -813,7 +815,7 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
-        $appartmentTotal = 0;
+        $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
             $invoice,
@@ -822,7 +824,7 @@ class InvoiceServiceController extends AbstractController
             $vatSums,
             $brutto,
             $netto,
-            $appartmentTotal,
+            $apartmentTotal,
             $miscTotal
         );
 
@@ -835,6 +837,8 @@ class InvoiceServiceController extends AbstractController
                 'netto' => $netto,
                 'appartments' => $newInvoicePositionsAppartmentsArray,
                 'positions' => $newInvoicePositionsMiscellaneousArray,
+                'apartmentTotal' => $apartmentTotal,
+                'miscTotal' => $miscTotal,
                 'token' => $csrf->getCSRFTokenForForm()
             )
         );
