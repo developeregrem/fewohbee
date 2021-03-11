@@ -59,3 +59,7 @@ invoice.status.payed: Paid
 invoice.template: Select invoice template
 invoice.title: Invoice management
 invoice.vat: VAT
+invoice.vatwarning: >-
+  You use price categories both with VAT included and without. This mix can lead
+  to inconsistent listings. It is recommended to use consistent price
+  categories.

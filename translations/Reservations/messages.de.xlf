@@ -206,6 +206,18 @@
                 <source>reservation.custumer.selected</source>
                 <target>Bereits ausgewählt:</target>
             </trans-unit>
+            <trans-unit id="reservation.prices.title">
+                <source>reservation.prices.title</source>
+                <target>Buchungsoptionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.prices.misc">
+                <source>reservation.prices.misc</source>
+                <target>Zusatzoptionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.prices.preliminary">
+                <source>reservation.prices.preliminary</source>
+                <target>Die hier angezeigten Preise sind vorläufig und können von denen in der Rechnung abweichen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
