@@ -47,6 +47,11 @@ reservation.preview.customer.address: Address
 reservation.preview.customer.inroom: Guests in this room
 reservation.preview.customer.name: Name
 reservation.price: Price
+reservation.prices.misc: Additional prices
+reservation.prices.preliminary: >-
+  The prices shown here are preliminary and may differ from those in the
+  invoice.
+reservation.prices.title: Booking options
 reservation.select.customer.search.input.placeholder: Surname
 reservation.startdate: From
 reservation.status: Status

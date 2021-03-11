@@ -198,6 +198,14 @@
                 <source>price.double</source>
                 <target>Doppelzimmer (1 Nacht)</target>
             </trans-unit>
+            <trans-unit id="price.includesvat">
+                <source>price.includesvat</source>
+                <target>inkl. MwSt.</target>
+            </trans-unit>
+            <trans-unit id="price.isflatprice">
+                <source>price.isflatprice</source>
+                <target>Pauschalpreis</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

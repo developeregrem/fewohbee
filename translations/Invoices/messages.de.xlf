@@ -246,6 +246,10 @@
                 <source>invoice.appartment.position.category</source>
                 <target>Kategorie</target>
             </trans-unit>
+            <trans-unit id="invoice.vatwarning">
+                <source>invoice.vatwarning</source>
+                <target>Sie nutzen Preiskategorien sowohl mit inkludierter MwSt. als auch ohne. Dieser Mix kann zu unstimmigen Anzeigen führen. Es wird empfohlen einheitliche Preiskategorien zu verwenden.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

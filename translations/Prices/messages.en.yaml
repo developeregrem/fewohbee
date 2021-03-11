@@ -29,6 +29,8 @@ price.flash.edit.success: The price was successfully processed.
 price.friday: Friday
 price.from: From
 price.inactive: Not active
+price.includesvat: incl. VAT
+price.isflatprice: flat rate
 price.minstay: Minimum nights
 price.miscellaneous: Other price
 price.monday: Monday
