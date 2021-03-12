@@ -23,6 +23,7 @@ use App\Entity\Correspondence;
 use App\Entity\Reservation;
 use App\Entity\FileCorrespondence;
 use App\Interfaces\ITemplateRenderer;
+use App\Entity\MailAttachment;
 
 class TemplatesService
 {
@@ -161,21 +162,21 @@ class TemplatesService
         return true;
     }
     
-    public function attachToMail($attachmentId, &$mail) 
-    {
+    /**
+     * Returns a MailAttachment entity which can be passed to Mailer
+     * @param type $attachmentId
+     * @return MailAttachment|null
+     */
+    public function getMailAttachment($attachmentId) : ?MailAttachment {        
         /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
-        if($attachment instanceof FileCorrespondence) {
+        if($attachment instanceof FileCorrespondence) {            
             $data = $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
-            $file = (new \Swift_Attachment())
-            ->setFilename($attachment->getName() . '.pdf')
-            ->setContentType('application/pdf')
-            ->setBody($data)
-            ;
-            $mail->attach($file);
+            $mailAttachment = new MailAttachment($data, $attachment->getName() . '.pdf', 'application/pdf');
+            return $mailAttachment;
         }
         
-        return $mail;
+        return null;
     }
     
     public function getPDFOutput($input, $name, $template, $noResponseOutput = false)
