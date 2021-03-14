@@ -128,4 +128,9 @@ final class Version20190802123327 extends AbstractMigration
         $this->addSql('DROP TABLE template_types');
         $this->addSql('DROP TABLE users');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

@@ -35,4 +35,9 @@ final class Version20210117110810 extends AbstractMigration
         $this->addSql('DROP INDEX uniq_1483a5e9f85e0677 ON users');
         $this->addSql('CREATE UNIQUE INDEX u_username ON users (username)');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

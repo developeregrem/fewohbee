@@ -37,4 +37,9 @@ final class Version20200201112113 extends AbstractMigration
         $this->addSql('ALTER TABLE opengeodb_de_plz CHANGE plz plz VARCHAR(5) CHARACTER SET utf8 NOT NULL COLLATE `utf8_general_ci`');
         $this->addSql('ALTER TABLE prices DROP all_periods');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
