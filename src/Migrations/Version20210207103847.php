@@ -34,4 +34,9 @@ final class Version20210207103847 extends AbstractMigration
         $this->addSql('ALTER TABLE invoice_appartments DROP includes_vat, DROP is_flat_price');
         $this->addSql('ALTER TABLE invoice_positions DROP includes_vat, DROP is_flat_price');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

@@ -32,4 +32,9 @@ final class Version20190831115321 extends AbstractMigration
 
         $this->addSql('ALTER TABLE template_types DROP editor_template');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
