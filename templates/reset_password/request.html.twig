@@ -33,9 +33,9 @@
                     </div>
                 </div>
                 {{ form_start(requestForm) }}
-                {{ form_row(requestForm.email) }}
+                {{ form_widget(requestForm.email) }}
                 
-                <button class="btn btn-primary btn-block">{{ 'login.pwforgotten.button'|trans }}</button>
+                <button class="btn btn-primary btn-block mt-3">{{ 'login.pwforgotten.button'|trans }}</button>
                 {{ form_end(requestForm) }}
             </div>
         </div>
