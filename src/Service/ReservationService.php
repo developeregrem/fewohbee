@@ -15,12 +15,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
-use App\Service\ReservationObject;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\Price;
 use App\Service\InvoiceService;
@@ -253,7 +253,7 @@ class ReservationService implements ITemplateRenderer
     
     /**
      * Adds the given prices to the reservations
-     * @param ArrayCollection $prices
+     * @param Collection $prices
      * @param array $reservations
      * @return array
      */
