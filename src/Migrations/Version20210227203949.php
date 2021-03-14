@@ -25,6 +25,7 @@ final class Version20210227203949 extends AbstractMigration
         $this->addSql('ALTER TABLE reservation_price ADD CONSTRAINT FK_89B7F27ED614C7E7 FOREIGN KEY (price_id) REFERENCES prices (id) ON DELETE CASCADE');
         $this->addSql('UPDATE invoice_appartments set includes_vat=1 WHERE 1');
         $this->addSql('UPDATE invoice_positions set includes_vat=1 WHERE 1');
+        $this->addSql('UPDATE prices set includes_vat=1 WHERE 1');
     }
 
     public function down(Schema $schema) : void
