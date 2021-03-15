@@ -1,7 +1,42 @@
-login.copy: Guesthouse management
-login.description: Please login
-login.password.placeholder: Password
-login.rememberme: Remember me
-login.submit.value: Login
-login.title: Login
-login.username.placeholder: Username
+login:
+  copy: Guesthouse management
+  description: Please login
+  password:
+    placeholder: Password
+  pwforgotten:
+    button: Request password
+    description: >-
+      If you have forgotten your password, you can request a new one on this
+      page. 
+    email: E-Mail
+    flash:
+      error: Please enter your e-mail address.
+    hint: Enter your e-mail address and we will send you a new password.
+    link: Password forgotten?
+    mail:
+      end: FewohBee
+      greeting: 'Dear FewohBee user,'
+      subject: Your password reset request
+      text1: 'to reset your password, please visit the following link.'
+      valid: This link will expire in %validity%.
+    reset:
+      button: Reset password
+      description: Reset password
+      password: New password
+      passwordrepeat: Repeat password
+      title: Reset password
+    sent:
+      back: back to login
+      description: >-
+        If your e-mail address is known to us, an e-mail has been sent to the
+        specified address. This e-mail contains a link that allows you to reset
+        your password.
+      hint: 'If you do not receive an email, please check your spam folder.'
+      title: New password sent
+    title: Request new password
+  rememberme: Remember me
+  submit:
+    value: Login
+  title: Login
+  username:
+    placeholder: Username

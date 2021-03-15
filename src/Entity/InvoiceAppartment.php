@@ -2,6 +2,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity
@@ -10,37 +11,79 @@ use Doctrine\ORM\Mapping as ORM;
 
 class InvoiceAppartment
 {
-    /** @ORM\Id @ORM\Column(type="bigint") @ORM\GeneratedValue * */
+    /** 
+     * @ORM\Id @ORM\Column(type="bigint") 
+     * @ORM\GeneratedValue 
+     */
     private $id;
 
-    /** @ORM\Column(type="string", length=10) * */
+    /** 
+     * @ORM\Column(type="string", length=10) 
+     * @Assert\NotBlank
+     */
     private $number;
 
-    /** @ORM\Column(type="string", length=255) * */
+    /** 
+     * @ORM\Column(type="string", length=255) 
+     * @Assert\NotBlank
+     */
     private $description;
 
-    /** @ORM\Column(type="smallint") * */
+    /** 
+     * @ORM\Column(type="smallint") 
+     * @Assert\Positive
+     */
     private $beds;
 
-    /** @ORM\Column(type="smallint") * */
+    /** 
+     * @ORM\Column(type="smallint") 
+     * @Assert\Positive
+     */
     private $persons;
 
-    /** @ORM\Column(name="start_date", type="date") * */
+    /** 
+     * @ORM\Column(name="start_date", type="date") 
+     * @Assert\NotNull
+     */
     private $startDate;
 
-    /** @ORM\Column(name="end_date", type="date") * */
+    /** 
+     * @ORM\Column(name="end_date", type="date") 
+     * @Assert\NotNull
+     */
     private $endDate;
 
-    /** @ORM\Column(type="decimal", scale=2) * */
+    /** 
+     * @ORM\Column(type="decimal", scale=2) 
+     * @Assert\PositiveOrZero
+     */
     private $price;
 
-    /** @ORM\Column(type="decimal", scale=2) * */
+    /** 
+     * @ORM\Column(type="decimal", scale=2) 
+     * @Assert\PositiveOrZero
+     */
     private $vat;
 
     /**
      * @ORM\ManyToOne(targetEntity="Invoice", inversedBy="appartments")
      */
     private $invoice;
+
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $includesVat;
+
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $isFlatPrice;
+    
+    public function __construct() {
+        $this->isFlatPrice = false;
+        $this->includesVat = false;
+    }
 
     public function getId()
     {
@@ -94,13 +137,18 @@ class InvoiceAppartment
 
     public function getAmount()
     {
+        if($this->isFlatPrice) {
+            return 1;
+        }
+        // else
         $interval = $this->startDate->diff($this->endDate);
         return $interval->format('%a');
     }
     
     public function getTotalPrice()
     {
-        return number_format($this->price * $this->getAmount(), 2, ',', '.');
+        $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
+        return number_format($price, 2, ',', '.');
     }
     
     public function getPriceFormated()
@@ -156,5 +204,29 @@ class InvoiceAppartment
     public function setDescription($description)
     {
         $this->description = $description;
+    }
+
+    public function getIncludesVat(): ?bool
+    {
+        return $this->includesVat;
+    }
+
+    public function setIncludesVat(bool $includesVat): self
+    {
+        $this->includesVat = $includesVat;
+
+        return $this;
+    }
+
+    public function getIsFlatPrice(): ?bool
+    {
+        return $this->isFlatPrice;
+    }
+
+    public function setIsFlatPrice(bool $isFlatPrice): self
+    {
+        $this->isFlatPrice = $isFlatPrice;
+
+        return $this;
     }
 }

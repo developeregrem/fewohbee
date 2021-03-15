@@ -42,6 +42,7 @@ class AppTwigExtensions extends AbstractExtension
             new TwigFunction('getLocalizedMonth', array($this, 'getLocalizedMonthFilter')),
             new TwigFunction('getActiveRouteName', array($this, 'getActiveRouteNameFilter')),
             new TwigFunction('getLocalizedDate', array($this, 'getLocalizedDateFilter')),
+            new TwigFunction('existsById', array($this, 'existsById')),
         );
     }
 
@@ -151,5 +152,14 @@ class AppTwigExtensions extends AbstractExtension
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $formatter->setPattern($pattern);
         return $formatter->format($date);
+    }
+    
+    public function existsById($array, $compare) {
+        foreach($array as $single) {
+            if($single->getId() === $compare->getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

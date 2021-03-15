@@ -46,4 +46,9 @@ final class Version20200229105042 extends AbstractMigration
         $this->addSql('DROP INDEX IDX_E4CB6D5967333DD ON prices');
         $this->addSql('ALTER TABLE prices ADD number_of_beds SMALLINT DEFAULT NULL, DROP room_category_id');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

@@ -1,0 +1,7 @@
+form:
+  email:
+    notblank: Please enter your e-mail address.
+  password:
+    min: 'The password must consist of at least {{ limit }} characters.'
+    nomatch: The passwords do not match.
+    notblank: Please enter a password.

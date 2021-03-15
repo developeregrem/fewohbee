@@ -9,7 +9,9 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '2.3.0'
+    version: '2.4.0'
+    mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
+    default_mailcopy: 'true'
 
 services:
     # default configuration for services in *this* file
@@ -33,13 +35,13 @@ services:
         tags: ['controller.service_arguments']
 
     # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
-    App\Controller\TemplatesServiceController:
+    # please note that last definitions always *replace* previous ones    
+    App\Service\MailService:
         arguments:
             - '%fromMail%'
             - '%fromName%'
-            - '%mailHost%'
             - '%returnPath%'
+            - '%mailCopy%'
     
     App\Service\TemplatesService:
         arguments:

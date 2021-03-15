@@ -83,4 +83,8 @@ class UserService
 
         return true;
     }
+    
+    public function isUsernameAvailable(string $username) {
+        return $this->em->getRepository(User::class)->isUsernameAvailable($username);
+    }
 }
