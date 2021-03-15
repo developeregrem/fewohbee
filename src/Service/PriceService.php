@@ -14,6 +14,7 @@ namespace App\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
@@ -139,6 +140,18 @@ class PriceService
                 $price->setAllDays(false);
             }
         }
+        
+        if ($request->get("includesVat-" . $id) != null) {
+            $price->setIncludesVat(true);
+        } else {
+            $price->setIncludesVat(false);
+        }
+        
+        if ($request->get("isFlatPrice-" . $id) != null) {
+            $price->setIsFlatPrice(true);
+        } else {
+            $price->setIsFlatPrice(false);
+        }
 
         if ($price->getType() == 2) {
             $price->setNumberOfPersons($request->get("number-of-persons-" . $id));
@@ -152,6 +165,14 @@ class PriceService
         }
 
         return $price;
+    }
+    
+    public function getActiveMiscellaneousPrices() : ?array {
+        return $this->em->getRepository(Price::class)->getActiveMiscellaneousPrices();
+    }
+    
+    public function getActiveAppartmentPrices() : ?array {
+        return $this->em->getRepository(Price::class)->getActiveAppartmentPrices();
     }
     
     /**
@@ -183,17 +204,18 @@ class PriceService
     
     /**
      * Based on the given reservation, price categories will be returned for each day of stay ordered by priority
+     * The result is an array where ech key represents a day of stay. idx 0 startday idx, 1 next day, ...
      * @param Reservation $reservation
      * @param int $type
      * @return array
      */
-    public function getPrices(Reservation $reservation, int $type) : array {
+    public function getPricesForReservationDays(Reservation $reservation, int $type, Collection $prices = null) : array {
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
-        if($type === 1) {
+        if($type === 1 && $prices === null) {
             $prices = $this->em->getRepository(Price::class)->findMiscPrices($reservation);
-        } else {
+        } else if($prices === null) {
             $prices = $this->em->getRepository(Price::class)->findApartmentPrices($reservation, $days);
-        }        
+        } // else use prices from method param      
         
         $result = [];
         $curDate = clone $reservation->getStartDate();
@@ -235,6 +257,30 @@ class PriceService
         }
         
         return $result;
+    }
+    
+    /**
+     * Will look for uniqe prices that are valid for the given reservations
+     * @param array $reservations
+     * @param int $type
+     * @return Collection
+     */
+    public function getUniquePricesForReservations(array $reservations, int $type) {         
+        $uniquePrices = new ArrayCollection();
+        foreach($reservations as $reservation) {
+            $pricesPerDay = $this->getPricesForReservationDays($reservation, $type);
+            foreach($pricesPerDay as $day=>$prices) {
+                if($prices === null) {
+                    continue;
+                }
+                foreach($prices as $price) { 
+                    if(!$uniquePrices->contains($price)) {
+                        $uniquePrices[] = $price;
+                    }
+                } 
+            }
+        }
+        return $uniquePrices;
     }
     
     private function getDateDiff(\DateTime $start, \DateTime $end) : int {

@@ -1,8 +1,3 @@
 <fieldset id="entry-form-fieldset-{{ category.id }}" {% if category.id != null %} disabled {% endif %}>
-    <div class="form-group row">
-        {{ form_label(form.name, 'category.name', {'label_attr': {'class': 'col-sm-4 col-form-label'}}) }}
-        <div class="col-sm-8">
-            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-        </div>
-    </div>
+    {{ form_widget(form) }}
 </fieldset>

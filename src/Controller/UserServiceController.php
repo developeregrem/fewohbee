@@ -74,7 +74,7 @@ class UserServiceController extends AbstractController
             $user = $userService->getUserFromForm($request, "new");
 
             // check username
-            if (!$userem->isUsernameAvailable($user->getUsername())) {
+            if (!$userService->isUsernameAvailable($user->getUsername())) {
                 $this->addFlash('warning', 'user.flash.username.na');
                 $error = true;
             } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0

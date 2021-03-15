@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
+        <body>
+            <trans-unit id="form.email.notblank">
+                <source>form.email.notblank</source>
+                <target>Bitte geben Sie ihre E-Mail Adresse ein.</target>
+            </trans-unit>
+            <trans-unit id="form.password.notblank">
+                <source>form.password.notblank</source>
+                <target>Bitte geben Sie ein Passwort ein.</target>
+            </trans-unit>
+            <trans-unit id="form.password.nomatch">
+                <source>form.password.nomatch</source>
+                <target>Die Passwörter stimmen nicht überein.</target>
+            </trans-unit>
+            <trans-unit id="form.password.min">
+                <source>form.password.min</source>
+                <target>Das Passwort muss mindestes aus {{ limit }} Zeichen bestehen.</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

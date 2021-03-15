@@ -1,184 +1,198 @@
-<form id="invoice-form-show" class="form-horizontal" role="form" onsubmit="">
-    <div class="modal-body">
-        <div class="container-fluid">
-            <div id="flash-message-overlay">
-                <div class="col">
-                    {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
-                </div>
+<div class="modal-body">
+    <div class="container-fluid">
+        <div id="flash-message-overlay">
+            <div class="col">
+                {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
-            <div class="row">                
-                <div class="col">
-                    <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
-                        <small>
-                        <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
+        </div>
+        <div class="row">                
+            <div class="col">
+                <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
+                    <small>
+                    <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
+                       title="{{ 'button.edit'|trans }}" class="text-secondary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    </small>
+                </h4>
+                {{ invoice.salutation }}
+            </div>
+            <div class="col text-right">
+                <h4 class="invoice-edit-field d-none">
+                    <small>
+                        <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
                            title="{{ 'button.edit'|trans }}" class="text-secondary">
                             <i class="fas fa-edit"></i>
                         </a>
-                        </small>
-                    </h4>
-                    {{ invoice.salutation }}
-                </div>
-                <div class="col text-right">
-                    <h4 class="invoice-edit-field d-none">
-                        <small>
-                            <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
-                               title="{{ 'button.edit'|trans }}" class="text-secondary">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </small>
-                    </h4>
-                    <strong>{{ 'invoice.number'|trans }}</strong></div>
-            </div>
-            <div class="row">
-                <div class="col">{{ invoice.firstname }} {{ invoice.lastname }}
-                    {% if invoice.company is not empty %}
-                        <br/>{{ invoice.company }}
-                    {% endif %}
-                </div>
-                <div class="col text-right">{{ invoice.number }}</div>
-            </div>
-            <div class="row">
-                <div class="col">{{ invoice.address }}</div>
-                <div class="col text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
-            </div>
-            <div class="row">
-                <div class="col">{{ invoice.zip }} {{ invoice.city }}</div>
-                <div class="col text-right">{{ invoice.date|date('d.m.Y') }}</div>
-            </div>
-            
-            <table class="table table-hover mt-4">
-                <thead>
-                <tr>
-                    <th>{{ 'invoice.position.appartment'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.position.stays'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                    <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% set appartmentSum = 0 %}
-                {% for appartment in invoice.appartments %}
-                    {% set appartmentSum = appartmentSum + (appartment.price * appartment.amount) %}
-                    <tr>
-                        <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
-                            <br/>{{ appartment.startDate|date('d.m.Y') }}
-                            - {{ appartment.endDate|date('d.m.Y') }}</td>
-                        <td class="text-right">{{ appartment.amount }}</td>
-                        <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
-                        <td class="text-right">
-                            {% if is_decimal_place_0(appartment.vat) %}
-                                {{ appartment.vat|number_format(0, ',', '.') }}
-                            {% else %}
-                                {{ appartment.vat|number_format(2, ',', '.') }}
-                            {% endif %}
-                        </td>
-                        <td class="text-right">{{ (appartment.price * appartment.amount)|number_format(2, ',', '.') }}</td>
-                        <td class="invoice-edit-field d-none text-right">
-                            <a href="#" title="{{ 'button.edit'|trans }}">
-                                <i onclick="return showEditAppartmentInvoicePosition({{ appartment.id }})" class="fas fa-edit"></i></a>
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="return removeAppartmentPositionFromInvoicePositions({{ appartment.id }})"
-                                    class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                <tr>
-                    <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return showCreateAppartmentInvoicePosition({{ invoice.id }})">
-                            <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
-                    <th colspan="5" class="text-right">{{ appartmentSum|number_format(2, ',', '.') }}</th>
-                </tr>
-                </tbody>
-            </table>
-            <table class="table table-hover mt-4">
-                <thead>
-                <tr>
-                    <th>{{ 'invoice.position.additional'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                    <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                    <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% set positionSum = 0 %}
-                {% for position in invoice.positions %}
-                    {% set positionSum = positionSum + (position.price * position.amount) %}
-                    <tr>
-                        <td>{{ position.description }}</td>
-                        <td class="text-right">{{ position.amount }}</td>
-                        <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                        <td class="text-right">
-                            {% if is_decimal_place_0(position.vat) %}
-                                {{ position.vat|number_format(0, ',', '.') }}
-                            {% else %}
-                                {{ position.vat|number_format(2, ',', '.') }}
-                            {% endif %}
-                        </td>
-                        <td class="text-right">{{ (position.price * position.amount)|number_format(2, ',', '.') }}</td>
-                        <td class="invoice-edit-field d-none text-right">
-                            <a href="#" title="{{ 'button.edit'|trans }}">
-                                <i onclick="return showEditMiscellaneousInvoicePosition({{ position.id }})" class="fas fa-edit"></i></a>
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ position.id }})"
-                                    class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                {% endfor %}
-                <tr>
-                    <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return showCreateMiscellaneousInvoicePosition({{ invoice.id }})">
-                            <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
-                    <th colspan="5" class="text-right">{{ positionSum|number_format(2, ',', '.') }}</th>
-                </tr>
-                </tbody>
-            </table>
-            
-            <div class="row">
-                <div class="col-md-4">
-                    {{ 'invoice.containing.vat'|trans }}<br/>
-                    <table>
-                        {% for key, value in vats %}
-                            <tr>
-                                <td class="text-right">
-                                    {% if is_decimal_place_0(key) %}
-                                        {{ key|number_format(0, ',', '.') }}
-                                    {% else %}
-                                        {{ key|number_format(2, ',', '.') }}
-                                    {% endif %} %:
-                                </td>
-                                <td>&nbsp;&nbsp;</td>
-                                <td class="text-right">{{ value.netto|number_format(2, ',', '.') }} €</td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                <div class="col-md-6 text-right">{{ 'invoice.netto'|trans }}
-                    <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-                <div class="col text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
-                    <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
-                </div>
-            </div>
-            <br/>
-            <div class="row">
-                <div class="col">
-                    <h4>{{ 'invoice.remark'|trans }}&nbsp;
-                        <small>
-                            <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
-                               title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </small>
-                    </h4>
-                    <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
-                </div>
-            </div>
-            
+                    </small>
+                </h4>
+                <strong>{{ 'invoice.number'|trans }}</strong></div>
         </div>
+        <div class="row">
+            <div class="col">{{ invoice.firstname }} {{ invoice.lastname }}
+                {% if invoice.company is not empty %}
+                    <br/>{{ invoice.company }}
+                {% endif %}
+            </div>
+            <div class="col text-right">{{ invoice.number }}</div>
+        </div>
+        <div class="row">
+            <div class="col">{{ invoice.address }}</div>
+            <div class="col text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
+        </div>
+        <div class="row">
+            <div class="col">{{ invoice.zip }} {{ invoice.city }}</div>
+            <div class="col text-right">{{ invoice.date|date('d.m.Y') }}</div>
+        </div>
+
+        <table class="table table-hover mt-4">
+            <thead>
+            <tr>
+                <th>{{ 'invoice.position.appartment'|trans }}</th>
+                <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {# variable that contains the status whether prices are used that includes vat and does not include vats
+            this will lead to price sums that are displayed incorrect #}
+            {% set lastIncludesVat = null %}
+            {% set vatWarning = false %}
+            {% for appartment in invoice.appartments %}
+                <tr>
+                    <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
+                        <br/>{{ appartment.startDate|date('d.m.Y') }}
+                        - {{ appartment.endDate|date('d.m.Y') }}</td>
+                    <td class="text-right">{{ appartment.amount }}</td>
+                    <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-right">
+                        {% if is_decimal_place_0(appartment.vat) %}
+                            {{ appartment.vat|number_format(0, ',', '.') }}
+                        {% else %}
+                            {{ appartment.vat|number_format(2, ',', '.') }}
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ appartment.totalPrice }}</td>
+                    <td class="invoice-edit-field d-none text-right">
+                        <a href="#" title="{{ 'button.edit'|trans }}">
+                            <i onclick="return getContentForModal('{{ path('invoices.edit.apartment.position', {'invoiceId': invoice.id, 'id': appartment.id}) }}')" class="fas fa-edit"></i></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}">
+                            <i onclick="return removeAppartmentPositionFromInvoicePositions({{ appartment.id }})"
+                                class="fas fa-trash-alt"></i></a>
+                    </td>
+                </tr>
+                {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
+                {% if lastIncludesVat is not null and lastIncludesVat != appartment.includesVat %}
+                    {% set vatWarning = true %}
+                {% endif %}
+                {% set lastIncludesVat = appartment.includesVat %}
+            {% endfor %}
+            <tr>
+                <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return getContentForModal('{{ path('invoices.new.apartment.position', {'invoiceId': invoice.id}) }}')">
+                        <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
+                <th colspan="5" class="text-right">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
+            </tr>
+            </tbody>
+        </table>
+        <table class="table table-hover mt-4">
+            <thead>
+            <tr>
+                <th>{{ 'invoice.position.additional'|trans }}</th>
+                <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
+                <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for position in invoice.positions %}
+                <tr>
+                    <td>{{ position.description }}</td>
+                    <td class="text-right">{{ position.amount }}</td>
+                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-right">
+                        {% if is_decimal_place_0(position.vat) %}
+                            {{ position.vat|number_format(0, ',', '.') }}
+                        {% else %}
+                            {{ position.vat|number_format(2, ',', '.') }}
+                        {% endif %}
+                    </td>
+                    <td class="text-right">{{ position.totalPrice }}</td>
+                    <td class="invoice-edit-field d-none text-right">
+                        <a href="#" title="{{ 'button.edit'|trans }}">
+                            <i onclick="return getContentForModal('{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}')" class="fas fa-edit"></i></a>
+                        <a href="#" title="{{ 'button.delete'|trans }}">
+                            <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ position.id }})"
+                                class="fas fa-trash-alt"></i></a>
+                    </td>
+                </tr>
+                {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
+                {% if lastIncludesVat is not null and lastIncludesVat != position.includesVat %}
+                    {% set vatWarning = true %}
+                {% endif %}
+                {% set lastIncludesVat = position.includesVat %}
+            {% endfor %}
+            <tr>
+                <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return getContentForModal('{{ path('invoices.new.miscellaneous.position', {'invoiceId': invoice.id}) }}')">
+                        <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
+                <th colspan="5" class="text-right">{{ miscTotal|number_format(2, ',', '.') }}</th>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="row">
+            <div class="col-md-4">
+                {{ 'invoice.containing.vat'|trans }}<br/>
+                <table>
+                    {% for key, value in vats %}
+                        <tr>
+                            <td class="text-right">
+                                {% if is_decimal_place_0(key) %}
+                                    {{ key|number_format(0, ',', '.') }}
+                                {% else %}
+                                    {{ key|number_format(2, ',', '.') }}
+                                {% endif %} %:
+                            </td>
+                            <td>&nbsp;&nbsp;</td>
+                            <td class="text-right">{{ value.netto|number_format(2, ',', '.') }} €</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            <div class="col-md-6 text-right">{{ 'invoice.netto'|trans }}
+                <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
+            <div class="col text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
+                <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
+            </div>
+        </div>
+        {% if vatWarning %}
+        <div class="row mt-3">
+            <div class="col text-center">
+            <span class="text-warning mr-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.vatwarning'|trans }}</span>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row mt-3">
+            <div class="col">
+                <h4>{{ 'invoice.remark'|trans }}&nbsp;
+                    <small>
+                        <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </small>
+                </h4>
+                <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
+            </div>
+        </div>
+
     </div>
-    <input name="_csrf_token" value="{{ token }}" type="hidden">
-</form>
+</div>
+
 <div class="modal-footer">
     <div class="col p-0" id="boxDefault">
         <form id="invoice-form-status"  role="form">   
@@ -330,57 +344,6 @@
 
         return false;
     }
-    
-    function showCreateAppartmentInvoicePosition(id) {
-        var url = "{{ path('invoices.show.create.appartment.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { invoiceid: id },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-
-                $("#from").datepicker(fromOptions);
-                $("#end").datepicker(endOptions);
-            }
-        });
-
-        return false;
-    }
-
-    function showEditAppartmentInvoicePosition(id) {
-        var url = "{{ path('invoices.show.edit.appartment.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { appartmentpositioneditid: id },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
 
     function removeAppartmentPositionFromInvoicePositions(id) {
         var url = "{{ path('invoices.delete.appartment.invoice.position') }}";
@@ -392,54 +355,6 @@
             url: url,
             type: "post",
             data: {appartmentInvoicePositionEditId: id},
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    
-    function showCreateMiscellaneousInvoicePosition(id) {
-        var url = "{{ path('invoices.show.create.miscellaneous.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { invoiceid: id },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-
-    function showEditMiscellaneousInvoicePosition(id) {
-        var url = "{{ path('invoices.show.edit.miscellaneous.invoice.position') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { miscellaneouspositionEditId: id },
             beforeSend: function () {
                 $("#modal-content-ajax").html(content);
             },

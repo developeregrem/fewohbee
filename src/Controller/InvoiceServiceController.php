@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
@@ -27,7 +28,12 @@ use App\Entity\Template;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\Price;
+use App\Form\InvoiceMiscPositionType;
+use App\Form\InvoiceApartmentPositionType;
 
+/**
+ * @Route("/invoices")
+ */
 class InvoiceServiceController extends AbstractController
 {
     private $perPage = 20;
@@ -107,7 +113,7 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
-        $appartmentTotal = 0;
+        $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
             $invoice,
@@ -116,7 +122,7 @@ class InvoiceServiceController extends AbstractController
             $vatSums,
             $brutto,
             $netto,
-            $appartmentTotal,
+            $apartmentTotal,
             $miscTotal
         );
 
@@ -139,6 +145,8 @@ class InvoiceServiceController extends AbstractController
                 'netto' => $netto,
                 'token' => $csrf->getCSRFTokenForForm(),
                 'templateId' => $templateId,
+                'apartmentTotal' => $apartmentTotal,
+                'miscTotal' => $miscTotal,
                 'error' => true
             )
         );
@@ -305,6 +313,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
+    /**
+     * @Route("/create/positions/create", name="invoices.create.invoice.positions", methods={"GET","POST"})
+     */
     public function showCreateInvoicePositionsFormAction(SessionInterface $session, InvoiceService $is, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
@@ -315,7 +326,7 @@ class InvoiceServiceController extends AbstractController
             $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
             
             // prefill positions for all selected reservations
-            $is->prefillMiscPositions($newInvoiceReservationsArray, $session);           
+            $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $session, true);           
         }
         $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
         
@@ -464,15 +475,17 @@ class InvoiceServiceController extends AbstractController
         }
         
     }
-
-    public function showCreateAppartmentInvoicePositionFormAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    
+    /**
+     * @Route("/{invoiceId}/position/apartment/new/", name="invoices.new.apartment.position", methods={"GET","POST"})
+     */
+    public function newApartmentPosition($invoiceId, SessionInterface $session, InvoiceService $is, Request $request): Response
     {
+        $invoicePosition = new InvoiceAppartment();
         $em = $this->getDoctrine()->getManager();
-        $invoiceId = $request->get('invoiceid', 'new');
-        $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
         
-        // during create process
-        if($invoiceId == 'new') {
+        // during invoice create process
+        if($invoiceId === 'new') {
             $newInvoiceReservationsArray = $session->get("invoiceInCreation");
 
             foreach ($newInvoiceReservationsArray as $reservationid) {
@@ -480,141 +493,120 @@ class InvoiceServiceController extends AbstractController
                     $reservationid
                 )[0];
             }
-        } else { // during edit process
+        } else { // during invoice edit process
             $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
             $reservations = $invoice->getReservations();
         }
-
-        return $this->render(
-            'Invoices/invoice_form_show_create_appartment_position.html.twig',
-            array(
-                'reservations' => $reservations,
-                'prices' => $prices,
-                'token' => $csrf->getCSRFTokenForForm(),
-                'invoiceId' => $invoiceId
-            )
-        );
-    }
-
-    public function createAppartmentInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, Request $request)
-    {
-        $id = $request->get('invoice-id');
         
-        if ($csrf->validateCSRFToken($request, true)) {
-            $positionAppartment = new InvoiceAppartment();
-            $positionAppartment->setDescription($request->get("description"));
-            $positionAppartment->setNumber($request->get("number"));
-            $positionAppartment->setStartDate(new \DateTime($request->get("from")));
-            $positionAppartment->setEndDate(new \DateTime($request->get("end")));
-            $positionAppartment->setVat(str_replace(",", ".", $request->get("vat")));
-            $positionAppartment->setPrice(str_replace(",", ".", $request->get("price")));
-            $positionAppartment->setPersons($request->get("persons"));
-            $positionAppartment->setBeds($request->get("beds"));
-            
-            // during create process
-            if($id === 'new') {
-                $is->saveNewAppartmentPosition($positionAppartment, $session);
+        $form = $this->createForm(InvoiceApartmentPositionType::class, $invoicePosition, [
+            'action' => $this->generateUrl('invoices.new.apartment.position', ['invoiceId' => $invoiceId]),
+            'reservations' => $reservations
+        ]);
+        $form->handleRequest($request);
+        
 
-                return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction', array());
+        if ($form->isSubmitted() && $form->isValid()) {
+            
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2, '.', ''));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2, '.', ''));
+            
+            // during invoice create process
+            if($invoiceId === 'new') {
+                $is->saveNewAppartmentPosition($invoicePosition, $session);
+
+                return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
                 $em = $this->getDoctrine()->getManager();
-                $invoice = $em->getRepository(Invoice::class)->find($id);
-                $positionAppartment->setInvoice($invoice);
+                $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
+                $invoicePosition->setInvoice($invoice);
                 
-                $em->persist($positionAppartment);
+                $em->persist($invoicePosition);
                 $em->flush();
                 
                 $this->addFlash('success', 'invoice.flash.edit.success');
                 
                 return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', array(
-                    'id'  => $id,
+                    'id'  => $invoiceId,
                 ));
             }
         }
         
-        // if invalid token
-        return $this->forward('App\Controller\InvoiceServiceController::showCreateAppartmentInvoicePositionFormAction', array());
+        $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
+        
+        return $this->render(
+            'Invoices/invoice_form_show_create_appartment_position.html.twig',
+            [
+                'reservations' => $reservations,
+                'prices' => $prices,
+                'invoiceId' => $invoiceId,
+                'form' => $form->createView()
+            ]
+        );
     }
-
-    public function showEditAppartmentInvoicePositionFormAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    
+    /**
+     * @Route("/{invoiceId}/edit/position/apartment/{id}/edit", name="invoices.edit.apartment.position", methods={"GET","POST"})
+     */
+    public function editApartmentPosition($invoiceId, $id, Request $request, SessionInterface $session): Response
     {
         $em = $this->getDoctrine()->getManager();
         
-        $key = $request->get("appartmentpositionkey", -1);              // during create process
-        $positionId = $request->get("appartmentpositioneditid", -1);    // during edit process
-        $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
-        
-        // during create process
-        if($key != -1) {
-            $newInvoiceReservationsArray = $session->get("invoiceInCreation");
+        // during invoice create process
+        if($invoiceId === 'new') {
             $newInvoicePositionsAppartmentArray = $session->get("invoicePositionsAppartments");
-
-            $newAppartmentPosition = $newInvoicePositionsAppartmentArray[$key];
+            $invoicePosition = $newInvoicePositionsAppartmentArray[$id];
+            
+            $newInvoiceReservationsArray = $session->get("invoiceInCreation");
 
             foreach ($newInvoiceReservationsArray as $reservationid) {
                 $reservations[] = $em->getRepository(Reservation::class)->find($reservationid);
             }
-        } else { // during edit process
-            $newAppartmentPosition = $em->getRepository(InvoiceAppartment::class)->find($positionId);
-            $reservations = $newAppartmentPosition->getInvoice()->getReservations();
+        } else { // during edit process     
+            
+            $invoicePosition = $em->getRepository(InvoiceAppartment::class)->find($id);
+            
+            $reservations = $invoicePosition->getInvoice()->getReservations();
         }
+        
+        $form = $this->createForm(InvoiceApartmentPositionType::class, $invoicePosition, [
+            'action' => $this->generateUrl('invoices.edit.apartment.position', ['invoiceId' => $invoiceId, 'id' => $id]),
+            'reservations' => $reservations
+        ]);
+        
+        $form->handleRequest($request);
 
-        return $this->render(
-            'Invoices/invoice_form_show_edit_appartment_position.html.twig',
-            array(
-                'reservations' => $reservations,
-                'position' => $newAppartmentPosition,
-                'key' => $key,
-                'prices' => $prices,
-                'token' => $csrf->getCSRFTokenForForm(),
-                'positionId' => $positionId
-            )
-        );
-    }
-
-    public function saveAppartmentInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
-    {        
-        $key = $request->get("key", -1);                    // during create process
-        $positionId = $request->get("position-id", -1);    // during edit process
-
-        if ($csrf->validateCSRFToken($request, true)) {
-            // during create process
-            if($key != -1) {
-                $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments");
-                $positionAppartment = $newInvoicePositionsAppartmentsArray[$key];
-            } else { // during edit process     
-                $em = $this->getDoctrine()->getManager();
-                $positionAppartment = $em->getRepository(InvoiceAppartment::class)->find($positionId);
-            }
+        if ($form->isSubmitted() && $form->isValid()) { 
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2, '.', ''));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2, '.', ''));
             
-            $positionAppartment->setDescription($request->get("description"));
-            $positionAppartment->setNumber($request->get("number"));
-            $positionAppartment->setStartDate(new \DateTime($request->get("from")));
-            $positionAppartment->setEndDate(new \DateTime($request->get("end")));
-            $positionAppartment->setVat(str_replace(",", ".", $request->get("vat")));
-            $positionAppartment->setPrice(str_replace(",", ".", $request->get("price")));
-            $positionAppartment->setPersons($request->get("persons"));
-            $positionAppartment->setBeds($request->get("beds"));
-            
-            // during create process
-            if($key != -1) {
-                $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+            // during invoice create process
+            if($invoiceId === 'new') {
+                $newInvoicePositionsAppartmentArray[$id] = $invoicePosition;
+                $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentArray);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process                
-                $em->persist($positionAppartment);
+                $em->persist($invoicePosition);
                 $em->flush();
                 
                 $this->addFlash('success', 'invoice.flash.edit.success');
                 
                 return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', array(
-                    'id'  => $positionAppartment->getInvoice()->getId(),
+                    'id'  => $invoicePosition->getInvoice()->getId(),
                 ));
             }
-        }  
+        }
         
-        // if invalid token
-        return $this->forward('App\Controller\InvoiceServiceController::showEditAppartmentInvoicePositionFormAction', array());
+        $prices = $em->getRepository(Price::class)->getActiveAppartmentPrices();
+
+        return $this->render('Invoices/invoice_form_show_edit_appartment_position.html.twig', [
+            'reservations' => $reservations,
+            'prices' => $prices,
+            'invoiceId' => $invoiceId,
+            'form' => $form->createView(),
+        ]);
     }
 
     public function deleteAppartmentInvoicePositionAction(SessionInterface $session, Request $request)
@@ -643,14 +635,49 @@ class InvoiceServiceController extends AbstractController
         }        
     }
 
-    public function showCreateMiscellaneousInvoicePositionFormAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    /**
+     * @Route("/{invoiceId}/new/miscellaneous", name="invoices.new.miscellaneous.position", methods={"GET","POST"})
+     */
+    public function newMiscellaneousPosition($invoiceId, SessionInterface $session, InvoiceService $is, Request $request): Response
     {
+        $invoicePosition = new InvoicePosition();
+        $form = $this->createForm(InvoiceMiscPositionType::class, $invoicePosition, [
+            'action' => $this->generateUrl('invoices.new.miscellaneous.position', ['invoiceId' => $invoiceId])
+        ]);
+        $form->handleRequest($request);
         $em = $this->getDoctrine()->getManager();
-        $invoiceId = $request->get('invoiceid', 'new');        
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
+            $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
+            
+            // during invoice create process
+            if($invoiceId === 'new') {
+                $is->saveNewMiscPosition($invoicePosition, $session);
+
+                return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
+            } else { // during edit process
+                $em = $this->getDoctrine()->getManager();
+                $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
+                $invoicePosition->setInvoice($invoice);
+                
+                $em->persist($invoicePosition);
+                $em->flush();
+                
+                $this->addFlash('success', 'invoice.flash.edit.success');
+                
+                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', array(
+                    'id'  => $invoiceId,
+                ));
+            }
+        }
+        
         $prices = $em->getRepository(Price::class)->getActiveMiscellaneousPrices();
 
-        // during create process
-        if($invoiceId == 'new') {
+        // during invoice create process
+        if($invoiceId === 'new') {
             $newInvoiceReservationsArray = $session->get("invoiceInCreation");
 
             foreach ($newInvoiceReservationsArray as $reservationid) {
@@ -658,117 +685,50 @@ class InvoiceServiceController extends AbstractController
                     $reservationid
                 )[0];
             }
-        } else { // during edit process
+        } else { // during invoice edit process
             $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
             $reservations = $invoice->getReservations();
         }
         
         return $this->render(
             'Invoices/invoice_form_show_create_miscellaneous_position.html.twig',
-            array(
+            [
                 'reservations' => $reservations,
                 'prices' => $prices,
-                'token' => $csrf->getCSRFTokenForForm(),
-                'invoiceId' => $invoiceId
-            )
+                'invoiceId' => $invoiceId,
+                'form' => $form->createView()
+            ]
         );
     }
-
-    public function showEditMiscellaneousInvoicePositionFormAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    
+    /**
+     * @Route("/{invoiceId}/edit/miscellaneous/{id}/edit", name="invoices.edit.miscellaneous.position", methods={"GET","POST"})
+     */
+    public function editMiscellaneousPosition($invoiceId, $id, Request $request, SessionInterface $session): Response
     {
-        $em = $this->getDoctrine()->getManager();
-        
-        $key = $request->get("miscellaneouspositionkey", -1);              // during create process
-        $positionId = $request->get("miscellaneouspositionEditId", -1);    // during edit process
-        $prices = $em->getRepository(Price::class)->getActiveMiscellaneousPrices();
-
-        // during create process
-        if($key != -1) {
-            $newInvoiceReservationsArray = $session->get("invoiceInCreation");
+        // during invoice create process
+        if($invoiceId === 'new') {
             $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
-
-            $newMiscellaneousPosition = $newInvoicePositionsMiscellaneousArray[$key];
-
-            foreach ($newInvoiceReservationsArray as $reservationid) {
-                $reservations[] = $em->getRepository(Reservation::class)->find($reservationid);
-            }
-        } else { // during edit process
-            $newMiscellaneousPosition = $em->getRepository(InvoicePosition::class)->find($positionId);
-            $reservations = $newMiscellaneousPosition->getInvoice()->getReservations();
-        }
-
-        return $this->render(
-            'Invoices/invoice_form_show_edit_miscellaneous_position.html.twig',
-            array(
-                'reservations' => $reservations,
-                'position' => $newMiscellaneousPosition,
-                'key' => $key,
-                'prices' => $prices,
-                'token' => $csrf->getCSRFTokenForForm(),
-                'positionId' => $positionId
-            )
-        );
-    }
-
-    public function createMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, InvoiceService $is, Request $request)
-    {
-        $id = $request->get('invoice-id');
-        
-        if ($csrf->validateCSRFToken($request, true)) {
-            $positionMiscellaneous = new InvoicePosition();
-            $positionMiscellaneous->setAmount($request->get("amount"));
-            $positionMiscellaneous->setDescription($request->get("description"));
-            $positionMiscellaneous->setPrice(str_replace(",", ".", $request->get("price")));
-            $positionMiscellaneous->setVat(str_replace(",", ".", $request->get("vat")));
-            
-            // during create process
-            if($id === 'new') {
-                $is->saveNewMiscPosition($positionMiscellaneous, $session);
-
-                return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-            } else { // during edit process
-                $em = $this->getDoctrine()->getManager();
-                $invoice = $em->getRepository(Invoice::class)->find($id);
-                $positionMiscellaneous->setInvoice($invoice);
-                
-                $em->persist($positionMiscellaneous);
-                $em->flush();
-                
-                $this->addFlash('success', 'invoice.flash.edit.success');
-                
-                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', array(
-                    'id'  => $id,
-                ));
-            }
+            $positionMiscellaneous = $newInvoicePositionsMiscellaneousArray[$id];
+        } else { // during edit process     
+            $em = $this->getDoctrine()->getManager();
+            $positionMiscellaneous = $em->getRepository(InvoicePosition::class)->find($id);
         }
         
-        // if invalid token
-        return $this->forward('App\Controller\InvoiceServiceController::showCreateMiscellaneousInvoicePositionFormAction', array());
-    }
+        $form = $this->createForm(InvoiceMiscPositionType::class, $positionMiscellaneous, [
+            'action' => $this->generateUrl('invoices.edit.miscellaneous.position', ['invoiceId' => $invoiceId, 'id' => $id])
+        ]);
+        $form->handleRequest($request);
+        $em = $this->getDoctrine()->getManager();
 
-    public function saveMiscellaneousInvoicePositionAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
-    {       
-        $key = $request->get("key", -1);                   // during create process
-        $positionId = $request->get("position-id", -1);    // during edit process
-        
-        if ($csrf->validateCSRFToken($request, true)) {
-            // during create process
-            if($key != -1) {
-                $newInvoicePositionsMiscellaneousArray = $session->get("invoicePositionsMiscellaneous");
-                $positionMiscellaneous = $newInvoicePositionsMiscellaneousArray[$key];
-            } else { // during edit process     
-                $em = $this->getDoctrine()->getManager();
-                $positionMiscellaneous = $em->getRepository(InvoicePosition::class)->find($positionId);
-            }
+        if ($form->isSubmitted() && $form->isValid()) {
+            // float values must be converted to string for later calculation steps in calculateSums()
+            $positionMiscellaneous->setPrice(number_format($positionMiscellaneous->getPrice(), 2));
+            $positionMiscellaneous->setVat(number_format($positionMiscellaneous->getVat(), 2));
             
-            $positionMiscellaneous->setAmount($request->get("amount"));
-            $positionMiscellaneous->setDescription($request->get("description"));
-            $positionMiscellaneous->setPrice(str_replace(",", ".", $request->get("price")));
-            $positionMiscellaneous->setVat(str_replace(",", ".", $request->get("vat")));
-            
-            // during create process
-            if($key != -1) {
-                $newInvoicePositionsMiscellaneousArray[$key] = $positionMiscellaneous;
+            // during invoice create process
+            if($invoiceId === 'new') {
+                $newInvoicePositionsMiscellaneousArray[$id] = $positionMiscellaneous;
                 $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
@@ -784,8 +744,25 @@ class InvoiceServiceController extends AbstractController
             }
         }
         
-        // if invalid token
-        return $this->forward('App\Controller\InvoiceServiceController::showEditMiscellaneousInvoicePositionFormAction', array());
+        $prices = $em->getRepository(Price::class)->getActiveMiscellaneousPrices();
+        
+        // during invoice create process
+        if($invoiceId === 'new') {
+            $newInvoiceReservationsArray = $session->get("invoiceInCreation");
+
+            foreach ($newInvoiceReservationsArray as $reservationid) {
+                $reservations[] = $em->getRepository(Reservation::class)->find($reservationid);
+            }
+        } else { // during edit process
+            $reservations = $positionMiscellaneous->getInvoice()->getReservations();
+        }
+
+        return $this->render('Invoices/invoice_form_show_edit_miscellaneous_position.html.twig', [
+            'reservations' => $reservations,
+            'prices' => $prices,
+            'invoiceId' => $invoiceId,
+            'form' => $form->createView(),
+        ]);
     }
 
     public function deleteMiscellaneousInvoicePositionAction(SessionInterface $session, Request $request)
@@ -838,7 +815,7 @@ class InvoiceServiceController extends AbstractController
         $vatSums = Array();
         $brutto = 0;
         $netto = 0;
-        $appartmentTotal = 0;
+        $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
             $invoice,
@@ -847,7 +824,7 @@ class InvoiceServiceController extends AbstractController
             $vatSums,
             $brutto,
             $netto,
-            $appartmentTotal,
+            $apartmentTotal,
             $miscTotal
         );
 
@@ -860,6 +837,8 @@ class InvoiceServiceController extends AbstractController
                 'netto' => $netto,
                 'appartments' => $newInvoicePositionsAppartmentsArray,
                 'positions' => $newInvoicePositionsMiscellaneousArray,
+                'apartmentTotal' => $apartmentTotal,
+                'miscTotal' => $miscTotal,
                 'token' => $csrf->getCSRFTokenForForm()
             )
         );

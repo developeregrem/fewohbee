@@ -73,11 +73,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
     <script>
-    $.ajaxSetup({
-        cache: false
-    });
     var lastClickedReservationId = 0;
     
     $(document).ready(function () {        
@@ -462,26 +458,27 @@
     }
     ;
 
-    function getReservationPreview(id, tab) {
+    function getReservationPreview(id, tab, displayWait) {        
+        displayWait = (displayWait === false ? displayWait : true);
         var url = "{{ path('reservations.create.preview') }}";
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
 
-        $("#modal-content-ajax").html(content);
+        if(displayWait) {
+            $("#modal-content-ajax").html(content);
+        }
 
         $.ajax({
             url: url,
             type: "post",
             data: { customerid: id, tab: tab },
-            beforeSend: function () {
-                $("#customers").html(content);
-            },
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(xhr.status);
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
+                enablePriceOptionsMisc();
             }
         });
 
@@ -532,7 +529,8 @@
     }
     ;
 
-    function getReservation(id, tab) {
+    function getReservation(id, tab, displayWait) {
+        displayWait = (displayWait === false ? displayWait : true);
         if (id != "new") {
             var url = "{{ path('reservations.get.reservation', {'id': 'placeholder'}) }}";
             url = url.replace("placeholder", id);
@@ -543,7 +541,9 @@
             var content = '<div class="modal-body">' +
                     '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                     '</div>';
-            $("#modal-content-ajax").html(content);
+            if(displayWait) {                
+                $("#modal-content-ajax").html(content);
+            }
             $('#modalCenter .modal-title').text("{{ 'reservation.details'|trans }}");
             $('#modalCenter').modal('show')
 
@@ -556,15 +556,16 @@
                 success: function (data) {
                     if (data.length > 0) {
                         $("#modal-content-ajax").html(data);
+                        enablePriceOptionsMisc();
                     } else {
                         window.location.href = "{{ path('start') }}";
                     }
                 }
             });
         } else {
-            getReservationPreview(null, tab);
+            getReservationPreview(null, tab, displayWait);
         }
-
+        
         return false;
     }
     ;
@@ -982,4 +983,10 @@
     }
     {% endif %}
     </script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/reservations.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.0.0.js"></script>
 {% endblock %}

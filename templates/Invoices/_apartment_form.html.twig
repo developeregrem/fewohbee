@@ -1,0 +1,31 @@
+{{ form_row(form.number) }}
+{{ form_row(form.description_choices) }}
+{{ form_row(form.description) }}
+{{ form_row(form.startDate) }}
+{{ form_row(form.endDate) }}
+{{ form_row(form.persons) }}
+{{ form_row(form.beds) }}
+<div class="form-group row">
+    <label for="pricecategory"
+           class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
+
+    <div class="col-sm">
+        <select id="pricecategory" name="pricecategory" class="form-control"
+                onchange="return fillApartmentFieldsFromPriceCategory(this)">
+            <option value="0|0" selected></option>
+            {% for price in prices %}
+                <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.includesVat }}|{{ price.isFlatPrice }}">{{ price.description }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>                   
+{{ form_row(form.vat) }}
+{{ form_row(form.price) }}
+<div class="form-group row mt-3 pl-5">
+    {{ form_widget(form.includesVat) }}
+    {{ form_widget(form.isFlatPrice) }}
+</div>
+
+<script>
+    addChangeEvtForApartmentDescription();    
+</script>

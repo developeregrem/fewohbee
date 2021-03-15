@@ -19,12 +19,18 @@
                                        value="{{ price.description }}" required>
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'price.price'|trans }} *</label>
+                        <div class="row form-inline">
+                            <label for="price-{{ price.id }}" class="col-sm-4 col-form-label justify-content-end">{{ 'price.price'|trans }} *</label>
 
-                            <div class="col-sm-8">
+                            <div class="col-sm-4">
                                 <input type="text" class="form-control" name="price-{{ price.id }}"
                                        value="{{ price.price|number_format(2, ',', '.') }}" required>
+                            </div>
+                            <div class="col">
+                                <div class="custom-control custom-checkbox custom-control-inline">
+                                    <input type="checkbox" name="includesVat-{{ price.id }}" id="includesVat-{{ price.id }}" class="custom-control-input"{% if price.includesVat == 1 %} checked {% endif %} value="1">
+                                    <label class="custom-control-label" for="includesVat-{{ price.id }}">{{ 'price.includesvat'|trans }}</label>
+                                </div>
                             </div>
                         </div>
                         <div class="form-group row">
@@ -62,6 +68,15 @@
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" name="active-{{ price.id }}" id="active-{{ price.id }}" class="custom-control-input"{% if price.active == 1 %} checked {% endif %} value="1">
                                     <label class="custom-control-label" for="active-{{ price.id }}">{{ 'price.active'|trans }}</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-sm-4"></div>
+                            <div class="col">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="isFlatPrice-{{ price.id }}" id="isFlatPrice-{{ price.id }}" class="custom-control-input"{% if price.isFlatPrice == 1 %} checked {% endif %} value="1">
+                                    <label class="custom-control-label" for="isFlatPrice-{{ price.id }}">{{ 'price.isflatprice'|trans }}</label>
                                 </div>
                             </div>
                         </div>

@@ -37,48 +37,8 @@
         <div class="row mt-4">
             <div class="col">
                 <h4>{{ 'invoice.appartment'|trans }}</h4>
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th>{{ 'invoice.appartment.position.number'|trans }}</th>
-                        <th>{{ 'invoice.appartment.position.description'|trans }}</th>
-                        <th>{{ 'invoice.appartment.position.beds'|trans }}</th>
-                        <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
-                        <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
-                        <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
-                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                        <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
-                        <th>{{ 'invoice.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for key,position in positionsAppartment %}
-                        <tr>
-                            <td>{{ position.number }}</td>
-                            <td>{{ position.description }}</td>
-                            <td>{{ position.beds }}</td>
-                            <td>{{ position.persons }}</td>
-                            <td>{{ position.startdate|date("d.m.Y") }}</td>
-                            <td>{{ position.enddate|date("d.m.Y") }}</td>
-                            <td class="text-right">
-                                {% if is_decimal_place_0(position.vat) %}
-                                    {{ position.vat|number_format(0, ',', '.') }}
-                                {% else %}
-                                    {{ position.vat|number_format(2, ',', '.') }}
-                                {% endif %}
-                            </td>
-                            <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.edit'|trans }}">
-                                    <i onclick="return showEditAppartmentInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-default" onclick="return showCreateAppartmentInvoicePosition()">
+                {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'edit'} %}
+                <button type="button" class="btn btn-default" onclick="return getContentForModal('{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}')">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
             </div>
         </div>
@@ -87,40 +47,8 @@
             <div class="col">
                 <p>
                 <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th>{{ 'invoice.appartment.position.description'|trans }}</th>
-                        <th>{{ 'invoice.position.amount'|trans }}</th>
-                        <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                        <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                        <th>{{ 'invoice.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for key,position in positionsMiscellaneous %}
-                        <tr>
-                            <td>{{ position.description }}</td>
-                            <td>{{ position.amount }}</td>
-                            <td class="text-right">
-                                {% if is_decimal_place_0(position.vat) %}
-                                    {{ position.vat|number_format(0, ',', '.') }}
-                                {% else %}
-                                    {{ position.vat|number_format(2, ',', '.') }}
-                                {% endif %}
-                            </td>
-                            <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                            <td>
-                                <a href="#" title="{{ 'button.edit'|trans }}">
-                                    <i onclick="return showEditMiscellaneousInvoicePosition({{ key }})" class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="return removeMiscellaneousPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                <button type="button" class="btn btn-default" onclick="return showCreateMiscellaneousInvoicePosition()">
+                {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'edit'} %}
+                <button type="button" class="btn btn-default" onclick="return getContentForModal('{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}')">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
                 </p>
             </div>
@@ -165,53 +93,6 @@ function saveNewInvoiceId() {
     return false;
 }
 
-function showCreateAppartmentInvoicePosition() {
-    var url = "{{ path('invoices.show.create.appartment.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function showEditAppartmentInvoicePosition(key) {
-    var url = "{{ path('invoices.show.edit.appartment.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        data: { appartmentpositionkey: key },
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
 function removeAppartmentPositionFromInvoicePositions(index) {
     var url = "{{ path('invoices.delete.appartment.invoice.position') }}";
     var content = '<div class="modal-body">' +
@@ -230,57 +111,6 @@ function removeAppartmentPositionFromInvoicePositions(index) {
         },
         success: function (data) {
             $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function showCreateMiscellaneousInvoicePosition() {
-    var url = "{{ path('invoices.show.create.miscellaneous.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-
-
-        }
-    });
-
-    return false;
-}
-
-function showEditMiscellaneousInvoicePosition(key) {
-    var url = "{{ path('invoices.show.edit.miscellaneous.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        data: { miscellaneouspositionkey: key },
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-
-
         }
     });
 

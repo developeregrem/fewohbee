@@ -28,19 +28,13 @@ use App\Entity\Correspondence;
 use App\Entity\FileCorrespondence;
 use App\Entity\MailCorrespondence;
 use App\Service\FileUploader;
+use App\Service\MailService;
 
 class TemplatesServiceController extends AbstractController
 {
-    private $fromMail;
-    private $fromName;
-    private $mailHost;
-    private $returnPath;
-    public function __construct(string $fromMail, string $fromName, string $mailHost, string $returnPath)
+    public function __construct()
     {
-        $this->fromMail = $fromMail;
-        $this->fromName = $fromName;
-        $this->mailHost = $mailHost;
-        $this->returnPath = $returnPath;
+
     }
 
     /**
@@ -328,7 +322,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
-    public function sendEmailAction(CSRFProtectionService $csrf, TemplatesService $ts, SessionInterface $session, \Swift_Mailer $mailer, Request $request)
+    public function sendEmailAction(CSRFProtectionService $csrf, TemplatesService $ts, SessionInterface $session, MailService $mailer, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
@@ -344,32 +338,18 @@ class TemplatesServiceController extends AbstractController
             if (strlen($to) == 0 || strlen($subject) == 0 || strlen($msg) == 0) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $message = (new \Swift_Message())
-                    ->setSubject($subject)
-                    ->setFrom(array($this->fromMail => $this->fromName))
-                    ->setTo(array($to))
-                    ->setBcc(array($this->fromMail => $this->fromName))
-                    ->setBody($msg, 'text/html')
-                    ->addPart(strip_tags($msg), 'text/plain')
-                    ->setId(uniqid()."@".$this->mailHost)
-                    //->setEncoder((Swift_Encoding::get8BitEncoding())
-                    ->setReturnPath($this->returnPath);
-                $headers = $message->getHeaders();
-                $headers->addTextHeader('X-Mailer', 'PHP/'.  phpversion());
-                //$headers->addTextHeader('X-MSMail-Priority', 'High');
-                
+            } else {                
+                $attachments = [];
                 // add attachments
                 foreach($attachmentIds as $attId) {
                     $id = reset($attId); // first element of array 
-                    $ts->attachToMail($id, $message);                        
+                    $mailAttachment = $ts->getMailAttachment($id);      
+                    if($mailAttachment !== null) {
+                        $attachments[] = $mailAttachment;
+                    }
                 }
-                //$logger = new \Swift_Plugins_Loggers_EchoLogger();
-                //$this->app['mailer']->registerPlugin(new \Swift_Plugins_LoggerPlugin($logger));
-                //$failures;
-                $res = $mailer->send($message);
-                //var_dump($failures);
-                //var_dump($res);
+                
+                $mailer->sendHTMLMail($to, $subject, $msg, $attachments);
 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
