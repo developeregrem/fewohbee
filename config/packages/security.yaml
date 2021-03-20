@@ -25,6 +25,7 @@ security:
                 target: /
             remember_me:
                 secret:   '%kernel.secret%'
+            lazy:   true
 
             # activate different ways to authenticate
 
