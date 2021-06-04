@@ -30,7 +30,7 @@ use App\Service\PriceService;
 class ReservationService implements ITemplateRenderer
 {
     private $em;
-	private $session;
+    private $session;
 
     public function __construct(EntityManagerInterface $em, SessionInterface $session)
     {
@@ -264,6 +264,26 @@ class ReservationService implements ITemplateRenderer
             }
         }
         return $reservations;
+    }
+    
+    /**
+     * Based on given Reservation IDs the coresponding Invoices will be returned
+     * @return array
+     */
+    public function getInvoicesForReservationsInProgress() {
+        $ids = $this->session->get("selectedReservationIds");
+        $totalInvoices = [];
+        foreach ($ids as $reservationId) {
+            $reservation = $this->em->find(Reservation::class, $reservationId);
+            if(!$reservation instanceof Reservation) {
+                continue;
+            }
+            $invoices = $reservation->getInvoices();
+            if(count($invoices) > 0) {
+                $totalInvoices = array_merge($totalInvoices, $invoices->toArray());
+            }
+        }
+        return $totalInvoices;
     }
     
     public function getRenderParams($template, $param) {

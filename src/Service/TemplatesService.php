@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use App\Service\MpdfService;
 use App\Entity\Template;
@@ -24,6 +25,8 @@ use App\Entity\Reservation;
 use App\Entity\FileCorrespondence;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\MailAttachment;
+use App\Entity\Invoice;
+use App\Service\InvoiceService;
 
 class TemplatesService
 {
@@ -33,17 +36,19 @@ class TemplatesService
     private $mpdfs;
     private $twig;
     private $webHost;
+    private $translator;
 
     /**
      * @param Application $app
      */
-    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs)
+    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs, TranslatorInterface $translator)
     {
         $this->em = $em;
 	$this->session = $session;
         $this->mpdfs = $mpdfs;
         $this->twig = $twig;
         $this->webHost = $webHost;
+        $this->translator = $translator;
     }
 
     /**
@@ -145,6 +150,37 @@ class TemplatesService
             }
         }
         return $correspondences;
+    }
+    
+    public function makeCorespondenceOfInvoice($id, InvoiceService $is) : ?int {
+        $invoice = $this->em->find(Invoice::class, $id);
+        if(!$invoice instanceof Invoice) {
+            return null;
+        }
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName(array('TEMPLATE_INVOICE_PDF'));
+        $defaultTemlate = $this->getDefaultTemplate($templates);
+        $templateOutput = "";
+        if($defaultTemlate !== null) {
+            $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id, $is);
+        }
+        
+        $reservations = $this->getReferencedReservationsInSession();
+        
+        $fileId = 0;
+        foreach($reservations as $reservation) {
+            $file = new FileCorrespondence();
+            $file->setFileName($this->translator->trans('invoice.number.short') . '-'.$invoice->getNumber())
+                 ->setName($this->translator->trans('invoice.number.short') . '-'.$invoice->getNumber())
+                 ->setText($templateOutput)
+                 ->setTemplate($defaultTemlate)
+                 ->setReservation($reservation);                    
+            $this->em->persist($file);
+            $this->em->flush();
+            $fileId = $file->getId();
+        }
+        
+        // return the last file id
+        return $fileId;
     }
     
     public function addFileAsAttachment($cId, $reservations) {         

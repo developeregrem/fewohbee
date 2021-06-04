@@ -29,6 +29,7 @@ use App\Entity\FileCorrespondence;
 use App\Entity\MailCorrespondence;
 use App\Service\FileUploader;
 use App\Service\MailService;
+use App\Service\InvoiceService;
 
 class TemplatesServiceController extends AbstractController
 {
@@ -411,7 +412,6 @@ class TemplatesServiceController extends AbstractController
                                              
                 // associate with reservations
                 $reservations = $ts->getReferencedReservationsInSession();  
-                $fileIds = Array();
                 
                 // save correspondence for each reservation
                 foreach($reservations as $reservation) {
@@ -524,10 +524,15 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function addAttachmentAction(TemplatesService $ts, Request $request)
+    public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is)
     {
-        $error = false;           
+        $error = false;
+        $isInvoice = $request->get("isInvoice", "false");
         $cId = $request->get("id");
+        if($isInvoice != 'false') {
+            $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
+        }
+        
         $reservations = $ts->getReferencedReservationsInSession(); 
         $ts->addFileAsAttachment($cId, $reservations);
 
