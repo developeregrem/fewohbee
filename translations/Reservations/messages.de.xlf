@@ -218,6 +218,10 @@
                 <source>reservation.prices.preliminary</source>
                 <target>Die hier angezeigten Preise sind vorläufig und können von denen in der Rechnung abweichen.</target>
             </trans-unit>
+            <trans-unit id="reservation.templates.availableprices">
+                <source>reservation.templates.availableprices</source>
+                <target>vorhandene Rechnungen</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -933,7 +933,7 @@ class ReservationServiceController extends AbstractController
     }
     
     
-    public function selectTemplateAction(SessionInterface $session, TemplatesService $ts, Request $request)
+    public function selectTemplateAction(SessionInterface $session, TemplatesService $ts, ReservationService $rs, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $progress = $request->get("inProcess", 'false');
@@ -942,12 +942,14 @@ class ReservationServiceController extends AbstractController
             $search = Array('TEMPLATE_FILE%', 'TEMPLATE_RESERVATION_PDF');
             $session->set("selectedTemplateId", $request->get("templateId"));
             $correspondences = $ts->getCorrespondencesForAttachment();
+            $invoices = $rs->getInvoicesForReservationsInProgress();
         } else {
             $search = Array('TEMPLATE_RESERVATION_%', 'TEMPLATE_FILE%');
             // reset do defaults at start of progress
             $session->set("selectedTemplateId", null);
-            $session->set("templateAttachmentIds", Array());
-            $correspondences = array();
+            $session->set("templateAttachmentIds", []);
+            $correspondences = [];
+            $invoices = [];
         }
         
         $templates = $em->getRepository(Template::class)->loadByTypeName($search);
@@ -956,7 +958,8 @@ class ReservationServiceController extends AbstractController
             'templates' => $templates,
             'selectedTemplateId' => $request->get("templateId"),
             'inProcess' => $progress,
-            'correspondences' => $correspondences
+            'correspondences' => $correspondences,
+            'invoices' => $invoices
         ));
     }
     

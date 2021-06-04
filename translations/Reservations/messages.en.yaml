@@ -56,3 +56,4 @@ reservation.select.customer.search.input.placeholder: Surname
 reservation.startdate: From
 reservation.status: Status
 reservation.table.reload: Update
+reservation.templates.availableprices: existing invoices
