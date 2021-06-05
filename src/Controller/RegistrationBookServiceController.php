@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 use App\Controller\CustomerServiceController;
 use App\Service\CSRFProtectionService;
@@ -34,7 +34,7 @@ class RegistrationBookServiceController extends AbstractController
     {
     }
 
-    public function indexAction(SessionInterface $session, Request $request)
+    public function indexAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $search = $request->get('search', '');
@@ -46,8 +46,8 @@ class RegistrationBookServiceController extends AbstractController
         $pages = ceil($entries->count() / $this->perPage);
         
         // unset session variables that are usesd in modals on this page
-        $session->remove('registrationbook.start');
-        $session->remove('registrationbook.end');
+        $requestStack->getSession()->remove('registrationbook.start');
+        $requestStack->getSession()->remove('registrationbook.end');
 
         return $this->render('RegistrationBook/index.html.twig', array(
             "bookEntries" => $entries,
@@ -80,7 +80,7 @@ class RegistrationBookServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function showAddReservationsAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function showAddReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $sess = $session;
