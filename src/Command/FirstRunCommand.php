@@ -19,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 use App\Entity\User;
@@ -32,10 +32,10 @@ class FirstRunCommand extends Command
 {
     protected static $defaultName = 'app:first-run';
     
-    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordEncoderInterface $encoder) {
+    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $hasher) {
         $this->validator = $validator;
         $this->em = $em;
-        $this->encoder = $encoder;
+        $this->hasher = $hasher;
         parent::__construct();
     }
 
@@ -108,7 +108,7 @@ class FirstRunCommand extends Command
         $user->setEmail($email);
         $user->setFirstname($firstName);
         $user->setLastname($lastName);
-        $user->setPassword($this->encoder->encodePassword($user, $password));
+        $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
         $user->setRole($role1);
         $this->em->persist($user);

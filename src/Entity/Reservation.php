@@ -68,7 +68,7 @@ class Reservation
     private $reservationOrigin;
     
     /**
-     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="reservation", cascade="remove")
+     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="reservation", cascade={"remove"})
      */
     private $correspondences;
 

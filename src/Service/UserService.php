@@ -14,7 +14,7 @@ namespace App\Service;
 use App\Entity\User;
 use App\Entity\Role;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 use Symfony\Component\HttpFoundation\Request;
 
@@ -23,12 +23,12 @@ class UserService
 
     private $em = null;
     private $app;
-    private $encoder;
+    private $hasher;
 
-    public function __construct(UserPasswordEncoderInterface $encoder, EntityManagerInterface $em)
+    public function __construct(UserPasswordHasherInterface $hasher, EntityManagerInterface $em)
     {
         $this->em = $em;
-	$this->encoder = $encoder;
+	$this->hasher = $hasher;
     }
 
     public function getUserFromForm(Request $request, $id = 'new')
@@ -45,8 +45,8 @@ class UserService
 
         $formPassword = $request->get("password-" . $id);
         if (!empty($formPassword) && $this->checkPassword($formPassword)) {
-            $encoded = $this->encoder->encodePassword($user, $request->get("password-" . $id));
-            $user->setPassword($encoded);
+            $hashed = $this->hasher->hashPassword($user, $request->get("password-" . $id));
+            $user->setPassword($hashed);
         }
 
         $user->setFirstname($request->get("firstname-" . $id));
