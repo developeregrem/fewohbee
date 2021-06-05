@@ -14,7 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 use App\Service\CSRFProtectionService;
 use App\Service\StatisticsService;
@@ -36,11 +36,11 @@ class StatisticsController extends AbstractController
      *
      * @return mixed
      */
-    public function utilizationAction(SessionInterface $session)
+    public function utilizationAction(RequestStack $requestStack)
     {
         $em = $this->getDoctrine()->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
-        $objectId = $session->get("reservation-overview-objectid", "all");
+        $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
         $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
         $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();
@@ -127,11 +127,11 @@ class StatisticsController extends AbstractController
      *
      * @return mixed
      */
-    public function originAction(SessionInterface $session)
+    public function originAction(RequestStack $requestStack)
     {
         $em = $this->getDoctrine()->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
-        $objectId = $session->get("reservation-overview-objectid", "all");
+        $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
         $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
         $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();

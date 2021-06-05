@@ -12,7 +12,7 @@
 namespace App\Service;
 
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * CSRFProtectionService is a Service to provide simple
@@ -21,11 +21,11 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  */
 class CSRFProtectionService
 {
-    private $session;
+    private $requestStack;
 	
-	public function __construct(SessionInterface $session)
+	public function __construct(RequestStack $requestStack)
     {
-        $this->session = $session;
+        $this->requestStack = $requestStack;
     }
 	/**
      * Saves a generated token into session and returns the generated token for csrf protection
@@ -36,7 +36,7 @@ class CSRFProtectionService
     public function getCSRFTokenForForm()
     {
         $token = $this->generateToken(20);
-        $this->session->set('_csrf_token', $token);
+        $this->requestStack->getSession()->set('_csrf_token', $token);
 
         return $token;
     }
@@ -50,7 +50,7 @@ class CSRFProtectionService
      */
     public function validateCSRFToken(Request $request, $invalidateToken = false, $fieldName = '_csrf_token')
     {
-        $savedToken = $this->session->get('_csrf_token');
+        $savedToken = $this->requestStack->getSession()->get('_csrf_token');
         $submittedToken = $request->get($fieldName);
         $result = ($savedToken == $submittedToken);
 

@@ -12,7 +12,7 @@
 namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -32,7 +32,7 @@ class TemplatesService
 {
     private $em = null;
     private $app = null;
-    private $session;
+    private $requestStack;
     private $mpdfs;
     private $twig;
     private $webHost;
@@ -41,10 +41,10 @@ class TemplatesService
     /**
      * @param Application $app
      */
-    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, SessionInterface $session, MpdfService $mpdfs, TranslatorInterface $translator)
+    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, RequestStack $requestStack, MpdfService $mpdfs, TranslatorInterface $translator)
     {
         $this->em = $em;
-	$this->session = $session;
+	$this->requestStack = $requestStack;
         $this->mpdfs = $mpdfs;
         $this->twig = $twig;
         $this->webHost = $webHost;
@@ -130,8 +130,8 @@ class TemplatesService
     public function getReferencedReservationsInSession()
     {
         $reservations = Array();
-        if($this->session->has("selectedReservationIds")) {
-            $selectedReservationIds = $this->session->get("selectedReservationIds");
+        if($this->requestStack->getSession()->has("selectedReservationIds")) {
+            $selectedReservationIds = $this->requestStack->getSession()->get("selectedReservationIds");
             foreach($selectedReservationIds as $id) {
                 $reservations[] = $this->em->getReference(Reservation::class, $id);
             }
@@ -140,7 +140,7 @@ class TemplatesService
     }
     
     public function getCorrespondencesForAttachment() {
-        $selectedReservationIds = $this->session->get("selectedReservationIds");
+        $selectedReservationIds = $this->requestStack->getSession()->get("selectedReservationIds");
         $correspondences = Array();
         foreach ($selectedReservationIds as $reservationId) {
             $reservation = $this->em->getReference(Reservation::class, $reservationId);
@@ -191,9 +191,9 @@ class TemplatesService
             $fileIds[$reservation->getId()] =  $cId;
         }                 
 
-        $attachments = $this->session->get("templateAttachmentIds");
+        $attachments = $this->requestStack->getSession()->get("templateAttachmentIds");
         $attachments[] = $fileIds;
-        $this->session->set("templateAttachmentIds", $attachments);  
+        $this->requestStack->getSession()->set("templateAttachmentIds", $attachments);  
 
         return true;
     }
