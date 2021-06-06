@@ -235,17 +235,17 @@ class ReservationService implements ITemplateRenderer
             
             // assign selected prices to reservations for getting the invoice price positions based on that prices
             $reservations = $this->setPricesToReservations($prices, $reservations);
-            $is->prefillMiscPositionsWithReservations($reservations, $session, true);
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
             
             return $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         } else { // initial load of preview new reservation, prices will be filled based on price categories     
             $prices = $ps->getUniquePricesForReservations($reservations, 1);
             // prefill reservatioInCreationPrices session
             foreach($prices as $price) {
-                $this->toggleInCreationPrice($price, $session);
+                $this->toggleInCreationPrice($price, $requestStack);
             }
             $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
-            $is->prefillMiscPositionsWithReservations($reservations, $session);    
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack);    
             
             return $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         }

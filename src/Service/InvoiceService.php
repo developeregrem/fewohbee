@@ -333,7 +333,7 @@ class InvoiceService implements ITemplateRenderer
             $curDate = (clone $curDate)->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
             if($price !== null && $lastPrice !== null && ($lastPrice->getId() !== $price->getId() || $i == $days)) {                
                 $position = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
-                $this->saveNewAppartmentPosition($position, $session);
+                $this->saveNewAppartmentPosition($position, $requestStack);
 
                 $start = clone $curDate;
             }
@@ -349,7 +349,7 @@ class InvoiceService implements ITemplateRenderer
      * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
     public function prefillMiscPositionsWithReservations(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false) {
-        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+        $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
     
     /**
@@ -364,7 +364,7 @@ class InvoiceService implements ITemplateRenderer
         foreach($reservationIds as $resId) {
             $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
         }
-        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+        $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
     /**
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
@@ -405,7 +405,7 @@ class InvoiceService implements ITemplateRenderer
                 }
             }
         }
-        $this->makeMiscPositions($reservation, $tmpMiscArr, $session);
+        $this->makeMiscPositions($reservation, $tmpMiscArr, $requestStack);
     }
     
     /**
@@ -473,7 +473,7 @@ class InvoiceService implements ITemplateRenderer
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
             
-            $this->saveNewMiscPosition($position, $session);
+            $this->saveNewMiscPosition($position, $requestStack);
         }
                          
         return $positions;
