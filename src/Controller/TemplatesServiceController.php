@@ -266,7 +266,7 @@ class TemplatesServiceController extends AbstractController
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
         
-        return $this->selectReservationAction($session, $request);
+        return $this->selectReservationAction($requestStack, $request);
     }
     
     public function getReservationsInPeriodAction(RequestStack $requestStack, Request $request)

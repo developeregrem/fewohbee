@@ -444,12 +444,12 @@ class ReservationServiceController extends AbstractController
             }
         }        
         
-        $miscPricePositions = $rs->getMiscPricesInCreation($is, $reservations, $ps, $session);
+        $miscPricePositions = $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
         $pricesInCreation = $requestStack->getSession()->get("reservatioInCreationPrices", []);
 
         $requestStack->getSession()->set("invoicePositionsAppartments", []);
         foreach($reservations as $reservation) {
-            $is->prefillAppartmentPositions($reservation, $session);
+            $is->prefillAppartmentPositions($reservation, $requestStack);
             
             // add selected misc prices to reservation
             foreach($pricesInCreation as $priceInCreation) {
@@ -548,11 +548,11 @@ class ReservationServiceController extends AbstractController
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
         $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
-        $is->prefillMiscPositionsWithReservations([$reservation], $session, true);
+        $is->prefillMiscPositionsWithReservations([$reservation], $requestStack, true);
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
 
         $requestStack->getSession()->set("invoicePositionsAppartments", []);
-        $is->prefillAppartmentPositions($reservation, $session);
+        $is->prefillAppartmentPositions($reservation, $requestStack);
         $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
 
         return $this->render('Reservations/reservation_form_show.html.twig', array(
@@ -1013,7 +1013,7 @@ class ReservationServiceController extends AbstractController
               
             // during reservation create process
             if($reservationId === 'new') {
-                $rs->toggleInCreationPrice($price, $session);
+                $rs->toggleInCreationPrice($price, $requestStack);
             } else { // during reservation edit process
                 $em = $this->getDoctrine()->getManager();
                 /* @var $reservation Reservation */

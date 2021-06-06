@@ -83,7 +83,6 @@ class RegistrationBookServiceController extends AbstractController
     public function showAddReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
-        $sess = $session;
         
         $start = $request->get('start', '');
         if($start !== '') {
@@ -93,8 +92,8 @@ class RegistrationBookServiceController extends AbstractController
                 $startDate = new \DateTime();
                 $startDate->sub(new \DateInterval('P30D'));
             }            
-        } else if($sess->has('registrationbook.start')) {
-            $startDate = unserialize($sess->get('registrationbook.start'));
+        } else if($requestStack->getSession()->has('registrationbook.start')) {
+            $startDate = unserialize($requestStack->getSession()->get('registrationbook.start'));
         } else {             
             $startDate = new \DateTime();
             $startDate->sub(new \DateInterval('P30D'));
@@ -107,8 +106,8 @@ class RegistrationBookServiceController extends AbstractController
             } catch (\Exception $ex) {
                 $endDate = new \DateTime();
             }            
-        } else if($sess->has('registrationbook.end')) {
-            $endDate = unserialize($sess->get('registrationbook.end'));
+        } else if($requestStack->getSession()->has('registrationbook.end')) {
+            $endDate = unserialize($requestStack->getSession()->get('registrationbook.end'));
         } else {
              $endDate = new \DateTime();
         }
@@ -119,8 +118,8 @@ class RegistrationBookServiceController extends AbstractController
             $startDate = $endDate;
             $endDate = $tmpDate;
         }
-        $sess->set('registrationbook.start', serialize($startDate));
-        $sess->set('registrationbook.end', serialize($endDate));
+        $requestStack->getSession()->set('registrationbook.start', serialize($startDate));
+        $requestStack->getSession()->set('registrationbook.end', serialize($endDate));
         
         $reservations = $em->getRepository(RegistrationBookEntry::class)->getReservationsNotInBook($startDate, $endDate);      
 

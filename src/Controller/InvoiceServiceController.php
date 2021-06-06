@@ -326,7 +326,7 @@ class InvoiceServiceController extends AbstractController
             $requestStack->getSession()->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
             
             // prefill positions for all selected reservations
-            $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $session, true);           
+            $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $requestStack, true);           
         }
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         
@@ -336,7 +336,7 @@ class InvoiceServiceController extends AbstractController
             // prefill positions for all selected reservations
             foreach($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);
-                $is->prefillAppartmentPositions($reservation, $session);
+                $is->prefillAppartmentPositions($reservation, $requestStack);
             }            
         }
         $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
@@ -513,7 +513,7 @@ class InvoiceServiceController extends AbstractController
             
             // during invoice create process
             if($invoiceId === 'new') {
-                $is->saveNewAppartmentPosition($invoicePosition, $session);
+                $is->saveNewAppartmentPosition($invoicePosition, $requestStack);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
@@ -655,7 +655,7 @@ class InvoiceServiceController extends AbstractController
             
             // during invoice create process
             if($invoiceId === 'new') {
-                $is->saveNewMiscPosition($invoicePosition, $session);
+                $is->saveNewMiscPosition($invoicePosition, $requestStack);
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
