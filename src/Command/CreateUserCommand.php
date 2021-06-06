@@ -8,7 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
@@ -19,7 +19,7 @@ class CreateUserCommand extends Command
 {
     protected static $defaultName = 'app:create-user';
     
-    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordEncoderInterface $encoder, UserService $us) {
+    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $encoder, UserService $us) {
         $this->validator = $validator;
         $this->em = $em;
         $this->encoder = $encoder;
