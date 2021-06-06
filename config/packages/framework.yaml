@@ -10,6 +10,7 @@ framework:
         handler_id: ~
         cookie_secure: 'auto'
         cookie_samesite: 'lax'
+        storage_factory_id: session.storage.factory.native
 
     #esi: true
     #fragments: true
@@ -30,3 +31,9 @@ framework:
 
         # APCu (not recommended with heavy random-write workloads as memory fragmentation can cause perf issues)
         #app: cache.adapter.apcu
+        
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file
