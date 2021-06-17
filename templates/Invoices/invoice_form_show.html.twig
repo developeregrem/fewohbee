@@ -17,7 +17,7 @@
                 </h4>
                 {{ invoice.salutation }}
             </div>
-            <div class="col text-right">
+            <div class="col text-end">
                 <h4 class="invoice-edit-field d-none">
                     <small>
                         <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
@@ -34,26 +34,26 @@
                     <br/>{{ invoice.company }}
                 {% endif %}
             </div>
-            <div class="col text-right">{{ invoice.number }}</div>
+            <div class="col text-end">{{ invoice.number }}</div>
         </div>
         <div class="row">
             <div class="col">{{ invoice.address }}</div>
-            <div class="col text-right"><strong>{{ 'invoice.date'|trans }}</strong></div>
+            <div class="col text-end"><strong>{{ 'invoice.date'|trans }}</strong></div>
         </div>
         <div class="row">
             <div class="col">{{ invoice.zip }} {{ invoice.city }}</div>
-            <div class="col text-right">{{ invoice.date|date('d.m.Y') }}</div>
+            <div class="col text-end">{{ invoice.date|date('d.m.Y') }}</div>
         </div>
 
         <table class="table table-hover mt-4">
             <thead>
             <tr>
                 <th>{{ 'invoice.position.appartment'|trans }}</th>
-                <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
-                <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
+                <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
+                <th class="invoice-edit-field d-none text-end">{{ 'invoice.action'|trans }}</th>
             </tr>
             </thead>
             <tbody>
@@ -66,17 +66,17 @@
                     <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
                         <br/>{{ appartment.startDate|date('d.m.Y') }}
                         - {{ appartment.endDate|date('d.m.Y') }}</td>
-                    <td class="text-right">{{ appartment.amount }}</td>
-                    <td class="text-right">{{ appartment.price|number_format(2, ',', '.') }}</td>
-                    <td class="text-right">
+                    <td class="text-end">{{ appartment.amount }}</td>
+                    <td class="text-end">{{ appartment.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-end">
                         {% if is_decimal_place_0(appartment.vat) %}
                             {{ appartment.vat|number_format(0, ',', '.') }}
                         {% else %}
                             {{ appartment.vat|number_format(2, ',', '.') }}
                         {% endif %}
                     </td>
-                    <td class="text-right">{{ appartment.totalPrice }}</td>
-                    <td class="invoice-edit-field d-none text-right">
+                    <td class="text-end">{{ appartment.totalPrice }}</td>
+                    <td class="invoice-edit-field d-none text-end">
                         <a href="#" title="{{ 'button.edit'|trans }}">
                             <i onclick="return getContentForModal('{{ path('invoices.edit.apartment.position', {'invoiceId': invoice.id, 'id': appartment.id}) }}')" class="fas fa-edit"></i></a>
                         <a href="#" title="{{ 'button.delete'|trans }}">
@@ -93,7 +93,7 @@
             <tr>
                 <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return getContentForModal('{{ path('invoices.new.apartment.position', {'invoiceId': invoice.id}) }}')">
                         <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button></th>
-                <th colspan="5" class="text-right">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
+                <th colspan="5" class="text-end">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
             </tr>
             </tbody>
         </table>
@@ -101,28 +101,28 @@
             <thead>
             <tr>
                 <th>{{ 'invoice.position.additional'|trans }}</th>
-                <th class="text-right">{{ 'invoice.position.amount'|trans }}</th>
-                <th class="text-right">{{ 'invoice.price.single'|trans }}</th>
-                <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-                <th class="text-right">{{ 'invoice.price.total'|trans }}</th>
-                <th class="invoice-edit-field d-none text-right">{{ 'invoice.action'|trans }}</th>
+                <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
+                <th class="invoice-edit-field d-none text-end">{{ 'invoice.action'|trans }}</th>
             </tr>
             </thead>
             <tbody>
             {% for position in invoice.positions %}
                 <tr>
                     <td>{{ position.description }}</td>
-                    <td class="text-right">{{ position.amount }}</td>
-                    <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
-                    <td class="text-right">
+                    <td class="text-end">{{ position.amount }}</td>
+                    <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-end">
                         {% if is_decimal_place_0(position.vat) %}
                             {{ position.vat|number_format(0, ',', '.') }}
                         {% else %}
                             {{ position.vat|number_format(2, ',', '.') }}
                         {% endif %}
                     </td>
-                    <td class="text-right">{{ position.totalPrice }}</td>
-                    <td class="invoice-edit-field d-none text-right">
+                    <td class="text-end">{{ position.totalPrice }}</td>
+                    <td class="invoice-edit-field d-none text-end">
                         <a href="#" title="{{ 'button.edit'|trans }}">
                             <i onclick="return getContentForModal('{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}')" class="fas fa-edit"></i></a>
                         <a href="#" title="{{ 'button.delete'|trans }}">
@@ -139,7 +139,7 @@
             <tr>
                 <th><button type="button" class="btn btn-secondary invoice-edit-field d-none" onclick="return getContentForModal('{{ path('invoices.new.miscellaneous.position', {'invoiceId': invoice.id}) }}')">
                         <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button></th>
-                <th colspan="5" class="text-right">{{ miscTotal|number_format(2, ',', '.') }}</th>
+                <th colspan="5" class="text-end">{{ miscTotal|number_format(2, ',', '.') }}</th>
             </tr>
             </tbody>
         </table>
@@ -150,7 +150,7 @@
                 <table>
                     {% for key, value in vats %}
                         <tr>
-                            <td class="text-right">
+                            <td class="text-end">
                                 {% if is_decimal_place_0(key) %}
                                     {{ key|number_format(0, ',', '.') }}
                                 {% else %}
@@ -158,21 +158,21 @@
                                 {% endif %} %:
                             </td>
                             <td>&nbsp;&nbsp;</td>
-                            <td class="text-right">{{ value.netto|number_format(2, ',', '.') }} €</td>
+                            <td class="text-end">{{ value.netto|number_format(2, ',', '.') }} €</td>
                         </tr>
                     {% endfor %}
                 </table>
             </div>
-            <div class="col-md-6 text-right">{{ 'invoice.netto'|trans }}
+            <div class="col-md-6 text-end">{{ 'invoice.netto'|trans }}
                 <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-            <div class="col text-right">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
+            <div class="col text-end">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
                 <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
             </div>
         </div>
         {% if vatWarning %}
         <div class="row mt-3">
             <div class="col text-center">
-            <span class="text-warning mr-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.vatwarning'|trans }}</span>
+            <span class="text-warning me-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.vatwarning'|trans }}</span>
             </div>
         </div>
         {% endif %}
@@ -198,7 +198,7 @@
         <form id="invoice-form-status"  role="form">   
            <div class="form-row"> 
                 <div class="col-sm-2">
-            <select id="invoce-status" name="invoice-status" class="form-control mr-sm-2">
+            <select id="invoce-status" name="invoice-status" class="form-control me-sm-2">
                 <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.notpayed'|trans }}</option>
                 <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.payed'|trans }}</option>
             </select>
@@ -207,7 +207,7 @@
             <button id="save-status" type="button" class="btn btn-secondary d-none"
                     onclick="return updateInvoiceStatus({{ invoice.id }});">{{ 'button.save'|trans }}</button>
             </div>
-            <div class="col text-right">
+            <div class="col text-end">
        
         <button type="button" class="btn btn-secondary " id="invoiceEditButton" 
                 onclick="return toggleInvoiceEditFields();">{{ 'button.edit'|trans }}</button>

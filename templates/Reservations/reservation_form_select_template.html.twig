@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col"></div>
         </div>
@@ -76,7 +76,7 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination mr-auto">
+    <ul class="pagination me-auto">
         <li class="page-item " onclick="return {% if inProcess == 'false' %}selectReservation()
                                              {% else %}previewTemplateForReservation({{ selectedTemplateId }}, {{ inProcess }});{% endif %}">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>

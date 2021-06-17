@@ -1,26 +1,26 @@
 {% for reservation in reservations %}
     <dl class="row m-0">
-        <dt class="col text-right">{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
+        <dt class="col text-end">{{ loop.index }}. {{ 'invoice.reservation'|trans }}</dt>
         <dd class="col"></dd>
     </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.startdate'|trans }}</dt>
+        <dt class="col text-end">{{ 'invoice.startdate'|trans }}</dt>
         <dd class="col">{{ reservation.startdate|date('d.m.Y') }}</dd>
         </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.enddate'|trans }}</dt>
+        <dt class="col text-end">{{ 'invoice.enddate'|trans }}</dt>
         <dd class="col">{{ reservation.enddate|date('d.m.Y') }}</dd>
         </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.position.stays'|trans }}</dt>
+        <dt class="col text-end">{{ 'invoice.position.stays'|trans }}</dt>
         <dd class="col">{{ get_date_diff_amount(reservation.startdate, reservation.enddate) }}</dd>
         </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.appartment.position.persons'|trans }}</dt>
+        <dt class="col text-end">{{ 'invoice.appartment.position.persons'|trans }}</dt>
         <dd class="col">{{ reservation.persons }}</dd>
         </dl>
     <dl class="row m-0">
-        <dt class="col text-right">{{ 'invoice.appartment.position.category'|trans }}</dt>
+        <dt class="col text-end">{{ 'invoice.appartment.position.category'|trans }}</dt>
         <dd class="col">{{ reservation.appartment.roomCategory.name }}</dd>
     </dl>
 {% endfor %}

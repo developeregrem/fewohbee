@@ -12,8 +12,8 @@
 <div class="container">
     <div class="row">
         <div class="col">
-                <button type="button" class="btn btn-default" onclick="showCreateForm()" data-toggle="modal"
-                        data-target="#modalCenter">
+                <button type="button" class="btn btn-default" onclick="showCreateForm()" data-bs-toggle="modal"
+                        data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
         </div>
     </div>
@@ -33,9 +33,9 @@
                     <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
                     <td>{{ template.name }}</td>
                     <td>
-                        {#<a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                        {#<a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                             <i onclick="previewEntity({{ template.id }})" class="fas fa-info-circle"></i></a>#}
-                        <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                        <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                             <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
                         <a href="#" title="{{ 'button.delete'|trans }}">
                             <i onclick="deleteEntry({{ template.id }})" class="fas fa-trash-alt"></i></a>

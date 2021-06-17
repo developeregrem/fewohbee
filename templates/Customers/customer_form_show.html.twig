@@ -1,10 +1,10 @@
-<div class="modal-body pl-5 pr-5">
+<div class="modal-body ps-5 pe-5">
     <div class="row">
         <div class="col">
             <h4 class="border-bottom pb-2">{{ 'reservation.preview.customer'|trans }}
                 <small>
                 <a href="#" onclick="return editCustomer({{ customer.id }});"
-                   title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-edit"></i></a>
                 </small>
             </h4>
@@ -31,7 +31,7 @@
 
 <form id="customer-form-{{ customer.id }}">
     <div class="modal-footer">
-        <div id="boxDelete" class="d-none mr-auto">
+        <div id="boxDelete" class="d-none me-auto">
             {{ 'customer.delete.ask'|trans }}<br />
             <button class="btn btn-danger" onclick="return doDeleteCustomer({{ customer.id }});">{{ 'button.delete'|trans }}</button>
             <button class="btn btn-secondary"

@@ -11,8 +11,8 @@
 <form id="reservationShowForm">
     <div class="modal-footer">
         <div class="col p-0" id="boxDefault">
-            <div class="btn-group dropup float-left">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownInvoice" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <div class="btn-group dropup float-start">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownInvoice" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   {{ 'reservation.invoices'|trans }} <span class="caret"></span>
                 </button>
                 <div class="dropdown-menu">
@@ -26,9 +26,9 @@
                 </div>                
             </div>
             
-            <button type="button" class="btn btn-danger float-right"
+            <button type="button" class="btn btn-danger float-end"
                     onclick="return toggleReservationDelete();">{{ 'button.delete'|trans }}</button>
-            <button type="button" class="btn btn-default float-right mr-2" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+            <button type="button" class="btn btn-default float-end me-2" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         </div>
         <div id="boxDelete" class="d-none">
             {{ 'reservation.delete.ask'|trans }}

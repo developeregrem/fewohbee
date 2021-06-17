@@ -14,10 +14,9 @@
             {% for type, flashMessages in app.flashes %}
                 {% for flashMessage in flashMessages %}
                     <div class="col">
-                        <div class="alert alert-{{ type }} alert-dismissable">
-                            <button type="button" class="close" data-dismiss="alert"
-                                    aria-hidden="true">&times;</button>
+                        <div class="alert alert-{{ type }} alert-dismissable" role="alert">
                             {{ flashMessage|trans }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>                            
                         </div>
                     </div>
                 {% endfor %}
@@ -30,10 +29,10 @@
     <form id="table-filter" role="form" onsubmit="return getNewTable()">
         <div class="row">
             <div class="col-md-auto">
-                <input type="date" class="form-control mb-2 mr-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
+                <input type="date" class="form-control mb-2 me-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
             </div>
                 <div class="col-md-auto">
-                <select name="intervall" class="custom-select mb-2 mr-sm-2">
+                <select name="intervall" class="custom-select mb-2 me-sm-2">
                     <option value="8"{% if "8" == interval %} selected{% endif %}>
                         8 {{ 'reservation.days'|trans }}</option>
                     <option value="15"{% if "15" == interval %} selected{% endif %}>
@@ -45,15 +44,15 @@
                 </select>
             </div>
             <div class="col-md-auto">
-                <button type="submit" class="btn btn-secondary mb-2 mr-sm-2 float-left">
+                <button type="submit" class="btn btn-secondary mb-2 me-sm-2 float-start">
                     <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
                 </button>
-                <button type="button" class="btn btn-secondary mb-2 mr-sm-2" onclick="return selectAppartment(true)"
-                        data-toggle="modal" data-target="#modalCenter">
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
+                        data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
                 </button>
             </div>
-            <div class="col-md-2 text-right ml-auto">
+            <div class="col-md-2 text-end ms-auto">
                 <select id="objects" name="object" class="form-control">
                 <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                 {% for object in objects %}
@@ -348,7 +347,7 @@
 
         var message = '<div class="col-md-10 col-md-offset-1">' +
                 '<div class="alert alert-danger alert-dismissable">' +
-                '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
                 '{{ 'reservation.no.selected.appartments'|trans }}' +
                 '</div>' +
                 '</div>';

@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
 {% if reservations|length > 0 %}
         <div class="row">
             <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
@@ -81,7 +81,7 @@
                            placeholder="{{ 'reservation.enddate'|trans }}"
                            onchange="getAvailableAppartmentsForPeriod()">
                 </div>
-                <div class="col text-right">
+                <div class="col text-end">
                     <select id="objects" name="object" class="form-control"
                             onchange="getAvailableAppartmentsForPeriod()">
                         <option value="all"
