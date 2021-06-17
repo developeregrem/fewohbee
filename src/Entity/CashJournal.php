@@ -46,7 +46,7 @@ class CashJournal
     private $isBooked;
 
     /**
-     * @ORM\OneToMany(targetEntity="CashJournalEntry", mappedBy="cashJournal", cascade="remove")
+     * @ORM\OneToMany(targetEntity="CashJournalEntry", mappedBy="cashJournal", cascade={"remove"})
      * @ORM\OrderBy({"date" = "ASC"})
      */
     private $cashJournalEntries;
