@@ -2,7 +2,7 @@
 <div class="card shadow-none p-2">
     {% for address in customer.customerAddresses %}
     <div class="card-body p-0">
-      <h6 class="card-title border-bottom text-secondary mouse-pointer pb-2" data-toggle="collapse" data-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
+      <h6 class="card-title border-bottom text-secondary mouse-pointer pb-2" data-bs-toggle="collapse" data-bs-target="#address-{{ address.id }}" aria-expanded="true" aria-controls="address-{{ address.id }}">
           {{ 'customer.contact'|trans }} ({{ address.type|trans }})
       </h6>
       <div class="collapse" id="address-{{ address.id }}" data-parent="#accordion">

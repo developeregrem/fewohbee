@@ -13,7 +13,7 @@
         <div class="row justify-content-between">
             <div class="col-md-4">
                 <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
-                        data-toggle="modal" data-target="#modalCenter">
+                        data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
             </div>
             <div class="col-md-3">                
@@ -32,7 +32,7 @@
                     <input type="search" class="form-control" id="search" name="search"
                            placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </div>
-                <div class="col-md pl-0">
+                <div class="col-md ps-0">
                     <button class="btn btn-default" type="button" onclick="doSearch();">
                         <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                     </button>

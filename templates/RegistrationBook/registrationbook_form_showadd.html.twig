@@ -1,4 +1,4 @@
-<div class="modal-body pl-5 pr-5">
+<div class="modal-body ps-5 pe-5">
     <div id="flash-message-overlay">
         <div class="col">
             {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
@@ -47,7 +47,7 @@
                                 <div class="col">
                                     {{ 'reservation.preview.customer.inroom'|trans }}
                                     <a href="#" onclick="return addReservationCustomer({{ reservation.id }}, 'guest');"
-                                                title="{{ 'button.add'|trans }}" class="float-right">
+                                                title="{{ 'button.add'|trans }}" class="float-end">
                                         <i class="fas fa-plus"></i></a>
                                 </div>
                             </div>
@@ -91,7 +91,7 @@
                                 {% endfor %}
                             </table>
 
-                            <div class="float-right">
+                            <div class="float-end">
                                 <button class="btn btn-primary" onclick="addReservationToBook({{ reservation.id }}, false)">{{ 'button.accept'|trans }}</button>
                             </div>
                         </div>
@@ -110,7 +110,7 @@
 </div>
 <input name="_csrf_token" value="{{ token }}" type="hidden" id="_csrf_token">
 <div class="modal-footer">
-    <span class="text-info mr-auto"><i class="fas fa-info-circle"></i> {{ 'registrationbook.help.message'|trans }}</span>
+    <span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'registrationbook.help.message'|trans }}</span>
 </div>
 <script>
     $(document).ready(function () {

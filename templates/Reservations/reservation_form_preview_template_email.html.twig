@@ -28,7 +28,7 @@
         <div class="col-sm-2">
             <small>
             <a href="#" onclick="return selectTemplateForReservations({{ template.id }}, true);"
-               title="{{ 'button.add'|trans }}" class="float-right"><i class="fas fa-plus"></i></a>
+               title="{{ 'button.add'|trans }}" class="float-end"><i class="fas fa-plus"></i></a>
             </small>
         </div>
     </div>
@@ -39,7 +39,7 @@
                 <tr id="aid-{{ attachment.id }}">
                     <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
                                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                         <a href="#" onclick="return deleteAttachment({{ attachment.id }})"
@@ -53,7 +53,7 @@
     <br />
     <input name="_csrf_token" value="{{ token }}" type="hidden">
     <input name="templateId" value="{{ template.id }}" type="hidden">
-    <div class="float-right">
+    <div class="float-end">
         <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>

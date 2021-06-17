@@ -1,11 +1,11 @@
 <form id="new-appartment-position" class="form" role="form"
       onsubmit="return changeInvoiceCustomerSave()">
     <div class="modal-body">
-        <div class="pl-5 pr-5">
+        <div class="ps-5 pe-5">
             <div class="row">
                 <div class="col-md-7">
                     <div class="form-group row">
-                        <label for="recommendation" class="col-sm-3 col-form-label text-right">{{ 'invoice.customer.recommendation'|trans }}</label>
+                        <label for="recommendation" class="col-sm-3 col-form-label text-end">{{ 'invoice.customer.recommendation'|trans }}</label>
                         <div class="col-sm-9">
                             <select id="recommendation" name="recommendation" class="form-control">
                                 <option value="0"></option>
@@ -21,43 +21,43 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="salutation" class="col-sm-3 col-form-label text-right">{{ 'customer.salutation'|trans }}</label>
+                        <label for="salutation" class="col-sm-3 col-form-label text-end">{{ 'customer.salutation'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="salutation" name="salutation" value="{{ invoiceCustomer.salutation }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="firstname" class="col-sm-3 col-form-label text-right">{{ 'customer.firstname'|trans }}</label>
+                        <label for="firstname" class="col-sm-3 col-form-label text-end">{{ 'customer.firstname'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="firstname" name="firstname" value="{{ invoiceCustomer.firstname }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="lastname" class="col-sm-3 col-form-label text-right">{{ 'customer.lastname'|trans }}</label>
+                        <label for="lastname" class="col-sm-3 col-form-label text-end">{{ 'customer.lastname'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="lastname" name="lastname" value="{{ invoiceCustomer.lastname }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="company" class="col-sm-3 col-form-label text-right">{{ 'customer.company'|trans }}</label>
+                        <label for="company" class="col-sm-3 col-form-label text-end">{{ 'customer.company'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="company" name="company" value="{{ invoiceCustomer.company }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="address" class="col-sm-3 col-form-label text-right">{{ 'customer.address'|trans }}</label>
+                        <label for="address" class="col-sm-3 col-form-label text-end">{{ 'customer.address'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="address" name="address" value="{{ invoiceCustomer.address }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="zip" class="col-sm-3 col-form-label text-right">{{ 'customer.zip'|trans }}</label>
+                        <label for="zip" class="col-sm-3 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="zip" name="zip" value="{{ invoiceCustomer.zip }}">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="city" class="col-sm-3 col-form-label text-right">{{ 'customer.city'|trans }}</label>
+                        <label for="city" class="col-sm-3 col-form-label text-end">{{ 'customer.city'|trans }}</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="city" name="city" value="{{ invoiceCustomer.city }}">
                         </div>
@@ -70,7 +70,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <ul class="pagination mr-auto">
+        <ul class="pagination me-auto">
             <li class="page-item" onclick="
                 {% if invoiceId == 'new' %}
                     return showCreateInvoicePositions('false')

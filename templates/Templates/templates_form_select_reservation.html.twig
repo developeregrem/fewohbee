@@ -1,6 +1,6 @@
 {% include 'Reservations/reservation_form_select_reservation_fields.html.twig' %}
 <div class="modal-footer {% if objectContainsReservations == "false" %} d-none {% endif %}">
-    <ul class="pagination ml-auto">
+    <ul class="pagination ms-auto">
         <li class="page-item" onclick="return selectReservation()">
             <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
         </li>

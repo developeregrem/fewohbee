@@ -1,5 +1,5 @@
 {{ form_start(form, {'attr': {'id':'entry-form-'~category.id, 'onsubmit':'return saveCategory('~ category.id ~');'} }) }}
-    <div class="modal-body pl-5 pr-5">
+    <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
         <div class="row" id="edit-button-area">
@@ -7,7 +7,7 @@
                 <h4 class="pb-2">
                     <small>
                     <a href="#" onclick="return enableEditForm({{ category.id }})"
-                       title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>
                 </h4>

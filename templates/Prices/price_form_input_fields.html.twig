@@ -3,7 +3,7 @@
         <div class="card">
             <div class="card-header p-0" id="headingOne-{{ price.id }}">
                 <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
+                    <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
                         {{ 'price.collapsable.group.1.description'|trans }}
                     </button>
                 </h6>
@@ -11,7 +11,7 @@
             <div id="collapseOne-{{ price.id }}" class="collapse show" aria-labelledby="headingOne-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
                         <div class="form-group row">
-                            <label for="inputDescription" class="col-sm-4 col-form-label text-right">{{ 'price.description'|trans }}
+                            <label for="inputDescription" class="col-sm-4 col-form-label text-end">{{ 'price.description'|trans }}
                                 *</label>
 
                             <div class="col-sm-8">
@@ -34,7 +34,7 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="inputVat" class="col-sm-4 col-form-label text-right">{{ 'price.vat'|trans }} *</label>
+                            <label for="inputVat" class="col-sm-4 col-form-label text-end">{{ 'price.vat'|trans }} *</label>
 
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" name="vat-{{ price.id }}"
@@ -42,7 +42,7 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'price.type'|trans }} *</label>
+                            <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.type'|trans }} *</label>
 
                             <div class="col-sm-8">
                                 <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-control"
@@ -53,7 +53,7 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'price.origin'|trans }} *</label>
+                            <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.origin'|trans }} *</label>
                             <div class="col-sm-8">
                                 <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-control" multiple>
                                     {% for origin in origins %}
@@ -86,7 +86,7 @@
         <div class="card mt-1">
             <div class="card-header p-0" id="headingTwo-{{ price.id }}">
                 <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo-{{ price.id }}" aria-expanded="false" aria-controls="collapseTwo-{{ price.id }}">
+                    <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseTwo-{{ price.id }}" aria-expanded="false" aria-controls="collapseTwo-{{ price.id }}">
                         {{ 'price.collapsable.group.2.description'|trans }}
                     </button>
                 </h6>
@@ -94,7 +94,7 @@
             <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
                     <div class="form-group row">
-                        <label for="inputDescription" class="col-sm-3 col-form-label text-right">{{ 'price.season'|trans }}:</label>
+                        <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.season'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" name="allperiods-{{ price.id }}" id="allperiods-{{ price.id }}" class="custom-control-input"
@@ -128,7 +128,7 @@
                         <div class="col-sm-3"></div>                        
                         <div class="col" id="periods-field">
                         {% for pricePeriod in price.pricePeriods %}
-                            <div class="price-period float-left">
+                            <div class="price-period float-start">
                                 <span class="badge .badge-pill badge-info">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
                                     <button type="button" class="close align-center" aria-label="Dismiss">
                                         <span aria-hidden="true">&times;</span>
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                     <div class="form-group row days-control">
-                        <label for="inputDescription" class="col-sm-3 col-form-label text-right">{{ 'price.weekdays'|trans }}:</label>
+                        <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.weekdays'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="custom-control-input"
@@ -212,7 +212,7 @@
             <div class="card-header p-0" id="headingThree-{{ price.id }}">
                 <h6 class="border-bottom mb-0">
                     <button type="button" class="btn btn-link {% if price.id == "new" or price.type != 2 %} disabled {% endif %}" 
-                            data-toggle="collapse" data-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
+                            data-bs-toggle="collapse" data-bs-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
                         {{ 'price.collapsable.group.3.description'|trans }}
                     </button>
                 </h6>
@@ -222,7 +222,7 @@
                     <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
                     <div class="form-group row">
                         <label for="inputNumberOfPersons"
-                               class="col-sm-4 col-form-label text-right">{{ 'price.numberofpersons'|trans }} *</label>
+                               class="col-sm-4 col-form-label text-end">{{ 'price.numberofpersons'|trans }} *</label>
 
                         <div class="col-sm-8">
                             <input type="text" id="number-of-persons" class="form-control"
@@ -230,7 +230,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-right">{{ 'appartment.category'|trans }}</label>
+                        <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'appartment.category'|trans }}</label>
 
                         <div class="col-sm">
                             <select name="category-{{ price.id }}" class="form-control">
@@ -245,7 +245,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="inputMinStay" class="col-sm-4 col-form-label text-right">{{ 'price.minstay'|trans }} *</label>
+                        <label for="inputMinStay" class="col-sm-4 col-form-label text-end">{{ 'price.minstay'|trans }} *</label>
 
                         <div class="col-sm-8">
                             <input type="text" id="min-stay" class="form-control" name="min-stay-{{ price.id }}"
@@ -261,7 +261,7 @@
     <input name="_csrf_token" value="{{ token }}" type="hidden">
 </fieldset>
 <div id="pricePeriodTemplate" class="d-none">
-    <div class="price-period float-left">
+    <div class="price-period float-start">
         <span class="badge badge-pill badge-info"><span class="period-text"></span>
             <button type="button" class="close align-center" aria-label="Dismiss">
                 <span aria-hidden="true">&times;</span>
