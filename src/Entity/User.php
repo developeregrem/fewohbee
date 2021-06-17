@@ -60,7 +60,7 @@ class User implements UserInterface
      */
     private $active;
 
-    public function getId(): ?int
+    public function getId()
     {
         return $this->id;
     }
