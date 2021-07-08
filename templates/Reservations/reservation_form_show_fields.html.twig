@@ -112,7 +112,7 @@
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
             </div>
             <div class="col-sm-9">
-                <select id="reservation-origin" name="reservation-origin" class="form-control"{% if mode is defined and mode == 'edit' %} disabled{% endif %}>
+                <select id="reservation-origin" name="reservation-origin" class="form-select"{% if mode is defined and mode == 'edit' %} disabled{% endif %}>
                     {% for origin in origins %}
                         <option value="{{ origin.id }}" {% if attribute(reservations, 0).reservationOrigin and origin.id == attribute(reservations, 0).reservationOrigin.id  %} selected {% endif %}>
                             {{ origin.name }}
@@ -243,10 +243,10 @@
         {% for price in miscPrices %}
             <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">
                 <div class="col-md-3">                    
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
                                data-reservationid="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
-                        <label class="custom-control-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
+                        <label class="form-check-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
                     </div>
                 </div>
                 <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>

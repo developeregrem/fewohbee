@@ -14,7 +14,7 @@
             {% for type, flashMessages in app.flashes %}
                 {% for flashMessage in flashMessages %}
                     <div class="col">
-                        <div class="alert alert-{{ type }} alert-dismissable" role="alert">
+                        <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
                             {{ flashMessage|trans }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>                            
                         </div>
@@ -32,7 +32,7 @@
                 <input type="date" class="form-control mb-2 me-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
             </div>
                 <div class="col-md-auto">
-                <select name="intervall" class="custom-select mb-2 me-sm-2">
+                <select name="intervall" class="form-select mb-2 me-sm-2 pe-2">
                     <option value="8"{% if "8" == interval %} selected{% endif %}>
                         8 {{ 'reservation.days'|trans }}</option>
                     <option value="15"{% if "15" == interval %} selected{% endif %}>
@@ -53,7 +53,7 @@
                 </button>
             </div>
             <div class="col-md-2 text-end ms-auto">
-                <select id="objects" name="object" class="form-control">
+                <select id="objects" name="object" class="form-select">
                 <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                 {% for object in objects %}
                     <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
@@ -346,7 +346,7 @@
                 '</div>';
 
         var message = '<div class="col-md-10 col-md-offset-1">' +
-                '<div class="alert alert-danger alert-dismissable">' +
+                '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
                 '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
                 '{{ 'reservation.no.selected.appartments'|trans }}' +
                 '</div>' +

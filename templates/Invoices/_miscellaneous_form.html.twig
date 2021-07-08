@@ -3,7 +3,7 @@
            class="col-sm-4 col-form-label text-end">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
 
     <div class="col-sm">
-        <select id="pricecategory" name="pricecategory" class="form-control"
+        <select id="pricecategory" name="pricecategory" class="form-select"
                 onchange="return fillFieldsFromPriceCategory(this)">
             <option value="0|0" selected></option>
             {% for price in prices %}
@@ -16,7 +16,7 @@
 {{ form_row(form.description) }}                    
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
-<div class="form-group row mt-3 ps-5">
+<div class="form-group mt-4 ps-5">
     {{ form_widget(form.includesVat) }}
     {{ form_widget(form.isFlatPrice) }}
 </div>

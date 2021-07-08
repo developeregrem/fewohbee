@@ -7,7 +7,7 @@
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.0.1.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.0.2.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style.css">
     {% endblock %}
@@ -15,7 +15,7 @@
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.6.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-5.14.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.9.2.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.0.1.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.0.2.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/ajax_1.0.0.js"></script>
@@ -26,7 +26,7 @@
 {% block body %}
     {% block menu %}
         {% set activeRouteName = getActiveRouteName() %}
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <nav class="navbar navbar-expand-md navbar-dark bg-primary">
             <div class="container-fluid">
                 <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,10 +101,11 @@
     {% block flashMessage %}
         <div class="container mt-3">
             <div class="row" id="flash-message-container">
+                <div class="col">
                 {% for type, flashMessages in app.flashes %}
                     {% for flashMessage in flashMessages %}
                         <div class="col">
-                            <div class="alert alert-{{ type }} alert-dismissable" role="alert">
+                            <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 {{ flashMessage|trans }}
                             </div>

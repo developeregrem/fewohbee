@@ -25,7 +25,7 @@
                            class="col-sm-4 col-form-label text-end">{{ 'customer.salutation'|trans }} *</label>
 
                     <div class="col-sm-8">
-                        <select name="salutation-{{ customer.id }}" class="form-control">
+                        <select name="salutation-{{ customer.id }}" class="form-select">
                             <option value="{{ 'customer.mr'|trans }}" {% if customer.salutation ==  'customer.mr'|trans %} selected {% endif %}>{{ 'customer.mr'|trans }}</option>
                             <option value="{{ 'customer.ms'|trans }}" {% if customer.salutation ==  'customer.ms'|trans %} selected {% endif %}>{{ 'customer.ms'|trans }}</option>
                             <option value="{{ 'customer.family'|trans }}" {% if customer.salutation == 'customer.family'|trans %} selected {% endif %}>{{ 'customer.family'|trans }}</option>
@@ -72,7 +72,7 @@
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
 
                     <div class="col-sm-8">
-                        <select name="addresstype-{{ customer.id }}[]" class="form-control">
+                        <select name="addresstype-{{ customer.id }}[]" class="form-select">
                             {% for type in addresstypes %}
                                 <option value="{{ type }}" 
                                         {% if type == address.type %} 
@@ -146,7 +146,7 @@
                     <label for="country-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
-                        <select name="country-{{ customer.id }}[]" class="form-control">
+                        <select name="country-{{ customer.id }}[]" class="form-select">
                             {% for key, country in countries %}
                                 <option value="{{ key }}" 
                                         {% if key == app.request.locale|upper and customer.id == 'new' %} 
@@ -215,7 +215,7 @@
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
                     <div class="col-sm-8">
-                        <select name="addresstype-{{ customer.id }}[]" class="form-control">
+                        <select name="addresstype-{{ customer.id }}[]" class="form-select">
                             {% for type in addresstypes %}
                                 <option value="{{ type }}">{{ type|trans }}</option>
                             {% endfor %}
@@ -283,7 +283,7 @@
                     <label for="country-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
-                        <select name="country-{{ customer.id }}[]" class="form-control">
+                        <select name="country-{{ customer.id }}[]" class="form-select">
                             {% for key, country in countries %}
                                 <option value="{{ key }}" 
                                         {% if key == app.request.locale|upper and customer.id == 'new' %} 
