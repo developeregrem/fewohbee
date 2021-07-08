@@ -27,7 +27,7 @@
         <label for="category-{{ appartment.id }}" class="col-sm-4 col-form-label text-end">{{ 'appartment.category'|trans }}</label>
 
         <div class="col-sm">
-            <select name="category-{{ appartment.id }}" class="form-control">
+            <select name="category-{{ appartment.id }}" class="form-select">
                 {% for category in categories %}
                     {% if appartment.id != "new" and appartment.roomCategory != null and category.id == appartment.roomCategory.id %}
                         <option value="{{ category.id }}" selected>{{ category.name }}</option>
@@ -42,7 +42,7 @@
         <label for="inputPassword3" class="col-sm-4 col-form-label text-end">{{ 'appartment.object'|trans }}</label>
 
         <div class="col-sm">
-            <select name="object-{{ appartment.id }}" class="form-control">
+            <select name="object-{{ appartment.id }}" class="form-select">
                 {% for object in objects %}
                     {% if appartment.id != "new" and object.id == appartment.object.id %}
                         <option value="{{ object.id }}" selected>{{ object.name }}</option>

@@ -55,7 +55,7 @@
                             <h4>{{ 'reservation.appartment.available'|trans }}</h4>
                         </div>
                         <div class="col text-end">
-                            <select id="objects" name="object" class="form-control"
+                            <select id="objects" name="object" class="form-select"
                                     onchange="getAvailableAppartmentsForPeriod('edit')">
                                 <option value="all"
                                         {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
@@ -87,7 +87,7 @@
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
             </div>
             <div class="col-sm-9">
-                <select id="reservation-origin" name="reservation-origin" class="form-control">
+                <select id="reservation-origin" name="reservation-origin" class="form-select">
                     {% for origin in origins %}
                         <option value="{{ origin.id }}" {% if origin.id == reservation.reservationOrigin.id  %} selected {% endif %}>{{ origin.name }}</option>
                     {% endfor %}

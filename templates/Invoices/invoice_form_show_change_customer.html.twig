@@ -7,7 +7,7 @@
                     <div class="form-group row">
                         <label for="recommendation" class="col-sm-3 col-form-label text-end">{{ 'invoice.customer.recommendation'|trans }}</label>
                         <div class="col-sm-9">
-                            <select id="recommendation" name="recommendation" class="form-control">
+                            <select id="recommendation" name="recommendation" class="form-select">
                                 <option value="0"></option>
                                 {% for customer in customers %}
                                     {% for address in customer.customerAddresses %}

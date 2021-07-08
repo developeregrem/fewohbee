@@ -12,7 +12,7 @@
         <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.type'|trans }}
             *</label>
         <div class="col-sm-8">
-            <select name="type-{{ template.id }}" class="form-control" id="template-type">
+            <select name="type-{{ template.id }}" class="form-select" id="template-type">
                 {% for type in types %}
                     <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
                 {% endfor %}

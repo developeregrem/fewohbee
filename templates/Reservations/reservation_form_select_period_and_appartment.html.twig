@@ -82,7 +82,7 @@
                            onchange="getAvailableAppartmentsForPeriod()">
                 </div>
                 <div class="col text-end">
-                    <select id="objects" name="object" class="form-control"
+                    <select id="objects" name="object" class="form-select"
                             onchange="getAvailableAppartmentsForPeriod()">
                         <option value="all"
                                 {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>

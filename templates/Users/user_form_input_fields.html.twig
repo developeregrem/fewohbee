@@ -44,7 +44,7 @@
     <div class="form-group row">
         <label for="role-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.role'|trans }}</label>
         <div class="col-sm">
-            <select name="role-{{ user.id }}" class="form-control">
+            <select name="role-{{ user.id }}" class="form-select">
                 {% for role in roles %}
                     {% if user.id != "new" and role.name == user.role.name %}
                         <option value="{{ role.id }}" selected>{{ role.name }}</option>
@@ -68,10 +68,10 @@
     <div class="form-group row">
         <div class="col-sm-4"></div>
         <div class="col-sm">
-        <div class="custom-control custom-checkbox">
+        <div class="form-check">
             <input type="checkbox" name="active-{{ user.id }}" id="active-{{ user.id }}" 
-                   class="custom-control-input"{% if user.active == true %} checked {% endif %} value="1">
-            <label class="custom-control-label " for="active-{{ user.id }}">{{ 'user.active'|trans }}</label>
+                   class="form-check-input"{% if user.active == true %} checked {% endif %} value="1">
+            <label class="form-check-label" for="active-{{ user.id }}">{{ 'user.active'|trans }}</label>
         </div>
     </div>
     <input name="_csrf_token" value="{{ token }}" type="hidden">

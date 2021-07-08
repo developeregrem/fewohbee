@@ -3,7 +3,7 @@
         {% for flashMessage in flashMessages %}
         <div class="row">
             <div class="col-md">
-                <div class="alert alert-{{ type }} alert-dismissable">
+                <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     {{ flashMessage|trans }}
                 </div>

@@ -11,7 +11,7 @@
 <div class="form-group row">
     <label for="month" class="col-sm-5 col-form-label text-end">{{ 'journal.month'|trans }} *</label>
     <div class="col-sm">
-        <select name="month" class="form-control">
+        <select name="month" class="form-select">
             {% set currentMonth = journal.cashMonth %}
             {% for month in monthList %}
                 <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
