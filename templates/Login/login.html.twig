@@ -28,11 +28,11 @@
                     <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
                 {% endif %}
                 <form class="" action="{{ path('login_check') }}" method="post">
-                    <div class="form-group">
+                    <div class="">
                         <input class="form-control" type="text" name="_username" value="{{ last_username }}"
                                placeholder="{{ 'login.username.placeholder'|trans }}"/>
                     </div>
-                    <div class="form-group">
+                    <div class="">
                         <input class="form-control" type="password" name="_password" value=""
                                placeholder="{{ 'login.password.placeholder'|trans }}"/>
                     </div>

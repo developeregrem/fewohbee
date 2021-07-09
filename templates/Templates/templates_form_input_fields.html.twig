@@ -1,6 +1,6 @@
 <fieldset
         id="template-form-fieldset-primary-{{ template.id }}" {% if template.id != "new" %} {% endif %}>
-    <div class="form-group row">
+    <div class="row">
         <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.name'|trans }}
             *</label>
         <div class="col-sm-8">
@@ -8,7 +8,7 @@
                    value="{{ template.name }}" required />
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.type'|trans }}
             *</label>
         <div class="col-sm-8">
@@ -19,12 +19,12 @@
             </select>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <div class="col">
             <textarea name="text-{{ template.id }}" id="editor1" rows="15">{{ template.text|raw }}</textarea>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="params-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.params'|trans }}</label>
         <div class="col-sm-8">
             {% if template.params|length == 0 %}
@@ -37,7 +37,7 @@
                    value="{{ tParams }}" />
         </div>
     </div> 
-    <div class="form-group row">
+    <div class="row">
         <label for="default-{{ template.id }}" class="col-sm-4 form-check-label text-end">{{ 'templates.default'|trans }}</label>
         <div class="col-sm-8 text-start">
             <input type="checkbox" name="default-{{ template.id }}" class="form-check"

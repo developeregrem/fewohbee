@@ -20,7 +20,7 @@
         </div>
         <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
             <div class="card-body">
-                <div class="form-group row">
+                <div class="row">
                     <label for="salutation-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.salutation'|trans }} *</label>
 
@@ -32,7 +32,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group row p-0">
+                <div class="row p-0">
                     <label for="firstname-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.firstname'|trans }}</label>
 
@@ -41,7 +41,7 @@
                                value="{{ customer.firstname }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="lastname-{{ customer.id }}"
                            class="col-sm-4 col-form-label col-form-label text-end">{{ 'customer.lastname'|trans }} *</label>
 
@@ -67,7 +67,7 @@
         </div>
         <div id="address{{ loop.index }}" class="collapse addressfields" aria-labelledby="headingTwo" data-parent="#accordion">
             <div class="card-body">
-                <div class="form-group row">
+                <div class="row">
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
 
@@ -82,7 +82,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="company-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.company'|trans }}</label>
                     <div class="col-sm-8">
@@ -90,7 +90,7 @@
                                value="{{ address.company }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="phone-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.phone'|trans }}</label>
                     <div class="col-sm-8">
@@ -98,7 +98,7 @@
                                value="{{ address.phone }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="mobilephone-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.mobilephone'|trans }}</label>
                     <div class="col-sm-8">
@@ -106,13 +106,13 @@
                                value="{{ address.mobilephone }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="fax-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.fax'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="{{ address.fax }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="email-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.email'|trans }}</label>
                     <div class="col-sm-8">
@@ -120,7 +120,7 @@
                                value="{{ address.email }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="address-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.address'|trans }}</label>
                     <div class="col-sm-8">
@@ -128,13 +128,13 @@
                                value="{{ address.address }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="city-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.city'|trans }}</label>
                     <div class="col-sm-8">
@@ -142,7 +142,7 @@
                                value="{{ address.city }}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="country-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
@@ -173,7 +173,7 @@
         </div>
         <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
             <div class="card-body">
-                <div class="form-group row">
+                <div class="row">
                     <label for="birthday-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.birthday'|trans }}</label>
 
@@ -183,7 +183,7 @@
                                value="{% if customer.birthday %}{{ customer.birthday|date('Y-m-d') }}{% endif %}">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="remark-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.remark'|trans }}</label>
                     <div class="col-sm-8">
@@ -211,7 +211,7 @@
         </div>
         <div id="addressXX" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
             <div class="card-body">
-                <div class="form-group row">
+                <div class="row">
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
                     <div class="col-sm-8">
@@ -222,7 +222,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="company-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.company'|trans }}</label>
                     <div class="col-sm-8">
@@ -230,7 +230,7 @@
                                value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="phone-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.phone'|trans }}</label>
                     <div class="col-sm-8">
@@ -238,7 +238,7 @@
                                value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="mobilephone-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.mobilephone'|trans }}</label>
                     <div class="col-sm-8">
@@ -246,40 +246,40 @@
                                value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="fax-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.fax'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="email-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.email'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="email-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="address-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.address'|trans }}</label>
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="address-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="city-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.city'|trans }}</label>
                     <div class="col-sm-8">
                         <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]" value="">
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="country-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.country'|trans }}</label>
                     <div class="col-sm-8">
