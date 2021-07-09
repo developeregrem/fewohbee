@@ -30,7 +30,7 @@ services:
             - '@doctrine.system_cache_pool'
             
     redis_cache_service:
-        class: Doctrine\Common\Cache\RedisCache
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
         calls:
             - method: setRedis
               arguments:
