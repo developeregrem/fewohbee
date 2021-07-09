@@ -10,7 +10,7 @@
             </div>
             <div id="collapseOne-{{ price.id }}" class="collapse show" aria-labelledby="headingOne-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
-                        <div class="form-group row">
+                        <div class="row">
                             <label for="inputDescription" class="col-sm-4 col-form-label text-end">{{ 'price.description'|trans }}
                                 *</label>
 
@@ -33,7 +33,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row">
                             <label for="inputVat" class="col-sm-4 col-form-label text-end">{{ 'price.vat'|trans }} *</label>
 
                             <div class="col-sm-8">
@@ -41,7 +41,7 @@
                                        value="{{ price.vat|number_format(2, ',', '.') }}" required>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row">
                             <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.type'|trans }} *</label>
 
                             <div class="col-sm-8">
@@ -52,7 +52,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row">
                             <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.origin'|trans }} *</label>
                             <div class="col-sm-8">
                                 <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-select" multiple>
@@ -62,7 +62,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group row mt-3">
+                        <div class="row mt-3">
                             <div class="col-sm-4"></div>
                             <div class="col">
                                 <div class="form-check form-switch">
@@ -71,7 +71,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group row">
+                        <div class="row">
                             <div class="col-sm-4"></div>
                             <div class="col">
                                 <div class="form-check form-switch">
@@ -93,7 +93,7 @@
             </div>
             <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
-                    <div class="form-group row">
+                    <div class="row">
                         <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.season'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
@@ -139,7 +139,7 @@
                         {% endfor %}
                         </div>
                     </div>
-                    <div class="form-group row days-control">
+                    <div class="row days-control">
                         <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.weekdays'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
@@ -170,7 +170,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group row days-control">
+                    <div class="row days-control">
                         <div class="col-sm-3"></div>
                         <div class="checkbox col-sm-2">
                             <div class="form-check">
@@ -218,7 +218,7 @@
             <div id="collapseThree-{{ price.id }}" class="collapse" aria-labelledby="headingThree-{{ price.id }}" data-parent="#accordion">
                 <div class="card-body">
                     <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
-                    <div class="form-group row">
+                    <div class="row">
                         <label for="inputNumberOfPersons"
                                class="col-sm-4 col-form-label text-end">{{ 'price.numberofpersons'|trans }} *</label>
 
@@ -227,7 +227,7 @@
                                    name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}">
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="row">
                         <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'appartment.category'|trans }}</label>
 
                         <div class="col-sm">
@@ -242,7 +242,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row">
+                    <div class="row">
                         <label for="inputMinStay" class="col-sm-4 col-form-label text-end">{{ 'price.minstay'|trans }} *</label>
 
                         <div class="col-sm-8">

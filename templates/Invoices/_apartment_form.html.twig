@@ -5,7 +5,7 @@
 {{ form_row(form.endDate) }}
 {{ form_row(form.persons) }}
 {{ form_row(form.beds) }}
-<div class="form-group row">
+<div class="row">
     <label for="pricecategory"
            class="col-sm-4 col-form-label text-end">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
 
@@ -21,9 +21,11 @@
 </div>                   
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
-<div class="form-group mt-4 ps-5">
-    {{ form_widget(form.includesVat) }}
-    {{ form_widget(form.isFlatPrice) }}
+<div class="row mt-4 ps-5">
+    <div class="col-sm">
+        {{ form_widget(form.includesVat) }}
+        {{ form_widget(form.isFlatPrice) }}
+    </div>
 </div>
 
 <script>

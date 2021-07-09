@@ -1,6 +1,6 @@
 <form id="template-form" class="form-horizontal" role="form" onsubmit="return saveTemplateFile('#template-form');">
     <fieldset id="template-form-fieldset-primary-">
-        <div class="form-group row">
+        <div class="row">
             <label for="subject" class="col-sm-3 col-form-label">Bezeichnung
                 *</label>
 
@@ -9,8 +9,10 @@
                        value="{{ template.name }}" required>
             </div>
         </div>
-        <div class="form-group">
-            <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
+        <div class="row mt-3">
+            <div class="col-sm">
+                <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
+            </div>
         </div>
     </fieldset>
 

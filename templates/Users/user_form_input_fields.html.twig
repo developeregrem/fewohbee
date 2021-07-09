@@ -1,6 +1,6 @@
 <fieldset id="entry-form-fieldset-{{ user.id }}" {% if user.id != "new" %} disabled {% endif %}>
     
-    <div class="form-group row">
+    <div class="row">
         <label for="inputUsername" class="col-sm-4 col-form-label text-end">{{ 'user.username'|trans }} *</label>
         <div class="col-sm">
             {% if user.id != "new" %}            
@@ -11,28 +11,28 @@
         </div>
     </div>
     
-    <div class="form-group row">
+    <div class="row">
         <label for="firstname-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.firstname'|trans }} *</label>
         <div class="col-sm">
             <input type="text" class="form-control" name="firstname-{{ user.id }}"
                    value="{{ user.firstname }}" required>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="lastname-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.lastname'|trans }} *</label>
         <div class="col-sm">
             <input type="text" class="form-control" name="lastname-{{ user.id }}"
                    value="{{ user.lastname }}" required>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="email-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.email'|trans }} *</label>
         <div class="col-sm">
             <input type="email" class="form-control" name="email-{{ user.id }}" value="{{ user.email }}"
                    required>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="password-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.password'|trans }}</label>
         <div class="col-sm">
             <input type="password" class="form-control" name="password-{{ user.id }}" placeholder="{{ 'user.password'|trans }}" aria-describedby="passwordHelpBlock">
@@ -41,7 +41,7 @@
             </small>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <label for="role-{{ user.id }}" class="col-sm-4 col-form-label text-end">{{ 'user.role'|trans }}</label>
         <div class="col-sm">
             <select name="role-{{ user.id }}" class="form-select">
@@ -56,7 +56,7 @@
         </div>
     </div>
     {% if user.id != "new" %}
-    <div class="form-group row">
+    <div class="row">
         <label for="inputPassword" class="col-sm-4 col-form-label text-end">{{ 'user.lastaction'|trans }}</label>
         <div class="col-sm">
             {% if user.lastaction != null %}
@@ -65,7 +65,7 @@
         </div>
     </div>
     {% endif %}
-    <div class="form-group row">
+    <div class="row">
         <div class="col-sm-4"></div>
         <div class="col-sm">
         <div class="form-check">
