@@ -73,7 +73,7 @@
         <select name="country-{{ customer.id }}[]" class="form-select">
             {% for key, country in countries %}
                 <option value="{{ key }}" 
-                        {% if key == app.request.locale|upper and customer.id == 'new' %} 
+                        {% if key == app.request.locale|upper %} 
                             selected
                         {% endif %}>{{ country }}</option>
             {% endfor %}
