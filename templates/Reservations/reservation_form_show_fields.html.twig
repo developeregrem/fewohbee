@@ -59,7 +59,7 @@
                 </dl>
             </div>
         </div>                        
-        {% include 'Customers/customer_show_address_fields.html.twig' with {'customer' : booker} %}
+        {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : booker} %}
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}

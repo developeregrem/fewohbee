@@ -10,7 +10,15 @@
 </div>
 
 <div id="accordion" class="accordion">
-    <div id="firstPanel" class="card">
+    <div class="accordion-item" id="firstPanel">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                {{ 'customer.person'|trans }}
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne">
+            <div class="accordion-body">
+{#    <div id="firstPanel" class="card">
         <div class="card-header p-0" id="headingOne">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -19,7 +27,7 @@
             </h6>
         </div>
         <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-            <div class="card-body">
+            <div class="card-body">#}
                 <div class="row">
                     <label for="salutation-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.salutation'|trans }} *</label>
@@ -53,8 +61,19 @@
             </div>
         </div>
     </div>
-    {% for address in customer.customerAddresses %}                
-    <div class="card mt-1">
+    {% for address in customer.customerAddresses %}  
+    <div class="accordion-item">
+        <h6 class="accordion-header" id="address-heading-{{ loop.index }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#address{{ loop.index }}" aria-expanded="false" aria-controls="address{{ loop.index }}">
+                {{ 'customer.contactdata'|trans }}
+                <i class="fas fa-trash-alt mouse-pointer ms-3 text-secondary" 
+                      title="{{ 'customer.address.delete'|trans }}"
+                      onclick="deleteAddress(this);"></i>
+            </button>            
+        </h6>
+        <div id="address{{ loop.index }}" class="accordion-collapse collapse addressfields" aria-labelledby="address-heading-{{ loop.index }}" data-bs-parent="#accordion">
+            <div class="accordion-body">
+    {#<div class="card mt-1">
         <div class="card-header p-0" id="headingTwo">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#address{{ loop.index }}" aria-expanded="true" aria-controls="address{{ loop.index }}">
@@ -66,7 +85,7 @@
             </h6>           
         </div>
         <div id="address{{ loop.index }}" class="collapse addressfields" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">
+            <div class="card-body">#}
                 <div class="row">
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
@@ -163,7 +182,15 @@
         <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="{{ address.id }}" />
     </div>    
     {% endfor %}
-    <div class="card mt-1">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingThree">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                {{ 'customer.additional'|trans }}
+            </button>
+        </h2>
+        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordion">
+            <div class="accordion-body">
+    {#<div class="card mt-1">
         <div class="card-header p-0" id="headingThree">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
@@ -172,7 +199,7 @@
             </h6>
         </div>
         <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
-            <div class="card-body">
+            <div class="card-body">#}
                 <div class="row">
                     <label for="birthday-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.birthday'|trans }}</label>
@@ -198,7 +225,18 @@
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
 <div class="d-none" id="address-forms">
-    <div class="card mt-1">
+    <div class="accordion-item">
+        <h6 class="accordion-header" id="address-heading-XXX">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
+                {{ 'customer.contactdata'|trans }}
+                <i class="fas fa-trash-alt mouse-pointer ms-3 text-secondary" 
+                      title="{{ 'customer.address.delete'|trans }}"
+                      onclick="deleteAddress(this);"></i>
+            </button>            
+        </h6>
+        <div id="addressXX" class="accordion-collapse collapse show addressfields" aria-labelledby="address-heading-XXX" data-bs-parent="#accordion">
+            <div class="accordion-body">
+    {#<div class="card mt-1">
         <div class="card-header p-0">
             <h6 class="border-bottom mb-0">
                 <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
@@ -210,89 +248,8 @@
             </h6> 
         </div>
         <div id="addressXX" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">
-                <div class="row">
-                    <label for="addresstype-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
-                    <div class="col-sm-8">
-                        <select name="addresstype-{{ customer.id }}[]" class="form-select">
-                            {% for type in addresstypes %}
-                                <option value="{{ type }}">{{ type|trans }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="company-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.company'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="company-{{ customer.id }}[]"
-                               value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="phone-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.phone'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="phone-{{ customer.id }}[]"
-                               value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="mobilephone-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.mobilephone'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="mobilephone-{{ customer.id }}[]"
-                               value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="fax-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.fax'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="fax-{{ customer.id }}[]" value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="email-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.email'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="email-{{ customer.id }}[]" value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="address-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.address'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" name="address-{{ customer.id }}[]" value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="city-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.city'|trans }}</label>
-                    <div class="col-sm-8">
-                        <input id="city" type="text" class="form-control" name="city-{{ customer.id }}[]" value="">
-                    </div>
-                </div>
-                <div class="row">
-                    <label for="country-{{ customer.id }}"
-                           class="col-sm-4 col-form-label text-end">{{ 'customer.country'|trans }}</label>
-                    <div class="col-sm-8">
-                        <select name="country-{{ customer.id }}[]" class="form-select">
-                            {% for key, country in countries %}
-                                <option value="{{ key }}" 
-                                        {% if key == app.request.locale|upper and customer.id == 'new' %} 
-                                            selected
-                                        {% endif %}>{{ country }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
+            <div class="card-body">#}
+                {% include 'Customers/customer_form_address_fields.html.twig' %}
             </div>
         </div>
         <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="0" />
@@ -367,10 +324,12 @@
     });
     function addAddressFields() {
         $addressForms = $("#address-forms").children().clone(false);        
-        $newId = $(".addressfields").length + 1;                        // count existing addresses
+        $newId = $(".addressfields").length + 1;    // count existing addresses
+        $addressForms.find("#addressXX").attr("aria-labelledby", "address-heading-"+$newId);
         $addressForms.find("#addressXX").prop("id", "address"+$newId);  // change id
-        $addressForms.find(".btn").attr("data-bs-target", "#address"+$newId);  // change id
-        $addressForms.find(".btn").attr("aria-controls", "address"+$newId);  // change id
+        $addressForms.find("h6").prop("id", "#address-heading-"+$newId);  // change id
+        $addressForms.find("button").attr("data-bs-target", "#address"+$newId);  // change id
+        $addressForms.find("button").attr("aria-controls", "address"+$newId);  // change id
         $addressForms.find(":input").prop('disabled', false);
         $("#firstPanel").after($addressForms);
         
@@ -379,13 +338,13 @@
     }
     
     function deleteAddress(elm) {
-        $panel = $(elm).parents(".card");
+        $panel = $(elm).parents(".accordion-item");
         $panel.remove();
     }
     
     function fillAddressFields(item) {
         addAddressFields();
-        $id = $(".addressfields").length + 1;   // number of address panels
+        $id = $(".addressfields").length;   // number of address panels
         
         $("#address"+$id).find("select[name^='addresstype-']").val(item.type);
         $("#address"+$id).find("input[name^='company-']").val(item.company);
