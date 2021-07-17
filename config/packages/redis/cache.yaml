@@ -1,0 +1,15 @@
+parameters:
+    # fallback parameters
+    # define the redis host
+    env(REDIS_HOST): 'redis'
+    # define the used redix index
+    env(REDIS_IDX): '1'
+
+framework:
+    cache:
+        # Unique name of your app: used to compute stable namespaces for cache keys.
+        prefix_seed: fewohbee
+
+        # Redis
+        app: cache.adapter.redis
+        default_redis_provider: 'redis://%env(resolve:REDIS_HOST)%/%env(resolve:REDIS_IDX)%'

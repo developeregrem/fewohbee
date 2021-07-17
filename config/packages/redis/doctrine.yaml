@@ -1,10 +1,3 @@
-parameters:
-    # fallback parameters
-    # define the redis host
-    env(REDIS_HOST): 'redis'
-    # define the used redix index
-    env(REDIS_IDX): '1'
-
 doctrine:
     orm:
         metadata_cache_driver:
@@ -17,40 +10,10 @@ doctrine:
             type: service
             id: redis_cache_service
 
-services:
-    doctrine.result_cache_provider:
-        class: Symfony\Component\Cache\DoctrineProvider
-        public: false
-        arguments:
-            - '@doctrine.result_cache_pool'
-    doctrine.system_cache_provider:
-        class: Symfony\Component\Cache\DoctrineProvider
-        public: false
-        arguments:
-            - '@doctrine.system_cache_pool'
-            
-    redis_cache_service:
-        class: Doctrine\Common\Cache\RedisCache
-        calls:
-            - method: setRedis
-              arguments:
-                - '@redis'
-                    
-    redis:
-        class: Redis
-        public: false
-        calls:
-            - method: connect
-              arguments:
-                - '%env(resolve:REDIS_HOST)%' # or host/ip with port
-            - method: select
-              arguments:
-                - '%env(resolve:REDIS_IDX)%' # change database by index
-
 framework:
     cache:
         pools:
             doctrine.result_cache_pool:
-                adapter: cache.app
+                adapter: cache.adapter.redis
             doctrine.system_cache_pool:
-                adapter: cache.system
+                adapter: cache.adapter.redis
