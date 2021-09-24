@@ -1,11 +1,6 @@
-login:
-    path:       /login
-    controller: App\Controller\LoginController::login
 login_check:
     path:       /login_check
-logout:
-    path:       /logout
-    
+
 start: 
     path: / 
     methods: GET
