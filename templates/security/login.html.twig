@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ parent() }} -  {{ 'login.title'|trans }}{% endblock %}
+
+{% block description %}{{ parent() }} -  {{ 'login.description'|trans }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/signin.css">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        if ($("body nav").length > 0) {
+            window.location.href = "{{ path('start') }}";
+        } else {
+            $(document).ready(function () {
+                $("body div").removeClass("d-none");
+                $("body p").removeClass("d-none");
+            });
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+        
+<main class="form-signin text-center">
+  <form action="{{ path('login_check') }}" method="post">    
+    <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
+    <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+    <div class="form-floating">
+      <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}">
+      <label for="floatingInput">{{ 'login.username.placeholder'|trans }}</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingPassword" name="_password"  placeholder="{{ 'login.password.placeholder'|trans }}">
+      <label for="floatingPassword">{{ 'login.password.placeholder'|trans }}</label>
+    </div>
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+    
+    <div class="checkbox mb-3">
+      <label>
+        <input type="checkbox" name="_remember_me"> {{ 'login.rememberme'|trans }}
+      </label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">{{ 'login.submit.value'|trans }}</button>
+    <div class="row mt-3">
+        <div class="col text-end"><a href="{{ path('app_forgot_password_request') }}">{{ 'login.pwforgotten.link'|trans }}</a></div>
+    </div>
+    <p class="mt-4 mb-3 text-muted">&copy; Copyright {{ "now"|date("Y") }} - {{ 'login.copy'|trans }}</p>
+  </form>
+</main>
+{% endblock %}
