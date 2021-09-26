@@ -2,12 +2,12 @@
 <html lang="{{ app.request.locale }}">
 <head>
     <meta charset="UTF-8"/>
-    <title>{% block title %}Pensionsverwaltung{% endblock %}</title>
+    <title>{% block title %}FewohBee{% endblock %}</title>
     <meta name="description" content="{% block description %}Welcome!{% endblock %}">
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.0.2.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.1.1.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style.css">
     {% endblock %}
@@ -15,7 +15,7 @@
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.6.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-5.14.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.9.2.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.0.2.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.1.1.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/ajax_1.0.0.js"></script>
@@ -57,13 +57,13 @@
                                     <i class="fas fa-tools"></i> {{ 'nav.settings'|trans }}
                                 </a>
                                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users"></i> {{ 'nav.user'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "category" %} active{% endif %}" href="{{ path('room_category_index') }}"><i class="fas fa-bed"></i> {{ 'nav.category'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "appartments" %} active{% endif %}" href="{{ path('appartments.overview') }}"><i class="fas fa-door-open"></i> {{ 'nav.appartment'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "objects" %} active{% endif %}" href="{{ path('objects.overview') }}"><i class="fas fa-home"></i> {{ 'nav.object'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "prices" %} active{% endif %}" href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt"></i> {{ 'nav.prices'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt"></i> {{ 'nav.reservationorigin'|trans }}</a>
-                                    <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file"></i> {{ 'nav.templates'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users text-secondary"></i> {{ 'nav.user'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "category" %} active{% endif %}" href="{{ path('room_category_index') }}"><i class="fas fa-bed text-secondary"></i> {{ 'nav.category'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "appartments" %} active{% endif %}" href="{{ path('appartments.overview') }}"><i class="fas fa-door-open text-secondary"></i> {{ 'nav.appartment'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "objects" %} active{% endif %}" href="{{ path('objects.overview') }}"><i class="fas fa-home text-secondary"></i> {{ 'nav.object'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "prices" %} active{% endif %}" href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt text-secondary"></i> {{ 'nav.prices'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt text-secondary"></i> {{ 'nav.reservationorigin'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
                                 </div>
                             </li>
                         {% endif %}

@@ -1,98 +1,94 @@
 <fieldset id="entry-form-fieldset-{{ price.id }}" {% if price.id != "new" %} disabled {% endif %}>
-    <div id="accordion" class="accordion">
-        <div class="card">
-            <div class="card-header p-0" id="headingOne-{{ price.id }}">
-                <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
-                        {{ 'price.collapsable.group.1.description'|trans }}
-                    </button>
-                </h6>
-            </div>
-            <div id="collapseOne-{{ price.id }}" class="collapse show" aria-labelledby="headingOne-{{ price.id }}" data-parent="#accordion">
-                <div class="card-body">
-                        <div class="row">
-                            <label for="inputDescription" class="col-sm-4 col-form-label text-end">{{ 'price.description'|trans }}
-                                *</label>
+    <div class="accordion" id="accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne-{{ price.id }}">
+                <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#collapseOne-{{ price.id }}" aria-expanded="true" aria-controls="collapseOne-{{ price.id }}">
+                    {{ 'price.collapsable.group.1.description'|trans }}
+                </button>
+            </h2>
+            <div id="collapseOne-{{ price.id }}" class="accordion-collapse collapse show" aria-labelledby="headingOne-{{ price.id }}" data-bs-parent="#accordion">
+                <div class="accordion-body">
+                    <div class="row">
+                        <label for="inputDescription" class="col-sm-4 col-form-label text-end">{{ 'price.description'|trans }}
+                            *</label>
 
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" name="description-{{ price.id }}"
-                                       value="{{ price.description }}" required>
-                            </div>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="description-{{ price.id }}"
+                                   value="{{ price.description }}" required>
                         </div>
-                        <div class="row">
-                            <label for="price-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.price'|trans }} *</label>
+                    </div>
+                    <div class="row">
+                        <label for="price-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.price'|trans }} *</label>
 
-                            <div class="col-sm-4">
-                                <input type="text" class="form-control" name="price-{{ price.id }}"
-                                       value="{{ price.price|number_format(2, ',', '.') }}" required>
-                            </div>
-                            <div class="col">
-                                <div class="form-check form-switch mt-4">
-                                    <input type="checkbox" name="includesVat-{{ price.id }}" id="includesVat-{{ price.id }}" class="form-check-input"{% if price.includesVat == 1 %} checked {% endif %} value="1">
-                                    <label class="form-check-label" for="includesVat-{{ price.id }}">{{ 'price.includesvat'|trans }}</label>
-                                </div>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="price-{{ price.id }}"
+                                   value="{{ price.price|number_format(2, ',', '.') }}" required>
+                        </div>
+                        <div class="col">
+                            <div class="form-check form-switch mt-4">
+                                <input type="checkbox" name="includesVat-{{ price.id }}" id="includesVat-{{ price.id }}" class="form-check-input"{% if price.includesVat == 1 %} checked {% endif %} value="1">
+                                <label class="form-check-label" for="includesVat-{{ price.id }}">{{ 'price.includesvat'|trans }}</label>
                             </div>
                         </div>
-                        <div class="row">
-                            <label for="inputVat" class="col-sm-4 col-form-label text-end">{{ 'price.vat'|trans }} *</label>
+                    </div>
+                    <div class="row">
+                        <label for="inputVat" class="col-sm-4 col-form-label text-end">{{ 'price.vat'|trans }} *</label>
 
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" name="vat-{{ price.id }}"
-                                       value="{{ price.vat|number_format(2, ',', '.') }}" required>
-                            </div>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" name="vat-{{ price.id }}"
+                                   value="{{ price.vat|number_format(2, ',', '.') }}" required>
                         </div>
-                        <div class="row">
-                            <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.type'|trans }} *</label>
+                    </div>
+                    <div class="row">
+                        <label for="type-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.type'|trans }} *</label>
 
-                            <div class="col-sm-8">
-                                <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-select"
-                                        onchange="return checkIfTypeIsAppartment('{{ price.id }}')">
-                                    <option value="1" {% if price.type == 1 %} selected {% endif %}>{{ 'price.miscellaneous'|trans }}</option>
-                                    <option value="2" {% if price.type == 2 %} selected {% endif %}>{{ 'price.appartment'|trans }}</option>
-                                </select>
+                        <div class="col-sm-8">
+                            <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-select"
+                                    onchange="return checkIfTypeIsAppartment('{{ price.id }}')">
+                                <option value="1" {% if price.type == 1 %} selected {% endif %}>{{ 'price.miscellaneous'|trans }}</option>
+                                <option value="2" {% if price.type == 2 %} selected {% endif %}>{{ 'price.appartment'|trans }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.origin'|trans }} *</label>
+                        <div class="col-sm-8">
+                            <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-select" multiple>
+                                {% for origin in origins %}
+                                    <option value="{{ origin.id }}" {% if origin.id in originPricesIds %} selected {% endif %}>{{ origin.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-sm-4"></div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="active-{{ price.id }}" id="active-{{ price.id }}" class="form-check-input"{% if price.active == 1 %} checked {% endif %} value="1">
+                                <label class="form-check-label" for="active-{{ price.id }}">{{ 'price.active'|trans }}</label>
                             </div>
                         </div>
-                        <div class="row">
-                            <label for="origin-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.origin'|trans }} *</label>
-                            <div class="col-sm-8">
-                                <select id="origin-{{ price.id }}" name="origin-{{ price.id }}[]" class="form-select" multiple>
-                                    {% for origin in origins %}
-                                        <option value="{{ origin.id }}" {% if origin.id in originPricesIds %} selected {% endif %}>{{ origin.name }}</option>
-                                    {% endfor %}
-                                </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="isFlatPrice-{{ price.id }}" id="isFlatPrice-{{ price.id }}" class="form-check-input"{% if price.isFlatPrice == 1 %} checked {% endif %} value="1">
+                                <label class="form-check-label" for="isFlatPrice-{{ price.id }}">{{ 'price.isflatprice'|trans }}</label>
                             </div>
                         </div>
-                        <div class="row mt-3">
-                            <div class="col-sm-4"></div>
-                            <div class="col">
-                                <div class="form-check form-switch">
-                                    <input type="checkbox" name="active-{{ price.id }}" id="active-{{ price.id }}" class="form-check-input"{% if price.active == 1 %} checked {% endif %} value="1">
-                                    <label class="form-check-label" for="active-{{ price.id }}">{{ 'price.active'|trans }}</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-4"></div>
-                            <div class="col">
-                                <div class="form-check form-switch">
-                                    <input type="checkbox" name="isFlatPrice-{{ price.id }}" id="isFlatPrice-{{ price.id }}" class="form-check-input"{% if price.isFlatPrice == 1 %} checked {% endif %} value="1">
-                                    <label class="form-check-label" for="isFlatPrice-{{ price.id }}">{{ 'price.isflatprice'|trans }}</label>
-                                </div>
-                            </div>
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="card mt-1">
-            <div class="card-header p-0" id="headingTwo-{{ price.id }}">
-                <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseTwo-{{ price.id }}" aria-expanded="false" aria-controls="collapseTwo-{{ price.id }}">
-                        {{ 'price.collapsable.group.2.description'|trans }}
-                    </button>
-                </h6>
-            </div>
-            <div id="collapseTwo-{{ price.id }}" class="collapse" aria-labelledby="headingTwo-{{ price.id }}" data-parent="#accordion">
-                <div class="card-body">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo-{{ price.id }}">
+                <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#collapseTwo-{{ price.id }}" aria-expanded="false" aria-controls="collapseTwo-{{ price.id }}">
+                    {{ 'price.collapsable.group.2.description'|trans }}
+                </button>
+            </h2>
+            <div id="collapseTwo-{{ price.id }}" class="accordion-collapse collapse" aria-labelledby="headingTwo-{{ price.id }}" data-bs-parent="#accordion">
+                <div class="accordion-body">
                     <div class="row">
                         <label for="inputDescription" class="col-sm-3 col-form-label text-end">{{ 'price.season'|trans }}:</label>
                         <div class="checkbox col-sm-2 align-self-center">
@@ -129,8 +125,8 @@
                         <div class="col" id="periods-field">
                         {% for pricePeriod in price.pricePeriods %}
                             <div class="price-period float-start">
-                                <span class="badge rounded-pill bg-info">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
-                                    <button type="button" class="btn-close" aria-label="Close">&nbsp;</button>
+                                <span class="badge rounded-pill bg-info fw-normal">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
+                                    <button type="button" class="btn-close btn-close-white" aria-label="Close">&nbsp;</button>
                                 </span>                                 
                                 <input type="hidden" name="periodstart-{{ pricePeriod.id }}[]" value="{{ pricePeriod.start|date('Y-m-d') }}" />
                                 <input type="hidden" name="periodend-{{ pricePeriod.id }}[]" value="{{ pricePeriod.end|date('Y-m-d') }}" />
@@ -206,17 +202,16 @@
             </div>
         </div>
 
-        <div class="card mt-1">
-            <div class="card-header p-0" id="headingThree-{{ price.id }}">
-                <h6 class="border-bottom mb-0">
-                    <button type="button" class="btn btn-link {% if price.id == "new" or price.type != 2 %} disabled {% endif %}" 
-                            data-bs-toggle="collapse" data-bs-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}">
-                        {{ 'price.collapsable.group.3.description'|trans }}
-                    </button>
-                </h6>
-            </div>
-            <div id="collapseThree-{{ price.id }}" class="collapse" aria-labelledby="headingThree-{{ price.id }}" data-parent="#accordion">
-                <div class="card-body">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree-{{ price.id }}">
+                <button type="button" class="accordion-button collapsed {% if price.id == "new" or price.type != 2 %} text-secondary{% endif %}" 
+                        data-bs-toggle="collapse" data-bs-target="#collapseThree-{{ price.id }}" aria-expanded="false" aria-controls="collapseThree-{{ price.id }}"
+                        {% if price.id == "new" or price.type != 2 %} disabled{% endif %}>
+                    {{ 'price.collapsable.group.3.description'|trans }}
+                </button>
+            </h2>
+            <div id="collapseThree-{{ price.id }}" class="accordion-collapse collapse" aria-labelledby="headingThree-{{ price.id }}" data-bs-parent="#accordion">
+                <div class="accordion-body">
                     <fieldset id="price-form-fieldset-type-appartment-{{ price.id }}" {% if price.id == "new" or price.type != 2 %} disabled {% endif %}>
                     <div class="row">
                         <label for="inputNumberOfPersons"
@@ -260,8 +255,8 @@
 </fieldset>
 <div id="pricePeriodTemplate" class="d-none">
     <div class="price-period float-start">
-        <span class="badge rounded-pill bg-info"><span class="period-text"></span>
-             <button type="button" class="btn-close" aria-label="Close">&nbsp;</button>
+        <span class="badge rounded-pill bg-info fw-normal"><span class="period-text"></span>
+             <button type="button" class="btn-close btn-close-white" aria-label="Close">&nbsp;</button>
         </span> 
         <input type="hidden" name="periodstart-new[]" value="" disabled />
         <input type="hidden" name="periodend-new[]" value="" disabled />        
@@ -270,7 +265,7 @@
 </div>
 <script>
     {% if price.id == 'new' %}
-    // initialy check all checkboces for days
+    // initialy check all checkboxes for days
     $('#collapseTwo-new #alldays-new').prop('checked', true);
     checkAllCheckboxes('new');
     {% endif %}

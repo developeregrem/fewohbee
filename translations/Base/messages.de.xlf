@@ -4,7 +4,7 @@
         <body>
             <trans-unit id="login.application.title">
                 <source>login.application.title</source>
-                <target>Pensionsverwaltung</target>
+                <target>FewohBee</target>
             </trans-unit>
             <trans-unit id="nav.user">
                 <source>nav.user</source>

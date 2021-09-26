@@ -1,5 +1,5 @@
 login:
-  copy: Guesthouse management
+  copy: FewohBee
   description: Please login
   password:
     placeholder: Password
@@ -15,9 +15,9 @@ login:
     link: Password forgotten?
     mail:
       end: FewohBee
-      greeting: 'Dear FewohBee user,'
+      greeting: Dear FewohBee user,
       subject: Your password reset request
-      text1: 'to reset your password, please visit the following link.'
+      text1: to reset your password, please visit the following link.
       valid: This link will expire in %validity%.
     reset:
       button: Reset password
@@ -31,7 +31,7 @@ login:
         If your e-mail address is known to us, an e-mail has been sent to the
         specified address. This e-mail contains a link that allows you to reset
         your password.
-      hint: 'If you do not receive an email, please check your spam folder.'
+      hint: If you do not receive an email, please check your spam folder.
       title: New password sent
     title: Request new password
   rememberme: Remember me
