@@ -87,6 +87,9 @@ class InvoicePosition
 
     public function getAmount()
     {
+        if($this->isFlatPrice) {
+            return 1;
+        }
         return $this->amount;
     }
     
