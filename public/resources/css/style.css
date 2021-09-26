@@ -6,6 +6,10 @@ body {
     font-size: 0.9rem;
 }
 
+.dropdown-menu {
+    font-size: 0.9rem;
+}
+
 .login {
     border-color: lightgray;
     border-width: 1px;

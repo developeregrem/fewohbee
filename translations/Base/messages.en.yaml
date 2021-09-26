@@ -17,7 +17,7 @@ button.save: Save
 flash.access.denied: Access denied.
 flash.invalidtoken: Invalid Token.
 flash.mandatory: Please fill in all required fields.
-login.application.title: Guesthouse management
+login.application.title: FewohBee
 nav.appartment: Room
 nav.appartment.add: Create Room
 nav.appartment.overview: Room Overview
@@ -47,4 +47,4 @@ nav.user: Users
 nav.user.add: Add User
 nav.user.overview: Users Overview
 nav.utilization: Utilization
-nav.welcome: 'Welcome, %user%'
+nav.welcome: Welcome, %user%

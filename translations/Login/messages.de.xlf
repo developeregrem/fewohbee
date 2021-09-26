@@ -28,7 +28,7 @@
             </trans-unit>
             <trans-unit id="login.copy">
                 <source>login.copy</source>
-                <target>Pensionsverwaltung</target>
+                <target>FewohBee</target>
             </trans-unit>
             <trans-unit id="login.pwforgotten.link">
                 <source>login.pwforgotten.link</source>

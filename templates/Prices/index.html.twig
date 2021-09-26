@@ -105,14 +105,16 @@
         if ($('#type-' + id).val() === "2") {
             $('#price-form-fieldset-type-appartment-' + id).removeAttr('disabled');
             $('#collapseThree-' + id).removeClass('collapse');
-            $('#headingThree-' + id + ' button').removeClass('disabled');
+            $('#headingThree-' + id + ' button').removeClass('text-secondary').removeClass('collapsed');
+            $('#headingThree-' + id + ' button').removeAttr('disabled');
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').attr('required', true);
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').attr('required', true);
             $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').attr('required', true);
         } else {
             $('#price-form-fieldset-type-appartment-' + id).attr('disabled', true);
             $('#collapseThree-' + id).addClass('collapse');
-            $('#headingThree-' + id + ' button').addClass('disabled');
+            $('#headingThree-' + id + ' button').addClass('text-secondary').addClass('collapsed');
+            $('#headingThree-' + id + ' button').attr('disabled', true);
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').removeAttr('required');
             $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').removeAttr('required');
             $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').removeAttr('required');
