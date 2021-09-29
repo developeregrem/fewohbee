@@ -241,16 +241,16 @@
         <div id="reservation-price-misc-options" class="row justify-content-start">    
         {% set reservationPrices =  attribute(reservations, 0).prices %}
         {% for price in miscPrices %}
-            <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">
-                <div class="col-md-3">                    
-                    <div class="form-check">
+            <div class="col-md-3">
+                <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">                                   
+                    <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
                                data-reservationid="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
                         <label class="form-check-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
-                    </div>
-                </div>
-                <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
-            </form>
+                    </div>                
+                    <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
+                </form>
+            </div>
         {% endfor %}            
         </div>
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">        
