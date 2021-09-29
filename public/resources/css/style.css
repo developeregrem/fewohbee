@@ -10,6 +10,15 @@ body {
     font-size: 0.9rem;
 }
 
+.popover-body, .popover-header {
+    font-size: 0.9rem;
+}
+
+.form-switch > .form-check-input {
+    margin-top: .25em;
+    margin-right: .75em;
+}
+
 .login {
     border-color: lightgray;
     border-width: 1px;
