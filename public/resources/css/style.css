@@ -63,7 +63,7 @@ body {
 }
 
 .reservation-table-weekend {
-    background-color: #EEE;
+    background-color: #EEE !important;
 }
 
 .mouse-pointer {

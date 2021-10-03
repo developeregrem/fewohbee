@@ -13,7 +13,7 @@ templates.correspondence.name: Name
 templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
 templates.delete.ask: Are you sure you want to delete the template?
-templates.description: 'Templates for emails, invoices, etc.'
+templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template
 templates.editor.address: Address
 templates.editor.appartment.positions: Room positions
@@ -33,7 +33,6 @@ templates.editor.invoice.date.desc: Date of invoice
 templates.editor.invoice.number: Invoice number
 templates.editor.invoice.number.desc: Invoice number
 templates.editor.lastname: Last Name
-templates.editor.listreservations: List of reservations
 templates.editor.misc.positions: Miscellaneous positions
 templates.editor.misc.positions.desc: >-
   Inserts a table with all miscellaneous positions. If there are multiple
@@ -44,6 +43,8 @@ templates.editor.misc.total.desc: Returns the total price of all other items.
 templates.editor.netto: Total net
 templates.editor.netto.desc: Total (net)
 templates.editor.phone: Phone
+templates.editor.price.sum: Total Price
+templates.editor.price.sum.desc: Outputs the total price of all room and miscellaneous items.
 templates.editor.price.total: Total price of all rooms
 templates.editor.price.total.desc: Returns the total price of all rooms.
 templates.editor.remarks: Remarks

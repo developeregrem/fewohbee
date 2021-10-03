@@ -32,10 +32,11 @@ class ReservationService implements ITemplateRenderer
     private $em;
     private $requestStack;
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, InvoiceService $is)
     {
         $this->em = $em;
-		$this->requestStack = $requestStack;
+        $this->requestStack = $requestStack;
+        $this->is = $is;
     }
 
     public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $appartment, $start, $end)
@@ -286,6 +287,46 @@ class ReservationService implements ITemplateRenderer
         return $totalInvoices;
     }
     
+    /**
+     * Collects the sum of all prices for the given reservations, e.g. to be used in templates
+     * @param array $reservations
+     * @return array
+     */
+    private function getTotalPricesForTemplate(array $reservations) : array {
+        $this->requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
+        $this->is->prefillMiscPositionsWithReservations($reservations, $this->requestStack, true);
+        $invoicePositionsMiscellaneousArray = $this->requestStack->getSession()->get("invoicePositionsMiscellaneous");
+
+        $this->requestStack->getSession()->set("invoicePositionsAppartments", []);
+        foreach($reservations as $reservation) {
+            $this->is->prefillAppartmentPositions($reservation, $this->requestStack);
+        }
+        $invoicePositionsAppartmentsArray = $this->requestStack->getSession()->get("invoicePositionsAppartments");
+        
+        // collect sums
+        $sumApartment = 0; $sumMisc = 0;
+        /* @var $position \App\Entity\InvoicePosition */
+        foreach($invoicePositionsMiscellaneousArray as $position) {
+            $sumMisc += $position->getTotalPriceRaw();
+        }
+        
+        /* @var $position \App\Entity\InvoiceAppartment */
+        foreach($invoicePositionsAppartmentsArray as $position) {
+            $sumApartment += $position->getTotalPriceRaw();
+        }
+        
+        return [
+            'sumApartmentRaw' => $sumApartment,
+            'sumMiscRaw' => $sumMisc,
+            'totalPriceRaw' => $sumApartment + $sumMisc,
+            'sumApartment' => number_format($sumApartment, 2, ',', '.'),
+            'sumMisc' => number_format($sumMisc, 2, ',', '.'),
+            'totalPrice' => number_format($sumApartment + $sumMisc, 2, ',', '.'),
+            'apartmentPositions' => $invoicePositionsAppartmentsArray,
+            'miscPositions' => $invoicePositionsMiscellaneousArray
+        ];
+    }
+    
     public function getRenderParams($template, $param) {
         // params need to be an array containing a list of Reservation Objects
         $params = array(
@@ -293,6 +334,8 @@ class ReservationService implements ITemplateRenderer
                 'address' => (count($param[0]->getBooker()->getCustomerAddresses()) == 0 ? null : $param[0]->getBooker()->getCustomerAddresses()[0]),
                 'reservations' => $param                 
             );
-        return $params;
+        $prices = $this->getTotalPricesForTemplate($param);
+        
+        return array_merge($params, $prices);
     }
 }
