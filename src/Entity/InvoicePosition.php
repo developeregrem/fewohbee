@@ -93,6 +93,12 @@ class InvoicePosition
         return $this->amount;
     }
     
+    public function getTotalPriceRaw()
+    {
+        $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
+        return $price;
+    }
+    
     public function getTotalPrice()
     {
         $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());

@@ -206,6 +206,14 @@
                 <source>templates.editor.misc.total.desc</source>
                 <target>Gibt den Gesamtpreis aller Sonstigepositionen aus.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.price.sum">
+                <source>templates.editor.price.sum</source>
+                <target>Gesamtpreis</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.price.sum.desc">
+                <source>templates.editor.price.sum.desc</source>
+                <target>Gibt den Gesamtpreis aller Zimmer- und Sonstigepositionen aus.</target>
+            </trans-unit>
             <trans-unit id="templates.editor.brutto">
                 <source>templates.editor.brutto</source>
                 <target>Gesamt Brutto</target>
@@ -232,7 +240,7 @@
             </trans-unit>
             <trans-unit id="templates.editor.appartment.positions">
                 <source>templates.editor.appartment.positions</source>
-                <target>Zimmerpositionen</target>
+                <target>Liste der Zimmerpositionen</target>
             </trans-unit>
             <trans-unit id="templates.editor.appartment.positions.desc">
                 <source>templates.editor.appartment.positions.desc</source>
@@ -240,15 +248,11 @@
             </trans-unit>
             <trans-unit id="templates.editor.misc.positions">
                 <source>templates.editor.misc.positions</source>
-                <target>Sonstigepositionen</target>
+                <target>Liste der Sonstigepositionen</target>
             </trans-unit>
             <trans-unit id="templates.editor.misc.positions.desc">
                 <source>templates.editor.misc.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Sonstigepositionen ein. Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
-            </trans-unit>
-            <trans-unit id="templates.editor.listreservations">
-                <source>templates.editor.listreservations</source>
-                <target>Liste der Reservierungen</target>
             </trans-unit>
         </body>
     </file>

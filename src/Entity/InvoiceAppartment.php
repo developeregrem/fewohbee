@@ -145,6 +145,12 @@ class InvoiceAppartment
         return $interval->format('%a');
     }
     
+    public function getTotalPriceRaw()
+    {
+        $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
+        return $price;
+    }
+    
     public function getTotalPrice()
     {
         $price = ($this->isFlatPrice ? $this->price : $this->price * $this->getAmount());
