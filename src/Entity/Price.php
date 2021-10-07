@@ -73,7 +73,7 @@ class Price
     private $reservationOrigins;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true, cascade={"persist"})
      */
     private $pricePeriods;
 

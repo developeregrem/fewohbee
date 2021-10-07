@@ -372,7 +372,6 @@ class PriceService
                 $pricePeriod->setEnd(new \DateTime($ends[$key]));
                 
                 $allAddedPeriods->add($pricePeriod);
-                $this->em->persist($pricePeriod);
                 $price->addPricePeriod($pricePeriod);
             }            
         }
