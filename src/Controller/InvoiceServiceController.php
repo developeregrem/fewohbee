@@ -322,17 +322,14 @@ class InvoiceServiceController extends AbstractController
         $newInvoiceReservationsArray = $requestStack->getSession()->get("invoiceInCreation");
         
         if(!$requestStack->getSession()->has("invoicePositionsMiscellaneous")) {            
-            $newInvoicePositionsMiscellaneousArray = array();
-            $requestStack->getSession()->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscellaneousArray);
-            
+            $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);            
             // prefill positions for all selected reservations
             $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $requestStack, true);           
         }
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         
         if(!$requestStack->getSession()->has("invoicePositionsAppartments")) {
-            $newInvoicePositionsAppartmentsArray = array();
-            $requestStack->getSession()->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+            $requestStack->getSession()->set("invoicePositionsAppartments", []);
             // prefill positions for all selected reservations
             foreach($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);

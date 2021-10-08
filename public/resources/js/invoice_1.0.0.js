@@ -26,6 +26,7 @@ function fillFieldsFromPriceCategory(elm) {
 
     document.getElementById("invoice_misc_position_includesVat").checked = (values[3] == 1 ? true : false);
     document.getElementById("invoice_misc_position_isFlatPrice").checked = (values[4] == 1 ? true : false);
+    document.getElementById("invoice_misc_position_amount").value = values[4];
 
     return false;
 }
