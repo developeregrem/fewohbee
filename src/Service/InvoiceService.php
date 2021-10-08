@@ -384,22 +384,28 @@ class InvoiceService implements ITemplateRenderer
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);  
 
             $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
-
+            
             // loop through each day and create the position based on the retrieved prices for this day
             for($i = 1; $i <= $days; $i++) {
                 if($prices[$i] === null) {
                     continue;
                 }
                 foreach($prices[$i] as $price) {  
+                    $amount = ($price->getIsFlatPrice() ? 1 : $reservation->getPersons());
                     
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list 
                     // with the same price id but a total amount if the same price category occurs more than once
                     if(array_key_exists($price->getId(), $tmpMiscArr)) {
-                        $tmpMiscArr[$price->getId()]['amount'] +=  1 * $reservation->getPersons();
+                        // add amount to an existing one only when it is not flat price or for another reservation (same flat price only once per reservation)
+                        if(!$price->getIsFlatPrice() || ($price->getIsFlatPrice() && $tmpMiscArr[$price->getId()]['reservationId'] !== $reservation->getId())) {
+                            $tmpMiscArr[$price->getId()]['amount'] +=  $amount;
+                            $tmpMiscArr[$price->getId()]['reservationId'] = $reservation->getId();
+                        }                        
                     } else {
                         $tmpMiscArr[$price->getId()] = [
                             'price' => $price,
-                            'amount' => 1 * $reservation->getPersons()
+                            'amount' => $amount,
+                            'reservationId' => $reservation->getId()
                         ];
                     }
                 }
