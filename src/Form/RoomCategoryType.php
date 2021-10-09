@@ -6,6 +6,7 @@ use App\Entity\RoomCategory;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 
 class RoomCategoryType extends AbstractType
 {
@@ -13,6 +14,7 @@ class RoomCategoryType extends AbstractType
     {
         $builder
             ->add('name')
+            ->add('acronym', TextType::class, ['label' => 'category.acronym'])
         ;
     }
 

@@ -29,7 +29,7 @@
                 <tbody>
                 {% for category in room_categories %}
                     <tr>
-                        <td>{{ category.name }}</td>
+                        <td>{{ category.name }}{% if category.acronym|length > 0 %} ({{ category.acronym }}){% endif %}</td>
                         <td>
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i onclick="getEntity({{ category.id }})" class="fas fa-info-circle"></i></a>

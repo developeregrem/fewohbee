@@ -28,8 +28,11 @@
         {% set j = 0 %}
         {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
         {% set emptyTdNr = 0 %}
+        {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
         <tr>
-            <td class="text-center">{{ appartment.number }}</td>
+            <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
+                {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
+            </td>
             {% for i in 0..intervall %}
               {% if i >= j %}
                 {% set addToDate = "+" ~ i ~ "day" %}
@@ -156,6 +159,7 @@
         html: true,
         trigger: 'hover'
     });
+    $('.room-info').popover();
 
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
