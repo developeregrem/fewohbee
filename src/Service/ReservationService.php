@@ -120,8 +120,6 @@ class ReservationService implements ITemplateRenderer
         $status = $request->get('status');
         $start = new \DateTime($request->get('from'));
         $end = new \DateTime($request->get('end'));
-        $remark = $request->get('remark');
-        $origin = $this->em->getRepository(ReservationOrigin::class)->find($request->get('reservation-origin'));
         $dateInterval = date_diff($start, $end);
         // number of days
         $interval = $dateInterval->format('%a');
@@ -154,8 +152,6 @@ class ReservationService implements ITemplateRenderer
         $reservation->setAppartment($appartment);
         $reservation->setStatus($status);
         $reservation->setPersons($persons);
-        $reservation->setRemark($remark);
-        $reservation->setReservationOrigin($origin);
 
         $this->em->persist($reservation);
         $this->em->flush();

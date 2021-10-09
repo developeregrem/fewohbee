@@ -72,34 +72,7 @@
                     </div>
                 </div>
             </div>
-        </form>
-
-        <div class="row mt-3">
-            <div class="col-sm-3">
-                    <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
-            </div>
-            <div class="col-sm-9">
-                <textarea id="reservation-remark" class="form-control"  name="remark">{{ reservation.remark }}</textarea>
-            </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-sm-3">
-                <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
-            </div>
-            <div class="col-sm-9">
-                <select id="reservation-origin" name="reservation-origin" class="form-select">
-                    {% for origin in origins %}
-                        <option value="{{ origin.id }}" {% if origin.id == reservation.reservationOrigin.id  %} selected {% endif %}>{{ origin.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="row mt-3">
-            <div class="col">
-                
-            </div>
-        </div>
+        </form>  
     </div>
 </div>
 <div class="modal-footer">

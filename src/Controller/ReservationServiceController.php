@@ -35,6 +35,7 @@ use App\Entity\Appartment;
 use App\Entity\Template;
 use App\Entity\Correspondence;
 use App\Entity\Price;
+use App\Form\ReservationMetaType;
 
 /**
  * @Route("/reservation")
@@ -585,8 +586,7 @@ class ReservationServiceController extends AbstractController
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
 
         // clear session variable
-        $newReservationsInformationArray = array();
-        $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
+        $requestStack->getSession()->set("reservationInCreation", []);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
@@ -617,6 +617,32 @@ class ReservationServiceController extends AbstractController
             'id' => $id,
             'error' => true
         ));
+    }
+    
+    /**
+     * @Route("/{id}/edit/remark", name="reservations.edit.remark", methods={"GET", "POST"})
+     */
+    public function editReservationRemark(Request $request, Reservation $reservation): Response
+    { 
+        $form = $this->createForm(ReservationMetaType::class, $reservation);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->getDoctrine()->getManager()->flush();
+
+            // add succes message
+            $this->addFlash('success', 'reservation.flash.update.success');
+            // on success edit
+            return $this->forward('App\Controller\ReservationServiceController::getReservationAction', [
+                'id' => $reservation->getId(),
+                'error' => true
+            ]);
+        } else {
+            return $this->render('Reservations/reservation_form_edit_remark.html.twig', [
+                'reservation' => $reservation,
+                'form' => $form->createView(),
+            ]);
+        }
     }
 
     /**
