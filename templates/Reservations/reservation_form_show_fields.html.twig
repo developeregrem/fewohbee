@@ -98,27 +98,48 @@
                 </tr>
             {% endfor %}
         </table>
-        <div class="row mt-3">
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
+                {% if mode is defined and mode == 'edit' %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
             </div>
             <div class="col-sm-9">
-                    <textarea id="reservation-remark" class="form-control"name="remark">{{ attribute(reservations, 0).remark }}</textarea>
+                {% if mode is defined and mode == 'edit' %}
+                    <span>{{ attribute(reservations, 0).remark|nl2br }}</span>
+                {% else %}
+                 <textarea id="reservation-remark" class="form-control"name="remark">{{ attribute(reservations, 0).remark }}</textarea>
+                {% endif %}                   
             </div>
         </div>
             
-        <div class="row mt-3">
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
+                {% if mode is defined and mode == 'edit' %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
             </div>
             <div class="col-sm-9">
-                <select id="reservation-origin" name="reservation-origin" class="form-select"{% if mode is defined and mode == 'edit' %} disabled{% endif %}>
+                {% if mode is defined and mode == 'edit' %}
+                    <span>{{ attribute(reservations, 0).reservationOrigin.name }}</span>
+                {% else %}
+                <select id="reservation-origin" name="reservation-origin" class="form-select">
                     {% for origin in origins %}
                         <option value="{{ origin.id }}" {% if attribute(reservations, 0).reservationOrigin and origin.id == attribute(reservations, 0).reservationOrigin.id  %} selected {% endif %}>
                             {{ origin.name }}
                         </option>
                     {% endfor %}
                 </select>
+                {% endif %}
+                
             </div>
         </div>
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
