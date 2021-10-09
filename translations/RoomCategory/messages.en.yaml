@@ -1,13 +1,23 @@
-category.action: Action
-category.delete.ask: Are you sure you want to delete this category?
-category.description: Management of room categories
-category.double: Double room
-category.flash.create.success: Category was successfully created.
-category.flash.delete.error.still.in.use: >-
-  Category cannot be deleted because it still has rooms or price ranges
-  associated with it.
-category.flash.delete.success: Category was successfully deleted.
-category.flash.edit.success: Category was successfully processed .
-category.name: Description
-category.single: Single room
-category.title: Room category management
+category:
+  acronym: Acronym
+  action: Action
+  delete:
+    ask: Are you sure you want to delete this category?
+  description: Management of room categories
+  double: Double room
+  flash:
+    create:
+      success: Category was successfully created.
+    delete:
+      error:
+        still:
+          in:
+            use: >-
+              Category cannot be deleted because it still has rooms or price
+              ranges associated with it.
+      success: Category was successfully deleted.
+    edit:
+      success: Category was successfully processed .
+  name: Description
+  single: Single room
+  title: Room category management

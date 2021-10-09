@@ -46,6 +46,10 @@
                 <source>category.double</source>
                 <target>Doppelzimmer</target>
             </trans-unit>
+            <trans-unit id="category.acronym">
+                <source>category.acronym</source>
+                <target>Akronym</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
