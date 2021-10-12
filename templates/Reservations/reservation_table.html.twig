@@ -2,7 +2,37 @@
 <table class="table table-hover table-bordered table-reservation" id="reservation-table">
     <thead>
     <tr>
-        <th class="text-center">Zimmer</th>
+        <td class="text-center"></td>
+        {% set firstWasSummer = today|date('I') %}
+        {% set lastWeek = today|date('W') %}
+        {% set colCount = 0 %}
+        {% for i in 0..intervall %}
+            {% set addToDate = "+" ~ i ~ "day" %}
+            {% set tmpDate = today|date_modify(addToDate) %}
+            {# if there is a change from summer to winter time #}
+            {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+            {% endif %}
+            {% set curWeek = tmpDate|date('W') %}
+            {# add 2 to colcount since we are at the end of the displayed period 
+               but add it only if the last day is not a monday (last cw was already printed #}
+            {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
+            {# be aware that when the last cw is printed while we are on monday already #}
+            {% if lastWeek != curWeek  or i == intervall %}
+                <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
+                {% set colCount = 2 %}
+                {% set lastWeek = curWeek %}
+                {# if we reached the end of the period and last day is a monday we need to print the last td #}
+                {% if tmpDate|date('N') == 1 and i == intervall %}
+                    <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
+                {% endif %}
+            {% else %}
+                {% set colCount = colCount + 2 %}
+            {% endif %}         
+        {% endfor %}
+    </tr>
+    <tr class="table-days">
+        <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
         {% set firstWasSummer = today|date('I') %}
         {% for i in 0..intervall %}
             {% set addToDate = "+" ~ i ~ "day" %}
