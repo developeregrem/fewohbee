@@ -63,7 +63,7 @@ body {
 }
 
 .reservation-table-weekend {
-    background-color: #EEE !important;
+    /*background-color: #EEE !important;*/
 }
 
 .mouse-pointer {
@@ -78,8 +78,36 @@ body {
     background-color: #f5f5f5;
 }
 
-.table-reservation .ui-selecting { background: #FECA40; }
-.table-reservation .ui-selected { background: #F39814; }
+.table-reservation .ui-selecting { 
+    background: #FECA40; 
+}
+.table-reservation .ui-selected { 
+    background: #F39814; 
+}
+
+/* reset 2px border of tbody */
+.table-reservation > :not(:first-child) {
+    border-top: 1px solid currentColor;
+}
+
+.table-reservation {
+    overflow: hidden;
+}
+
+.table-reservation .table-days > th {
+    position: relative;
+}
+
+.reservation-table-weekend::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: -5000px;
+    z-index: -1;
+    background-color: #EEE !important;
+}
 
 /* fix for autocomplete not  shown */
 .ui-front { 
