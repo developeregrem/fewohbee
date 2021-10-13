@@ -458,7 +458,22 @@ class ReservationServiceController extends AbstractController
             }
             
         } 
-        $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
+        $apartmentPricePositions = $requestStack->getSession()->get("invoicePositionsAppartments");
+        
+        $vatSums = Array();
+        $brutto = 0;
+        $netto = 0;
+        $apartmentTotal = 0;
+        $miscTotal = 0;
+        $is->calculateSums(
+            $apartmentPricePositions,
+            $miscPricePositions,
+            $vatSums,
+            $brutto,
+            $netto,
+            $apartmentTotal,
+            $miscTotal
+        );
 
         return $this->render('Reservations/reservation_form_show_preview.html.twig', array(
             'booker' => $booker,
@@ -471,7 +486,12 @@ class ReservationServiceController extends AbstractController
             'correspondences' => Array(),
             'miscPrices' => $ps->getActiveMiscellaneousPrices(),
             'positionsMiscellaneous' => $miscPricePositions,
-            'positionsAppartment' => $newInvoicePositionsAppartmentsArray
+            'positionsApartment' => $apartmentPricePositions,
+            'vats' => $vatSums,
+            'brutto' => $brutto,
+            'netto' => $netto,
+            'apartmentTotal' => $apartmentTotal,
+            'miscTotal' => $miscTotal,
         ));
     }
 
@@ -550,12 +570,27 @@ class ReservationServiceController extends AbstractController
 
         $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
         $is->prefillMiscPositionsWithReservations([$reservation], $requestStack, true);
-        $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
+        $miscPricePositions = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
 
         $requestStack->getSession()->set("invoicePositionsAppartments", []);
         $is->prefillAppartmentPositions($reservation, $requestStack);
-        $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
-
+        $apartmentPricePositions = $requestStack->getSession()->get("invoicePositionsAppartments");
+        
+        $vatSums = Array();
+        $brutto = 0;
+        $netto = 0;
+        $apartmentTotal = 0;
+        $miscTotal = 0;
+        $is->calculateSums(
+            $apartmentPricePositions,
+            $miscPricePositions,
+            $vatSums,
+            $brutto,
+            $netto,
+            $apartmentTotal,
+            $miscTotal
+        );
+        
         return $this->render('Reservations/reservation_form_show.html.twig', array(
             'booker' => $reservation->getBooker(),
             'customers' => $reservation->getCustomers(),
@@ -566,8 +601,13 @@ class ReservationServiceController extends AbstractController
             'origins' => $origins,
             'correspondences' => $correspondences,
             'miscPrices' => $ps->getActiveMiscellaneousPrices(),
-            'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
-            'positionsAppartment' => $newInvoicePositionsAppartmentsArray
+            'positionsMiscellaneous' => $miscPricePositions,
+            'positionsApartment' => $apartmentPricePositions,
+            'vats' => $vatSums,
+            'brutto' => $brutto,
+            'netto' => $netto,
+            'apartmentTotal' => $apartmentTotal,
+            'miscTotal' => $miscTotal,
         ));
     }
 

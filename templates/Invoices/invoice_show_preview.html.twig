@@ -23,87 +23,15 @@
                 <div class="col-md-4">{{ invoice.zip }} {{ invoice.city }}</div>
                 <div class="col-md text-end">{{ invoice.date|date('d.m.Y') }}</div>
             </div>
+            {# variable that contains the status whether prices are used that includes vat and does not include vats
+            this will lead to price sums that are displayed incorrect #}
+            {% set lastIncludesVat = null %}
+            {% set vatWarning = false %}
             <div class="row mt-5">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>{{ 'invoice.position.appartment'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.vat'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {# variable that contains the status whether prices are used that includes vat and does not include vats
-                    this will lead to price sums that are displayed incorrect #}
-                    {% set lastIncludesVat = null %}
-                    {% set vatWarning = false %}
-                    {% for appartment in appartments %}
-                        <tr>
-                            <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
-                                <br/>{{ appartment.startDate|date('d.m.Y') }}
-                                - {{ appartment.endDate|date('d.m.Y') }}</td>
-                            <td class="text-end">{{ appartment.amount }}</td>
-                            <td class="text-end">{{ appartment.price|number_format(2, ',', '.') }}</td>
-                            <td class="text-end">
-                                {% if is_decimal_place_0(appartment.vat) %}
-                                    {{ appartment.vat|number_format(0, ',', '.') }}
-                                {% else %}
-                                    {{ appartment.vat|number_format(2, ',', '.') }}
-                                {% endif %}
-                            </td>
-                            <td class="text-end">{{ appartment.totalPrice }}</td>
-                        </tr>
-                        {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
-                        {% if lastIncludesVat is not null and lastIncludesVat != appartment.includesVat %}
-                            {% set vatWarning = true %}
-                        {% endif %}
-                        {% set lastIncludesVat = appartment.includesVat %}
-                    {% endfor %}
-                    <tr>
-                        <th colspan="5" class="text-end">{{ apartmentTotal|number_format(2, ',', '.') }}</th>
-                    </tr>
-                    </tbody>
-                </table>
+                {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'edit'} %}                
             </div>
             <div class="row mt-5">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>{{ 'invoice.position.additional'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.vat'|trans }}</th>
-                        <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for position in positions %}
-                        <tr>
-                            <td>{{ position.description }}</td>
-                            <td class="text-end">{{ position.amount }}</td>
-                            <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
-                            <td class="text-end">
-                                {% if is_decimal_place_0(position.vat) %}
-                                    {{ position.vat|number_format(0, ',', '.') }}
-                                {% else %}
-                                    {{ position.vat|number_format(2, ',', '.') }}
-                                {% endif %}
-                            </td>
-                            <td class="text-end">{{ position.totalPrice }}</td>
-                        </tr>
-                        {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
-                        {% if lastIncludesVat is not null and lastIncludesVat != position.includesVat %}
-                            {% set vatWarning = true %}
-                        {% endif %}
-                        {% set lastIncludesVat = position.includesVat %}
-                    {% endfor %}
-                    <tr>
-                        <th colspan="5" class="text-end">{{ miscTotal|number_format(2, ',', '.') }}</th>
-                    </tr>
-                    </tbody>
-                </table>
+                {% include 'Invoices/invoice_table_misc_preview_positions.html.twig' with {'mode': 'edit'} %}
             </div>
             <div class="row">
                 <div class="col-md-4">

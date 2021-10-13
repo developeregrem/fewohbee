@@ -40,7 +40,6 @@ class InvoiceService implements ITemplateRenderer
 
     /**
      * Calculates the sums and vats for an invoice
-     * @param Invoice $invoice
      * @param array $apps The invoice positions for apartment prices
      * @param array $poss The invoice positions for miscellaneous prices
      * @param array $vats Returns array of all vat values
@@ -49,7 +48,7 @@ class InvoiceService implements ITemplateRenderer
      * @param type $appartmentTotal Returns the total sum for all apartment prices
      * @param type $miscTotal Returns the total price for all miscellaneous prices
      */
-    public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
+    public function calculateSums($apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
     {
         $vats = Array();
         $brutto = 0;
@@ -279,7 +278,6 @@ class InvoiceService implements ITemplateRenderer
         $miscTotal = 0;
         // calculate needed values for template
         $this->calculateSums(
-            $invoice,
             $invoice->getAppartments(),
             $invoice->getPositions(),
             $vatSums,
