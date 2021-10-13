@@ -275,22 +275,29 @@
         {% endfor %}            
         </div>
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">        
-            
+        
+        <div class="row mt-4">
+            <div class="col fs-5 fw-bold ">{{ 'invoice.price.total'|trans }}: {{ brutto|number_format(2, ',', '.') }}</div>
+        </div>
+        {# variable that contains the status whether prices are used that includes vat and does not include vats
+        this will lead to price sums that are displayed incorrect #}
+        {% set lastIncludesVat = null %}
+        {% set vatWarning = false %}
         <div class="row mt-4">
             <div class="col">
                 <h5>{{ 'invoice.appartment'|trans }}</h5>
-                {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'read'} %}
+                {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'read'} %}
             </div>
         </div>
             
         <div class="row mt-4">
             <div class="col">
                 <h5>{{ 'invoice.miscellaneous'|trans }}</h5>
-                {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'read'} %}
+                {% include 'Invoices/invoice_table_misc_preview_positions.html.twig' with {'mode': 'read'} %}
             </div>
         </div>
-        <div class="row">
-            <span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span>
+        <div class="row mt-3">
+            <small><span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span></small>
         </div>
     </div>
 </div>

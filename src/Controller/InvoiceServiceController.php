@@ -116,7 +116,6 @@ class InvoiceServiceController extends AbstractController
         $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
-            $invoice,
             $invoice->getAppartments(),
             $invoice->getPositions(),
             $vatSums,
@@ -815,7 +814,6 @@ class InvoiceServiceController extends AbstractController
         $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
-            $invoice,
             $newInvoicePositionsAppartmentsArray,
             $newInvoicePositionsMiscellaneousArray,
             $vatSums,
@@ -832,8 +830,8 @@ class InvoiceServiceController extends AbstractController
                 'vats' => $vatSums,
                 'brutto' => $brutto,
                 'netto' => $netto,
-                'appartments' => $newInvoicePositionsAppartmentsArray,
-                'positions' => $newInvoicePositionsMiscellaneousArray,
+                'positionsApartment' => $newInvoicePositionsAppartmentsArray,
+                'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
                 'apartmentTotal' => $apartmentTotal,
                 'miscTotal' => $miscTotal,
                 'token' => $csrf->getCSRFTokenForForm()
