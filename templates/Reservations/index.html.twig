@@ -44,9 +44,9 @@
                 </select>
             </div>
             <div class="col-md-auto">
-                <button type="submit" class="btn btn-secondary mb-2 me-sm-2 float-start">
-                    <i class="fas fa-sync-alt"></i> {{ 'reservation.table.reload'|trans }}
-                </button>
+                <a href="#" class="me-3" onclick="getNewTable();" title="{{ 'reservation.table.reload'|trans }}">
+                    <i class="fas fa-sync-alt"></i>
+                </a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
@@ -83,9 +83,12 @@
 
         // load initial table
         getNewTable();
-
-        $("#objects").change(function () {
-            getNewTable();
+        
+        document.getElementById("objects").addEventListener('change', getNewTable);
+        document.querySelectorAll('#table-filter #start, #table-filter select[name="intervall"]').forEach(item => {
+            item.addEventListener('change', event => {
+              getNewTable();
+            });
         });
     });
 
