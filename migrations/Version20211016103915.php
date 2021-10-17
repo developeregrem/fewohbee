@@ -19,10 +19,17 @@ final class Version20211016103915 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
+        $sql = "SELECT * FROM reservations";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->execute();
+        $count = $stmt->rowCount();
+
         $this->addSql('CREATE TABLE reservation_status (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(100) NOT NULL, color VARCHAR(7) NOT NULL, contrast_color VARCHAR(7) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql("INSERT INTO reservation_status (name, color, contrast_color) VALUES ('Bestätigt', '#2D9434', '#ffffff')");
-        $this->addSql("INSERT INTO reservation_status (name, color, contrast_color) VALUES ('Option', '#f6e95c', '#000000')");
+        // execute only for existing installations, not for new ones
+        if($count > 0) {
+            $this->addSql("INSERT INTO reservation_status (name, color, contrast_color) VALUES ('Bestätigt', '#2D9434', '#ffffff')");
+            $this->addSql("INSERT INTO reservation_status (name, color, contrast_color) VALUES ('Option', '#f6e95c', '#000000')");
+        }
         $this->addSql('ALTER TABLE reservations ADD reservation_status_id INT NOT NULL');
         $this->addSql("UPDATE reservations set reservation_status_id=status");
         $this->addSql('ALTER TABLE reservations ADD CONSTRAINT FK_4DA23971B06122 FOREIGN KEY (reservation_status_id) REFERENCES reservation_status (id)');
