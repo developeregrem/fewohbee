@@ -113,12 +113,6 @@
                             {% set colspan = colspan + 1 %}
                         {% endif %}
 
-                        {% if reservation.status == 1 %}
-                            {% set status = 'confirmed' %}
-                        {% elseif reservation.status == 2 %}
-                            {% set status = 'option' %}
-                        {% endif %}
-
                         {% set letterCount = get_letter_count_for_display(period, intervall) %}
                         {% set name = reservation.booker.salutation ~ " " ~ reservation.booker.lastname %}
                         {% set shortName = name|slice(0, letterCount) %}
@@ -143,14 +137,15 @@
                                 {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
                             {% endif %}                           
                         {% endfor %}
+                        {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
                         {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
                         {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
                         {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
                         {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
 
                         <td class="reservation text-center" colspan="{{ colspan }}">
-                            <div onclick="return getReservation({{ reservation.id }});"
-                                 class="reservation-inner reservation-{{ status }} text-center"
+                            <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
+                                 class="reservation-inner text-center"
                                  title="{{ popTitle }}" data-bs-content="{{ popBody }}">{{ shortName }}</div>
                         </td>
 

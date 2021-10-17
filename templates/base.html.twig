@@ -63,6 +63,7 @@
                                     <a class="dropdown-item{% if activeRouteName starts with "objects" %} active{% endif %}" href="{{ path('objects.overview') }}"><i class="fas fa-home text-secondary"></i> {{ 'nav.object'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "prices" %} active{% endif %}" href="{{ path('prices.overview') }}"><i class="fas fa-money-bill-alt text-secondary"></i> {{ 'nav.prices'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt text-secondary"></i> {{ 'nav.reservationorigin'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "status" %} active{% endif %}" href="{{ path('reservation_status_index') }}"><i class="fas fa-info text-secondary ms-1 me-1"></i> {{ 'nav.status'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
                                 </div>
                             </li>

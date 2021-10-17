@@ -36,6 +36,7 @@ use App\Entity\Template;
 use App\Entity\Correspondence;
 use App\Entity\Price;
 use App\Form\ReservationMetaType;
+use App\Entity\ReservationStatus;
 
 /**
  * @Route("/reservation")
@@ -122,6 +123,7 @@ class ReservationServiceController extends AbstractController
     {
         $em = $this->getDoctrine()->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         if ($request->get('createNewReservation') == "true") {
             $newReservationsInformationArray = array();
@@ -146,6 +148,7 @@ class ReservationServiceController extends AbstractController
             'objectSelected' => $request->get("object"),
             'objectHasAppartments' => $objectHasAppartments,
             'reservations' => $reservations,
+            'reservationStatus' => $reservationStatus
         ));
     }
 
@@ -161,6 +164,7 @@ class ReservationServiceController extends AbstractController
         $start = $request->get("from");
         $end = $request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->get("object"));
+        $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         $newReservationsInformationArray = $requestStack->getSession()->get("reservationInCreation", array());
 
@@ -177,6 +181,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', array(
             'appartments' => $availableAppartments,
+            'reservationStatus' => $reservationStatus
         ));
     }
 
@@ -192,9 +197,11 @@ class ReservationServiceController extends AbstractController
         $start = $request->get("from");
         $end = $request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->get("object"));
+        $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', array(
             'appartments' => $appartmentsDb,
+            'reservationStatus' => $reservationStatus
         ));
     }
 
@@ -287,7 +294,7 @@ class ReservationServiceController extends AbstractController
 
         $newReservationInformation = $newReservationsInformationArray[$request->get("appartmentid")];
         $newReservationInformation->setPersons($request->get("persons"));
-        $newReservationInformation->setStatus($request->get("status"));
+        $newReservationInformation->setReservationStatus($request->get("status"));
 
         $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
 
@@ -624,6 +631,7 @@ class ReservationServiceController extends AbstractController
         $em = $this->getDoctrine()->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
+        $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         // clear session variable
         $requestStack->getSession()->set("reservationInCreation", []);
@@ -635,7 +643,8 @@ class ReservationServiceController extends AbstractController
             'objectSelected' => $request->get("object"),
             'reservation' => $reservation,
             'error' => $error,
-            'origins' => $origins
+            'origins' => $origins,
+            'reservationStatus' => $reservationStatus
         ));
     }
 

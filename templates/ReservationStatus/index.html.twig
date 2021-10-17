@@ -1,11 +1,11 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}
-    {{ parent() }} -  {{ 'category.title'|trans }}
+    {{ parent() }} -  {{ 'status.title'|trans }}
 {% endblock %}
 
 {% block description %}
-    {{ parent() }} -  {{ 'category.description'|trans }}
+    {{ parent() }} -  {{ 'status.description'|trans }}
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
         <div class="col">
             <button type="button" class="btn btn-default" onclick="showCreateForm()" data-bs-toggle="modal"
                     data-bs-target="#modalCenter">
-                <i class="fas fa-plus"></i> {{ 'nav.category.add'|trans }}</button>
+                <i class="fas fa-plus"></i> {{ 'status.add'|trans }}</button>
         </div>
     </div>
     <div class="row mt-3">
@@ -22,25 +22,27 @@
             <table class="table table-bordered table-hover">
                 <thead>
                 <tr>
-                    <th>{{ 'category.name'|trans }}</th>
-                    <th>{{ 'category.action'|trans }}</th>
+                    <th>{{ 'status.name'|trans }}</th>
+                    <th>{{ 'status.action'|trans }}</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for category in room_categories %}
+                {% for status in reservation_status %}
                     <tr>
-                        <td>{{ category.name }}{% if category.acronym|length > 0 %} ({{ category.acronym }}){% endif %}</td>
+                        <td>
+                            <div class="reservation-inner" style="hight:100%; background-color: {{ status.color}}; color: {{ status.contrastColor }}">{{ status.name }}</div>
+                        </td>
                         <td>
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i onclick="getEntity({{ category.id }})" class="fas fa-info-circle"></i></a>
+                                <i onclick="getEntity({{ status.id }})" class="fas fa-info-circle"></i></a>
                             <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i onclick="editEntry({{ category.id }})" class="fas fa-edit"></i></a>
+                                <i onclick="editEntry({{ status.id }})" class="fas fa-edit"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="deleteEntry({{ category.id }})" class="fas fa-trash-alt"></i></a>
+                                <i onclick="deleteEntry({{ status.id }})" class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>
-                    <tr id="entry-{{ category.id }}" class="d-none">
-                        <td colspan="6" id="entry-cell-{{ category.id }}">
+                    <tr id="entry-{{ status.id }}" class="d-none">
+                        <td colspan="6" id="entry-cell-{{ status.id }}">
                             <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                         </td>
                     </tr>
@@ -69,41 +71,41 @@
     });
 
     function getEntity(id) {
-        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
         getContentForModal(url);
         
     }
     
     function editEntry(id) {
-        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
         getContentForModal(url, "", function() {
             enableEditForm(id);
         });
         
     }
     
-    function saveCategory(id) {
-        let url = replacePlaceholder("{{ path('room_category_edit', {'id': 'placeholder'}) }}", id);
+    function saveStatus(id) {
+        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 
     function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('room_category_delete', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('reservation_status_delete', {'id': 'placeholder'}) }}", id);
         _deleteEntry(id, url);        
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('room_category_delete', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('reservation_status_delete', {'id': 'placeholder'}) }}", id);
         return _doDelete('#entry-form-'+id, url);
     }
 
     function showCreateForm() {
-        getContentForModal("{{ path('room_category_new') }}");
+        getContentForModal("{{ path('reservation_status_new') }}");
     }
 
     function createNew() {
-        let url = "{{ path('room_category_new')}}";
-        _doPost('#entry-form-new', url, '{{ path('room_category_index') }}');
+        let url = "{{ path('reservation_status_new')}}";
+        _doPost('#entry-form-new', url, '{{ path('reservation_status_index') }}');
         return false;
     }
     </script>
