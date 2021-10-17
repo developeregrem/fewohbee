@@ -26,6 +26,7 @@ use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\CustomerAddresses;
+use App\Entity\ReservationStatus;
 
 class ReservationFixtures extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
 {
@@ -52,6 +53,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
         $apps = $manager->getRepository(Appartment::class)->findAll();        
         $origins = $manager->getRepository(ReservationOrigin::class)->findAll();
         $customer = $manager->getRepository(Customer::class)->findOneBy(['lastname' => 'Mustermann']);
+        $status = $manager->getRepository(ReservationStatus::class)->find(1);
         
         if(!($customer instanceof Customer)) {
             return;
@@ -71,7 +73,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
             $res->setBooker($customer);
             $res->addCustomer($customer);
             $res->setPersons($app->getBedsMax());
-            $res->setStatus(1);
+            $res->setReservationStatus($status);
             $res->setStartDate($start);
             $res->setEndDate($end);
             $res->setAppartment($app);
