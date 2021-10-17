@@ -86,13 +86,7 @@
                     <td>{{ reservation.appartment.number }}</td>
                     <td>{{ reservation.appartment.description }}</td>
                     <td>{{ reservation.persons }}</td>
-                    <td>
-                        {% if reservation.status == 1 %}
-                            {{ 'reservation.confirm'|trans }}
-                        {% elseif reservation.status == 2 %}
-                            {{ 'reservation.option'|trans }}
-                        {% endif %}
-                    </td>
+                    <td>{{ reservation.reservationStatus.name }}</td>
                     <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                     <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                 </tr>

@@ -16,7 +16,7 @@ class ReservationObject
     private $appartmentId;
     private $start;
     private $end;
-    private $status;
+    private $reservationStatus;
     private $persons;
     private $customerId;
 
@@ -25,7 +25,7 @@ class ReservationObject
         $this->appartmentId = $appartmentId;
         $this->start = $start;
         $this->end = $end;
-        $this->status = $status;
+        $this->reservationStatus = $status;
         $this->persons = $persons;
     }
 
@@ -54,9 +54,9 @@ class ReservationObject
         return $this->end;
     }
 
-    public function getStatus()
+    public function getReservationStatus()
     {
-        return $this->status;
+        return $this->reservationStatus;
     }
 
     public function getPersons()
@@ -64,9 +64,9 @@ class ReservationObject
         return $this->persons;
     }
 
-    public function setStatus($status)
+    public function setReservationStatus($status)
     {
-        $this->status = $status;
+        $this->reservationStatus = $status;
     }
 
     public function setPersons($persons)

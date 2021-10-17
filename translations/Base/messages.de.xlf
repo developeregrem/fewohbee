@@ -202,6 +202,10 @@
                 <source>nav.category.add</source>
                 <target>Zimmerkategorie anlegen</target>
             </trans-unit>
+            <trans-unit id="nav.status">
+                <source>nav.status</source>
+                <target>Reservierungsstatus</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

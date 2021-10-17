@@ -42,6 +42,7 @@ nav.reservation.overview: Reservation Overview
 nav.reservationorigin: Reservation Origin
 nav.settings: Settings
 nav.statistics: Statistics
+nav.status: Reservation Status
 nav.templates: Templates
 nav.user: Users
 nav.user.add: Add User

@@ -21,6 +21,7 @@ use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
+use App\Entity\ReservationStatus;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\Price;
 use App\Service\InvoiceService;
@@ -71,7 +72,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setAppartment($this->em->getRepository(Appartment::class)->findById($reservationInformation->getAppartmentId())[0]);
             $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
             $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
-            $reservation->setStatus($reservationInformation->getStatus());
+            $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
             $reservation->setPersons($reservationInformation->getPersons());
 
             if (isset($customer)) {
@@ -124,8 +125,10 @@ class ReservationService implements ITemplateRenderer
         // number of days
         $interval = $dateInterval->format('%a');
 
+        /* @var $reservation \App\Entity\Reservation */
         $reservation = $this->em->getRepository(Reservation::class)->findById($id)[0];
         $appartment = $this->em->getRepository(Appartment::class)->findById($appartmentId)[0];
+        $reservationStatus = $this->em->getRepository(ReservationStatus::class)->find($status);
         
         if($start > $end) {
             $tmp = $start;
@@ -150,7 +153,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setEndDate($end);
         }
         $reservation->setAppartment($appartment);
-        $reservation->setStatus($status);
+        $reservation->setReservationStatus($reservationStatus);
         $reservation->setPersons($persons);
 
         $this->em->persist($reservation);
