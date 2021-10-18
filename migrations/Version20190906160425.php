@@ -19,10 +19,8 @@ final class Version20190906160425 extends AbstractMigration
 
     public function up(Schema $schema) : void
     {
-        $sql = "SELECT * FROM template_types";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute();
-        $count = $stmt->rowCount();
+        $sql = "SELECT COUNT(*) FROM template_types";
+        $count = $this->connection->fetchOne($sql);
         // execute the following only when the table is not empty
         if($count > 0) {
             $this->addSql("UPDATE template_types SET editor_template = 'editor_template_reservation.json.twig' WHERE name = 'TEMPLATE_RESERVATION_EMAIL'");
