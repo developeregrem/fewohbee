@@ -19,10 +19,8 @@ final class Version20211016103915 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $sql = "SELECT * FROM reservations";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute();
-        $count = $stmt->rowCount();
+        $sql = "SELECT COUNT(*) FROM reservations";
+        $count = $this->connection->fetchOne($sql);
 
         $this->addSql('CREATE TABLE reservation_status (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(100) NOT NULL, color VARCHAR(7) NOT NULL, contrast_color VARCHAR(7) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         // execute only for existing installations, not for new ones
