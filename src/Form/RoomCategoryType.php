@@ -13,7 +13,7 @@ class RoomCategoryType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('name')
+            ->add('name', TextType::class, ['empty_data' => ''])
             ->add('acronym', TextType::class, ['label' => 'category.acronym'])
         ;
     }
