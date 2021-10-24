@@ -179,7 +179,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
                 ], [
                     'name' => $this->translator->trans('status.option'), 
                     'color' => '#2D9434',
-                    'contrast' => '#ffffff'
+                    'contrast' => '#000000'
                 ]
                 
             ];
