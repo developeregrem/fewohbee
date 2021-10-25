@@ -36,10 +36,11 @@
     "require-dev": {
         "symfony/browser-kit": "^5.2",
         "symfony/css-selector": "^5.3",
-        "symfony/debug-pack": "*",
+        "symfony/debug-bundle": "5.3.*",
         "symfony/maker-bundle": "^1.0",
         "symfony/phpunit-bridge": "^5.3",
-        "symfony/profiler-pack": "*"
+        "symfony/stopwatch": "5.3.*",
+        "symfony/web-profiler-bundle": "5.3.*"
     },
     "config": {
         "optimize-autoloader": true,
