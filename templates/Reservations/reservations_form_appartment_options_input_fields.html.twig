@@ -1,7 +1,7 @@
 
     <div class="col-sm-3">
         <select id="persons" name="persons" class="form-select">
-            {% for i in 1..appartment.bedsmax %}
+            {% for i in appartment.bedsmax..1 %}
                 <option value="{{ i }}"{% if reservation is defined and reservation.persons == i %} selected{% endif %}>
                     {{ i }} {% if i == 1 %} {{ 'reservation.person'|trans }} {% else %} {{ 'reservation.persons'|trans }} {% endif %}
                 </option>

@@ -253,8 +253,10 @@ class ReservationServiceController extends AbstractController
                 $end = $from;
                 $from = $request->get("end");
             }
+            $em = $this->getDoctrine()->getManager();
+            $room = $em->getRepository(Appartment::class)->find($request->get("appartmentid"));
             $newReservationsInformationArray[] = new ReservationObject($request->get("appartmentid"), $from,
-                                                    $end, $request->get("status", 1), $request->get("persons", 1));
+                                                    $end, $request->get("status", 1), $request->get("persons", $room->getBedsMax()));
             $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
         }
         
