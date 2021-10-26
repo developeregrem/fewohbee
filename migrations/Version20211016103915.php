@@ -43,4 +43,9 @@ final class Version20211016103915 extends AbstractMigration
         $this->addSql('DROP INDEX IDX_4DA23971B06122 ON reservations');
         $this->addSql('ALTER TABLE reservations DROP reservation_status_id');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

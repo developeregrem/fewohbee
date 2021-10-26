@@ -30,4 +30,9 @@ final class Version20211008204004 extends AbstractMigration
         $this->addSql('ALTER TABLE invoice_appartments CHANGE id id INT AUTO_INCREMENT NOT NULL');
         $this->addSql('ALTER TABLE room_category DROP acronym');
     }
+    
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
