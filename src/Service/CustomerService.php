@@ -105,9 +105,11 @@ class CustomerService implements ITemplateRenderer
 
     public function deleteCustomer($id)
     {
+        /* @var $customer Customer */
         $customer = $this->em->getRepository(Customer::class)->find($id);
 
         $reservations = $customer->getReservations();
+        $registrationBookEntries = $customer->getRegistrationBookEntries();
         $bookedReservations = $customer->getBookedReservations();
         $reservationsArray = new ArrayCollection(
             array_merge($reservations->toArray(), $bookedReservations->toArray())); // combine both arrays
@@ -142,6 +144,11 @@ class CustomerService implements ITemplateRenderer
             foreach ($bookedReservations as $reservation) {
                 $reservation->setBooker($deletedCustomer);
                 $this->em->persist($reservation);
+            }            
+            // assign all registration book entries to our anonym user
+            foreach ($registrationBookEntries as $entry) {
+                $entry->setCustomer($deletedCustomer);
+                $this->em->persist($entry);
             }
 
             $this->em->remove($customer);
