@@ -531,15 +531,7 @@ settings.templates.edit:
     methods: POST 
     controller: App\Controller\TemplatesServiceController::editAction 
     defaults:
-        id: 0
-settings.templates.delete: 
-    path: /settings/templates/{id}/delete 
-    methods: GET 
-    controller: App\Controller\TemplatesServiceController::deleteAction 
-settings.templates.dodelete: 
-    path: /settings/templates/{id}/delete 
-    methods: POST 
-    controller: App\Controller\TemplatesServiceController::deleteAction 
+        id: 0 
 settings.templates.preview: 
     path: /settings/templates/{id}/preview 
     methods: GET 
