@@ -102,11 +102,16 @@ body {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
+    left: -1px;
+    right: -1px;
     bottom: -5000px;
     z-index: -1;
     background-color: #EEE !important;
+}
+
+#reservation-table .room-info {
+    white-space: nowrap;
+    vertical-align: middle;
 }
 
 /* fix for autocomplete not  shown */
