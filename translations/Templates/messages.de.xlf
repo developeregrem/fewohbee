@@ -36,7 +36,7 @@
             </trans-unit>
             <trans-unit id="templates.flash.delete.inuse.reservations">
                 <source>templates.flash.delete.inuse.reservations</source>
-                <target>Vorlage kann nicht gelöscht werden, da sie in vorhandenen Reservierungen genutzt wird.</target>
+                <target>Vorlage kann nicht gelöscht werden, da sie in vorhandenen Konversationen genutzt wird.</target>
             </trans-unit>
             <trans-unit id="templates.preview">
                 <source>templates.preview</source>

@@ -31,6 +31,9 @@ use App\Service\FileUploader;
 use App\Service\MailService;
 use App\Service\InvoiceService;
 
+/**
+ * @Route("/settings/templates")
+ */
 class TemplatesServiceController extends AbstractController
 {
     public function __construct()
@@ -159,21 +162,29 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @param $id
      * @return string
+     * 
+     * @Route("/{id}/delete", name="settings.templates.delete", methods={"DELETE", "GET"})
      */
-    public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id)
+    public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template)
     {
-        if ($request->getMethod() == 'POST') {
+        if ($request->getMethod() == 'DELETE') {
             if (($csrf->validateCSRFToken($request, true))) {
-                $template = $ts->deleteEntity($id);
-                if($template) {
-                    $this->addFlash('success', 'templates.flash.delete.success');
+                $countCor = $template->getCorrespondences()->count();
+                
+                if($countCor > 0) {
+                    $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+                } else {                    
+                    $template = $ts->deleteEntity($template->getId());
+                    if($template) {
+                        $this->addFlash('success', 'templates.flash.delete.success');
+                    }
                 }
             }
             return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
             return $this->render('common/form_delete_entry.html.twig', array(
-                "id" => $id,
+                "id" => $template->getId(),
                 'token' => $csrf->getCSRFTokenForForm()
             ));
         }
@@ -591,7 +602,7 @@ class TemplatesServiceController extends AbstractController
     }
     
     /**
-     * @Route("/settings/templates/upload", name="templates.upload", methods={"POST"})
+     * @Route("/upload", name="templates.upload", methods={"POST"})
      */
     public function uploadImage(Request $request, FileUploader $fos) {
         /** @var UploadedFile $imageFile */

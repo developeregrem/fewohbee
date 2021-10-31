@@ -89,8 +89,8 @@
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.dodelete', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
+        let url = replacePlaceholder("{{ path('settings.templates.delete', {'id': 'placeholder'}) }}", id);
+        return _doDelete('#entry-form-'+id, url);
     }
     
     function saveEntity(id) {
