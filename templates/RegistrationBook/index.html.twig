@@ -11,21 +11,21 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-md-6 pr-2">
+            <div class="col-md-6 pe-2">
                 <form class="form" id="registrationbook-search-form" onsubmit="return false;">
                     <input type="search" class="form-control" id="search" name="search"
                            placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </form>
             </div>
-            <div class="col-md pl-0">
+            <div class="col-md ps-0">
                 <button class="btn btn-secondary" type="button" onclick="doSearch();">
                     <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                 </button>
             </div>
-            <div class="col-md text-right">
+            <div class="col-md text-end">
                 <div class="btn-group">
                     <button type="button" class="btn btn-secondary" onclick="showAddReservationsForm()"
-                            data-toggle="modal" data-target="#modalCenter">
+                            data-bs-toggle="modal" data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'registrationbook.addreservations'|trans }}
                     </button>
                 </div>

@@ -5,12 +5,12 @@
 {{ form_row(form.endDate) }}
 {{ form_row(form.persons) }}
 {{ form_row(form.beds) }}
-<div class="form-group row">
+<div class="row">
     <label for="pricecategory"
-           class="col-sm-4 col-form-label text-right">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
+           class="col-sm-4 col-form-label text-end">{{ 'invoice.appartment.position.pricecategory'|trans }}</label>
 
     <div class="col-sm">
-        <select id="pricecategory" name="pricecategory" class="form-control"
+        <select id="pricecategory" name="pricecategory" class="form-select"
                 onchange="return fillApartmentFieldsFromPriceCategory(this)">
             <option value="0|0" selected></option>
             {% for price in prices %}
@@ -21,9 +21,11 @@
 </div>                   
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
-<div class="form-group row mt-3 pl-5">
-    {{ form_widget(form.includesVat) }}
-    {{ form_widget(form.isFlatPrice) }}
+<div class="row mt-4 ps-5">
+    <div class="col-sm">
+        {{ form_widget(form.includesVat) }}
+        {{ form_widget(form.isFlatPrice) }}
+    </div>
 </div>
 
 <script>

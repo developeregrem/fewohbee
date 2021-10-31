@@ -4,7 +4,7 @@
         <body>
             <trans-unit id="login.application.title">
                 <source>login.application.title</source>
-                <target>Pensionsverwaltung</target>
+                <target>FewohBee</target>
             </trans-unit>
             <trans-unit id="nav.user">
                 <source>nav.user</source>
@@ -201,6 +201,10 @@
             <trans-unit id="nav.category.add">
                 <source>nav.category.add</source>
                 <target>Zimmerkategorie anlegen</target>
+            </trans-unit>
+            <trans-unit id="nav.status">
+                <source>nav.status</source>
+                <target>Reservierungsstatus</target>
             </trans-unit>
         </body>
     </file>

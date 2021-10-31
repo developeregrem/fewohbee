@@ -1,4 +1,4 @@
-<div class="modal-body pl-5 pr-5">
+<div class="modal-body ps-5 pe-5">
     <div class="row" >
         <div class="col" id="flash-message-overlay">
         </div>
@@ -25,7 +25,7 @@
                 <tr id="aid-{{ attachment.id }}">
                     <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
                                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                     </td>
@@ -36,7 +36,7 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination mr-auto">
+    <ul class="pagination me-auto">
         <li class="page-item " onclick="return getReservation({{ reservationId }}, 'correspondence')">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>   

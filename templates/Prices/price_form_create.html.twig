@@ -1,5 +1,5 @@
 <form id="entry-form-new" role="form" onsubmit="return createNewPrice()">
-    <div class="modal-body pl-5 pr-5">
+    <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col">
             </div>
@@ -7,7 +7,7 @@
         {% include 'Prices/price_form_input_fields.html.twig' %}
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
 </form>

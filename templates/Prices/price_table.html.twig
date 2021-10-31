@@ -38,8 +38,8 @@
                 {% if price.sunday == true %}{{ 'price.abbreviation.sunday'|trans }}{% endif %}
             {% endif %}
         </td>
-        <td class="text-right">{{ price.price|number_format(2, ',', '.') }}</td>
-        <td class="text-right">
+        <td class="text-end">{{ price.price|number_format(2, ',', '.') }}</td>
+        <td class="text-end">
             {% if is_decimal_place_0(price.vat) %}
                 {{ price.vat|number_format(0, ',', '.') }}
             {% else %}
@@ -54,10 +54,10 @@
         </td>
         <td>{% if price.active == true %}{{ 'price.active'|trans }} {% else %} {{ 'price.inactive'|trans }}{% endif %}</td>
         <td>
-            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                 <i onclick="getEntity({{ price.id }})" class="fas fa-info-circle"></i></a>
             <a href="#" title="{{ 'button.edit'|trans }}">
-                <i onclick="editEntry({{ price.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
+                <i onclick="editEntry({{ price.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
             <a href="#" title="{{ 'button.delete'|trans }}">
                 <i onclick="deleteEntry({{ price.id }})" class="fas fa-trash-alt"></i></a>
         </td>

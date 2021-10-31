@@ -149,7 +149,7 @@ class ReservationRepository extends EntityRepository
             $query = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')            
             ->where(':day >= u.startDate and :day < u.endDate')
-            ->andWhere('u.status=1')
+            //->andWhere('u.status=1')
             //->addGroupBy('u.persons')
             ->setParameter('day', $day)
             ->getQuery();
@@ -157,7 +157,7 @@ class ReservationRepository extends EntityRepository
             $query = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')            
             ->where('a.object = :objId and :day >= u.startDate and :day < u.endDate')
-            ->andWhere('u.status=1')
+            //->andWhere('u.status=1')
             ->join('u.appartment', 'a')
             //->addGroupBy('u.persons')
             ->setParameter('day', $day)
@@ -202,8 +202,8 @@ class ReservationRepository extends EntityRepository
             ->createQueryBuilder('u')
             ->select('u')
             ->join('u.appartment', 'a')
-            ->where('u.status=1')
-            ->andWhere('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
+            //->where('u.status=1')
+            ->where('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
                 . '(u.startDate <= :start AND u.endDate > :start AND u.endDate <= :end) OR'
                 . '(u.startDate >= :start AND u.startDate < :end AND u.endDate > :end) OR'
                 . '(u.startDate <= :start AND u.endDate >= :end))')
@@ -230,7 +230,7 @@ class ReservationRepository extends EntityRepository
             ->select('ro.id, COUNT(u.id) as origins')  
             ->join('u.reservationOrigin', 'ro')
             ->where('u.startDate >= :start and u.endDate <= :end')
-            ->andWhere('u.status=1')
+            //->andWhere('u.status=1')
             ->addGroupBy('u.reservationOrigin')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
@@ -240,7 +240,7 @@ class ReservationRepository extends EntityRepository
             ->select('ro.id, COUNT(u.id) as origins') 
             ->join('u.reservationOrigin', 'ro')
             ->where('a.object = :objId and u.startDate >= :start and u.endDate <= :end')
-            ->andWhere('u.status=1')
+            //->andWhere('u.status=1')
             ->join('u.appartment', 'a')
             ->addGroupBy('u.reservationOrigin')
             ->setParameter('start', $start)

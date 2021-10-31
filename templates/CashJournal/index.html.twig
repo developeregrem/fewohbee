@@ -13,11 +13,11 @@
         <div class="row justify-content-between">
             <div class="col-md-4">
                 <button type="button" class="btn btn-default" onclick="showCreateForm()"
-                            data-toggle="modal" data-target="#modalCenter">
+                            data-bs-toggle="modal" data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'journal.add'|trans }}</button>
             </div>
             <div class="col-md-3">                
-                    <select id="template" name="template" class="form-control">
+                    <select id="template" name="template" class="form-select">
                         <option disabled>{{ 'journal.template'|trans }}:</option>
                         <option disabled>──────────</option>
                         {% for template in templates %}
@@ -29,7 +29,7 @@
         <div class="row">
             <div class="col-md-1">
                 <form id="table-filter" role="form">                     
-                    <select id="cashJournalYear" name="search" class="form-control">
+                    <select id="cashJournalYear" name="search" class="form-select">
                     {% for journal in journalYears %}
                         <option value="{{ journal.cashYear }}"{% if journal.cashYear == "Y"|date or search == journal.cashYear %} selected{% endif %}>{{ journal.cashYear }}</option>
                     {% endfor %}

@@ -12,7 +12,7 @@
 namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -40,7 +40,6 @@ class InvoiceService implements ITemplateRenderer
 
     /**
      * Calculates the sums and vats for an invoice
-     * @param Invoice $invoice
      * @param array $apps The invoice positions for apartment prices
      * @param array $poss The invoice positions for miscellaneous prices
      * @param array $vats Returns array of all vat values
@@ -49,7 +48,7 @@ class InvoiceService implements ITemplateRenderer
      * @param type $appartmentTotal Returns the total sum for all apartment prices
      * @param type $miscTotal Returns the total price for all miscellaneous prices
      */
-    public function calculateSums(Invoice $invoice, $apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
+    public function calculateSums($apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal)
     {
         $vats = Array();
         $brutto = 0;
@@ -279,7 +278,6 @@ class InvoiceService implements ITemplateRenderer
         $miscTotal = 0;
         // calculate needed values for template
         $this->calculateSums(
-            $invoice,
             $invoice->getAppartments(),
             $invoice->getPositions(),
             $vatSums,
@@ -311,9 +309,9 @@ class InvoiceService implements ITemplateRenderer
      * Retrieves valid prices for each day of stay and prefills the apartment position for the reservation
      * each day has exactly one valid price category
      * @param Reservation $reservation
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      */
-    public function prefillAppartmentPositions(Reservation $reservation, SessionInterface $session) {
+    public function prefillAppartmentPositions(Reservation $reservation, RequestStack $requestStack) {
         $prices = $this->ps->getPricesForReservationDays($reservation, 2);
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
         
@@ -333,7 +331,7 @@ class InvoiceService implements ITemplateRenderer
             $curDate = (clone $curDate)->add(new \DateInterval("P".($i === 0 ? 0 : 1)."D"));
             if($price !== null && $lastPrice !== null && ($lastPrice->getId() !== $price->getId() || $i == $days)) {                
                 $position = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
-                $this->saveNewAppartmentPosition($position, $session);
+                $this->saveNewAppartmentPosition($position, $requestStack);
 
                 $start = clone $curDate;
             }
@@ -345,35 +343,35 @@ class InvoiceService implements ITemplateRenderer
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category
      * @param array $reservations a list of reservations
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
-    public function prefillMiscPositionsWithReservations(array $reservations, SessionInterface $session, bool $useExistingPrices = false) {
-        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+    public function prefillMiscPositionsWithReservations(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false) {
+        $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
     
     /**
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category
      * @param array $reservationIds a list of reservation IDs
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
-    public function prefillMiscPositionsWithReservationIds(array $reservationIds, SessionInterface $session, bool $useExistingPrices = false) {
+    public function prefillMiscPositionsWithReservationIds(array $reservationIds, RequestStack $requestStack, bool $useExistingPrices = false) {
         $reservations = [];
         foreach($reservationIds as $resId) {
             $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
         }
-        $this->prefillMiscPositions($reservations, $session, $useExistingPrices);
+        $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
     /**
      * Retrieves valid prices for each day of stay and prefills the miscellaneous position for the reservation
      * each day can have more than one active price category
      * @param array $reservations
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      * @param boolean $useExistingPrices whether to use existing prices of the reservation or load prices based on price categories
      */
-    private function prefillMiscPositions(array $reservations, SessionInterface $session, bool $useExistingPrices = false) {
+    private function prefillMiscPositions(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false) {
         $tmpMiscArr = [];
         $existingPrices = null;
         // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
@@ -384,52 +382,58 @@ class InvoiceService implements ITemplateRenderer
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);  
 
             $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
-
+            
             // loop through each day and create the position based on the retrieved prices for this day
             for($i = 1; $i <= $days; $i++) {
                 if($prices[$i] === null) {
                     continue;
                 }
                 foreach($prices[$i] as $price) {  
+                    $amount = ($price->getIsFlatPrice() ? 1 : $reservation->getPersons());
                     
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list 
                     // with the same price id but a total amount if the same price category occurs more than once
                     if(array_key_exists($price->getId(), $tmpMiscArr)) {
-                        $tmpMiscArr[$price->getId()]['amount'] +=  1 * $reservation->getPersons();
+                        // add amount to an existing one only when it is not flat price or for another reservation (same flat price only once per reservation)
+                        if(!$price->getIsFlatPrice() || ($price->getIsFlatPrice() && $tmpMiscArr[$price->getId()]['reservationId'] !== $reservation->getId())) {
+                            $tmpMiscArr[$price->getId()]['amount'] +=  $amount;
+                            $tmpMiscArr[$price->getId()]['reservationId'] = $reservation->getId();
+                        }                        
                     } else {
                         $tmpMiscArr[$price->getId()] = [
                             'price' => $price,
-                            'amount' => 1 * $reservation->getPersons()
+                            'amount' => $amount,
+                            'reservationId' => $reservation->getId()
                         ];
                     }
                 }
             }
         }
-        $this->makeMiscPositions($reservation, $tmpMiscArr, $session);
+        $this->makeMiscPositions($reservation, $tmpMiscArr, $requestStack);
     }
     
     /**
      * Stores a new apartment position in the session
      * @param InvoiceAppartment $position
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      */
-    public function saveNewAppartmentPosition(InvoiceAppartment $position, SessionInterface $session) {
-        $newInvoicePositionsAppartmentsArray = $session->get("invoicePositionsAppartments", []);                
+    public function saveNewAppartmentPosition(InvoiceAppartment $position, RequestStack $requestStack) {
+        $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments", []);                
         $newInvoicePositionsAppartmentsArray[] = $position;
 
-        $session->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
+        $requestStack->getSession()->set("invoicePositionsAppartments", $newInvoicePositionsAppartmentsArray);
     }
     
     /**
      * Stores a new miscellaneous position in the session
      * @param InvoicePosition $position
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      */
-    public function saveNewMiscPosition(InvoicePosition $position, SessionInterface $session) {
-        $newInvoicePositionsMiscArray = $session->get("invoicePositionsMiscellaneous", []);                
+    public function saveNewMiscPosition(InvoicePosition $position, RequestStack $requestStack) {
+        $newInvoicePositionsMiscArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous", []);                
         $newInvoicePositionsMiscArray[] = $position;
 
-        $session->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscArray);
+        $requestStack->getSession()->set("invoicePositionsMiscellaneous", $newInvoicePositionsMiscArray);
     }
     
     /**
@@ -462,7 +466,7 @@ class InvoiceService implements ITemplateRenderer
      * @param array $tmpPricesArr
      * @return InvoicePosition[]
      */
-     private function makeMiscPositions(Reservation $reservation, array $tmpPricesArr, SessionInterface $session) : array {
+     private function makeMiscPositions(Reservation $reservation, array $tmpPricesArr, RequestStack $requestStack) : array {
         $positions = [];
          foreach($tmpPricesArr as $tmpPrice) {
             $position = new InvoicePosition();
@@ -473,7 +477,7 @@ class InvoiceService implements ITemplateRenderer
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
             
-            $this->saveNewMiscPosition($position, $session);
+            $this->saveNewMiscPosition($position, $requestStack);
         }
                          
         return $positions;

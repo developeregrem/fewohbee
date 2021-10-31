@@ -23,9 +23,6 @@ class Reservation
     /** @ORM\Column(type="smallint") * */
     private $persons;
 
-    /** @ORM\Column(type="smallint") * */
-    private $status;
-
     /** @ORM\Column(name="option_date", type="date", nullable=true) * */
     private $optionDate;
 
@@ -77,6 +74,12 @@ class Reservation
      */
     private $prices;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=ReservationStatus::class, inversedBy="reservations")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $reservationStatus;
+
     public function __construct()
     {
         $this->reservationDate = new \DateTime('now');
@@ -105,11 +108,6 @@ class Reservation
     public function getPersons()
     {
         return $this->persons;
-    }
-
-    public function getStatus()
-    {
-        return $this->status;
     }
 
     public function getOptionDate()
@@ -164,11 +162,6 @@ class Reservation
     public function setPersons($persons)
     {
         $this->persons = $persons;
-    }
-
-    public function setStatus($status)
-    {
-        $this->status = $status;
     }
 
     public function setOptionDate($optionDate)
@@ -395,6 +388,18 @@ class Reservation
     public function removePrice(Price $price): self
     {
         $this->prices->removeElement($price);
+
+        return $this;
+    }
+
+    public function getReservationStatus(): ?ReservationStatus
+    {
+        return $this->reservationStatus;
+    }
+
+    public function setReservationStatus(?ReservationStatus $reservationStatus): self
+    {
+        $this->reservationStatus = $reservationStatus;
 
         return $this;
     }

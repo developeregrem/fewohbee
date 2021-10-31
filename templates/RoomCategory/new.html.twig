@@ -1,5 +1,5 @@
 {{ form_start(form, {'attr': {'id':'entry-form-new', 'onsubmit':'return createNew();'} }) }}
-    <div class="modal-body pl-5 pr-5">
+    <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
         <div class="row">
@@ -9,7 +9,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
 {{ form_end(form) }}

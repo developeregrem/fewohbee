@@ -1,6 +1,6 @@
 security:
     enable_authenticator_manager: true
-    encoders:
+    password_hashers:
         App\Entity\User:
             algorithm: auto
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
@@ -25,6 +25,7 @@ security:
                 target: /
             remember_me:
                 secret:   '%kernel.secret%'
+            lazy:   true
 
             # activate different ways to authenticate
 

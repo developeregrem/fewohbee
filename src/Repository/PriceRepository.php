@@ -108,8 +108,7 @@ class PriceRepository extends EntityRepository
                     ->setParameter(":end", $pricePeriod->getEnd())
                     ->getQuery();
             try {
-                $res = $resQ->getResult();
-                $prices = array_merge($prices, $res);
+                $prices = $resQ->getResult();
             } catch (NoResultException $e) {
 
             }

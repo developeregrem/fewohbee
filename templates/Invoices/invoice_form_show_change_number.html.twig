@@ -1,16 +1,16 @@
 <form id="invoice-number-form" class="form-horizontal" role="form"
       onsubmit="return changeInvoiceNumberSave()">
-    <div class="modal-body pl-5 pr-5">
+    <div class="modal-body ps-5 pe-5">
         <div class="row">
             <div class="col-md-7">
                 <p>
-                <div class="form-group row">
+                <div class="row">
                     <label for="salutation" class="col-sm-4 col-form-label">{{ 'invoice.number.short'|trans }} *</label>
                     <div class="col-sm">
                         <input type="text" class="form-control" id="salutatinumberon" name="number" value="{{ invoice.number }}" required>
                     </div>
                 </div>
-                <div class="form-group row">
+                <div class="row">
                     <label for="firstname" class="col-sm-4 col-form-label">{{ 'invoice.date2'|trans }} *</label>
                     <div class="col-sm">
                         <input type="text" class="form-control" id="date" name="date" value="{{ invoice.date|date("d.m.Y") }}" required>
@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <ul class="pagination mr-auto">
+        <ul class="pagination me-auto">
             <li class="page-item " onclick="
                 {% if invoiceId == 'new' %}
                     //return showCreateInvoicePositions('false')

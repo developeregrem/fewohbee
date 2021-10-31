@@ -1,31 +1,31 @@
 <fieldset
         id="template-form-fieldset-primary-{{ template.id }}" {% if template.id != "new" %} {% endif %}>
-    <div class="form-group row">
-        <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-right">{{ 'templates.name'|trans }}
+    <div class="row">
+        <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.name'|trans }}
             *</label>
         <div class="col-sm-8">
             <input type="text" class="form-control" name="name-{{ template.id }}"
                    value="{{ template.name }}" required />
         </div>
     </div>
-    <div class="form-group row">
-        <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-right">{{ 'templates.type'|trans }}
+    <div class="row">
+        <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.type'|trans }}
             *</label>
         <div class="col-sm-8">
-            <select name="type-{{ template.id }}" class="form-control" id="template-type">
+            <select name="type-{{ template.id }}" class="form-select" id="template-type">
                 {% for type in types %}
                     <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
                 {% endfor %}
             </select>
         </div>
     </div>
-    <div class="form-group row">
+    <div class="row">
         <div class="col">
             <textarea name="text-{{ template.id }}" id="editor1" rows="15">{{ template.text|raw }}</textarea>
         </div>
     </div>
-    <div class="form-group row">
-        <label for="params-{{ template.id }}" class="col-sm-4 col-form-label text-right">{{ 'templates.params'|trans }}</label>
+    <div class="row">
+        <label for="params-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.params'|trans }}</label>
         <div class="col-sm-8">
             {% if template.params|length == 0 %}
                 {% set tParams = '{"orientation": "P", "marginLeft": 25, "marginRight": 20, "marginTop": 20, "marginBottom": 20, "marginHeader": 9, "marginFooter": 9}' %}
@@ -37,9 +37,9 @@
                    value="{{ tParams }}" />
         </div>
     </div> 
-    <div class="form-group row">
-        <label for="default-{{ template.id }}" class="col-sm-4 form-check-label text-right">{{ 'templates.default'|trans }}</label>
-        <div class="col-sm-8 text-left">
+    <div class="row">
+        <label for="default-{{ template.id }}" class="col-sm-4 form-check-label text-end">{{ 'templates.default'|trans }}</label>
+        <div class="col-sm-8 text-start">
             <input type="checkbox" name="default-{{ template.id }}" class="form-check"
                    {%if template.isDefault %}checked="checked"{%endif %} />
         </div>
