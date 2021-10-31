@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col">
             </div>
@@ -9,7 +9,7 @@
                 <input type="text" class="form-control" id="lastname" name="lastname"
                        placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
             </div>
-            <div class="col text-right">
+            <div class="col text-end">
                 <span class="input-group-btn">
                     <button class="btn btn-secondary" type="button"
                             onclick="getCustomers(1, 'edit', '{{ tab }}', {{ appartmentId}})">
@@ -25,7 +25,7 @@
             <div class="col">
                 <form id="customer-selection" onsubmit="return editReservationNewCustomer('{{ reservation.id }}', '{{ tab }}')">
                     <div id="customers"></div>
-                    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-right mt-3 d-none"/>
+                    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-end mt-3 d-none"/>
                     <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
                     <input id="tab" type="hidden" value="{{ tab }}" name="tab"/>
                     <input id="appartmentId" type="hidden" value="{{ appartmentId }}" name="appartmentId"/>
@@ -35,7 +35,7 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination mr-auto">
+    <ul class="pagination me-auto">
         <li class="page-item " onclick="return getReservation('{{ reservation.id }}', '{{ tab }}')">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>

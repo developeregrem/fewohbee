@@ -56,12 +56,12 @@ class InvoiceApartmentPositionType extends AbstractType
             ])
             ->add('includesVat', CheckboxType::class, [
                 'label' => 'price.includesvat',
-                'label_attr' => ['class' => 'switch-custom switch-inline'],
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false
             ])
             ->add('isFlatPrice', CheckboxType::class, [
                 'label' => 'price.isflatprice',
-                'label_attr' => ['class' => 'switch-custom switch-inline'],
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false
             ])
         ;

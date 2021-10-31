@@ -28,10 +28,10 @@
                     <i class="fas fa-info-circle"></i></a>
                 {% if not journal.isClosed %}
                 <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="getJournal({{ journal.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
+                    <i onclick="getJournal({{ journal.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 
                 <a href="#" title="{{ 'button.add'|trans }}">
-                    <i onclick="addJournalEntry({{ journal.id }}, true)" class="fas fa-plus" data-toggle="modal" data-target="#modalCenter"></i></a>
+                    <i onclick="addJournalEntry({{ journal.id }}, true)" class="fas fa-plus" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 {% endif %}
                 <a class="export-link"
                    href="{{ path('cashjournal.journal.export.pdf', {'id': journal.id, 'templateId': 0 }) }}"

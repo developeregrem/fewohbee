@@ -10,11 +10,11 @@
     </div>
     <div class="modal-footer">
         {% if is_granted('ROLE_ADMIN') %}
-        <div class="boxDefault mr-auto">            
+        <div class="boxDefault me-auto">            
             <button type="button" class="btn btn-danger"
                         onclick="return toggleDelete();">{{ 'button.delete'|trans }}</button>
         </div>
-        <div id="boxDelete" class="d-none mr-auto">               
+        <div id="boxDelete" class="d-none me-auto">               
             <button class="btn btn-secondary"
                     onclick="return toggleDelete();">{{ 'button.cancel'|trans }}</button>
             <button class="btn btn-danger" onclick="return doDeleteJournal({{ journal.id }});">{{ 'button.delete'|trans }}</button>
@@ -22,7 +22,7 @@
         </div>
         {% endif %} 
         <div class="boxDefault">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
             <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>  
         </div>               
     </div>

@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 use App\Service\CSRFProtectionService;
 use App\Service\CashJournalService;
@@ -33,7 +33,7 @@ class CashJournalServiceController extends AbstractController
 
     }
 
-    public function indexAction(SessionInterface $session, TemplatesService $ts, Request $request)
+    public function indexAction(RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         
@@ -69,7 +69,7 @@ class CashJournalServiceController extends AbstractController
             $templateId = $defaultTemplate->getId();
         }
 
-        $templateId = $session->get("cashjournal-template-id", $templateId); // get previously selected id
+        $templateId = $requestStack->getSession()->get("cashjournal-template-id", $templateId); // get previously selected id
         //
         // initialy select the joungest year available
         if(count($journalYears) > 0) {
@@ -426,11 +426,11 @@ class CashJournalServiceController extends AbstractController
         return new Response("ok");
     }
     
-    public function exportJournalToPdfAction(SessionInterface $session, $id, TemplatesService $ts, CashJournalService $cjs, $templateId)
+    public function exportJournalToPdfAction(RequestStack $requestStack, $id, TemplatesService $ts, CashJournalService $cjs, $templateId)
     {
         $em = $this->getDoctrine()->getManager();
         // save id, after page reload template will be preselected in dropdown
-        $session->set("cashjournal-template-id", $templateId);
+        $requestStack->getSession()->set("cashjournal-template-id", $templateId);
         
         $templateOutput = $ts->renderTemplate($templateId, $id, $cjs);
         $template = $em->getRepository(Template::class)->find($templateId);

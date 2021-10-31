@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col"></div>
         </div>
@@ -20,11 +20,34 @@
             {% for correspondence in correspondences %}
                 {# do not allow other mails #}
                 {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
-                    <tr onclick="return addAsAttachment({{ correspondence.id }});" class="mouse-pointer">
+                    <tr onclick="return addAsAttachment({{ correspondence.id }}, false);" class="mouse-pointer">
                         <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
                         <td>{{ correspondence.name }}</td>
                     </tr>
                 {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% if invoices|length > 0 %}
+        <div class="row">
+            <div class="col">
+                <h4 class="pb-2">{{ 'reservation.templates.availableprices'|trans }}</h4>
+            </div>
+        </div>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th></th>
+                <th>{{ 'invoice.number'|trans }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for invoice in invoices %}
+                    <tr onclick="return addAsAttachment({{ invoice.id }}, true);" class="mouse-pointer">
+                        <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
+                        <td>{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</td>
+                    </tr>
             {% endfor %}
             </tbody>
         </table>
@@ -53,7 +76,7 @@
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination mr-auto">
+    <ul class="pagination me-auto">
         <li class="page-item " onclick="return {% if inProcess == 'false' %}selectReservation()
                                              {% else %}previewTemplateForReservation({{ selectedTemplateId }}, {{ inProcess }});{% endif %}">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
@@ -85,7 +108,7 @@ function selectReservation(id) {
     return false;
 }
 
-function addAsAttachment(id) {
+function addAsAttachment(id, isInvoice) {
     var url = "{{ path('settings.templates.attachment.add') }}";
     var content = '<div class="modal-body">' +
             '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
@@ -94,7 +117,7 @@ function addAsAttachment(id) {
     $.ajax({
         url: url,
         type: "post",
-        data: { id: id },
+        data: { id: id, isInvoice: isInvoice },
         beforeSend: function () {
             $("#modal-content-ajax").html(content);
         },

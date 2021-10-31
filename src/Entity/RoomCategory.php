@@ -35,6 +35,12 @@ class RoomCategory
      */
     private $prices;
 
+    /**
+     * @ORM\Column(type="string", length=5, nullable=true)
+     * @Assert\Length(max = 5)
+     */
+    private $acronym;
+
     public function __construct()
     {
         $this->apartments = new ArrayCollection();
@@ -116,6 +122,18 @@ class RoomCategory
                 $price->setRoomCategory(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getAcronym(): ?string
+    {
+        return $this->acronym;
+    }
+
+    public function setAcronym(?string $acronym): self
+    {
+        $this->acronym = $acronym;
 
         return $this;
     }

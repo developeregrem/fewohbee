@@ -12,8 +12,8 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-toggle="modal"
-                    data-target="#modalCenter">
+            <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-bs-toggle="modal"
+                    data-bs-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'nav.user.add'|trans }}</button>
         </div>
     </div>
@@ -35,10 +35,10 @@
                         <td>{{ user.firstname }}</td>
                         <td>{{ user.lastname }}</td>
                         <td>
-                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i onclick="getEntry({{ user.id }})" class="fas fa-info-circle"></i></a>
                             <a href="#" title="{{ 'button.edit'|trans }}">
-                                <i onclick="editEntry({{ user.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
+                                <i onclick="editEntry({{ user.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i onclick="deleteEntry({{ user.id }})" class="fas fa-trash-alt"></i></a>
                         </td>

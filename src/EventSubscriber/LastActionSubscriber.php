@@ -48,10 +48,18 @@ class LastActionSubscriber implements EventSubscriberInterface {
         if($accessToken !== null) {
             /* @var $user User */
             $user = $accessToken->getUser();
-            if($user instanceof User) {
-                $user->setLastAction(new \DateTime());
-                $this->em->persist($user);
-                $this->em->flush();
+            if($user instanceof User) {                
+//                if (!$this->em->isOpen()) {
+//                    $this->em = $this->em->create(
+//                        $this->em->getConnection(),
+//                        $this->em->getConfiguration()
+//                    );
+//                }
+                if($this->em->isOpen()) {
+                    $user->setLastAction(new \DateTime());
+                    $this->em->persist($user);
+                    $this->em->flush();
+                }
             }
         }
     }

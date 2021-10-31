@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
 {% if reservations|length > 0 %}
         <div class="row">
             <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
@@ -24,13 +24,7 @@
                             <td>{{ reservation.appartment.number }}</td>
                             <td>{{ reservation.appartment.description }}</td>
                             <td>{{ reservation.persons }}</td>
-                            <td>
-                                {% if reservation.status == 1 %}
-                                    {{ 'reservation.confirm'|trans }}
-                                {% elseif reservation.status == 2 %}
-                                    {{ 'reservation.option'|trans }}
-                                {% endif %}
-                            </td>
+                            <td>{{ reservation.reservationStatus.name }}</td>
                             <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                             <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                             <td>
@@ -81,8 +75,8 @@
                            placeholder="{{ 'reservation.enddate'|trans }}"
                            onchange="getAvailableAppartmentsForPeriod()">
                 </div>
-                <div class="col text-right">
-                    <select id="objects" name="object" class="form-control"
+                <div class="col text-end">
+                    <select id="objects" name="object" class="form-select"
                             onchange="getAvailableAppartmentsForPeriod()">
                         <option value="all"
                                 {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>

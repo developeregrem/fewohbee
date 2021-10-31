@@ -19,7 +19,7 @@
         <div class="row justify-content-end">
             <div class="col-md-3">
                 <form id="table-filter" role="form">                   
-                    <select id="objects" name="object" class="form-control">
+                    <select id="objects" name="object" class="form-select">
                         <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                         {% for object in objects %}
                             <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
@@ -33,7 +33,7 @@
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         {{ 'statistics.utilization.monthly'|trans }}
-                         <i id="refreshMonthly" class="fas fa-sync-alt float-right" aria-hidden="true" 
+                         <i id="refreshMonthly" class="fas fa-sync-alt float-end" aria-hidden="true" 
                             style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
                     </div>
                     <div class="card-body">
@@ -43,7 +43,7 @@
                         <form role="form">
                             <div class="row justify-content-md-center">
                                 <div class="col-md-3">
-                                    <select id="monthlyStart" name="monthtlyStart" class="form-control">
+                                    <select id="monthlyStart" name="monthtlyStart" class="form-select">
                                         {% set currentMonth = 'now'|date('n') %}
                                         {% for month in monthList %}
                                             <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
@@ -51,7 +51,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-control">
+                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select">
                                         {% set currentYear = 'now'|date('Y') %}
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
@@ -62,14 +62,14 @@
                                     -
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-control">
+                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-select">
                                         {% for month in monthList %}
                                             <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-control">
+                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -84,7 +84,7 @@
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         {{ 'statistics.utilization.yearly'|trans }}
-                         <i id="refreshYearly" class="fas fa-sync-alt float-right mouse-pointer" aria-hidden="true" 
+                         <i id="refreshYearly" class="fas fa-sync-alt float-end mouse-pointer" aria-hidden="true" 
                             onclick="drawYearlyChart();"></i>
                     </div>
                     <div class="card-body">
@@ -94,7 +94,7 @@
                         <form role="form">
                             <div class="row">
                                 <div class="col-md-2">
-                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-control">
+                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -104,7 +104,7 @@
                                     -
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-control">
+                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}

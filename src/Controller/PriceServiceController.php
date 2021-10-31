@@ -20,6 +20,7 @@ use App\Service\PriceService;
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Entity\PricePeriod;
 
 class PriceServiceController extends AbstractController
 {
@@ -135,6 +136,7 @@ class PriceServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->clear(Price::class);
+                $em->clear(PricePeriod::class);
             } else {  
                 $conflicts = $ps->findConflictingPrices($price);
                 // during edit we need to remove the current item from the list
@@ -152,6 +154,7 @@ class PriceServiceController extends AbstractController
                     $this->addFlash('warning', 'price.flash.create.conflict');
                     // stop auto commit of doctrine with invalid field values
                     $em->clear(Price::class);
+                    $em->clear(PricePeriod::class);
                 }  
             }
         }

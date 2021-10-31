@@ -2,7 +2,37 @@
 <table class="table table-hover table-bordered table-reservation" id="reservation-table">
     <thead>
     <tr>
-        <th class="text-center">Zimmer</th>
+        <td class="text-center"></td>
+        {% set firstWasSummer = today|date('I') %}
+        {% set lastWeek = today|date('W') %}
+        {% set colCount = 0 %}
+        {% for i in 0..intervall %}
+            {% set addToDate = "+" ~ i ~ "day" %}
+            {% set tmpDate = today|date_modify(addToDate) %}
+            {# if there is a change from summer to winter time #}
+            {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+            {% endif %}
+            {% set curWeek = tmpDate|date('W') %}
+            {# add 2 to colcount since we are at the end of the displayed period 
+               but add it only if the last day is not a monday (last cw was already printed #}
+            {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
+            {# be aware that when the last cw is printed while we are on monday already #}
+            {% if lastWeek != curWeek  or i == intervall %}
+                <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
+                {% set colCount = 2 %}
+                {% set lastWeek = curWeek %}
+                {# if we reached the end of the period and last day is a monday we need to print the last td #}
+                {% if tmpDate|date('N') == 1 and i == intervall %}
+                    <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
+                {% endif %}
+            {% else %}
+                {% set colCount = colCount + 2 %}
+            {% endif %}         
+        {% endfor %}
+    </tr>
+    <tr class="table-days">
+        <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
         {% set firstWasSummer = today|date('I') %}
         {% for i in 0..intervall %}
             {% set addToDate = "+" ~ i ~ "day" %}
@@ -28,8 +58,11 @@
         {% set j = 0 %}
         {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
         {% set emptyTdNr = 0 %}
+        {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
         <tr>
-            <td class="text-center">{{ appartment.number }}</td>
+            <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
+                {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
+            </td>
             {% for i in 0..intervall %}
               {% if i >= j %}
                 {% set addToDate = "+" ~ i ~ "day" %}
@@ -80,12 +113,6 @@
                             {% set colspan = colspan + 1 %}
                         {% endif %}
 
-                        {% if reservation.status == 1 %}
-                            {% set status = 'confirmed' %}
-                        {% elseif reservation.status == 2 %}
-                            {% set status = 'option' %}
-                        {% endif %}
-
                         {% set letterCount = get_letter_count_for_display(period, intervall) %}
                         {% set name = reservation.booker.salutation ~ " " ~ reservation.booker.lastname %}
                         {% set shortName = name|slice(0, letterCount) %}
@@ -110,15 +137,16 @@
                                 {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
                             {% endif %}                           
                         {% endfor %}
+                        {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
                         {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
                         {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
                         {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
                         {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
 
                         <td class="reservation text-center" colspan="{{ colspan }}">
-                            <div onclick="return getReservation({{ reservation.id }});"
-                                 class="reservation-inner reservation-{{ status }} text-center"
-                                 data-title="{{ popTitle }}" data-content="{{ popBody }}">{{ shortName }}</div>
+                            <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
+                                 class="reservation-inner text-center"
+                                 title="{{ popTitle }}" data-bs-content="{{ popBody }}">{{ shortName }}</div>
                         </td>
 
                         {% if printSpacerAfter %}
@@ -156,6 +184,7 @@
         html: true,
         trigger: 'hover'
     });
+    $('.room-info').popover();
 
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',

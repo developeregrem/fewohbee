@@ -73,7 +73,7 @@ class Price
     private $reservationOrigins;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true, cascade={"persist"})
      */
     private $pricePeriods;
 
@@ -103,7 +103,7 @@ class Price
      */
     public function __construct()
     {
-        $this->reservationOrigins = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->reservationOrigins = new ArrayCollection();
         $this->pricePeriods = new ArrayCollection();
         $this->allPeriods = true;
         $this->includesVat = true;
@@ -298,7 +298,9 @@ class Price
      */
     public function addReservationOrigin(\App\Entity\ReservationOrigin $reservationOrigins)
     {
-        $this->reservationOrigins[] = $reservationOrigins;
+        if (!$this->reservationOrigins->contains($reservationOrigins)) {
+            $this->reservationOrigins[] = $reservationOrigins;
+        }
 
         return $this;
     }
@@ -310,7 +312,10 @@ class Price
      */
     public function removeReservationOrigin(\App\Entity\ReservationOrigin $reservationOrigins)
     {
-        $this->reservationOrigins->removeElement($reservationOrigins);
+        if($this->reservationOrigins->contains($reservationOrigins)) {
+            $this->reservationOrigins->removeElement($reservationOrigins);
+        }
+        return $this;
     }
 
     /**

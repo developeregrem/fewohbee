@@ -13,7 +13,7 @@ namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 use App\Entity\ReservationOrigin;
 
@@ -21,15 +21,15 @@ class ReservationOriginService
 {
 
     private $em = null;
-	private $session;
+	private $requestStack;
 
     /**
      * @param Application $app
      */
-    public function __construct(EntityManagerInterface $em, SessionInterface $session)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
     {
         $this->em = $em;
-		$this->session = $session;
+		$this->requestStack = $requestStack;
     }
 
     /**
@@ -66,7 +66,7 @@ class ReservationOriginService
 
             return true;
         } else {
-            $this->session->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
+            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservationorigin.flash.delete.inuse.reservations');
 
             return false;
         }

@@ -14,7 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -29,7 +29,11 @@ use App\Entity\FileCorrespondence;
 use App\Entity\MailCorrespondence;
 use App\Service\FileUploader;
 use App\Service\MailService;
+use App\Service\InvoiceService;
 
+/**
+ * @Route("/settings/templates")
+ */
 class TemplatesServiceController extends AbstractController
 {
     public function __construct()
@@ -158,21 +162,29 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @param $id
      * @return string
+     * 
+     * @Route("/{id}/delete", name="settings.templates.delete", methods={"DELETE", "GET"})
      */
-    public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id)
+    public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template)
     {
-        if ($request->getMethod() == 'POST') {
+        if ($request->getMethod() == 'DELETE') {
             if (($csrf->validateCSRFToken($request, true))) {
-                $template = $ts->deleteEntity($id);
-                if($template) {
-                    $this->addFlash('success', 'templates.flash.delete.success');
+                $countCor = $template->getCorrespondences()->count();
+                
+                if($countCor > 0) {
+                    $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+                } else {                    
+                    $template = $ts->deleteEntity($template->getId());
+                    if($template) {
+                        $this->addFlash('success', 'templates.flash.delete.success');
+                    }
                 }
             }
             return new Response('', Response::HTTP_NO_CONTENT);
         } else {
             // initial get load (ask for deleting)           
             return $this->render('common/form_delete_entry.html.twig', array(
-                "id" => $id,
+                "id" => $template->getId(),
                 'token' => $csrf->getCSRFTokenForForm()
             ));
         }
@@ -195,23 +207,23 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function selectReservationAction(SessionInterface $session, Request $request)
+    public function selectReservationAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
         if ($request->get('createNew') == "true") {
             $selectedReservationIds = array();
-            $session->set("selectedReservationIds", $selectedReservationIds);
+            $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
-            //$session->remove("invoicePositionsMiscellaneous");
+            //$requestStack->getSession()->remove("invoicePositionsMiscellaneous");
             
         } else {
-            $selectedReservationIds = $session->get("selectedReservationIds");
+            $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         }
 
         if ($request->get("reservationid") != null) {
             $selectedReservationIds[] = $request->get("reservationid");
-            $session->set("selectedReservationIds", $selectedReservationIds);
+            $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
 
         $reservations = Array();
@@ -227,17 +239,17 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
-    public function getReservationsAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function getReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
         if ($request->get('createNew') == "true") {
             $selectedReservationIds = array();
-            $session->set("selectedReservationIds", $selectedReservationIds);
+            $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
-            // $session->remove("invoicePositionsMiscellaneous");
+            // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
         } else {
-            $selectedReservationIds = $session->get("selectedReservationIds");
+            $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         }
 
         if (count($selectedReservationIds) == 0) {
@@ -254,25 +266,25 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
-    public function removeReservationFromSelectionAction(SessionInterface $session, Request $request)
+    public function removeReservationFromSelectionAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
-        $selectedReservationIds = $session->get("selectedReservationIds");
+        $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
         if ($request->get("reservationkey") != null) {
             unset($selectedReservationIds[$request->get("reservationkey")]);
-            $session->set("selectedReservationIds", $selectedReservationIds);
+            $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
         
-        return $this->selectReservationAction($session, $request);
+        return $this->selectReservationAction($requestStack, $request);
     }
     
-    public function getReservationsInPeriodAction(SessionInterface $session, Request $request)
+    public function getReservationsInPeriodAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $reservations = Array();
-        $selectedReservationIds = $session->get("selectedReservationIds");
+        $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         $potentialReservations = $em->getRepository(
                 Reservation::class
             )->loadReservationsForPeriod($request->get('from'), $request->get('end'));
@@ -292,11 +304,11 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
-    public function getReservationsForCustomerAction(SessionInterface $session, Request $request)
+    public function getReservationsForCustomerAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
         $reservations = Array();
-        $selectedReservationIds = $session->get("selectedReservationIds");
+        $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
             $request->get("lastname")
@@ -322,7 +334,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
-    public function sendEmailAction(CSRFProtectionService $csrf, TemplatesService $ts, SessionInterface $session, MailService $mailer, Request $request)
+    public function sendEmailAction(CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
@@ -332,7 +344,7 @@ class TemplatesServiceController extends AbstractController
             $subject = $request->get("subject");
             $msg = $request->get("msg");
             $templateId = $request->get("templateId");
-            $attachmentIds = $session->get("templateAttachmentIds", Array()); 
+            $attachmentIds = $requestStack->getSession()->get("templateAttachmentIds", Array()); 
 
             // todo add email validation http://silex.sensiolabs.org/doc/providers/validator.html
             if (strlen($to) == 0 || strlen($subject) == 0 || strlen($msg) == 0) {
@@ -388,7 +400,7 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function saveFileAction(CSRFProtectionService $csrf, TemplatesService $ts, SessionInterface $session, Request $request)
+    public function saveFileAction(CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
@@ -404,14 +416,13 @@ class TemplatesServiceController extends AbstractController
             } else {
                 // todo
                 // if this file is an attachment for email, 
-                $attachmentForId = $session->get("selectedTemplateId", null);
+                $attachmentForId = $requestStack->getSession()->get("selectedTemplateId", null);
                 
                 // now save correspondence to db
                 $template = $em->getReference(Template::class, $templateId);
                                              
                 // associate with reservations
                 $reservations = $ts->getReferencedReservationsInSession();  
-                $fileIds = Array();
                 
                 // save correspondence for each reservation
                 foreach($reservations as $reservation) {
@@ -450,14 +461,14 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function deleteAttachmentAction(CSRFProtectionService $csrf, SessionInterface $session, Request $request)
+    public function deleteAttachmentAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $this->getDoctrine()->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
             $aId = $request->get("id");
-            $attachments = $session->get("templateAttachmentIds");
+            $attachments = $requestStack->getSession()->get("templateAttachmentIds");
             $isAttachment = false;
             // loop through all reservations
             foreach($attachments as $key=>$attachment) {
@@ -474,7 +485,7 @@ class TemplatesServiceController extends AbstractController
             }
             
             if($isAttachment) {
-                $session->set("templateAttachmentIds", $attachments);
+                $requestStack->getSession()->set("templateAttachmentIds", $attachments);
                 //$correspondence = $em->getReference(Correspondence::class, $aId);
             } else {
                 $this->addFlash('warning', 'templates.attachment.notfound');
@@ -524,10 +535,15 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function addAttachmentAction(TemplatesService $ts, Request $request)
+    public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is)
     {
-        $error = false;           
+        $error = false;
+        $isInvoice = $request->get("isInvoice", "false");
         $cId = $request->get("id");
+        if($isInvoice != 'false') {
+            $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
+        }
+        
         $reservations = $ts->getReferencedReservationsInSession(); 
         $ts->addFileAsAttachment($cId, $reservations);
 
@@ -586,7 +602,7 @@ class TemplatesServiceController extends AbstractController
     }
     
     /**
-     * @Route("/settings/templates/upload", name="templates.upload", methods={"POST"})
+     * @Route("/upload", name="templates.upload", methods={"POST"})
      */
     public function uploadImage(Request $request, FileUploader $fos) {
         /** @var UploadedFile $imageFile */

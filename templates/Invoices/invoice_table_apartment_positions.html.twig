@@ -7,8 +7,8 @@
             <th>{{ 'invoice.appartment.position.persons'|trans }}</th>
             <th>{{ 'invoice.appartment.position.startdate'|trans }}</th>
             <th>{{ 'invoice.appartment.position.enddate'|trans }}</th>
-            <th class="text-right">{{ 'invoice.vat'|trans }}</th>
-            <th class="text-right">{{ 'invoice.appartment.position.price'|trans }}</th>
+            <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+            <th class="text-end">{{ 'invoice.appartment.position.price'|trans }}</th>
             {% if mode is defined and mode == 'edit' %}
             <th>{{ 'invoice.action'|trans }}</th>
             {% endif %}
@@ -23,14 +23,14 @@
                 <td>{{ position.persons }}</td>
                 <td>{{ position.startdate|date("d.m.Y") }}</td>
                 <td>{{ position.enddate|date("d.m.Y") }}</td>
-                <td class="text-right">
+                <td class="text-end">
                     {% if is_decimal_place_0(position.vat) %}
                         {{ position.vat|number_format(0, ',', '.') }}
                     {% else %}
                         {{ position.vat|number_format(2, ',', '.') }}
                     {% endif %}
                 </td>
-                <td class="text-right">{{ position.price|number_format(2, ',', '.') }}</td>
+                <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
                 {% if mode is defined and mode == 'edit' %}
                 <td>
                     <a href="#" title="{{ 'button.edit'|trans }}">

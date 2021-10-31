@@ -13,7 +13,7 @@ namespace App\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -21,6 +21,7 @@ use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
+use App\Entity\ReservationStatus;
 use App\Interfaces\ITemplateRenderer;
 use App\Entity\Price;
 use App\Service\InvoiceService;
@@ -30,12 +31,13 @@ use App\Service\PriceService;
 class ReservationService implements ITemplateRenderer
 {
     private $em;
-	private $session;
+    private $requestStack;
 
-    public function __construct(EntityManagerInterface $em, SessionInterface $session)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, InvoiceService $is)
     {
         $this->em = $em;
-		$this->session = $session;
+        $this->requestStack = $requestStack;
+        $this->is = $is;
     }
 
     public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $appartment, $start, $end)
@@ -70,7 +72,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setAppartment($this->em->getRepository(Appartment::class)->findById($reservationInformation->getAppartmentId())[0]);
             $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
             $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
-            $reservation->setStatus($reservationInformation->getStatus());
+            $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
             $reservation->setPersons($reservationInformation->getPersons());
 
             if (isset($customer)) {
@@ -119,14 +121,14 @@ class ReservationService implements ITemplateRenderer
         $status = $request->get('status');
         $start = new \DateTime($request->get('from'));
         $end = new \DateTime($request->get('end'));
-        $remark = $request->get('remark');
-        $origin = $this->em->getRepository(ReservationOrigin::class)->find($request->get('reservation-origin'));
         $dateInterval = date_diff($start, $end);
         // number of days
         $interval = $dateInterval->format('%a');
 
+        /* @var $reservation \App\Entity\Reservation */
         $reservation = $this->em->getRepository(Reservation::class)->findById($id)[0];
         $appartment = $this->em->getRepository(Appartment::class)->findById($appartmentId)[0];
+        $reservationStatus = $this->em->getRepository(ReservationStatus::class)->find($status);
         
         if($start > $end) {
             $tmp = $start;
@@ -151,10 +153,8 @@ class ReservationService implements ITemplateRenderer
             $reservation->setEndDate($end);
         }
         $reservation->setAppartment($appartment);
-        $reservation->setStatus($status);
+        $reservation->setReservationStatus($reservationStatus);
         $reservation->setPersons($persons);
-        $reservation->setRemark($remark);
-        $reservation->setReservationOrigin($origin);
 
         $this->em->persist($reservation);
         $this->em->flush();
@@ -168,7 +168,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setBooker($customer);
             $this->em->persist($reservation);
             $this->em->flush();
-            $this->session->getFlashBag()->add('success', 'reservation.flash.update.success');
+            $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
         } else if ($tab === 'guest' && count($reservation->getCustomers()) < $reservation->getPersons()) {
             // check if customer is already in list
             $isAlreadyInList = false;
@@ -185,22 +185,22 @@ class ReservationService implements ITemplateRenderer
                 $reservation->addCustomer($customer);
                 $this->em->persist($reservation);
                 $this->em->flush();
-                $this->session->getFlashBag()->add('success', 'reservation.flash.update.success');
+                $this->requestStack->getSession()->getFlashBag()->add('success', 'reservation.flash.update.success');
             } else {
-                $this->session->getFlashBag()->add('warning', 'reservation.flash.update.customeralreadyinlist');
+                $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.customeralreadyinlist');
             }
         } else {
-            $this->session->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
+            $this->requestStack->getSession()->getFlashBag()->add('warning', 'reservation.flash.update.toomuchcustomers');
         }
     }
     
     /**
      * Toggles a selected or deselected price for reservations in creation and stores them in the session
      * @param Price $price
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      */
-    public function toggleInCreationPrice(Price $price, SessionInterface $session) {
-        $prices = $session->get("reservatioInCreationPrices", new ArrayCollection()); 
+    public function toggleInCreationPrice(Price $price, RequestStack $requestStack) {
+        $prices = $requestStack->getSession()->get("reservatioInCreationPrices", new ArrayCollection()); 
         
         $exists = $prices->exists(function($key, $value) use ($price) {
                     return $value->getId() === $price->getId();
@@ -216,7 +216,7 @@ class ReservationService implements ITemplateRenderer
             $prices->remove($toDeleteKeys[0]);
         }
         
-        $session->set("reservatioInCreationPrices", $prices);
+        $requestStack->getSession()->set("reservatioInCreationPrices", $prices);
     }
     
     /**
@@ -224,30 +224,30 @@ class ReservationService implements ITemplateRenderer
      * @param InvoiceService $is
      * @param array $reservations
      * @param PriceService $ps
-     * @param SessionInterface $session
+     * @param RequestStack $requestStack
      * @return type
      */
-    public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, SessionInterface $session) {
+    public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack) {
         // prices will be filles based on already selected prices
-        if($session->get("reservatioInCreationPrices", null) !== null) {
-            $prices = $session->get("reservatioInCreationPrices");
-            $session->set("invoicePositionsMiscellaneous", []);
+        if($requestStack->getSession()->get("reservatioInCreationPrices", null) !== null) {
+            $prices = $requestStack->getSession()->get("reservatioInCreationPrices");
+            $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
             
             // assign selected prices to reservations for getting the invoice price positions based on that prices
             $reservations = $this->setPricesToReservations($prices, $reservations);
-            $is->prefillMiscPositionsWithReservations($reservations, $session, true);
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
             
-            return $session->get("invoicePositionsMiscellaneous");
+            return $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         } else { // initial load of preview new reservation, prices will be filled based on price categories     
             $prices = $ps->getUniquePricesForReservations($reservations, 1);
             // prefill reservatioInCreationPrices session
             foreach($prices as $price) {
-                $this->toggleInCreationPrice($price, $session);
+                $this->toggleInCreationPrice($price, $requestStack);
             }
-            $session->set("invoicePositionsMiscellaneous", []);
-            $is->prefillMiscPositionsWithReservations($reservations, $session);    
+            $requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack);    
             
-            return $session->get("invoicePositionsMiscellaneous");
+            return $requestStack->getSession()->get("invoicePositionsMiscellaneous");
         }
     }
     
@@ -266,6 +266,66 @@ class ReservationService implements ITemplateRenderer
         return $reservations;
     }
     
+    /**
+     * Based on given Reservation IDs the coresponding Invoices will be returned
+     * @return array
+     */
+    public function getInvoicesForReservationsInProgress() {
+        $ids = $this->requestStack->getSession()->get("selectedReservationIds");
+        $totalInvoices = [];
+        foreach ($ids as $reservationId) {
+            $reservation = $this->em->find(Reservation::class, $reservationId);
+            if(!$reservation instanceof Reservation) {
+                continue;
+            }
+            $invoices = $reservation->getInvoices();
+            if(count($invoices) > 0) {
+                $totalInvoices = array_merge($totalInvoices, $invoices->toArray());
+            }
+        }
+        return $totalInvoices;
+    }
+    
+    /**
+     * Collects the sum of all prices for the given reservations, e.g. to be used in templates
+     * @param array $reservations
+     * @return array
+     */
+    private function getTotalPricesForTemplate(array $reservations) : array {
+        $this->requestStack->getSession()->set("invoicePositionsMiscellaneous", []);
+        $this->is->prefillMiscPositionsWithReservations($reservations, $this->requestStack, true);
+        $invoicePositionsMiscellaneousArray = $this->requestStack->getSession()->get("invoicePositionsMiscellaneous");
+
+        $this->requestStack->getSession()->set("invoicePositionsAppartments", []);
+        foreach($reservations as $reservation) {
+            $this->is->prefillAppartmentPositions($reservation, $this->requestStack);
+        }
+        $invoicePositionsAppartmentsArray = $this->requestStack->getSession()->get("invoicePositionsAppartments");
+        
+        // collect sums
+        $sumApartment = 0; $sumMisc = 0;
+        /* @var $position \App\Entity\InvoicePosition */
+        foreach($invoicePositionsMiscellaneousArray as $position) {
+            $sumMisc += $position->getTotalPriceRaw();
+        }
+        
+        /* @var $position \App\Entity\InvoiceAppartment */
+        foreach($invoicePositionsAppartmentsArray as $position) {
+            $sumApartment += $position->getTotalPriceRaw();
+        }
+        
+        return [
+            'sumApartmentRaw' => $sumApartment,
+            'sumMiscRaw' => $sumMisc,
+            'totalPriceRaw' => $sumApartment + $sumMisc,
+            'sumApartment' => number_format($sumApartment, 2, ',', '.'),
+            'sumMisc' => number_format($sumMisc, 2, ',', '.'),
+            'totalPrice' => number_format($sumApartment + $sumMisc, 2, ',', '.'),
+            'apartmentPositions' => $invoicePositionsAppartmentsArray,
+            'miscPositions' => $invoicePositionsMiscellaneousArray
+        ];
+    }
+    
     public function getRenderParams($template, $param) {
         // params need to be an array containing a list of Reservation Objects
         $params = array(
@@ -273,6 +333,8 @@ class ReservationService implements ITemplateRenderer
                 'address' => (count($param[0]->getBooker()->getCustomerAddresses()) == 0 ? null : $param[0]->getBooker()->getCustomerAddresses()[0]),
                 'reservations' => $param                 
             );
-        return $params;
+        $prices = $this->getTotalPricesForTemplate($param);
+        
+        return array_merge($params, $prices);
     }
 }

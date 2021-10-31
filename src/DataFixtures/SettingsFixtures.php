@@ -22,6 +22,7 @@ use App\Entity\Subsidiary;
 use App\Entity\Price;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\ReservationStatus;
 
 class SettingsFixtures extends Fixture implements FixtureGroupInterface
 {
@@ -52,6 +53,8 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         $this->createPrices($manager, $categories, $origins);
         
         $this->createCustomer($manager);
+        
+        $this->createReservationStatus($manager);
         
         $manager->flush();
     }
@@ -165,5 +168,27 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         $cus->setSalutation("Herr");
         
         $manager->persist($cus);        
+    }
+    
+    private function createReservationStatus(ObjectManager $manager) {
+        $reservationStatus = [
+                [
+                    'name' => $this->translator->trans('status.confirmed'), 
+                    'color' => '#2D9434',
+                    'contrast' => '#ffffff'
+                ], [
+                    'name' => $this->translator->trans('status.option'), 
+                    'color' => '#f6e95c',
+                    'contrast' => '#000000'
+                ]
+                
+            ];
+        foreach($reservationStatus as $status) {
+            $rs = new ReservationStatus();
+            $rs->setName( $status['name'] );
+            $rs->setColor($status['color']);
+            $rs->setContrastColor($status['contrast']);
+            $manager->persist($rs);
+        }
     }
 }

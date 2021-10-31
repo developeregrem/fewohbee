@@ -16,7 +16,7 @@
                 {% if not journal.isClosed %}
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" onclick="addJournalEntry({{ journal.id }})"
-                            data-toggle="modal" data-target="#modalCenter">
+                            data-bs-toggle="modal" data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'journal.entry.add'|trans }}</button>
                 </div>
                 {% endif %}
@@ -33,7 +33,7 @@
         </div>
         <div class="row">
             <div id="table-ajax" class="col">
-            <ul class="pagination mr-auto">
+            <ul class="pagination me-auto">
                     <li class="page-item">
                         <a class="page-link" href="{{ path('cashjournal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
                     </li>

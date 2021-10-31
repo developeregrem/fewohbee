@@ -1,16 +1,16 @@
 <!-- Nav tabs -->
 <ul class="nav nav-tabs">
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-toggle="tab">{{ 'reservation.details'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'booker' %} active{% endif %}" href="#reservation" data-bs-toggle="tab">{{ 'reservation.details'|trans }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-toggle="tab">{{ 'reservation.preview.customer.inroom'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab">{{ 'reservation.preview.customer.inroom'|trans }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-bs-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
+        <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
     </li>
 </ul>
 
@@ -31,11 +31,11 @@
                         </form>
                         <small>
                         <a href="#" onclick="return editReservationCustomerEdit({{ booker.id }}, '#actions-booker-{{ booker.id }}');"
-                           title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                           title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i>
                         </a>
                         <a href="#" onclick="return changeReservationCustomer({{ reservationId }}, 'booker', 0);"
-                           title="{{ 'reservation.button.changeBooker'|trans }}" class="float-right text-secondary">
+                           title="{{ 'reservation.button.changeBooker'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
                         </a>
                         </small>
@@ -59,13 +59,13 @@
                 </dl>
             </div>
         </div>                        
-        {% include 'Customers/customer_show_address_fields.html.twig' with {'customer' : booker} %}
+        {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : booker} %}
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}
             <small>
                 <a href="#" onclick="return editReservation({{ reservationId }});"
-                   title="{{ 'button.edit'|trans }}" class="float-right text-secondary">
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
             </small>
@@ -86,39 +86,54 @@
                     <td>{{ reservation.appartment.number }}</td>
                     <td>{{ reservation.appartment.description }}</td>
                     <td>{{ reservation.persons }}</td>
-                    <td>
-                        {% if reservation.status == 1 %}
-                            {{ 'reservation.confirm'|trans }}
-                        {% elseif reservation.status == 2 %}
-                            {{ 'reservation.option'|trans }}
-                        {% endif %}
-                    </td>
+                    <td>{{ reservation.reservationStatus.name }}</td>
                     <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                     <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                 </tr>
             {% endfor %}
         </table>
-        <div class="row mt-3">
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
+                {% if mode is defined and mode == 'edit' %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
             </div>
             <div class="col-sm-9">
-                    <textarea id="reservation-remark" class="form-control"name="remark">{{ attribute(reservations, 0).remark }}</textarea>
+                {% if mode is defined and mode == 'edit' %}
+                    <span>{{ attribute(reservations, 0).remark|nl2br }}</span>
+                {% else %}
+                 <textarea id="reservation-remark" class="form-control"name="remark">{{ attribute(reservations, 0).remark }}</textarea>
+                {% endif %}                   
             </div>
         </div>
             
-        <div class="row mt-3">
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
+                {% if mode is defined and mode == 'edit' %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
             </div>
             <div class="col-sm-9">
-                <select id="reservation-origin" name="reservation-origin" class="form-control"{% if mode is defined and mode == 'edit' %} disabled{% endif %}>
+                {% if mode is defined and mode == 'edit' %}
+                    <span>{{ attribute(reservations, 0).reservationOrigin.name }}</span>
+                {% else %}
+                <select id="reservation-origin" name="reservation-origin" class="form-select">
                     {% for origin in origins %}
                         <option value="{{ origin.id }}" {% if attribute(reservations, 0).reservationOrigin and origin.id == attribute(reservations, 0).reservationOrigin.id  %} selected {% endif %}>
                             {{ origin.name }}
                         </option>
                     {% endfor %}
                 </select>
+                {% endif %}
+                
             </div>
         </div>
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
@@ -133,7 +148,7 @@
                 <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
                     <small>
                     <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
-                       title="{{ 'button.add'|trans }}" class="float-right text-secondary">
+                       title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-plus"></i></a>
                     </small>
                 </h4>
@@ -190,7 +205,7 @@
                     {% if mode is defined and mode == 'edit' %}
                         <small>
                             <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
-                               title="{{ 'button.add'|trans }}" class="float-right text-secondary">
+                               title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                                 <i class="fas fa-plus"></i></a>
                         </small>
                     {% endif %}
@@ -241,35 +256,42 @@
         <div id="reservation-price-misc-options" class="row justify-content-start">    
         {% set reservationPrices =  attribute(reservations, 0).prices %}
         {% for price in miscPrices %}
-            <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">
-                <div class="col-md-3">                    
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
+            <div class="col-md-3">
+                <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">                                   
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
                                data-reservationid="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
-                        <label class="custom-control-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
-                    </div>
-                </div>
-                <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
-            </form>
+                        <label class="form-check-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
+                    </div>                
+                    <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
+                </form>
+            </div>
         {% endfor %}            
         </div>
         <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">        
-            
+        
+        <div class="row mt-4">
+            <div class="col fs-5 fw-bold ">{{ 'invoice.price.total'|trans }}: {{ brutto|number_format(2, ',', '.') }}</div>
+        </div>
+        {# variable that contains the status whether prices are used that includes vat and does not include vats
+        this will lead to price sums that are displayed incorrect #}
+        {% set lastIncludesVat = null %}
+        {% set vatWarning = false %}
         <div class="row mt-4">
             <div class="col">
                 <h5>{{ 'invoice.appartment'|trans }}</h5>
-                {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'read'} %}
+                {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'read'} %}
             </div>
         </div>
             
         <div class="row mt-4">
             <div class="col">
                 <h5>{{ 'invoice.miscellaneous'|trans }}</h5>
-                {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'read'} %}
+                {% include 'Invoices/invoice_table_misc_preview_positions.html.twig' with {'mode': 'read'} %}
             </div>
         </div>
-        <div class="row">
-            <span class="text-info mr-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span>
+        <div class="row mt-3">
+            <small><span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'reservation.prices.preliminary'|trans }}</span></small>
         </div>
     </div>
 </div>

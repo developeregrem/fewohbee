@@ -1,5 +1,5 @@
 <div class="modal-body">
-    <div class="pl-5 pr-5">
+    <div class="ps-5 pe-5">
         <div class="row">
                 <div class="col" id="flash-message-overlay">
                 </div>
@@ -12,7 +12,7 @@
                 <input type="text" class="form-control" id="lastname" name="lastname"
                        placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
             </div>
-            <div class="col text-right">
+            <div class="col text-end">
                 <button class="btn btn-default" type="button" onclick="getCustomers(1)">
                     <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                 </button>
@@ -31,14 +31,14 @@
                         {% endif %}
                     </p>
                 </div>
-                <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-right mt-3 d-none"/>
+                <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-end mt-3 d-none"/>
             </form>
             </div>
         </div>
     </div>
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
-    <ul class="pagination mr-auto">
+    <ul class="pagination me-auto">
         <li class="page-item " onclick="return selectAppartment(false)">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>

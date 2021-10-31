@@ -17,9 +17,9 @@
     {% for entry in entries %}
         <tr>
             <td>{{ loop.index + startIdx }}</td>
-            <td class="text-right">{{ entry.incomes|number_format(2, ',', '.') }}</td>
-            <td class="text-right">{{ entry.expenses|number_format(2, ',', '.') }}</td>
-            <td class="text-right">{{ entry.inventory|number_format(2, ',', '.') }}</td>
+            <td class="text-end">{{ entry.incomes|number_format(2, ',', '.') }}</td>
+            <td class="text-end">{{ entry.expenses|number_format(2, ',', '.') }}</td>
+            <td class="text-end">{{ entry.inventory|number_format(2, ',', '.') }}</td>
             <td>{{ entry.counterAccount }}</td>
             <td>{{ entry.invoiceNumber }}</td>
             <td>{{ "%04d"|format(entry.documentNumber) }}</td>
@@ -28,7 +28,7 @@
             <td>
                 {% if not journal.isClosed %}
                 <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="getEntry({{ entry.id }})" class="fas fa-edit" data-toggle="modal" data-target="#modalCenter"></i></a>
+                    <i onclick="getEntry({{ entry.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 {% endif %}
             </td>
         </tr>
@@ -36,12 +36,12 @@
     </tbody>
 </table>
 <div class="row">
-    <div class="col-md-11 text-right">{{ 'journal.cash.start'|trans }}:</div>
-    <div class="col-md-1 text-right">{{ journal.cashStart|number_format(2, ',', '.') }}</div>
+    <div class="col-md-11 text-end">{{ 'journal.cash.start'|trans }}:</div>
+    <div class="col-md-1 text-end">{{ journal.cashStart|number_format(2, ',', '.') }}</div>
 </div>
 <div class="row">
-    <div class="col-md-11 text-right">{{ 'journal.cash.end'|trans }}:</div>
-    <div class="col-md-1 text-right">{{ journal.cashEnd|number_format(2, ',', '.') }}</div>
+    <div class="col-md-11 text-end">{{ 'journal.cash.end'|trans }}:</div>
+    <div class="col-md-1 text-end">{{ journal.cashEnd|number_format(2, ',', '.') }}</div>
 </div>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
 {% include 'paginator.html.twig' with { 'url' : path('cashjournal.journal.entry.index', {'id': journal.id}) } %}

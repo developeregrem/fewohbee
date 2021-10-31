@@ -12,8 +12,8 @@
 <div class="container">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-default" onclick="showCreateObjectForm()" data-toggle="modal"
-                    data-target="#modalCenter">
+            <button type="button" class="btn btn-default" onclick="showCreateObjectForm()" data-bs-toggle="modal"
+                    data-bs-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'nav.object.add'|trans }}</button>
         </div>
     </div>
@@ -31,9 +31,9 @@
                     <tr>
                         <td>{{ object.name }}</td>
                         <td>
-                            <a href="#" title="{{ 'button.details'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i onclick="getEntity({{ object.id }})" class="fas fa-info-circle"></i></a>
-                            <a href="#" title="{{ 'button.edit'|trans }}" data-toggle="modal" data-target="#modalCenter">
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i onclick="editEntry({{ object.id }})" class="fas fa-edit"></i></a>
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i onclick="deleteEntry({{ object.id }})" class="fas fa-trash-alt"></i></a>

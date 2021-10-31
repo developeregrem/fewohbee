@@ -1,6 +1,6 @@
 <form id="template-form" class="form-horizontal" role="form" onsubmit="return sendEmail('#template-form');">
     <fieldset id="template-form-fieldset-primary-">
-        <div class="form-group row">
+        <div class="row">
             <label for="to" class="col-sm-3 col-form-label">{{ 'templates.recipient'|trans }} *</label>
             {% set mail = "" %}
             {% for address in attribute(reservations, 0).booker.customerAddresses %}
@@ -10,7 +10,7 @@
                 <input type="email" class="form-control" name="to" value="{{ mail }}" required>
             </div>
         </div>
-        <div class="form-group row">
+        <div class="row">
             <label for="subject" class="col-sm-3 col-form-label">{{ 'templates.subject'|trans }}
                 *</label>
 
@@ -19,16 +19,18 @@
                        value="" required>
             </div>
         </div>
-        <div class="form-group">
-            <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
+        <div class="row mt-3">
+            <div class="col-sm">
+                <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
+            </div>
         </div>
     </fieldset>
-    <div class="row">
+    <div class="row mt-3">
         <div class="col-sm-10">{{ 'templates.attachment'|trans }}</div>
         <div class="col-sm-2">
             <small>
             <a href="#" onclick="return selectTemplateForReservations({{ template.id }}, true);"
-               title="{{ 'button.add'|trans }}" class="float-right"><i class="fas fa-plus"></i></a>
+               title="{{ 'button.add'|trans }}" class="float-end"><i class="fas fa-plus"></i></a>
             </small>
         </div>
     </div>
@@ -39,7 +41,7 @@
                 <tr id="aid-{{ attachment.id }}">
                     <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
-                    <td class="text-right">
+                    <td class="text-end">
                         <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
                                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                         <a href="#" onclick="return deleteAttachment({{ attachment.id }})"
@@ -53,8 +55,8 @@
     <br />
     <input name="_csrf_token" value="{{ token }}" type="hidden">
     <input name="templateId" value="{{ template.id }}" type="hidden">
-    <div class="float-right">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    <div class="float-end">
+        <button type="button" class="btn btn-default" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>
 </form>

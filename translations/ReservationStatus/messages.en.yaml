@@ -1,0 +1,24 @@
+status:
+  action: Action
+  add: Add reservation status
+  color: Color
+  confirmed: Confirmed
+  delete:
+    ask: Are you sure you want to delete this reservation status?
+  description: Reservation status management
+  flash:
+    create:
+      success: Status was successfully created.
+    delete:
+      error:
+        still:
+          in:
+            use: >-
+              Status cannot be deleted because it still has reservations
+              associated with it.
+      success: Status deleted successfully.
+    edit:
+      success: Status was successfully processed.
+  name: Name
+  option: Option
+  title: Reservation status

@@ -55,4 +55,6 @@ reservation.prices.title: Booking options
 reservation.select.customer.search.input.placeholder: Surname
 reservation.startdate: From
 reservation.status: Status
+reservation.table.calendarweek: CW
 reservation.table.reload: Update
+reservation.templates.availableprices: existing invoices

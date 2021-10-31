@@ -46,19 +46,7 @@ class PriceService
         $price->setVat(str_replace(",", ".", $request->get("vat-" . $id)));
         $price->setType($request->get("type-" . $id));
 
-        $origins = $request->get("origin-" . $id);
-        if(is_array($origins)) {
-            $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
-            $originsPrice = $price->getReservationOrigins();
-            // first remove all origins
-            foreach($originsPrice as $originPrice) {
-                $price->removeReservationOrigin($originPrice);
-            }
-            // now add all origins
-            foreach($originsDb as $originDb) {
-                $price->addReservationOrigin($originDb);
-            }
-        }
+        $this->setOrigins($request, $price, $id);
 
         if( $request->get("allperiods-". $id) == null ) {            
             $this->setPeriods($request, $price, $id);
@@ -344,6 +332,32 @@ class PriceService
     }
     
     /**
+     * Helper funtion to set posted reservation origins
+     * @param Request $request
+     * @param Price $price
+     * @param type $id
+     */
+    private function setOrigins(Request $request, Price $price, $id) {
+        $origins = $request->get("origin-" . $id, []);
+        $allAddedOrigins = new ArrayCollection();
+        
+        $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
+        // now add all origins
+        foreach($originsDb as $originDb) {
+            $price->addReservationOrigin($originDb);
+            $allAddedOrigins->add($originDb);
+        }
+        
+        // when a origin is deleted in the frontend it is not in the post body anymore, therefore we need to find it and remove it from db
+        $allAndRemovableOrigins = $price->getReservationOrigins();
+        foreach($allAndRemovableOrigins as $origin) {
+            if(! $allAddedOrigins->contains($origin) ) {
+                $price->removeReservationOrigin($origin);
+            }
+        }
+    }
+    
+    /**
      * Helper function to set posted periods, if a period exists the existing one is used otherwise a new one is created
      * @param Request $request
      * @param Price $price
@@ -372,7 +386,6 @@ class PriceService
                 $pricePeriod->setEnd(new \DateTime($ends[$key]));
                 
                 $allAddedPeriods->add($pricePeriod);
-                $this->em->persist($pricePeriod);
                 $price->addPricePeriod($pricePeriod);
             }            
         }

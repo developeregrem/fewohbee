@@ -1,41 +1,41 @@
-<div class="form-group row">
-    <label for="year" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.incomes'|trans }}</label>
+<div class="row">
+    <label for="year" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.incomes'|trans }}</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="incomes" value="{{ entry.incomes }}">
     </div>
 </div>
-<div class="form-group row">
-    <label for="month" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.expenses'|trans }}</label>
+<div class="row">
+    <label for="month" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.expenses'|trans }}</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="expenses" value="{{ entry.expenses }}">
     </div>
 </div>
-<div class="form-group row">
-    <label for="cashStart" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.counteraccount'|trans }}</label>
+<div class="row">
+    <label for="cashStart" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.counteraccount'|trans }}</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="counterAccount" value="{{ entry.counterAccount }}">
     </div>
 </div>
-<div class="form-group row">
-    <label for="cashEnd" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.invoicenumber'|trans }}</label>
+<div class="row">
+    <label for="cashEnd" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.invoicenumber'|trans }}</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="invoiceNumber" value="{{ entry.invoiceNumber }}">
     </div>
 </div>
-<div class="form-group row">
-    <label for="cashEnd" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.documentnumber'|trans }} *</label>
+<div class="row">
+    <label for="cashEnd" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.documentnumber'|trans }} *</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="documentNumber" value="{% if newDocumentNumber is defined %}{{ newDocumentNumber }}{% else %}{{ entry.documentNumber }}{% endif %}" required>
     </div>
 </div>
-<div class="form-group row">
-    <label for="cashEnd" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.date'|trans }} *</label>
+<div class="row">
+    <label for="cashEnd" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.date'|trans }} *</label>
     <div class="col-sm-8">
         <input type="date" class="form-control" name="date" value="{{ entry.date|date("Y-m-d") }}" required>
     </div>
 </div>
-<div class="form-group row">
-    <label for="cashEnd" class="col-sm-4 col-form-label text-right">{{ 'journal.entry.remark'|trans }}</label>
+<div class="row">
+    <label for="cashEnd" class="col-sm-4 col-form-label text-end">{{ 'journal.entry.remark'|trans }}</label>
     <div class="col-sm-8">
         <input type="text" class="form-control" name="remark" value="{{ entry.remark }}" length="200">
     </div>
