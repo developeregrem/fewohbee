@@ -73,19 +73,6 @@
         </h6>
         <div id="address{{ loop.index }}" class="accordion-collapse collapse addressfields" aria-labelledby="address-heading-{{ loop.index }}" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0" id="headingTwo">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#address{{ loop.index }}" aria-expanded="true" aria-controls="address{{ loop.index }}">
-                    {{ 'customer.contactdata'|trans }}
-                </button>
-                <i class="fas fa-trash-alt mouse-pointer float-end mt-3 me-3" 
-                      title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
-            </h6>           
-        </div>
-        <div id="address{{ loop.index }}" class="collapse addressfields" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">#}
                 <div class="row">
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
@@ -190,16 +177,6 @@
         </h2>
         <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0" id="headingThree">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
-                    {{ 'customer.additional'|trans }}
-                </button>
-            </h6>
-        </div>
-        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
-            <div class="card-body">#}
                 <div class="row">
                     <label for="birthday-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.birthday'|trans }}</label>
@@ -236,19 +213,6 @@
         </h6>
         <div id="addressXX" class="accordion-collapse collapse show addressfields" aria-labelledby="address-heading-XXX" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
-                    {{ 'customer.contactdata'|trans }}
-                </button>
-                <i class="fas fa-trash-alt mouse-pointer float-end mt-3 me-3" 
-                      title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
-            </h6> 
-        </div>
-        <div id="addressXX" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">#}
                 {% include 'Customers/customer_form_address_fields.html.twig' %}
             </div>
         </div>
@@ -304,7 +268,7 @@
                     type: "post",
                     data: {plz: $elm.val()},
                     beforeSend: function () {
-                        $elm.parents(".card-body").find("input[name^='city-']")
+                        $elm.parents(".accordion-body").find("input[name^='city-']")
                                 .parent().parent().find('label').prepend(content);
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
@@ -314,7 +278,7 @@
                         if($("#lookUpWait").length > 0) {
                             $("#lookUpWait").remove();
                         }
-                        $elm.parents(".card-body").find("input[name^='city-']").val(data);
+                        $elm.parents(".accordion-body").find("input[name^='city-']").val(data);
                     }
                 });
             }
