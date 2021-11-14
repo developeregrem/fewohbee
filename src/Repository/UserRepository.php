@@ -38,7 +38,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
     }
 
-    public function loadUserByUsername(string $username) {
+    public function loadUserByIdentifier(string $username) {
         $q = $this
             ->createQueryBuilder('u')
             ->select('u')
@@ -61,6 +61,12 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         }
 
         return $user;
+    }
+    
+    /** @deprecated since Symfony 5.3 */
+    public function loadUserByUsername(string $username): ?User
+    {
+        return $this->loadUserByIdentifier($username);
     }
     
     public function findAll()
