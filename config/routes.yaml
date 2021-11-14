@@ -179,21 +179,11 @@ customers.dodelete.customer:
 customers.search: 
     path: /customers/search 
     methods: POST 
-    controller: App\Controller\CustomerServiceController::searchCustomersAction 
-customers.citylookup: 
-    path: /customers/citylookup 
-    methods: POST 
-    controller: App\Controller\CustomerServiceController::cityLookUpAction 
+    controller: App\Controller\CustomerServiceController::searchCustomersAction  
 customers.import.csv: 
     path: /customers/import/csv 
     methods: GET 
     controller: App\Controller\CustomerServiceController::importCsvAction 
-customers.search.address: 
-    path: /customers/search/address/{address} 
-    methods: GET 
-    controller: App\Controller\CustomerServiceController::searchAddressAction 
-    defaults:
-        address: ''
 customers.gdpr.customer: 
     path: /customers/{id}/gdpr 
     methods: GET 

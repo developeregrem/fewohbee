@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
@@ -23,6 +24,9 @@ use Symfony\Component\Intl\Countries;
 use App\Service\TemplatesService;
 use App\Entity\Template;
 
+/**
+ * @Route("/customers")
+ */
 class CustomerServiceController extends AbstractController
 {
     private $perPage = 20;
@@ -218,10 +222,12 @@ class CustomerServiceController extends AbstractController
      * OnkeyUp Request for plz field in the create or edit customer process to find the city for the given plz
      * @param Request $request
      * @return string
+     * 
+     * @Route("/citylookup", name="customers.citylookup", methods={"POST"})
      */
     public function cityLookUpAction(Request $request, CustomerService $cs)
     {
-        $plz = $request->get('plz');
+        $plz = $request->request->get('plz');
         $city = $cs->getCityByPlz($plz);
         
         if($city == null) {
@@ -236,6 +242,8 @@ class CustomerServiceController extends AbstractController
      * Search for a given address (autocomplete)
      * @param Request $request
      * @param string $address
+     * 
+     * @Route("/search/address/{address}", name="customers.search.address", methods={"GET"})
      */
     public function searchAddressAction(Request $request, $address)
     {   
