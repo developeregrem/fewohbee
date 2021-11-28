@@ -28,7 +28,7 @@ class ImportPostalcodedataCommand extends Command
     {
         $this
             ->addArgument('file', InputArgument::REQUIRED, 'The file containing the data.')
-            ->addOption('override', 'override', InputOption::VALUE_NONE, 'Whether to override an older import.')
+            ->addOption('override', 'o', InputOption::VALUE_NONE, 'Whether to override an older import.')
         ;
     }
 
@@ -40,7 +40,7 @@ class ImportPostalcodedataCommand extends Command
         
         if ($override) {
             $this->emptyTaple();
-            $io->info("Successfully cleard old data.");
+            $io->info("Successfully cleared old data.");
         }
 
         $stream = null;

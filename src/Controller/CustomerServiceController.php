@@ -15,6 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
@@ -223,19 +224,13 @@ class CustomerServiceController extends AbstractController
      * @param Request $request
      * @return string
      * 
-     * @Route("/citylookup", name="customers.citylookup", methods={"POST"})
+     * @Route("/citylookup/{countryCode}/{postalCode}", name="customers.citylookup", methods={"GET"})
      */
-    public function cityLookUpAction(Request $request, CustomerService $cs)
+    public function cityLookUpAction(string $countryCode, string $postalCode, Request $request, CustomerService $cs)
     {
-        $plz = $request->request->get('plz');
-        $city = $cs->getCityByPlz($plz);
+        $cities = $cs->getCitiesByZIP($countryCode, $postalCode);
         
-        if($city == null) {
-            return new Response("");
-        }
-        
-        return new Response($city->getOrt());
-
+        return new JsonResponse($cities);
     }
     
     /**
