@@ -3,7 +3,8 @@
         <div class="col">
             <h4 class="border-bottom pb-2">{{ 'reservation.preview.customer'|trans }}
                 <small>
-                <a href="#" onclick="return editCustomer({{ customer.id }});"
+                <a href="#" 
+                   onclick="return getContentForModal('{{ path('customers.edit.customer.show', {'id': customer.id}) }}', '{{ 'customer.details'|trans }}');"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-edit"></i></a>
                 </small>

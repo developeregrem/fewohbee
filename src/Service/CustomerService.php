@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\OpengeodbDePlz;
+use App\Entity\PostalCodeData;
 
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -162,14 +163,24 @@ class CustomerService implements ITemplateRenderer
     
     /**
      * Returns the city connected to the given plz
-     * @param string $plz
-     * @return string
+     * @param string $country
+     * @param string $zip
+     * @return array
      */
-    public function getCityByPlz($plz)
+    public function getCitiesByZIP($country, $zip)
     {
-        $city = $this->em->getRepository(OpengeodbDePlz::class)->find($plz);
+        $cities = $this->em->getRepository(PostalCodeData::class)->findPlacesByCode($country, $zip);
+        $result = [];
+        /* @var $city PostalCodeData */
+        foreach($cities as $city) {
+            $result [] = [
+                'postalCode' => $city->getPostalCode(),
+                'placeName' => $city->getPlaceName(),
+                'search' => $city->getPostalCode() . ' - ' . $city->getPlaceName()
+            ];
+        }
 
-        return $city;
+        return $result;
     }
 
     public function getRenderParams($template, $param) {

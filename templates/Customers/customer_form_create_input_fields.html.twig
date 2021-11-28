@@ -127,7 +127,7 @@
                 <div class="row">
                     <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
-                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}">
+                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}" autocomplete="new-zip">
                     </div>
                 </div>
                 <div class="row">
@@ -244,35 +244,10 @@
         }
     }
 {% endif %}
+    var cityLookupPath = '{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}';
+    initCityLookup();    
     
     $(document).ready(function() {
-        // look for city
-        $("#accordion").on("keyup", "input[name^='zip-']", function() {
-            // at the moment, only with complete plz
-            if($(this).val().length === 5) { 
-                var url = "{{ path('customers.citylookup')}}";
-                var content = '<span id="lookUpWait"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />&nbsp;</span>';
-                $elm = $(this);
-                $.ajax({
-                    url: url,
-                    type: "post",
-                    data: {plz: $elm.val()},
-                    beforeSend: function () {
-                        $elm.parents(".accordion-body").find("input[name^='city-']")
-                                .parent().parent().find('label').prepend(content);
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        alert(xhr.status);
-                    },
-                    success: function (data) {
-                        if($("#lookUpWait").length > 0) {
-                            $("#lookUpWait").remove();
-                        }
-                        $elm.parents(".accordion-body").find("input[name^='city-']").val(data);
-                    }
-                });
-            }
-        });
         // disable all fields for hidden form, so it will not be send via post
         $("#address-forms :input").prop('disabled', true);
     });
@@ -289,6 +264,7 @@
         
         $("#address"+$newId).collapse("show");
         //alert($(".addressfields").length);
+        initCityLookup();
     }
     
     function deleteAddress(elm) {

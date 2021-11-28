@@ -23,8 +23,12 @@
                 </td>
                 <td>{{ customer.bookedReservations|length }}</td>
                 <td>
-                    <a href="#" title="{{ 'button.details'|trans }}"><i onclick="getCustomer({{ customer.id }})" class="fas fa-info-circle"></i></a>
-                    <a href="#" title="{{ 'button.edit'|trans }}"><i onclick="editCustomer({{ customer.id }})" class="fas fa-edit"></i></a>
+                    <a href="#" title="{{ 'button.details'|trans }}"><i onclick="getContentForModal('{{ path('customers.get.customer', {'id': customer.id }) }}', '{{ 'customer.details'|trans }}')" 
+                           class="fas fa-info-circle"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                    <a href="#" title="{{ 'button.edit'|trans }}"><i onclick="getContentForModal('{{ path('customers.edit.customer.show', {'id': customer.id}) }}', '{{ 'customer.details'|trans }}')" 
+                           class="fas fa-edit"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                     <a href="{{ path('customers.gdpr.customer', {'id': customer.id}) }}" title="{{ 'button.gdpr'|trans }}">
                         <i class="fas fa-balance-scale-left"></i></a>                                                                          
                 </td>
