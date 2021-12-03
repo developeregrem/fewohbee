@@ -49,6 +49,10 @@ function addAutocompleteCityLookup(element) {
         resultItem: {
             highlight: true
         },
+        searchEngine: function (query, record) {
+            // disable search engine because search is done on backend
+            return record;
+        },
         events: {
             input: {
                 selection: (event) => {
@@ -57,6 +61,60 @@ function addAutocompleteCityLookup(element) {
                     let target = parentBody.querySelector('input[name*="city-"]');
                     target.value = selection.placeName;
                     element.value = selection.postalCode;
+                },
+            }
+        }
+    });
+}
+
+function addAutocompleteAddressLookup(element) {
+    const autoCompleteJS = new autoComplete({
+        selector: () => element,
+        threshold: 2,
+        cache: true,
+        data: {
+            src: async (query) => {
+                try {
+                    let url = addressLookupPath.replace('placeholder', query);
+                    // Fetch Data from external Source
+                    const source = await fetch(url);
+                    // Data is array of `Objects` | `Strings`
+                    const data = await source.json();
+                    return data;
+                } catch (error) {
+                    return error;
+                }
+            },
+        },
+        resultsList: {
+            maxResults: 5,
+        },
+        resultItem: {
+            highlight: true,
+            element: (item, data) => {
+                let company = data.value.company || "";
+                item.innerHTML = "";
+                const s1 = document.createElement("span");
+                const s2 = document.createElement("span");
+                if(company.length) {
+                    s1.innerText = company;
+                    item.appendChild(s1);
+                    item.appendChild(document.createElement("br"));
+                }
+
+                s2.innerText = data.value.address + ", " + data.value.zip + " " + data.value.city;;
+                item.appendChild(s2);
+            },
+        },
+        searchEngine: function (query, record) {
+            // disable search engine because search is done on backend
+            return record;
+        },
+        events: {
+            input: {
+                selection: (event) => {
+                    const selection = event.detail.selection.value;
+                    fillAddressFields(selection);
                 },
             }
         }
