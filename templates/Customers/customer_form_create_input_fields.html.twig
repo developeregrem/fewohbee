@@ -245,7 +245,9 @@
     }
 {% endif %}
     var cityLookupPath = '{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}';
-    initCityLookup();    
+    var addressLookupPath = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
+    initCityLookup();  
+    addAutocompleteAddressLookup(document.getElementById("customer-address"));
     
     $(document).ready(function() {
         // disable all fields for hidden form, so it will not be send via post
@@ -288,36 +290,4 @@
         $("#address"+$id).find("input[name^='email-']").val(item.email);
     }
     
-      $( function() {
-        var cache = {};
-        $( "#customer-address" ).autocomplete({
-          minLength: 2,
-          source: function( request, response ) {
-            var term = request.term;
-            if ( term in cache ) {
-              response( cache[ term ] );
-              return;
-            }
-            var url = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
-            url = url.replace("placeholder", term);
-            
-            $.getJSON( url, request, function( data, status, xhr ) {
-              cache[ term ] = data;
-              response( data );
-            });
-          },
-          select: function( event, ui ) {
-              fillAddressFields(ui.item);
-              return;
-          }
-        })
-        .autocomplete( "instance" )._renderItem = function( ul, item ) {
-            let company = item.company || "";
-            var out = (company.length > 0 ? 'Firma: ' + company + "<br>" : '');
-            out += item.address + ", " + item.zip + " " + item.city;
-            return $( "<li>" )
-              .append( '<div class="text-secondary">' + out + "</div>" )
-              .appendTo( ul );
-          };
-        } );
 </script>
