@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\ReservationOriginService;
@@ -22,7 +23,7 @@ use App\Entity\ReservationOrigin;
 class ReservationOriginServiceController extends AbstractController
 {
 
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
@@ -32,7 +33,7 @@ class ReservationOriginServiceController extends AbstractController
      */
     public function indexAction()
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
         return $this->render('ReservationOrigin/index.html.twig', array(
@@ -47,7 +48,7 @@ class ReservationOriginServiceController extends AbstractController
      */
     public function getAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $origin = $em->getRepository(ReservationOrigin::class)->find($id);
 
         return $this->render('ReservationOrigin/reservationorigin_form_edit.html.twig', array(
@@ -62,7 +63,7 @@ class ReservationOriginServiceController extends AbstractController
      */
     public function newAction(CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $origin = new ReservationOrigin();
         $origin->setId("new");
@@ -89,7 +90,7 @@ class ReservationOriginServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($origin);
                 $em->flush();
 
@@ -114,7 +115,7 @@ class ReservationOriginServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $origin = $ros->getOriginFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($origin->getName()) == 0) {

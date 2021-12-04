@@ -9,12 +9,17 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @Route("/settings/category")
  */
 class RoomCategoryController extends AbstractController
 {
+    public function __construct(private ManagerRegistry $doctrine) {
+        
+    }
+    
     /**
      * @Route("/", name="room_category_index", methods={"GET"})
      */
@@ -35,7 +40,7 @@ class RoomCategoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->doctrine->getManager();
             $entityManager->persist($roomCategory);
             $entityManager->flush();
 
@@ -70,7 +75,7 @@ class RoomCategoryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $this->doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'category.flash.edit.success');
@@ -97,7 +102,7 @@ class RoomCategoryController extends AbstractController
             if($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
                 $this->addFlash('warning', 'category.flash.delete.error.still.in.use');
             } else {
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->doctrine->getManager();
                 $entityManager->remove($roomCategory);
                 $entityManager->flush();
                 $this->addFlash('success', 'category.flash.delete.success');

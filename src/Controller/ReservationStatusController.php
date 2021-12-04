@@ -9,12 +9,17 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @Route("/settings/status")
  */
 class ReservationStatusController extends AbstractController
 {
+    public function __construct(private ManagerRegistry $doctrine) {
+        
+    }
+    
     /**
      * @Route("/", name="reservation_status_index", methods={"GET"})
      */
@@ -36,7 +41,7 @@ class ReservationStatusController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $this->doctrine->getManager();
             $entityManager->persist($reservationStatus);
             $entityManager->flush();
 
@@ -72,7 +77,7 @@ class ReservationStatusController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
-            $this->getDoctrine()->getManager()->flush();
+            $this->doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'status.flash.edit.success');
@@ -99,7 +104,7 @@ class ReservationStatusController extends AbstractController
             if($reservationStatus->getReservations()->count() > 0) {
                 $this->addFlash('warning', 'status.flash.delete.error.still.in.use');
             } else {
-                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager = $this->doctrine->getManager();
                 $entityManager->remove($reservationStatus);
                 $entityManager->flush();
                 $this->addFlash('success', 'status.flash.delete.success');

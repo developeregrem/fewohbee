@@ -13,6 +13,7 @@ namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Entity\User;
 use App\Entity\Role;
@@ -22,14 +23,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class UserServiceController extends AbstractController
 {
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
 
     }
 
     public function indexAction()
     {
-	$em = $this->getDoctrine()->getManager();
+	$em = $this->doctrine->getManager();
         $users = $em->getRepository(User::class)->findAll();
 
         return $this->render('Users/index.html.twig', array(
@@ -39,7 +40,7 @@ class UserServiceController extends AbstractController
 
     public function getUserAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 		$user = $em->getRepository(User::class)->find($id);
         $roles = $em->getRepository(Role::class)->findAll();
 
@@ -52,7 +53,7 @@ class UserServiceController extends AbstractController
 
     public function newUserAction(CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $roles = $em->getRepository(Role::class)->findAll();
         $user = new User();
         $user->setId('new');
@@ -66,7 +67,7 @@ class UserServiceController extends AbstractController
 
     public function createUserAction(Request $request, UserService $userService, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 		$error = false;
         if (($csrf->validateCSRFToken($request))) {
             $userem = $em->getRepository(User::class);
@@ -104,7 +105,7 @@ class UserServiceController extends AbstractController
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $user = $userService->getUserFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             
             if(!$userService->checkPassword($request->get("password-".$id))) {
                 $error = true;

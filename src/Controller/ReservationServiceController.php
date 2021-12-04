@@ -18,6 +18,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Controller\CustomerServiceController;
 use App\Service\CSRFProtectionService;
@@ -45,7 +46,7 @@ class ReservationServiceController extends AbstractController
 {
     private $perPage = 15;
 
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
@@ -56,7 +57,7 @@ class ReservationServiceController extends AbstractController
      */
     public function indexAction(RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
         $today = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
@@ -80,7 +81,7 @@ class ReservationServiceController extends AbstractController
      */
     public function getTableAction(RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $date = $request->get("start");
         $intervall = $request->get("intervall");
         $objectId = $request->get("object");
@@ -121,7 +122,7 @@ class ReservationServiceController extends AbstractController
      */
     public function showSelectAppartmentsFormAction(RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -160,7 +161,7 @@ class ReservationServiceController extends AbstractController
      */
     public function getAvailableAppartmentsAction(RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $start = $request->get("from");
         $end = $request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->get("object"));
@@ -193,7 +194,7 @@ class ReservationServiceController extends AbstractController
      */
     public function getEditAvailableAppartmentsAction(Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $start = $request->get("from");
         $end = $request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->get("object"));
@@ -253,7 +254,7 @@ class ReservationServiceController extends AbstractController
                 $end = $from;
                 $from = $request->get("end");
             }
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->get("appartmentid"));
             $newReservationsInformationArray[] = new ReservationObject($request->get("appartmentid"), $from,
                                                     $end, $request->get("status", 1), $request->get("persons", $room->getBedsMax()));
@@ -314,7 +315,7 @@ class ReservationServiceController extends AbstractController
      */
     public function selectCustomerAction(RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $newReservationsInformationArray = $requestStack->getSession()->get("reservationInCreation");
         $customerId = array_values($newReservationsInformationArray)[0]->getCustomerId();
 
@@ -340,7 +341,7 @@ class ReservationServiceController extends AbstractController
         $search = $request->get('lastname', '');
         $page = $request->get('page', 1);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike("%" . $search . "%", $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -362,7 +363,7 @@ class ReservationServiceController extends AbstractController
      */
     public function getNewCustomerFormAction(CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         // Get the country names for a locale
         $countries = Countries::getNames($request->getLocale());
 
@@ -388,7 +389,7 @@ class ReservationServiceController extends AbstractController
      */
     public function createNewCustomerAction(HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $customer = $cs->getCustomerFromForm($request);
 
@@ -413,7 +414,7 @@ class ReservationServiceController extends AbstractController
      */
     public function previewNewReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $tab = $request->get('tab', 'booker');
 
         if ($request->get('customerid') != null) {
@@ -512,7 +513,7 @@ class ReservationServiceController extends AbstractController
      */
     public function createNewReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $error = false;
 
         if (($csrf->validateCSRFToken($request))) {
@@ -568,7 +569,7 @@ class ReservationServiceController extends AbstractController
     public function getReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, $id)
     {
         $tab = $request->get('tab', 'booker');
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         /* @var $reservation Reservation */
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
@@ -630,7 +631,7 @@ class ReservationServiceController extends AbstractController
      */
     public function editReservationAction(RequestStack $requestStack, Request $request, $id, $error = false)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
@@ -679,7 +680,7 @@ class ReservationServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $this->doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'reservation.flash.update.success');
@@ -723,7 +724,7 @@ class ReservationServiceController extends AbstractController
      */
     public function editReservationCustomerAction(Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         if ($id != "new") {
             $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
         } else {
@@ -745,7 +746,7 @@ class ReservationServiceController extends AbstractController
      */
     public function editReservationCustomerCreateAction(CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -790,7 +791,7 @@ class ReservationServiceController extends AbstractController
         $search = $request->get('lastname', '');
         $page = $request->get('page', 1);
 
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike("%" . $request->get("lastname") . "%", $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -818,7 +819,7 @@ class ReservationServiceController extends AbstractController
         $customerId = $request->get('customerId');     
         
         if ($id != "new") {
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             $customer = $em->getRepository(Customer::class)->find($customerId);
 
             /* @var $reservation Reservation */
@@ -894,7 +895,7 @@ class ReservationServiceController extends AbstractController
 
         if ($reservationId != "new") {
             if (($csrf->validateCSRFToken($request))) {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $customer = $em->getRepository(Customer::class)->findById($customerId)[0];
 
                 /* @var $reservation Reservation */
@@ -940,7 +941,7 @@ class ReservationServiceController extends AbstractController
      */
     public function getEditCustomerAction(CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $customerId = $request->get('customer-id');
         $reservationId = $request->get('reservation-id');
         $tab = $request->get('tab', 'booker');
@@ -985,7 +986,7 @@ class ReservationServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -1012,7 +1013,7 @@ class ReservationServiceController extends AbstractController
     
     public function selectTemplateAction(RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $progress = $request->get("inProcess", 'false');
         // if email is inProcess, you can attach other files but no other emails
         if($request->get("inProcess") == 'true') {
@@ -1042,7 +1043,7 @@ class ReservationServiceController extends AbstractController
     
     public function previewTemplateAction(CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, $id)
     {
-        $em = $this->getDoctrine()->getManager();       
+        $em = $this->doctrine->getManager();       
         $inProcess = $request->get("inProcess");
         
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
@@ -1092,7 +1093,7 @@ class ReservationServiceController extends AbstractController
             if($reservationId === 'new') {
                 $rs->toggleInCreationPrice($price, $requestStack);
             } else { // during reservation edit process
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 /* @var $reservation Reservation */
                 $reservation = $em->getRepository(Reservation::class)->find($reservationId);
                 $prices = $reservation->getPrices();
