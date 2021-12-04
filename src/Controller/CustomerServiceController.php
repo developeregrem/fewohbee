@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
@@ -33,13 +34,13 @@ class CustomerServiceController extends AbstractController
     private $perPage = 20;
     public static $addessTypes = Array('CUSTOMER_ADDRESS_TYPE_PRIVATE', 'CUSTOMER_ADDRESS_TYPE_BUSINESS', 'CUSTOMER_ADDRESS_TYPE_ADDITIONAL');
 
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
     public function indexAction(Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $search = $request->get('search', '');
         $page = $request->get('page', 1);
@@ -82,7 +83,7 @@ class CustomerServiceController extends AbstractController
 
     public function searchCustomersAction(Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $search = $request->get('search', '');
         $page = $request->get('page', 1);
         $customers = $em->getRepository(Customer::class)->findByFilter($search, $page, $this->perPage);
@@ -100,7 +101,7 @@ class CustomerServiceController extends AbstractController
 
     public function getCustomerAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
         return $this->render('Customers/customer_form_show.html.twig', array(
@@ -111,7 +112,7 @@ class CustomerServiceController extends AbstractController
 
     public function newCustomerAction(CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         // Get the country names for a locale
         $countries = Countries::getNames($request->getLocale());
@@ -142,7 +143,7 @@ class CustomerServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -157,7 +158,7 @@ class CustomerServiceController extends AbstractController
     }
 
     public function showEditCustomerAction(CSRFProtectionService $csrf, Request $request, $id) {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
@@ -183,7 +184,7 @@ class CustomerServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -242,7 +243,7 @@ class CustomerServiceController extends AbstractController
      */
     public function searchAddressAction(Request $request, $address)
     {   
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $customers = $em->getRepository(Customer::class)->findByFilterToArray($address, 1, 5);
         $addresses = array();
@@ -258,7 +259,7 @@ class CustomerServiceController extends AbstractController
     
     public function exportGDPRToPdfAction(TemplatesService $ts, CustomerService $cs, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $customer = $em->getRepository(Customer::class)->find($id);
         if($customer === null) {
@@ -358,7 +359,7 @@ class CustomerServiceController extends AbstractController
             echo 'could not open import directory';
         }
         echo count($customers);
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $output = "";
         foreach ($customers as $key => $value) {

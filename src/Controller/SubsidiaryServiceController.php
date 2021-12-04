@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Entity\Subsidiary;
@@ -22,13 +23,13 @@ use App\Service\SubsidiaryService;
 class SubsidiaryServiceController extends AbstractController
 {
 
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
     public function indexAction()
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
         return $this->render(
@@ -41,7 +42,7 @@ class SubsidiaryServiceController extends AbstractController
 
     public function getObjectAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $object = $em->getRepository(Subsidiary::class)->find($id);
 
         return $this->render(
@@ -55,7 +56,7 @@ class SubsidiaryServiceController extends AbstractController
 
     public function newObjectAction(CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $sub = new Subsidiary();
         $sub->setId("new");
         return $this->render(
@@ -79,7 +80,7 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($object);
                 $em->flush();
 
@@ -102,7 +103,7 @@ class SubsidiaryServiceController extends AbstractController
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
             $object = $sub->getObjectFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {

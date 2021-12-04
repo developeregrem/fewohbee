@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\AppartmentService;
@@ -23,13 +24,13 @@ use App\Entity\RoomCategory;
 
 class AppartmentServiceController extends AbstractController
 {
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
     public function indexAction()
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $appartments = $em->getRepository(Appartment::class)->findAll();
 
         return $this->render('Appartments/index.html.twig', array(
@@ -39,7 +40,7 @@ class AppartmentServiceController extends AbstractController
 
     public function getAppartmentAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $appartment = $em->getRepository(Appartment::class)->find($id);
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -55,7 +56,7 @@ class AppartmentServiceController extends AbstractController
 
     public function newAppartmentAction(CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
@@ -84,7 +85,7 @@ class AppartmentServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $this->doctrine->getManager();
                 $em->persist($appartment);
                 $em->flush();
 
@@ -105,7 +106,7 @@ class AppartmentServiceController extends AbstractController
         if (($csrf->validateCSRFToken($request))) {
             /* @var $appartment Appartment */
             $appartment = $as->getAppartmentFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
 
             // check for mandatory fields
             if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMax()) == 0

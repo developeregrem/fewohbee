@@ -15,6 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\StatisticsService;
@@ -27,7 +28,7 @@ class StatisticsController extends AbstractController
 {
     private $perPage = 15;
 
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
@@ -38,7 +39,7 @@ class StatisticsController extends AbstractController
      */
     public function utilizationAction(RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
@@ -56,7 +57,7 @@ class StatisticsController extends AbstractController
     }
     
     public function getUtilizationForMonthAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         
         $objectId = $request->get('objectId');
         $monthStart = $request->get('monthStart');
@@ -100,7 +101,7 @@ class StatisticsController extends AbstractController
     }
     
     public function getUtilizationForYearAction(StatisticsService $ss, Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objectId = $request->get('objectId');
         $yearStart = $request->get('yearStart');
         $yearEnd = $request->get('yearEnd');
@@ -129,7 +130,7 @@ class StatisticsController extends AbstractController
      */
     public function originAction(RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
@@ -152,7 +153,7 @@ class StatisticsController extends AbstractController
      * @return Response
      */
     public function getOriginForMonthAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         
         $objectId = $request->get('objectId');
         $monthStart = $request->get('monthStart');
@@ -187,7 +188,7 @@ class StatisticsController extends AbstractController
      * @return Response
      */
     public function getOriginForYearAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $objectId = $request->get('objectId');
         $yearStart = $request->get('yearStart');
         $yearEnd = $request->get('yearEnd');

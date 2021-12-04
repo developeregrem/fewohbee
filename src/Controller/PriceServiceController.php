@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
@@ -24,13 +25,13 @@ use App\Entity\PricePeriod;
 
 class PriceServiceController extends AbstractController
 {
-    public function __construct()
+    public function __construct(private ManagerRegistry $doctrine)
     {
     }
 
     public function indexAction()
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', array(
@@ -40,7 +41,7 @@ class PriceServiceController extends AbstractController
 
     public function getPriceAction(CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
@@ -63,7 +64,7 @@ class PriceServiceController extends AbstractController
 
     public function newPriceAction(CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $this->doctrine->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
@@ -103,7 +104,7 @@ class PriceServiceController extends AbstractController
                 
                 // complain conflicts only when current price is marked as acitve
                 if(!$price->getActive() || count($conflicts) === 0) {
-                    $em = $this->getDoctrine()->getManager();
+                    $em = $this->doctrine->getManager();
                     $em->persist($price);
                     $em->flush();
                     // add succes message
@@ -127,7 +128,7 @@ class PriceServiceController extends AbstractController
         $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $this->doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($price->getDescription()) == 0 || strlen($price->getPrice()) == 0 || strlen($price->getVat()) == 0
