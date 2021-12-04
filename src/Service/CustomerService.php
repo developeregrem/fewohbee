@@ -15,7 +15,6 @@ use Doctrine\ORM\EntityManagerInterface;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use App\Entity\OpengeodbDePlz;
 use App\Entity\PostalCodeData;
 
 use Symfony\Component\HttpFoundation\Request;
