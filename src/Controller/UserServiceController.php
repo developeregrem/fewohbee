@@ -83,7 +83,7 @@ class UserServiceController extends AbstractController
                 // check for mandatory fields
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else if(!$userService->checkPassword($request->get("password-new"))) {
+            } else if(!$userService->checkPassword($request->request->get("password-new"))) {
                 $error = true;
                 $this->addFlash('warning', 'user.password.error');
             } else {
@@ -107,7 +107,7 @@ class UserServiceController extends AbstractController
             $user = $userService->getUserFromForm($request, $id);
             $em = $this->doctrine->getManager();
             
-            if(!$userService->checkPassword($request->get("password-".$id))) {
+            if(!$userService->checkPassword($request->request->get("password-".$id))) {
                 $error = true;
                 $this->addFlash('warning', 'user.password.error');
                 // check for mandatory fields

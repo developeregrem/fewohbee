@@ -115,12 +115,12 @@ class ReservationService implements ITemplateRenderer
 
     public function updateReservation(Request $request)
     {
-        $id = $request->get('id');
-        $appartmentId = $request->get('aid');
-        $persons = $request->get('persons');
-        $status = $request->get('status');
-        $start = new \DateTime($request->get('from'));
-        $end = new \DateTime($request->get('end'));
+        $id = $request->request->get('id');
+        $appartmentId = $request->request->get('aid');
+        $persons = $request->request->get('persons');
+        $status = $request->request->get('status');
+        $start = new \DateTime($request->request->get('from'));
+        $end = new \DateTime($request->request->get('end'));
         $dateInterval = date_diff($start, $end);
         // number of days
         $interval = $dateInterval->format('%a');

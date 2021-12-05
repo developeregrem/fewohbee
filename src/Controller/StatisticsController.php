@@ -59,11 +59,11 @@ class StatisticsController extends AbstractController
     public function getUtilizationForMonthAction(Request $request) {        
         $em = $this->doctrine->getManager();
         
-        $objectId = $request->get('objectId');
-        $monthStart = $request->get('monthStart');
-        $monthEnd = $request->get('monthEnd');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $monthStart = $request->query->get('monthStart');
+        $monthEnd = $request->query->get('monthEnd');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->q->get('yearEnd');
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = ($beds == 0 ? 1 : $beds);
 
@@ -102,9 +102,9 @@ class StatisticsController extends AbstractController
     
     public function getUtilizationForYearAction(StatisticsService $ss, Request $request) {        
         $em = $this->doctrine->getManager();
-        $objectId = $request->get('objectId');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
         
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = ($beds == 0 ? 1 : $beds);
@@ -155,11 +155,11 @@ class StatisticsController extends AbstractController
     public function getOriginForMonthAction(Request $request) {        
         $em = $this->doctrine->getManager();
         
-        $objectId = $request->get('objectId');
-        $monthStart = $request->get('monthStart');
-        $monthEnd = $request->get('monthEnd');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $monthStart = $request->query->get('monthStart');
+        $monthEnd = $request->query->get('monthEnd');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
 
         $start = new \DateTime($yearStart."-".$monthStart."-1");
         $tmpEnd = new \DateTime($yearEnd."-".$monthEnd."-1"); // set to first day, we need to figure out the number of days in this month
@@ -189,9 +189,9 @@ class StatisticsController extends AbstractController
      */
     public function getOriginForYearAction(Request $request) {        
         $em = $this->doctrine->getManager();
-        $objectId = $request->get('objectId');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
         
         $start = new \DateTime($yearStart."-01-1");
         $end = new \DateTime($yearEnd."-12-31");

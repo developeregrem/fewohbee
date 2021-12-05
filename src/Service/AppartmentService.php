@@ -39,13 +39,13 @@ class AppartmentService
             $appartment = $this->em->getRepository(Appartment::class)->find($id);
         }
 
-        $appartment->setNumber($request->get("number-" . $id));
-        $appartment->setBedsMax($request->get("bedsmax-" . $id));
-        $appartment->setDescription($request->get("description-" . $id));
+        $appartment->setNumber($request->request->get("number-" . $id));
+        $appartment->setBedsMax($request->request->get("bedsmax-" . $id));
+        $appartment->setDescription($request->request->get("description-" . $id));
 
-        $object = $this->em->getRepository(Subsidiary::class)->find($request->get("object-" . $id));
+        $object = $this->em->getRepository(Subsidiary::class)->find($request->request->get("object-" . $id));
         $appartment->setObject($object);
-        $category = $this->em->getRepository(RoomCategory::class)->find($request->get("category-" . $id));
+        $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get("category-" . $id));
         $appartment->setRoomCategory($category);
 
         return $appartment;

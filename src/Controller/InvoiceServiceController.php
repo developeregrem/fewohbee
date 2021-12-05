@@ -57,8 +57,8 @@ class InvoiceServiceController extends AbstractController
 
         $templateId = $requestStack->getSession()->get("invoice-template-id", $templateId); // get previously selected id
 
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->query->get('search', '');
+        $page = $request->query->get('page', 1);
 
         $invoices = $em->getRepository(Invoice::class)->findByFilter($search, $page, $this->perPage);
 
@@ -81,8 +81,8 @@ class InvoiceServiceController extends AbstractController
     public function searchInvoicesAction(RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
         $em = $this->doctrine->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->request->get('search', '');
+        $page = $request->request->get('page', 1);
         $invoices = $em->getRepository(Invoice::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -156,7 +156,7 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
 
-        if ($request->get('createNewInvoice') == "true") {
+        if ($request->query->get('createNewInvoice') == "true") {
             $newInvoiceInformationArray = array();
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
             // reset session variables
@@ -191,7 +191,7 @@ class InvoiceServiceController extends AbstractController
 
         $potentialReservations = $em->getRepository(
             Reservation::class
-        )->loadReservationsForPeriod($request->get('from'), $request->get('end'));
+        )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
 
         foreach ($potentialReservations as $reservation) {
             // make sure that already selected reservation can not be choosen twice
@@ -215,7 +215,7 @@ class InvoiceServiceController extends AbstractController
         $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
-            $request->get("lastname")
+            $request->request->get("lastname")
         );
 
         if ($customer instanceof Customer) {
@@ -244,7 +244,7 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
 
-        if ($request->get('createNewInvoice') == "true") {
+        if ($request->request->get('createNewInvoice') == "true") {
             $newInvoiceInformationArray = array();
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
             // reset session variables
@@ -257,8 +257,8 @@ class InvoiceServiceController extends AbstractController
             $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
         }
 
-        if ($request->get("reservationid") != null) {
-            $newInvoiceInformationArray[] = $request->get("reservationid");
+        if ($request->request->get("reservationid") != null) {
+            $newInvoiceInformationArray[] = $request->request->get("reservationid");
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
         }
 
@@ -286,8 +286,8 @@ class InvoiceServiceController extends AbstractController
 
         $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
 
-        if ($request->get("reservationkey") != null) {
-            unset($newInvoiceInformationArray[$request->get("reservationkey")]);
+        if ($request->request->get("reservationkey") != null) {
+            unset($newInvoiceInformationArray[$request->request->get("reservationkey")]);
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
         }
         $reservations = Array();
@@ -363,12 +363,12 @@ class InvoiceServiceController extends AbstractController
             $lastInvoiceId = '';
         }
 
-        if ($request->get("invoiceid") != null) {
-            $invoiceid = $request->get("invoiceid");
+        if ($request->request->get("invoiceid") != null) {
+            $invoiceid = $request->request->get("invoiceid");
             $requestStack->getSession()->set("new-invoice-id", $invoiceid);
         }
-        if ($request->get("invoiceDate") != null && strlen($request->get("invoiceDate")) > 0) {
-            $invoiceDate = new \DateTime($request->get("invoiceDate"));
+        if ($request->request->get("invoiceDate") != null && strlen($request->request->get("invoiceDate")) > 0) {
+            $invoiceDate = new \DateTime($request->request->get("invoiceDate"));
             $requestStack->getSession()->set("invoiceDate", $invoiceDate);
         }
         
@@ -433,7 +433,7 @@ class InvoiceServiceController extends AbstractController
 
     public function saveChangeCustomerInvoiceFormAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, Request $request)
     {
-        $id = $request->get('invoice-id');
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
             if($id === 'new') {
                 $invoiceCustomerArray = $is->makeInvoiceCustomerArrayFromRequest($request);
@@ -444,13 +444,13 @@ class InvoiceServiceController extends AbstractController
                 $em = $this->doctrine->getManager();
                 $invoice = $em->getRepository(Invoice::class)->find($id);
 
-                $invoice->setSalutation($request->get('salutation'));
-                $invoice->setFirstname($request->get('firstname'));
-                $invoice->setLastname($request->get('lastname'));
-                $invoice->setCompany($request->get('company'));
-                $invoice->setAddress($request->get('address'));
-                $invoice->setZip($request->get('zip'));
-                $invoice->setCity($request->get('city'));
+                $invoice->setSalutation($request->request->get('salutation'));
+                $invoice->setFirstname($request->request->get('firstname'));
+                $invoice->setLastname($request->request->get('lastname'));
+                $invoice->setCompany($request->request->get('company'));
+                $invoice->setAddress($request->request->get('address'));
+                $invoice->setZip($request->request->get('zip'));
+                $invoice->setCity($request->request->get('city'));
                 
                 $em->persist($invoice);
                 $em->flush();
@@ -608,8 +608,8 @@ class InvoiceServiceController extends AbstractController
 
     public function deleteAppartmentInvoicePositionAction(RequestStack $requestStack, Request $request)
     {        
-        $index = $request->get("appartmentInvoicePositionIndex", -1);       // during create process
-        $positionId = $request->get("appartmentInvoicePositionEditId", -1); // during edit process
+        $index = $request->request->get("appartmentInvoicePositionIndex", -1);       // during create process
+        $positionId = $request->request->get("appartmentInvoicePositionEditId", -1); // during edit process
         
         if($index != -1) {
             $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
@@ -764,8 +764,8 @@ class InvoiceServiceController extends AbstractController
 
     public function deleteMiscellaneousInvoicePositionAction(RequestStack $requestStack, Request $request)
     {
-        $index = $request->get("miscellaneousInvoicePositionIndex", -1);       // during create process
-        $positionId = $request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
+        $index = $request->request->get("miscellaneousInvoicePositionIndex", -1);       // during create process
+        $positionId = $request->request->request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
         
         if($index != -1) {
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
@@ -862,7 +862,7 @@ class InvoiceServiceController extends AbstractController
             $invoiceDate =  $requestStack->getSession()->get("invoiceDate");
             $invoice->setDate($invoiceDate);
 
-            $invoice->setRemark($request->get("remark"));
+            $invoice->setRemark($request->request->get("remark"));
             $em->persist($invoice);
 
             foreach ($newInvoicePositionsAppartmentsArray as $appartmentPosition) {
@@ -900,7 +900,7 @@ class InvoiceServiceController extends AbstractController
 
         if (($csrf->validateCSRFToken($request))) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
-            $invoice->setStatus($request->get('invoice-status'));
+            $invoice->setStatus($request->request->get('invoice-status'));
             $em->persist($invoice);
             $em->flush();
         }
@@ -965,12 +965,12 @@ class InvoiceServiceController extends AbstractController
     
     public function saveChangeNumberInvoiceEditAction(CSRFProtectionService $csrf, Request $request) {
         $em = $this->doctrine->getManager();
-        $id = $request->get('invoice-id');
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
-            if(strlen($request->get("date")) > 0 && strlen($request->get("number")) > 0) {
+            if(strlen($request->request->get("date")) > 0 && strlen($request->request->get("number")) > 0) {
                 $invoice = $em->getRepository(Invoice::class)->find($id);
-                $invoice->setDate(new \DateTime($request->get("date")));
-                $invoice->setNumber($request->get('number'));
+                $invoice->setDate(new \DateTime($request->request->get("date")));
+                $invoice->setNumber($request->request->get('number'));
                 $em->persist($invoice);
                 $em->flush();
                 
@@ -1003,10 +1003,10 @@ class InvoiceServiceController extends AbstractController
     
     public function saveChangeRemarkInvoiceEditAction(CSRFProtectionService $csrf, Request $request) {
         $em = $this->doctrine->getManager();
-        $id = $request->get('invoice-id');
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
-            $invoice->setRemark($request->get("remark"));
+            $invoice->setRemark($request->request->get("remark"));
             $em->persist($invoice);
             $em->flush();
 
@@ -1044,7 +1044,7 @@ class InvoiceServiceController extends AbstractController
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
             if (($csrf->validateCSRFToken($request, true))) {
-                $delete = $is->deleteInvoice($request->get('id'));
+                $delete = $is->deleteInvoice($request->request->get('id'));
 
                 if ($delete) {
                     $this->addFlash('success', 'invoice.flash.delete.success');

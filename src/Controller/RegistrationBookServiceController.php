@@ -38,8 +38,8 @@ class RegistrationBookServiceController extends AbstractController
     public function indexAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->doctrine->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->query->get('search', '');
+        $page = $request->query->get('page', 1);
 
         $entries = $em->getRepository(RegistrationBookEntry::class)->findByFilter($search, $page, $this->perPage);
 
@@ -61,8 +61,8 @@ class RegistrationBookServiceController extends AbstractController
     public function searchAction(Request $request)
     {
         $em = $this->doctrine->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->request->get('search', '');
+        $page = $request->request->get('page', 1);
         $entries = $em->getRepository(RegistrationBookEntry::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -85,7 +85,7 @@ class RegistrationBookServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
         
-        $start = $request->get('start', '');
+        $start = $request->query->get('start', '');
         if($start !== '') {
             try {
                 $startDate = new \DateTime($start);
@@ -100,7 +100,7 @@ class RegistrationBookServiceController extends AbstractController
             $startDate->sub(new \DateInterval('P30D'));
         }
         
-        $end = $request->get('end', '');
+        $end = $request->query->get('end', '');
         if($end !== '') {
             try {
                 $endDate = new \DateTime($end);
@@ -137,7 +137,7 @@ class RegistrationBookServiceController extends AbstractController
     {
 
         if (($csrf->validateCSRFToken($request))) {
-            $id = $request->get('id');            
+            $id = $request->request->get('id');            
             $result = $rbs->addBookEntriesFromReservation($id);
 
             $this->addFlash('success', 'reservationbook.flash.add.success');
@@ -148,8 +148,8 @@ class RegistrationBookServiceController extends AbstractController
 
     public function deleteRegistrationBookCustomerAction(CSRFProtectionService $csrf, Request $request)
     {
-        $customerId = $request->get('customer-id');
-        $reservationId = $request->get('reservation-id');
+        $customerId = $request->request->get('customer-id');
+        $reservationId = $request->request->get('reservation-id');
 
         if (($csrf->validateCSRFToken($request))) {
             $em = $this->doctrine->getManager();
@@ -169,7 +169,7 @@ class RegistrationBookServiceController extends AbstractController
     public function showAddReservationCustomerAction(Request $request)
     {
         $em = $this->doctrine->getManager();
-        $id = $request->get('id');
+        $id = $request->request->get('id');
         $reservation = $em->getRepository(Reservation::class)->find($id);
 
         return $this->render('RegistrationBook/registrationbook_form_add_change_customer.html.twig', array(
@@ -180,7 +180,7 @@ class RegistrationBookServiceController extends AbstractController
     public function getEditCustomerAction(CSRFProtectionService $csrf, Request $request)
     {
         $em = $this->doctrine->getManager();
-        $id = $request->get('id');
+        $id = $request->request->get('id');
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
@@ -196,7 +196,7 @@ class RegistrationBookServiceController extends AbstractController
 
     public function saveEditCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
-        $id = $request->get('customer-id');
+        $id = $request->request->get('customer-id');
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
