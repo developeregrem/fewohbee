@@ -208,11 +208,17 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
+    /**
+     * Called when clicking add conversation in the reservation overview
+     * @param RequestStack $requestStack
+     * @param Request $request
+     * @return type
+     */
     public function selectReservationAction(RequestStack $requestStack, Request $request)
     {
         $em = $this->doctrine->getManager();
 
-        if ($request->get('createNew') == "true") {
+        if ($request->request->get('createNew') == "true") {
             $selectedReservationIds = array();
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
@@ -222,8 +228,8 @@ class TemplatesServiceController extends AbstractController
             $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         }
 
-        if ($request->get("reservationid") != null) {
-            $selectedReservationIds[] = $request->get("reservationid");
+        if ($request->request->get("reservationid") != null) {
+            $selectedReservationIds[] = $request->request->get("reservationid");
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
 
@@ -244,7 +250,7 @@ class TemplatesServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
 
-        if ($request->get('createNew') == "true") {
+        if ($request->query->get('createNew') == "true") {
             $selectedReservationIds = array();
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
@@ -273,8 +279,8 @@ class TemplatesServiceController extends AbstractController
 
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
-        if ($request->get("reservationkey") != null) {
-            unset($selectedReservationIds[$request->get("reservationkey")]);
+        if ($request->request->get("reservationkey") != null) {
+            unset($selectedReservationIds[$request->request->get("reservationkey")]);
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
         
@@ -288,7 +294,7 @@ class TemplatesServiceController extends AbstractController
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         $potentialReservations = $em->getRepository(
                 Reservation::class
-            )->loadReservationsForPeriod($request->get('from'), $request->get('end'));
+            )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
 
         foreach ($potentialReservations as $reservation) {
             // make sure that already selected reservation can not be choosen twice
@@ -312,7 +318,7 @@ class TemplatesServiceController extends AbstractController
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
-            $request->get("lastname")
+            $request->request->get("lastname")
         );
 
         if ($customer instanceof Customer) {
@@ -341,10 +347,10 @@ class TemplatesServiceController extends AbstractController
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $to = $request->get("to");
-            $subject = $request->get("subject");
-            $msg = $request->get("msg");
-            $templateId = $request->get("templateId");
+            $to = $request->request->get("to");
+            $subject = $request->request->get("subject");
+            $msg = $request->request->get("msg");
+            $templateId = $request->request->get("templateId");
             $attachmentIds = $requestStack->getSession()->get("templateAttachmentIds", Array()); 
 
             // todo add email validation http://silex.sensiolabs.org/doc/providers/validator.html
@@ -407,9 +413,9 @@ class TemplatesServiceController extends AbstractController
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $subject = $request->get("subject");
-            $msg = $request->get("msg");
-            $templateId = $request->get("templateId");
+            $subject = $request->request->get("subject");
+            $msg = $request->request->get("msg");
+            $templateId = $request->request->get("templateId");
 
             if (strlen($subject) == 0 || strlen($msg) == 0) {
                 $error = true;
@@ -468,7 +474,7 @@ class TemplatesServiceController extends AbstractController
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $aId = $request->get("id");
+            $aId = $request->request->get("id");
             $attachments = $requestStack->getSession()->get("templateAttachmentIds");
             $isAttachment = false;
             // loop through all reservations
@@ -509,7 +515,7 @@ class TemplatesServiceController extends AbstractController
 
         $error = false;
         if (($csrf->validateCSRFToken($request, true))) {            
-            $cId = $request->get("id");
+            $cId = $request->request->get("id");
             $correspondence = $em->getRepository(Correspondence::class)->find($cId);
             
             if($correspondence instanceof Correspondence) {
@@ -539,8 +545,8 @@ class TemplatesServiceController extends AbstractController
     public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is)
     {
         $error = false;
-        $isInvoice = $request->get("isInvoice", "false");
-        $cId = $request->get("id");
+        $isInvoice = $request->request->get("isInvoice", "false");
+        $cId = $request->request->get("id");
         if($isInvoice != 'false') {
             $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
         }
@@ -581,7 +587,7 @@ class TemplatesServiceController extends AbstractController
                 'Templates/templates_show_mail.html.twig',
                 array(
                     'correspondence' => $correspondence,
-                    'reservationId' => $request->get("reservationId")
+                    'reservationId' => $request->request->get("reservationId")
                 )
              );
         }

@@ -13,7 +13,7 @@
 </div>
 <script>
 
-    function showGetReservations(createNewInvoiceSessionObject) {
+    function showGetReservations(createNew) {
         var url = "{{ path('settings.templates.get.reservations') }}";
         var content = '<div class="modal-body">' +
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
@@ -26,7 +26,7 @@
         $.ajax({
             url: url,
             type: "get",
-            data: { createNewInvoice: createNewInvoiceSessionObject },
+            data: { createNew: createNew },
             beforeSend: function () {
                 $("modal-content-ajax").html(content);
             },

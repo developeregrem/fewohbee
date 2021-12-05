@@ -100,8 +100,8 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
         
-        $page = $request->get('page', 1);
-        $search = $request->get('search', date("Y"));
+        $page = $request->query->get('page', 1);
+        $search = $request->query->get('search', date("Y"));
 
         $journals = $em->getRepository(CashJournal::class)->findByFilter($search, $page, $this->perPage);
 
@@ -217,7 +217,7 @@ class CashJournalServiceController extends AbstractController
         $em = $this->doctrine->getManager();
         
         $validStatus = Array('closed', 'booked');
-        $status = $request->get('status');
+        $status = $request->request->get('status');
         
         if(in_array($status, $validStatus)) {
             /* @var $journal \Pensionsverwaltung\Database\Entity\CashJournal */
@@ -277,7 +277,7 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
         
-        $journal = $em->getRepository(CashJournal::class)->find($request->get('id'));
+        $journal = $em->getRepository(CashJournal::class)->find($request->query->get('id'));
         $docNumber = $em->getRepository(CashJournalEntry::class)->getLastDocumentNumber($journal) + 1;
 
         $entry = new CashJournalEntry();
@@ -298,7 +298,7 @@ class CashJournalServiceController extends AbstractController
         if (($csrf->validateCSRFToken($request))) {
             /* @var $entry CashJournalEntry */
             $entry = $cjs->getJournalEntryFromForm($request);
-            $journal = $em->getRepository(CashJournal::class)->find($request->get('id'));
+            $journal = $em->getRepository(CashJournal::class)->find($request->request->get('id'));
             
             // check if journal is closed
             if($journal->getIsClosed()) {
@@ -330,8 +330,8 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
 
-        $page = $request->get('page', 1);
-        $search = $request->get('search', '');
+        $page = $request->query->get('page', 1);
+        $search = $request->query->get('search', '');
 
         $journal = $em->getRepository(CashJournal::class)->find($id);
         $entries = $em->getRepository(CashJournalEntry::class)->findByFilter($journal, $search, $page, $this->perPage);

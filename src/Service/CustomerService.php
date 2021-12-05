@@ -41,43 +41,43 @@ class CustomerService implements ITemplateRenderer
             $customer = $this->em->getRepository(Customer::class)->find($id);
         }
         
-        $customer->setSalutation($request->get("salutation-" . $id));
-        $customer->setFirstname($request->get("firstname-" . $id));
-        $customer->setLastname($request->get("lastname-" . $id));
-        if (strlen($request->get("birthday-" . $id)) > 0) {
-            $customer->setBirthday(new \DateTime($request->get("birthday-" . $id)));
+        $customer->setSalutation($request->request->get("salutation-" . $id));
+        $customer->setFirstname($request->request->get("firstname-" . $id));
+        $customer->setLastname($request->request->get("lastname-" . $id));
+        if (strlen($request->request->get("birthday-" . $id)) > 0) {
+            $customer->setBirthday(new \DateTime($request->request->get("birthday-" . $id)));
         } else {
             $customer->setBirthday(null);
         }
         
-        $addressCount = count($request->get("addresstype-" . $id, Array()));
+        $addressCount = count($request->request->get("addresstype-" . $id, Array()));
         $newAddresses = Array();
         for($i = 0; $i < $addressCount; $i++) {
             if ($id === 'new') {
                 $address = new CustomerAddresses();
             } else {
                 // if exist use it or create one
-                $atid = $request->get("addresstypeid-" . $id)[$i];
+                $atid = $request->request->get("addresstypeid-" . $id)[$i];
                 $address = $this->em->getRepository(CustomerAddresses::class)->find($atid);
                 if(!$address instanceof CustomerAddresses) {
                     $address = new CustomerAddresses();
                 }
             }          
             
-            $address->setType($request->get("addresstype-" . $id)[$i]);
-            $address->setCompany($request->get("company-" . $id)[$i]);
-            $address->setAddress($request->get("address-" . $id)[$i]);
-            $address->setZip($request->get("zip-" . $id)[$i]);
-            $address->setCity($request->get("city-" . $id)[$i]);
-            $address->setCountry($request->get("country-" . $id)[$i]);
-            $address->setPhone($request->get("phone-" . $id)[$i]);
-            $address->setFax($request->get("fax-" . $id)[$i]);
-            $address->setMobilePhone($request->get("mobilephone-" . $id)[$i]);
-            $address->setEmail($request->get("email-" . $id)[$i]);
+            $address->setType($request->request->get("addresstype-" . $id)[$i]);
+            $address->setCompany($request->request->get("company-" . $id)[$i]);
+            $address->setAddress($request->request->get("address-" . $id)[$i]);
+            $address->setZip($request->request->get("zip-" . $id)[$i]);
+            $address->setCity($request->request->get("city-" . $id)[$i]);
+            $address->setCountry($request->request->get("country-" . $id)[$i]);
+            $address->setPhone($request->request->get("phone-" . $id)[$i]);
+            $address->setFax($request->request->get("fax-" . $id)[$i]);
+            $address->setMobilePhone($request->request->get("mobilephone-" . $id)[$i]);
+            $address->setEmail($request->request->get("email-" . $id)[$i]);
             
             $newAddresses[] = $address;
         }
-        $customer->setRemark($request->get("remark-" . $id));
+        $customer->setRemark($request->request->get("remark-" . $id));
         
         // first remove all old addresses
         $oldAddresses = clone $customer->getCustomerAddresses();        

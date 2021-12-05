@@ -145,13 +145,13 @@ class InvoiceService implements ITemplateRenderer
 
     public function makeInvoiceCustomerArrayFromRequest($request) {
         $arr = Array();
-        $arr['salutation'] = $request->get('salutation');
-        $arr['firstname'] = $request->get('firstname');
-        $arr['lastname'] = $request->get('lastname');
-        $arr['company'] = $request->get('company');
-        $arr['address'] = $request->get('address');
-        $arr['zip'] = $request->get('zip');
-        $arr['city'] = $request->get('city');
+        $arr['salutation'] = $request->request->get('salutation');
+        $arr['firstname'] = $request->request->get('firstname');
+        $arr['lastname'] = $request->request->get('lastname');
+        $arr['company'] = $request->request->get('company');
+        $arr['address'] = $request->request->get('address');
+        $arr['zip'] = $request->request->get('zip');
+        $arr['city'] = $request->request->get('city');
 
         return $arr;
     }

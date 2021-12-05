@@ -42,8 +42,8 @@ class CustomerServiceController extends AbstractController
     {
         $em = $this->doctrine->getManager();
 
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->query->get('search', '');
+        $page = $request->query->get('page', 1);
         $customers = $em->getRepository(Customer::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -84,8 +84,8 @@ class CustomerServiceController extends AbstractController
     public function searchCustomersAction(Request $request)
     {
         $em = $this->doctrine->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->request->get('search', '');
+        $page = $request->request->get('page', 1);
         $customers = $em->getRepository(Customer::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination

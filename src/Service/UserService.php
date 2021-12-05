@@ -38,28 +38,28 @@ class UserService
 
         if ($id === 'new') {
             $user = new User();
-            $user->setUsername($request->get("username-" . $id));
+            $user->setUsername($request->request->get("username-" . $id));
         } else {
             $user = $this->em->getRepository(User::class)->find($id);
         }
 
-        $formPassword = $request->get("password-" . $id);
+        $formPassword = $request->request->get("password-" . $id);
         if (!empty($formPassword) && $this->checkPassword($formPassword)) {
-            $hashed = $this->hasher->hashPassword($user, $request->get("password-" . $id));
+            $hashed = $this->hasher->hashPassword($user, $request->request->get("password-" . $id));
             $user->setPassword($hashed);
         }
 
-        $user->setFirstname($request->get("firstname-" . $id));
-        $user->setLastname($request->get("lastname-" . $id));
-        $user->setEmail($request->get("email-" . $id));
+        $user->setFirstname($request->request->get("firstname-" . $id));
+        $user->setLastname($request->request->get("lastname-" . $id));
+        $user->setEmail($request->request->get("email-" . $id));
 
-        if ($request->get("active-" . $id) != null) {
+        if ($request->request->get("active-" . $id) != null) {
             $user->setActive(true);
         } else {
             $user->setActive(false);
         }
 
-        $role = $this->em->getRepository(Role::class)->find($request->get("role-" . $id));
+        $role = $this->em->getRepository(Role::class)->find($request->request->get("role-" . $id));
         $user->setRole($role);
 
         return $user;
