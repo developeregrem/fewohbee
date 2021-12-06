@@ -46,18 +46,14 @@ class ReservationServiceController extends AbstractController
 {
     private $perPage = 15;
 
-    public function __construct(private ManagerRegistry $doctrine)
-    {
-    }
-
     /**
      * Index Action start page
      *
      * @return mixed
      */
-    public function indexAction(RequestStack $requestStack)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
         $today = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
@@ -79,9 +75,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getTableAction(RequestStack $requestStack, Request $request)
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $date = $request->query->get("start");
         $intervall = $request->query->get("intervall");
         $objectId = $request->query->get("object");
@@ -120,9 +116,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function showSelectAppartmentsFormAction(RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function showSelectAppartmentsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -159,9 +155,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getAvailableAppartmentsAction(RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $start = $request->request->get("from");
         $end = $request->request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
@@ -192,9 +188,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getEditAvailableAppartmentsAction(Request $request)
+    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $start = $request->request->get("from");
         $end = $request->request->get("end");
         $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
@@ -234,7 +230,7 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function addAppartmentToReservationSelectableAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
+    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
     {
         if ($request->request->get('createNewReservation') == "true") {
             $newReservationsInformationArray = array();
@@ -254,7 +250,7 @@ class ReservationServiceController extends AbstractController
                 $end = $from;
                 $from = $request->request->get("end");
             }
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get("appartmentid"));
             $newReservationsInformationArray[] = new ReservationObject($request->request->get("appartmentid"), $from,
                                                     $end, $request->request->get("status", 1), $request->request->get("persons", $room->getBedsMax()));
@@ -313,9 +309,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function selectCustomerAction(RequestStack $requestStack, Request $request)
+    public function selectCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $newReservationsInformationArray = $requestStack->getSession()->get("reservationInCreation");
         $customerId = array_values($newReservationsInformationArray)[0]->getCustomerId();
 
@@ -336,12 +332,12 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getCustomersAction(Request $request)
+    public function getCustomersAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
         $page = $request->request->get('page', 1);
 
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike("%" . $search . "%", $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -361,9 +357,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getNewCustomerFormAction(CSRFProtectionService $csrf, Request $request)
+    public function getNewCustomerFormAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         // Get the country names for a locale
         $countries = Countries::getNames($request->getLocale());
 
@@ -387,9 +383,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function createNewCustomerAction(HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
+    public function createNewCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $customer = $cs->getCustomerFromForm($request);
 
@@ -412,9 +408,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function previewNewReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, Request $request)
+    public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $tab = $request->request->get('tab', 'booker');
 
         if ($request->request->get('customerid') != null) {
@@ -511,9 +507,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function createNewReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $error = false;
 
         if (($csrf->validateCSRFToken($request))) {
@@ -566,10 +562,10 @@ class ReservationServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function getReservationAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, $id)
+    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, $id)
     {
         $tab = $request->query->get('tab', 'booker');
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         /* @var $reservation Reservation */
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
@@ -629,9 +625,9 @@ class ReservationServiceController extends AbstractController
      * @param bool $error
      * @return mixed
      */
-    public function editReservationAction(RequestStack $requestStack, Request $request, $id, $error = false)
+    public function editReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, $id, $error = false)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
@@ -674,13 +670,13 @@ class ReservationServiceController extends AbstractController
     /**
      * @Route("/{id}/edit/remark", name="reservations.edit.remark", methods={"GET", "POST"})
      */
-    public function editReservationRemark(Request $request, Reservation $reservation): Response
+    public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     { 
         $form = $this->createForm(ReservationMetaType::class, $reservation);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->doctrine->getManager()->flush();
+            $doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'reservation.flash.update.success');
@@ -722,9 +718,9 @@ class ReservationServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function editReservationCustomerAction(Request $request, $id)
+    public function editReservationCustomerAction(ManagerRegistry $doctrine, Request $request, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         if ($id != "new") {
             $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
         } else {
@@ -744,9 +740,9 @@ class ReservationServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function editReservationCustomerCreateAction(CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
+    public function editReservationCustomerCreateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -786,12 +782,12 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function editReservationCustomersGetAction(Request $request)
+    public function editReservationCustomersGetAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
         $page = $request->request->get('page', 1);
 
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike("%" . $request->request->get("lastname") . "%", $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -812,14 +808,14 @@ class ReservationServiceController extends AbstractController
      * @param $id
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function editReservationCustomerChangeAction(HttpKernelInterface $kernel, RequestStack $requestStack, ReservationService $rs, Request $request, $id)
+    public function editReservationCustomerChangeAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, ReservationService $rs, Request $request, $id)
     {
         $tab = $request->request->get('tab', 'booker');
         $appartmentId = $request->request->get('appartmentId', 0);
         $customerId = $request->request->get('customerId');     
         
         if ($id != "new") {
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             $customer = $em->getRepository(Customer::class)->find($customerId);
 
             /* @var $reservation Reservation */
@@ -885,7 +881,7 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function deleteReservationCustomerAction(HttpKernelInterface $kernel, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    public function deleteReservationCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $customerId = $request->request->get('customer-id');
         $reservationId = $request->request->get('reservation-id');
@@ -893,7 +889,7 @@ class ReservationServiceController extends AbstractController
 
         if ($reservationId != "new") {
             if (($csrf->validateCSRFToken($request))) {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $customer = $em->getRepository(Customer::class)->findById($customerId)[0];
 
                 /* @var $reservation Reservation */
@@ -935,9 +931,9 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getEditCustomerAction(CSRFProtectionService $csrf, Request $request)
+    public function getEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $customerId = $request->request->get('customer-id');
         $reservationId = $request->request->get('reservation-id');
         $tab = $request->request->get('tab', 'booker');
@@ -967,7 +963,7 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function saveEditCustomerAction(HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
+    public function saveEditCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $id = $request->request->get('customer-id');
         $reservationId = $request->request->get('reservation-id');
@@ -982,7 +978,7 @@ class ReservationServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -1004,9 +1000,9 @@ class ReservationServiceController extends AbstractController
     }
     
     
-    public function selectTemplateAction(RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
+    public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $progress = $request->request->get("inProcess", 'false');
         // if email is inProcess, you can attach other files but no other emails
         if($request->request->get("inProcess") == 'true') {
@@ -1034,9 +1030,9 @@ class ReservationServiceController extends AbstractController
         ));
     }
     
-    public function previewTemplateAction(CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, $id)
+    public function previewTemplateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, Request $request, ReservationService $rs, $id)
     {
-        $em = $this->doctrine->getManager();       
+        $em = $doctrine->getManager();       
         $inProcess = $request->request->get("inProcess");
         
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
@@ -1078,7 +1074,7 @@ class ReservationServiceController extends AbstractController
     /**
      * @Route("/{reservationId}/edit/prices/{id}/update", name="reservations.update.misc.price", methods={"POST"})
      */
-    public function updateMiscPriceForReservation($reservationId, Price $price, ReservationService $rs, RequestStack $requestStack, Request $request): Response
+    public function updateMiscPriceForReservation($reservationId, Price $price, ManagerRegistry $doctrine, ReservationService $rs, RequestStack $requestStack, Request $request): Response
     {        
         if ($this->isCsrfTokenValid('reservation-update-misc-price', $request->request->get('_token'))) {          
               
@@ -1086,7 +1082,7 @@ class ReservationServiceController extends AbstractController
             if($reservationId === 'new') {
                 $rs->toggleInCreationPrice($price, $requestStack);
             } else { // during reservation edit process
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 /* @var $reservation Reservation */
                 $reservation = $em->getRepository(Reservation::class)->find($reservationId);
                 $prices = $reservation->getPrices();

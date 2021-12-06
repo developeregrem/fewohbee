@@ -16,9 +16,6 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ReservationStatusController extends AbstractController
 {
-    public function __construct(private ManagerRegistry $doctrine) {
-        
-    }
     
     /**
      * @Route("/", name="reservation_status_index", methods={"GET"})
@@ -33,7 +30,7 @@ class ReservationStatusController extends AbstractController
     /**
      * @Route("/new", name="reservation_status_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $reservationStatus = new ReservationStatus();
         $form = $this->createForm(ReservationStatusType::class, $reservationStatus);
@@ -41,7 +38,7 @@ class ReservationStatusController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
-            $entityManager = $this->doctrine->getManager();
+            $entityManager = $doctrine->getManager();
             $entityManager->persist($reservationStatus);
             $entityManager->flush();
 
@@ -70,14 +67,14 @@ class ReservationStatusController extends AbstractController
     /**
      * @Route("/{id}/edit", name="reservation_status_edit", methods={"GET","POST"})
      */
-    public function edit(Request $request, ReservationStatus $reservationStatus): Response
+    public function edit(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
         $form = $this->createForm(ReservationStatusType::class, $reservationStatus);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
-            $this->doctrine->getManager()->flush();
+            $doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'status.flash.edit.success');
@@ -93,7 +90,7 @@ class ReservationStatusController extends AbstractController
     /**
      * @Route("/{id}/delete", name="reservation_status_delete", methods={"DELETE", "GET"})
      */
-    public function delete(Request $request, ReservationStatus $reservationStatus): Response
+    public function delete(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
         if ($request->getMethod() === 'GET') {
             // initial get load (ask for deleting)           
@@ -104,7 +101,7 @@ class ReservationStatusController extends AbstractController
             if($reservationStatus->getReservations()->count() > 0) {
                 $this->addFlash('warning', 'status.flash.delete.error.still.in.use');
             } else {
-                $entityManager = $this->doctrine->getManager();
+                $entityManager = $doctrine->getManager();
                 $entityManager->remove($reservationStatus);
                 $entityManager->flush();
                 $this->addFlash('success', 'status.flash.delete.success');

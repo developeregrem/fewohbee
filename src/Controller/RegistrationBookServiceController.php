@@ -31,13 +31,9 @@ class RegistrationBookServiceController extends AbstractController
 {
     private $perPage = 20;
 
-    public function __construct(private ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-    }
-
-    public function indexAction(RequestStack $requestStack, Request $request)
-    {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $search = $request->query->get('search', '');
         $page = $request->query->get('page', 1);
 
@@ -58,9 +54,9 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function searchAction(Request $request)
+    public function searchAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $search = $request->request->get('search', '');
         $page = $request->request->get('page', 1);
         $entries = $em->getRepository(RegistrationBookEntry::class)->findByFilter($search, $page, $this->perPage);
@@ -81,9 +77,9 @@ class RegistrationBookServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function showAddReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    public function showAddReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         
         $start = $request->query->get('start', '');
         if($start !== '') {
@@ -146,13 +142,13 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
-    public function deleteRegistrationBookCustomerAction(CSRFProtectionService $csrf, Request $request)
+    public function deleteRegistrationBookCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $customerId = $request->request->get('customer-id');
         $reservationId = $request->request->get('reservation-id');
 
         if (($csrf->validateCSRFToken($request))) {
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             $customer = $em->getRepository(Customer::class)->findById($customerId)[0];
 
             /* @var $reservation \Pensionsverwaltung\Database\Entity\Reservation */
@@ -166,9 +162,9 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
-    public function showAddReservationCustomerAction(Request $request)
+    public function showAddReservationCustomerAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $id = $request->request->get('id');
         $reservation = $em->getRepository(Reservation::class)->find($id);
 
@@ -177,9 +173,9 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function getEditCustomerAction(CSRFProtectionService $csrf, Request $request)
+    public function getEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $id = $request->request->get('id');
         $customer = $em->getRepository(Customer::class)->find($id);
 
@@ -194,7 +190,7 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function saveEditCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request)
+    public function saveEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $id = $request->request->get('customer-id');
         $error = false;
@@ -207,7 +203,7 @@ class RegistrationBookServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 

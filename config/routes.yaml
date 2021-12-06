@@ -1,6 +1,3 @@
-login_check:
-    path:       /login_check
-
 start: 
     path: / 
     methods: GET
@@ -180,10 +177,6 @@ customers.search:
     path: /customers/search 
     methods: POST 
     controller: App\Controller\CustomerServiceController::searchCustomersAction  
-customers.import.csv: 
-    path: /customers/import/csv 
-    methods: GET 
-    controller: App\Controller\CustomerServiceController::importCsvAction 
 customers.gdpr.customer: 
     path: /customers/{id}/gdpr 
     methods: GET 

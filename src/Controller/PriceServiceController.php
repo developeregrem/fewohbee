@@ -25,13 +25,10 @@ use App\Entity\PricePeriod;
 
 class PriceServiceController extends AbstractController
 {
-    public function __construct(private ManagerRegistry $doctrine)
-    {
-    }
 
-    public function indexAction()
+    public function indexAction(ManagerRegistry $doctrine)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', array(
@@ -39,9 +36,9 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function getPriceAction(CSRFProtectionService $csrf, $id)
+    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
@@ -62,9 +59,9 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function newPriceAction(CSRFProtectionService $csrf)
+    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
@@ -87,7 +84,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function createPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request)
+    public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request)
     {
         $error = false;
         $conflicts = [];
@@ -104,7 +101,7 @@ class PriceServiceController extends AbstractController
                 
                 // complain conflicts only when current price is marked as acitve
                 if(!$price->getActive() || count($conflicts) === 0) {
-                    $em = $this->doctrine->getManager();
+                    $em = $doctrine->getManager();
                     $em->persist($price);
                     $em->flush();
                     // add succes message
@@ -122,13 +119,13 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function editPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
+    public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         $error = false;
         $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($price->getDescription()) == 0 || strlen($price->getPrice()) == 0 || strlen($price->getVat()) == 0

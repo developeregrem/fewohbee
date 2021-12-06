@@ -16,9 +16,6 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class RoomCategoryController extends AbstractController
 {
-    public function __construct(private ManagerRegistry $doctrine) {
-        
-    }
     
     /**
      * @Route("/", name="room_category_index", methods={"GET"})
@@ -33,14 +30,14 @@ class RoomCategoryController extends AbstractController
     /**
      * @Route("/new", name="room_category_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $roomCategory = new RoomCategory();
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->doctrine->getManager();
+            $entityManager = $doctrine->getManager();
             $entityManager->persist($roomCategory);
             $entityManager->flush();
 
@@ -69,13 +66,13 @@ class RoomCategoryController extends AbstractController
     /**
      * @Route("/{id}/edit", name="room_category_edit", methods={"GET","POST"})
      */
-    public function edit(Request $request, RoomCategory $roomCategory): Response
+    public function edit(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->doctrine->getManager()->flush();
+            $doctrine->getManager()->flush();
 
             // add succes message
             $this->addFlash('success', 'category.flash.edit.success');
@@ -91,7 +88,7 @@ class RoomCategoryController extends AbstractController
     /**
      * @Route("/{id}/delete", name="room_category_delete", methods={"DELETE", "GET"})
      */
-    public function delete(Request $request, RoomCategory $roomCategory): Response
+    public function delete(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
         if ($request->getMethod() === 'GET') {
             // initial get load (ask for deleting)           
@@ -102,7 +99,7 @@ class RoomCategoryController extends AbstractController
             if($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
                 $this->addFlash('warning', 'category.flash.delete.error.still.in.use');
             } else {
-                $entityManager = $this->doctrine->getManager();
+                $entityManager = $doctrine->getManager();
                 $entityManager->remove($roomCategory);
                 $entityManager->flush();
                 $this->addFlash('success', 'category.flash.delete.success');

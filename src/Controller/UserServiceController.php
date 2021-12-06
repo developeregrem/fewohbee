@@ -23,14 +23,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class UserServiceController extends AbstractController
 {
-    public function __construct(private ManagerRegistry $doctrine)
+    public function __construct()
     {
 
     }
 
-    public function indexAction()
+    public function indexAction(ManagerRegistry $doctrine)
     {
-	$em = $this->doctrine->getManager();
+	$em = $doctrine->getManager();
         $users = $em->getRepository(User::class)->findAll();
 
         return $this->render('Users/index.html.twig', array(
@@ -38,9 +38,9 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function getUserAction(CSRFProtectionService $csrf, $id)
+    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 		$user = $em->getRepository(User::class)->find($id);
         $roles = $em->getRepository(Role::class)->findAll();
 
@@ -51,9 +51,9 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function newUserAction(CSRFProtectionService $csrf)
+    public function newUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $roles = $em->getRepository(Role::class)->findAll();
         $user = new User();
         $user->setId('new');
@@ -65,9 +65,9 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function createUserAction(Request $request, UserService $userService, CSRFProtectionService $csrf)
+    public function createUserAction(ManagerRegistry $doctrine, Request $request, UserService $userService, CSRFProtectionService $csrf)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 		$error = false;
         if (($csrf->validateCSRFToken($request))) {
             $userem = $em->getRepository(User::class);
@@ -100,12 +100,12 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function editUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
+    public function editUserAction(ManagerRegistry $doctrine, Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
     {        
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $user = $userService->getUserFromForm($request, $id);
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             
             if(!$userService->checkPassword($request->request->get("password-".$id))) {
                 $error = true;

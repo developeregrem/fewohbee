@@ -23,17 +23,13 @@ use App\Entity\ReservationOrigin;
 class ReservationOriginServiceController extends AbstractController
 {
 
-    public function __construct(private ManagerRegistry $doctrine)
-    {
-    }
-
     /**
      * Index-View
      * @return mixed
      */
-    public function indexAction()
+    public function indexAction(ManagerRegistry $doctrine, )
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
         return $this->render('ReservationOrigin/index.html.twig', array(
@@ -46,9 +42,9 @@ class ReservationOriginServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function getAction(CSRFProtectionService $csrf, $id)
+    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $origin = $em->getRepository(ReservationOrigin::class)->find($id);
 
         return $this->render('ReservationOrigin/reservationorigin_form_edit.html.twig', array(
@@ -61,9 +57,9 @@ class ReservationOriginServiceController extends AbstractController
      * Show form for new entity
      * @return mixed
      */
-    public function newAction(CSRFProtectionService $csrf)
+    public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $origin = new ReservationOrigin();
         $origin->setId("new");
@@ -79,7 +75,7 @@ class ReservationOriginServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function createAction(CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
+    public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -90,7 +86,7 @@ class ReservationOriginServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($origin);
                 $em->flush();
 
@@ -110,12 +106,12 @@ class ReservationOriginServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function editAction(CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
+    public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $origin = $ros->getOriginFromForm($request, $id);
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($origin->getName()) == 0) {
