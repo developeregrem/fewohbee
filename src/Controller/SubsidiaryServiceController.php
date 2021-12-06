@@ -23,13 +23,9 @@ use App\Service\SubsidiaryService;
 class SubsidiaryServiceController extends AbstractController
 {
 
-    public function __construct(private ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine)
     {
-    }
-
-    public function indexAction()
-    {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
         return $this->render(
@@ -40,9 +36,9 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function getObjectAction(CSRFProtectionService $csrf, $id)
+    public function getObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $object = $em->getRepository(Subsidiary::class)->find($id);
 
         return $this->render(
@@ -54,9 +50,9 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function newObjectAction(CSRFProtectionService $csrf)
+    public function newObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $sub = new Subsidiary();
         $sub->setId("new");
         return $this->render(
@@ -68,7 +64,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function createObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
+    public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -80,7 +76,7 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($object);
                 $em->flush();
 
@@ -97,13 +93,13 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function editObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
+    public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
             $object = $sub->getObjectFromForm($request, $id);
-            $em = $this->doctrine->getManager();
+            $em = $doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {

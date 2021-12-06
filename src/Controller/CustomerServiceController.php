@@ -34,13 +34,9 @@ class CustomerServiceController extends AbstractController
     private $perPage = 20;
     public static $addessTypes = Array('CUSTOMER_ADDRESS_TYPE_PRIVATE', 'CUSTOMER_ADDRESS_TYPE_BUSINESS', 'CUSTOMER_ADDRESS_TYPE_ADDITIONAL');
 
-    public function __construct(private ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine, Request $request)
     {
-    }
-
-    public function indexAction(Request $request)
-    {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $search = $request->query->get('search', '');
         $page = $request->query->get('page', 1);
@@ -81,9 +77,9 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function searchCustomersAction(Request $request)
+    public function searchCustomersAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $search = $request->request->get('search', '');
         $page = $request->request->get('page', 1);
         $customers = $em->getRepository(Customer::class)->findByFilter($search, $page, $this->perPage);
@@ -99,9 +95,9 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function getCustomerAction(CSRFProtectionService $csrf, $id)
+    public function getCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
         return $this->render('Customers/customer_form_show.html.twig', array(
@@ -110,9 +106,9 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function newCustomerAction(CSRFProtectionService $csrf, Request $request)
+    public function newCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         // Get the country names for a locale
         $countries = Countries::getNames($request->getLocale());
@@ -131,7 +127,7 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function createCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request)
+    public function createCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -143,7 +139,7 @@ class CustomerServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -157,8 +153,8 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function showEditCustomerAction(CSRFProtectionService $csrf, Request $request, $id) {
-        $em = $this->doctrine->getManager();
+    public function showEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id) {
+        $em = $doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
@@ -172,7 +168,7 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function editCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
+    public function editCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -184,7 +180,7 @@ class CustomerServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->doctrine->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -198,7 +194,7 @@ class CustomerServiceController extends AbstractController
         ));
     }
 
-    public function deleteCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
+    public function deleteCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {
             if (($csrf->validateCSRFToken($request, true))) {
@@ -241,9 +237,9 @@ class CustomerServiceController extends AbstractController
      * 
      * @Route("/search/address/{address}", name="customers.search.address", methods={"GET"})
      */
-    public function searchAddressAction(Request $request, $address)
+    public function searchAddressAction(ManagerRegistry $doctrine, Request $request, $address)
     {   
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $customers = $em->getRepository(Customer::class)->findByFilterToArray($address, 1, 5);
         $addresses = array();
@@ -257,9 +253,9 @@ class CustomerServiceController extends AbstractController
         return $this->json($addresses);
     }
     
-    public function exportGDPRToPdfAction(TemplatesService $ts, CustomerService $cs, $id)
+    public function exportGDPRToPdfAction(ManagerRegistry $doctrine, TemplatesService $ts, CustomerService $cs, $id)
     {
-        $em = $this->doctrine->getManager();
+        $em = $doctrine->getManager();
 
         $customer = $em->getRepository(Customer::class)->find($id);
         if($customer === null) {
@@ -284,99 +280,5 @@ class CustomerServiceController extends AbstractController
         $response->headers->set('Content-Type', 'application/pdf');
 
         return $response;
-    }
-
-    public function importCsvAction()
-    {
-        $path = "D:\\importcsv\\";
-        $files = array();
-        $customers = array();
-        $countries = array();
-        $countries = Countries::getNames($request->getLocale());
-
-        $dirhandle = opendir($path);
-        if ($dirhandle) {
-            //Ordner auslesen
-            while ($file = readdir($dirhandle)) {
-                if (is_file($path . $file) && strlen(strstr($file, ".csv")) > 0) {
-                    array_push($files, $file);
-                }
-            }
-            closedir($dirhandle);
-            //alphabetisch sortieren
-            sort($files, SORT_STRING);
-            // read each file
-            foreach ($files as $file) {
-                $row = 1;
-                echo $file . '<br />';
-                if (($handle = fopen($path . $file, "rt")) !== FALSE) {
-                    while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
-                        $num = count($data);
-                        //echo "<p> $num Felder in Zeile $row:</p>\n";
-                        $row++;
-                        $name = $data[2];
-                        $names = explode(',', $data[2]);
-                        if (count($names) == 2 && strlen(trim($names[0])) > 2 && strlen(trim($names[1])) > 2) {
-                            $nkey = trim($names[0]) . trim($names[1]);
-                        } else
-                            $nkey = ''; // use only entries with first and last name
-
-
-                        if ($nkey != '' && !array_key_exists($nkey, $customers)) {
-                            $customers[$nkey][0] = trim($names[0]); // lastname
-                            $customers[$nkey][1] = (count($names) == 2 ? trim($names[1]) : '');
-                            try {
-                                $customers[$nkey][2] = new \DateTime(trim($data[3]));
-                            } catch (\Exception $ex) {
-                                $customers[$nkey][2] = null;
-                            }
-
-
-                            if (strlen(trim($data[4])) > 0) {
-                                if (array_key_exists(trim($data[4]), $countries2))
-                                    $country = trim($data[4]);
-                                else if (trim($data[4]) == 'dt.')
-                                    $country = 'DE';
-                                else if (trim($data[4]) == 'USA')
-                                    $country = 'US';
-                                else if (trim($data[4]) == 'F' || trim($data[4]) == 'Frankr.')
-                                    $country = 'FR';
-
-                                $countries[trim($data[4])] = trim($data[4]);
-                            } else
-                                $country = '';
-                            $customers[$nkey][3] = $country;
-                        }
-
-//                        for ($c=0; $c < $num; $c++) {
-//                            echo $data[$c] . "<br />\n";
-//                        }
-                    }
-                    fclose($handle);
-                }
-            }
-        } else {
-            echo 'could not open import directory';
-        }
-        echo count($customers);
-        $em = $this->doctrine->getManager();
-
-        $output = "";
-        foreach ($customers as $key => $value) {
-            $date = ($value[2] == null ? "NULL" : "'" . date_format($value[2], 'Y-m-d') . "'");
-            $output .= "insert into customers (firstname, lastname, birthday, country, salutation) VALUES ('" . mysql_real_escape_string($value[1]) . "', '" . mysql_real_escape_string($value[0]) . "', " . $date . ", '" . $value[3] . "', 'Herr');<br>";
-//            $customer = new Customer();
-//            $customer->setLastname($value[0]);
-//            $customer->setFirstname($value[1]);
-//            $customer->setBirthday($value[2]);
-//            $customer->setCountry($value[3]); 
-//            $customer->setSalutation('Herr');
-//            $em->persist($customer);
-//            $em->flush();   
-//            echo $key.'<br />';
-        }
-        echo $output;
-//        $em->flush(); 
-        return '';
     }
 }
