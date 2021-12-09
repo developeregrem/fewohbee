@@ -21,10 +21,13 @@ use App\Service\AppartmentService;
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
 use App\Entity\RoomCategory;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/appartments')]
 class AppartmentServiceController extends AbstractController
 {
     
+    #[Route('/', name: 'appartments.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
         $em = $doctrine->getManager();
@@ -35,6 +38,7 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/get', name: 'appartments.get.appartment', methods: ['GET'], defaults: ['id' => '0'])]
     public function getAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -51,6 +55,7 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
+    #[Route('/new', name: 'appartments.new.appartment', methods: ['GET'])]
     public function newAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -68,6 +73,7 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
+    #[Route('/create', name: 'appartments.create.appartment', methods: ['POST'])]
     public function createAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request)
     {
         $error = false;
@@ -97,6 +103,7 @@ class AppartmentServiceController extends AbstractController
     }
 
 
+    #[Route('/{id}/edit', name: 'appartments.edit.appartment', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request, $id)
     {
         $error = false;
@@ -126,6 +133,7 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'appartments.delete.appartment', methods: ['GET', 'POST'])]
     public function deleteAppartmentAction(CSRFProtectionService $csrf, AppartmentService $as, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

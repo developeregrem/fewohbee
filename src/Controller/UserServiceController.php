@@ -20,14 +20,13 @@ use App\Entity\Role;
 use App\Service\UserService;
 use App\Service\CSRFProtectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/users')]
 class UserServiceController extends AbstractController
 {
-    public function __construct()
-    {
 
-    }
-
+    #[Route('/', name: 'users.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
 	$em = $doctrine->getManager();
@@ -38,6 +37,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/get', name: 'users.get.user', methods: ['GET'], defaults: ['id' => '0'])]
     public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -51,6 +51,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/new', name: 'users.new.user', methods: ['GET'])]
     public function newUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -65,6 +66,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/create', name: 'users.create.user', methods: ['POST'])]
     public function createUserAction(ManagerRegistry $doctrine, Request $request, UserService $userService, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -100,6 +102,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/edit', name: 'users.edit.user', methods: ['POST'], defaults: ['id' => '0'])]
     public function editUserAction(ManagerRegistry $doctrine, Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
     {        
         $error = false;
@@ -132,6 +135,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'users.delete.user', methods: ['GET', 'POST'])]
     public function deleteUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
     {
         if ($request->getMethod() == 'POST') {

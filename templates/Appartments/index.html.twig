@@ -99,7 +99,7 @@
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('appartments.dodelete.appartment', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 

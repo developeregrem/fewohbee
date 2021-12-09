@@ -93,7 +93,7 @@
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('reservationorigin.dodelete.origin', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('reservationorigin.delete.origin', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 

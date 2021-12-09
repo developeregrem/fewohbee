@@ -23,7 +23,9 @@ use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Appartment;
 use App\Entity\ReservationOrigin;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/statistics')]
 class StatisticsController extends AbstractController
 {
     private $perPage = 15;
@@ -33,6 +35,7 @@ class StatisticsController extends AbstractController
      *
      * @return mixed
      */
+    #[Route('/utilization', name: 'statistics.utilization', methods: ['GET'])]
     public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack)
     {
         $em = $doctrine->getManager();
@@ -52,6 +55,7 @@ class StatisticsController extends AbstractController
         ));
     }
     
+    #[Route('/utilization/monthtly', name: 'statistics.utilization.monthtly', methods: ['GET'])]
     public function getUtilizationForMonthAction(ManagerRegistry $doctrine, Request $request) {        
         $em = $doctrine->getManager();
         
@@ -96,6 +100,7 @@ class StatisticsController extends AbstractController
         );
     }
     
+    #[Route('/utilization/yearly', name: 'statistics.utilization.yearly', methods: ['GET'])]
     public function getUtilizationForYearAction(ManagerRegistry $doctrine, StatisticsService $ss, Request $request) {        
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId');
@@ -124,6 +129,7 @@ class StatisticsController extends AbstractController
      *
      * @return mixed
      */
+    #[Route('/origin', name: 'statistics.origin', methods: ['GET'])]
     public function originAction(ManagerRegistry $doctrine, RequestStack $requestStack)
     {
         $em = $doctrine->getManager();
@@ -148,6 +154,7 @@ class StatisticsController extends AbstractController
      * @param Request $request
      * @return Response
      */
+    #[Route('/origin/monthtly', name: 'statistics.origin.monthtly', methods: ['GET'])]
     public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request) {        
         $em = $doctrine->getManager();
         
@@ -183,6 +190,7 @@ class StatisticsController extends AbstractController
      * @param Request $request
      * @return Response
      */
+    #[Route('/origin/yearly', name: 'statistics.origin.yearly', methods: ['GET'])]
     public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request) {        
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId');
