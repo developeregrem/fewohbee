@@ -19,10 +19,13 @@ use Doctrine\Persistence\ManagerRegistry;
 use App\Service\CSRFProtectionService;
 use App\Entity\Subsidiary;
 use App\Service\SubsidiaryService;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/objects')]
 class SubsidiaryServiceController extends AbstractController
 {
 
+    #[Route('/', name: 'objects.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
         $em = $doctrine->getManager();
@@ -36,6 +39,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/{id}/get', name: 'objects.get.object', methods: ['GET'], defaults: ['id' => '0'])]
     public function getObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -50,6 +54,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/new', name: 'objects.new.object', methods: ['GET'])]
     public function newObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -64,6 +69,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/create', name: 'objects.create.object', methods: ['POST'])]
     public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
     {
         $error = false;
@@ -93,6 +99,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/{id}/edit', name: 'objects.edit.object', methods: ['POST'], defaults: ['id' => '0'])]
     public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         $error = false;
@@ -124,6 +131,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['GET', 'POST'])]
     public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

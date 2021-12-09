@@ -89,7 +89,7 @@
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('prices.dodelete.price', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('prices.delete.price', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 

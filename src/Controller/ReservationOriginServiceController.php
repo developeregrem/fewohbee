@@ -19,7 +19,9 @@ use Doctrine\Persistence\ManagerRegistry;
 use App\Service\CSRFProtectionService;
 use App\Service\ReservationOriginService;
 use App\Entity\ReservationOrigin;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/reservationorigin')]
 class ReservationOriginServiceController extends AbstractController
 {
 
@@ -27,6 +29,7 @@ class ReservationOriginServiceController extends AbstractController
      * Index-View
      * @return mixed
      */
+    #[Route('/', name: 'reservationorigin.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, )
     {
         $em = $doctrine->getManager();
@@ -42,6 +45,7 @@ class ReservationOriginServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
+    #[Route('/{id}/get', name: 'reservationorigin.get.origin', methods: ['GET'], defaults: ['id' => '0'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -57,6 +61,7 @@ class ReservationOriginServiceController extends AbstractController
      * Show form for new entity
      * @return mixed
      */
+    #[Route('/new', name: 'reservationorigin.new.origin', methods: ['GET'])]
     public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -75,6 +80,7 @@ class ReservationOriginServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
+    #[Route('/create', name: 'reservationorigin.create.origin', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
     {
         $error = false;
@@ -106,6 +112,7 @@ class ReservationOriginServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
+    #[Route('/{id}/edit', name: 'reservationorigin.edit.origin', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
     {
         $error = false;
@@ -139,6 +146,7 @@ class ReservationOriginServiceController extends AbstractController
      * @param $id
      * @return string
      */
+    #[Route('/{id}/delete', name: 'reservationorigin.delete.origin', methods: ['GET', 'POST'])]
     public function deleteAction(CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
     {
 

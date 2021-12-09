@@ -26,11 +26,14 @@ use App\Service\CustomerService;
 use App\Entity\RegistrationBookEntry;
 use App\Entity\Customer;
 use App\Entity\Reservation;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/registrationbook')]
 class RegistrationBookServiceController extends AbstractController
 {
     private $perPage = 20;
 
+    #[Route('/', name: 'registrationbook.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -54,6 +57,7 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
+    #[Route('/search', name: 'registrationbook.search', methods: ['POST'])]
     public function searchAction(ManagerRegistry $doctrine, Request $request)
     {
         $em = $doctrine->getManager();
@@ -77,6 +81,7 @@ class RegistrationBookServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
+    #[Route('/showadd/reservations', name: 'registrationbook.showadd.reservations', methods: ['GET'])]
     public function showAddReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -129,6 +134,7 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
+    #[Route('/add/registration', name: 'registrationbook.add.registration', methods: ['POST'])]
     public function addRegistrationAction(CSRFProtectionService $csrf, RegistrationBookService $rbs, Request $request)
     {
 
@@ -142,6 +148,7 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
+    #[Route('/add/delete/customer', name: 'registrationbook.add.delete.customer', methods: ['POST'])]
     public function deleteRegistrationBookCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $customerId = $request->request->get('customer-id');
@@ -162,6 +169,7 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
+    #[Route('/add/add/customer', name: 'registrationbook.add.add.customer', methods: ['POST'])]
     public function showAddReservationCustomerAction(ManagerRegistry $doctrine, Request $request)
     {
         $em = $doctrine->getManager();
@@ -173,6 +181,7 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
+    #[Route('/add/edit/customer', name: 'registrationbook.add.edit.customer', methods: ['POST'])]
     public function getEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $em = $doctrine->getManager();
@@ -190,6 +199,7 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
+    #[Route('/add/edit/customer/save', name: 'registrationbook.add.edit.customer.save', methods: ['POST'])]
     public function saveEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $id = $request->request->get('customer-id');
@@ -220,6 +230,7 @@ class RegistrationBookServiceController extends AbstractController
      * @param $id
      * @return string
      */
+    #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['GET', 'POST'])]
     public function deleteAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {

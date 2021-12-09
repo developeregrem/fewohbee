@@ -11,15 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @Route("/settings/category")
- */
+#[Route('/settings/category')]
 class RoomCategoryController extends AbstractController
 {
-    
-    /**
-     * @Route("/", name="room_category_index", methods={"GET"})
-     */
+
+    #[Route('/', name: 'room_category_index', methods: ['GET'])]
     public function index(RoomCategoryRepository $roomCategoryRepository): Response
     {
         return $this->render('RoomCategory/index.html.twig', [
@@ -27,9 +23,7 @@ class RoomCategoryController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/new", name="room_category_new", methods={"GET","POST"})
-     */
+    #[Route('/new', name: 'room_category_new', methods: ['GET', 'POST'])]
     public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $roomCategory = new RoomCategory();
@@ -63,9 +57,7 @@ class RoomCategoryController extends AbstractController
 //        ]);
 //    }
 
-    /**
-     * @Route("/{id}/edit", name="room_category_edit", methods={"GET","POST"})
-     */
+    #[Route('/{id}/edit', name: 'room_category_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
@@ -85,9 +77,7 @@ class RoomCategoryController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}/delete", name="room_category_delete", methods={"DELETE", "GET"})
-     */
+    #[Route('/{id}/delete', name: 'room_category_delete', methods: ['GET', 'DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
         if ($request->getMethod() === 'GET') {

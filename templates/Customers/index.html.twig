@@ -124,7 +124,7 @@
 
         function doDeleteCustomer(id) {
             var form = "#customer-form-" + id;
-            var url = "{{ path('customers.dodelete.customer', {'id': 'placeholder'}) }}";
+            var url = "{{ path('customers.delete.customer', {'id': 'placeholder'}) }}";
             url = url.replace("placeholder", id);
 
             $.ajax({

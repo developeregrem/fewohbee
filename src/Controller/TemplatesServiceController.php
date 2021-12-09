@@ -35,6 +35,7 @@ use App\Service\InvoiceService;
 /**
  * @Route("/settings/templates")
  */
+#[Route('/settings/templates')]
 class TemplatesServiceController extends AbstractController
 {
 
@@ -42,6 +43,7 @@ class TemplatesServiceController extends AbstractController
      * Index-View
      * @return mixed
      */
+    #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
         $em = $doctrine->getManager();
@@ -57,6 +59,7 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
+    #[Route('/{id}/get', name: 'settings.templates.get', methods: ['GET'], defaults: ['id' => '0'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -75,6 +78,7 @@ class TemplatesServiceController extends AbstractController
      * Show form for new entity
      * @return mixed
      */
+    #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
     public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -96,6 +100,7 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
+    #[Route('/create', name: 'settings.templates.create', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request)
     {
         $error = false;
@@ -127,6 +132,7 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
+    #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id)
     {
         $error = false;
@@ -160,8 +166,8 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return string
      * 
-     * @Route("/{id}/delete", name="settings.templates.delete", methods={"DELETE", "GET"})
      */
+    #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['GET', 'DELETE'])]
     public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template)
     {
         if ($request->getMethod() == 'DELETE') {
@@ -192,6 +198,7 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
+    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
     public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id)
     {
         $em = $doctrine->getManager();
@@ -210,6 +217,7 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
+    #[Route('/select/reservation', name: 'settings.templates.select.reservation', methods: ['POST'])]
     public function selectReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -242,6 +250,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
+    #[Route('/get/reservations', name: 'settings.templates.get.reservations', methods: ['GET'])]
     public function getReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -269,6 +278,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
+    #[Route('/remove/reservation/from/selection', name: 'settings.templates.remove.reservation.from.selection', methods: ['POST'])]
     public function removeReservationFromSelectionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -283,6 +293,7 @@ class TemplatesServiceController extends AbstractController
         return $this->selectReservationAction($requestStack, $request);
     }
     
+    #[Route('/get/reservations/in/period', name: 'settings.templates.get.reservations.in.period', methods: ['POST'])]
     public function getReservationsInPeriodAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -307,6 +318,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
+    #[Route('/get/reservations/for/customer', name: 'settings.templates.get.reservations.for.customer', methods: ['POST'])]
     public function getReservationsForCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -337,6 +349,7 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
+    #[Route('/email/send', name: 'settings.templates.email.send', methods: ['POST'])]
     public function sendEmailAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
     {
         $em = $doctrine->getManager();
@@ -403,6 +416,7 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
+    #[Route('/file/save', name: 'settings.templates.file.save', methods: ['POST'])]
     public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -464,6 +478,7 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
+    #[Route('/attachment/remove', name: 'settings.templates.attachment.remove', methods: ['POST'])]
     public function deleteAttachmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
@@ -505,6 +520,7 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
+    #[Route('/correspondence/remove', name: 'settings.templates.correspondence.remove', methods: ['POST'])]
     public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
         $em = $doctrine->getManager();
@@ -538,6 +554,7 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
+    #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
     public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is)
     {
         $error = false;
@@ -556,6 +573,7 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
+    #[Route('/correspondence/export/pdf/{id}/', name: 'settings.templates.correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
     public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -573,6 +591,7 @@ class TemplatesServiceController extends AbstractController
         return new Response("no file");
     }
     
+    #[Route('/correspondence/show/{id}', name: 'settings.templates.correspondence.show', methods: ['POST'], defaults: ['id' => '0'])]
     public function showMailCorrespondenceAction(ManagerRegistry $doctrine, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -590,6 +609,7 @@ class TemplatesServiceController extends AbstractController
         return new Response("no mail");
     }
     
+    #[Route('/editortemplate/{templateTypeId}', name: 'settings.templates.editor.template', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
     public function getTemplatesForEditor(ManagerRegistry $doctrine, $templateTypeId) {
         $em = $doctrine->getManager();
         /* @var $type TemplateType */
@@ -607,6 +627,7 @@ class TemplatesServiceController extends AbstractController
     /**
      * @Route("/upload", name="templates.upload", methods={"POST"})
      */
+    #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
     public function uploadImage(Request $request, FileUploader $fos) {
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');

@@ -93,7 +93,7 @@
     }
 
     function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('objects.dodelete.object', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('objects.delete.object', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 

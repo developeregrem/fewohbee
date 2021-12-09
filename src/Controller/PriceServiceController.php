@@ -22,10 +22,13 @@ use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Entity\PricePeriod;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/prices')]
 class PriceServiceController extends AbstractController
 {
 
+    #[Route('/', name: 'prices.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
         $em = $doctrine->getManager();
@@ -36,6 +39,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
     public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
         $em = $doctrine->getManager();
@@ -59,6 +63,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
     public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
         $em = $doctrine->getManager();
@@ -84,6 +89,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/create', name: 'prices.create.price', methods: ['POST'])]
     public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request)
     {
         $error = false;
@@ -119,6 +125,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/edit', name: 'prices.edit.price', methods: ['POST'], defaults: ['id' => '0'])]
     public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         $error = false;
@@ -163,6 +170,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['GET', 'POST'])]
     public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

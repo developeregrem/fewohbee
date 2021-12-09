@@ -11,15 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @Route("/settings/status")
- */
+#[Route('/settings/status')]
 class ReservationStatusController extends AbstractController
 {
-    
-    /**
-     * @Route("/", name="reservation_status_index", methods={"GET"})
-     */
+
+    #[Route('/', name: 'reservation_status_index', methods: ['GET'])]
     public function index(ReservationStatusRepository $reservationStatusRepository): Response
     {
         return $this->render('ReservationStatus/index.html.twig', [
@@ -27,9 +23,7 @@ class ReservationStatusController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/new", name="reservation_status_new", methods={"GET","POST"})
-     */
+    #[Route('/new', name: 'reservation_status_new', methods: ['GET', 'POST'])]
     public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $reservationStatus = new ReservationStatus();
@@ -64,9 +58,7 @@ class ReservationStatusController extends AbstractController
 //        ]);
 //    }
 
-    /**
-     * @Route("/{id}/edit", name="reservation_status_edit", methods={"GET","POST"})
-     */
+    #[Route('/{id}/edit', name: 'reservation_status_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
         $form = $this->createForm(ReservationStatusType::class, $reservationStatus);
@@ -87,9 +79,7 @@ class ReservationStatusController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}/delete", name="reservation_status_delete", methods={"DELETE", "GET"})
-     */
+    #[Route('/{id}/delete', name: 'reservation_status_delete', methods: ['GET', 'DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
         if ($request->getMethod() === 'GET') {
