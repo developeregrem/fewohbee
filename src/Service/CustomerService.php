@@ -50,30 +50,31 @@ class CustomerService implements ITemplateRenderer
             $customer->setBirthday(null);
         }
         
-        $addressCount = count($request->request->get("addresstype-" . $id, Array()));
+        $addressTypes = $request->request->all("addresstype-" . $id) ?? [];
+        $addressCount = count($addressTypes);
         $newAddresses = Array();
         for($i = 0; $i < $addressCount; $i++) {
             if ($id === 'new') {
                 $address = new CustomerAddresses();
             } else {
                 // if exist use it or create one
-                $atid = $request->request->get("addresstypeid-" . $id)[$i];
+                $atid = $request->request->all("addresstypeid-" . $id)[$i];
                 $address = $this->em->getRepository(CustomerAddresses::class)->find($atid);
                 if(!$address instanceof CustomerAddresses) {
                     $address = new CustomerAddresses();
                 }
             }          
             
-            $address->setType($request->request->get("addresstype-" . $id)[$i]);
-            $address->setCompany($request->request->get("company-" . $id)[$i]);
-            $address->setAddress($request->request->get("address-" . $id)[$i]);
-            $address->setZip($request->request->get("zip-" . $id)[$i]);
-            $address->setCity($request->request->get("city-" . $id)[$i]);
-            $address->setCountry($request->request->get("country-" . $id)[$i]);
-            $address->setPhone($request->request->get("phone-" . $id)[$i]);
-            $address->setFax($request->request->get("fax-" . $id)[$i]);
-            $address->setMobilePhone($request->request->get("mobilephone-" . $id)[$i]);
-            $address->setEmail($request->request->get("email-" . $id)[$i]);
+            $address->setType($request->request->all("addresstype-" . $id)[$i]);
+            $address->setCompany($request->request->all("company-" . $id)[$i]);
+            $address->setAddress($request->request->all("address-" . $id)[$i]);
+            $address->setZip($request->request->all("zip-" . $id)[$i]);
+            $address->setCity($request->request->all("city-" . $id)[$i]);
+            $address->setCountry($request->request->all("country-" . $id)[$i]);
+            $address->setPhone($request->request->all("phone-" . $id)[$i]);
+            $address->setFax($request->request->all("fax-" . $id)[$i]);
+            $address->setMobilePhone($request->request->all("mobilephone-" . $id)[$i]);
+            $address->setEmail($request->request->all("email-" . $id)[$i]);
             
             $newAddresses[] = $address;
         }

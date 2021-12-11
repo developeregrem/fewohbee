@@ -338,7 +338,7 @@ class PriceService
      * @param type $id
      */
     private function setOrigins(Request $request, Price $price, $id) {
-        $origins = $request->request->get("origin-" . $id, []);
+        $origins = $request->request->all("origin-" . $id) ?? [];
         $allAddedOrigins = new ArrayCollection();
         
         $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
@@ -365,11 +365,11 @@ class PriceService
      */
     private function setPeriods(Request $request, Price $price, $id) {
         $allAddedPeriods = new ArrayCollection();
-        $periodIds = array_unique( $request->request->get("period-". $id, []) );
+        $periodIds = array_unique( $request->request->all("period-". $id) ?? [] );
         // loop over all posted periods (new and existing ones)
         foreach($periodIds as $id) {
-            $starts = $request->request->get("periodstart-". $id, []);
-            $ends = $request->request->get("periodend-". $id, []);
+            $starts = $request->request->all("periodstart-". $id) ?? [];
+            $ends = $request->request->all("periodend-". $id) ?? [];
             
             foreach($starts as $key => $start) {
                 if ($id !== 'new') {
