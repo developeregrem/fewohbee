@@ -121,3 +121,16 @@ function addAutocompleteAddressLookup(element) {
     });
 }
 
+function addCaptializeEvent() {
+    delegate(document.getElementById("accordion"), "input", 'input[name*="firstname-"],input[name*="lastname-"]', (event) => {
+        // capitalize only when the input field is empty
+        if( event.target.value.length === 1) {
+            event.target.value = capitalizeFirstLetter(event.target.value);
+        }
+    });
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
