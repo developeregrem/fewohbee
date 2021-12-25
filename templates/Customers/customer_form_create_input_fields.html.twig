@@ -8,7 +8,7 @@
         <input name="customer-address" id="customer-address" class="form-control ms-auto" placeholder="{{ 'customer.search.addresses'|trans }}" />
     </div>
 </div>
-
+    
 <div id="accordion" class="accordion">
     <div class="accordion-item" id="firstPanel">
         <h2 class="accordion-header" id="headingOne">
@@ -35,7 +35,7 @@
                            class="col-sm-4 col-form-label text-end">{{ 'customer.firstname'|trans }}</label>
 
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="firstname-{{ customer.id }}"
+                        <input type="text" class="form-control" name="firstname-{{ customer.id }}" 
                                value="{{ customer.firstname }}">
                     </div>
                 </div>
@@ -248,6 +248,8 @@
     var addressLookupPath = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
     initCityLookup();  
     addAutocompleteAddressLookup(document.getElementById("customer-address"));
+    
+    addCaptializeEvent();
     
     $(document).ready(function() {
         // disable all fields for hidden form, so it will not be send via post

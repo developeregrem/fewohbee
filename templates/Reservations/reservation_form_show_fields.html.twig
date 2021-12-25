@@ -256,7 +256,7 @@
         <div id="reservation-price-misc-options" class="row justify-content-start">    
         {% set reservationPrices =  attribute(reservations, 0).prices %}
         {% for price in miscPrices %}
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">                                   
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
