@@ -9,7 +9,7 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '3.0.0'
+    version: '3.1.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
 
