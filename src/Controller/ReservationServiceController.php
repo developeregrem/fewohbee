@@ -38,6 +38,7 @@ use App\Entity\Correspondence;
 use App\Entity\Price;
 use App\Form\ReservationMetaType;
 use App\Entity\ReservationStatus;
+use App\Service\CalendarService;
 
 #[Route('/reservation')]
 class ReservationServiceController extends AbstractController
@@ -50,7 +51,7 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/', name: 'start', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -59,12 +60,15 @@ class ReservationServiceController extends AbstractController
         $start = $requestStack->getSession()->get("reservation-overview-start", $today);
         $interval = $requestStack->getSession()->get("reservation-overview-interval", 15);
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
-
+        
         return $this->render('Reservations/index.html.twig', array(
             'objects' => $objects,
             'today' => $start,
             'interval' => $interval,
-            'objectId' => $objectId
+            'objectId' => $objectId,
+            'holidayCountries' => $cs->getHolidayCountries($requestStack->getCurrentRequest()->getLocale()),
+            'selectedCountry' => 'DE',
+            'selectedSubdivision' => 'all'
         ));
     }
 
@@ -74,13 +78,15 @@ class ReservationServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    #[Route('/get/table', name: 'reservations.get.table', methods: ['GET'])]
+    #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
     public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $em = $doctrine->getManager();
         $date = $request->query->get("start");
         $intervall = $request->query->get("intervall");
         $objectId = $request->query->get("object");
+        $holidayCountry = $request->query->get("holidayCountry", 'DE');
+        $selectedSubdivision = $request->query->get("holidaySubdivision", 'all');
 
         if ($date == null) {
             $date = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
@@ -106,7 +112,29 @@ class ReservationServiceController extends AbstractController
         return $this->render('Reservations/reservation_table.html.twig', array(
             "appartments" => $appartments,
             "today" => $date,
-            "intervall" => $intervall
+            "intervall" => $intervall,
+            "holidayCountry" => $holidayCountry,
+            'selectedSubdivision' => $selectedSubdivision
+        ));
+    }
+    
+    #[Route('/table/settings', name: 'reservations.table.settings', methods: ['POST'])]
+    public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
+    {
+        $em = $doctrine->getManager();
+        $request = $requestStack->getCurrentRequest();
+        $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $selectedCountry = $request->request->get("holidayCountry", 'DE');
+        $selectedSubdivision = $request->request->get("holidaySubdivision", 'all');
+
+        $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
+
+        return $this->render('Reservations/reservation_table_settings_input_fields.html.twig', array(
+            'objects' => $objects,
+            'objectId' => $objectId,
+            'holidayCountries' => $cs->getHolidayCountries($requestStack->getCurrentRequest()->getLocale()),
+            'selectedCountry' => $selectedCountry,
+            'selectedSubdivision' => $selectedSubdivision
         ));
     }
 

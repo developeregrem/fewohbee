@@ -1,0 +1,21 @@
+<a href="#" class="fs-5 text-secondary" title="{{ 'reservation.table.settings.title'|trans }}" data-bs-toggle="modal" data-bs-target="#settingsModal" onclick="return false;">
+    <i class="fas fa-cog"></i></a>
+
+<!-- Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">{{ 'reservation.table.settings.title'|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="modal-content-settings">
+            {% include 'Reservations/reservation_table_settings_input_fields.html.twig' %}
+            </div>
+            {#<div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>#}
+        </div>
+    </div>
+</div>

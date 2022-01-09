@@ -47,7 +47,28 @@
             {% else %}
                 {% set weekendCss = '' %}
             {% endif %}
-            <th class="text-center{{ weekendCss }}" colspan="2"
+            {# Holidays #}
+            {% if selectedSubdivision == 'all' %}
+                {% set showCountry =  holidayCountry %}
+            {% else %}
+                {% set showCountry =  selectedSubdivision %}
+            {% endif %}
+            {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
+            {% set holidayText = "" %}
+            {% for holiday in publicdays %}
+                {% set holidayText = holidayText ~ holiday.name %}
+                {% if loop.last == false %}
+                    {% set holidayText = holidayText ~ "<br />" %}
+                {% endif %}
+            {% endfor %}
+            {% if holidayText|length > 0 %}
+                {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
+                {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
+            {% else %}
+                {% set holidayPopover = "" %}
+                {% set holidayCss = "" %}
+            {% endif %}
+            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }} 
                 style="width: {{ 100 / (intervall+1) }}%">{{ tmpDate|date('d') }}</th>
         {% endfor %}
     </tr>
@@ -185,6 +206,7 @@
         trigger: 'hover'
     });
     $('.room-info').popover();
+    $('.holiday-info').popover();
 
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
