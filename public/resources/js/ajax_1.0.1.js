@@ -40,7 +40,7 @@ function _doPost(formId, url, successUrl, type, successFunc) {
         },
         success: function (data) {
             if(successFunc !== null) {
-                successFunc();
+                successFunc(data);
             } else {
                 // if the whole modal content is returned
                 if($(data).filter('.modal-body').length > 0 || $(data).find('.modal-body').length > 0) {

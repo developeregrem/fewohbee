@@ -57,4 +57,10 @@ reservation.startdate: From
 reservation.status: Status
 reservation.table.calendarweek: CW
 reservation.table.reload: Update
+reservation.table.settings.all: all
+reservation.table.settings.country: Country
+reservation.table.settings.general: General
+reservation.table.settings.holidays: Display settings for holidays
+reservation.table.settings.subdivision: Subdivision
+reservation.table.settings.title: Table settings
 reservation.templates.availableprices: existing invoices
