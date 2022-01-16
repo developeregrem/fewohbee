@@ -14,21 +14,21 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Entity\Subsidiary;
 use App\Service\SubsidiaryService;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/objects')]
 class SubsidiaryServiceController extends AbstractController
 {
 
-    public function __construct()
+    #[Route('/', name: 'objects.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine)
     {
-    }
-
-    public function indexAction()
-    {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
         return $this->render(
@@ -39,9 +39,10 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function getObjectAction(CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'objects.get.object', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $object = $em->getRepository(Subsidiary::class)->find($id);
 
         return $this->render(
@@ -53,9 +54,10 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function newObjectAction(CSRFProtectionService $csrf)
+    #[Route('/new', name: 'objects.new.object', methods: ['GET'])]
+    public function newObjectAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $sub = new Subsidiary();
         $sub->setId("new");
         return $this->render(
@@ -67,7 +69,8 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function createObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
+    #[Route('/create', name: 'objects.create.object', methods: ['POST'])]
+    public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -79,7 +82,7 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($object);
                 $em->flush();
 
@@ -96,13 +99,14 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    public function editObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
+    #[Route('/{id}/edit', name: 'objects.edit.object', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
             $object = $sub->getObjectFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {
@@ -127,6 +131,7 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
+    #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['GET', 'POST'])]
     public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

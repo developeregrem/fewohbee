@@ -14,22 +14,23 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\AppartmentService;
 use App\Entity\Appartment;
 use App\Entity\Subsidiary;
 use App\Entity\RoomCategory;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/appartments')]
 class AppartmentServiceController extends AbstractController
 {
-    public function __construct()
+    
+    #[Route('/', name: 'appartments.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine)
     {
-    }
-
-    public function indexAction()
-    {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $appartments = $em->getRepository(Appartment::class)->findAll();
 
         return $this->render('Appartments/index.html.twig', array(
@@ -37,9 +38,10 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
-    public function getAppartmentAction(CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'appartments.get.appartment', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $appartment = $em->getRepository(Appartment::class)->find($id);
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -53,9 +55,10 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
-    public function newAppartmentAction(CSRFProtectionService $csrf)
+    #[Route('/new', name: 'appartments.new.appartment', methods: ['GET'])]
+    public function newAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
@@ -70,7 +73,8 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
-    public function createAppartmentAction(CSRFProtectionService $csrf, AppartmentService $as, Request $request)
+    #[Route('/create', name: 'appartments.create.appartment', methods: ['POST'])]
+    public function createAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -84,7 +88,7 @@ class AppartmentServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($appartment);
                 $em->flush();
 
@@ -99,13 +103,14 @@ class AppartmentServiceController extends AbstractController
     }
 
 
-    public function editAppartmentAction(CSRFProtectionService $csrf, AppartmentService $as, Request $request, $id)
+    #[Route('/{id}/edit', name: 'appartments.edit.appartment', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $appartment Appartment */
             $appartment = $as->getAppartmentFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
 
             // check for mandatory fields
             if (strlen($appartment->getNumber()) == 0 || strlen($appartment->getBedsMax()) == 0
@@ -128,6 +133,7 @@ class AppartmentServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'appartments.delete.appartment', methods: ['GET', 'POST'])]
     public function deleteAppartmentAction(CSRFProtectionService $csrf, AppartmentService $as, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

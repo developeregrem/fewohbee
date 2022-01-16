@@ -19,10 +19,10 @@ class CreateUserCommand extends Command
 {
     protected static $defaultName = 'app:create-user';
     
-    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $encoder, UserService $us) {
+    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $hasher, UserService $us) {
         $this->validator = $validator;
         $this->em = $em;
-        $this->encoder = $encoder;
+        $this->hasher = $hasher;
         $this->us = $us;
         parent::__construct();
     }
@@ -92,7 +92,7 @@ class CreateUserCommand extends Command
         $user->setEmail($email);
         $user->setFirstname($firstName);
         $user->setLastname($lastName);
-        $user->setPassword($this->encoder->encodePassword($user, $password));
+        $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
         $user->setRole($this->em->getRepository(Role::class)->find($role));
         $user->setActive(true);

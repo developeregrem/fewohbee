@@ -38,8 +38,8 @@ class SubsidiaryService
             $object = $this->em->getRepository(Subsidiary::class)->find($id);
         }
 
-        $object->setName($request->get("name-" . $id));
-        $object->setDescription($request->get("description-" . $id));
+        $object->setName($request->request->get("name-" . $id));
+        $object->setDescription($request->request->get("description-" . $id));
 
         return $object;
     }

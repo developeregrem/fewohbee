@@ -46,7 +46,7 @@ class ReservationOriginService
             $origin = $this->em->getRepository(ReservationOrigin::class)->find($id);
         }
 
-        $origin->setName(trim($request->get("name-" . $id)));
+        $origin->setName(trim($request->request->get("name-" . $id)));
 
         return $origin;
     }

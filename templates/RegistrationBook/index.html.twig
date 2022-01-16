@@ -384,7 +384,7 @@
 
     function doDeleteEntry(id) {
         var form = "#entry-form-" + id;
-        var url = "{{ path('registrationbook.dodelete.origin', {'id': 'placeholder'}) }}";
+        var url = "{{ path('registrationbook.delete.origin', {'id': 'placeholder'}) }}";
         url = url.replace("placeholder", id);
 
         $.ajax({

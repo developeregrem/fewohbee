@@ -64,15 +64,15 @@ class TemplatesService
         if ($id !== 'new') {
             $template = $this->em->getRepository(Template::class)->find($id);
         }
-        $templateId = $request->get("type-" . $id);
+        $templateId = $request->request->get("type-" . $id);
         $type = $this->em->getRepository(TemplateType::class)->find($templateId);
         if(!($type instanceof TemplateType)) {
             //throw ""
         }
         $template->setTemplateType($type);
-        $template->setName(trim($request->get("name-" . $id)));
-        $template->setText($request->get("text-" . $id));
-        $template->setParams($request->get("params-" . $id));
+        $template->setName(trim($request->request->get("name-" . $id)));
+        $template->setText($request->request->get("text-" . $id));
+        $template->setParams($request->request->get("params-" . $id));
         if($request->request->has("default-" . $id)) {
             $template->setIsDefault(true);
         } else {

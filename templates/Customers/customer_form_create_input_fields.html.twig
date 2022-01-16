@@ -8,7 +8,7 @@
         <input name="customer-address" id="customer-address" class="form-control ms-auto" placeholder="{{ 'customer.search.addresses'|trans }}" />
     </div>
 </div>
-
+    
 <div id="accordion" class="accordion">
     <div class="accordion-item" id="firstPanel">
         <h2 class="accordion-header" id="headingOne">
@@ -18,16 +18,6 @@
         </h2>
         <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne">
             <div class="accordion-body">
-{#    <div id="firstPanel" class="card">
-        <div class="card-header p-0" id="headingOne">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    {{ 'customer.person'|trans }}
-                </button>
-            </h6>
-        </div>
-        <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-            <div class="card-body">#}
                 <div class="row">
                     <label for="salutation-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.salutation'|trans }} *</label>
@@ -45,7 +35,7 @@
                            class="col-sm-4 col-form-label text-end">{{ 'customer.firstname'|trans }}</label>
 
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="firstname-{{ customer.id }}"
+                        <input type="text" class="form-control" name="firstname-{{ customer.id }}" 
                                value="{{ customer.firstname }}">
                     </div>
                 </div>
@@ -73,19 +63,6 @@
         </h6>
         <div id="address{{ loop.index }}" class="accordion-collapse collapse addressfields" aria-labelledby="address-heading-{{ loop.index }}" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0" id="headingTwo">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#address{{ loop.index }}" aria-expanded="true" aria-controls="address{{ loop.index }}">
-                    {{ 'customer.contactdata'|trans }}
-                </button>
-                <i class="fas fa-trash-alt mouse-pointer float-end mt-3 me-3" 
-                      title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
-            </h6>           
-        </div>
-        <div id="address{{ loop.index }}" class="collapse addressfields" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">#}
                 <div class="row">
                     <label for="addresstype-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.addresstype'|trans }}</label>
@@ -150,7 +127,7 @@
                 <div class="row">
                     <label for="zip-{{ customer.id }}" class="col-sm-4 col-form-label text-end">{{ 'customer.zip'|trans }}</label>
                     <div class="col-sm-8">
-                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}">
+                        <input id="zip" type="text" class="form-control" name="zip-{{ customer.id }}[]" value="{{ address.zip }}" autocomplete="new-zip">
                     </div>
                 </div>
                 <div class="row">
@@ -190,16 +167,6 @@
         </h2>
         <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0" id="headingThree">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
-                    {{ 'customer.additional'|trans }}
-                </button>
-            </h6>
-        </div>
-        <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
-            <div class="card-body">#}
                 <div class="row">
                     <label for="birthday-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.birthday'|trans }}</label>
@@ -236,19 +203,6 @@
         </h6>
         <div id="addressXX" class="accordion-collapse collapse show addressfields" aria-labelledby="address-heading-XXX" data-bs-parent="#accordion">
             <div class="accordion-body">
-    {#<div class="card mt-1">
-        <div class="card-header p-0">
-            <h6 class="border-bottom mb-0">
-                <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
-                    {{ 'customer.contactdata'|trans }}
-                </button>
-                <i class="fas fa-trash-alt mouse-pointer float-end mt-3 me-3" 
-                      title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
-            </h6> 
-        </div>
-        <div id="addressXX" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
-            <div class="card-body">#}
                 {% include 'Customers/customer_form_address_fields.html.twig' %}
             </div>
         </div>
@@ -290,35 +244,14 @@
         }
     }
 {% endif %}
+    var cityLookupPath = '{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}';
+    var addressLookupPath = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
+    initCityLookup();  
+    addAutocompleteAddressLookup(document.getElementById("customer-address"));
+    
+    addCaptializeEvent();
     
     $(document).ready(function() {
-        // look for city
-        $("#accordion").on("keyup", "input[name^='zip-']", function() {
-            // at the moment, only with complete plz
-            if($(this).val().length === 5) { 
-                var url = "{{ path('customers.citylookup')}}";
-                var content = '<span id="lookUpWait"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />&nbsp;</span>';
-                $elm = $(this);
-                $.ajax({
-                    url: url,
-                    type: "post",
-                    data: {plz: $elm.val()},
-                    beforeSend: function () {
-                        $elm.parents(".card-body").find("input[name^='city-']")
-                                .parent().parent().find('label').prepend(content);
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        alert(xhr.status);
-                    },
-                    success: function (data) {
-                        if($("#lookUpWait").length > 0) {
-                            $("#lookUpWait").remove();
-                        }
-                        $elm.parents(".card-body").find("input[name^='city-']").val(data);
-                    }
-                });
-            }
-        });
         // disable all fields for hidden form, so it will not be send via post
         $("#address-forms :input").prop('disabled', true);
     });
@@ -335,6 +268,7 @@
         
         $("#address"+$newId).collapse("show");
         //alert($(".addressfields").length);
+        initCityLookup();
     }
     
     function deleteAddress(elm) {
@@ -358,36 +292,4 @@
         $("#address"+$id).find("input[name^='email-']").val(item.email);
     }
     
-      $( function() {
-        var cache = {};
-        $( "#customer-address" ).autocomplete({
-          minLength: 2,
-          source: function( request, response ) {
-            var term = request.term;
-            if ( term in cache ) {
-              response( cache[ term ] );
-              return;
-            }
-            var url = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
-            url = url.replace("placeholder", term);
-            
-            $.getJSON( url, request, function( data, status, xhr ) {
-              cache[ term ] = data;
-              response( data );
-            });
-          },
-          select: function( event, ui ) {
-              fillAddressFields(ui.item);
-              return;
-          }
-        })
-        .autocomplete( "instance" )._renderItem = function( ul, item ) {
-            let company = item.company || "";
-            var out = (company.length > 0 ? 'Firma: ' + company + "<br>" : '');
-            out += item.address + ", " + item.zip + " " + item.city;
-            return $( "<li>" )
-              .append( '<div class="text-secondary">' + out + "</div>" )
-              .appendTo( ul );
-          };
-        } );
 </script>

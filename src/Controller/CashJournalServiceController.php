@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\CashJournalService;
@@ -23,19 +24,17 @@ use App\Service\TemplatesService;
 use App\Entity\CashJournal;
 use App\Entity\CashJournalEntry;
 use App\Entity\Template;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/cashjournal')]
 class CashJournalServiceController extends AbstractController
 {
     private $perPage = 20;
 
-    public function __construct()
+    #[Route('/', name: 'cashjournal.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
-
-    }
-
-    public function indexAction(RequestStack $requestStack, TemplatesService $ts, Request $request)
-    {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
 //        $journal = $em->getRepository(CashJournal::class)->find(6);
 //        for($i=0; $i<100;$i++) {
@@ -95,12 +94,13 @@ class CashJournalServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function getJournalTableAction(Request $request)
+    #[Route('/journal/list', name: 'cashjournal.table.get', methods: ['GET'])]
+    public function getJournalTableAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
-        $page = $request->get('page', 1);
-        $search = $request->get('search', date("Y"));
+        $page = $request->query->get('page', 1);
+        $search = $request->query->get('search', date("Y"));
 
         $journals = $em->getRepository(CashJournal::class)->findByFilter($search, $page, $this->perPage);
 
@@ -115,9 +115,10 @@ class CashJournalServiceController extends AbstractController
         ));
     }
 
-    public function newJournalAction(CSRFProtectionService $csrf, Request $request)
+    #[Route('/journal/new', name: 'cashjournal.journal.new', methods: ['GET'])]
+    public function newJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
         $journal = new CashJournal();
         $youngestJ = $em->getRepository(CashJournal::class)->getYoungestJournal();
@@ -133,11 +134,8 @@ class CashJournalServiceController extends AbstractController
             } else {
                 $journal->setCashYear($youngestJ->getCashYear());
                 $journal->setCashMonth($youngestJ->getCashMonth() + 1);
-            }
-            
-        }
-        
-        
+            }            
+        }       
 
         return $this->render('CashJournal/journal_journal_form_create.html.twig', array(
             'journal' => $journal,
@@ -145,7 +143,8 @@ class CashJournalServiceController extends AbstractController
         ));
     }
 
-    public function createJournalAction(CSRFProtectionService $csrf, CashJournalService $cjs, Request $request)
+    #[Route('/journal/create', name: 'cashjournal.journal.create', methods: ['POST'])]
+    public function createJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CashJournalService $cjs, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -157,7 +156,7 @@ class CashJournalServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($journal);
                 $em->flush();
 
@@ -171,9 +170,10 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function getJournalAction(CSRFProtectionService $csrf, Request $request, $id)
+    #[Route('/journal/{id}', name: 'cashjournal.journal', methods: ['GET'])]
+    public function getJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $journal = $em->getRepository(CashJournal::class)->find($id);
 
@@ -183,9 +183,10 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function editJournalAction(CSRFProtectionService $csrf, CashJournalService $cjs, Request $request, $id)
+    #[Route('/journal/{id}/edit', name: 'cashjournal.journal.edit', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CashJournalService $cjs, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $entry \Pensionsverwaltung\Database\Entity\CashJournalEntry */
@@ -211,12 +212,13 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function editJournalStatusAction(AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
+    #[Route('/journal/{id}/edit/status', name: 'cashjournal.journal.edit.status', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editJournalStatusAction(ManagerRegistry $doctrine, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
         $validStatus = Array('closed', 'booked');
-        $status = $request->get('status');
+        $status = $request->request->get('status');
         
         if(in_array($status, $validStatus)) {
             /* @var $journal \Pensionsverwaltung\Database\Entity\CashJournal */
@@ -249,10 +251,11 @@ class CashJournalServiceController extends AbstractController
      * @param Request $request
      * @return string
      */
-    public function deleteJournalAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, Request $request, $id)
+    #[Route('/journal/{id}/delete', name: 'cashjournal.journal.delete', methods: ['POST'], defaults: ['id' => '0'])]
+    public function deleteJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, Request $request, $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             if (($csrf->validateCSRFToken($request, true))) {
                 $journal = $em->getRepository(CashJournal::class)->find($id);  
                 
@@ -272,11 +275,12 @@ class CashJournalServiceController extends AbstractController
         return new Response("ok");
     }
     
-    public function newJournalEntryAction(CSRFProtectionService $csrf, Request $request)
+    #[Route('/journal/entry/new', name: 'cashjournal.journal.entry.new', methods: ['GET'])]
+    public function newJournalEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
-        $journal = $em->getRepository(CashJournal::class)->find($request->get('id'));
+        $journal = $em->getRepository(CashJournal::class)->find($request->query->get('id'));
         $docNumber = $em->getRepository(CashJournalEntry::class)->getLastDocumentNumber($journal) + 1;
 
         $entry = new CashJournalEntry();
@@ -290,14 +294,15 @@ class CashJournalServiceController extends AbstractController
         ));
     }
 
-    public function createJournalEntryAction(CSRFProtectionService $csrf, CashJournalService $cjs, Request $request)
+    #[Route('/journal/entry/create', name: 'cashjournal.journal.entry.create', methods: ['POST'])]
+    public function createJournalEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CashJournalService $cjs, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $entry CashJournalEntry */
             $entry = $cjs->getJournalEntryFromForm($request);
-            $journal = $em->getRepository(CashJournal::class)->find($request->get('id'));
+            $journal = $em->getRepository(CashJournal::class)->find($request->request->get('id'));
             
             // check if journal is closed
             if($journal->getIsClosed()) {
@@ -325,12 +330,13 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function indexEntryAction(Request $request, $id)
+    #[Route('/journal/overview/{id}', name: 'cashjournal.journal.entry.index', methods: ['GET'])]
+    public function indexEntryAction(ManagerRegistry $doctrine, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
-        $page = $request->get('page', 1);
-        $search = $request->get('search', '');
+        $page = $request->query->get('page', 1);
+        $search = $request->query->get('search', '');
 
         $journal = $em->getRepository(CashJournal::class)->find($id);
         $entries = $em->getRepository(CashJournalEntry::class)->findByFilter($journal, $search, $page, $this->perPage);
@@ -349,9 +355,10 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function getEntryAction(CSRFProtectionService $csrf, Request $request, $id)
+    #[Route('/journal/entry/{id}', name: 'cashjournal.journal.entry', methods: ['GET'])]
+    public function getEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $entry = $em->getRepository(CashJournalEntry::class)->find($id);
 
@@ -361,9 +368,10 @@ class CashJournalServiceController extends AbstractController
         ));
     }
     
-    public function editEntryAction(CSRFProtectionService $csrf, CashJournalService $cjs, Request $request, $id)
+    #[Route('/journal/entry/{id}/edit', name: 'cashjournal.journal.entry.edit', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CashJournalService $cjs, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $entry CashJournalEntry */
@@ -399,10 +407,11 @@ class CashJournalServiceController extends AbstractController
      * @param Request $request
      * @return string
      */
-    public function deleteEntryAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
+    #[Route('/journal/entry/{id}/delete', name: 'cashjournal.journal.entry.delete', methods: ['POST'], defaults: ['id' => '0'])]
+    public function deleteEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             if (($csrf->validateCSRFToken($request, true))) {
                 $entry = $em->getRepository(CashJournalEntry::class)->find($id);  
                 
@@ -426,9 +435,10 @@ class CashJournalServiceController extends AbstractController
         return new Response("ok");
     }
     
-    public function exportJournalToPdfAction(RequestStack $requestStack, $id, TemplatesService $ts, CashJournalService $cjs, $templateId)
+    #[Route('/journal/{id}/export/pdf/{templateId}', name: 'cashjournal.journal.export.pdf', methods: ['GET'])]
+    public function exportJournalToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, $id, TemplatesService $ts, CashJournalService $cjs, $templateId)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set("cashjournal-template-id", $templateId);
         

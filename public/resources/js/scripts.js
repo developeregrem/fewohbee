@@ -42,3 +42,19 @@ function iniStartOrEndDate(idStart, idEnd, addDays) {
         start.value = sDate;
     }
 }
+
+/**
+ * Adds an event listener to dynamically loaded content
+ * @param element element a static element e.g. document
+ * @param string type the event e.g. onclick
+ * @param string selector the dynamically loaded content
+ * @param function handler a function that shall be executed once the event is fired
+ * @returns void
+ */
+ const delegate = (element, type, selector, handler) => {
+        element.addEventListener(type, (event) => {
+          if (event.target.closest(selector)) {
+            handler(event);
+          }
+        });
+    };

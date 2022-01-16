@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Controller\CustomerServiceController;
 use App\Service\CSRFProtectionService;
@@ -25,20 +26,19 @@ use App\Service\CustomerService;
 use App\Entity\RegistrationBookEntry;
 use App\Entity\Customer;
 use App\Entity\Reservation;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/registrationbook')]
 class RegistrationBookServiceController extends AbstractController
 {
     private $perPage = 20;
 
-    public function __construct()
+    #[Route('/', name: 'registrationbook.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-    }
-
-    public function indexAction(RequestStack $requestStack, Request $request)
-    {
-        $em = $this->getDoctrine()->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $em = $doctrine->getManager();
+        $search = $request->query->get('search', '');
+        $page = $request->query->get('page', 1);
 
         $entries = $em->getRepository(RegistrationBookEntry::class)->findByFilter($search, $page, $this->perPage);
 
@@ -57,11 +57,12 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function searchAction(Request $request)
+    #[Route('/search', name: 'registrationbook.search', methods: ['POST'])]
+    public function searchAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $em = $doctrine->getManager();
+        $search = $request->request->get('search', '');
+        $page = $request->request->get('page', 1);
         $entries = $em->getRepository(RegistrationBookEntry::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -80,11 +81,12 @@ class RegistrationBookServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function showAddReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    #[Route('/showadd/reservations', name: 'registrationbook.showadd.reservations', methods: ['GET'])]
+    public function showAddReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
-        $start = $request->get('start', '');
+        $start = $request->query->get('start', '');
         if($start !== '') {
             try {
                 $startDate = new \DateTime($start);
@@ -99,7 +101,7 @@ class RegistrationBookServiceController extends AbstractController
             $startDate->sub(new \DateInterval('P30D'));
         }
         
-        $end = $request->get('end', '');
+        $end = $request->query->get('end', '');
         if($end !== '') {
             try {
                 $endDate = new \DateTime($end);
@@ -132,11 +134,12 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
+    #[Route('/add/registration', name: 'registrationbook.add.registration', methods: ['POST'])]
     public function addRegistrationAction(CSRFProtectionService $csrf, RegistrationBookService $rbs, Request $request)
     {
 
         if (($csrf->validateCSRFToken($request))) {
-            $id = $request->get('id');            
+            $id = $request->request->get('id');            
             $result = $rbs->addBookEntriesFromReservation($id);
 
             $this->addFlash('success', 'reservationbook.flash.add.success');
@@ -145,13 +148,14 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
-    public function deleteRegistrationBookCustomerAction(CSRFProtectionService $csrf, Request $request)
+    #[Route('/add/delete/customer', name: 'registrationbook.add.delete.customer', methods: ['POST'])]
+    public function deleteRegistrationBookCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $customerId = $request->get('customer-id');
-        $reservationId = $request->get('reservation-id');
+        $customerId = $request->request->get('customer-id');
+        $reservationId = $request->request->get('reservation-id');
 
         if (($csrf->validateCSRFToken($request))) {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             $customer = $em->getRepository(Customer::class)->findById($customerId)[0];
 
             /* @var $reservation \Pensionsverwaltung\Database\Entity\Reservation */
@@ -165,10 +169,11 @@ class RegistrationBookServiceController extends AbstractController
         return $this->forward('App\Controller\RegistrationBookServiceController::showAddReservationsAction');
     }
 
-    public function showAddReservationCustomerAction(Request $request)
+    #[Route('/add/add/customer', name: 'registrationbook.add.add.customer', methods: ['POST'])]
+    public function showAddReservationCustomerAction(ManagerRegistry $doctrine, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
-        $id = $request->get('id');
+        $em = $doctrine->getManager();
+        $id = $request->request->get('id');
         $reservation = $em->getRepository(Reservation::class)->find($id);
 
         return $this->render('RegistrationBook/registrationbook_form_add_change_customer.html.twig', array(
@@ -176,10 +181,11 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function getEditCustomerAction(CSRFProtectionService $csrf, Request $request)
+    #[Route('/add/edit/customer', name: 'registrationbook.add.edit.customer', methods: ['POST'])]
+    public function getEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
-        $id = $request->get('id');
+        $em = $doctrine->getManager();
+        $id = $request->request->get('id');
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
@@ -193,9 +199,10 @@ class RegistrationBookServiceController extends AbstractController
         ));
     }
 
-    public function saveEditCustomerAction(CSRFProtectionService $csrf, CustomerService $cs, Request $request)
+    #[Route('/add/edit/customer/save', name: 'registrationbook.add.edit.customer.save', methods: ['POST'])]
+    public function saveEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
-        $id = $request->get('customer-id');
+        $id = $request->request->get('customer-id');
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
@@ -206,7 +213,7 @@ class RegistrationBookServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($customer);
                 $em->flush();
 
@@ -223,6 +230,7 @@ class RegistrationBookServiceController extends AbstractController
      * @param $id
      * @return string
      */
+    #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['GET', 'POST'])]
     public function deleteAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {

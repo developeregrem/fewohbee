@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\TemplatesService;
@@ -31,20 +32,15 @@ use App\Entity\Price;
 use App\Form\InvoiceMiscPositionType;
 use App\Form\InvoiceApartmentPositionType;
 
-/**
- * @Route("/invoices")
- */
+#[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
 {
     private $perPage = 20;
 
-    public function __construct()
+    #[Route('/', name: 'invoices.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
-    }
-
-    public function indexAction(RequestStack $requestStack, TemplatesService $ts, Request $request)
-    {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $templates = $em->getRepository(Template::class)->loadByTypeName(array('TEMPLATE_INVOICE_PDF'));
         $defaultTemplate = $ts->getDefaultTemplate($templates);
@@ -56,8 +52,8 @@ class InvoiceServiceController extends AbstractController
 
         $templateId = $requestStack->getSession()->get("invoice-template-id", $templateId); // get previously selected id
 
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $search = $request->query->get('search', '');
+        $page = $request->query->get('page', 1);
 
         $invoices = $em->getRepository(Invoice::class)->findByFilter($search, $page, $this->perPage);
 
@@ -77,11 +73,12 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function searchInvoicesAction(RequestStack $requestStack, TemplatesService $ts, Request $request)
+    #[Route('/search', name: 'invoices.search', methods: ['POST'])]
+    public function searchInvoicesAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
-        $search = $request->get('search', '');
-        $page = $request->get('page', 1);
+        $em = $doctrine->getManager();
+        $search = $request->request->get('search', '');
+        $page = $request->request->get('page', 1);
         $invoices = $em->getRepository(Invoice::class)->findByFilter($search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -106,9 +103,10 @@ class InvoiceServiceController extends AbstractController
         ));
     }
 
-    public function getInvoiceAction(CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id)
+    #[Route('/{id}/', name: 'invoices.get.invoice', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
         $vatSums = Array();
         $brutto = 0;
@@ -151,11 +149,12 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function newInvoiceAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    #[Route('/new', name: 'invoices.new.invoice', methods: ['GET'])]
+    public function newInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
-        if ($request->get('createNewInvoice') == "true") {
+        if ($request->query->get('createNewInvoice') == "true") {
             $newInvoiceInformationArray = array();
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
             // reset session variables
@@ -182,15 +181,16 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function getReservationsInPeriodAction(RequestStack $requestStack, Request $request)
+    #[Route('/get/reservations/in/period', name: 'invoices.get.reservations.in.period', methods: ['POST'])]
+    public function getReservationsInPeriodAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $reservations = Array();
         $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
 
         $potentialReservations = $em->getRepository(
             Reservation::class
-        )->loadReservationsForPeriod($request->get('from'), $request->get('end'));
+        )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
 
         foreach ($potentialReservations as $reservation) {
             // make sure that already selected reservation can not be choosen twice
@@ -207,14 +207,15 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function getReservationsForCustomerAction(RequestStack $requestStack, Request $request)
+    #[Route('/get/reservations/for/customer', name: 'invoices.get.reservations.for.customer', methods: ['POST'])]
+    public function getReservationsForCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $reservations = Array();
         $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
-            $request->get("lastname")
+            $request->request->get("lastname")
         );
 
         if ($customer instanceof Customer) {
@@ -239,11 +240,12 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function selectReservationAction(RequestStack $requestStack, Request $request)
+    #[Route('/select/reservation', name: 'invoices.select.reservation', methods: ['POST'])]
+    public function selectReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
-        if ($request->get('createNewInvoice') == "true") {
+        if ($request->request->get('createNewInvoice') == "true") {
             $newInvoiceInformationArray = array();
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
             // reset session variables
@@ -256,8 +258,8 @@ class InvoiceServiceController extends AbstractController
             $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
         }
 
-        if ($request->get("reservationid") != null) {
-            $newInvoiceInformationArray[] = $request->get("reservationid");
+        if ($request->request->get("reservationid") != null) {
+            $newInvoiceInformationArray[] = $request->request->get("reservationid");
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
         }
 
@@ -279,14 +281,15 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function removeReservationFromSelectionAction(RequestStack $requestStack, Request $request)
+    #[Route('/remove/reservation/from/selection', name: 'invoices.remove.reservation.from.selection', methods: ['POST'])]
+    public function removeReservationFromSelectionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $newInvoiceInformationArray = $requestStack->getSession()->get("invoiceInCreation");
 
-        if ($request->get("reservationkey") != null) {
-            unset($newInvoiceInformationArray[$request->get("reservationkey")]);
+        if ($request->request->get("reservationkey") != null) {
+            unset($newInvoiceInformationArray[$request->request->get("reservationkey")]);
             $requestStack->getSession()->set("invoiceInCreation", $newInvoiceInformationArray);
         }
         $reservations = Array();
@@ -312,12 +315,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    /**
-     * @Route("/create/positions/create", name="invoices.create.invoice.positions", methods={"GET","POST"})
-     */
-    public function showCreateInvoicePositionsFormAction(RequestStack $requestStack, InvoiceService $is, Request $request)
+    #[Route('/create/positions/create', name: 'invoices.create.invoice.positions', methods: ['GET', 'POST'])]
+    public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $newInvoiceReservationsArray = $requestStack->getSession()->get("invoiceInCreation");
         
         if(!$requestStack->getSession()->has("invoicePositionsMiscellaneous")) {            
@@ -362,12 +363,12 @@ class InvoiceServiceController extends AbstractController
             $lastInvoiceId = '';
         }
 
-        if ($request->get("invoiceid") != null) {
-            $invoiceid = $request->get("invoiceid");
+        if ($request->request->get("invoiceid") != null) {
+            $invoiceid = $request->request->get("invoiceid");
             $requestStack->getSession()->set("new-invoice-id", $invoiceid);
         }
-        if ($request->get("invoiceDate") != null && strlen($request->get("invoiceDate")) > 0) {
-            $invoiceDate = new \DateTime($request->get("invoiceDate"));
+        if ($request->request->get("invoiceDate") != null && strlen($request->request->get("invoiceDate")) > 0) {
+            $invoiceDate = new \DateTime($request->request->get("invoiceDate"));
             $requestStack->getSession()->set("invoiceDate", $invoiceDate);
         }
         
@@ -391,9 +392,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function showChangeCustomerInvoiceFormAction(CSRFProtectionService $csrf, RequestStack $requestStack)
+    #[Route('/create/invoice/customer/change', name: 'invoices.show.change.customer', methods: ['POST'])]
+    public function showChangeCustomerInvoiceFormAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $newInvoiceReservationsArray = $requestStack->getSession()->get("invoiceInCreation");
         $customersArray = Array();
 
@@ -430,9 +432,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function saveChangeCustomerInvoiceFormAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, Request $request)
+    #[Route('/create/invoice/customer/change/save', name: 'invoices.show.change.customer.save', methods: ['POST'])]
+    public function saveChangeCustomerInvoiceFormAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, Request $request)
     {
-        $id = $request->get('invoice-id');
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
             if($id === 'new') {
                 $invoiceCustomerArray = $is->makeInvoiceCustomerArrayFromRequest($request);
@@ -440,16 +443,16 @@ class InvoiceServiceController extends AbstractController
                 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction', array());
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $invoice = $em->getRepository(Invoice::class)->find($id);
 
-                $invoice->setSalutation($request->get('salutation'));
-                $invoice->setFirstname($request->get('firstname'));
-                $invoice->setLastname($request->get('lastname'));
-                $invoice->setCompany($request->get('company'));
-                $invoice->setAddress($request->get('address'));
-                $invoice->setZip($request->get('zip'));
-                $invoice->setCity($request->get('city'));
+                $invoice->setSalutation($request->request->get('salutation'));
+                $invoice->setFirstname($request->request->get('firstname'));
+                $invoice->setLastname($request->request->get('lastname'));
+                $invoice->setCompany($request->request->get('company'));
+                $invoice->setAddress($request->request->get('address'));
+                $invoice->setZip($request->request->get('zip'));
+                $invoice->setCity($request->request->get('city'));
                 
                 $em->persist($invoice);
                 $em->flush();
@@ -471,14 +474,12 @@ class InvoiceServiceController extends AbstractController
         }
         
     }
-    
-    /**
-     * @Route("/{invoiceId}/position/apartment/new/", name="invoices.new.apartment.position", methods={"GET","POST"})
-     */
-    public function newApartmentPosition($invoiceId, RequestStack $requestStack, InvoiceService $is, Request $request): Response
+
+    #[Route('/{invoiceId}/position/apartment/new', name: 'invoices.new.apartment.position', methods: ['GET', 'POST'])]
+    public function newApartmentPosition(ManagerRegistry $doctrine, $invoiceId, RequestStack $requestStack, InvoiceService $is, Request $request): Response
     {
         $invoicePosition = new InvoiceAppartment();
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
         // during invoice create process
         if($invoiceId === 'new') {
@@ -513,7 +514,7 @@ class InvoiceServiceController extends AbstractController
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
                 $invoicePosition->setInvoice($invoice);
                 
@@ -541,12 +542,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
     
-    /**
-     * @Route("/{invoiceId}/edit/position/apartment/{id}/edit", name="invoices.edit.apartment.position", methods={"GET","POST"})
-     */
-    public function editApartmentPosition($invoiceId, $id, Request $request, RequestStack $requestStack): Response
+    #[Route('/{invoiceId}/edit/position/apartment/{id}/edit', name: 'invoices.edit.apartment.position', methods: ['GET', 'POST'])]
+    public function editApartmentPosition(ManagerRegistry $doctrine, $invoiceId, $id, Request $request, RequestStack $requestStack): Response
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         
         // during invoice create process
         if($invoiceId === 'new') {
@@ -605,10 +604,11 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
-    public function deleteAppartmentInvoicePositionAction(RequestStack $requestStack, Request $request)
+    #[Route('/delete/invoice/appartment/position', name: 'invoices.delete.appartment.invoice.position', methods: ['POST'])]
+    public function deleteAppartmentInvoicePositionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {        
-        $index = $request->get("appartmentInvoicePositionIndex", -1);       // during create process
-        $positionId = $request->get("appartmentInvoicePositionEditId", -1); // during edit process
+        $index = $request->request->get("appartmentInvoicePositionIndex", -1);       // during create process
+        $positionId = $request->request->get("appartmentInvoicePositionEditId", -1); // during edit process
         
         if($index != -1) {
             $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get("invoicePositionsAppartments");
@@ -617,7 +617,7 @@ class InvoiceServiceController extends AbstractController
 
             return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
         } else {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             $invoiceAppartment = $em->getRepository(InvoiceAppartment::class)->find($positionId);
             $invoiceId = $invoiceAppartment->getInvoice()->getId();
             $em->remove($invoiceAppartment);
@@ -631,17 +631,15 @@ class InvoiceServiceController extends AbstractController
         }        
     }
 
-    /**
-     * @Route("/{invoiceId}/new/miscellaneous", name="invoices.new.miscellaneous.position", methods={"GET","POST"})
-     */
-    public function newMiscellaneousPosition($invoiceId, RequestStack $requestStack, InvoiceService $is, Request $request): Response
+    #[Route('/{invoiceId}/new/miscellaneous', name: 'invoices.new.miscellaneous.position', methods: ['GET', 'POST'])]
+    public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, Request $request): Response
     {
         $invoicePosition = new InvoicePosition();
         $form = $this->createForm(InvoiceMiscPositionType::class, $invoicePosition, [
             'action' => $this->generateUrl('invoices.new.miscellaneous.position', ['invoiceId' => $invoiceId])
         ]);
         $form->handleRequest($request);
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         if ($form->isSubmitted() && $form->isValid()) {
             
@@ -655,7 +653,7 @@ class InvoiceServiceController extends AbstractController
 
                 return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
             } else { // during edit process
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
                 $invoicePosition->setInvoice($invoice);
                 
@@ -696,18 +694,16 @@ class InvoiceServiceController extends AbstractController
             ]
         );
     }
-    
-    /**
-     * @Route("/{invoiceId}/edit/miscellaneous/{id}/edit", name="invoices.edit.miscellaneous.position", methods={"GET","POST"})
-     */
-    public function editMiscellaneousPosition($invoiceId, $id, Request $request, RequestStack $requestStack): Response
+
+    #[Route('/{invoiceId}/edit/miscellaneous/{id}/edit', name: 'invoices.edit.miscellaneous.position', methods: ['GET', 'POST'])]
+    public function editMiscellaneousPosition($invoiceId, $id, ManagerRegistry $doctrine, Request $request, RequestStack $requestStack): Response
     {
         // during invoice create process
         if($invoiceId === 'new') {
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
             $positionMiscellaneous = $newInvoicePositionsMiscellaneousArray[$id];
         } else { // during edit process     
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             $positionMiscellaneous = $em->getRepository(InvoicePosition::class)->find($id);
         }
         
@@ -715,7 +711,7 @@ class InvoiceServiceController extends AbstractController
             'action' => $this->generateUrl('invoices.edit.miscellaneous.position', ['invoiceId' => $invoiceId, 'id' => $id])
         ]);
         $form->handleRequest($request);
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         if ($form->isSubmitted() && $form->isValid()) {
             // float values must be converted to string for later calculation steps in calculateSums()
@@ -761,10 +757,11 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
-    public function deleteMiscellaneousInvoicePositionAction(RequestStack $requestStack, Request $request)
+    #[Route('/delete/invoice/miscellaneous/position', name: 'invoices.delete.miscellaneous.invoice.position', methods: ['POST'])]
+    public function deleteMiscellaneousInvoicePositionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $index = $request->get("miscellaneousInvoicePositionIndex", -1);       // during create process
-        $positionId = $request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
+        $index = $request->request->get("miscellaneousInvoicePositionIndex", -1);       // during create process
+        $positionId = $request->request->request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
         
         if($index != -1) {
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
@@ -773,7 +770,7 @@ class InvoiceServiceController extends AbstractController
 
             return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
         } else {
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             $invoiceMisc = $em->getRepository(InvoicePosition::class)->find($positionId);
             $invoiceId = $invoiceMisc->getInvoice()->getId();
             
@@ -788,9 +785,10 @@ class InvoiceServiceController extends AbstractController
         }    
     }
 
-    public function showNewInvoicePreviewAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is)
+    #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['POST'])]
+    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $newInvoiceReservationsArray = $requestStack->getSession()->get("invoiceInCreation");
 
@@ -839,9 +837,10 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function createNewInvoiceAction(CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, Request $request)
+    #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
+    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $error = false;
 
         if (($csrf->validateCSRFToken($request))) {
@@ -861,7 +860,7 @@ class InvoiceServiceController extends AbstractController
             $invoiceDate =  $requestStack->getSession()->get("invoiceDate");
             $invoice->setDate($invoiceDate);
 
-            $invoice->setRemark($request->get("remark"));
+            $invoice->setRemark($request->request->get("remark"));
             $em->persist($invoice);
 
             foreach ($newInvoicePositionsAppartmentsArray as $appartmentPosition) {
@@ -893,13 +892,14 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    public function updateStatusAction(CSRFProtectionService $csrf, Request $request, $id)
+    #[Route('/update/{id}/status', name: 'invoices.update.status', methods: ['POST'])]
+    public function updateStatusAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         if (($csrf->validateCSRFToken($request))) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
-            $invoice->setStatus($request->get('invoice-status'));
+            $invoice->setStatus($request->request->get('invoice-status'));
             $em->persist($invoice);
             $em->flush();
         }
@@ -912,8 +912,9 @@ class InvoiceServiceController extends AbstractController
      * @param integer $id
      * @return type
      */
-    public function showChangeCustomerInvoiceEditAction(CSRFProtectionService $csrf, InvoiceService $is, $id) {
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/{id}/edit/customer/change', name: 'invoices.get.invoice.customer.change', methods: ['GET'], defaults: ['id' => '0'])]
+    public function showChangeCustomerInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, InvoiceService $is, $id) {
+        $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
         $reservations = $invoice->getReservations();
         $customersArray = Array();
@@ -946,8 +947,9 @@ class InvoiceServiceController extends AbstractController
         );
     }
     
-    public function showChangeNumberInvoiceEditAction(CSRFProtectionService $csrf, $id) {
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/{id}/edit/number/show', name: 'invoices.edit.invoice.number.show', methods: ['GET'], defaults: ['id' => '0'])]
+    public function showChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id) {
+        $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
         $reservations = $invoice->getReservations();
         
@@ -962,14 +964,15 @@ class InvoiceServiceController extends AbstractController
         );
     }
     
-    public function saveChangeNumberInvoiceEditAction(CSRFProtectionService $csrf, Request $request) {
-        $em = $this->getDoctrine()->getManager();
-        $id = $request->get('invoice-id');
+    #[Route('/edit/number/save', name: 'invoices.edit.invoice.number.save', methods: ['POST'])]
+    public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request) {
+        $em = $doctrine->getManager();
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
-            if(strlen($request->get("date")) > 0 && strlen($request->get("number")) > 0) {
+            if(strlen($request->request->get("date")) > 0 && strlen($request->request->get("number")) > 0) {
                 $invoice = $em->getRepository(Invoice::class)->find($id);
-                $invoice->setDate(new \DateTime($request->get("date")));
-                $invoice->setNumber($request->get('number'));
+                $invoice->setDate(new \DateTime($request->request->get("date")));
+                $invoice->setNumber($request->request->get('number'));
                 $em->persist($invoice);
                 $em->flush();
                 
@@ -984,8 +987,9 @@ class InvoiceServiceController extends AbstractController
         ));
     }
     
-    public function showChangeRemarkInvoiceEditAction(CSRFProtectionService $csrf, $id) {
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/{id}/edit/remark/show', name: 'invoices.edit.invoice.remark.show', methods: ['GET'], defaults: ['id' => '0'])]
+    public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id) {
+        $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
         $reservations = $invoice->getReservations();
   
@@ -1000,12 +1004,13 @@ class InvoiceServiceController extends AbstractController
         );
     }
     
-    public function saveChangeRemarkInvoiceEditAction(CSRFProtectionService $csrf, Request $request) {
-        $em = $this->getDoctrine()->getManager();
-        $id = $request->get('invoice-id');
+    #[Route('/edit/remark/save', name: 'invoices.edit.invoice.remark.save', methods: ['POST'])]
+    public function saveChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request) {
+        $em = $doctrine->getManager();
+        $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
-            $invoice->setRemark($request->get("remark"));
+            $invoice->setRemark($request->request->get("remark"));
             $em->persist($invoice);
             $em->flush();
 
@@ -1017,9 +1022,10 @@ class InvoiceServiceController extends AbstractController
         ));
     }
     
-    public function exportToPdfAction(RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id, $templateId)
+    #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]
+    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id, $templateId)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set("invoice-template-id", $templateId);
         
@@ -1039,11 +1045,12 @@ class InvoiceServiceController extends AbstractController
      * @param Request $request
      * @return string
      */
+    #[Route('/invoice/delete', name: 'invoices.dodelete.invoice', methods: ['POST'])]
     public function deleteInvoiceAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, InvoiceService $is, Request $request)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
             if (($csrf->validateCSRFToken($request, true))) {
-                $delete = $is->deleteInvoice($request->get('id'));
+                $delete = $is->deleteInvoice($request->request->get('id'));
 
                 if ($delete) {
                     $this->addFlash('success', 'invoice.flash.delete.success');

@@ -15,6 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\StatisticsService;
@@ -22,23 +23,22 @@ use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Appartment;
 use App\Entity\ReservationOrigin;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/statistics')]
 class StatisticsController extends AbstractController
 {
     private $perPage = 15;
-
-    public function __construct()
-    {
-    }
 
     /**
      * Index Action start page
      *
      * @return mixed
      */
-    public function utilizationAction(RequestStack $requestStack)
+    #[Route('/utilization', name: 'statistics.utilization', methods: ['GET'])]
+    public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
@@ -55,14 +55,15 @@ class StatisticsController extends AbstractController
         ));
     }
     
-    public function getUtilizationForMonthAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/utilization/monthtly', name: 'statistics.utilization.monthtly', methods: ['GET'])]
+    public function getUtilizationForMonthAction(ManagerRegistry $doctrine, Request $request) {        
+        $em = $doctrine->getManager();
         
-        $objectId = $request->get('objectId');
-        $monthStart = $request->get('monthStart');
-        $monthEnd = $request->get('monthEnd');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $monthStart = $request->query->get('monthStart');
+        $monthEnd = $request->query->get('monthEnd');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = ($beds == 0 ? 1 : $beds);
 
@@ -99,11 +100,12 @@ class StatisticsController extends AbstractController
         );
     }
     
-    public function getUtilizationForYearAction(StatisticsService $ss, Request $request) {        
-        $em = $this->getDoctrine()->getManager();
-        $objectId = $request->get('objectId');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+    #[Route('/utilization/yearly', name: 'statistics.utilization.yearly', methods: ['GET'])]
+    public function getUtilizationForYearAction(ManagerRegistry $doctrine, StatisticsService $ss, Request $request) {        
+        $em = $doctrine->getManager();
+        $objectId = $request->query->get('objectId');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
         
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = ($beds == 0 ? 1 : $beds);
@@ -127,9 +129,10 @@ class StatisticsController extends AbstractController
      *
      * @return mixed
      */
-    public function originAction(RequestStack $requestStack)
+    #[Route('/origin', name: 'statistics.origin', methods: ['GET'])]
+    public function originAction(ManagerRegistry $doctrine, RequestStack $requestStack)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
         
@@ -151,14 +154,15 @@ class StatisticsController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function getOriginForMonthAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/origin/monthtly', name: 'statistics.origin.monthtly', methods: ['GET'])]
+    public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request) {        
+        $em = $doctrine->getManager();
         
-        $objectId = $request->get('objectId');
-        $monthStart = $request->get('monthStart');
-        $monthEnd = $request->get('monthEnd');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+        $objectId = $request->query->get('objectId');
+        $monthStart = $request->query->get('monthStart');
+        $monthEnd = $request->query->get('monthEnd');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
 
         $start = new \DateTime($yearStart."-".$monthStart."-1");
         $tmpEnd = new \DateTime($yearEnd."-".$monthEnd."-1"); // set to first day, we need to figure out the number of days in this month
@@ -186,11 +190,12 @@ class StatisticsController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function getOriginForYearAction(Request $request) {        
-        $em = $this->getDoctrine()->getManager();
-        $objectId = $request->get('objectId');
-        $yearStart = $request->get('yearStart');
-        $yearEnd = $request->get('yearEnd');
+    #[Route('/origin/yearly', name: 'statistics.origin.yearly', methods: ['GET'])]
+    public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request) {        
+        $em = $doctrine->getManager();
+        $objectId = $request->query->get('objectId');
+        $yearStart = $request->query->get('yearStart');
+        $yearEnd = $request->query->get('yearEnd');
         
         $start = new \DateTime($yearStart."-01-1");
         $end = new \DateTime($yearEnd."-12-31");

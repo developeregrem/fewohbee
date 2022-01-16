@@ -51,12 +51,7 @@
                 </button>
             </div>
             <div class="col-md-2 text-end ms-auto">
-                <select id="objects" name="object" class="form-select">
-                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
-                {% for object in objects %}
-                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
-                {% endfor %}
-            </select>
+                {% include 'Reservations/reservation_table_settings.html.twig' %}
             </div>
         </div>
     </form>
@@ -70,26 +65,29 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js"></script>
     <script>
     var lastClickedReservationId = 0;
+    var tableSettingsUrl = "{{ path('reservations.table.settings') }}";
     
-    $(document).ready(function () {        
-        let intervall = localStorage.getItem('reservations-intervall');        
-        if(intervall !== null) {
-             $("#table-filter select[name='intervall']").val(parseInt(intervall));
-        }
-
-        // load initial table
-        getNewTable();
+    $(document).ready(function () {                    
         
-        document.getElementById("objects").addEventListener('change', getNewTable);
-        document.querySelectorAll('#table-filter #start, #table-filter select[name="intervall"]').forEach(item => {
-            item.addEventListener('change', event => {
-              getNewTable();
-            });
+        // add dynamic onchage listener for table settings fields
+        delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter select[name="intervall"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
+            getNewTable();            
         });
+        
+        // add dynamic onchange listener for hiliday country field to load subdivisions of the country
+        delegate(document.getElementById("modal-content-settings"), 'change', '#holidayCountry', (event) => {
+            loadTableSettings(tableSettingsUrl);         
+        });
+        
+        // initially load table settings based on local storage values
+        getLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
+        loadTableSettings(tableSettingsUrl, true);  
     });
-
+    
     function selectReservatioForInvoice(id) {
         var url = "{{ path('invoices.select.reservation') }}";
         var content = '<div class="modal-body">' +
@@ -138,7 +136,8 @@
 
         return false;
     }
-
+    
+    
     function getNewTable() {
         var url = "{{ path('reservations.get.table') }}";
         var form = "#table-filter";
@@ -146,9 +145,10 @@
                 '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                 '</div>';
         
-        // save selected intervall for reuse
-        let intervall = parseInt($(form + " select[name='intervall']").val());
-        localStorage.setItem('reservations-intervall', intervall);
+        // save selected settings for reuse
+        setLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
+        setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
         
         $("#table-ajax").html(content);
         
@@ -986,6 +986,6 @@
 {% block bodyjs %}
     {{ parent() }}
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/reservations.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/reservations_1.1.0.js"></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.0.0.js"></script>
 {% endblock %}

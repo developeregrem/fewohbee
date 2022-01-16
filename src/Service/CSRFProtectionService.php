@@ -51,7 +51,7 @@ class CSRFProtectionService
     public function validateCSRFToken(Request $request, $invalidateToken = false, $fieldName = '_csrf_token')
     {
         $savedToken = $this->requestStack->getSession()->get('_csrf_token');
-        $submittedToken = $request->get($fieldName);
+        $submittedToken = $request->request->get($fieldName);
         $result = ($savedToken == $submittedToken);
 
         // generate and save new token

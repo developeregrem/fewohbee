@@ -15,22 +15,22 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-
+use App\Service\CalendarService;
 use App\Entity\Reservation;
 
-class AppTwigExtensions extends AbstractExtension
-{
+class AppTwigExtensions extends AbstractExtension {
+
     private $em;
-	private $requestStack;
-	
-	public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
-    {
+    private $requestStack;
+    private $calendarService;
+
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs) {
         $this->em = $em;
-		$this->requestStack = $requestStack;
+        $this->requestStack = $requestStack;
+        $this->calendarService = $cs;
     }
-	
-	public function getFunctions()
-    {
+
+    public function getFunctions() {
         return array(
             new TwigFunction('date_difference', array($this, 'dateDifferenceFilter')),
             new TwigFunction('reservation_date_compare', array($this, 'reservationDateCompareFilter')),
@@ -43,18 +43,20 @@ class AppTwigExtensions extends AbstractExtension
             new TwigFunction('getActiveRouteName', array($this, 'getActiveRouteNameFilter')),
             new TwigFunction('getLocalizedDate', array($this, 'getLocalizedDateFilter')),
             new TwigFunction('existsById', array($this, 'existsById')),
+            new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
         );
     }
 
-	public function dateDifferenceFilter($startDate, $endDate) {
+    public function dateDifferenceFilter($startDate, $endDate) {
         $start = new \DateTime($startDate);
         $end = new \DateTime($endDate);
         $interval = date_diff($start, $end);
-		
+
         // return number of days
         return $interval->format('%a');
     }
-	/**
+
+    /**
      * compares the reservation start and end date with the displayed period. if start or end lies inside displayed period or not
      */
     public function reservationDateCompareFilter($date, $reservation, $type = 'start') {
@@ -67,20 +69,20 @@ class AppTwigExtensions extends AbstractExtension
             return false;
         }
     }
-	
-	public function getReservationsForPeriodFilter($today, $intervall, $appartment) {
+
+    public function getReservationsForPeriodFilter($today, $intervall, $appartment) {
         $reservations = $this->em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartment($today, $intervall, $appartment);
 
         return $reservations;
     }
-	
-	public function isSingleReservationForDayFilter($today, $period, $reservationIdx, $reservations, $type = 'start') {
+
+    public function isSingleReservationForDayFilter($today, $period, $reservationIdx, $reservations, $type = 'start') {
         $currentReservation = $reservations[$reservationIdx];
         if ($type == 'end') {
             $compareReservationIdx = $reservationIdx + 1;
             // wenn es eine nachfolgende reservierung gibt und diese nicht am gleichen tag startet wie die andere endet
             if (array_key_exists($compareReservationIdx, $reservations) &&
-                $reservations[$compareReservationIdx]->getStartDate()->getTimestamp() == $currentReservation->getEndDate()->getTimestamp()
+                    $reservations[$compareReservationIdx]->getStartDate()->getTimestamp() == $currentReservation->getEndDate()->getTimestamp()
             ) {
                 return false;
             } else { // entweder es gibt keine nachfolgende oder am gleichen tag beginnt keine neue reservierung
@@ -95,7 +97,7 @@ class AppTwigExtensions extends AbstractExtension
             $compareReservationIdx = $reservationIdx - 1;
             // wenn es eine vorherige reservierung gibt und diese nicht am gleichen tag endet wie die andere startet
             if (array_key_exists($compareReservationIdx, $reservations) &&
-                $reservations[$compareReservationIdx]->getEndDate()->getTimestamp() == $currentReservation->getStartDate()->getTimestamp()
+                    $reservations[$compareReservationIdx]->getEndDate()->getTimestamp() == $currentReservation->getStartDate()->getTimestamp()
             ) {
                 return false;
             } else { // entweder es gibt keine vorherige oder am gleichen tag endet keine neue reservierung
@@ -110,22 +112,22 @@ class AppTwigExtensions extends AbstractExtension
 
         return $reservations;
     }
-	
-	public function getLetterCountForDisplayFilter($period, $intervall) {
+
+    public function getLetterCountForDisplayFilter($period, $intervall) {
         if ($period > 4) {
             return pow($period, 2) - 2;
         } else {
             return ($period * 2) - 1;
         }
     }
-	
-	public function getDateDiffAmountFilter($start, $end) {
+
+    public function getDateDiffAmountFilter($start, $end) {
         $interval = $start->diff($end);
         return $interval->format('%a');
     }
-	
-	// prüft einen float-Wert, ob die Nachkommastellen 0 sind
-	public function isDecimalPlace0($float) {
+
+    // prüft einen float-Wert, ob die Nachkommastellen 0 sind
+    public function isDecimalPlace0($float) {
         // prüfe 1. Nachkommastelle, ob sie 0 ist
         if ((($float * 10) % 10) === 0) {
             // prüfe 2. Nachkommastelle, ob sie 0 ist
@@ -135,31 +137,35 @@ class AppTwigExtensions extends AbstractExtension
         }
         return false;
     }
-	
-	public function getLocalizedMonthFilter($monthNumber, $pattern, $locale) {
+
+    public function getLocalizedMonthFilter($monthNumber, $pattern, $locale) {
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $formatter->setPattern($pattern);
-        return $formatter->format(mktime(0, 0, 0, $monthNumber+1, 0, 0));
+        return $formatter->format(mktime(0, 0, 0, $monthNumber + 1, 0, 0));
     }
-	
-	public function getActiveRouteNameFilter() {
+
+    public function getActiveRouteNameFilter() {
         $route = $this->requestStack->getCurrentRequest()->get('_route');
 
         return $route;
     }
-	
-	public function getLocalizedDateFilter($date, $pattern, $locale) {
+
+    public function getLocalizedDateFilter($date, $pattern, $locale) {
         $formatter = new \IntlDateFormatter($locale, \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $formatter->setPattern($pattern);
         return $formatter->format($date);
     }
-    
+
     public function existsById($array, $compare) {
-        foreach($array as $single) {
-            if($single->getId() === $compare->getId()) {
+        foreach ($array as $single) {
+            if ($single->getId() === $compare->getId()) {
                 return true;
             }
         }
         return false;
+    }
+
+    public function getPublicdaysForDay($date, $code, $locale) {
+        return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
     }
 }
