@@ -13,23 +13,23 @@ namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Entity\User;
 use App\Entity\Role;
 use App\Service\UserService;
 use App\Service\CSRFProtectionService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/users')]
 class UserServiceController extends AbstractController
 {
-    public function __construct()
-    {
 
-    }
-
-    public function indexAction()
+    #[Route('/', name: 'users.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine)
     {
-	$em = $this->getDoctrine()->getManager();
+	$em = $doctrine->getManager();
         $users = $em->getRepository(User::class)->findAll();
 
         return $this->render('Users/index.html.twig', array(
@@ -37,9 +37,10 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function getUserAction(CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'users.get.user', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 		$user = $em->getRepository(User::class)->find($id);
         $roles = $em->getRepository(Role::class)->findAll();
 
@@ -50,9 +51,10 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function newUserAction(CSRFProtectionService $csrf)
+    #[Route('/new', name: 'users.new.user', methods: ['GET'])]
+    public function newUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $roles = $em->getRepository(Role::class)->findAll();
         $user = new User();
         $user->setId('new');
@@ -64,9 +66,10 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function createUserAction(Request $request, UserService $userService, CSRFProtectionService $csrf)
+    #[Route('/create', name: 'users.create.user', methods: ['POST'])]
+    public function createUserAction(ManagerRegistry $doctrine, Request $request, UserService $userService, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 		$error = false;
         if (($csrf->validateCSRFToken($request))) {
             $userem = $em->getRepository(User::class);
@@ -82,7 +85,7 @@ class UserServiceController extends AbstractController
                 // check for mandatory fields
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } else if(!$userService->checkPassword($request->get("password-new"))) {
+            } else if(!$userService->checkPassword($request->request->get("password-new"))) {
                 $error = true;
                 $this->addFlash('warning', 'user.password.error');
             } else {
@@ -99,14 +102,15 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    public function editUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
+    #[Route('/{id}/edit', name: 'users.edit.user', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editUserAction(ManagerRegistry $doctrine, Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
     {        
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $user = $userService->getUserFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             
-            if(!$userService->checkPassword($request->get("password-".$id))) {
+            if(!$userService->checkPassword($request->request->get("password-".$id))) {
                 $error = true;
                 $this->addFlash('warning', 'user.password.error');
                 // check for mandatory fields
@@ -131,6 +135,7 @@ class UserServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'users.delete.user', methods: ['GET', 'POST'])]
     public function deleteUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
     {
         if ($request->getMethod() == 'POST') {

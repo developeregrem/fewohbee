@@ -226,6 +226,30 @@
                 <source>reservation.table.calendarweek</source>
                 <target>KW</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.title">
+                <source>reservation.table.settings.title</source>
+                <target>Tabelleneigenschaften</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.all">
+                <source>reservation.table.settings.all</source>
+                <target>alle</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.country">
+                <source>reservation.table.settings.country</source>
+                <target>Anzeigeland</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.subdivision">
+                <source>reservation.table.settings.subdivision</source>
+                <target>Bundesland/Staat</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.general">
+                <source>reservation.table.settings.general</source>
+                <target>Allgemein</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.holidays">
+                <source>reservation.table.settings.holidays</source>
+                <target>Anzeige der Feiertage</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

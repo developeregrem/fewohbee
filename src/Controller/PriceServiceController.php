@@ -14,6 +14,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
@@ -21,16 +22,16 @@ use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Entity\PricePeriod;
+use Symfony\Component\Routing\Annotation\Route;
 
+#[Route('/prices')]
 class PriceServiceController extends AbstractController
 {
-    public function __construct()
-    {
-    }
 
-    public function indexAction()
+    #[Route('/', name: 'prices.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', array(
@@ -38,9 +39,10 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function getPriceAction(CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
@@ -61,9 +63,10 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function newPriceAction(CSRFProtectionService $csrf)
+    #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
+    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
@@ -86,7 +89,8 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function createPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request)
+    #[Route('/create', name: 'prices.create.price', methods: ['POST'])]
+    public function createPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request)
     {
         $error = false;
         $conflicts = [];
@@ -103,7 +107,7 @@ class PriceServiceController extends AbstractController
                 
                 // complain conflicts only when current price is marked as acitve
                 if(!$price->getActive() || count($conflicts) === 0) {
-                    $em = $this->getDoctrine()->getManager();
+                    $em = $doctrine->getManager();
                     $em->persist($price);
                     $em->flush();
                     // add succes message
@@ -121,13 +125,14 @@ class PriceServiceController extends AbstractController
         ));
     }
 
-    public function editPriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
+    #[Route('/{id}/edit', name: 'prices.edit.price', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         $error = false;
         $conflicts = [];
         if (($csrf->validateCSRFToken($request))) {
             $price = $ps->getPriceFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
             
             // check for mandatory fields
             if (strlen($price->getDescription()) == 0 || strlen($price->getPrice()) == 0 || strlen($price->getVat()) == 0
@@ -165,6 +170,7 @@ class PriceServiceController extends AbstractController
         ));
     }
 
+    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['GET', 'POST'])]
     public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
     {
         if ($request->getMethod() == 'POST') {

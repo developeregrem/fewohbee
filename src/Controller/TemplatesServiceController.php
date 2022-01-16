@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Doctrine\Persistence\ManagerRegistry;
 
 use App\Service\CSRFProtectionService;
 use App\Service\TemplatesService;
@@ -34,20 +35,18 @@ use App\Service\InvoiceService;
 /**
  * @Route("/settings/templates")
  */
+#[Route('/settings/templates')]
 class TemplatesServiceController extends AbstractController
 {
-    public function __construct()
-    {
-
-    }
 
     /**
      * Index-View
      * @return mixed
      */
-    public function indexAction()
+    #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
+    public function indexAction(ManagerRegistry $doctrine)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
 
         return $this->render('Templates/index.html.twig', array(
@@ -60,9 +59,10 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function getAction(CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'settings.templates.get', methods: ['GET'], defaults: ['id' => '0'])]
+    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $template = $em->getRepository(Template::class)->find($id);
         
         $types = $em->getRepository(TemplateType::class)->findAll();
@@ -78,9 +78,10 @@ class TemplatesServiceController extends AbstractController
      * Show form for new entity
      * @return mixed
      */
-    public function newAction(CSRFProtectionService $csrf)
+    #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
+    public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $template = new Template();
         $template->setId("new");
@@ -99,7 +100,8 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return mixed
      */
-    public function createAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request)
+    #[Route('/create', name: 'settings.templates.create', methods: ['POST'])]
+    public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -110,7 +112,7 @@ class TemplatesServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $em = $this->getDoctrine()->getManager();
+                $em = $doctrine->getManager();
                 $em->persist($template);
                 $em->flush();
 
@@ -130,12 +132,13 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function editAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id)
+    #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
+    public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
             $template = $ts->getEntityFromForm($request, $id);
-            $em = $this->getDoctrine()->getManager();
+            $em = $doctrine->getManager();
 
             // check for mandatory fields
             if (strlen($template->getName()) == 0) {
@@ -163,8 +166,8 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return string
      * 
-     * @Route("/{id}/delete", name="settings.templates.delete", methods={"DELETE", "GET"})
      */
+    #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['GET', 'DELETE'])]
     public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template)
     {
         if ($request->getMethod() == 'DELETE') {
@@ -195,9 +198,10 @@ class TemplatesServiceController extends AbstractController
      * @param $id
      * @return mixed
      */
-    public function previewAction(TemplatesService $ts, $id)
+    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
+    public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $reservation = $em->getRepository(Reservation::class)->find(172);
         
         $template = $ts->renderTemplateForReservations($id, Array($reservation));
@@ -207,11 +211,18 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function selectReservationAction(RequestStack $requestStack, Request $request)
+    /**
+     * Called when clicking add conversation in the reservation overview
+     * @param RequestStack $requestStack
+     * @param Request $request
+     * @return type
+     */
+    #[Route('/select/reservation', name: 'settings.templates.select.reservation', methods: ['POST'])]
+    public function selectReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
-        if ($request->get('createNew') == "true") {
+        if ($request->request->get('createNew') == "true") {
             $selectedReservationIds = array();
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
@@ -221,8 +232,8 @@ class TemplatesServiceController extends AbstractController
             $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         }
 
-        if ($request->get("reservationid") != null) {
-            $selectedReservationIds[] = $request->get("reservationid");
+        if ($request->request->get("reservationid") != null) {
+            $selectedReservationIds[] = $request->request->get("reservationid");
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
 
@@ -239,11 +250,12 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
-    public function getReservationsAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    #[Route('/get/reservations', name: 'settings.templates.get.reservations', methods: ['GET'])]
+    public function getReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
-        if ($request->get('createNew') == "true") {
+        if ($request->query->get('createNew') == "true") {
             $selectedReservationIds = array();
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
             // reset session variables
@@ -266,28 +278,30 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
-    public function removeReservationFromSelectionAction(RequestStack $requestStack, Request $request)
+    #[Route('/remove/reservation/from/selection', name: 'settings.templates.remove.reservation.from.selection', methods: ['POST'])]
+    public function removeReservationFromSelectionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
-        if ($request->get("reservationkey") != null) {
-            unset($selectedReservationIds[$request->get("reservationkey")]);
+        if ($request->request->get("reservationkey") != null) {
+            unset($selectedReservationIds[$request->request->get("reservationkey")]);
             $requestStack->getSession()->set("selectedReservationIds", $selectedReservationIds);
         }
         
         return $this->selectReservationAction($requestStack, $request);
     }
     
-    public function getReservationsInPeriodAction(RequestStack $requestStack, Request $request)
+    #[Route('/get/reservations/in/period', name: 'settings.templates.get.reservations.in.period', methods: ['POST'])]
+    public function getReservationsInPeriodAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $reservations = Array();
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
         $potentialReservations = $em->getRepository(
                 Reservation::class
-            )->loadReservationsForPeriod($request->get('from'), $request->get('end'));
+            )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
 
         foreach ($potentialReservations as $reservation) {
             // make sure that already selected reservation can not be choosen twice
@@ -304,14 +318,15 @@ class TemplatesServiceController extends AbstractController
         );
     }
 
-    public function getReservationsForCustomerAction(RequestStack $requestStack, Request $request)
+    #[Route('/get/reservations/for/customer', name: 'settings.templates.get.reservations.for.customer', methods: ['POST'])]
+    public function getReservationsForCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $reservations = Array();
         $selectedReservationIds = $requestStack->getSession()->get("selectedReservationIds");
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
-            $request->get("lastname")
+            $request->request->get("lastname")
         );
 
         if ($customer instanceof Customer) {
@@ -334,16 +349,17 @@ class TemplatesServiceController extends AbstractController
         );
     }
     
-    public function sendEmailAction(CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
+    #[Route('/email/send', name: 'settings.templates.email.send', methods: ['POST'])]
+    public function sendEmailAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $to = $request->get("to");
-            $subject = $request->get("subject");
-            $msg = $request->get("msg");
-            $templateId = $request->get("templateId");
+            $to = $request->request->get("to");
+            $subject = $request->request->get("subject");
+            $msg = $request->request->get("msg");
+            $templateId = $request->request->get("templateId");
             $attachmentIds = $requestStack->getSession()->get("templateAttachmentIds", Array()); 
 
             // todo add email validation http://silex.sensiolabs.org/doc/providers/validator.html
@@ -400,15 +416,16 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function saveFileAction(CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
+    #[Route('/file/save', name: 'settings.templates.file.save', methods: ['POST'])]
+    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $subject = $request->get("subject");
-            $msg = $request->get("msg");
-            $templateId = $request->get("templateId");
+            $subject = $request->request->get("subject");
+            $msg = $request->request->get("msg");
+            $templateId = $request->request->get("templateId");
 
             if (strlen($subject) == 0 || strlen($msg) == 0) {
                 $error = true;
@@ -461,13 +478,14 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
-    public function deleteAttachmentAction(CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    #[Route('/attachment/remove', name: 'settings.templates.attachment.remove', methods: ['POST'])]
+    public function deleteAttachmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request))) {            
-            $aId = $request->get("id");
+            $aId = $request->request->get("id");
             $attachments = $requestStack->getSession()->get("templateAttachmentIds");
             $isAttachment = false;
             // loop through all reservations
@@ -502,13 +520,14 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function deleteCorrespondenceAction(CSRFProtectionService $csrf, Request $request)
+    #[Route('/correspondence/remove', name: 'settings.templates.correspondence.remove', methods: ['POST'])]
+    public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
 
         $error = false;
         if (($csrf->validateCSRFToken($request, true))) {            
-            $cId = $request->get("id");
+            $cId = $request->request->get("id");
             $correspondence = $em->getRepository(Correspondence::class)->find($cId);
             
             if($correspondence instanceof Correspondence) {
@@ -535,11 +554,12 @@ class TemplatesServiceController extends AbstractController
      * @param Request $request
      * @return type
      */
+    #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
     public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is)
     {
         $error = false;
-        $isInvoice = $request->get("isInvoice", "false");
-        $cId = $request->get("id");
+        $isInvoice = $request->request->get("isInvoice", "false");
+        $cId = $request->request->get("id");
         if($isInvoice != 'false') {
             $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
         }
@@ -553,9 +573,10 @@ class TemplatesServiceController extends AbstractController
         ));
     }
     
-    public function exportPDFCorrespondenceAction(TemplatesService $ts, Request $request, $id)
+    #[Route('/correspondence/export/pdf/{id}/', name: 'settings.templates.correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
+    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $correspondence = $em->getRepository(Correspondence::class)->find($id);
         if($correspondence instanceof FileCorrespondence) {
             
@@ -570,9 +591,10 @@ class TemplatesServiceController extends AbstractController
         return new Response("no file");
     }
     
-    public function showMailCorrespondenceAction(Request $request, $id)
+    #[Route('/correspondence/show/{id}', name: 'settings.templates.correspondence.show', methods: ['POST'], defaults: ['id' => '0'])]
+    public function showMailCorrespondenceAction(ManagerRegistry $doctrine, Request $request, $id)
     {
-        $em = $this->getDoctrine()->getManager();
+        $em = $doctrine->getManager();
         $correspondence = $em->getRepository(Correspondence::class)->find($id);
         if($correspondence instanceof MailCorrespondence) {
             
@@ -580,15 +602,16 @@ class TemplatesServiceController extends AbstractController
                 'Templates/templates_show_mail.html.twig',
                 array(
                     'correspondence' => $correspondence,
-                    'reservationId' => $request->get("reservationId")
+                    'reservationId' => $request->request->get("reservationId")
                 )
              );
         }
         return new Response("no mail");
     }
     
-    public function getTemplatesForEditor($templateTypeId) {
-        $em = $this->getDoctrine()->getManager();
+    #[Route('/editortemplate/{templateTypeId}', name: 'settings.templates.editor.template', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
+    public function getTemplatesForEditor(ManagerRegistry $doctrine, $templateTypeId) {
+        $em = $doctrine->getManager();
         /* @var $type TemplateType */
         $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
         if($type instanceof TemplateType && !empty($type->getEditorTemplate())) {
@@ -604,6 +627,7 @@ class TemplatesServiceController extends AbstractController
     /**
      * @Route("/upload", name="templates.upload", methods={"POST"})
      */
+    #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
     public function uploadImage(Request $request, FileUploader $fos) {
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');

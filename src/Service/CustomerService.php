@@ -15,7 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use App\Entity\OpengeodbDePlz;
+use App\Entity\PostalCodeData;
 
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -41,43 +41,44 @@ class CustomerService implements ITemplateRenderer
             $customer = $this->em->getRepository(Customer::class)->find($id);
         }
         
-        $customer->setSalutation($request->get("salutation-" . $id));
-        $customer->setFirstname($request->get("firstname-" . $id));
-        $customer->setLastname($request->get("lastname-" . $id));
-        if (strlen($request->get("birthday-" . $id)) > 0) {
-            $customer->setBirthday(new \DateTime($request->get("birthday-" . $id)));
+        $customer->setSalutation($request->request->get("salutation-" . $id));
+        $customer->setFirstname($request->request->get("firstname-" . $id));
+        $customer->setLastname($request->request->get("lastname-" . $id));
+        if (strlen($request->request->get("birthday-" . $id)) > 0) {
+            $customer->setBirthday(new \DateTime($request->request->get("birthday-" . $id)));
         } else {
             $customer->setBirthday(null);
         }
         
-        $addressCount = count($request->get("addresstype-" . $id, Array()));
+        $addressTypes = $request->request->all("addresstype-" . $id) ?? [];
+        $addressCount = count($addressTypes);
         $newAddresses = Array();
         for($i = 0; $i < $addressCount; $i++) {
             if ($id === 'new') {
                 $address = new CustomerAddresses();
             } else {
                 // if exist use it or create one
-                $atid = $request->get("addresstypeid-" . $id)[$i];
+                $atid = $request->request->all("addresstypeid-" . $id)[$i];
                 $address = $this->em->getRepository(CustomerAddresses::class)->find($atid);
                 if(!$address instanceof CustomerAddresses) {
                     $address = new CustomerAddresses();
                 }
             }          
             
-            $address->setType($request->get("addresstype-" . $id)[$i]);
-            $address->setCompany($request->get("company-" . $id)[$i]);
-            $address->setAddress($request->get("address-" . $id)[$i]);
-            $address->setZip($request->get("zip-" . $id)[$i]);
-            $address->setCity($request->get("city-" . $id)[$i]);
-            $address->setCountry($request->get("country-" . $id)[$i]);
-            $address->setPhone($request->get("phone-" . $id)[$i]);
-            $address->setFax($request->get("fax-" . $id)[$i]);
-            $address->setMobilePhone($request->get("mobilephone-" . $id)[$i]);
-            $address->setEmail($request->get("email-" . $id)[$i]);
+            $address->setType($request->request->all("addresstype-" . $id)[$i]);
+            $address->setCompany($request->request->all("company-" . $id)[$i]);
+            $address->setAddress($request->request->all("address-" . $id)[$i]);
+            $address->setZip($request->request->all("zip-" . $id)[$i]);
+            $address->setCity($request->request->all("city-" . $id)[$i]);
+            $address->setCountry($request->request->all("country-" . $id)[$i]);
+            $address->setPhone($request->request->all("phone-" . $id)[$i]);
+            $address->setFax($request->request->all("fax-" . $id)[$i]);
+            $address->setMobilePhone($request->request->all("mobilephone-" . $id)[$i]);
+            $address->setEmail($request->request->all("email-" . $id)[$i]);
             
             $newAddresses[] = $address;
         }
-        $customer->setRemark($request->get("remark-" . $id));
+        $customer->setRemark($request->request->get("remark-" . $id));
         
         // first remove all old addresses
         $oldAddresses = clone $customer->getCustomerAddresses();        
@@ -162,14 +163,24 @@ class CustomerService implements ITemplateRenderer
     
     /**
      * Returns the city connected to the given plz
-     * @param string $plz
-     * @return string
+     * @param string $country
+     * @param string $zip
+     * @return array
      */
-    public function getCityByPlz($plz)
+    public function getCitiesByZIP($country, $zip)
     {
-        $city = $this->em->getRepository(OpengeodbDePlz::class)->find($plz);
+        $cities = $this->em->getRepository(PostalCodeData::class)->findPlacesByCode($country, $zip);
+        $result = [];
+        /* @var $city PostalCodeData */
+        foreach($cities as $city) {
+            $result [] = [
+                'postalCode' => $city->getPostalCode(),
+                'placeName' => $city->getPlaceName(),
+                'search' => $city->getPostalCode() . ' - ' . $city->getPlaceName()
+            ];
+        }
 
-        return $city;
+        return $result;
     }
 
     public function getRenderParams($template, $param) {

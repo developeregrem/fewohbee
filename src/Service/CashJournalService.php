@@ -34,10 +34,10 @@ class CashJournalService implements ITemplateRenderer
             $journal = $this->em->getRepository(CashJournal::class)->find($id);
         }
         
-        $journal->setCashYear($request->get('year'));
-        $journal->setCashMonth($request->get('month'));
-        $journal->setCashStart(str_replace(',', '.', $request->get('cashStart')));
-        $journal->setCashEnd(str_replace(',', '.', $request->get('cashEnd')));
+        $journal->setCashYear($request->request->get('year'));
+        $journal->setCashMonth($request->request->get('month'));
+        $journal->setCashStart(str_replace(',', '.', $request->request->get('cashStart')));
+        $journal->setCashEnd(str_replace(',', '.', $request->request->get('cashEnd')));
 
         if(strlen($journal->getCashEnd()) == 0) {
             $journal->setCashEnd(0.00);
@@ -53,13 +53,13 @@ class CashJournalService implements ITemplateRenderer
             $entry = $this->em->getRepository(CashJournalEntry::class)->find($id);
         }
         
-        $entry->setIncomes(str_replace(',', '.', $request->get('incomes')));
-        $entry->setExpenses(str_replace(',', '.', $request->get('expenses')));
-        $entry->setCounterAccount($request->get('counterAccount'));
-        $entry->setInvoiceNumber($request->get('invoiceNumber'));
-        $entry->setDocumentNumber($request->get('documentNumber'));
-        $entry->setDate(($request->get('date') ? new \DateTime($request->get('date')) : null));
-        $entry->setRemark($request->get('remark'));
+        $entry->setIncomes(str_replace(',', '.', $request->request->get('incomes')));
+        $entry->setExpenses(str_replace(',', '.', $request->request->get('expenses')));
+        $entry->setCounterAccount($request->request->get('counterAccount'));
+        $entry->setInvoiceNumber($request->request->get('invoiceNumber'));
+        $entry->setDocumentNumber($request->request->get('documentNumber'));
+        $entry->setDate(($request->request->get('date') ? new \DateTime($request->request->get('date')) : null));
+        $entry->setRemark($request->request->get('remark'));
         
         if(strlen($entry->getExpenses()) == 0) {
             $entry->setExpenses(0.00);

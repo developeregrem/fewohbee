@@ -24,7 +24,9 @@
             </div>
             <div class="col-md text-end">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="showCreateCustomerForm()" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-default" 
+                            onclick="getContentForModal('{{ path('customers.new.customer') }}', '{{ 'nav.customer.add'|trans }}')" 
+                            data-bs-toggle="modal"
                             data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}</button>
                 </div>
@@ -41,6 +43,7 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js"></script>
     <script>
         $(document).ready(function () {
             if ($("#search").val() != "") {
@@ -84,64 +87,6 @@
             return false;
         }
 
-        function getCustomer(id) {
-            var url = "{{ path('customers.get.customer', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $('#modalCenter .modal-title').text("{{ 'customer.details'|trans }}");
-            $('#modalCenter').modal('show')
-
-            $.ajax({
-                url: url,
-                type: "get",
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#modal-content-ajax").html(data);
-                    } else {
-                        //window.location.href = "{{ path('start') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-
-        function editCustomer(id) {
-            var url = "{{ path('customers.edit.customer.show', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $('#modalCenter .modal-title').text("{{ 'customer.details'|trans }}");
-            $('#modalCenter').modal('show')
-
-            $.ajax({
-                url: url,
-                type: "get",
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#modal-content-ajax").html(data);
-                    } else {
-                        //window.location.href = "{{ path('start') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-
         function saveCustomer(id) {
             var form = "#customer-form-" + id;
             var url = "{{ path('customers.edit.customer', {'id': 'placeholder'}) }}";
@@ -179,7 +124,7 @@
 
         function doDeleteCustomer(id) {
             var form = "#customer-form-" + id;
-            var url = "{{ path('customers.dodelete.customer', {'id': 'placeholder'}) }}";
+            var url = "{{ path('customers.delete.customer', {'id': 'placeholder'}) }}";
             url = url.replace("placeholder", id);
 
             $.ajax({
@@ -191,22 +136,6 @@
                 },
                 success: function (data) {
                     location.reload();
-                }
-            });
-
-            return false;
-        }
-
-        function showCreateCustomerForm() {
-            var url = "{{ path('customers.new.customer') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $('#modalCenter .modal-title').text("{{ 'nav.customer.add'|trans }}");
-            $("#modal-content-ajax").html(content);
-            $("#modal-content-ajax").load(url, function (response, status, xhr) {
-                if (status == "success") {
-                    
                 }
             });
 

@@ -1,0 +1,40 @@
+
+<div class="modal-body">
+    <h6 class="border-bottom pb-2 text-start mt-3">{{ 'reservation.table.settings.general'|trans }}</h6>
+    <div class="row">
+        <label for="object" class="col-sm-4 col-form-label text-end">{{ 'object.name'|trans }}</label>
+        <div class="col-sm">
+            <select id="objects" name="object" class="form-select">
+                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                {% for object in objects %}
+                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <h6 class="border-bottom pb-2 text-start mt-4">{{ 'reservation.table.settings.holidays'|trans }}</h6>
+    <div class="row">
+        <label for="holidayCountry" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.country'|trans }}</label>
+        <div class="col-sm">
+            <select id="holidayCountry" name="holidayCountry" class="form-select">
+                {% for code, country in holidayCountries %}
+                    <option value="{{ code }}"{% if code == selectedCountry %} selected{% endif %}>{{ country.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% if holidayCountries[selectedCountry] is defined and holidayCountries[selectedCountry].subdivisions|length > 0 %}
+    <div class="row">
+        <label for="holidaySubdivision" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.subdivision'|trans }}</label>
+        <div class="col-sm">
+            <select id="holidaySubdivision" name="holidaySubdivision" class="form-select">
+                <option value="all"{% if selectedSubdivision == 'all' %} selected{% endif %}>-- {{ 'reservation.table.settings.all'|trans }} --</option>
+                {% for code, division in holidayCountries[selectedCountry].subdivisions %}
+                    <option value="{{ code }}"{% if code == selectedSubdivision %} selected{% endif %}>{{ division.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% endif %}
+</div>

@@ -41,27 +41,27 @@ class PriceService
             $price = $this->em->getRepository(Price::class)->find($id);
         }
 
-        $price->setDescription($request->get("description-" . $id));
-        $price->setPrice(str_replace(",", ".", $request->get("price-" . $id)));
-        $price->setVat(str_replace(",", ".", $request->get("vat-" . $id)));
-        $price->setType($request->get("type-" . $id));
+        $price->setDescription($request->request->get("description-" . $id));
+        $price->setPrice(str_replace(",", ".", $request->request->get("price-" . $id)));
+        $price->setVat(str_replace(",", ".", $request->request->get("vat-" . $id)));
+        $price->setType($request->request->get("type-" . $id));
 
         $this->setOrigins($request, $price, $id);
 
-        if( $request->get("allperiods-". $id) == null ) {            
+        if( $request->request->get("allperiods-". $id) == null ) {            
             $this->setPeriods($request, $price, $id);
             $price->setAllPeriods(false);
         } else {
             $price->setAllPeriods(true);
         }
 
-        if ($request->get("active-" . $id) != null) {
+        if ($request->request->get("active-" . $id) != null) {
             $price->setActive(true);
         } else {
             $price->setActive(false);
         }
 
-        if ($request->get("alldays-" . $id) != null) {
+        if ($request->request->get("alldays-" . $id) != null) {
             $price->setAllDays(true);
             $price->setMonday(true);
             $price->setTuesday(true);
@@ -73,49 +73,49 @@ class PriceService
         } else {
             $noDaySelected = true;
 
-            if ($request->get("monday-" . $id) != null) {
+            if ($request->request->get("monday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setMonday(true);
             } else {
                 $price->setMonday(false);
             }
 
-            if ($request->get("tuesday-" . $id) != null) {
+            if ($request->request->get("tuesday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setTuesday(true);
             } else {
                 $price->setTuesday(false);
             }
 
-            if ($request->get("wednesday-" . $id) != null) {
+            if ($request->request->get("wednesday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setWednesday(true);
             } else {
                 $price->setWednesday(false);
             }
 
-            if ($request->get("thursday-" . $id) != null) {
+            if ($request->request->get("thursday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setThursday(true);
             } else {
                 $price->setThursday(false);
             }
 
-            if ($request->get("friday-" . $id) != null) {
+            if ($request->request->get("friday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setFriday(true);
             } else {
                 $price->setFriday(false);
             }
 
-            if ($request->get("saturday-" . $id) != null) {
+            if ($request->request->get("saturday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setSaturday(true);
             } else {
                 $price->setSaturday(false);
             }
 
-            if ($request->get("sunday-" . $id) != null) {
+            if ($request->request->get("sunday-" . $id) != null) {
                 if ($noDaySelected) $noDaySelected = false;
                 $price->setSunday(true);
             } else {
@@ -129,22 +129,22 @@ class PriceService
             }
         }
         
-        if ($request->get("includesVat-" . $id) != null) {
+        if ($request->request->get("includesVat-" . $id) != null) {
             $price->setIncludesVat(true);
         } else {
             $price->setIncludesVat(false);
         }
         
-        if ($request->get("isFlatPrice-" . $id) != null) {
+        if ($request->request->get("isFlatPrice-" . $id) != null) {
             $price->setIsFlatPrice(true);
         } else {
             $price->setIsFlatPrice(false);
         }
 
         if ($price->getType() == 2) {
-            $price->setNumberOfPersons($request->get("number-of-persons-" . $id));
-            $price->setMinStay($request->get("min-stay-" . $id));
-            $category = $this->em->getRepository(RoomCategory::class)->find($request->get("category-" . $id));
+            $price->setNumberOfPersons($request->request->get("number-of-persons-" . $id));
+            $price->setMinStay($request->request->get("min-stay-" . $id));
+            $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get("category-" . $id));
             $price->setRoomCategory($category);
         } else {
             $price->setRoomCategory(null);
@@ -338,7 +338,7 @@ class PriceService
      * @param type $id
      */
     private function setOrigins(Request $request, Price $price, $id) {
-        $origins = $request->get("origin-" . $id, []);
+        $origins = $request->request->all("origin-" . $id) ?? [];
         $allAddedOrigins = new ArrayCollection();
         
         $originsDb = $this->em->getRepository(ReservationOrigin::class)->findById($origins);
@@ -365,11 +365,11 @@ class PriceService
      */
     private function setPeriods(Request $request, Price $price, $id) {
         $allAddedPeriods = new ArrayCollection();
-        $periodIds = array_unique( $request->get("period-". $id, []) );
+        $periodIds = array_unique( $request->request->all("period-". $id) ?? [] );
         // loop over all posted periods (new and existing ones)
         foreach($periodIds as $id) {
-            $starts = $request->get("periodstart-". $id, []);
-            $ends = $request->get("periodend-". $id, []);
+            $starts = $request->request->all("periodstart-". $id) ?? [];
+            $ends = $request->request->all("periodend-". $id) ?? [];
             
             foreach($starts as $key => $start) {
                 if ($id !== 'new') {
