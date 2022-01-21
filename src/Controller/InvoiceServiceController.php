@@ -103,7 +103,7 @@ class InvoiceServiceController extends AbstractController
         ));
     }
 
-    #[Route('/{id}/', name: 'invoices.get.invoice', methods: ['GET'], defaults: ['id' => '0'])]
+    #[Route('/get/{id}/', name: 'invoices.get.invoice', methods: ['GET'], defaults: ['id' => '0'])]
     public function getInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id)
     {
         $em = $doctrine->getManager();
