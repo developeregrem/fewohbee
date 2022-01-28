@@ -24,7 +24,7 @@ Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den
 
 ## Anforderungen
 
-Um das Tool nutzen zu können, benötigen man einen kleinen Webserver, der die Anforderungen von Symfony 5 [requirements](https://symfony.com/doc/current/setup.html#technical-requirements) erfüllt:
+Um das Tool nutzen zu können, benötigen man einen kleinen Webserver, der die Anforderungen von Symfony [requirements](https://symfony.com/doc/current/setup.html#technical-requirements) erfüllt:
 
  - PHP 8.0.2 oder höher
  - php-intl extension
