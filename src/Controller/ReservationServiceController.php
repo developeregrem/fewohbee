@@ -19,6 +19,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 use App\Controller\CustomerServiceController;
 use App\Service\CSRFProtectionService;
@@ -569,6 +570,7 @@ class ReservationServiceController extends AbstractController
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->request->get('remark'));
                 $reservation->setReservationOrigin($origin);
+                $reservation->setUuid(Uuid::v4());
 
                 foreach($customersInReservation as $guest) {
                     // add guest only if he is in the appartment

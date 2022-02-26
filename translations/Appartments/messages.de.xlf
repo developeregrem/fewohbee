@@ -50,6 +50,54 @@
                 <source>appartment.category</source>
                 <target>Zimmerkategorie</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.title">
+                <source>calendar.sync.title</source>
+                <target>Kalender synchronisieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.hint">
+                <source>calendar.sync.export.hint</source>
+                <target>Geben Sie den Belegungsplan für dieses Zimmer für andere Anwendungen frei, die den sog. iCal Import (Kalender synchronisieren) unterstützen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.title">
+                <source>calendar.sync.export.option.title</source>
+                <target>Exportoptionen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.status.hint">
+                <source>calendar.sync.export.option.status.hint</source>
+                <target>Nur Reservierungen des angegebenen Status werden exportiert.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.guestname.label">
+                <source>calendar.sync.export.option.guestname.label</source>
+                <target>Name des Gastes exportieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.option.guestname.hint">
+                <source>calendar.sync.export.option.guestname.hint</source>
+                <target>Der Titel des exportierten Kalendereintrages enthält den Namen des Gastes.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.title">
+                <source>calendar.sync.export.access.title</source>
+                <target>Zugriff</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.public.label">
+                <source>calendar.sync.export.access.public.label</source>
+                <target>öffentlich</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.public.hint">
+                <source>calendar.sync.export.access.public.hint</source>
+                <target>Aktiviert/Deaktiviert den öffentlichen Zugriff auf diesen Kalender.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.url.title">
+                <source>calendar.sync.export.access.url.title</source>
+                <target>Öffentliche Adresse im iCal-Format</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.url.hint">
+                <source>calendar.sync.export.access.url.hint</source>
+                <target>Mit dieser Adresse können Sie von anderen Anwendungen aus auf diesen Kalender zugreifen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.acess.last">
+                <source>calendar.sync.export.access.last</source>
+                <target>letzter Aufruf</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

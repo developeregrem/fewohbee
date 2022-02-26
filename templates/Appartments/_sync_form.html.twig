@@ -1,0 +1,47 @@
+<div class="row mb-4">
+    <div class="col">{{ 'calendar.sync.export.hint'|trans }}</div>
+</div>
+<h6>{{ 'calendar.sync.export.option.title'|trans }}</h6>
+<div class="row mb-3">
+    <div class="col">        
+        {{ form_widget(form.reservationStatus) }}
+        {{ form_help(form.reservationStatus) }}
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col">        
+        {{ form_widget(form.exportGuestName) }}
+        {{ form_help(form.exportGuestName) }}
+    </div>
+</div>
+<h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
+<div class="row mb-3">
+    <div class="col">
+        {{ form_widget(form.isPublic) }}
+        {{ form_help(form.isPublic) }}
+    </div>
+</div>
+
+{{ form_widget(form) }}
+
+<div class="form-floating mb-3 mt-3">
+    <input type="text" class="form-control" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
+           value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}">
+    <label for="floatingInput">{{ 'calendar.sync.export.access.url.title'|trans }}</label>
+    <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
+</div>
+<div class="row">
+    <div class="col">
+        {{ 'calendar.sync.export.access.last'|trans }}<br />
+        <span class="text-muted">
+            {% if sync.lastExport is not null%}
+                {{ sync.lastExport|date('d.m.Y H:i') }}
+            {% else %}
+                -
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+
+

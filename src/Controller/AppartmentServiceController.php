@@ -15,6 +15,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use App\Service\CSRFProtectionService;
 use App\Service\AppartmentService;
@@ -22,8 +24,13 @@ use App\Entity\Appartment;
 use App\Entity\Subsidiary;
 use App\Entity\RoomCategory;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Uid\Uuid;
+use App\Service\CalendarService;
+use App\Form\CalendarSyncExportType;
+use App\Entity\CalendarSync;
+use App\Service\CalendarSyncService;
 
-#[Route('/appartments')]
+#[Route('/apartments')]
 class AppartmentServiceController extends AbstractController
 {
     
@@ -74,7 +81,7 @@ class AppartmentServiceController extends AbstractController
     }
 
     #[Route('/create', name: 'appartments.create.appartment', methods: ['POST'])]
-    public function createAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request)
+    public function createAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AppartmentService $as, Request $request, CalendarSyncService $css)
     {
         $error = false;
         if (($csrf->validateCSRFToken($request))) {
@@ -91,6 +98,7 @@ class AppartmentServiceController extends AbstractController
                 $em = $doctrine->getManager();
                 $em->persist($appartment);
                 $em->flush();
+                $css->initSync($appartment);                
 
                 // add succes message
                 $this->addFlash('success', 'appartment.flash.create.success');
@@ -154,5 +162,51 @@ class AppartmentServiceController extends AbstractController
                 'token' => $csrf->getCSRFTokenForForm()
             ));
         }
+    }
+    
+    #[Route('/sync/{id}/edit', name: 'apartments.sync.edit', methods: ['GET', 'POST'])]
+    public function editSync(ManagerRegistry $doctrine, Request $request, CalendarSync $sync): Response
+    {
+        $form = $this->createForm(CalendarSyncExportType::class, $sync);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $doctrine->getManager()->flush();
+
+            // add succes message
+            $this->addFlash('success', 'category.flash.edit.success');
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        return $this->render('Appartments/sync_edit.html.twig', [
+            'sync' => $sync,
+            'form' => $form->createView(),
+        ]);
+    }
+    
+    #[Route('/calendar/{uuid}/calendar.ics', name: 'apartments.get.calendar', methods: ['GET'], requirements: ['uuid' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'])]
+    public function getCalendarAction(ManagerRegistry $doctrine, CalendarService $cs, string $uuid, CalendarSyncService $css)
+    {
+        $em = $doctrine->getManager();
+        $sync = $em->getRepository(CalendarSync::class)->findOneBy(['uuid' => Uuid::fromString($uuid)]);
+        /* @var $sync CalendarSync */
+        if( !$sync instanceof CalendarSync || !$sync->getIsPublic() ) {
+            throw new NotFoundHttpException();
+        }
+       $css->updateExportDate($sync);
+        
+        $response = new Response(
+            $cs->getIcalContent($sync),
+            Response::HTTP_OK,
+            ['content-type' => 'text/calendar; charset=utf-8']
+        );
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'calendar.ics'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
+        
+        return $response;
+        
     }
 }
