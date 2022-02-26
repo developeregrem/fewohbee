@@ -23,12 +23,15 @@ use App\Entity\Price;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\ReservationStatus;
+use App\Service\CalendarSyncService;
 
 class SettingsFixtures extends Fixture implements FixtureGroupInterface
 {
     private $translator;
-    public function __construct(TranslatorInterface $translator) {
+    private $syncService;
+    public function __construct(TranslatorInterface $translator, CalendarSyncService $css) {
         $this->translator = $translator;
+        $this->syncService = $css;
     }
     
     public static function getGroups(): array
@@ -98,6 +101,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
                 $app->setRoomCategory($roomCats[0]);
                 $app->setDescription($this->translator->trans('category.single'));
             }
+            $this->syncService->initSync($app);
             $manager->persist($app);
         }
     }

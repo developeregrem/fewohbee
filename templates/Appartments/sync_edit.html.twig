@@ -1,0 +1,12 @@
+{{ form_start(form, {'attr': {'id':'entry-form-'~sync.id, 'onsubmit':'return saveSync('~ sync.id ~', "'~ path('apartments.sync.edit', {'id': sync.id}) ~'");'} }) }}
+<div class="modal-body ps-5 pe-5">
+    <div id="flash-message-overlay">
+</div>                             
+    {{ include('Appartments/_sync_form.html.twig') }}
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+    <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ sync.id }}" 
+           class="btn btn-primary"/>
+</div>
+{{ form_end(form) }}

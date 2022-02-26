@@ -9,6 +9,10 @@ use Yasumi\Provider\AbstractProvider;
 use Symfony\Component\Intl\Countries;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use App\Entity\Appartment;
+use App\Entity\Reservation;
+use App\Entity\CalendarSync;
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -119,6 +123,74 @@ class CalendarService {
         );
 
         return $filtered;
+    }
+    
+    public function getIcalContent(CalendarSync $sync): string {
+        $room = $sync->getApartment();
+        $content = $this->getIcalHeader($room);
+        
+        /* @var $reservation \App\Entity\Reservation */
+        foreach($room->getReservations() as $reservation) {
+            // filter reservation status
+            if( $sync->getReservationStatus()->contains($reservation->getReservationStatus()) ) {
+                $content .= $this->getIcalEventBody($reservation, $sync);
+            }                       
+        }
+        
+        $content .= $this->getIcalFooter();
+        
+        return $content;
+    }
+    
+    private function getIcalHeader(Appartment $room): string {
+        if(ini_get('date.timezone') && strlen(ini_get('date.timezone') > 0)) {
+            $timezone = ini_get('date.timezone');
+        } else {
+            $timezone = "Europe/Berlin";
+        }
+        
+        return  "BEGIN:VCALENDAR\r\n" .
+                "PRODID:-//FewohBee//Calendar 1.0//EN\r\nVERSION:2.0\r\n" .
+                "CALSCALE:GREGORIAN\r\n" .
+                "METHOD:PUBLISH\r\n" .
+                "X-WR-CALNAME:Bookings Apartment " . $room->getNumber() . "\r\n" . 
+                "X-WR-TIMEZONE:" . $timezone . "\r\n";
+    }
+    
+    private function getIcalEventBody(Reservation $resevation, CalendarSync $sync): string {
+        //The "DTEND" property for a "VEVENT" calendar component specifies the non-inclusive end of the event.
+        // therefore we need to add one day to the actual end date
+        $endDate = clone $resevation->getEndDate();
+        $endDate->add(new \DateInterval('P1D'));
+        
+        if( $sync->getExportGuestName() ) {
+            $title = $resevation->getBooker()->getSalutation() . ' ' . $resevation->getBooker()->getFirstname() .' ' .
+                    $resevation->getBooker()->getLastname() . ' (' . $title = $resevation->getReservationStatus()->getName() . ')';
+        } else {
+            $title = $resevation->getReservationStatus()->getName();
+        }
+        
+        return  "BEGIN:VEVENT\r\n" .
+                "DTSTART;VALUE=DATE:" . $resevation->getStartDate()->format('Ymd') . "\r\n" .                
+                "DTEND;VALUE=DATE:" . $endDate->format('Ymd') . "\r\n" .                
+                // the date of the cration of this ics file
+                "DTSTAMP: " . date('Ymd') . "T" . date('His') . "Z\r\n" .
+                "UID:" . $resevation->getUuid()->toBase32() . "@fewohbee\r\n" .
+                // the date of the creation of the reservation itself
+                "CREATED:" . $resevation->getReservationDate()->format('Ymd') . "T" . $resevation->getReservationDate()->format('His') . "Z\r\n" .
+                "DESCRIPION:\r\n" .
+                // the date of the creation of the reservation itself
+                "LAST-MODIFIED:" . $resevation->getReservationDate()->format('Ymd') . "T" . $resevation->getReservationDate()->format('His') . "Z\r\n" .
+                "LOCATION:\r\n" .
+                "SEQUENCE:0\r\n" . 
+                "STATUS:CONFIRMED\r\n" .
+                "SUMMARY:" . $title . "\r\n" .
+                "TRANSP:TRANSPARENT\r\n" .
+                "END:VEVENT\r\n";
+    }
+    
+    private function getIcalFooter(): string {
+        return "END:VCALENDAR\r\n";
     }
 
 }

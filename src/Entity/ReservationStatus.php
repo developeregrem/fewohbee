@@ -42,9 +42,15 @@ class ReservationStatus
      */
     private $contrastColor;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=CalendarSync::class, mappedBy="reservationStatus")
+     */
+    private $calendarSyncs;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
+        $this->calendarSyncs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -114,6 +120,33 @@ class ReservationStatus
     public function setContrastColor(string $contrastColor): self
     {
         $this->contrastColor = $contrastColor;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|CalendarSync[]
+     */
+    public function getCalendarSyncs(): Collection
+    {
+        return $this->calendarSyncs;
+    }
+
+    public function addCalendarSync(CalendarSync $calendarSync): self
+    {
+        if (!$this->calendarSyncs->contains($calendarSync)) {
+            $this->calendarSyncs[] = $calendarSync;
+            $calendarSync->addReservationStatus($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCalendarSync(CalendarSync $calendarSync): self
+    {
+        if ($this->calendarSyncs->removeElement($calendarSync)) {
+            $calendarSync->removeReservationStatus($this);
+        }
 
         return $this;
     }

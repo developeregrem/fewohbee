@@ -40,5 +40,6 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/users, roles: ROLE_ADMIN }
         - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
