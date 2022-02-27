@@ -1,12 +1,48 @@
-appartment.action: Action
-appartment.bedsmax: Max. people
-appartment.bedsmin: Normal occupancy
-appartment.category: Room Category
-appartment.delete.ask: Are you sure you want to delete this room?
-appartment.description: Description
-appartment.flash.create.success: Room was successfully created .
-appartment.flash.delete.error.still.in.use: Room cannot be deleted because it has already been booked.
-appartment.flash.delete.success: Room was successfully deleted.
-appartment.flash.edit.success: Room was successfully processed.
-appartment.number: Room Number
-appartment.object: Branch
+appartment:
+  action: Action
+  bedsmax: Max. people
+  bedsmin: Normal occupancy
+  category: Room Category
+  delete:
+    ask: Are you sure you want to delete this room?
+  description: Description
+  flash:
+    create:
+      success: Room was successfully created .
+    delete:
+      error:
+        still:
+          in:
+            use: Room cannot be deleted because it has already been booked.
+      success: Room was successfully deleted.
+    edit:
+      success: Room was successfully processed.
+  number: Room Number
+  object: Branch
+calendar:
+  sync:
+    export:
+      acess:
+        last: last access
+        public:
+          hint: Enables/disables public access to this calendar.
+          label: public
+        title: Access
+        url:
+          hint: >-
+            With this address you can access this calendar from other
+            applications.
+          title: Public address in iCal format
+      hint: >-
+        Share the booking plan for this room with other applications that
+        support the so-called iCal import (synchronize calendar).
+      option:
+        guestname:
+          hint: >-
+            The title of the exported calendar entry contains the name of the
+            guest.
+          label: Export name of the guest
+        status:
+          hint: Only reservations of the specified status will be exported.
+        title: Export options
+    title: Syncing your calendar
