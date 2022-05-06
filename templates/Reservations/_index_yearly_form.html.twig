@@ -1,0 +1,12 @@
+<div class="col-md-auto">
+    <input name="year" type="number" class="form-control mb-2 me-sm-2" id="year" min="1900" max="2099" step="1" value="{{ year }}" />
+</div>
+<div class="col-md-auto">
+    <select name="apartment" class="form-select mb-2 me-sm-2 pe-2">
+        <option disabled="disabled">{{ 'reservation.appartment.name'|trans }}</option>
+        <option disabled="disabled">----</option>
+        {% for apartment in apartments %}
+            <option value="{{ apartment.id }}"{% if apartment.id == selectedApartmentId %} selected{% endif %}>{{ apartment.number }} ({{ apartment.description }})</option>
+        {% endfor %}
+    </select>
+</div>

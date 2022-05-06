@@ -64,4 +64,16 @@ class AppartmentRepository extends EntityRepository
             return 0;
         }
     }
+    
+    public function findAllByProperty($propertyId = 'all'): array {
+        if($propertyId === 'all') {
+            return $this->findAll();
+        }
+        
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.object.id = :id')
+            ->setParameter('id', $propertyId)
+            ->getQuery()
+            ->getResult();
+    }
 }

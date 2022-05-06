@@ -1,0 +1,15 @@
+<div class="col-md-auto">
+    <input type="date" class="form-control mb-2 me-sm-2" id="start" name="start" value="{{ today|date('Y-m-d') }}" />
+</div>
+<div class="col-md-auto">
+    <select name="intervall" class="form-select mb-2 me-sm-2 pe-2">
+        <option value="8"{% if "8" == interval %} selected{% endif %}>
+            8 {{ 'reservation.days'|trans }}</option>
+        <option value="15"{% if "15" == interval %} selected{% endif %}>
+            15 {{ 'reservation.days'|trans }}</option>
+        <option value="22"{% if "22" == interval %} selected{% endif %}>
+            22 {{ 'reservation.days'|trans }}</option>
+        <option value="30"{% if "30" == interval %} selected{% endif %}>
+            30 {{ 'reservation.days'|trans }}</option>
+    </select>
+</div>
