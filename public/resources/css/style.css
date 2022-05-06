@@ -62,8 +62,8 @@ body {
     border-color: #999;
 }
 
-.reservation-table-weekend {
-    /*background-color: #EEE !important;*/
+.reservation-table-weekend-single {
+    background-color: #EEE !important;
 }
 
 .mouse-pointer {
@@ -134,4 +134,46 @@ body {
     color: inherit;
     font-size: medium;
     font-weight: bold;
+}
+
+/* yearly reservation overview */
+.reservation-yearly-parent { 
+    padding: 0 !important; 
+    position: relative; 
+    overflow:hidden; 
+}
+
+.no-pointer-events {
+    pointer-events: none;
+}
+
+div .reservation-yearly {
+    padding: .5rem;
+    width: 100%; 
+    height: 100%;
+    pointer-events: auto; 
+    z-index: 1;
+    cursor: pointer;
+}
+
+div .reservation-yearly-day {
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    left: 0; 
+    top: 0; 
+    z-index: 2; 
+    padding: .5rem;
+}
+.two-reservations {
+    flex: 1 0 100%;
+}
+.two-reservations-left {
+    transform: skewY(-45deg);
+    transform-origin: bottom left;
+}
+
+.two-reservations-right {
+    transform: skewX(-45deg);
+    transform-origin: top right;
 }

@@ -1,0 +1,14 @@
+<div class="row row-cols-4">
+    {% for i in 1..12 %}
+    <div class="col">
+        {% include 'Reservations/reservation_table_month.html.twig' with {year: year, month: i, apartment: apartment} %}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    $('.reservation-popover').popover({
+        placement: 'top',
+        html: true,
+        trigger: 'hover'
+    });
+</script>
