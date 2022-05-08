@@ -55,6 +55,7 @@ class CalendarSync
     {
         $this->reservationStatus = new ArrayCollection();
         $this->isPublic = false;
+        $this->exportGuestName = false;
     }
 
     public function getId(): ?int
