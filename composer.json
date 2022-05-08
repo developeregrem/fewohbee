@@ -13,7 +13,7 @@
         "doctrine/doctrine-fixtures-bundle": "^3.4",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.10",
-        "mpdf/mpdf": "^8.0",
+        "mpdf/mpdf": "^8.1",
         "sensio/framework-extra-bundle": "^6.1",
         "symfony/asset": "^6.0",
         "symfony/console": "^6.0",
