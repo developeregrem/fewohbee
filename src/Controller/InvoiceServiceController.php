@@ -761,7 +761,7 @@ class InvoiceServiceController extends AbstractController
     public function deleteMiscellaneousInvoicePositionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
     {
         $index = $request->request->get("miscellaneousInvoicePositionIndex", -1);       // during create process
-        $positionId = $request->request->request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
+        $positionId = $request->request->get("miscellaneousInvoicePositionEditId", -1); // during edit process
         
         if($index != -1) {
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get("invoicePositionsMiscellaneous");
