@@ -15,7 +15,10 @@ class ReservationMetaType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('remark', TextareaType::class, ['label' => 'customer.remark'])
+            ->add('remark', TextareaType::class, [
+                'label' => 'customer.remark',
+                'required' => false
+            ])
             ->add('reservationOrigin', EntityType::class, [
                 'class' => ReservationOrigin::class,
                 'choice_label' => 'name',
