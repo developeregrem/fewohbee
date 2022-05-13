@@ -160,8 +160,10 @@ class CalendarService {
     private function getIcalEventBody(Reservation $resevation, CalendarSync $sync): string {
         //The "DTEND" property for a "VEVENT" calendar component specifies the non-inclusive end of the event.
         // therefore we need to add one day to the actual end date
+        // currently this is not used because portals use the calendars "avilability" which means a reserervation 
+        // ending on 12 means the room is blocked on the 11 but available again on 12
         $endDate = clone $resevation->getEndDate();
-        $endDate->add(new \DateInterval('P1D'));
+        //$endDate->add(new \DateInterval('P1D'));
         
         if( $sync->getExportGuestName() ) {
             $title = $resevation->getBooker()->getSalutation() . ' ' . $resevation->getBooker()->getFirstname() .' ' .
