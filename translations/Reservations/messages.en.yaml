@@ -63,4 +63,6 @@ reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
+reservation.table.view.table: Table View
+reservation.table.view.yearly: Annual View
 reservation.templates.availableprices: existing invoices

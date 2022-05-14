@@ -250,6 +250,14 @@
                 <source>reservation.table.settings.holidays</source>
                 <target>Anzeige der Feiertage</target>
             </trans-unit>
+            <trans-unit id="reservation.table.view.yearly">
+                <source>reservation.table.view.yearly</source>
+                <target>Jahresansicht</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.view.table">
+                <source>reservation.table.view.table</source>
+                <target>Tabellenansicht</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
