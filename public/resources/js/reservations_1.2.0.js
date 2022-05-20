@@ -92,3 +92,45 @@ function showTableSettings() {
 
     return false;
 }
+
+/**
+ * Checks whether the current day is reservation
+ * @param {array} item
+ * @returns {Boolean}
+ */
+function isDayWithReservation(item) {
+    let reservationItem = item.node.querySelector(".reservation-yearly");
+    // only when a reservation fits the whole day; ignore days where a reservation starts or ends
+    if (reservationItem && !reservationItem.classList.contains('month-reservationstartend')) {
+        return true;
+    } else {
+        // reservation start or ends at this day
+        return false;
+    }
+    return false;
+}
+
+/**
+ * Mark a day as selected
+ * @param {type} item
+ * @param {type} c
+ * @returns {void}
+ */
+function selectableSelect(item, c) {
+    item.node.classList.add(c.selecting);
+    item.selecting = true;
+}
+
+/**
+ * Mark a day as deselected
+ * @param {type} item
+ * @param {type} c
+ * @returns {void}
+ */
+function selectableDeselect(item, c) {
+    item.selecting = false;
+    item.node.classList.remove(c.selecting);
+    item.node.classList.remove(c.selected);
+}
+
+var selectable, lastSelectedMonthDay, startSlectedDay, endSelectedDay;

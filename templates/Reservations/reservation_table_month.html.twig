@@ -61,6 +61,7 @@
     {% for i in 0..(daysInMonth-1) %}   
         {% set addToDate = "+" ~ i ~ "day" %}
         {% set tmpDate = startDate|date_modify(addToDate) %}
+        {% set tmpDateFormatted = tmpDate|date('Y-m-d') %}
         {# always start line on monday #}
         {% if tmpDate|date('w') == 1 %}
             <tr>
@@ -71,7 +72,7 @@
             
         {% set reservationsForDay = getReservationsForDay(tmpDate, reservations) %}
         {% set style = '' %}{% set action = '' %}{% set popClass = '' %}{% set tdContent = '' %}{% set resCss = 'reservation-popover reservation-yearly' %}
-        {% set noEvents = '' %}
+        {% set noEvents = ' day-selectable' %}{% set dummyContent = '' %}
         {# currently max two events are allowed for one day (end of one reservation and start of another reservation) #}
         {% for reservation in reservationsForDay %}
             {% set style = 'background-color:' ~ reservation.reservationStatus.color %}
@@ -79,18 +80,30 @@
             {% set noEvents = ' no-pointer-events' %}
             {% if loop.length == 1 %}
                 {% set resCol = 2 %} 
+                {% if tmpDateFormatted == reservation.startDate|date('Y-m-d') %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-start month-reservation-onlystart' %}
+                    {# relevant to get the pointer event for selecable if reservation starts or ends at this day, therefore an empty dummy layer is placed to collect the event #}
+                    {% set dummyContent = '<div class="month-reservation-end dummy-day">&nbsp;</div>' %}
+                {% elseif tmpDateFormatted == reservation.endDate|date('Y-m-d') %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-end' %}
+                    {% set dummyContent = '<div class="month-reservation-start dummy-day">&nbsp;</div>' %}
+                {% endif %}
             {% else %}
                 {% set resCol = 1 %}
                 {% if loop.index == 1 %}
-                    {% set resCss = resCss ~ ' two-reservations two-reservations-left' %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-end' %}
                 {% else %}
-                    {% set resCss = resCss ~ ' two-reservations two-reservations-right' %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-start' %}
                 {% endif %}
             {% endif %}
             
-            {% set tdContent = tdContent ~ '<div class="' ~ resCss ~'" style="' ~  style ~'"'~ action|raw ~' title="'~ block('popTitle') ~'" data-bs-content="'~ block('popBody')|raw ~'">&nbsp;</div>' %}
+            {% set tdContent = tdContent ~ '<div class="' ~ resCss ~'" style="' ~  style ~'"'~ action|raw ~' title="'~ block('popTitle') ~'" data-bs-content="'~ block('popBody')|raw ~'">&nbsp;</div> ' ~ dummyContent %}
         {% endfor %}
-        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}" style="width: {{ 100 / 7}}%"><div class="d-flex w-100 h-100">{{ tdContent|raw }}</div><div class="reservation-yearly-day">{{ tmpDate|date('d') }}</div></td>
+        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}" 
+            style="width: {{ 100 / 7}}%" data-day="{{ tmpDate|date("Y-m-d")  }}">
+            <div class="d-flex w-100 h-100">{{ tdContent|raw }}</div>
+            <div class="reservation-yearly-day">{{ tmpDate|date('d') }}</div>
+        </td>
            
         
         {# always end line on sunday #}
