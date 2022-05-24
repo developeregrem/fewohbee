@@ -132,7 +132,9 @@
         var loader = '<img src="'+config.basePath+'/resources/images/ajax-loader.gif" />';
         var modalLoader = '<div class="modal-body">' + loader + '</div>';
     </script>
-    {% block bodyjs %}{% endblock %}
+    {% block bodyjs %}
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bodyevents.js"></script>
+    {% endblock %}
 
 {% endblock %}
 </body>
