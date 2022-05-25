@@ -8,7 +8,7 @@ use App\Entity\User;
  * @ORM\Entity
  * @ORM\Table(name="roles")
  */
-class Role implements \Serializable
+class Role
 {
     /**
      * @ORM\Column(name="id", type="integer")
@@ -78,24 +78,6 @@ class Role implements \Serializable
     public function setRole($role)
     {
         $this->role = $role;
-    }
-
-    public function serialize()
-    {
-        return serialize(array(
-            $this->id,
-            $this->name,
-            $this->role
-        ));
-    }
-
-    public function unserialize($serialized)
-    {
-        list(
-            $this->id,
-            $this->name,
-            $this->role
-            ) = unserialize($serialized);
     }
 
     /**
