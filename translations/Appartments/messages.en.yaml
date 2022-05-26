@@ -22,7 +22,7 @@ appartment:
 calendar:
   sync:
     export:
-      acess:
+      access:
         last: last access
         public:
           hint: Enables/disables public access to this calendar.

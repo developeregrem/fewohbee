@@ -25,9 +25,9 @@
 {{ form_widget(form) }}
 
 <div class="mb-3 mt-3 mx-auto">    
-    <div class="small fw-light">{{ 'calendar.sync.export.access.url.title'|trans }}</div>
+    <div>{{ 'calendar.sync.export.access.url.title'|trans }}</div>
     <div class="input-group">
-        <input type="text" class="form-control border-end-0" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
+        <input type="text" class="form-control border-end-0 pt-0 pb-1" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
            value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}">
         <span class="input-group-append">
             <button class="copy-to-clipboard btn btn-outline-secondary bg-white border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-hint="{{ 'copy.sucess'|trans }}">
@@ -39,7 +39,7 @@
 </div>
 <div class="row">
     <div class="col">
-        {{ 'calendar.sync.export.access.last'|trans }}<br />
+        <div>{{ 'calendar.sync.export.access.last'|trans }}</div>
         <span class="text-muted">
             {% if sync.lastExport is not null%}
                 {{ sync.lastExport|date('d.m.Y H:i') }}
