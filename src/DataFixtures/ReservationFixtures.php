@@ -16,6 +16,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use App\DataFixtures\SettingsFixtures;
+use Symfony\Component\Uid\Uuid;
 
 use App\Entity\ReservationOrigin;
 use App\Entity\Appartment;
@@ -78,6 +79,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
             $res->setEndDate($end);
             $res->setAppartment($app);
             $res->setReservationDate(new \DateTime());
+            $res->setUuid(Uuid::v4());
             
             $manager->persist($res);
         }

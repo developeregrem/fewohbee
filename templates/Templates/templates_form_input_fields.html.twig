@@ -1,5 +1,5 @@
 <fieldset
-        id="template-form-fieldset-primary-{{ template.id }}" {% if template.id != "new" %} {% endif %}>
+    id="template-form-fieldset-primary-{{ template.id }}" {% if template.id != "new" %} {% endif %}>
     <div class="row">
         <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.name'|trans }}
             *</label>
@@ -32,7 +32,7 @@
             {% else %}
                 {% set tParams = template.params %}
             {% endif %}
-            
+
             <input type="text" class="form-control" name="params-{{ template.id }}"
                    value="{{ tParams }}" />
         </div>
@@ -49,59 +49,62 @@
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
 <script>
-    
+
     var templateUrl = "{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}";
-    
+
     var newTemplateUrl = templateUrl.replace("placeholder", $("#template-type").val());
-    
-    $(function()
+    //tinymce.execCommand("mceRemoveEditor", true, "editor1");
+
+    $(function ()
     {
-        if(tinymce.get("editor1") !== null)
+        if (tinymce.get("editor1") !== null)
             tinymce.get("editor1").remove();
         tinymce.init({
-        selector: '#editor1',
-        language: '{{ app.request.locale }}',
-        toolbar_drawer: 'sliding',
-        plugins: [
-            'advlist autolink lists link image charmap print preview anchor',
-            'searchreplace visualblocks code fullscreen image',
-            'insertdatetime media table paste code help wordcount table noneditable template fullpage'
-          ],
-        toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor image | template | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |  table | removeformat | code | fullscreen preview | help',
-        menubar: false,
-        images_upload_url: '{{ path('templates.upload') }}',
-        relative_urls: false,
-        protect: [
-           /\{\%[\s\S]*?%\}/g, // Allow TWIG control codes
-           ///\{\{[\s\S]*?\}\}/g, // Allow TWIG output codes
-           /\{\#[\s\S]*?#\}/g, // Allow TWIG comment codes
-           /<\/?.*(html)?pageheader.*?>/g,
-           /<\/?.*(html)?pagefooter.*?>/g
-        ],
-        templates: newTemplateUrl,
-        entity_encoding: "raw",
-        branding: false,
-        content_css: [
-            '{{ app.request.basepath }}/resources/css/editor.css'
-        ],
-        fontsize_formats: "8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt",
-        // for the moment we define a different class name. fields are therefore editable because they use the original class name
-        // reason: formats can not be applied to noneditable fields at the moment (https://github.com/tinymce/tinymce/issues/3355)
-        // when the issue is resolved we can remove this line here
-        noneditable_noneditable_class: "mceNonEditable2",   
-        setup : function(ed)
+            selector: '#editor1',
+            language: '{{ app.request.locale }}',
+            toolbar_mode: 'sliding',
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen', 'image',
+                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount', 'table', 'template'
+            ],
+            toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor image | template | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |  table | removeformat | code | fullscreen preview | help',
+            menubar: false,
+            images_upload_url: '{{ path('templates.upload') }}',
+            relative_urls: false,
+            protect: [
+                /\{\%[\s\S]*?%\}/g, // Allow TWIG control codes
+                ///\{\{[\s\S]*?\}\}/g, // Allow TWIG output codes
+                /\{\#[\s\S]*?#\}/g, // Allow TWIG comment codes
+                /<\/?.*(html)?pageheader.*?>/g,
+                /<\/?.*(html)?pagefooter.*?>/g
+            ],
+            templates: newTemplateUrl,
+            entity_encoding: "raw",
+            branding: false,
+            valid_children: '+body[style]',
+            content_css: [
+                '{{ app.request.basepath }}/resources/css/editor.css'
+            ],
+            fontsize_formats: "8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt",
+            // for the moment we define a different class name. fields are therefore editable because they use the original class name
+            // reason: formats can not be applied to noneditable fields at the moment (https://github.com/tinymce/tinymce/issues/3355)
+            // when the issue is resolved we can remove this line here
+            noneditable_class: "mceNonEditable2",
+            setup: function (ed)
+            {
+                ed.on('init', function ()
                 {
-                    ed.on('init', function() 
-                    {
-                        //this.getDoc().body.style.fontSize = '12';
-                        //this.getDoc().body.style.fontFamily = 'Arial';
-                    });
-                },
-      });
-
-        $("#template-type").change(function() {
-          let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
-          tinymce.activeEditor.settings.templates = newTemplateUrl;
+                    //this.getDoc().body.style.fontSize = '12';
+                    //this.getDoc().body.style.fontFamily = 'Arial';
+                });
+            },
         });
-  });  
+
+        $("#template-type").change(function () {
+            let settings = tinymce.activeEditor.options;
+            let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
+            settings.set('templates', newTemplateUrl);
+        });
+    });
 </script>

@@ -21,6 +21,7 @@ Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den
  - Statistiken
  - Meldebuch
  - Kassenbuch zur Verwaltung Ihrer Einnahmen und Ausgaben
+ - Kalenderexport für andere Anwendungen (iCal Synchronisierung)
 
 ## Anforderungen
 

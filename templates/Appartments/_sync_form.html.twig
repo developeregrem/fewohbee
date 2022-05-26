@@ -1,0 +1,51 @@
+<div class="row mb-4">
+    <div class="col">{{ 'calendar.sync.export.hint'|trans }}</div>
+</div>
+<h6>{{ 'calendar.sync.export.option.title'|trans }}</h6>
+<div class="row mb-3">
+    <div class="col">        
+        {{ form_widget(form.reservationStatus) }}
+        {{ form_help(form.reservationStatus) }}
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col">        
+        {{ form_widget(form.exportGuestName) }}
+        {{ form_help(form.exportGuestName) }}
+    </div>
+</div>
+<h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
+<div class="row mb-3">
+    <div class="col">
+        {{ form_widget(form.isPublic) }}
+        {{ form_help(form.isPublic) }}
+    </div>
+</div>
+
+{{ form_widget(form) }}
+
+<div class="mb-3 mt-3 mx-auto">    
+    <div>{{ 'calendar.sync.export.access.url.title'|trans }}</div>
+    <div class="input-group">
+        <input type="text" class="form-control border-end-0 pt-0 pb-1" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
+           value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}">
+        <span class="input-group-append">
+            <button class="copy-to-clipboard btn btn-outline-secondary bg-white border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-hint="{{ 'copy.sucess'|trans }}">
+                <i class="fa-solid fa-copy prefix"></i>
+            </button>
+        </span>
+    </div>
+    <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
+</div>
+<div class="row">
+    <div class="col">
+        <div>{{ 'calendar.sync.export.access.last'|trans }}</div>
+        <span class="text-muted">
+            {% if sync.lastExport is not null%}
+                {{ sync.lastExport|date('d.m.Y H:i') }}
+            {% else %}
+                -
+            {% endif %}
+        </span>
+    </div>
+</div>

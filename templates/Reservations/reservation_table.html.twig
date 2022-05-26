@@ -140,34 +140,14 @@
                         {% if shortName != name %}
                             {% set shortName = shortName ~ "..." %}
                         {% endif %}
-                        {# popover #}
-                        {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname %}
-                        {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
-                        {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}
-                        {% for address in reservation.booker.customerAddresses %} 
-                            {% if address.phone|length > 0 %}
-                                {% set phones = phones ~ address.phone %}
-                                {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
-                            {% endif %}
-                            {% if address.mobilePhone|length > 0 %}
-                                {% set mobiles = mobiles ~ address.mobilePhone %}
-                                {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
-                            {% endif %}
-                            {% if address.email|length > 0 %}
-                                {% set mails = mails ~ address.email %}
-                                {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
-                            {% endif %}                           
-                        {% endfor %}
-                        {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
-                        {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
-                        {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
-                        {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
-                        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
+                        
+                        {# popover #}                        
+                        {% use 'Reservations/_resevation_popover.html.twig' %}
 
                         <td class="reservation text-center" colspan="{{ colspan }}">
                             <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                                  class="reservation-inner text-center"
-                                 title="{{ popTitle }}" data-bs-content="{{ popBody }}">{{ shortName }}</div>
+                                 title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
                         </td>
 
                         {% if printSpacerAfter %}

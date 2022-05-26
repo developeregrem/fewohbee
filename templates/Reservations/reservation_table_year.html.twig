@@ -1,0 +1,93 @@
+<div id="calendar" class="row row-cols-4">
+    {% for i in 1..12 %}
+    <div class="col">
+        {% include 'Reservations/reservation_table_month.html.twig' with {year: year, month: i, apartment: apartment} %}
+    </div>
+    {% endfor %}
+</div>
+<script>
+    $('.reservation-popover').popover({
+        placement: 'top',
+        html: true,
+        trigger: 'hover'
+    });
+
+    if(selectable) {
+        selectable.destroy();   
+    }
+    selectable = new Selectable({
+        //lassoSelect: "sequential",
+        //appendTo: "#calendar",
+        filter: ".reservation-yearly-parent",
+        ignore: ".reservation-yearly",
+        lasso: {
+                    border: "2px dashed rgba(255, 255, 255, 0)",
+                    backgroundColor: "rgba(255, 255, 255, 0)"
+                }
+    });
+
+    selectable.on('start', function(e, item){
+        if(item) {
+            startSlectedDay = item.node;
+            endSelectedDay = null;
+        }
+       
+    });
+    selectable.on('drag', function(e, coords) {
+        let elm = document.elementFromPoint(e.pageX, e.pageY - window.pageYOffset);
+        let c = selectable.config.classes;
+        if(elm) {
+            // check if it can be selected
+            elm = elm.closest("." + c.selectable);            
+            if(elm) {
+                let elmIdx = selectable.nodes.indexOf(elm),
+                    startIdx = selectable.nodes.indexOf(startSlectedDay), start, end,
+                    cItems = selectable.items.length;
+
+                if( elmIdx > startIdx) {
+                    start = startIdx;
+                    end = elmIdx;
+                } else {
+                    start = elmIdx;
+                    end = startIdx;
+                }
+
+                let canSelected = true;
+                let i = 0, u = cItems-1;
+                while(i < cItems) {
+                    // depending if selected from left to right or right to left
+                    let idx = (elmIdx > startIdx ? i : u);
+                    let item = selectable.items[idx];
+                    if(idx >= start && idx <= end) {
+                        // stop selecting if selection will happen over an existing reservation
+                        if(isDayWithReservation(item)) {
+                            canSelected = false;
+                        }
+                        if(canSelected) {
+                            selectableSelect(item, c);
+                            endSelectedDay = item.node;
+                        } else {
+                            selectableDeselect(item, c);
+                        }
+                    } else if(item.selected || item.selecting) {
+                        selectableDeselect(item, c);
+                    }
+                    i++;
+                    u--;
+                }               
+                lastSelectedMonthDay = elm;
+            }
+        }
+    });
+    
+    selectable.on("end", function(e, selected, unselected) {
+        if(startSlectedDay && endSelectedDay) {
+            selectableAddAppartmentToSelection({{ apartment.id }}, startSlectedDay.dataset.day, endSelectedDay.dataset.day);
+            $('#modalCenter').modal('toggle');
+            
+            startSlectedDay = null;
+            endSelectedDay = null;
+        }
+        
+    });
+</script>

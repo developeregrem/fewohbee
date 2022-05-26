@@ -4,10 +4,11 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ReservationRepository")
- * @ORM\Table(name="reservations")
+ * @ORM\Table(name="reservations", indexes={@ORM\Index(name="idx_uuid", columns={"uuid"})})
  **/
 class Reservation
 {
@@ -29,7 +30,7 @@ class Reservation
     /** @ORM\Column(type="text", nullable=true) * */
     private $remark;
 
-    /** @ORM\Column(name="reservation_date", type="date") * */
+    /** @ORM\Column(name="reservation_date", type="datetime") * */
     private $reservationDate;
 
     /**
@@ -79,6 +80,11 @@ class Reservation
      * @ORM\JoinColumn(nullable=false)
      */
     private $reservationStatus;
+
+    /**
+     * @ORM\Column(type="uuid", unique=true)
+     */
+    private $uuid;
 
     public function __construct()
     {
@@ -400,6 +406,18 @@ class Reservation
     public function setReservationStatus(?ReservationStatus $reservationStatus): self
     {
         $this->reservationStatus = $reservationStatus;
+
+        return $this;
+    }
+
+    public function getUuid(): ?Uuid
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(Uuid $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

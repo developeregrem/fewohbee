@@ -48,7 +48,7 @@ class FirstRunCommand extends Command
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
@@ -137,7 +137,7 @@ class FirstRunCommand extends Command
         
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
         
-        return 0;
+        return Command::SUCCESS;;
     }
     
     private function createTemplateTypes()

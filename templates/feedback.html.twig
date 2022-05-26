@@ -1,4 +1,4 @@
-{% if error %}    
+{% if error is not defined or error %}    
     {% for type, flashMessages in app.flashes %}
         {% for flashMessage in flashMessages %}
         <div class="row">

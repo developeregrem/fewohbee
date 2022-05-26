@@ -31,7 +31,7 @@
             selector: '#editor1',
             language: '{{ app.request.locale }}',
             branding: false,
-            plugins: ['fullpage'],
+            valid_children: '+body[style]',
             relative_urls: false,
             protect: [
                 /<\/?.*(html)?pageheader.*?>/g, // allow page header and footer
