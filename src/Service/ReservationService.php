@@ -28,6 +28,7 @@ use App\Service\InvoiceService;
 use App\Service\PriceService;
 
 
+
 class ReservationService implements ITemplateRenderer
 {
     private $em;
@@ -40,15 +41,15 @@ class ReservationService implements ITemplateRenderer
         $this->is = $is;
     }
 
-    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $appartment, $start, $end)
+    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $appartment, \DateTimeInterface $start, \DateTimeInterface $end)
     {
         foreach ($reservations as $reservation) {
             if ($appartment->getId() == $reservation->getAppartmentId()) {
                 $startReservation = strtotime($reservation->getStart());
                 $endReservation = strtotime($reservation->getEnd());
 
-                $startDateToBeChecked = strtotime($start);
-                $endDateToBeChecked = strtotime($end);
+                $startDateToBeChecked = $start->getTimestamp();
+                $endDateToBeChecked = $end->getTimestamp();
 
                 if (
                     (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked >= $endReservation)) ||
@@ -61,6 +62,53 @@ class ReservationService implements ITemplateRenderer
             }
         }
         return false;
+    }
+    
+    /**
+     * Returns a list of apartments that can be selected (free) for the given period
+     * @param \DateTimeInterface $start
+     * @param \DateTimeInterface $end
+     * @param Appartment $apartment
+     * @param string $propertyId
+     * @return array
+     */
+    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment = null, string $propertyId = "all"): array {
+        if($apartment instanceof Appartment) {
+            $propertyId = $apartment->getObject()->getId();
+        }
+        $result = [];
+        $appartmentsDb = $this->em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $propertyId);
+        $newReservationsInformationArray = $this->requestStack->getSession()->get("reservationInCreation", []);
+
+        if (count($newReservationsInformationArray) != 0) {
+            foreach ($appartmentsDb as $apartment) {
+                if (!($this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $apartment, $start, $end))) {
+                    $result[] = $apartment;
+                }
+            }
+        } else {
+            $result = $appartmentsDb;
+        }
+        return $result;
+    }
+    
+    /**
+     * Checks whether the provided apartment can be selected for the given period
+     * @param \DateTimeInterface $start
+     * @param \DateTimeInterface $end
+     * @param Appartment $apartment
+     * @return boolean
+     */
+    public function isApartmentSelectable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): bool {
+        $apartments = $this->getAvailableApartments($start, $end, $apartment);
+        $result = false;
+        foreach($apartments as $a) {
+            if($a->getId() === $apartment->getId()) {
+                return true;
+            }
+        }
+            
+        return $result;
     }
 
     public function createReservationsFromReservationInformationArray($newReservationsInformationArray, Customer $customer = null)
