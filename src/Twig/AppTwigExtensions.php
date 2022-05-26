@@ -30,7 +30,7 @@ class AppTwigExtensions extends AbstractExtension {
         $this->calendarService = $cs;
     }
 
-    public function getFunctions() {
+    public function getFunctions(): array {
         return array(
             new TwigFunction('date_difference', array($this, 'dateDifferenceFilter')),
             new TwigFunction('reservation_date_compare', array($this, 'reservationDateCompareFilter')),
