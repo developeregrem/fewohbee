@@ -22,6 +22,7 @@ Small guesthouses or accommodations usually manage their rooms or apartments the
  - statistics
  - registration book
  - cash book to manage your income and outcome
+ - calendar export for other applications (iCal sync)
 
 ## Requirements
 
