@@ -31,7 +31,7 @@
                     <i onclick="showInvoice({{ invoice.id }}, true)" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 <a class="export-link"
                    href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}"
-                   title="{{ 'button.export.pdf'|trans }}">
+                   title="{{ 'button.export.pdf'|trans }}" target="_blank">
                     <i class="fas fa-download"></i></a>
             </td>
         </tr>
