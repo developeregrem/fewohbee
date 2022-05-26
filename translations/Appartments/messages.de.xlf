@@ -74,27 +74,27 @@
                 <source>calendar.sync.export.option.guestname.hint</source>
                 <target>Der Titel des exportierten Kalendereintrages enthält den Namen des Gastes.</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.title">
+            <trans-unit id="calendar.sync.export.access.title">
                 <source>calendar.sync.export.access.title</source>
                 <target>Zugriff</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.public.label">
+            <trans-unit id="calendar.sync.export.access.public.label">
                 <source>calendar.sync.export.access.public.label</source>
                 <target>öffentlich</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.public.hint">
+            <trans-unit id="calendar.sync.export.access.public.hint">
                 <source>calendar.sync.export.access.public.hint</source>
                 <target>Aktiviert/Deaktiviert den öffentlichen Zugriff auf diesen Kalender.</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.url.title">
+            <trans-unit id="calendar.sync.export.access.url.title">
                 <source>calendar.sync.export.access.url.title</source>
                 <target>Öffentliche Adresse im iCal-Format</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.url.hint">
+            <trans-unit id="calendar.sync.export.access.url.hint">
                 <source>calendar.sync.export.access.url.hint</source>
                 <target>Mit dieser Adresse können Sie von anderen Anwendungen aus auf diesen Kalender zugreifen.</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.export.acess.last">
+            <trans-unit id="calendar.sync.export.access.last">
                 <source>calendar.sync.export.access.last</source>
                 <target>letzter Aufruf</target>
             </trans-unit>
