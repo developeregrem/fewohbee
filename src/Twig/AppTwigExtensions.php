@@ -30,7 +30,7 @@ class AppTwigExtensions extends AbstractExtension {
         $this->calendarService = $cs;
     }
 
-    public function getFunctions() {
+    public function getFunctions(): array {
         return array(
             new TwigFunction('date_difference', array($this, 'dateDifferenceFilter')),
             new TwigFunction('reservation_date_compare', array($this, 'reservationDateCompareFilter')),
@@ -44,6 +44,7 @@ class AppTwigExtensions extends AbstractExtension {
             new TwigFunction('getLocalizedDate', array($this, 'getLocalizedDateFilter')),
             new TwigFunction('existsById', array($this, 'existsById')),
             new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
+            new TwigFunction('getReservationsForDay', [$this, 'getReservationsForDay']),
         );
     }
 
@@ -167,5 +168,20 @@ class AppTwigExtensions extends AbstractExtension {
 
     public function getPublicdaysForDay($date, $code, $locale) {
         return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
+    }
+    
+    public function getReservationsForDay(\DateTimeInterface $day, array $reservations): array {
+        $result = [];
+        
+        /* @var $reservation Reservation */
+        foreach($reservations as $reservation) {
+            $start = new \DateTimeImmutable($reservation->getStartDate()->format("Y-m-d").' UTC');
+            $end = new \DateTimeImmutable($reservation->getEndDate()->format("Y-m-d").' UTC');
+            // todo store all reservation dates as UTC time
+            if($day >= $start && $day <= $end) {
+                $result[] = $reservation;
+            }
+        }
+        return $result;
     }
 }

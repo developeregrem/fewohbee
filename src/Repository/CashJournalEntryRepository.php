@@ -15,7 +15,7 @@ use App\Entity\CashJournal;
  */
 class CashJournalEntryRepository extends EntityRepository
 {
-    public function findAll()
+    public function findAll(): array
     {
         return $this->findBy(array(), array('date' => 'ASC'));
     }

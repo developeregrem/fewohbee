@@ -39,6 +39,8 @@
                                     <i onclick="getEntry({{ appartment.id }})" class="fas fa-info-circle"></i></a>
                                 <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                     <i onclick="editEntry({{ appartment.id }})" class="fas fa-edit"></i></a>
+                                <a href="#" title="{{ 'calendar.sync.title'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                    <i onclick="getContentForModal('{{ path('apartments.sync.edit', {'id': appartment.id}) }}', '{{ 'calendar.sync.title'|trans }}')" class="fas fa-calendar-check"></i></a>
                                 <a href="#" title="{{ 'button.delete'|trans }}">
                                     <i onclick="deleteEntry({{ appartment.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
@@ -107,6 +109,10 @@
         let url = "{{ path('appartments.create.appartment')}}";
         _doPost('#entry-form-new', url, '{{ path('appartments.overview') }}');
         return false;
+    }
+    
+    function saveSync(id, url) {
+        return _doPost('#entry-form-'+id, url);
     }
     </script>
 {% endblock %}

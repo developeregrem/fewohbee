@@ -38,6 +38,11 @@ class Appartment
      */
     private $roomCategory;
 
+    /**
+     * @ORM\OneToOne(targetEntity=CalendarSync::class, mappedBy="apartment", cascade={"persist", "remove"})
+     */
+    private $calendarSync;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -130,6 +135,23 @@ class Appartment
     public function setRoomCategory(?RoomCategory $roomCategory): self
     {
         $this->roomCategory = $roomCategory;
+
+        return $this;
+    }
+
+    public function getCalendarSync(): ?CalendarSync
+    {
+        return $this->calendarSync;
+    }
+
+    public function setCalendarSync(CalendarSync $calendarSync): self
+    {
+        // set the owning side of the relation if necessary
+        if ($calendarSync->getApartment() !== $this) {
+            $calendarSync->setApartment($this);
+        }
+
+        $this->calendarSync = $calendarSync;
 
         return $this;
     }

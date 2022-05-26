@@ -19,6 +19,8 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use App\Controller\CustomerServiceController;
 use App\Service\CSRFProtectionService;
@@ -55,31 +57,79 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
-
+        
         $today = strtotime(date("Y").'-'.date("m").'-'.(date("d")-2). ' UTC');
         $start = $requestStack->getSession()->get("reservation-overview-start", $today);
         $interval = $requestStack->getSession()->get("reservation-overview-interval", 15);
+        
+        $year = $requestStack->getSession()->get("reservation-overview-year", date('Y'));
+        
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
+        
+        $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
+        $selectedApartmentId = $requestStack->getSession()->get("reservation-overview-apartment", $apartments[0]->getId());
+        
+        $show = $requestStack->getSession()->get("reservation-overview", "table");
         
         return $this->render('Reservations/index.html.twig', array(
             'objects' => $objects,
             'today' => $start,
             'interval' => $interval,
+            'year' => $year,
+            'selectedApartmentId' => $selectedApartmentId,
+            'apartments' => $apartments,
             'objectId' => $objectId,
             'holidayCountries' => $cs->getHolidayCountries($requestStack->getCurrentRequest()->getLocale()),
             'selectedCountry' => 'DE',
-            'selectedSubdivision' => 'all'
+            'selectedSubdivision' => 'all',
+            'show' => $show
         ));
+    }
+    
+    /**
+     * Triggered by the buttons to switch reservation view table/yearly
+     * @param RequestStack $requestStack
+     * @param string $show
+     * @return Response
+     */
+    #[Route('/view/{show}', name: 'start.toggle.view', methods: ['GET'])]
+    public function indexActionToggle(RequestStack $requestStack, string $show) : Response
+    {
+        if($show === 'yearly') {
+            $requestStack->getSession()->set("reservation-overview", "yearly");
+        } else {
+            $requestStack->getSession()->set("reservation-overview", "table");
+        }
+        
+        return $this->forward('App\Controller\ReservationServiceController::indexAction');
     }
 
     /**
-     * Gets the reservation overview as a table
-     *
+     * Gets the reservation overview
+     * @param ManagerRegistry $doctrine
+     * @param RequestStack $requestStack
      * @param Request $request
-     * @return mixed
+     * @return Response
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    {
+        $year = $request->query->get("year", null);
+        if($year === null) {
+            return $this->_handleTableRequest($doctrine, $requestStack, $request);
+        } else {
+            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
+        }
+    }
+    
+    /**
+     * Displays the regular table overview based on a start date and a period
+     * @param ManagerRegistry $doctrine
+     * @param RequestStack $requestStack
+     * @param Request $request
+     * @return Response
+     */
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response 
     {
         $em = $doctrine->getManager();
         $date = $request->query->get("start");
@@ -108,6 +158,7 @@ class ReservationServiceController extends AbstractController
         $requestStack->getSession()->set("reservation-overview-start", $date);
         $requestStack->getSession()->set("reservation-overview-interval", $intervall);
         $requestStack->getSession()->set("reservation-overview-objectid", $objectId);
+        $requestStack->getSession()->set("reservation-overview", "table");
 
         return $this->render('Reservations/reservation_table.html.twig', array(
             "appartments" => $appartments,
@@ -115,6 +166,51 @@ class ReservationServiceController extends AbstractController
             "intervall" => $intervall,
             "holidayCountry" => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision
+        ));        
+    }
+    
+    /**
+     * Loads the actual table based on a given year and apartment
+     * @param ManagerRegistry $doctrine
+     * @param RequestStack $requestStack
+     * @param Request $request
+     * @return Response
+     * @throws NotFoundHttpException
+     */
+    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    {
+        $em = $doctrine->getManager();
+        $objectId = $request->query->get("object");
+        $year = $request->query->get("year", date('Y'));
+        $apartmentId = $request->query->get("apartment");
+        $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
+        
+        if(!$apartment instanceof Appartment) {
+            throw new NotFoundHttpException();
+        }
+        
+        if(!preg_match("/[0-9]{4}/", $year)) {
+            throw new NotFoundHttpException();
+        }
+        
+        if ($objectId == null || $objectId == "all") {
+            $appartments = $em->getRepository(Appartment::class)->findAll();
+        } else {
+            $object = $em->getRepository(Subsidiary::class)->findById($objectId);
+            $appartments = $em->getRepository(Appartment::class)->findByObject($object);
+        }
+        
+        $requestStack->getSession()->set("reservation-overview-objectid", $objectId);
+        $requestStack->getSession()->set("reservation-overview-year", $year);
+        $requestStack->getSession()->set("reservation-overview-apartment", $apartment->getId());
+        $requestStack->getSession()->set("reservation-overview", "yearly");
+
+        return $this->render('Reservations/reservation_table_year.html.twig', array(
+            "appartments" => $appartments,
+            "year" => $year,
+            "apartment" => $apartment,
+            //"holidayCountry" => $holidayCountry,
+            //'selectedSubdivision' => $selectedSubdivision
         ));
     }
     
@@ -126,6 +222,7 @@ class ReservationServiceController extends AbstractController
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $selectedCountry = $request->request->get("holidayCountry", 'DE');
         $selectedSubdivision = $request->request->get("holidaySubdivision", 'all');
+        $requestStack->getSession()->set("reservation-overview", "table");
 
         $objectId = $requestStack->getSession()->get("reservation-overview-objectid", "all");
 
@@ -185,29 +282,18 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/appartments/available/get', name: 'reservations.get.available.appartments', methods: ['POST'])]
-    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
         $start = $request->request->get("from");
+        $startDate = new \DateTime($start);
         $end = $request->request->get("end");
-        $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
+        $endDate = new \DateTime($end);
+        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get("object"));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
-        $newReservationsInformationArray = $requestStack->getSession()->get("reservationInCreation", array());
-
-
-        if (count($newReservationsInformationArray) != 0) {
-            foreach ($appartmentsDb as $appartment) {
-                if (!($rs->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $appartment, $start, $end))) {
-                    $availableAppartments[] = $appartment;
-                }
-            }
-        } else {
-            $availableAppartments = $appartmentsDb;
-        }
-
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', array(
-            'appartments' => $availableAppartments,
+            'appartments' => $apartments,
             'reservationStatus' => $reservationStatus
         ));
     }
@@ -219,16 +305,19 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/edit/available/get', name: 'reservations.get.edit.available.appartments', methods: ['POST'])]
-    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request)
+    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request, ReservationService $rs)
     {
         $em = $doctrine->getManager();
         $start = $request->request->get("from");
+        $startDate = new \DateTime($start);
         $end = $request->request->get("end");
-        $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
+        $endDate = new \DateTime($end);
+        
+        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get("object"));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', array(
-            'appartments' => $appartmentsDb,
+            'appartments' => $apartments,
             'reservationStatus' => $reservationStatus
         ));
     }
@@ -263,7 +352,7 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
-    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
+    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
     {
         if ($request->request->get('createNewReservation') == "true") {
             $newReservationsInformationArray = array();
@@ -282,12 +371,21 @@ class ReservationServiceController extends AbstractController
             if($fromDate > $endDate) {
                 $end = $from;
                 $from = $request->request->get("end");
-            }
+                $fromDate = $endDate;
+                $endDate = new \DateTime($end);
+            }            
             $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get("appartmentid"));
-            $newReservationsInformationArray[] = new ReservationObject($request->request->get("appartmentid"), $from,
-                                                    $end, $request->request->get("status", 1), $request->request->get("persons", $room->getBedsMax()));
-            $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
+            
+            $isselactable = $rs->isApartmentSelectable($fromDate, $endDate, $room);
+            if($isselactable) {
+                $newReservationsInformationArray[] = new ReservationObject($request->request->get("appartmentid"), $from,
+                                                        $end, $request->request->get("status", 1), $request->request->get("persons", $room->getBedsMax()));
+                $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
+            } else {
+                $this->addFlash('warning', 'reservation.flash.update.conflict');
+            }
+            
         }
         
         $request2 = $request->duplicate([], []);
@@ -569,6 +667,7 @@ class ReservationServiceController extends AbstractController
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->request->get('remark'));
                 $reservation->setReservationOrigin($origin);
+                $reservation->setUuid(Uuid::v4());
 
                 foreach($customersInReservation as $guest) {
                     // add guest only if he is in the appartment

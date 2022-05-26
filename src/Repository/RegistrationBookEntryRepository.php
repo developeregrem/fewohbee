@@ -11,7 +11,7 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 class RegistrationBookEntryRepository extends EntityRepository
 {
 
-    public function findAll()
+    public function findAll(): array
     {
         return $this->findBy(array(), array('date' => 'ASC'));
     }

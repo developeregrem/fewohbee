@@ -206,6 +206,14 @@
                 <source>nav.status</source>
                 <target>Reservierungsstatus</target>
             </trans-unit>
+            <trans-unit id="copy.text">
+                <source>copy.text</source>
+                <target>Kopieren</target>
+            </trans-unit>
+            <trans-unit id="copy.sucess">
+                <source>copy.sucess</source>
+                <target>Text in die Zwischenablage kopiert!</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

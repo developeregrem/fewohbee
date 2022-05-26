@@ -16,11 +16,8 @@ use App\Entity\Reservation;
  */
 class AppartmentRepository extends EntityRepository
 {
-    public function loadAvailableAppartmentsForPeriod($startDate, $endDate, $object)
+    public function loadAvailableAppartmentsForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, $object)
     {
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
-
         $dateInterval = date_diff($start, $end);
         $intervall = $dateInterval->format('%a');
 
@@ -33,7 +30,7 @@ class AppartmentRepository extends EntityRepository
 
         $appartmentsAvailable = array();
         foreach ($appartments as $appartment) {
-            $reservationsForAppartment = $em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartmentWithoutStartAndEndDate(strtotime($startDate), $intervall, $appartment);
+            $reservationsForAppartment = $em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartmentWithoutStartAndEndDate($start->getTimestamp(), $intervall, $appartment);
             if ($reservationsForAppartment == null) {
                 $appartmentsAvailable[] = $appartment;
             }
@@ -63,5 +60,17 @@ class AppartmentRepository extends EntityRepository
         } catch (NoResultException $ex) {
             return 0;
         }
+    }
+    
+    public function findAllByProperty($propertyId = 'all'): array {
+        if($propertyId === 'all') {
+            return $this->findAll();
+        }
+        
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.object.id = :id')
+            ->setParameter('id', $propertyId)
+            ->getQuery()
+            ->getResult();
     }
 }

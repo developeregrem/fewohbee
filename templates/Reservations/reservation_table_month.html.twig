@@ -1,0 +1,131 @@
+{# year and month are provided #}
+{% set startDate = date(year ~ '-' ~ month ~ '-01 UTC') %}
+
+{# this is a dummy date where the first of month is monday which is used for the table header #}
+{% set dummyDate = date('2021-11-01 UTC') %}
+{% set showCalenderWeek = true %}
+{% set daysInMonth = startDate|date('t') %}
+{% set reservations = get_reservations_for_period(startDate.timestamp, daysInMonth-1, apartment) %}
+{# popover #}                        
+{% use 'Reservations/_resevation_popover.html.twig' %}
+<table class="table table-hover table-bordered table-reservation" id="reservation-table-month">
+    <thead>
+    {# placeholder for calendarweek #}
+    {% if showCalenderWeek %}{% set headerColspan = 15 %}{% else %}{% set headerColspan = 14 %}{% endif %}
+    <tr>
+        <th colspan="{{ headerColspan }}" class="text-center">{{ getLocalizedMonth(month, 'MMMM', app.request.locale) }} {{ year }}</th>
+    </tr>
+    <tr>    
+    {# placeholder for calendarweek #}
+    {% if showCalenderWeek %}
+        <th class="text-center text-muted"><small>W</small</th>
+    {% endif %}
+    {# print week days #}
+    {% for i in 0..6 %}         
+        {% set addToDate = "+" ~ i ~ "day" %}
+        {% set tmpDate = dummyDate|date_modify(addToDate) %}
+        {# check for weekend #}
+        {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
+            {% set weekendCss = ' reservation-table-weekend-single' %}
+        {% else %}
+            {% set weekendCss = '' %}
+        {% endif %}
+        <th class="text-center{{ weekendCss }}" colspan="2" style="width: {{ 100 / 7}}%">{{ getLocalizedDate(tmpDate, 'EEEEEE', app.request.locale) }}</th>    
+    {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% set lastWeek = startDate|date('W') %}
+    {% set weekDayStart = startDate|date('w') %}
+    {# if sunday (0) set it to 7 otherwise the loop to print the td before the actual start of the month starts will fail #}
+    {% if weekDayStart == 0 %}{% set weekDayStart = 7 %}{% endif %}
+    {% set tmpDate = startDate %}
+    
+    {# always start line at the beginning but not if 1. of month is a monday (this is done in the main loop) #}
+    {% if weekDayStart != 1 %}
+        <tr>
+        {% if showCalenderWeek %}
+            <td class="text-center text-muted"><small>{{ tmpDate|date('W') }}</small></td>
+        {% endif %}
+    {% endif %}
+
+    {# print days before loop, print missing tds minus one for the first day of month #}
+    {% set i = 1 %}
+    {% for i in 1..weekDayStart %}
+        {% if i < weekDayStart %}
+        <td colspan="2" style="width: {{ 100 / 7}}%"></td>
+        {% endif %}
+    {% endfor %}
+    
+    {# print main month loop #}
+    {% for i in 0..(daysInMonth-1) %}   
+        {% set addToDate = "+" ~ i ~ "day" %}
+        {% set tmpDate = startDate|date_modify(addToDate) %}
+        {% set tmpDateFormatted = tmpDate|date('Y-m-d') %}
+        {# always start line on monday #}
+        {% if tmpDate|date('w') == 1 %}
+            <tr>
+            {% if showCalenderWeek %}
+                <td class="text-center text-muted"><small>{{ tmpDate|date('W') }}</small></td>
+            {% endif %}
+        {% endif %}  
+            
+        {% set reservationsForDay = getReservationsForDay(tmpDate, reservations) %}
+        {% set style = '' %}{% set action = '' %}{% set popClass = '' %}{% set tdContent = '' %}{% set resCss = 'reservation-popover reservation-yearly' %}
+        {% set noEvents = ' day-selectable' %}{% set dummyContent = '' %}
+        {# currently max two events are allowed for one day (end of one reservation and start of another reservation) #}
+        {% for reservation in reservationsForDay %}
+            {% set style = 'background-color:' ~ reservation.reservationStatus.color %}
+            {% set action = ' onclick="return getReservation(' ~ reservation.id ~ ');"' %}
+            {% set noEvents = ' no-pointer-events' %}
+            {% if loop.length == 1 %}
+                {% set resCol = 2 %} 
+                {% if tmpDateFormatted == reservation.startDate|date('Y-m-d') %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-start month-reservation-onlystart' %}
+                    {# relevant to get the pointer event for selecable if reservation starts or ends at this day, therefore an empty dummy layer is placed to collect the event #}
+                    {% set dummyContent = '<div class="month-reservation-end dummy-day">&nbsp;</div>' %}
+                {% elseif tmpDateFormatted == reservation.endDate|date('Y-m-d') %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-end' %}
+                    {% set dummyContent = '<div class="month-reservation-start dummy-day">&nbsp;</div>' %}
+                {% endif %}
+            {% else %}
+                {% set resCol = 1 %}
+                {% if loop.index == 1 %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-end' %}
+                {% else %}
+                    {% set resCss = resCss ~ ' month-reservationstartend month-reservation-start' %}
+                {% endif %}
+            {% endif %}
+            
+            {% set tdContent = tdContent ~ '<div class="' ~ resCss ~'" style="' ~  style ~'"'~ action|raw ~' title="'~ block('popTitle') ~'" data-bs-content="'~ block('popBody')|raw ~'">&nbsp;</div> ' ~ dummyContent %}
+        {% endfor %}
+        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}" 
+            style="width: {{ 100 / 7}}%" data-day="{{ tmpDate|date("Y-m-d")  }}">
+            <div class="d-flex w-100 h-100">{{ tdContent|raw }}</div>
+            <div class="reservation-yearly-day">{{ tmpDate|date('d') }}</div>
+        </td>
+           
+        
+        {# always end line on sunday #}
+        {% if tmpDate|date('w') == 0 %}
+            </tr>
+        {% endif %}
+    {% endfor %}
+    
+    {% set weekDayEnd = tmpDate|date('w') %}
+    {# if sunday (0) set it to 7 otherwise the loop to print the td after the actual end of the month will fail #}
+    {% if weekDayEnd == 0 %}{% set weekDayEnd = 7 %}{% endif %}
+    {# print days after loop #}
+    {% set i = 1 %}
+    {% for i in weekDayEnd..7 %}
+        {% if i < 7 %}
+        <td colspan="2" style="width: {{ 100 / 7}}%"></td>
+        {% endif %}
+    {% endfor %}
+    
+    {# always end line at the end but not if last day of month is a sunday (this is done in the main loop) #}
+    {% if weekDayEnd != 7 %}
+        </tr>
+    {% endif %}
+    </tbody>
+</table>
