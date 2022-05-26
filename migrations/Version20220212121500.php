@@ -45,7 +45,7 @@ final class Version20220212121500 extends AbstractMigration
         $ids = $this->connection->fetchAllAssociative($sql);
         foreach($ids as $id) {
             $uuid = Uuid::v4();
-            $this->addSql("INSERT INTO calendar_sync (apartment_id, uuid, is_public) VALUES (?, ?, ?,?)", [ $id['id'], $uuid->toBinary(), false, false ]); 
+            $this->addSql("INSERT INTO calendar_sync (apartment_id, uuid, is_public, export_guest_name) VALUES (?, ?, ?, ?)", [ $id['id'], $uuid->toBinary(), false, false ]); 
         }
         $this->addSql('ALTER TABLE reservations CHANGE uuid uuid BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid)\'');
     }
