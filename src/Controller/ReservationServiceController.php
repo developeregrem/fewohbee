@@ -282,29 +282,18 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/appartments/available/get', name: 'reservations.get.available.appartments', methods: ['POST'])]
-    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
         $start = $request->request->get("from");
+        $startDate = new \DateTime($start);
         $end = $request->request->get("end");
-        $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
+        $endDate = new \DateTime($end);
+        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get("object"));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
-        $newReservationsInformationArray = $requestStack->getSession()->get("reservationInCreation", array());
-
-
-        if (count($newReservationsInformationArray) != 0) {
-            foreach ($appartmentsDb as $appartment) {
-                if (!($rs->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $appartment, $start, $end))) {
-                    $availableAppartments[] = $appartment;
-                }
-            }
-        } else {
-            $availableAppartments = $appartmentsDb;
-        }
-
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', array(
-            'appartments' => $availableAppartments,
+            'appartments' => $apartments,
             'reservationStatus' => $reservationStatus
         ));
     }
@@ -316,16 +305,19 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/edit/available/get', name: 'reservations.get.edit.available.appartments', methods: ['POST'])]
-    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request)
+    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request, ReservationService $rs)
     {
         $em = $doctrine->getManager();
         $start = $request->request->get("from");
+        $startDate = new \DateTime($start);
         $end = $request->request->get("end");
-        $appartmentsDb = $em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $request->request->get("object"));
+        $endDate = new \DateTime($end);
+        
+        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get("object"));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', array(
-            'appartments' => $appartmentsDb,
+            'appartments' => $apartments,
             'reservationStatus' => $reservationStatus
         ));
     }
@@ -360,7 +352,7 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
-    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
+    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
     {
         if ($request->request->get('createNewReservation') == "true") {
             $newReservationsInformationArray = array();
@@ -379,12 +371,21 @@ class ReservationServiceController extends AbstractController
             if($fromDate > $endDate) {
                 $end = $from;
                 $from = $request->request->get("end");
-            }
+                $fromDate = $endDate;
+                $endDate = new \DateTime($end);
+            }            
             $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get("appartmentid"));
-            $newReservationsInformationArray[] = new ReservationObject($request->request->get("appartmentid"), $from,
-                                                    $end, $request->request->get("status", 1), $request->request->get("persons", $room->getBedsMax()));
-            $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
+            
+            $isselactable = $rs->isApartmentSelectable($fromDate, $endDate, $room);
+            if($isselactable) {
+                $newReservationsInformationArray[] = new ReservationObject($request->request->get("appartmentid"), $from,
+                                                        $end, $request->request->get("status", 1), $request->request->get("persons", $room->getBedsMax()));
+                $requestStack->getSession()->set("reservationInCreation", $newReservationsInformationArray);
+            } else {
+                $this->addFlash('warning', 'reservation.flash.update.conflict');
+            }
+            
         }
         
         $request2 = $request->duplicate([], []);

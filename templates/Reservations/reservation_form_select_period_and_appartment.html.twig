@@ -1,5 +1,10 @@
 <div class="modal-body">
     <div class="ps-5 pe-5">
+        <div id="flash-message-overlay">
+            <div class="col">
+                {% include 'feedback.html.twig' with {'app': app } %}
+            </div>
+        </div>
 {% if reservations|length > 0 %}
         <div class="row">
             <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
