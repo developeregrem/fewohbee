@@ -68,7 +68,7 @@ class AppartmentRepository extends EntityRepository
         }
         
         return $this->createQueryBuilder('a')
-            ->andWhere('a.object.id = :id')
+            ->andWhere('a.object = :id')
             ->setParameter('id', $propertyId)
             ->getQuery()
             ->getResult();
