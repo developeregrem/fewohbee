@@ -3,8 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -18,13 +17,8 @@ use Doctrine\ORM\NoResultException;
  * @method User|null findOneBy(array $criteria, array $orderBy = null)
  * @method User[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface, UserLoaderInterface
+class UserRepository extends EntityRepository implements PasswordUpgraderInterface, UserLoaderInterface
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, User::class);
-    }
-
     /**
      * Used to upgrade (rehash) the user's password automatically over time.
      */
@@ -74,13 +68,13 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      * @param string $username
      * @return boolean
      */
-    public function isUsernameAvailable($username) {
+    public function isUsernameAvailable(string $username): bool {
         $query = $this->createQueryBuilder('u')
             ->select('COUNT(u.username)')
             ->where('u.username = :un')
             ->setParameter('un', $username)
             ->getQuery();
 
-        return ($query->getSingleScalarResult() == 0 ? true : false);
+        return $query->getSingleScalarResult() == 0;
     }
 }

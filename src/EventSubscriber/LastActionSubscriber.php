@@ -11,6 +11,7 @@
 
 namespace App\EventSubscriber;
 
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\HttpKernel\Event\FinishRequestEvent;
@@ -25,15 +26,13 @@ use App\Entity\User;
  * @author Alex
  */
 class LastActionSubscriber implements EventSubscriberInterface {
-    private $em;
-    private $tokenStorage;
+    private EntityManagerInterface $em;
     
-    public function __construct(EntityManagerInterface $em, TokenStorageInterface $tokenStorage) {
-        $this->em = $em;
-        $this->tokenStorage = $tokenStorage;
+    public function __construct(private readonly ManagerRegistry $doctrine, private readonly TokenStorageInterface $tokenStorage) {
+        $this->em = $doctrine->getManager(('background'));
     }
-    public static function getSubscribedEvents(): array
-    {
+
+    public static function getSubscribedEvents(): array {
         // return the subscribed events, their methods and priorities
         return array(
            KernelEvents::FINISH_REQUEST => array(
@@ -42,22 +41,19 @@ class LastActionSubscriber implements EventSubscriberInterface {
         );
     }
 
-    public function updateLastAction(FinishRequestEvent $event)
-    { 
+    public function updateLastAction(FinishRequestEvent $event) {
         $accessToken = $this->tokenStorage->getToken();
         if($accessToken !== null) {
             /* @var $user User */
             $user = $accessToken->getUser();
-            if($user instanceof User) {                
-//                if (!$this->em->isOpen()) {
-//                    $this->em = $this->em->create(
-//                        $this->em->getConnection(),
-//                        $this->em->getConfiguration()
-//                    );
-//                }
+            if($user instanceof User) {
+                // load user using a different entity manager
+                // this prevents unintended behavior e.g. when a user is edited with violations this flush here would course that the fields are updated anyway
+                $user2 = $this->em->getRepository(User::class)->find($user->getId());
+
                 if($this->em->isOpen()) {
-                    $user->setLastAction(new \DateTime());
-                    $this->em->persist($user);
+                    $user2->setLastAction(new \DateTime());
+                    $this->em->persist($user2);
                     $this->em->flush();
                 }
             }

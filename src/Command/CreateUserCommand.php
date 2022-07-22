@@ -18,12 +18,12 @@ use App\Entity\Role;
 class CreateUserCommand extends Command
 {
     protected static $defaultName = 'app:create-user';
-    
-    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $hasher, UserService $us) {
-        $this->validator = $validator;
-        $this->em = $em;
-        $this->hasher = $hasher;
-        $this->us = $us;
+
+    public function __construct(private readonly ValidatorInterface          $validator,
+                                private readonly EntityManagerInterface      $em,
+                                private readonly UserPasswordHasherInterface $hasher,
+                                private readonly UserService                 $us) {
+
         parent::__construct();
     }
 
@@ -50,10 +50,9 @@ class CreateUserCommand extends Command
             }
             return $input;
         });
-        $password = $io->ask('Password (min 8 characters)', null, function ($input) {
-            if (strlen($input) < 8) {
-                throw new \RuntimeException('Password must be at least 8 characters long!');
-            }
+        $password = $io->ask('Password (min 10 characters)', null, function ($input) use ($io) {
+            $this->us->isPasswordValid($input, new User());
+
             return $input;
         });
         $firstName = $io->ask('Firstname', null, function ($input) {

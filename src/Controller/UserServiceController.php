@@ -11,6 +11,8 @@
 
 namespace App\Controller;
 
+use App\Form\UserEditType;
+use App\Form\UserType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\Persistence\ManagerRegistry;
@@ -27,9 +29,9 @@ class UserServiceController extends AbstractController
 {
 
     #[Route('/', name: 'users.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine): Response
     {
-	$em = $doctrine->getManager();
+	    $em = $doctrine->getManager();
         $users = $em->getRepository(User::class)->findAll();
 
         return $this->render('Users/index.html.twig', array(
@@ -37,8 +39,8 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    #[Route('/{id}/get', name: 'users.get.user', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'users.get.user', defaults: ['id' => '0'], methods: ['GET'])]
+    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
     {
         $em = $doctrine->getManager();
 		$user = $em->getRepository(User::class)->find($id);
@@ -51,92 +53,63 @@ class UserServiceController extends AbstractController
         ));
     }
 
-    #[Route('/new', name: 'users.new.user', methods: ['GET'])]
-    public function newUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
+    #[Route('/new', name: 'users.new.user', methods: ['GET', 'POST'])]
+    public function new(ManagerRegistry $doctrine, Request $request, UserService $us): Response
     {
-        $em = $doctrine->getManager();
-        $roles = $em->getRepository(Role::class)->findAll();
         $user = new User();
-        $user->setId('new');
+        $form = $this->createForm(UserType::class, $user);
+        $form->handleRequest($request);
+        $pw = $form->get('password')->getData();
 
-        return $this->render('Users/user_form_create.html.twig', array(
-            'roles' => $roles,
+        if ($form->isSubmitted() && $form->isValid() && $us->isPasswordValid($pw, $user, $form)) {
+            $user->setPassword($us->hashPassword($pw, $user));
+
+            $entityManager = $doctrine->getManager();
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            // add success message
+            $this->addFlash('success', 'user.flash.create.success');
+
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        return $this->render('Users/new.html.twig', [
             'user' => $user,
-            'token' => $csrf->getCSRFTokenForForm()
-        ));
+            'form' => $form->createView(),
+        ]);
     }
 
-    #[Route('/create', name: 'users.create.user', methods: ['POST'])]
-    public function createUserAction(ManagerRegistry $doctrine, Request $request, UserService $userService, CSRFProtectionService $csrf)
+    #[Route('/{id}/edit', name: 'users.edit.user', methods: ['GET', 'POST'])]
+    public function edit(ManagerRegistry $doctrine, Request $request, UserService $us, User $user): Response
     {
-        $em = $doctrine->getManager();
-		$error = false;
-        if (($csrf->validateCSRFToken($request))) {
-            $userem = $em->getRepository(User::class);
-            /* @var $user \Pensionsverwaltung\Database\Entity\User */
-            $user = $userService->getUserFromForm($request, "new");
+        $oldUsername = $user->getUsername();
+        $oldPw = $user->getPassword();
+        $form = $this->createForm(UserEditType::class, $user, ['old_username' => $oldUsername]);
+        $form->handleRequest($request);
+        $pw = $form->get('password')->getData();
 
-            // check username
-            if (!$userService->isUsernameAvailable($user->getUsername())) {
-                $this->addFlash('warning', 'user.flash.username.na');
-                $error = true;
-            } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0
-                || strlen($user->getEmail()) == 0 || strlen($user->getPassword()) == 0) {
-                // check for mandatory fields
-                $error = true;
-                $this->addFlash('warning', 'flash.mandatory');
-            } else if(!$userService->checkPassword($request->request->get("password-new"))) {
-                $error = true;
-                $this->addFlash('warning', 'user.password.error');
+        if ($form->isSubmitted() && $form->isValid() && $us->isPasswordValid($pw, $user, $form)) {
+            if(!empty($pw)) {
+                $user->setPassword($us->hashPassword($pw, $user));
             } else {
-                $em->persist($user);
-                $em->flush();
-
-                // add succes message
-                $this->addFlash('success', 'user.flash.create.success');
+                $user->setPassword($oldPw);
             }
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'user.flash.edit.success');
+            return new Response('', Response::HTTP_NO_CONTENT);
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
-    }
-
-    #[Route('/{id}/edit', name: 'users.edit.user', methods: ['POST'], defaults: ['id' => '0'])]
-    public function editUserAction(ManagerRegistry $doctrine, Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
-    {        
-        $error = false;
-        if (($csrf->validateCSRFToken($request))) {
-            $user = $userService->getUserFromForm($request, $id);
-            $em = $doctrine->getManager();
-            
-            if(!$userService->checkPassword($request->request->get("password-".$id))) {
-                $error = true;
-                $this->addFlash('warning', 'user.password.error');
-                // check for mandatory fields
-            } else if (strlen($user->getUsername()) == 0 || strlen($user->getFirstname()) == 0 || strlen($user->getLastname()) == 0
-                || strlen($user->getEmail()) == 0) {        
-                $error = true;
-                $this->addFlash('warning', 'flash.mandatory');
-                // stop auto commit of doctrine with invalid field values
-                // this results in an error when the current user edit themself
-                //$em->clear(User::class);
-            } else {
-                $em->persist($user);
-                $em->flush();
-
-                // add succes message
-                $this->addFlash('success', 'user.flash.edit.success');
-            }
-        }
-
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
+        return $this->render('Users/edit.html.twig', [
+            'user' => $user,
+            'form' => $form->createView(),
+        ]);
     }
 
     #[Route('/{id}/delete', name: 'users.delete.user', methods: ['GET', 'POST'])]
-    public function deleteUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf)
+    public function deleteUserAction(Request $request, $id, UserService $userService, CSRFProtectionService $csrf): Response
     {
         if ($request->getMethod() == 'POST') {
             if (($csrf->validateCSRFToken($request, true))) {

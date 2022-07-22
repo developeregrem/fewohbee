@@ -11,6 +11,7 @@
 
 namespace App\Command;
 
+use App\Service\UserService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,10 +33,11 @@ class FirstRunCommand extends Command
 {
     protected static $defaultName = 'app:first-run';
     
-    public function __construct(ValidatorInterface $validator, EntityManagerInterface $em, UserPasswordHasherInterface $hasher) {
-        $this->validator = $validator;
-        $this->em = $em;
-        $this->hasher = $hasher;
+    public function __construct(private readonly ValidatorInterface          $validator,
+                                private readonly EntityManagerInterface      $em,
+                                private readonly UserPasswordHasherInterface $hasher,
+                                private readonly UserService                 $us)
+    {
         parent::__construct();
     }
 
@@ -67,10 +69,9 @@ class FirstRunCommand extends Command
             }
             return $input;
         });
-        $password = $io->ask('Password (min 8 characters)', null, function ($input) {
-            if (strlen($input) < 8) {
-                throw new \RuntimeException('Password must be at least 8 characters long!');
-            }
+        $password = $io->ask('Password (min 10 characters)', null, function ($input) {
+            $this->us->isPasswordValid($input, new User());
+
             return $input;
         });
         $firstName = $io->ask('Firstname', null, function ($input) {
@@ -137,7 +138,7 @@ class FirstRunCommand extends Command
         
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
         
-        return Command::SUCCESS;;
+        return Command::SUCCESS;
     }
     
     private function createTemplateTypes()
