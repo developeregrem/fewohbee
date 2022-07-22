@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,10 +16,12 @@ use App\Entity\User;
 use App\Service\UserService;
 use App\Entity\Role;
 
+#[AsCommand(
+    name: 'app:create-user',
+    description: 'Create a new user via command line.',
+)]
 class CreateUserCommand extends Command
 {
-    protected static $defaultName = 'app:create-user';
-
     public function __construct(private readonly ValidatorInterface          $validator,
                                 private readonly EntityManagerInterface      $em,
                                 private readonly UserPasswordHasherInterface $hasher,
@@ -29,9 +32,6 @@ class CreateUserCommand extends Command
 
     protected function configure()
     {
-        $this
-            ->setDescription('Create a new user via command line.')
-        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
