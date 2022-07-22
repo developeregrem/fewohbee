@@ -18,6 +18,10 @@
                 <source>form.password.min</source>
                 <target>Das Passwort muss mindestes aus {{ limit }} Zeichen bestehen.</target>
             </trans-unit>
+            <trans-unit id="form.username.na">
+                <source>form.username.na</source>
+                <target>Der angegebene Anmeldename {{ string }} wird bereits verwendet.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

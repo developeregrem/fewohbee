@@ -12,66 +12,63 @@
 namespace App\Service;
 
 use App\Entity\User;
-use App\Entity\Role;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class UserService
 {
 
-    private $em = null;
-    private $app;
-    private $hasher;
-
-    public function __construct(UserPasswordHasherInterface $hasher, EntityManagerInterface $em)
+    public function __construct(private readonly ValidatorInterface $validator,
+                                private readonly UserPasswordHasherInterface $hasher,
+                                private readonly EntityManagerInterface $em,
+                                private readonly TranslatorInterface $translator)
     {
-        $this->em = $em;
-	$this->hasher = $hasher;
     }
 
-    public function getUserFromForm(Request $request, $id = 'new')
-    {
-
-        $user = null;
-
-        if ($id === 'new') {
-            $user = new User();
-            $user->setUsername($request->request->get("username-" . $id));
-        } else {
-            $user = $this->em->getRepository(User::class)->find($id);
-        }
-
-        $formPassword = $request->request->get("password-" . $id);
-        if (!empty($formPassword) && $this->checkPassword($formPassword)) {
-            $hashed = $this->hasher->hashPassword($user, $request->request->get("password-" . $id));
-            $user->setPassword($hashed);
-        }
-
-        $user->setFirstname($request->request->get("firstname-" . $id));
-        $user->setLastname($request->request->get("lastname-" . $id));
-        $user->setEmail($request->request->get("email-" . $id));
-
-        if ($request->request->get("active-" . $id) != null) {
-            $user->setActive(true);
-        } else {
-            $user->setActive(false);
-        }
-
-        $role = $this->em->getRepository(Role::class)->find($request->request->get("role-" . $id));
-        $user->setRole($role);
-
-        return $user;
+    public function hashPassword(string $password, User $user): string {
+            return $this->hasher->hashPassword($user, $password);
     }
     
-    public function checkPassword($password) {
-        if (!empty($password)) {
-            if(strlen($password) < 8) {
-                return false;
+    public function isPasswordValid(string $password, User $user, FormInterface $form = null, $pwField = 'password'): bool {
+        $success = true;
+        // check password during create and when it's not empty during edit
+        if($user->getId() === null || !empty($password)) {
+            $constraints = [
+                new Length([
+                    'min' => 10,
+                    'minMessage' => 'form.password.min',
+                    // max length allowed by Symfony for security reasons
+                    'max' => 4096,
+                ]),
+                new NotCompromisedPassword(['skipOnError' => true])
+            ];
+
+            $violations = $this->validator->validate($password, $constraints);
+            if ($violations->count() > 0) {
+                foreach ($violations as $violation) {
+                    if ($violation instanceof ConstraintViolation) {
+                        $success = false;
+                        $message = $violation->getMessage();
+                        $message = \is_string($message) ? $message : '';
+                        if ($form !== null) {
+                            $form->get($pwField)->addError(new FormError($message));
+                        } else {
+                            throw new \RuntimeException('❌ ' . $message . ' ❌');
+                        }
+
+                    }
+                }
             }
         }
-        return true;
+        return $success;
     }
 
     public function deleteUser($id)
@@ -84,7 +81,7 @@ class UserService
         return true;
     }
     
-    public function isUsernameAvailable(string $username) {
+    public function isUsernameAvailable(string $username): bool {
         return $this->em->getRepository(User::class)->isUsernameAvailable($username);
     }
 }
