@@ -12,6 +12,7 @@
 namespace App\Command;
 
 use App\Service\UserService;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,10 +30,12 @@ use App\Entity\TemplateType;
 use App\Entity\Subsidiary;
 use App\Entity\Customer;
 
+#[AsCommand(
+    name: 'app:first-run',
+    description: 'This command will prepare the app for the first use.',
+)]
 class FirstRunCommand extends Command
 {
-    protected static $defaultName = 'app:first-run';
-    
     public function __construct(private readonly ValidatorInterface          $validator,
                                 private readonly EntityManagerInterface      $em,
                                 private readonly UserPasswordHasherInterface $hasher,
@@ -43,11 +46,6 @@ class FirstRunCommand extends Command
 
     protected function configure()
     {
-        $this
-            ->setDescription('This command will prepare the app for the first use.')
-            //->addArgument('arg1', InputArgument::OPTIONAL, 'Argument description')
-            //->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
-        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

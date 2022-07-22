@@ -15,7 +15,7 @@ use App\Entity\PostalCodeData;
 
 #[AsCommand(
     name: 'app:import-postalcodedata',
-    description: 'This command imports postal code data (e.g. from geonames) to be used in autocompletion when entering a ziop code while creating a customer\'s address',
+    description: 'This command imports postal code data (e.g. from geonames) to be used in autocompletion when entering a zip code while creating a customer\'s address',
 )]
 class ImportPostalcodedataCommand extends Command
 {
