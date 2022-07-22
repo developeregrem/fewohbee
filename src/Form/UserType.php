@@ -52,7 +52,6 @@ class UserType extends AbstractType
             ->add('active', CheckboxType::class, [
                 'label' => 'user.active',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
-                'data' => false,
                 'required' => false
             ])
         ;
