@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -70,7 +72,7 @@ class Customer
      * @ORM\OneToMany(targetEntity="Reservation", mappedBy="booker")
      */
     private $bookedReservations;
-    
+
     /**
      * @ORM\ManyToMany(targetEntity="CustomerAddresses", inversedBy="customers")
      * @ORM\JoinTable(name="customer_has_address")
@@ -160,88 +162,89 @@ class Customer
         return $this->reservations;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setSalutation($salutation)
+    public function setSalutation($salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname)
+    public function setFirstname($firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname)
+    public function setLastname($lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setBirthday($birthday)
+    public function setBirthday($birthday): void
     {
         $this->birthday = $birthday;
     }
 
-    public function setCompany($company)
+    public function setCompany($company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address)
+    public function setAddress($address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip)
+    public function setZip($zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city)
+    public function setCity($city): void
     {
         $this->city = $city;
     }
 
-    public function setCountry($country)
+    public function setCountry($country): void
     {
         $this->country = $country;
     }
 
-    public function setPhone($phone)
+    public function setPhone($phone): void
     {
         $this->phone = $phone;
     }
 
-    public function setFax($fax)
+    public function setFax($fax): void
     {
         $this->fax = $fax;
     }
 
-    public function setMobilePhone($mobile_phone)
+    public function setMobilePhone($mobile_phone): void
     {
         $this->mobile_phone = $mobile_phone;
     }
 
-    public function setEmail($email)
+    public function setEmail($email): void
     {
         $this->email = $email;
     }
 
-    public function setReservations($reservations)
+    public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addReservation(\App\Entity\Reservation $reservation)
+    public function addReservation(Reservation $reservation)
     {
         $this->reservations[] = $reservation;
+
         return $this;
     }
 
-    public function removeReservation(\App\Entity\Reservation $reservation)
+    public function removeReservation(Reservation $reservation): void
     {
         $this->reservations->removeElement($reservation);
     }
@@ -250,13 +253,13 @@ class Customer
     {
         return $this->remark;
     }
-    
+
     public function getRemarkF()
     {
         return nl2br($this->remark);
     }
 
-    public function setRemark($remark)
+    public function setRemark($remark): void
     {
         $this->remark = $remark;
     }
@@ -266,29 +269,31 @@ class Customer
         return $this->registrationBookEntries;
     }
 
-    public function setRegistrationBookEntries($registrationBookEntries)
+    public function setRegistrationBookEntries($registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
     }
 
-    public function addRegistrationBookEntry(\App\Entity\RegistrationBookEntry $registrationBookEntry)
+    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry)
     {
         $this->registrationBookEntries[] = $registrationBookEntry;
+
         return $this;
     }
 
-    public function removeRegistrationBookEntry(\App\Entity\RegistrationBookEntry $registrationBookEntry)
+    public function removeRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry): void
     {
         $this->registrationBookEntries->removeElement($registrationBookEntry);
     }
 
     /**
-     * Add bookedReservations
+     * Add bookedReservations.
      *
      * @param \App\Entity\Reservation $bookedReservations
+     *
      * @return Customer
      */
-    public function addBookedReservation(\App\Entity\Reservation $bookedReservations)
+    public function addBookedReservation(Reservation $bookedReservations)
     {
         $this->bookedReservations[] = $bookedReservations;
 
@@ -296,17 +301,17 @@ class Customer
     }
 
     /**
-     * Remove bookedReservations
+     * Remove bookedReservations.
      *
      * @param \App\Entity\Reservation $bookedReservations
      */
-    public function removeBookedReservation(\App\Entity\Reservation $bookedReservations)
+    public function removeBookedReservation(Reservation $bookedReservations): void
     {
         $this->bookedReservations->removeElement($bookedReservations);
     }
 
     /**
-     * Get bookedReservations
+     * Get bookedReservations.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -316,13 +321,13 @@ class Customer
     }
 
     /**
-     * Add customerAddress
+     * Add customerAddress.
      *
      * @param \App\Entity\CustomerAddresses $customerAddress
      *
      * @return Customer
      */
-    public function addCustomerAddress(\App\Entity\CustomerAddresses $customerAddress)
+    public function addCustomerAddress(CustomerAddresses $customerAddress)
     {
         $this->customerAddresses[] = $customerAddress;
 
@@ -330,17 +335,17 @@ class Customer
     }
 
     /**
-     * Remove customerAddress
+     * Remove customerAddress.
      *
      * @param \App\Entity\CustomerAddresses $customerAddress
      */
-    public function removeCustomerAddress(\App\Entity\CustomerAddresses $customerAddress)
+    public function removeCustomerAddress(CustomerAddresses $customerAddress): void
     {
         $this->customerAddresses->removeElement($customerAddress);
     }
 
     /**
-     * Get customerAddresses
+     * Get customerAddresses.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

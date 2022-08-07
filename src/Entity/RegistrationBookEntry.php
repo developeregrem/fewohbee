@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -9,7 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
  **/
 class RegistrationBookEntry
 {
-
     /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
     private $id;
 
@@ -114,52 +116,52 @@ class RegistrationBookEntry
         return $this->city;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number)
+    public function setNumber($number): void
     {
         $this->number = $number;
     }
 
-    public function setDate($date)
+    public function setDate($date): void
     {
         $this->date = $date;
     }
 
-    public function setSalutation($salutation)
+    public function setSalutation($salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname)
+    public function setFirstname($firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname)
+    public function setLastname($lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setCompany($company)
+    public function setCompany($company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address)
+    public function setAddress($address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip)
+    public function setZip($zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city)
+    public function setCity($city): void
     {
         $this->city = $city;
     }
@@ -179,25 +181,26 @@ class RegistrationBookEntry
         return $this->reservation;
     }
 
-    public function setCountry($country)
+    public function setCountry($country): void
     {
         $this->country = $country;
     }
 
-    public function setCustomer($customer)
+    public function setCustomer($customer): void
     {
         $this->customer = $customer;
     }
 
-    public function setReservation($reservation)
+    public function setReservation($reservation): void
     {
         $this->reservation = $reservation;
     }
 
     /**
-     * Set birthday
+     * Set birthday.
      *
      * @param \DateTime $birthday
+     *
      * @return RegistrationBookEntry
      */
     public function setBirthday($birthday)
@@ -208,7 +211,7 @@ class RegistrationBookEntry
     }
 
     /**
-     * Get birthday
+     * Get birthday.
      *
      * @return \DateTime
      */
@@ -218,9 +221,10 @@ class RegistrationBookEntry
     }
 
     /**
-     * Set year
+     * Set year.
      *
      * @param string $year
+     *
      * @return RegistrationBookEntry
      */
     public function setYear($year)
@@ -231,7 +235,7 @@ class RegistrationBookEntry
     }
 
     /**
-     * Get year
+     * Get year.
      *
      * @return string
      */

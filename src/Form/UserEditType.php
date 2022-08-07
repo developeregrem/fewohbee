@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -31,14 +33,14 @@ class UserEditType extends AbstractType
             ->add('username', TextType::class, [
                 'label' => 'user.username',
                 'constraints' => [
-                    new UsernameAvailable($oldUsername)
-                ]
+                    new UsernameAvailable($oldUsername),
+                ],
             ])
             ->add('firstname', TextType::class, [
-                'label' => 'user.firstname'
+                'label' => 'user.firstname',
             ])
             ->add('lastname', TextType::class, [
-                'label' => 'user.lastname'
+                'label' => 'user.lastname',
             ])
             ->add('email')
             ->add('password', PasswordType::class, [
@@ -48,12 +50,12 @@ class UserEditType extends AbstractType
             ])
             ->add('role', EntityType::class, [
                 'class' => Role::class,
-                'choice_label' => 'name'
+                'choice_label' => 'name',
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'user.active',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
-                'required' => false
+                'required' => false,
             ])
         ;
     }
@@ -62,7 +64,7 @@ class UserEditType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => User::class,
-            'old_username' => ''
+            'old_username' => '',
         ]);
         $resolver->setAllowedTypes('old_username', 'string');
     }

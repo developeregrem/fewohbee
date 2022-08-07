@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -74,9 +77,10 @@ class Appartment
     }
 
     /**
-     * Set id
+     * Set id.
      *
      * @param int $id
+     *
      * @return Appartment
      */
     public function setId($id)
@@ -85,18 +89,18 @@ class Appartment
 
         return $this;
     }
-    
-    public function setNumber($number)
+
+    public function setNumber($number): void
     {
         $this->number = $number;
     }
 
-    public function setBedsMax($beds_max)
+    public function setBedsMax($beds_max): void
     {
         $this->beds_max = $beds_max;
     }
 
-    public function setDescription($description)
+    public function setDescription($description): void
     {
         $this->description = $description;
     }
@@ -106,23 +110,24 @@ class Appartment
         return $this->object;
     }
 
-    public function setObject($object)
+    public function setObject($object): void
     {
         $this->object = $object;
     }
 
-    public function setReservations($reservations)
+    public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addReservation(\App\Entity\Reservation $reservation)
+    public function addReservation(Reservation $reservation)
     {
         $this->reservations[] = $reservation;
+
         return $this;
     }
 
-    public function removeReservation(\App\Entity\Reservation $reservation)
+    public function removeReservation(Reservation $reservation): void
     {
         $this->reservations->removeElement($reservation);
     }

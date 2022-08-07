@@ -1,44 +1,60 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 /**
- * DTO for mail attachments
+ * DTO for mail attachments.
  *
  * @author Alexander Elchlepp
  */
-class MailAttachment {
+class MailAttachment
+{
     private string $body;
     private string$name;
     private string $contentType;
-    
-    function __construct(string $body, string $name, string $contentType) {
+
+    public function __construct(string $body, string $name, string $contentType)
+    {
         $this->body = $body;
         $this->name = $name;
         $this->contentType = $contentType;
     }
 
-    function getBody(): string {
+    public function getBody(): string
+    {
         return $this->body;
     }
 
-    function getName(): string {
+    public function getName(): string
+    {
         return $this->name;
     }
 
-    function getContentType(): string {
+    public function getContentType(): string
+    {
         return $this->contentType;
     }
 
-    function setBody(string $body): self {
+    public function setBody(string $body): static
+    {
         $this->body = $body;
+
+        return $this;
     }
 
-    function setName(string $name): self {
+    public function setName(string $name): static
+    {
         $this->name = $name;
+
+        return $this;
     }
 
-    function setContentType(string $contentType): self {
+    public function setContentType(string $contentType): static
+    {
         $this->contentType = $contentType;
+
+        return $this;
     }
 }

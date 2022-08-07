@@ -1,7 +1,11 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -20,39 +24,40 @@ class Template
      * @ORM\Column(type="text")
      */
     private $text;
-    
+
     /** @ORM\Column(type="string", length=255, nullable=true) * */
     private $params;
-    
+
     /** @ORM\Column(type="boolean", nullable=false) * */
     private $isDefault;
-    
+
     /**
      * @ORM\ManyToOne(targetEntity="TemplateType", inversedBy="templates")
      */
     private $templateType;
-    
+
     /**
      * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="template")
      */
     private $correspondences;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->correspondences = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->correspondences = new ArrayCollection();
         $this->isDefault = false;
     }
 
     /**
-     * Set id
+     * Set id.
      *
      * @param int $id
-     * @return ReservationOrigin
+     *
+     * @return Template
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
 
@@ -60,22 +65,23 @@ class Template
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer 
+     * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
-     * @return ReservationOrigin
+     *
+     * @return Template
      */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -83,23 +89,23 @@ class Template
     }
 
     /**
-     * Get name
+     * Get name.
      *
-     * @return string 
+     * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * Set text
+     * Set text.
      *
      * @param string $text
      *
      * @return Template
      */
-    public function setText($text)
+    public function setText(string $text): static
     {
         $this->text = $text;
 
@@ -107,23 +113,23 @@ class Template
     }
 
     /**
-     * Get text
+     * Get text.
      *
      * @return string
      */
-    public function getText()
+    public function getText(): string
     {
         return $this->text;
     }
 
     /**
-     * Set templateType
+     * Set templateType.
      *
-     * @param \App\Entity\TemplateType $templateType
+     * @param TemplateType|null $templateType
      *
      * @return Template
      */
-    public function setTemplateType(\App\Entity\TemplateType $templateType = null)
+    public function setTemplateType(TemplateType $templateType = null): static
     {
         $this->templateType = $templateType;
 
@@ -131,23 +137,23 @@ class Template
     }
 
     /**
-     * Get templateType
-     *
-     * @return \App\Entity\TemplateType
-     */
-    public function getTemplateType()
-    {
-        return $this->templateType;
-    }
-    
-    /**
-     * Add correspondence
-     *
-     * @param \App\Entity\Correspondence $correspondence
+     * Get templateType.
      *
      * @return TemplateType
      */
-    public function addCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function getTemplateType(): TemplateType
+    {
+        return $this->templateType;
+    }
+
+    /**
+     * Add correspondence.
+     *
+     * @param Correspondence $correspondence
+     *
+     * @return Template
+     */
+    public function addCorrespondence(Correspondence $correspondence): static
     {
         $this->correspondences[] = $correspondence;
 
@@ -155,33 +161,33 @@ class Template
     }
 
     /**
-     * Remove correspondence
+     * Remove correspondence.
      *
-     * @param \App\Entity\Correspondence $correspondence
+     * @param Correspondence $correspondence
      */
-    public function removeCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function removeCorrespondence(Correspondence $correspondence): void
     {
         $this->correspondences->removeElement($correspondence);
     }
 
     /**
-     * Get correspondences
+     * Get correspondences.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
-    public function getCorrespondences()
+    public function getCorrespondences(): ArrayCollection|Collection
     {
         return $this->correspondences;
     }
 
     /**
-     * Set params
+     * Set params.
      *
      * @param string $params
      *
      * @return Template
      */
-    public function setParams($params)
+    public function setParams(string $params): static
     {
         $this->params = $params;
 
@@ -189,22 +195,23 @@ class Template
     }
 
     /**
-     * Get params
+     * Get params.
      *
      * @return string
      */
-    public function getParams()
+    public function getParams(): string
     {
         return $this->params;
     }
-    
+
     /**
-     * Set isDefault
+     * Set isDefault.
      *
-     * @param boolean $isDefault
+     * @param bool $isDefault
+     *
      * @return Template
      */
-    public function setIsDefault($isDefault)
+    public function setIsDefault($isDefault): static
     {
         $this->isDefault = $isDefault;
 
@@ -212,11 +219,11 @@ class Template
     }
 
     /**
-     * Get isDefault
+     * Get isDefault.
      *
-     * @return boolean
+     * @return bool
      */
-    public function getIsDefault()
+    public function getIsDefault(): bool
     {
         return $this->isDefault;
     }

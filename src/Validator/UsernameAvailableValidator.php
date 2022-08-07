@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -23,7 +25,7 @@ class UsernameAvailableValidator extends ConstraintValidator
     {
     }
 
-    public function validate(mixed $value, Constraint $constraint)
+    public function validate(mixed $value, Constraint $constraint): void
     {
         if (!$constraint instanceof UsernameAvailable) {
             throw new UnexpectedTypeException($constraint, UsernameAvailable::class);
@@ -39,10 +41,10 @@ class UsernameAvailableValidator extends ConstraintValidator
 
         $isAvailable = $this->us->isUsernameAvailable($value);
         // during edit the same name is of course allowed but no other name that is in the database already
-        if(!$isAvailable && $constraint->oldUsername === $value) {
+        if (!$isAvailable && $constraint->oldUsername === $value) {
             return;
         }
-        if(!$isAvailable) {
+        if (!$isAvailable) {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ string }}', $value)
                 ->addViolation();

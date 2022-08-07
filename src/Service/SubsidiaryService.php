@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,15 +13,13 @@
 
 namespace App\Service;
 
+use App\Entity\Appartment;
+use App\Entity\Subsidiary;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
-use App\Entity\Subsidiary;
-use App\Entity\Appartment;
-
 class SubsidiaryService
 {
-
     private $em = null;
 
     public function __construct(EntityManagerInterface $em)
@@ -29,17 +29,16 @@ class SubsidiaryService
 
     public function getObjectFromForm(Request $request, $id = 'new')
     {
-
         $object = null;
 
-        if ($id === 'new') {
+        if ('new' === $id) {
             $object = new Subsidiary();
         } else {
             $object = $this->em->getRepository(Subsidiary::class)->find($id);
         }
 
-        $object->setName($request->request->get("name-" . $id));
-        $object->setDescription($request->request->get("description-" . $id));
+        $object->setName($request->request->get('name-'.$id));
+        $object->setDescription($request->request->get('description-'.$id));
 
         return $object;
     }
@@ -50,7 +49,7 @@ class SubsidiaryService
 
         $appartments = $this->em->getRepository(Appartment::class)->findByObject($id);
 
-        if (count($appartments) == 0) {
+        if (0 == count($appartments)) {
             $this->em->remove($object);
             $this->em->flush();
 

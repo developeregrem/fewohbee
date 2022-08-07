@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,14 +13,14 @@
 
 namespace App\Validator;
 
-//use Symfony\Component\Validator\Attribute\HasNamedArguments;
+// use Symfony\Component\Validator\Attribute\HasNamedArguments;
 use Symfony\Component\Validator\Constraint;
 
 class UsernameAvailable extends Constraint
 {
     public $message = 'form.username.na';
 
-    //#[HasNamedArguments]
+    // #[HasNamedArguments]
     public function __construct(public string $oldUsername = '', array $groups = null, mixed $payload = null)
     {
         parent::__construct([], $groups, $payload);

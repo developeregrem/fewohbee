@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,29 +13,28 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Doctrine\Persistence\ManagerRegistry;
-
-use App\Service\CSRFProtectionService;
-use App\Service\CustomerService;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use Symfony\Component\Intl\Countries;
-use App\Service\TemplatesService;
 use App\Entity\Template;
+use App\Service\CSRFProtectionService;
+use App\Service\CustomerService;
+use App\Service\TemplatesService;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Intl\Countries;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * @Route("/customers")
  */
- #[Route('/customers')]
+#[Route('/customers')]
 class CustomerServiceController extends AbstractController
 {
     private $perPage = 20;
-    public static $addessTypes = Array('CUSTOMER_ADDRESS_TYPE_PRIVATE', 'CUSTOMER_ADDRESS_TYPE_BUSINESS', 'CUSTOMER_ADDRESS_TYPE_ADDITIONAL');
+    public static $addessTypes = ['CUSTOMER_ADDRESS_TYPE_PRIVATE', 'CUSTOMER_ADDRESS_TYPE_BUSINESS', 'CUSTOMER_ADDRESS_TYPE_ADDITIONAL'];
 
     #[Route('/', name: 'customers.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine, Request $request)
@@ -46,7 +47,7 @@ class CustomerServiceController extends AbstractController
 
         // calculate the number of pages for pagination
         $pages = ceil($customers->count() / $this->perPage);
-        
+
 //        $customers2 = $em->getRepository(Customer::class)->findAll();
 //        /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
 //        foreach($customers2 as $customer) {
@@ -64,19 +65,19 @@ class CustomerServiceController extends AbstractController
 //            $address->setMobilePhone($customer->getMobilePhone());
 //            $address->setPhone($customer->getPhone());
 //            $address->setZip($customer->getZip());
-//            
+//
 //            $em->persist($address);
 //            $customer->addCustomerAddress($address);
 //            $em->persist($customer);
 //        }
 //        $em->flush();
 
-        return $this->render('Customers/index.html.twig', array(
-            "customers" => $customers,
+        return $this->render('Customers/index.html.twig', [
+            'customers' => $customers,
             'page' => $page,
             'pages' => $pages,
-            'search' => $search
-        ));
+            'search' => $search,
+        ]);
     }
 
     #[Route('/search', name: 'customers.search', methods: ['POST'])]
@@ -90,12 +91,12 @@ class CustomerServiceController extends AbstractController
         // calculate the number of pages for pagination
         $pages = ceil($customers->count() / $this->perPage);
 
-        return $this->render('Customers/customer_table.html.twig', array(
-            "customers" => $customers,
+        return $this->render('Customers/customer_table.html.twig', [
+            'customers' => $customers,
             'page' => $page,
             'pages' => $pages,
-            'search' => $search
-        ));
+            'search' => $search,
+        ]);
     }
 
     #[Route('/{id}/get', name: 'customers.get.customer', methods: ['GET'], defaults: ['id' => '0'])]
@@ -104,10 +105,10 @@ class CustomerServiceController extends AbstractController
         $em = $doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
-        return $this->render('Customers/customer_form_show.html.twig', array(
+        return $this->render('Customers/customer_form_show.html.twig', [
             'customer' => $customer,
             'token' => $csrf->getCSRFTokenForForm(),
-        ));
+        ]);
     }
 
     #[Route('/new', name: 'customers.new.customer', methods: ['GET'])]
@@ -123,25 +124,25 @@ class CustomerServiceController extends AbstractController
 
         $customersForTemplate = $em->getRepository(Customer::class)->getLastCustomers(5);
 
-        return $this->render('Customers/customer_form_create.html.twig', array(
+        return $this->render('Customers/customer_form_create.html.twig', [
             'customer' => $customer,
             'token' => $csrf->getCSRFTokenForForm(),
             'countries' => $countries,
             'customersForTemplate' => $customersForTemplate,
-            'addresstypes' => self::$addessTypes
-        ));
+            'addresstypes' => self::$addessTypes,
+        ]);
     }
 
     #[Route('/create', name: 'customers.create.customer', methods: ['POST'])]
     public function createCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
+        if ($csrf->validateCSRFToken($request)) {
             /* @var $customer Customer */
-            $customer = $cs->getCustomerFromForm($request, "new");
+            $customer = $cs->getCustomerFromForm($request, 'new');
 
             // check for mandatory fields
-            if (strlen($customer->getSalutation()) == 0 || strlen($customer->getLastname()) == 0) {
+            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -154,37 +155,38 @@ class CustomerServiceController extends AbstractController
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
+        return $this->render('feedback.html.twig', [
+            'error' => $error,
+        ]);
     }
 
     #[Route('/{id}/edit/show', name: 'customers.edit.customer.show', methods: ['GET'], defaults: ['id' => '0'])]
-    public function showEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id) {
+    public function showEditCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
+    {
         $em = $doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
         // Get the country names for a locale
         $countries = Countries::getNames($request->getLocale());
 
-        return $this->render('Customers/customer_form_edit.html.twig', array(
+        return $this->render('Customers/customer_form_edit.html.twig', [
             'customer' => $customer,
             'token' => $csrf->getCSRFTokenForForm(),
             'countries' => $countries,
-            'addresstypes' => self::$addessTypes
-        ));
+            'addresstypes' => self::$addessTypes,
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'customers.edit.customer', methods: ['POST'], defaults: ['id' => '0'])]
     public function editCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
+        if ($csrf->validateCSRFToken($request)) {
             /* @var $customer Customer */
             $customer = $cs->getCustomerFromForm($request, $id);
 
             // check for mandatory fields
-            if (strlen($customer->getSalutation()) == 0 || strlen($customer->getLastname()) == 0) {
+            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -192,21 +194,21 @@ class CustomerServiceController extends AbstractController
                 $em->persist($customer);
                 $em->flush();
 
-                // add succes message           
+                // add succes message
                 $this->addFlash('success', 'customer.flash.edit.success');
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
+        return $this->render('feedback.html.twig', [
+            'error' => $error,
+        ]);
     }
 
     #[Route('/{id}/delete', name: 'customers.delete.customer', methods: ['GET', 'POST'])]
     public function deleteCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, CustomerService $cs, Request $request, $id)
     {
-        if ($request->getMethod() == 'POST') {
-            if (($csrf->validateCSRFToken($request, true))) {
+        if ('POST' == $request->getMethod()) {
+            if ($csrf->validateCSRFToken($request, true)) {
                 $customer = $cs->deleteCustomer($id);
 
                 if ($customer) {
@@ -215,77 +217,77 @@ class CustomerServiceController extends AbstractController
                     $this->addFlash('warning', 'customer.flash.delete.error.still.in.use');
                 }
             }
-            return new Response("ok");
+
+            return new Response('ok');
         } else {
-            // initial get load (ask for deleting)           
-            return $this->render('Customers/customer_form_delete.html.twig', array(
-                "id" => $id,
-                'token' => $csrf->getCSRFTokenForForm()
-            ));
+            // initial get load (ask for deleting)
+            return $this->render('Customers/customer_form_delete.html.twig', [
+                'id' => $id,
+                'token' => $csrf->getCSRFTokenForForm(),
+            ]);
         }
     }
-    
+
     /**
-     * OnkeyUp Request for plz field in the create or edit customer process to find the city for the given plz
-     * @param Request $request
+     * OnkeyUp Request for plz field in the create or edit customer process to find the city for the given plz.
+     *
      * @return string
-     * 
+     *
      * @Route("/citylookup/{countryCode}/{postalCode}", name="customers.citylookup", methods={"GET"})
      */
     public function cityLookUpAction(string $countryCode, string $postalCode, Request $request, CustomerService $cs)
     {
         $cities = $cs->getCitiesByZIP($countryCode, $postalCode);
-        
+
         return new JsonResponse($cities);
     }
-    
+
     /**
-     * Search for a given address (autocomplete)
-     * @param Request $request
+     * Search for a given address (autocomplete).
+     *
      * @param string $address
-     * 
+     *
      * @Route("/search/address/{address}", name="customers.search.address", methods={"GET"})
      */
     public function searchAddressAction(ManagerRegistry $doctrine, Request $request, $address)
-    {   
+    {
         $em = $doctrine->getManager();
 
         $customers = $em->getRepository(Customer::class)->findByFilterToArray($address, 1, 5);
-        $addresses = array();
+        $addresses = [];
 
-        foreach($customers as $customer) {
-            foreach($customer['customerAddresses'] as $address) {
+        foreach ($customers as $customer) {
+            foreach ($customer['customerAddresses'] as $address) {
                 $addresses[] = $address;
             }
-                       
         }
+
         return $this->json($addresses);
     }
-    
+
     #[Route('/{id}/gdpr', name: 'customers.gdpr.customer', methods: ['GET'])]
     public function exportGDPRToPdfAction(ManagerRegistry $doctrine, TemplatesService $ts, CustomerService $cs, $id)
     {
         $em = $doctrine->getManager();
 
         $customer = $em->getRepository(Customer::class)->find($id);
-        if($customer === null) {
+        if (null === $customer) {
             return $this->json(['error' => 'no user']);
         }
-        
-        $templates = $em->getRepository(Template::class)->loadByTypeName(array('TEMPLATE_GDPR_PDF'));
+
+        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_GDPR_PDF']);
         $defaultTemplate = $ts->getDefaultTemplate($templates);
 
-        if($defaultTemplate === null) {
+        if (null === $defaultTemplate) {
             return $this->json(['error' => 'no template']);
-            
         }
         $templateId = $defaultTemplate->getId();
-        
+
         $templateOutput = $ts->renderTemplate($templateId, $customer, $cs);
-        
+
         $template = $em->getRepository(Template::class)->find($templateId);
 
-        $pdfOutput = $ts->getPDFOutput($templateOutput, "GDPR-Export", $template);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, 'GDPR-Export', $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
 

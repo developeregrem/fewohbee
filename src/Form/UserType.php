@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -30,14 +32,14 @@ class UserType extends AbstractType
             ->add('username', TextType::class, [
                 'label' => 'user.username',
                 'constraints' => [
-                    new UsernameAvailable()
-                ]
+                    new UsernameAvailable(),
+                ],
             ])
             ->add('firstname', TextType::class, [
-                'label' => 'user.firstname'
+                'label' => 'user.firstname',
             ])
             ->add('lastname', TextType::class, [
-                'label' => 'user.lastname'
+                'label' => 'user.lastname',
             ])
             ->add('email')
             ->add('password', PasswordType::class, [
@@ -47,12 +49,12 @@ class UserType extends AbstractType
             ])
             ->add('role', EntityType::class, [
                 'class' => Role::class,
-                'choice_label' => 'name'
+                'choice_label' => 'name',
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'user.active',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
-                'required' => false
+                'required' => false,
             ])
         ;
     }

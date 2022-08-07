@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -15,23 +17,24 @@ use Symfony\Component\Mime\Email;
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-class MailService {
-    
+class MailService
+{
     private $fromMail;
     private $fromName;
     private $mailer;
     private $mailCopy;
     private $returnPath;
-    
-    public function __construct(string $fromMail, string $fromName, string $returnPath, string $mailCopy, MailerInterface $mailer) {
+
+    public function __construct(string $fromMail, string $fromName, string $returnPath, string $mailCopy, MailerInterface $mailer)
+    {
         $this->fromMail = $fromMail;
         $this->fromName = $fromName;
         $this->mailer = $mailer;
         $this->returnPath = $returnPath;
         $this->mailCopy = $mailCopy;
     }
-    
-    public function sendTemplatedMail(string $to, string $subject, string $template, array $parameter = [])
+
+    public function sendTemplatedMail(string $to, string $subject, string $template, array $parameter = []): void
     {
         $email = (new TemplatedEmail())
             ->from(new Address($this->fromMail, $this->fromName))
@@ -42,8 +45,8 @@ class MailService {
         ;
         $this->mailer->send($email);
     }
-    
-    public function sendHTMLMail(string $to, string $subject, string $body, array $attachments = [])
+
+    public function sendHTMLMail(string $to, string $subject, string $body, array $attachments = []): void
     {
         $email = (new Email())
             ->from(new Address($this->fromMail, $this->fromName))
@@ -51,22 +54,22 @@ class MailService {
             ->subject($subject)
             ->html($body)
         ;
-        
-        if($this->returnPath != $this->fromMail) {
+
+        if ($this->returnPath != $this->fromMail) {
             $email->replyTo(new Address($this->returnPath));
         }
-        
-        if($this->mailCopy == 'true') {
+
+        if ('true' == $this->mailCopy) {
             $email->bcc(new Address($this->fromMail));
         }
-        
+
         /* @var $attachment \App\Entity\MailAttachment */
-        foreach($attachments as $attachment) {
+        foreach ($attachments as $attachment) {
             $email->attach(
-                    $attachment->getBody(), 
-                    $attachment->getName(), 
-                    $attachment->getContentType()
-                );
+                $attachment->getBody(),
+                $attachment->getName(),
+                $attachment->getContentType()
+            );
         }
         $this->mailer->send($email);
     }

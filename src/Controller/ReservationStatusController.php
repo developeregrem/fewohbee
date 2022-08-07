@@ -1,20 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\ReservationStatus;
 use App\Form\ReservationStatusType;
 use App\Repository\ReservationStatusRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\Persistence\ManagerRegistry;
 
 #[Route('/settings/status')]
 class ReservationStatusController extends AbstractController
 {
-
     #[Route('/', name: 'reservation_status_index', methods: ['GET'])]
     public function index(ReservationStatusRepository $reservationStatusRepository): Response
     {
@@ -38,7 +39,7 @@ class ReservationStatusController extends AbstractController
 
             // add succes message
             $this->addFlash('success', 'status.flash.create.success');
-            
+
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
@@ -70,6 +71,7 @@ class ReservationStatusController extends AbstractController
 
             // add succes message
             $this->addFlash('success', 'status.flash.edit.success');
+
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
@@ -82,35 +84,37 @@ class ReservationStatusController extends AbstractController
     #[Route('/{id}/delete', name: 'reservation_status_delete', methods: ['GET', 'DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
-        if ($request->getMethod() === 'GET') {
-            // initial get load (ask for deleting)           
+        if ('GET' === $request->getMethod()) {
+            // initial get load (ask for deleting)
             return $this->render('common/form_delete_ask.html.twig', [
                 'id' => $reservationStatus->getId(),
             ]);
-        } else if ($this->isCsrfTokenValid('delete'.$reservationStatus->getId(), $request->request->get('_token'))) {
-            if($reservationStatus->getReservations()->count() > 0) {
+        } elseif ($this->isCsrfTokenValid('delete'.$reservationStatus->getId(), $request->request->get('_token'))) {
+            if ($reservationStatus->getReservations()->count() > 0) {
                 $this->addFlash('warning', 'status.flash.delete.error.still.in.use');
             } else {
                 $entityManager = $doctrine->getManager();
                 $entityManager->remove($reservationStatus);
                 $entityManager->flush();
                 $this->addFlash('success', 'status.flash.delete.success');
-            }            
+            }
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
     }
-    
-    private function calculateColor($bgColor) {
-        list($r, $g, $b) = sscanf($bgColor, "#%02x%02x%02x");
-        $color = 1 - ( 0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
 
-        if ($color < 0.5)
-            $color = '#000000'; // bright colors - black font
-        else
-            $color = '#ffffff'; // dark colors - white font
+    private function calculateColor($bgColor)
+    {
+        [$r, $g, $b] = sscanf($bgColor, '#%02x%02x%02x');
+        $color = 1 - (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255;
+
+        if ($color < 0.5) {
+            $color = '#000000';
+        } // bright colors - black font
+        else {
+            $color = '#ffffff';
+        } // dark colors - white font
 
         return $color;
     }
-
 }
