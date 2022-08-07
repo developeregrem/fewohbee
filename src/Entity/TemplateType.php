@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -14,26 +17,25 @@ class TemplateType
 
     /** @ORM\Column(type="string", length=50) * */
     private $name;
-    
+
     /** @ORM\Column(type="string", length=50) * */
     private $icon;
-    
+
     /** @ORM\Column(type="string", length=150) * */
     private $service;
 
     /**
      * @ORM\OneToMany(targetEntity="Template", mappedBy="templateType")
      */
-    
     private $templates;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
      */
-    private $editorTemplate;    
-    
+    private $editorTemplate;
+
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -41,9 +43,9 @@ class TemplateType
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -51,7 +53,7 @@ class TemplateType
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -65,7 +67,7 @@ class TemplateType
     }
 
     /**
-     * Get name
+     * Get name.
      *
      * @return string
      */
@@ -74,9 +76,8 @@ class TemplateType
         return $this->name;
     }
 
-    
     /**
-     * Set icon
+     * Set icon.
      *
      * @param string $icon
      *
@@ -90,7 +91,7 @@ class TemplateType
     }
 
     /**
-     * Get icon
+     * Get icon.
      *
      * @return string
      */
@@ -100,7 +101,7 @@ class TemplateType
     }
 
     /**
-     * Set service
+     * Set service.
      *
      * @param string $service
      *
@@ -114,7 +115,7 @@ class TemplateType
     }
 
     /**
-     * Get service
+     * Get service.
      *
      * @return string
      */
@@ -122,15 +123,15 @@ class TemplateType
     {
         return $this->service;
     }
-    
+
     /**
-     * Add template
+     * Add template.
      *
      * @param \App\Entity\Template $template
      *
      * @return TemplateType
      */
-    public function addTemplate(\App\Entity\Template $template)
+    public function addTemplate(Template $template)
     {
         $this->templates[] = $template;
 
@@ -138,17 +139,17 @@ class TemplateType
     }
 
     /**
-     * Remove template
+     * Remove template.
      *
      * @param \App\Entity\Template $template
      */
-    public function removeTemplate(\App\Entity\Template $template)
+    public function removeTemplate(Template $template): void
     {
         $this->templates->removeElement($template);
     }
 
     /**
-     * Get templates
+     * Get templates.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

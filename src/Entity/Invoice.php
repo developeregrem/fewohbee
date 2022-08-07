@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -120,7 +123,7 @@ class Invoice
     {
         return $this->remark;
     }
-    
+
     public function getRemarkF()
     {
         return nl2br($this->remark);
@@ -156,115 +159,118 @@ class Invoice
         return $this->status;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number)
+    public function setNumber($number): void
     {
         $this->number = $number;
     }
 
-    public function setDate($date)
+    public function setDate($date): void
     {
         $this->date = $date;
     }
 
-    public function setSalutation($salutation)
+    public function setSalutation($salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname)
+    public function setFirstname($firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname)
+    public function setLastname($lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setCompany($company)
+    public function setCompany($company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address)
+    public function setAddress($address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip)
+    public function setZip($zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city)
+    public function setCity($city): void
     {
         $this->city = $city;
     }
 
-    public function setRemark($remark)
+    public function setRemark($remark): void
     {
         $this->remark = $remark;
     }
 
-    public function setPayment($payment)
+    public function setPayment($payment): void
     {
         $this->payment = $payment;
     }
 
-    public function setStatus($status)
+    public function setStatus($status): void
     {
         $this->status = $status;
     }
 
-    public function setPositions($positions)
+    public function setPositions($positions): void
     {
         $this->positions = $positions;
     }
 
-    public function setAppartments($appartments)
+    public function setAppartments($appartments): void
     {
         $this->appartments = $appartments;
     }
 
-    public function setReservations($reservations)
+    public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addAppartment(\App\Entity\InvoiceAppartment $appartment)
+    public function addAppartment(InvoiceAppartment $appartment)
     {
         $this->appartments[] = $appartment;
+
         return $this;
     }
 
-    public function addPosition(\App\Entity\InvoicePosition $position)
+    public function addPosition(InvoicePosition $position)
     {
         $this->positions[] = $position;
+
         return $this;
     }
 
-    public function addReservation(\App\Entity\Reservation $reservation)
+    public function addReservation(Reservation $reservation)
     {
         $this->reservations[] = $reservation;
+
         return $this;
     }
 
-    public function removeAppartment(\App\Entity\InvoiceAppartment $appartment)
+    public function removeAppartment(InvoiceAppartment $appartment): void
     {
         $this->appartments->removeElement($appartment);
     }
 
-    public function removePosition(\App\Entity\InvoicePosition $position)
+    public function removePosition(InvoicePosition $position): void
     {
         $this->positions->removeElement($position);
     }
 
-    public function removeReservation(\App\Entity\Reservation $reservation)
+    public function removeReservation(Reservation $reservation): void
     {
         $this->reservations->removeElement($reservation);
     }

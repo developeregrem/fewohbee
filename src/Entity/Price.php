@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -9,7 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Entity(repositoryClass="App\Repository\PriceRepository")
  * @ORM\Table(name="prices")
  **/
-
 class Price
 {
     /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
@@ -99,7 +101,7 @@ class Price
     private $isFlatPrice;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -195,87 +197,87 @@ class Price
         return $this->type;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setPrice($price)
+    public function setPrice($price): void
     {
         $this->price = $price;
     }
 
-    public function setVat($vat)
+    public function setVat($vat): void
     {
         $this->vat = $vat;
     }
 
-    public function setDescription($description)
+    public function setDescription($description): void
     {
         $this->description = $description;
     }
 
-    public function setNumberOfPersons($numberOfPersons)
+    public function setNumberOfPersons($numberOfPersons): void
     {
         $this->numberOfPersons = $numberOfPersons;
     }
 
-    public function setMinStay($minStay)
+    public function setMinStay($minStay): void
     {
         $this->minStay = $minStay;
     }
 
-    public function setActive($active)
+    public function setActive($active): void
     {
         $this->active = $active;
     }
 
-    public function setSeasonStart($seasonStart)
+    public function setSeasonStart($seasonStart): void
     {
         $this->seasonStart = $seasonStart;
     }
 
-    public function setSeasonEnd($seasonEnd)
+    public function setSeasonEnd($seasonEnd): void
     {
         $this->seasonEnd = $seasonEnd;
     }
 
-    public function setMonday($monday)
+    public function setMonday($monday): void
     {
         $this->monday = $monday;
     }
 
-    public function setTuesday($tuesday)
+    public function setTuesday($tuesday): void
     {
         $this->tuesday = $tuesday;
     }
 
-    public function setWednesday($wednesday)
+    public function setWednesday($wednesday): void
     {
         $this->wednesday = $wednesday;
     }
 
-    public function setThursday($thursday)
+    public function setThursday($thursday): void
     {
         $this->thursday = $thursday;
     }
 
-    public function setFriday($friday)
+    public function setFriday($friday): void
     {
         $this->friday = $friday;
     }
 
-    public function setSaturday($saturday)
+    public function setSaturday($saturday): void
     {
         $this->saturday = $saturday;
     }
 
-    public function setSunday($sunday)
+    public function setSunday($sunday): void
     {
         $this->sunday = $sunday;
     }
 
-    public function setType($type)
+    public function setType($type): void
     {
         $this->type = $type;
     }
@@ -285,18 +287,19 @@ class Price
         return $this->allDays;
     }
 
-    public function setAllDays($allDays)
+    public function setAllDays($allDays): void
     {
         $this->allDays = $allDays;
     }
 
     /**
-     * Add reservationOrigins
+     * Add reservationOrigins.
      *
      * @param \App\Entity\ReservationOrigin $reservationOrigins
+     *
      * @return Price
      */
-    public function addReservationOrigin(\App\Entity\ReservationOrigin $reservationOrigins)
+    public function addReservationOrigin(ReservationOrigin $reservationOrigins)
     {
         if (!$this->reservationOrigins->contains($reservationOrigins)) {
             $this->reservationOrigins[] = $reservationOrigins;
@@ -306,22 +309,23 @@ class Price
     }
 
     /**
-     * Remove reservationOrigins
+     * Remove reservationOrigins.
      *
      * @param \App\Entity\ReservationOrigin $reservationOrigins
      */
-    public function removeReservationOrigin(\App\Entity\ReservationOrigin $reservationOrigins)
+    public function removeReservationOrigin(ReservationOrigin $reservationOrigins)
     {
-        if($this->reservationOrigins->contains($reservationOrigins)) {
+        if ($this->reservationOrigins->contains($reservationOrigins)) {
             $this->reservationOrigins->removeElement($reservationOrigins);
         }
+
         return $this;
     }
 
     /**
-     * Get reservationOrigins
+     * Get reservationOrigins.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getReservationOrigins()
     {

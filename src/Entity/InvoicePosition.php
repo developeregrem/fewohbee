@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -7,32 +10,31 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity @ORM\Table(name="invoice_positions")
  **/
-
 class InvoicePosition
 {
     /** @ORM\Id @ORM\Column(type="bigint") @ORM\GeneratedValue * */
     private $id;
 
-    /** 
+    /**
      * @ORM\Column(type="integer")
      * @Assert\Positive
      */
     private $amount;
 
-    /** 
-     * @ORM\Column(type="string", length=255) 
+    /**
+     * @ORM\Column(type="string", length=255)
      * @Assert\NotBlank
      */
     private $description;
 
-    /** 
-     * @ORM\Column(type="decimal", scale=2) 
+    /**
+     * @ORM\Column(type="decimal", scale=2)
      * @Assert\PositiveOrZero
      */
     private $price;
 
-    /** 
-     * @ORM\Column(type="decimal", scale=2) 
+    /**
+     * @ORM\Column(type="decimal", scale=2)
      * @Assert\PositiveOrZero
      */
     private $vat;
@@ -54,8 +56,9 @@ class InvoicePosition
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $isFlatPrice;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->isFlatPrice = false;
         $this->includesVat = false;
     }
@@ -89,50 +92,50 @@ class InvoicePosition
     {
         return $this->amount;
     }
-    
-    public function getTotalPriceRaw()
+
+    public function getTotalPriceRaw(): float
     {
-        $price = $this->price * $this->getAmount();
-        return $price;
-    }
-    
-    public function getTotalPrice()
-    {
-        $price = $this->price * $this->getAmount();
-        return number_format($price, 2, ',', '.');
-    }
-    
-    public function getPriceFormated()
-    {
-        return number_format($this->price, 2, ',', '.');
+        return (float) $this->price * $this->getAmount();
     }
 
-    public function setId($id)
+    public function getTotalPrice(): string
+    {
+        $price = $this->price * $this->getAmount();
+
+        return number_format((float) $price, 2, ',', '.');
+    }
+
+    public function getPriceFormated(): string
+    {
+        return number_format((float) $this->price, 2, ',', '.');
+    }
+
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setDescription($description)
+    public function setDescription($description): void
     {
         $this->description = $description;
     }
 
-    public function setPrice($price)
+    public function setPrice($price): void
     {
         $this->price = $price;
     }
 
-    public function setVat($vat)
+    public function setVat($vat): void
     {
         $this->vat = $vat;
     }
 
-    public function setInvoice($invoice)
+    public function setInvoice($invoice): void
     {
         $this->invoice = $invoice;
     }
 
-    public function setAmount($amount)
+    public function setAmount($amount): void
     {
         $this->amount = $amount;
     }

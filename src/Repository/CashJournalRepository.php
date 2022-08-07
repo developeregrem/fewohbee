@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
@@ -7,8 +9,7 @@ use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
- * CashJournalRepository
- *
+ * CashJournalRepository.
  */
 class CashJournalRepository extends EntityRepository
 {
@@ -17,7 +18,7 @@ class CashJournalRepository extends EntityRepository
         $q = $this
             ->createQueryBuilder('cj')
             ->select('cj.cashYear')
-            ->addGroupBy("cj.cashYear")
+            ->addGroupBy('cj.cashYear')
             ->addOrderBy('cj.cashYear', 'DESC')
             ->getQuery();
 
@@ -39,20 +40,20 @@ class CashJournalRepository extends EntityRepository
 
         return $paginator;
     }
-    
+
     public function getYoungestJournal()
     {
         $q = $this
             ->createQueryBuilder('cj')
             ->select('MAX(cj.cashYear)')
             ->getQuery();
-        
+
         try {
             $res = $q->getSingleScalarResult();
         } catch (NoResultException $e) {
             return null;
         }
-       
+
         $maxMonthQ = '(SELECT MAX(sub1.cashMonth) FROM App\Entity\CashJournal sub1 WHERE sub1.cashYear=:year)';
         $q = $this
             ->createQueryBuilder('cj')
@@ -60,7 +61,7 @@ class CashJournalRepository extends EntityRepository
             ->where('cj.cashYear=:year AND cj.cashMonth='.$maxMonthQ.'')
             ->setParameter('year', $res)
             ->getQuery();
-        
+
         try {
             return $q->getSingleResult();
         } catch (NoResultException $e) {

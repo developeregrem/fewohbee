@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -16,7 +18,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotCompromisedPassword;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -25,22 +26,24 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class UserService
 {
+    public function __construct(
+        private readonly ValidatorInterface $validator,
+        private readonly UserPasswordHasherInterface $hasher,
+        private readonly EntityManagerInterface $em,
+        private readonly TranslatorInterface $translator
+    ) {
+    }
 
-    public function __construct(private readonly ValidatorInterface $validator,
-                                private readonly UserPasswordHasherInterface $hasher,
-                                private readonly EntityManagerInterface $em,
-                                private readonly TranslatorInterface $translator)
+    public function hashPassword(string $password, User $user): string
     {
+        return $this->hasher->hashPassword($user, $password);
     }
 
-    public function hashPassword(string $password, User $user): string {
-            return $this->hasher->hashPassword($user, $password);
-    }
-    
-    public function isPasswordValid(string $password, User $user, FormInterface $form = null, $pwField = 'password'): bool {
+    public function isPasswordValid(string $password, User $user, FormInterface $form = null, $pwField = 'password'): bool
+    {
         $success = true;
         // check password during create and when it's not empty during edit
-        if($user->getId() === null || !empty($password)) {
+        if (null === $user->getId() || !empty($password)) {
             $constraints = [
                 new Length([
                     'min' => 10,
@@ -48,7 +51,7 @@ class UserService
                     // max length allowed by Symfony for security reasons
                     'max' => 4096,
                 ]),
-                new NotCompromisedPassword(['skipOnError' => true])
+                new NotCompromisedPassword(['skipOnError' => true]),
             ];
 
             $violations = $this->validator->validate($password, $constraints);
@@ -58,16 +61,16 @@ class UserService
                         $success = false;
                         $message = $violation->getMessage();
                         $message = \is_string($message) ? $message : '';
-                        if ($form !== null) {
+                        if (null !== $form) {
                             $form->get($pwField)->addError(new FormError($message));
                         } else {
-                            throw new \RuntimeException('❌ ' . $message . ' ❌');
+                            throw new \RuntimeException('❌ '.$message.' ❌');
                         }
-
                     }
                 }
             }
         }
+
         return $success;
     }
 
@@ -80,8 +83,9 @@ class UserService
 
         return true;
     }
-    
-    public function isUsernameAvailable(string $username): bool {
+
+    public function isUsernameAvailable(string $username): bool
+    {
         return $this->em->getRepository(User::class)->isUsernameAvailable($username);
     }
 }

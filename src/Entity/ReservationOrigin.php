@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -27,7 +30,7 @@ class ReservationOrigin
     private $reservations;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -36,9 +39,10 @@ class ReservationOrigin
     }
 
     /**
-     * Set id
+     * Set id.
      *
      * @param int $id
+     *
      * @return ReservationOrigin
      */
     public function setId($id)
@@ -49,9 +53,9 @@ class ReservationOrigin
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer 
+     * @return int
      */
     public function getId()
     {
@@ -59,9 +63,10 @@ class ReservationOrigin
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
+     *
      * @return ReservationOrigin
      */
     public function setName($name)
@@ -72,9 +77,9 @@ class ReservationOrigin
     }
 
     /**
-     * Get name
+     * Get name.
      *
-     * @return string 
+     * @return string
      */
     public function getName()
     {
@@ -82,12 +87,13 @@ class ReservationOrigin
     }
 
     /**
-     * Add prices
+     * Add prices.
      *
      * @param \App\Entity\Price $prices
+     *
      * @return ReservationOrigin
      */
-    public function addPrice(\App\Entity\Price $prices)
+    public function addPrice(Price $prices)
     {
         $this->prices[] = $prices;
 
@@ -95,19 +101,19 @@ class ReservationOrigin
     }
 
     /**
-     * Remove prices
+     * Remove prices.
      *
      * @param \App\Entity\Price $prices
      */
-    public function removePrice(\App\Entity\Price $prices)
+    public function removePrice(Price $prices): void
     {
         $this->prices->removeElement($prices);
     }
 
     /**
-     * Get prices
+     * Get prices.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getPrices()
     {
@@ -115,12 +121,13 @@ class ReservationOrigin
     }
 
     /**
-     * Add reservations
+     * Add reservations.
      *
      * @param \App\Entity\Reservation $reservations
+     *
      * @return ReservationOrigin
      */
-    public function addReservation(\App\Entity\Reservation $reservations)
+    public function addReservation(Reservation $reservations)
     {
         $this->reservations[] = $reservations;
 
@@ -128,19 +135,19 @@ class ReservationOrigin
     }
 
     /**
-     * Remove reservations
+     * Remove reservations.
      *
      * @param \App\Entity\Reservation $reservations
      */
-    public function removeReservation(\App\Entity\Reservation $reservations)
+    public function removeReservation(Reservation $reservations): void
     {
         $this->reservations->removeElement($reservations);
     }
 
     /**
-     * Get reservations
+     * Get reservations.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return \Doctrine\Common\Collections\Collection
      */
     public function getReservations()
     {

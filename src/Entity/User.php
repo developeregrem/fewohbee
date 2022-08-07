@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Table(name="users")
@@ -65,14 +67,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->id;
     }
-    
+
     public function setId($id): self
     {
         $this->id = $id;
 
         return $this;
     }
-    
+
     /**
      * A visual identifier that represents this user.
      *
@@ -94,14 +96,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
-    
+
     public function getRole()
     {
-
         return $this->role;
     }
 
-    public function setRole($role)
+    public function setRole($role): void
     {
         $this->role = $role;
     }
@@ -111,7 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        return array($this->role->getRole());
+        return [$this->role->getRole()];
     }
 
     /**
@@ -132,7 +133,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;

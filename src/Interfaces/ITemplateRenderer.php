@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,12 +13,12 @@
 
 namespace App\Interfaces;
 
-interface ITemplateRenderer {
-    
+use App\Entity\Template;
+
+interface ITemplateRenderer
+{
     /**
-     * Every Service can tell which information are provided to render a template
-     * @param \App\Entity\\Template $template
-     * @param mixed $param
+     * Every Service can tell which information are provided to render a template.
      */
-    public function getRenderParams($template, $param);
+    public function getRenderParams(Template $template, mixed $param);
 }
