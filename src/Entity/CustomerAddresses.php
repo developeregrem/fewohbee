@@ -7,48 +7,35 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="customer_addresses")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'customer_addresses')]
 class CustomerAddresses
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=50) * */
+    #[ORM\Column(type: 'string', length: 50)]
     private $type;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $country;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $phone;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $fax;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $mobile_phone;
-
-    /** @ORM\Column(type="string", length=100, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $email;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="customerAddresses")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Customer', mappedBy: 'customerAddresses')]
     private $customers;
 
     /**

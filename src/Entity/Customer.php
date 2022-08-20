@@ -7,76 +7,50 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity (repositoryClass="App\Repository\CustomerRepository")
- * @ORM\Table(name="customers")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\CustomerRepository')]
+#[ORM\Table(name: 'customers')]
 class Customer
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=20) * */
+    #[ORM\Column(type: 'string', length: 20)]
     private $salutation;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $firstname;
-
-    /** @ORM\Column(type="string", length=45) * */
+    #[ORM\Column(type: 'string', length: 45)]
     private $lastname;
-
-    /** @ORM\Column(type="date", nullable=true) * */
+    #[ORM\Column(type: 'date', nullable: true)]
     private $birthday;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $country;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $phone;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $fax;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $mobile_phone;
-
-    /** @ORM\Column(type="string", length=100, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $email;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $remark;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Reservation", mappedBy="customers")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'customers')]
     private $reservations;
-
-    /**
-     * @ORM\OneToMany(targetEntity="RegistrationBookEntry", mappedBy="customer")
-     */
+    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'customer')]
     private $registrationBookEntries;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Reservation", mappedBy="booker")
-     */
+    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'booker')]
     private $bookedReservations;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="CustomerAddresses", inversedBy="customers")
-     * @ORM\JoinTable(name="customer_has_address")
-     */
+    #[ORM\ManyToMany(targetEntity: 'CustomerAddresses', inversedBy: 'customers')]
+    #[ORM\JoinTable(name: 'customer_has_address')]
     private $customerAddresses;
 
     public function __construct()

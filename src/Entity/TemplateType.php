@@ -6,32 +6,23 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity()
- * @ORM\Table(name="template_types")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'template_types')]
 class TemplateType
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=50) * */
+    #[ORM\Column(type: 'string', length: 50)]
     private $name;
-
-    /** @ORM\Column(type="string", length=50) * */
+    #[ORM\Column(type: 'string', length: 50)]
     private $icon;
-
-    /** @ORM\Column(type="string", length=150) * */
+    #[ORM\Column(type: 'string', length: 150)]
     private $service;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Template", mappedBy="templateType")
-     */
+    #[ORM\OneToMany(targetEntity: 'Template', mappedBy: 'templateType')]
     private $templates;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $editorTemplate;
 
     /**

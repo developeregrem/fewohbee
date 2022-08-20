@@ -6,60 +6,31 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CashJournalEntryRepository")
- * @ORM\Table(name="cash_journal_entries")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\CashJournalEntryRepository')]
+#[ORM\Table(name: 'cash_journal_entries')]
 class CashJournalEntry
 {
-    /**
-     * @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue
-     **/
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true)
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $incomes;
-
-    /**
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true)
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $expenses;
-
-    /**
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true)
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $inventory;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     **/
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $counterAccount;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     **/
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $invoiceNumber;
-
-    /**
-     * @ORM\Column(type="integer")
-     **/
+    #[ORM\Column(type: 'integer')]
     private $documentNumber;
-
-    /**
-     * @ORM\Column(type="date")
-     **/
+    #[ORM\Column(type: 'date')]
     private $date;
-
-    /**
-     * @ORM\Column(type="text", length=255, nullable=true)
-     **/
+    #[ORM\Column(type: 'text', length: 255, nullable: true)]
     private $remark;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="CashJournal", inversedBy="cashJournalEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'CashJournal', inversedBy: 'cashJournalEntries')]
     private $cashJournal;
 
     /**
@@ -123,8 +94,6 @@ class CashJournalEntry
     /**
      * Set counterAccount.
      *
-     * @param string $counterAccount
-     *
      * @return CashJournalEntry
      */
     public function setCounterAccount(string $counterAccount): static
@@ -136,8 +105,6 @@ class CashJournalEntry
 
     /**
      * Get counterAccount.
-     *
-     * @return string|null
      */
     public function getCounterAccount(): ?string
     {
@@ -146,8 +113,6 @@ class CashJournalEntry
 
     /**
      * Set invoiceNumber.
-     *
-     * @param string $invoiceNumber
      *
      * @return CashJournalEntry
      */
@@ -160,8 +125,6 @@ class CashJournalEntry
 
     /**
      * Get invoiceNumber.
-     *
-     * @return string|null
      */
     public function getInvoiceNumber(): ?string
     {
@@ -170,8 +133,6 @@ class CashJournalEntry
 
     /**
      * Set documentNumber.
-     *
-     * @param int $documentNumber
      *
      * @return CashJournalEntry
      */
@@ -184,8 +145,6 @@ class CashJournalEntry
 
     /**
      * Get documentNumber.
-     *
-     * @return int
      */
     public function getDocumentNumber(): int
     {
@@ -194,8 +153,6 @@ class CashJournalEntry
 
     /**
      * Set date.
-     *
-     * @param \DateTime $date
      *
      * @return CashJournalEntry
      */
@@ -208,8 +165,6 @@ class CashJournalEntry
 
     /**
      * Get date.
-     *
-     * @return \DateTime
      */
     public function getDate(): \DateTime
     {
@@ -218,8 +173,6 @@ class CashJournalEntry
 
     /**
      * Set remark.
-     *
-     * @param string $remark
      *
      * @return CashJournalEntry
      */
@@ -232,8 +185,6 @@ class CashJournalEntry
 
     /**
      * Get remark.
-     *
-     * @return string|null
      */
     public function getRemark(): ?string
     {
@@ -242,8 +193,6 @@ class CashJournalEntry
 
     /**
      * Set cashJournal.
-     *
-     * @param CashJournal|null $cashJournal
      *
      * @return CashJournalEntry
      */
@@ -256,8 +205,6 @@ class CashJournalEntry
 
     /**
      * Get cashJournal.
-     *
-     * @return CashJournal
      */
     public function getCashJournal(): CashJournal
     {
@@ -280,8 +227,6 @@ class CashJournalEntry
 
     /**
      * Get incomes formatted.
-     *
-     * @return string
      */
     public function getIncomesF(): string
     {
@@ -290,8 +235,6 @@ class CashJournalEntry
 
     /**
      * Get expenses formatted.
-     *
-     * @return string
      */
     public function getExpensesF(): string
     {

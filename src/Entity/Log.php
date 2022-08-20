@@ -6,18 +6,16 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity @ORM\Table(name="logging")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'logging')]
 class Log
 {
-    /** @ORM\Id @ORM\Column(type="integer") * */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
     private $user_id;
-
-    /** @ORM\Column(type="time") * */
+    #[ORM\Column(type: 'time')]
     private $date;
-
-    /** @ORM\Column(type="string", length=255) * */
+    #[ORM\Column(type: 'string', length: 255)]
     private $action;
 
     /**

@@ -128,8 +128,6 @@ class StatisticsController extends AbstractController
 
     /**
      * Index Action reservationorigin page.
-     *
-     * @return Response
      */
     #[Route('/origin', name: 'statistics.origin', methods: ['GET'])]
     public function originAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response

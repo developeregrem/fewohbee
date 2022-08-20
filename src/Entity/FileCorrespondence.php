@@ -6,14 +6,10 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
+#[ORM\Entity]
 class FileCorrespondence extends Correspondence
 {
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $fileName;
 
     /**

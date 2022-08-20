@@ -7,25 +7,19 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity @ORM\Table(name="objects")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'objects')]
 class Subsidiary
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=45)
-     * **/
+    #[ORM\Column(type: 'string', length: 45)]
     private $name;
-
-    /** @ORM\Column(type="string", length=255)
-     * **/
+    #[ORM\Column(type: 'string', length: 255)]
     private $description;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Appartment", mappedBy="object")
-     */
+    #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
     private $appartments;
 
     public function __construct()
@@ -85,8 +79,6 @@ class Subsidiary
     /**
      * Add appartments.
      *
-     * @param Appartment $appartments
-     *
      * @return Subsidiary
      */
     public function addAppartment(Appartment $appartments)
@@ -98,8 +90,6 @@ class Subsidiary
 
     /**
      * Remove appartments.
-     *
-     * @param Appartment $appartments
      */
     public function removeAppartment(Appartment $appartments): void
     {

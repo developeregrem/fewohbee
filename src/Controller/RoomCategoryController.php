@@ -48,16 +48,6 @@ class RoomCategoryController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}", name="room_category_show", methods={"GET"})
-     */
-//    public function show(RoomCategory $roomCategory): Response
-//    {
-//        return $this->render('RoomCategory/show.html.twig', [
-//            'room_category' => $roomCategory,
-//        ]);
-//    }
-
     #[Route('/{id}/edit', name: 'room_category_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
@@ -67,7 +57,7 @@ class RoomCategoryController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $doctrine->getManager()->flush();
 
-            // add succes message
+            // add success message
             $this->addFlash('success', 'category.flash.edit.success');
 
             return new Response('', Response::HTTP_NO_CONTENT);

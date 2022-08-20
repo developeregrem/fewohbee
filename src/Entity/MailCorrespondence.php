@@ -6,19 +6,12 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
+#[ORM\Entity]
 class MailCorrespondence extends Correspondence
 {
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $recipient;
-
-    /**
-     * @ORM\Column(type="string", length=200)
-     */
+    #[ORM\Column(type: 'string', length: 200)]
     protected $subject;
 
     /**

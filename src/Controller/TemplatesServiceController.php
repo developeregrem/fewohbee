@@ -33,16 +33,11 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-/**
- * @Route("/settings/templates")
- */
-#[Route('/settings/templates')]
+#[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
 {
     /**
      * Index-View.
-     *
-     * @return Response
      */
     #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine): Response
@@ -59,8 +54,6 @@ class TemplatesServiceController extends AbstractController
      * Show single entity.
      *
      * @param $id
-     *
-     * @return Response
      */
     #[Route('/{id}/get', name: 'settings.templates.get', defaults: ['id' => '0'], methods: ['GET'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
@@ -79,8 +72,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Show form for new entity.
-     *
-     * @return Response
      */
     #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
     public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf): Response
@@ -101,8 +92,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Create new entity.
-     *
-     * @return Response
      */
     #[Route('/create', name: 'settings.templates.create', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request): Response
@@ -134,8 +123,6 @@ class TemplatesServiceController extends AbstractController
      * update entity end show update result.
      *
      * @param $id
-     *
-     * @return Response
      */
     #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id): Response
@@ -169,8 +156,6 @@ class TemplatesServiceController extends AbstractController
      * delete entity.
      *
      * @param $id
-     *
-     * @return Response
      */
     #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['GET', 'DELETE'])]
     public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template): Response
@@ -203,8 +188,6 @@ class TemplatesServiceController extends AbstractController
      * Preview single entity.
      *
      * @param $id
-     *
-     * @return Response
      */
     #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
     public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id): Response
@@ -221,8 +204,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Called when clicking add conversation in the reservation overview.
-     *
-     * @return Response
      */
     #[Route('/select/reservation', name: 'settings.templates.select.reservation', methods: ['POST'])]
     public function selectReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
@@ -481,8 +462,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Softly delete attachment, doesn't delete file from db.
-     *
-     * @return Response
      */
     #[Route('/attachment/remove', name: 'settings.templates.attachment.remove', methods: ['POST'])]
     public function deleteAttachmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request): Response
@@ -555,8 +534,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Adds an already added file (correspondence) as attachment of the current mail.
-     *
-     * @return Response
      */
     #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
     public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is): Response

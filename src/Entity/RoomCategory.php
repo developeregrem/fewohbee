@@ -9,38 +9,22 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\RoomCategoryRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\RoomCategoryRepository')]
 class RoomCategory
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
     private $name;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Appartment", mappedBy="roomCategory")
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Appartment', mappedBy: 'roomCategory')]
     private $apartments;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Price", mappedBy="roomCategory")
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategory')]
     private $prices;
-
-    /**
-     * @ORM\Column(type="string", length=5, nullable=true)
-     * @Assert\Length(max = 5)
-     */
+    #[ORM\Column(type: 'string', length: 5, nullable: true)]
+    #[Assert\Length(max: 5)]
     private $acronym;
 
     public function __construct()
