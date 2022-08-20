@@ -7,42 +7,24 @@ namespace App\Entity;
 use App\Repository\PostalCodeDataRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=PostalCodeDataRepository::class)
- * @ORM\Table(name="postal_code_data",indexes={@ORM\Index(name="search_zip_idx", columns={"country_code", "postal_code"})})
- */
+#[ORM\Entity(repositoryClass: PostalCodeDataRepository::class)]
+#[ORM\Table(name: 'postal_code_data')]
+#[ORM\Index(name: 'search_zip_idx', columns: ['country_code', 'postal_code'])]
 class PostalCodeData
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="string", length=2)
-     */
+    #[ORM\Column(type: 'string', length: 2)]
     private $countryCode;
-
-    /**
-     * @ORM\Column(type="string", length=20)
-     */
+    #[ORM\Column(type: 'string', length: 20)]
     private $postalCode;
-
-    /**
-     * @ORM\Column(type="string", length=180)
-     */
+    #[ORM\Column(type: 'string', length: 180)]
     private $placeName;
-
-    /**
-     * @ORM\Column(type="string", length=100, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $stateName;
-
-    /**
-     * @ORM\Column(type="string", length=20, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $stateNameShort;
 
     public function getId(): ?int

@@ -7,64 +7,43 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\InvoiceRepository")
- * @ORM\Table(name="invoices")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\InvoiceRepository')]
+#[ORM\Table(name: 'invoices')]
 class Invoice
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=45) * */
+    #[ORM\Column(type: 'string', length: 45)]
     private $number;
-
-    /** @ORM\Column(type="date") * */
+    #[ORM\Column(type: 'date')]
     private $date;
-
-    /** @ORM\Column(type="string", length=20, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $salutation;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $firstname;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $lastname;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="text", nullable=true) * */
+    #[ORM\Column(type: 'text', nullable: true)]
     private $remark;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $payment;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $status;
-
-    /**
-     * @ORM\OneToMany(targetEntity="InvoicePosition", mappedBy="invoice")
-     */
+    #[ORM\OneToMany(targetEntity: 'InvoicePosition', mappedBy: 'invoice')]
     private $positions;
-
-    /**
-     * @ORM\OneToMany(targetEntity="InvoiceAppartment", mappedBy="invoice")
-     */
+    #[ORM\OneToMany(targetEntity: 'InvoiceAppartment', mappedBy: 'invoice')]
     private $appartments;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Reservation", mappedBy="invoices")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'invoices')]
     private $reservations;
 
     public function __construct()

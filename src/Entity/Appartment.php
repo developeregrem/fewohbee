@@ -7,43 +7,28 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\AppartmentRepository")
- * @ORM\Table(name="appartments")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\AppartmentRepository')]
+#[ORM\Table(name: 'appartments')]
 class Appartment
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=10) * */
+    #[ORM\Column(type: 'string', length: 10)]
     private $number;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $beds_max;
-
-    /** @ORM\Column(type="string", length=255) * */
+    #[ORM\Column(type: 'string', length: 255)]
     private $description;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Subsidiary", inversedBy="appartments")
-     * **/
+    #[ORM\ManyToOne(targetEntity: 'Subsidiary', inversedBy: 'appartments')]
     private $object;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Reservation", mappedBy="appartment")
-     */
+    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'appartment')]
     private $reservations;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\RoomCategory", inversedBy="apartments")
-     * @ORM\JoinColumn(nullable=true)
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
+    #[ORM\JoinColumn(nullable: true)]
     private $roomCategory;
-
-    /**
-     * @ORM\OneToOne(targetEntity=CalendarSync::class, mappedBy="apartment", cascade={"persist", "remove"})
-     */
+    #[ORM\OneToOne(targetEntity: CalendarSync::class, mappedBy: 'apartment', cascade: ['persist', 'remove'])]
     private $calendarSync;
 
     public function __construct()

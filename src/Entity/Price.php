@@ -8,96 +8,61 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\PriceRepository")
- * @ORM\Table(name="prices")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\PriceRepository')]
+#[ORM\Table(name: 'prices')]
 class Price
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="decimal", scale=2) * */
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private $price;
-
-    /** @ORM\Column(type="decimal", scale=2) * */
+    #[ORM\Column(type: 'decimal', scale: 2)]
     private $vat;
-
-    /** @ORM\Column(type="string", length=100) * */
+    #[ORM\Column(type: 'string', length: 100)]
     private $description;
-
-    /** @ORM\Column(type="smallint", nullable=true) * */
+    #[ORM\Column(type: 'smallint', nullable: true)]
     private $numberOfPersons;
-
-    /** @ORM\Column(type="smallint", nullable=true) * */
+    #[ORM\Column(type: 'smallint', nullable: true)]
     private $minStay;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $active;
-
-    /** @ORM\Column(type="date", nullable=true) * */
+    #[ORM\Column(type: 'date', nullable: true)]
     private $seasonStart;
-
-    /** @ORM\Column(type="date", nullable=true) * */
+    #[ORM\Column(type: 'date', nullable: true)]
     private $seasonEnd;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $monday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $tuesday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $wednesday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $thursday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $friday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $saturday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $sunday;
-
-    /** @ORM\Column(type="boolean", nullable=true) * */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $allDays;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $type;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="ReservationOrigin", inversedBy="prices")
-     * @ORM\JoinTable(name="prices_has_reservation_origins")
-     */
+    #[ORM\ManyToMany(targetEntity: 'ReservationOrigin', inversedBy: 'prices')]
+    #[ORM\JoinTable(name: 'prices_has_reservation_origins')]
     private $reservationOrigins;
-
-    /**
-     * @ORM\OneToMany(targetEntity="App\Entity\PricePeriod", mappedBy="price", orphanRemoval=true, cascade={"persist"})
-     */
+    #[ORM\OneToMany(targetEntity: 'App\Entity\PricePeriod', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     private $pricePeriods;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $allPeriods;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\RoomCategory", inversedBy="prices")
-     * @ORM\JoinColumn(nullable=true)
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'prices')]
+    #[ORM\JoinColumn(nullable: true)]
     private $roomCategory;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $includesVat;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $isFlatPrice;
 
     /**

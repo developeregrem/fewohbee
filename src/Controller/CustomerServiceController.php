@@ -27,10 +27,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Annotation\Route;
 
-/**
- * @Route("/customers")
- */
-#[Route('/customers')]
+#[Route(path: '/customers')]
 class CustomerServiceController extends AbstractController
 {
     private $perPage = 20;
@@ -230,12 +227,9 @@ class CustomerServiceController extends AbstractController
 
     /**
      * OnkeyUp Request for plz field in the create or edit customer process to find the city for the given plz.
-     *
-     * @return string
-     *
-     * @Route("/citylookup/{countryCode}/{postalCode}", name="customers.citylookup", methods={"GET"})
      */
-    public function cityLookUpAction(string $countryCode, string $postalCode, Request $request, CustomerService $cs)
+    #[Route(path: '/citylookup/{countryCode}/{postalCode}', name: 'customers.citylookup', methods: ['GET'])]
+    public function cityLookUpAction(string $countryCode, string $postalCode, Request $request, CustomerService $cs): JsonResponse
     {
         $cities = $cs->getCitiesByZIP($countryCode, $postalCode);
 
@@ -246,16 +240,13 @@ class CustomerServiceController extends AbstractController
      * Search for a given address (autocomplete).
      *
      * @param string $address
-     *
-     * @Route("/search/address/{address}", name="customers.search.address", methods={"GET"})
      */
-    public function searchAddressAction(ManagerRegistry $doctrine, Request $request, $address)
+    #[Route(path: '/search/address/{address}', name: 'customers.search.address', methods: ['GET'])]
+    public function searchAddressAction(ManagerRegistry $doctrine, Request $request, $address): JsonResponse
     {
         $em = $doctrine->getManager();
-
         $customers = $em->getRepository(Customer::class)->findByFilterToArray($address, 1, 5);
         $addresses = [];
-
         foreach ($customers as $customer) {
             foreach ($customer['customerAddresses'] as $address) {
                 $addresses[] = $address;

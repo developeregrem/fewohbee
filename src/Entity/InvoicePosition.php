@@ -7,54 +7,31 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity @ORM\Table(name="invoice_positions")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'invoice_positions')]
 class InvoicePosition
 {
-    /** @ORM\Id @ORM\Column(type="bigint") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'bigint')]
     private $id;
-
-    /**
-     * @ORM\Column(type="integer")
-     * @Assert\Positive
-     */
+    #[ORM\Column(type: 'integer')]
+    #[Assert\Positive]
     private $amount;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
     private $description;
-
-    /**
-     * @ORM\Column(type="decimal", scale=2)
-     * @Assert\PositiveOrZero
-     */
+    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[Assert\PositiveOrZero]
     private $price;
-
-    /**
-     * @ORM\Column(type="decimal", scale=2)
-     * @Assert\PositiveOrZero
-     */
+    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[Assert\PositiveOrZero]
     private $vat;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Invoice", inversedBy="positions")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'positions')]
     private $invoice;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    /**
-     * @ORM\Column(type="boolean", nullable=true)
-     */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $includesVat;
-
-    /**
-     * @ORM\Column(type="boolean", nullable=true)
-     */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $isFlatPrice;
 
     public function __construct()

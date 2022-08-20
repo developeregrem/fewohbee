@@ -789,14 +789,11 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}/edit/remark", name="reservations.edit.remark", methods={"GET", "POST"})
-     */
+    #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
     public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     {
         $form = $this->createForm(ReservationMetaType::class, $reservation);
         $form->handleRequest($request);
-
         if ($form->isSubmitted() && $form->isValid()) {
             $doctrine->getManager()->flush();
 
@@ -1199,9 +1196,7 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{reservationId}/edit/prices/{id}/update", name="reservations.update.misc.price", methods={"POST"})
-     */
+    #[Route(path: '/{reservationId}/edit/prices/{id}/update', name: 'reservations.update.misc.price', methods: ['POST'])]
     public function updateMiscPriceForReservation($reservationId, Price $price, ManagerRegistry $doctrine, ReservationService $rs, RequestStack $requestStack, Request $request): Response
     {
         if ($this->isCsrfTokenValid('reservation-update-misc-price', $request->request->get('_token'))) {

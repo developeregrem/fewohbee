@@ -212,6 +212,7 @@ class TemplatesService
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
             $data = $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
+
             return new MailAttachment($data, $attachment->getName().'.pdf', 'application/pdf');
         }
 
@@ -279,7 +280,6 @@ class TemplatesService
      * Returns the default Template or null.
      *
      * @param Template[] $templates
-     * @return Template|null
      */
     public function getDefaultTemplate(array $templates): ?Template
     {

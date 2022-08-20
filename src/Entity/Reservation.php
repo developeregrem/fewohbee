@@ -9,84 +9,49 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\ReservationRepository")
- * @ORM\Table(name="reservations", indexes={@ORM\Index(name="idx_uuid", columns={"uuid"})})
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\ReservationRepository')]
+#[ORM\Table(name: 'reservations')]
+#[ORM\Index(name: 'idx_uuid', columns: ['uuid'])]
 class Reservation
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(name="start_date", type="date") * */
+    #[ORM\Column(name: 'start_date', type: 'date')]
     private $startDate;
-
-    /** @ORM\Column(name="end_date", type="date") * */
+    #[ORM\Column(name: 'end_date', type: 'date')]
     private $endDate;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $persons;
-
-    /** @ORM\Column(name="option_date", type="date", nullable=true) * */
+    #[ORM\Column(name: 'option_date', type: 'date', nullable: true)]
     private $optionDate;
-
-    /** @ORM\Column(type="text", nullable=true) * */
+    #[ORM\Column(type: 'text', nullable: true)]
     private $remark;
-
-    /** @ORM\Column(name="reservation_date", type="datetime") * */
+    #[ORM\Column(name: 'reservation_date', type: 'datetime')]
     private $reservationDate;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Invoice", inversedBy="reservations")
-     * @ORM\JoinTable(name="reservations_has_invoices")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Invoice', inversedBy: 'reservations')]
+    #[ORM\JoinTable(name: 'reservations_has_invoices')]
     private $invoices;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Appartment", inversedBy="reservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Appartment', inversedBy: 'reservations')]
     private $appartment;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Customer", inversedBy="reservations")
-     * @ORM\JoinTable(name="reservations_has_customers")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'reservations')]
+    #[ORM\JoinTable(name: 'reservations_has_customers')]
     private $customers;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="bookedReservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'bookedReservations')]
     private $booker;
-
-    /**
-     * @ORM\OneToMany(targetEntity="RegistrationBookEntry", mappedBy="reservation")
-     */
+    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'reservation')]
     private $registrationBookEntries;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="ReservationOrigin", inversedBy="reservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'ReservationOrigin', inversedBy: 'reservations')]
     private $reservationOrigin;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="reservation", cascade={"remove"})
-     */
+    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
-
-    /**
-     * @ORM\ManyToMany(targetEntity=Price::class)
-     */
+    #[ORM\ManyToMany(targetEntity: Price::class)]
     private $prices;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=ReservationStatus::class, inversedBy="reservations")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: ReservationStatus::class, inversedBy: 'reservations')]
+    #[ORM\JoinColumn(nullable: false)]
     private $reservationStatus;
-
-    /**
-     * @ORM\Column(type="uuid", unique=true)
-     */
+    #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
 
     public function __construct()

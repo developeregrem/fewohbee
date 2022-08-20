@@ -8,37 +8,25 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\TemplateRepository")
- * @ORM\Table(name="templates")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\TemplateRepository')]
+#[ORM\Table(name: 'templates')]
 class Template
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=100) * */
+    #[ORM\Column(type: 'string', length: 100)]
     private $name;
-
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: 'text')]
     private $text;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $params;
-
-    /** @ORM\Column(type="boolean", nullable=false) * */
+    #[ORM\Column(type: 'boolean', nullable: false)]
     private $isDefault;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="TemplateType", inversedBy="templates")
-     */
+    #[ORM\ManyToOne(targetEntity: 'TemplateType', inversedBy: 'templates')]
     private $templateType;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="template")
-     */
+    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'template')]
     private $correspondences;
 
     /**
@@ -66,8 +54,6 @@ class Template
 
     /**
      * Get id.
-     *
-     * @return int
      */
     public function getId(): int
     {
@@ -76,8 +62,6 @@ class Template
 
     /**
      * Set name.
-     *
-     * @param string $name
      *
      * @return Template
      */
@@ -90,8 +74,6 @@ class Template
 
     /**
      * Get name.
-     *
-     * @return string
      */
     public function getName(): string
     {
@@ -100,8 +82,6 @@ class Template
 
     /**
      * Set text.
-     *
-     * @param string $text
      *
      * @return Template
      */
@@ -114,8 +94,6 @@ class Template
 
     /**
      * Get text.
-     *
-     * @return string
      */
     public function getText(): string
     {
@@ -124,8 +102,6 @@ class Template
 
     /**
      * Set templateType.
-     *
-     * @param TemplateType|null $templateType
      *
      * @return Template
      */
@@ -138,8 +114,6 @@ class Template
 
     /**
      * Get templateType.
-     *
-     * @return TemplateType
      */
     public function getTemplateType(): TemplateType
     {
@@ -148,8 +122,6 @@ class Template
 
     /**
      * Add correspondence.
-     *
-     * @param Correspondence $correspondence
      *
      * @return Template
      */
@@ -162,8 +134,6 @@ class Template
 
     /**
      * Remove correspondence.
-     *
-     * @param Correspondence $correspondence
      */
     public function removeCorrespondence(Correspondence $correspondence): void
     {
@@ -183,8 +153,6 @@ class Template
     /**
      * Set params.
      *
-     * @param string $params
-     *
      * @return Template
      */
     public function setParams(string $params): static
@@ -196,8 +164,6 @@ class Template
 
     /**
      * Get params.
-     *
-     * @return string
      */
     public function getParams(): string
     {
@@ -220,8 +186,6 @@ class Template
 
     /**
      * Get isDefault.
-     *
-     * @return bool
      */
     public function getIsDefault(): bool
     {

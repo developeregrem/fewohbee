@@ -9,48 +9,27 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=CalendarSyncRepository::class)
- * @ORM\Table(name="calendar_sync", indexes={@ORM\Index(name="uuid_idx", columns={"uuid"})})
- */
+#[ORM\Entity(repositoryClass: CalendarSyncRepository::class)]
+#[ORM\Table(name: 'calendar_sync')]
+#[ORM\Index(name: 'uuid_idx', columns: ['uuid'])]
 class CalendarSync
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="uuid", unique=true)
-     */
+    #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $isPublic;
-
-    /**
-     * @ORM\ManyToMany(targetEntity=ReservationStatus::class, inversedBy="calendarSyncs", cascade={"persist"})
-     */
+    #[ORM\ManyToMany(targetEntity: ReservationStatus::class, inversedBy: 'calendarSyncs', cascade: ['persist'])]
     private $reservationStatus;
-
-    /**
-     * @ORM\Column(type="datetime", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime', nullable: true)]
     private $lastExport;
-
-    /**
-     * @ORM\OneToOne(targetEntity=Appartment::class, inversedBy="calendarSync", cascade={"persist"})
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\OneToOne(targetEntity: Appartment::class, inversedBy: 'calendarSync', cascade: ['persist'])]
+    #[ORM\JoinColumn(nullable: false)]
     private $apartment;
-
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: 'boolean')]
     private $exportGuestName;
 
     public function __construct()

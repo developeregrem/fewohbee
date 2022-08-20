@@ -6,59 +6,41 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity (repositoryClass="App\Repository\RegistrationBookEntryRepository")
- * @ORM\Table(name="registration_book")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\RegistrationBookEntryRepository')]
+#[ORM\Table(name: 'registration_book')]
 class RegistrationBookEntry
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=10) * */
+    #[ORM\Column(type: 'string', length: 10)]
     private $number;
-
-    /** @ORM\Column(type="datetime", nullable=false) * */
+    #[ORM\Column(type: 'datetime', nullable: false)]
     private $date;
-
-    /** @ORM\Column(type="string", length=20, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $salutation;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $firstname;
-
-    /** @ORM\Column(type="string", length=45, nullable=false) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: false)]
     private $lastname;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="date", nullable=true) * */
+    #[ORM\Column(type: 'date', nullable: true)]
     private $birthday;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $country;
-
-    /** @ORM\Column(type="string", length=4, nullable=false) * */
+    #[ORM\Column(type: 'string', length: 4, nullable: false)]
     private $year;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="registrationBookEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'registrationBookEntries')]
     private $customer;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Reservation", inversedBy="registrationBookEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'registrationBookEntries')]
     private $reservation;
 
     public function __construct()

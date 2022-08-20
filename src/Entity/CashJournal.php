@@ -7,51 +7,28 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CashJournalRepository")
- * @ORM\Table(name="cash_journal")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\CashJournalRepository')]
+#[ORM\Table(name: 'cash_journal')]
 class CashJournal
 {
-    /**
-     * @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue
-     **/
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="smallint", options={"unsigned"=true})
-     **/
+    #[ORM\Column(type: 'smallint', options: ['unsigned' => true])]
     private $cashYear;
-
-    /**
-     * @ORM\Column(type="smallint", options={"unsigned"=true})
-     **/
+    #[ORM\Column(type: 'smallint', options: ['unsigned' => true])]
     private $cashMonth;
-
-    /**
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=false)
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: false)]
     private $cashStart;
-
-    /**
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true)
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $cashEnd;
-
-    /**
-     * @ORM\Column(type="boolean", )
-     **/
+    #[ORM\Column(type: 'boolean')]
     private $isClosed;
-
-    /**
-     * @ORM\Column(type="boolean", )
-     **/
+    #[ORM\Column(type: 'boolean')]
     private $isBooked;
-
-    /**
-     * @ORM\OneToMany(targetEntity="CashJournalEntry", mappedBy="cashJournal", cascade={"remove"})
-     * @ORM\OrderBy({"date" = "ASC"})
-     */
+    #[ORM\OneToMany(targetEntity: 'CashJournalEntry', mappedBy: 'cashJournal', cascade: ['remove'])]
+    #[ORM\OrderBy(['date' => 'ASC'])]
     private $cashJournalEntries;
 
     public function __construct()

@@ -7,26 +7,19 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity()
- * @ORM\Table(name="reservation_origins")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'reservation_origins')]
 class ReservationOrigin
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=100) * */
+    #[ORM\Column(type: 'string', length: 100)]
     private $name;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Price", mappedBy="reservationOrigins")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Price', mappedBy: 'reservationOrigins')]
     private $prices;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Reservation", mappedBy="reservationOrigin")
-     */
+    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
     private $reservations;
 
     /**

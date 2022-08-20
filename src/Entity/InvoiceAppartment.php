@@ -7,79 +7,43 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="invoice_appartments")
- **/
+#[ORM\Entity]
+#[ORM\Table(name: 'invoice_appartments')]
 class InvoiceAppartment
 {
-    /**
-     * @ORM\Id @ORM\Column(type="bigint")
-     * @ORM\GeneratedValue
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'bigint')]
     private $id;
-
-    /**
-     * @ORM\Column(type="string", length=10)
-     * @Assert\NotBlank
-     */
+    #[ORM\Column(type: 'string', length: 10)]
+    #[Assert\NotBlank]
     private $number;
-
-    /**
-     * @ORM\Column(type="string", length=255)
-     * @Assert\NotBlank
-     */
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
     private $description;
-
-    /**
-     * @ORM\Column(type="smallint")
-     * @Assert\Positive
-     */
+    #[ORM\Column(type: 'smallint')]
+    #[Assert\Positive]
     private $beds;
-
-    /**
-     * @ORM\Column(type="smallint")
-     * @Assert\Positive
-     */
+    #[ORM\Column(type: 'smallint')]
+    #[Assert\Positive]
     private $persons;
-
-    /**
-     * @ORM\Column(name="start_date", type="date")
-     * @Assert\NotNull
-     */
+    #[ORM\Column(name: 'start_date', type: 'date')]
+    #[Assert\NotNull]
     private $startDate;
-
-    /**
-     * @ORM\Column(name="end_date", type="date")
-     * @Assert\NotNull
-     */
+    #[ORM\Column(name: 'end_date', type: 'date')]
+    #[Assert\NotNull]
     private $endDate;
-
-    /**
-     * @ORM\Column(type="decimal", scale=2)
-     * @Assert\PositiveOrZero
-     */
+    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[Assert\PositiveOrZero]
     private $price;
-
-    /**
-     * @ORM\Column(type="decimal", scale=2)
-     * @Assert\PositiveOrZero
-     */
+    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[Assert\PositiveOrZero]
     private $vat;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Invoice", inversedBy="appartments")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'appartments')]
     private $invoice;
-
-    /**
-     * @ORM\Column(type="boolean", nullable=true)
-     */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $includesVat;
-
-    /**
-     * @ORM\Column(type="boolean", nullable=true)
-     */
+    #[ORM\Column(type: 'boolean', nullable: true)]
     private $isFlatPrice;
 
     public function __construct()

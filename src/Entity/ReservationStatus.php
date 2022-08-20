@@ -10,43 +10,24 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity(repositoryClass=ReservationStatusRepository::class)
- */
+#[ORM\Entity(repositoryClass: ReservationStatusRepository::class)]
 class ReservationStatus
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="string", length=100)
-     * @Assert\NotBlank
-     */
+    #[ORM\Column(type: 'string', length: 100)]
+    #[Assert\NotBlank]
     private $name;
-
-    /**
-     * @ORM\Column(type="string", length=7)
-     * @Assert\Regex("/^#[0-9a-f]{6}$/i")
-     */
+    #[ORM\Column(type: 'string', length: 7)]
+    #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private $color;
-
-    /**
-     * @ORM\OneToMany(targetEntity=Reservation::class, mappedBy="reservationStatus")
-     */
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'reservationStatus')]
     private $reservations;
-
-    /**
-     * @ORM\Column(type="string", length=7)
-     */
+    #[ORM\Column(type: 'string', length: 7)]
     private $contrastColor;
-
-    /**
-     * @ORM\ManyToMany(targetEntity=CalendarSync::class, mappedBy="reservationStatus")
-     */
+    #[ORM\ManyToMany(targetEntity: CalendarSync::class, mappedBy: 'reservationStatus')]
     private $calendarSyncs;
 
     public function __construct()

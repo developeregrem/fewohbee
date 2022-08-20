@@ -7,59 +7,29 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Description of Correspondence.
- *
- * @author Alexander
- */
-
-/**
- * @ORM\Entity
- * @ORM\InheritanceType("SINGLE_TABLE")
- * @ORM\DiscriminatorColumn(name="discr", type="string")
- * @ORM\DiscriminatorMap({"correspondence" = "Correspondence", "mail" = "MailCorrespondence", "file" = "FileCorrespondence"})
- */
+#[ORM\Entity]
+#[ORM\InheritanceType('SINGLE_TABLE')]
+#[ORM\DiscriminatorColumn(name: 'discr', type: 'string')]
+#[ORM\DiscriminatorMap(['correspondence' => 'Correspondence', 'mail' => 'MailCorrespondence', 'file' => 'FileCorrespondence'])]
 class Correspondence
 {
-    /**
-     * @ORM\Id @ORM\Column(type="integer")
-     * @ORM\GeneratedValue
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     protected $id;
-
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $name;
-
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: 'text')]
     protected $text;
-
-    /**
-     * @ORM\Column(name="created", type="datetime")
-     */
+    #[ORM\Column(name: 'created', type: 'datetime')]
     protected $created;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Template", inversedBy="correspondences")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Template', inversedBy: 'correspondences')]
     protected $template;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Reservation", inversedBy="correspondences")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'correspondences')]
     protected $reservation;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Correspondence", inversedBy="parents")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Correspondence', inversedBy: 'parents')]
     protected $children;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Correspondence", mappedBy="children")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Correspondence', mappedBy: 'children')]
     protected $parents;
 
     public function __construct()

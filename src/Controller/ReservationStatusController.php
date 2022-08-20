@@ -49,16 +49,6 @@ class ReservationStatusController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}", name="reservation_status_show", methods={"GET"})
-     */
-//    public function show(ReservationStatus $reservationStatus): Response
-//    {
-//        return $this->render('ReservationStatus/show.html.twig', [
-//            'reservation_status' => $reservationStatus,
-//        ]);
-//    }
-
     #[Route('/{id}/edit', name: 'reservation_status_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
@@ -69,7 +59,7 @@ class ReservationStatusController extends AbstractController
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
             $doctrine->getManager()->flush();
 
-            // add succes message
+            // add success message
             $this->addFlash('success', 'status.flash.edit.success');
 
             return new Response('', Response::HTTP_NO_CONTENT);

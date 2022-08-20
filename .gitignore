@@ -23,3 +23,10 @@ symfony.lock
 .phpunit.result.cache
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
+
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+/tools/
+###< friendsofphp/php-cs-fixer ###

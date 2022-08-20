@@ -6,32 +6,19 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="roles")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'roles')]
 class Role
 {
-    /**
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(name="name", type="string", length=30)
-     */
+    #[ORM\Column(name: 'name', type: 'string', length: 30)]
     private $name;
-
-    /**
-     * @ORM\Column(name="role", type="string", length=20, unique=true)
-     */
+    #[ORM\Column(name: 'role', type: 'string', length: 20, unique: true)]
     private $role;
-
-    /**
-     * @ORM\OneToMany(targetEntity="User", mappedBy="role")
-     */
+    #[ORM\OneToMany(targetEntity: 'User', mappedBy: 'role')]
     private $users;
 
     /**
