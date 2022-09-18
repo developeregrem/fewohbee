@@ -150,6 +150,26 @@
                 <source>customer.count.books</source>
                 <target>Anzahl Buchungen</target>
             </trans-unit>
+            <trans-unit id="customer.id.type.driving_licence">
+                <source>customer.id.type.driving_licence</source>
+                <target>Führerschein</target>
+            </trans-unit>
+            <trans-unit id="customer.id.type.national_id">
+                <source>customer.id.type.national_id</source>
+                <target>Ausweis</target>
+            </trans-unit>
+            <trans-unit id="customer.id.type.passport">
+                <source>customer.id.type.passport</source>
+                <target>Reisepass</target>
+            </trans-unit>
+            <trans-unit id="customer.id.type.name">
+                <source>customer.id.type.name</source>
+                <target>Ausweistyp</target>
+            </trans-unit>
+            <trans-unit id="customer.id.number">
+                <source>customer.id.number</source>
+                <target>Ausweisnummer</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

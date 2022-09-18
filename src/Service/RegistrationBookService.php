@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Controller\CustomerServiceController;
+use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\RegistrationBookEntry;
 use App\Entity\Reservation;
@@ -32,7 +33,7 @@ class RegistrationBookService
     {
         $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
         $customers = $reservation->getCustomers();
-        /* @var $customer \App\Entity\Customer */
+        /* @var $customer Customer */
         foreach ($customers as $customer) {
             $entry = new RegistrationBookEntry();
             $entry->setNumber('1');
@@ -42,13 +43,11 @@ class RegistrationBookService
             $entry->setBirthday($customer->getBirthday());
             $addresses = $customer->getCustomerAddresses();
             $cAddress = new CustomerAddresses();
-            /* @var $address \App\Entity\CustomerAddresses */
+            /* @var $address CustomerAddresses */
             foreach ($addresses as $address) {
+                $cAddress = $address;
                 if ($address->getType() == CustomerServiceController::$addessTypes[1]) {
-                    $cAddress = $address;
                     break;
-                } else {
-                    $cAddress = $address;
                 }
             }
             $entry->setCompany($cAddress->getCompany());
@@ -57,6 +56,8 @@ class RegistrationBookService
             $entry->setZip($cAddress->getZip());
             $entry->setCountry($cAddress->getCountry());
             $entry->setReservation($reservation);
+            $entry->setIdType($customer->getIdType());
+            $entry->setIDNumber($customer->getIDNumber());
             $entry->setCustomer($customer);
             $entry->setYear($reservation->getStartDate()->format('Y'));
             $this->em->persist($entry);

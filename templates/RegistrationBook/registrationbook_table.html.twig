@@ -17,10 +17,14 @@
         <tr>
             <td>{{ bookEntry.year }}</td>
             <td>{{ bookEntry.reservation.appartment.number }}</td>
-            <td>{{ bookEntry.lastname }}, {{ bookEntry.firstname }}</td>
+            <td>{{ bookEntry.lastname }}, {{ bookEntry.firstname }}
+                {% if bookEntry.iDNumber and bookEntry.idType %}
+                    <br /><small>({{ bookEntry.idType.value|trans }}: {{ bookEntry.iDNumber }})</small>
+                {% endif %}
+            </td>
             <td>{% if bookEntry.birthday %} {{ bookEntry.birthday|date('d.m.Y') }} {% endif %}</td>
             <td>{{ bookEntry.country }}</td>
-            <td>{{ bookEntry.address }}, {{ bookEntry.zip }} {{ bookEntry.city }}</td>
+            <td>{% if bookEntry.address %}{{ bookEntry.address }}, {{ bookEntry.zip }} {{ bookEntry.city }}{% endif %}</td>
             <td>{{ bookEntry.reservation.startDate|date('d.m.Y') }}
                 - {{ bookEntry.reservation.endDate|date('d.m.Y') }}</td>
             <td>{{ bookEntry.reservation.amount }}</td>

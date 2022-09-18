@@ -12,22 +12,9 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-6">
-            <dl>
-                <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
-                <dd>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</dd>
-                <dt>{{ 'customer.remark'|trans }}</dt>
-                <dd>{% if customer.remark %}{{ customer.remark|nl2br }}{% else %} -{% endif %}</dd>
-            </dl>
-        </div>
-        <div class="col-sm-6">
-            <dl>
-                <dt>{{ 'customer.birthday'|trans }}</dt>
-                <dd>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</dd>
-            </dl>
-        </div>
+        {% include 'Customers/_show_info.html.twig' with {'customer' : customer} %}
     </div>
-          {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : customer} %}          
+        {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : customer} %}
 </div>
 
 <form id="customer-form-{{ customer.id }}">

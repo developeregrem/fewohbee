@@ -28,6 +28,11 @@ customer.flash.delete.error.still.in.use: >-
   reservation.
 customer.flash.delete.success: Guest was deleted successfully.
 customer.flash.edit.success: Guest has been edited successfully.
+customer.id.number: ID number
+customer.id.type.driving_licence: Driving licence
+customer.id.type.name: ID card type
+customer.id.type.national_id: ID card
+customer.id.type.passport: Passport
 customer.lastname: Last Name
 customer.mobilephone: Mobile Phone
 customer.mr: Mr

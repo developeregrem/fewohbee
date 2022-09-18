@@ -16,6 +16,7 @@ namespace App\Controller;
 use App\Entity\Appartment;
 use App\Entity\Correspondence;
 use App\Entity\Customer;
+use App\Entity\Enum\IDCardType;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
@@ -495,6 +496,7 @@ class ReservationServiceController extends AbstractController
             'customer' => $customer,
             'customersForTemplate' => $customersForTemplate,
             'addresstypes' => CustomerServiceController::$addessTypes,
+            'cardTypes' => IDCardType::cases(),
         ]);
     }
 
@@ -1079,6 +1081,7 @@ class ReservationServiceController extends AbstractController
             'countries' => $countries,
             'addresstypes' => CustomerServiceController::$addessTypes,
             'tab' => $tab,
+            'cardTypes' => IDCardType::cases(),
         ]);
     }
 
