@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\IDCardType;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\RegistrationBookEntryRepository')]
@@ -42,6 +43,12 @@ class RegistrationBookEntry
     private $customer;
     #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'registrationBookEntries')]
     private $reservation;
+
+    #[ORM\Column(type: 'string', nullable: true, enumType: IDCardType::class)]
+    private ?IDCardType $idType = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $IDNumber = null;
 
     public function __construct()
     {
@@ -224,5 +231,33 @@ class RegistrationBookEntry
     public function getYear()
     {
         return $this->year;
+    }
+
+    public function getIDNumber(): ?string
+    {
+        return $this->IDNumber;
+    }
+
+    public function setIDNumber(?string $IDNumber): self
+    {
+        $this->IDNumber = $IDNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return IDCardType|null
+     */
+    public function getIdType(): ?IDCardType
+    {
+        return $this->idType;
+    }
+
+    /**
+     * @param IDCardType|null $idType
+     */
+    public function setIdType(?IDCardType $idType): void
+    {
+        $this->idType = $idType;
     }
 }

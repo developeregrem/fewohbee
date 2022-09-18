@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\IDCardType;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\CustomerRepository')]
@@ -24,34 +26,22 @@ class Customer
     #[ORM\Column(type: 'date', nullable: true)]
     private $birthday;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $company;
-    #[ORM\Column(type: 'string', length: 150, nullable: true)]
-    private $address;
-    #[ORM\Column(type: 'string', length: 10, nullable: true)]
-    private $zip;
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $city;
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $country;
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $phone;
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $fax;
-    #[ORM\Column(type: 'string', length: 45, nullable: true)]
-    private $mobile_phone;
-    #[ORM\Column(type: 'string', length: 100, nullable: true)]
-    private $email;
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private $remark;
+    private ?string $remark = null;
     #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'customers')]
-    private $reservations;
-    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'customer')]
-    private $registrationBookEntries;
-    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'booker')]
-    private $bookedReservations;
+    private Collection $reservations;
+    #[ORM\OneToMany(mappedBy: 'customer', targetEntity: 'RegistrationBookEntry')]
+    private Collection $registrationBookEntries;
+    #[ORM\OneToMany(mappedBy: 'booker', targetEntity: 'Reservation')]
+    private Collection $bookedReservations;
     #[ORM\ManyToMany(targetEntity: 'CustomerAddresses', inversedBy: 'customers')]
     #[ORM\JoinTable(name: 'customer_has_address')]
-    private $customerAddresses;
+    private Collection $customerAddresses;
+
+    #[ORM\Column(type: 'string', nullable: true, enumType: IDCardType::class)]
+    private ?IDCardType $idType = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $IDNumber = null;
 
     public function __construct()
     {
@@ -86,52 +76,7 @@ class Customer
         return $this->birthday;
     }
 
-    public function getCompany()
-    {
-        return $this->company;
-    }
-
-    public function getAddress()
-    {
-        return $this->address;
-    }
-
-    public function getZip()
-    {
-        return $this->zip;
-    }
-
-    public function getCity()
-    {
-        return $this->city;
-    }
-
-    public function getCountry()
-    {
-        return $this->country;
-    }
-
-    public function getPhone()
-    {
-        return $this->phone;
-    }
-
-    public function getFax()
-    {
-        return $this->fax;
-    }
-
-    public function getMobilePhone()
-    {
-        return $this->mobile_phone;
-    }
-
-    public function getEmail()
-    {
-        return $this->email;
-    }
-
-    public function getReservations()
+    public function getReservations(): ArrayCollection|Collection
     {
         return $this->reservations;
     }
@@ -161,57 +106,12 @@ class Customer
         $this->birthday = $birthday;
     }
 
-    public function setCompany($company): void
-    {
-        $this->company = $company;
-    }
-
-    public function setAddress($address): void
-    {
-        $this->address = $address;
-    }
-
-    public function setZip($zip): void
-    {
-        $this->zip = $zip;
-    }
-
-    public function setCity($city): void
-    {
-        $this->city = $city;
-    }
-
-    public function setCountry($country): void
-    {
-        $this->country = $country;
-    }
-
-    public function setPhone($phone): void
-    {
-        $this->phone = $phone;
-    }
-
-    public function setFax($fax): void
-    {
-        $this->fax = $fax;
-    }
-
-    public function setMobilePhone($mobile_phone): void
-    {
-        $this->mobile_phone = $mobile_phone;
-    }
-
-    public function setEmail($email): void
-    {
-        $this->email = $email;
-    }
-
     public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addReservation(Reservation $reservation)
+    public function addReservation(Reservation $reservation): static
     {
         $this->reservations[] = $reservation;
 
@@ -223,12 +123,12 @@ class Customer
         $this->reservations->removeElement($reservation);
     }
 
-    public function getRemark()
+    public function getRemark(): ?string
     {
         return $this->remark;
     }
 
-    public function getRemarkF()
+    public function getRemarkF(): string
     {
         return nl2br($this->remark);
     }
@@ -238,7 +138,7 @@ class Customer
         $this->remark = $remark;
     }
 
-    public function getRegistrationBookEntries()
+    public function getRegistrationBookEntries(): ArrayCollection
     {
         return $this->registrationBookEntries;
     }
@@ -248,7 +148,7 @@ class Customer
         $this->registrationBookEntries = $registrationBookEntries;
     }
 
-    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry)
+    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry): static
     {
         $this->registrationBookEntries[] = $registrationBookEntry;
 
@@ -263,11 +163,10 @@ class Customer
     /**
      * Add bookedReservations.
      *
-     * @param \App\Entity\Reservation $bookedReservations
-     *
+     * @param Reservation $bookedReservations
      * @return Customer
      */
-    public function addBookedReservation(Reservation $bookedReservations)
+    public function addBookedReservation(Reservation $bookedReservations): static
     {
         $this->bookedReservations[] = $bookedReservations;
 
@@ -277,7 +176,7 @@ class Customer
     /**
      * Remove bookedReservations.
      *
-     * @param \App\Entity\Reservation $bookedReservations
+     * @param Reservation $bookedReservations
      */
     public function removeBookedReservation(Reservation $bookedReservations): void
     {
@@ -287,9 +186,9 @@ class Customer
     /**
      * Get bookedReservations.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return ArrayCollection|Collection
      */
-    public function getBookedReservations()
+    public function getBookedReservations(): ArrayCollection|Collection
     {
         return $this->bookedReservations;
     }
@@ -297,11 +196,11 @@ class Customer
     /**
      * Add customerAddress.
      *
-     * @param \App\Entity\CustomerAddresses $customerAddress
+     * @param CustomerAddresses $customerAddress
      *
      * @return Customer
      */
-    public function addCustomerAddress(CustomerAddresses $customerAddress)
+    public function addCustomerAddress(CustomerAddresses $customerAddress): static
     {
         $this->customerAddresses[] = $customerAddress;
 
@@ -311,7 +210,7 @@ class Customer
     /**
      * Remove customerAddress.
      *
-     * @param \App\Entity\CustomerAddresses $customerAddress
+     * @param CustomerAddresses $customerAddress
      */
     public function removeCustomerAddress(CustomerAddresses $customerAddress): void
     {
@@ -321,10 +220,38 @@ class Customer
     /**
      * Get customerAddresses.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return ArrayCollection|Collection
      */
-    public function getCustomerAddresses()
+    public function getCustomerAddresses(): ArrayCollection|Collection
     {
         return $this->customerAddresses;
+    }
+
+    public function getIDNumber(): ?string
+    {
+        return $this->IDNumber;
+    }
+
+    public function setIDNumber(?string $IDNumber): self
+    {
+        $this->IDNumber = $IDNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return IDCardType|null
+     */
+    public function getIdType(): ?IDCardType
+    {
+        return $this->idType;
+    }
+
+    /**
+     * @param IDCardType|null $idType
+     */
+    public function setIdType(?IDCardType $idType): void
+    {
+        $this->idType = $idType;
     }
 }

@@ -27,25 +27,25 @@ final class Version20220212121500 extends AbstractMigration
         $this->addSql('ALTER TABLE calendar_sync_reservation_status ADD CONSTRAINT FK_88FEA5C99827BFE5 FOREIGN KEY (calendar_sync_id) REFERENCES calendar_sync (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE calendar_sync_reservation_status ADD CONSTRAINT FK_88FEA5C971B06122 FOREIGN KEY (reservation_status_id) REFERENCES reservation_status (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE calendar_sync ADD export_guest_name TINYINT(1) NOT NULL');
-        
+
         $this->addSql('ALTER TABLE reservations CHANGE reservation_date reservation_date DATETIME NOT NULL');
-        
+
         $this->addSql('ALTER TABLE reservations ADD uuid BINARY(16) COMMENT \'(DC2Type:uuid)\'');
         $this->addSql('CREATE UNIQUE INDEX UNIQ_4DA239D17F50A6 ON reservations (uuid)');
         $this->addSql('CREATE INDEX idx_uuid ON reservations (uuid)');
-        
-        $sql = "SELECT id FROM reservations";
+
+        $sql = 'SELECT id FROM reservations';
         $ids = $this->connection->fetchAllAssociative($sql);
-        foreach($ids as $id) {
+        foreach ($ids as $id) {
             $uuid = Uuid::v4();
-            $this->addSql("UPDATE reservations SET uuid = ? WHERE id = ? ", [ $uuid->toBinary(), $id['id'] ]); 
+            $this->addSql('UPDATE reservations SET uuid = ? WHERE id = ? ', [$uuid->toBinary(), $id['id']]);
         }
-        
-        $sql = "SELECT id FROM appartments";
+
+        $sql = 'SELECT id FROM appartments';
         $ids = $this->connection->fetchAllAssociative($sql);
-        foreach($ids as $id) {
+        foreach ($ids as $id) {
             $uuid = Uuid::v4();
-            $this->addSql("INSERT INTO calendar_sync (apartment_id, uuid, is_public, export_guest_name) VALUES (?, ?, ?, ?)", [ $id['id'], $uuid->toBinary(), 0, 0 ]);
+            $this->addSql('INSERT INTO calendar_sync (apartment_id, uuid, is_public, export_guest_name) VALUES (?, ?, ?, ?)', [$id['id'], $uuid->toBinary(), 0, 0]);
         }
         $this->addSql('ALTER TABLE reservations CHANGE uuid uuid BINARY(16) NOT NULL COMMENT \'(DC2Type:uuid)\'');
     }
@@ -61,7 +61,7 @@ final class Version20220212121500 extends AbstractMigration
         $this->addSql('DROP INDEX idx_uuid ON reservations');
         $this->addSql('ALTER TABLE reservations DROP uuid');
     }
-    
+
     public function isTransactional(): bool
     {
         return false;

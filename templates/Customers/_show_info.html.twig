@@ -1,0 +1,18 @@
+<div class="col-sm-6">
+    <dl>
+        <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
+        <dd>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</dd>
+        <dt>{{ 'customer.remark'|trans }}</dt>
+        <dd>{% if customer.remark %}{{ customer.remark|nl2br }}{% else %} -{% endif %}</dd>
+    </dl>
+</div>
+<div class="col-sm-6">
+    <dl>
+        <dt>{{ 'customer.birthday'|trans }}</dt>
+        <dd>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</dd>
+        {% if customer.iDNumber %}
+            <dt>{{ 'customer.id.number'|trans }}</dt>
+            <dd>{{ customer.idType.value|trans }}: {{ customer.iDNumber }}</dd>
+        {% endif %}
+    </dl>
+</div>

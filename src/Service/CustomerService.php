@@ -15,6 +15,7 @@ namespace App\Service;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\IDCardType;
 use App\Entity\PostalCodeData;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
@@ -24,11 +25,9 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CustomerService implements ITemplateRenderer
 {
-    private $em = null;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em)
     {
-        $this->em = $em;
     }
 
     public function getCustomerFromForm(Request $request, $id = 'new')
@@ -78,6 +77,9 @@ class CustomerService implements ITemplateRenderer
 
             $newAddresses[] = $address;
         }
+        $customer->setIdType(IDCardType::tryFrom($request->request->get('id-type-'.$id)));
+        $customer->setIDNumber($request->request->get('id-'.$id));
+        $customer->setIDNumber($request->request->get('id-'.$id));
         $customer->setRemark($request->request->get('remark-'.$id));
 
         // first remove all old addresses

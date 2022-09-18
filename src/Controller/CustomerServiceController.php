@@ -15,6 +15,7 @@ namespace App\Controller;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\IDCardType;
 use App\Entity\Template;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
@@ -104,7 +105,7 @@ class CustomerServiceController extends AbstractController
 
         return $this->render('Customers/customer_form_show.html.twig', [
             'customer' => $customer,
-            'token' => $csrf->getCSRFTokenForForm(),
+            'token' => $csrf->getCSRFTokenForForm()
         ]);
     }
 
@@ -127,6 +128,7 @@ class CustomerServiceController extends AbstractController
             'countries' => $countries,
             'customersForTemplate' => $customersForTemplate,
             'addresstypes' => self::$addessTypes,
+            'cardTypes' => IDCardType::cases(),
         ]);
     }
 
@@ -171,6 +173,7 @@ class CustomerServiceController extends AbstractController
             'token' => $csrf->getCSRFTokenForForm(),
             'countries' => $countries,
             'addresstypes' => self::$addessTypes,
+            'cardTypes' => IDCardType::cases(),
         ]);
     }
 

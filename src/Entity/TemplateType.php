@@ -20,7 +20,7 @@ class TemplateType
     private $icon;
     #[ORM\Column(type: 'string', length: 150)]
     private $service;
-    #[ORM\OneToMany(targetEntity: 'Template', mappedBy: 'templateType')]
+    #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: 'Template')]
     private $templates;
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $editorTemplate;

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Customer;
+use App\Entity\Enum\IDCardType;
 use App\Entity\RegistrationBookEntry;
 use App\Entity\Reservation;
 use App\Service\CSRFProtectionService;
@@ -195,6 +196,7 @@ class RegistrationBookServiceController extends AbstractController
             'token' => $csrf->getCSRFTokenForForm(),
             'countries' => $countries,
             'addresstypes' => CustomerServiceController::$addessTypes,
+            'cardTypes' => IDCardType::cases(),
         ]);
     }
 
