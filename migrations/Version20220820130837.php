@@ -20,7 +20,7 @@ final class Version20220820130837 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE customers ADD idnumbyeser VARCHAR(255) DEFAULT NULL, DROP address, DROP zip, DROP city, DROP country, DROP phone, DROP fax, DROP mobile_phone, DROP email, CHANGE company id_type VARCHAR(255) DEFAULT NULL');
+        $this->addSql('ALTER TABLE customers ADD idnumber VARCHAR(255) DEFAULT NULL, DROP address, DROP zip, DROP city, DROP country, DROP phone, DROP fax, DROP mobile_phone, DROP email, CHANGE company id_type VARCHAR(255) DEFAULT NULL');
         $this->addSql('ALTER TABLE registration_book ADD id_type VARCHAR(255) DEFAULT NULL, ADD idnumber VARCHAR(255) DEFAULT NULL');
     }
 
