@@ -1,28 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity @ORM\Table(name="logging")
- **/
-
+#[ORM\Entity]
+#[ORM\Table(name: 'logging')]
 class Log
 {
-    /** @ORM\Id @ORM\Column(type="integer") * */
+    #[ORM\Id]
+    #[ORM\Column(type: 'integer')]
     private $user_id;
-
-    /** @ORM\Column(type="time") * */
+    #[ORM\Column(type: 'time')]
     private $date;
-
-    /** @ORM\Column(type="string", length=255) * */
+    #[ORM\Column(type: 'string', length: 255)]
     private $action;
 
     /**
-     * Set user_id
+     * Set user_id.
      *
-     * @param integer $userId
+     * @param int $userId
+     *
      * @return Log
      */
     public function setUserId($userId)
@@ -33,9 +33,9 @@ class Log
     }
 
     /**
-     * Get user_id
+     * Get user_id.
      *
-     * @return integer
+     * @return int
      */
     public function getUserId()
     {
@@ -43,9 +43,10 @@ class Log
     }
 
     /**
-     * Set date
+     * Set date.
      *
      * @param \DateTime $date
+     *
      * @return Log
      */
     public function setDate($date)
@@ -56,7 +57,7 @@ class Log
     }
 
     /**
-     * Get date
+     * Get date.
      *
      * @return \DateTime
      */
@@ -66,9 +67,10 @@ class Log
     }
 
     /**
-     * Set action
+     * Set action.
      *
      * @param string $action
+     *
      * @return Log
      */
     public function setAction($action)
@@ -79,7 +81,7 @@ class Log
     }
 
     /**
-     * Get action
+     * Get action.
      *
      * @return string
      */

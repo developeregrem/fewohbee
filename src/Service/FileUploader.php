@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -9,18 +11,14 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class FileUploader
 {
-    private $targetDirectory;
-    private $publicDirectory;
-    private $validator;
-
-    public function __construct(string $targetDirectory, string $publicDirectory, ValidatorInterface $validator)
+    public function __construct(
+        private readonly string $targetDirectory,
+        private readonly string $publicDirectory,
+        private readonly ValidatorInterface $validator)
     {
-        $this->targetDirectory = $targetDirectory;
-        $this->publicDirectory = $publicDirectory;
-        $this->validator = $validator;
     }
 
-    public function upload(UploadedFile $file)
+    public function upload(UploadedFile $file): string
     {
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
@@ -34,26 +32,25 @@ class FileUploader
 
         return $fileName;
     }
-    
-    public function isValidImage(UploadedFile $file) {
-        if(!$file) {
-            return false;
-        }
-        
+
+    public function isValidImage(UploadedFile $file): bool
+    {
         $imageConstraint = new Assert\Image([
-                'maxSize' => '5m'
+                'maxSize' => '5m',
             ]);
-            
+
         $errors = $this->validator->validate($file, $imageConstraint);
-        return ($errors->count() === 0);
+
+        return 0 === $errors->count();
     }
 
-    public function getTargetDirectory()
+    public function getTargetDirectory(): string
     {
         return $this->targetDirectory;
     }
-    
-    public function getPublicDirecotry() {
-        return $this->publicDirectory;        
+
+    public function getPublicDirectory(): string
+    {
+        return $this->publicDirectory;
     }
 }

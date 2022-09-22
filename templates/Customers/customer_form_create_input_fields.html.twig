@@ -177,6 +177,28 @@
                                value="{% if customer.birthday %}{{ customer.birthday|date('Y-m-d') }}{% endif %}">
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <label for="id-type-{{ customer.id }}"
+                           class="col-sm-4 col-form-label text-end">{{ 'customer.id.type.name'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <select class="form-control" name="id-type-{{ customer.id }}">
+                            {% for cardType in cardTypes %}
+                                <option value="{{ cardType.value }}"{% if customer.idType == cardType %} selected{% endif %}>{{ cardType.value|trans }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="id-{{ customer.id }}"
+                           class="col-sm-4 col-form-label text-end">{{ 'customer.id.number'|trans }}</label>
+
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="id-{{ customer.id }}"
+                               name="id-{{ customer.id }}"
+                               value="{{ customer.IDNumber }}">
+                    </div>
+                </div>
                 <div class="row">
                     <label for="remark-{{ customer.id }}"
                            class="col-sm-4 col-form-label text-end">{{ 'customer.remark'|trans }}</label>

@@ -77,12 +77,12 @@
     }
     
     function getEntry(id) {
-        let url = replacePlaceholder("{{ path('users.get.user', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
         getContentForModal(url);        
     }
     
     function editEntry(id) {
-        let url = replacePlaceholder("{{ path('users.get.user', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
         getContentForModal(url, "", function() {
             enableEditForm(id);
         });        
@@ -104,7 +104,7 @@
     }
 
     function createNewUser() {
-        let url = "{{ path('users.create.user')}}";
+        let url = "{{ path('users.new.user')}}";
         return _doPost('#entry-form-new', url, '{{ path('users.overview') }}');
     }
     </script>

@@ -1,58 +1,51 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\TemplateRepository")
- * @ORM\Table(name="templates")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\TemplateRepository')]
+#[ORM\Table(name: 'templates')]
 class Template
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=100) * */
+    #[ORM\Column(type: 'string', length: 100)]
     private $name;
-
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: 'text')]
     private $text;
-    
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $params;
-    
-    /** @ORM\Column(type="boolean", nullable=false) * */
+    #[ORM\Column(type: 'boolean', nullable: false)]
     private $isDefault;
-    
-    /**
-     * @ORM\ManyToOne(targetEntity="TemplateType", inversedBy="templates")
-     */
+    #[ORM\ManyToOne(targetEntity: 'TemplateType', inversedBy: 'templates')]
     private $templateType;
-    
-    /**
-     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="template")
-     */
+    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'template')]
     private $correspondences;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->correspondences = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->correspondences = new ArrayCollection();
         $this->isDefault = false;
     }
 
     /**
-     * Set id
+     * Set id.
      *
      * @param int $id
-     * @return ReservationOrigin
+     *
+     * @return Template
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
 
@@ -60,22 +53,19 @@ class Template
     }
 
     /**
-     * Get id
-     *
-     * @return integer 
+     * Get id.
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
 
     /**
-     * Set name
+     * Set name.
      *
-     * @param string $name
-     * @return ReservationOrigin
+     * @return Template
      */
-    public function setName($name)
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -83,23 +73,19 @@ class Template
     }
 
     /**
-     * Get name
-     *
-     * @return string 
+     * Get name.
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
     /**
-     * Set text
-     *
-     * @param string $text
+     * Set text.
      *
      * @return Template
      */
-    public function setText($text)
+    public function setText(string $text): static
     {
         $this->text = $text;
 
@@ -107,23 +93,19 @@ class Template
     }
 
     /**
-     * Get text
-     *
-     * @return string
+     * Get text.
      */
-    public function getText()
+    public function getText(): string
     {
         return $this->text;
     }
 
     /**
-     * Set templateType
-     *
-     * @param \App\Entity\TemplateType $templateType
+     * Set templateType.
      *
      * @return Template
      */
-    public function setTemplateType(\App\Entity\TemplateType $templateType = null)
+    public function setTemplateType(TemplateType $templateType = null): static
     {
         $this->templateType = $templateType;
 
@@ -131,23 +113,19 @@ class Template
     }
 
     /**
-     * Get templateType
-     *
-     * @return \App\Entity\TemplateType
+     * Get templateType.
      */
-    public function getTemplateType()
+    public function getTemplateType(): TemplateType
     {
         return $this->templateType;
     }
-    
+
     /**
-     * Add correspondence
+     * Add correspondence.
      *
-     * @param \App\Entity\Correspondence $correspondence
-     *
-     * @return TemplateType
+     * @return Template
      */
-    public function addCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function addCorrespondence(Correspondence $correspondence): static
     {
         $this->correspondences[] = $correspondence;
 
@@ -155,33 +133,29 @@ class Template
     }
 
     /**
-     * Remove correspondence
-     *
-     * @param \App\Entity\Correspondence $correspondence
+     * Remove correspondence.
      */
-    public function removeCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function removeCorrespondence(Correspondence $correspondence): void
     {
         $this->correspondences->removeElement($correspondence);
     }
 
     /**
-     * Get correspondences
+     * Get correspondences.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
-    public function getCorrespondences()
+    public function getCorrespondences(): ArrayCollection|Collection
     {
         return $this->correspondences;
     }
 
     /**
-     * Set params
-     *
-     * @param string $params
+     * Set params.
      *
      * @return Template
      */
-    public function setParams($params)
+    public function setParams(string $params): static
     {
         $this->params = $params;
 
@@ -189,22 +163,21 @@ class Template
     }
 
     /**
-     * Get params
-     *
-     * @return string
+     * Get params.
      */
-    public function getParams()
+    public function getParams(): string
     {
         return $this->params;
     }
-    
+
     /**
-     * Set isDefault
+     * Set isDefault.
      *
-     * @param boolean $isDefault
+     * @param bool $isDefault
+     *
      * @return Template
      */
-    public function setIsDefault($isDefault)
+    public function setIsDefault($isDefault): static
     {
         $this->isDefault = $isDefault;
 
@@ -212,11 +185,9 @@ class Template
     }
 
     /**
-     * Get isDefault
-     *
-     * @return boolean
+     * Get isDefault.
      */
-    public function getIsDefault()
+    public function getIsDefault(): bool
     {
         return $this->isDefault;
     }

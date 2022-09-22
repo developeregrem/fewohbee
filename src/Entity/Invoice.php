@@ -1,67 +1,49 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\InvoiceRepository")
- * @ORM\Table(name="invoices")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\InvoiceRepository')]
+#[ORM\Table(name: 'invoices')]
 class Invoice
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=45) * */
+    #[ORM\Column(type: 'string', length: 45)]
     private $number;
-
-    /** @ORM\Column(type="date") * */
+    #[ORM\Column(type: 'date')]
     private $date;
-
-    /** @ORM\Column(type="string", length=20, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $salutation;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $firstname;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $lastname;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="text", nullable=true) * */
+    #[ORM\Column(type: 'text', nullable: true)]
     private $remark;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $payment;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $status;
-
-    /**
-     * @ORM\OneToMany(targetEntity="InvoicePosition", mappedBy="invoice")
-     */
+    #[ORM\OneToMany(targetEntity: 'InvoicePosition', mappedBy: 'invoice')]
     private $positions;
-
-    /**
-     * @ORM\OneToMany(targetEntity="InvoiceAppartment", mappedBy="invoice")
-     */
+    #[ORM\OneToMany(targetEntity: 'InvoiceAppartment', mappedBy: 'invoice')]
     private $appartments;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Reservation", mappedBy="invoices")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'invoices')]
     private $reservations;
 
     public function __construct()
@@ -120,7 +102,7 @@ class Invoice
     {
         return $this->remark;
     }
-    
+
     public function getRemarkF()
     {
         return nl2br($this->remark);
@@ -156,115 +138,118 @@ class Invoice
         return $this->status;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number)
+    public function setNumber($number): void
     {
         $this->number = $number;
     }
 
-    public function setDate($date)
+    public function setDate($date): void
     {
         $this->date = $date;
     }
 
-    public function setSalutation($salutation)
+    public function setSalutation($salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname)
+    public function setFirstname($firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname)
+    public function setLastname($lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setCompany($company)
+    public function setCompany($company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address)
+    public function setAddress($address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip)
+    public function setZip($zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city)
+    public function setCity($city): void
     {
         $this->city = $city;
     }
 
-    public function setRemark($remark)
+    public function setRemark($remark): void
     {
         $this->remark = $remark;
     }
 
-    public function setPayment($payment)
+    public function setPayment($payment): void
     {
         $this->payment = $payment;
     }
 
-    public function setStatus($status)
+    public function setStatus($status): void
     {
         $this->status = $status;
     }
 
-    public function setPositions($positions)
+    public function setPositions($positions): void
     {
         $this->positions = $positions;
     }
 
-    public function setAppartments($appartments)
+    public function setAppartments($appartments): void
     {
         $this->appartments = $appartments;
     }
 
-    public function setReservations($reservations)
+    public function setReservations($reservations): void
     {
         $this->reservations = $reservations;
     }
 
-    public function addAppartment(\App\Entity\InvoiceAppartment $appartment)
+    public function addAppartment(InvoiceAppartment $appartment)
     {
         $this->appartments[] = $appartment;
+
         return $this;
     }
 
-    public function addPosition(\App\Entity\InvoicePosition $position)
+    public function addPosition(InvoicePosition $position)
     {
         $this->positions[] = $position;
+
         return $this;
     }
 
-    public function addReservation(\App\Entity\Reservation $reservation)
+    public function addReservation(Reservation $reservation)
     {
         $this->reservations[] = $reservation;
+
         return $this;
     }
 
-    public function removeAppartment(\App\Entity\InvoiceAppartment $appartment)
+    public function removeAppartment(InvoiceAppartment $appartment): void
     {
         $this->appartments->removeElement($appartment);
     }
 
-    public function removePosition(\App\Entity\InvoicePosition $position)
+    public function removePosition(InvoicePosition $position): void
     {
         $this->positions->removeElement($position);
     }
 
-    public function removeReservation(\App\Entity\Reservation $reservation)
+    public function removeReservation(Reservation $reservation): void
     {
         $this->reservations->removeElement($reservation);
     }

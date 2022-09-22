@@ -1,75 +1,48 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Description of Correspondence
- *
- * @author Alexander
- */
-
-/**
- * @ORM\Entity
- * @ORM\InheritanceType("SINGLE_TABLE")
- * @ORM\DiscriminatorColumn(name="discr", type="string")
- * @ORM\DiscriminatorMap({"correspondence" = "Correspondence", "mail" = "MailCorrespondence", "file" = "FileCorrespondence"})
- */
-class Correspondence 
+#[ORM\Entity]
+#[ORM\InheritanceType('SINGLE_TABLE')]
+#[ORM\DiscriminatorColumn(name: 'discr', type: 'string')]
+#[ORM\DiscriminatorMap(['correspondence' => 'Correspondence', 'mail' => 'MailCorrespondence', 'file' => 'FileCorrespondence'])]
+class Correspondence
 {
-    /** 
-     * @ORM\Id @ORM\Column(type="integer") 
-     * @ORM\GeneratedValue 
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     protected $id;
-
-    /** 
-     * @ORM\Column(type="string", length=100) 
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $name;
-
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: 'text')]
     protected $text;
-    
-    /** 
-     * @ORM\Column(name="created", type="datetime") 
-     */
+    #[ORM\Column(name: 'created', type: 'datetime')]
     protected $created;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Template", inversedBy="correspondences")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Template', inversedBy: 'correspondences')]
     protected $template;
-    
-    /**
-     * @ORM\ManyToOne(targetEntity="Reservation", inversedBy="correspondences")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'correspondences')]
     protected $reservation;
-    
-    /**
-     * @ORM\ManyToMany(targetEntity="Correspondence", inversedBy="parents")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Correspondence', inversedBy: 'parents')]
     protected $children;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Correspondence", mappedBy="children")
-     * 
-     */
+    #[ORM\ManyToMany(targetEntity: 'Correspondence', mappedBy: 'children')]
     protected $parents;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->created = new \DateTime();
         $this->children = new ArrayCollection();
         $this->parents = new ArrayCollection();
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -77,7 +50,7 @@ class Correspondence
     }
 
     /**
-     * Set name
+     * Set name.
      *
      * @param string $name
      *
@@ -91,7 +64,7 @@ class Correspondence
     }
 
     /**
-     * Get name
+     * Get name.
      *
      * @return string
      */
@@ -101,7 +74,7 @@ class Correspondence
     }
 
     /**
-     * Set text
+     * Set text.
      *
      * @param string $text
      *
@@ -115,7 +88,7 @@ class Correspondence
     }
 
     /**
-     * Get text
+     * Get text.
      *
      * @return string
      */
@@ -125,7 +98,7 @@ class Correspondence
     }
 
     /**
-     * Set created
+     * Set created.
      *
      * @param \DateTime $created
      *
@@ -139,7 +112,7 @@ class Correspondence
     }
 
     /**
-     * Get created
+     * Get created.
      *
      * @return \DateTime
      */
@@ -149,13 +122,13 @@ class Correspondence
     }
 
     /**
-     * Set template
+     * Set template.
      *
      * @param \App\Entity\Template $template
      *
      * @return Correspondence
      */
-    public function setTemplate(\App\Entity\Template $template = null)
+    public function setTemplate(Template $template = null)
     {
         $this->template = $template;
 
@@ -163,7 +136,7 @@ class Correspondence
     }
 
     /**
-     * Get template
+     * Get template.
      *
      * @return \App\Entity\Template
      */
@@ -173,13 +146,13 @@ class Correspondence
     }
 
     /**
-     * Set reservation
+     * Set reservation.
      *
      * @param \App\Entity\Reservation $reservation
      *
      * @return Correspondence
      */
-    public function setReservation(\App\Entity\Reservation $reservation = null)
+    public function setReservation(Reservation $reservation = null)
     {
         $this->reservation = $reservation;
 
@@ -187,7 +160,7 @@ class Correspondence
     }
 
     /**
-     * Get reservation
+     * Get reservation.
      *
      * @return \App\Entity\Reservation
      */
@@ -197,13 +170,13 @@ class Correspondence
     }
 
     /**
-     * Add child
+     * Add child.
      *
      * @param \App\Entity\Correspondence $child
      *
      * @return Correspondence
      */
-    public function addChild(\App\Entity\Correspondence $child)
+    public function addChild(Correspondence $child)
     {
         $this->children[] = $child;
 
@@ -211,17 +184,17 @@ class Correspondence
     }
 
     /**
-     * Remove child
+     * Remove child.
      *
      * @param \App\Entity\Correspondence $child
      */
-    public function removeChild(\App\Entity\Correspondence $child)
+    public function removeChild(Correspondence $child): void
     {
         $this->children->removeElement($child);
     }
 
     /**
-     * Get children
+     * Get children.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -231,13 +204,13 @@ class Correspondence
     }
 
     /**
-     * Add parent
+     * Add parent.
      *
      * @param \App\Entity\Correspondence $parent
      *
      * @return Correspondence
      */
-    public function addParent(\App\Entity\Correspondence $parent)
+    public function addParent(Correspondence $parent)
     {
         $this->parents[] = $parent;
 
@@ -245,17 +218,17 @@ class Correspondence
     }
 
     /**
-     * Remove parent
+     * Remove parent.
      *
      * @param \App\Entity\Correspondence $parent
      */
-    public function removeParent(\App\Entity\Correspondence $parent)
+    public function removeParent(Correspondence $parent): void
     {
         $this->parents->removeElement($parent);
     }
 
     /**
-     * Get parents
+     * Get parents.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

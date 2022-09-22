@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -16,21 +18,22 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * CSRFProtectionService is a Service to provide simple
- * generation and validation of tokens for CSRF Protection
- *
+ * generation and validation of tokens for CSRF Protection.
  */
 class CSRFProtectionService
 {
     private $requestStack;
-	
-	public function __construct(RequestStack $requestStack)
+
+    public function __construct(RequestStack $requestStack)
     {
         $this->requestStack = $requestStack;
     }
-	/**
+
+    /**
      * Saves a generated token into session and returns the generated token for csrf protection
      * The form must have a hidden input field where the token can be used
-     * This hidden input field will be validated against the saved token (funtion: validateCSRFToken)
+     * This hidden input field will be validated against the saved token (funtion: validateCSRFToken).
+     *
      * @return string
      */
     public function getCSRFTokenForForm()
@@ -42,11 +45,12 @@ class CSRFProtectionService
     }
 
     /**
-     * Validates the submitted csrf token against the token saved in the session
-     * @param \Symfony\Component\HttpFoundation\Request $request
-     * @param boolean $invalidateToken token is only valid for one submit
-     * @param string $fieldName Set the name of the hidden input field default='_csrf_token'
-     * @return boolean
+     * Validates the submitted csrf token against the token saved in the session.
+     *
+     * @param bool   $invalidateToken token is only valid for one submit
+     * @param string $fieldName       Set the name of the hidden input field default='_csrf_token'
+     *
+     * @return bool
      */
     public function validateCSRFToken(Request $request, $invalidateToken = false, $fieldName = '_csrf_token')
     {
@@ -59,13 +63,16 @@ class CSRFProtectionService
         if ($invalidateToken) {
             $this->getCSRFTokenForForm();
         }
+
         return $result;
     }
 
     /**
-     * Returns a token
-     * @param int $length
-     * @param boolean $alphaNumeric
+     * Returns a token.
+     *
+     * @param int  $length
+     * @param bool $alphaNumeric
+     *
      * @return string
      */
     private function generateToken($length, $alphaNumeric = true)
@@ -75,15 +82,16 @@ class CSRFProtectionService
         $token = '';
 
         if ($alphaNumeric) {
-            $chars = $numeric . $alpha;
+            $chars = $numeric.$alpha;
         } else {
             $chars = $alpha;
         }
 
-        for ($i = 0; $i < $length; $i++) {
+        for ($i = 0; $i < $length; ++$i) {
             $tmpStr = str_shuffle($chars);
             $token .= $tmpStr[0];
         }
+
         return $token;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,38 +13,39 @@
 
 namespace App\Controller;
 
+use App\Entity\ReservationOrigin;
+use App\Service\CSRFProtectionService;
+use App\Service\ReservationOriginService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\Persistence\ManagerRegistry;
-
-use App\Service\CSRFProtectionService;
-use App\Service\ReservationOriginService;
-use App\Entity\ReservationOrigin;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/reservationorigin')]
 class ReservationOriginServiceController extends AbstractController
 {
-
     /**
-     * Index-View
+     * Index-View.
+     *
      * @return mixed
      */
     #[Route('/', name: 'reservationorigin.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, )
+    public function indexAction(ManagerRegistry $doctrine)
     {
         $em = $doctrine->getManager();
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
-        return $this->render('ReservationOrigin/index.html.twig', array(
-            "origins" => $origins
-        ));
+        return $this->render('ReservationOrigin/index.html.twig', [
+            'origins' => $origins,
+        ]);
     }
 
     /**
-     * Show single entity
+     * Show single entity.
+     *
      * @param $id
+     *
      * @return mixed
      */
     #[Route('/{id}/get', name: 'reservationorigin.get.origin', methods: ['GET'], defaults: ['id' => '0'])]
@@ -51,14 +54,15 @@ class ReservationOriginServiceController extends AbstractController
         $em = $doctrine->getManager();
         $origin = $em->getRepository(ReservationOrigin::class)->find($id);
 
-        return $this->render('ReservationOrigin/reservationorigin_form_edit.html.twig', array(
+        return $this->render('ReservationOrigin/reservationorigin_form_edit.html.twig', [
             'origin' => $origin,
             'token' => $csrf->getCSRFTokenForForm(),
-        ));
+        ]);
     }
 
     /**
-     * Show form for new entity
+     * Show form for new entity.
+     *
      * @return mixed
      */
     #[Route('/new', name: 'reservationorigin.new.origin', methods: ['GET'])]
@@ -67,28 +71,28 @@ class ReservationOriginServiceController extends AbstractController
         $em = $doctrine->getManager();
 
         $origin = new ReservationOrigin();
-        $origin->setId("new");
+        $origin->setId('new');
 
-        return $this->render('ReservationOrigin/reservationorigin_form_create.html.twig', array(
+        return $this->render('ReservationOrigin/reservationorigin_form_create.html.twig', [
             'origin' => $origin,
             'token' => $csrf->getCSRFTokenForForm(),
-        ));
+        ]);
     }
 
     /**
-     * Create new entity
-     * @param Request $request
+     * Create new entity.
+     *
      * @return mixed
      */
     #[Route('/create', name: 'reservationorigin.create.origin', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
-            $origin = $ros->getOriginFromForm($request, "new");
+        if ($csrf->validateCSRFToken($request)) {
+            $origin = $ros->getOriginFromForm($request, 'new');
 
             // check for mandatory fields
-            if (strlen($origin->getName()) == 0) {
+            if (0 == strlen($origin->getName())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -101,70 +105,71 @@ class ReservationOriginServiceController extends AbstractController
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
+        return $this->render('feedback.html.twig', [
+            'error' => $error,
+        ]);
     }
 
     /**
-     * update entity end show update result
-     * @param Request $request
+     * update entity end show update result.
+     *
      * @param $id
+     *
      * @return mixed
      */
     #[Route('/{id}/edit', name: 'reservationorigin.edit.origin', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
+        if ($csrf->validateCSRFToken($request)) {
             $origin = $ros->getOriginFromForm($request, $id);
             $em = $doctrine->getManager();
-            
+
             // check for mandatory fields
-            if (strlen($origin->getName()) == 0) {
+            if (0 == strlen($origin->getName())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->clear(ReservationOrigin::class);
-            } else {                
+            } else {
                 $em->persist($origin);
                 $em->flush();
 
-                // add succes message           
+                // add succes message
                 $this->addFlash('success', 'reservationorigin.flash.edit.success');
             }
         }
 
-        return $this->render('feedback.html.twig', array(
-            "error" => $error
-        ));
+        return $this->render('feedback.html.twig', [
+            'error' => $error,
+        ]);
     }
 
     /**
-     * delete entity
-     * @param Request $request
+     * delete entity.
+     *
      * @param $id
+     *
      * @return string
      */
     #[Route('/{id}/delete', name: 'reservationorigin.delete.origin', methods: ['GET', 'POST'])]
     public function deleteAction(CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
     {
-
-        if ($request->getMethod() == 'POST') {
-            if (($csrf->validateCSRFToken($request, true))) {
+        if ('POST' == $request->getMethod()) {
+            if ($csrf->validateCSRFToken($request, true)) {
                 $origin = $ros->deleteOrigin($id);
-                if($origin) {
+                if ($origin) {
                     $this->addFlash('success', 'reservationorigin.flash.delete.success');
                 }
             }
+
             return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)           
-            return $this->render('common/form_delete_entry.html.twig', array(
-                "id" => $id,
-                'token' => $csrf->getCSRFTokenForForm()
-            ));
+            // initial get load (ask for deleting)
+            return $this->render('common/form_delete_entry.html.twig', [
+                'id' => $id,
+                'token' => $csrf->getCSRFTokenForForm(),
+            ]);
         }
-
     }
 }

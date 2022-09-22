@@ -1,55 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="customer_addresses")
- **/
-class CustomerAddresses {
-    
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+#[ORM\Entity]
+#[ORM\Table(name: 'customer_addresses')]
+class CustomerAddresses
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-    
-    /** @ORM\Column(type="string", length=50) * */
+    #[ORM\Column(type: 'string', length: 50)]
     private $type;
-    
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $country;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $phone;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $fax;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $mobile_phone;
-
-    /** @ORM\Column(type="string", length=100, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $email;
-    
-    /**
-     * @ORM\ManyToMany(targetEntity="Customer", mappedBy="customerAddresses")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Customer', mappedBy: 'customerAddresses')]
     private $customers;
+
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -57,17 +47,17 @@ class CustomerAddresses {
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
         return $this->id;
     }
-    
+
     /**
-     * Set type
+     * Set type.
      *
      * @param string $type
      *
@@ -81,7 +71,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get type
+     * Get type.
      *
      * @return string
      */
@@ -91,7 +81,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set company
+     * Set company.
      *
      * @param string $company
      *
@@ -105,7 +95,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get company
+     * Get company.
      *
      * @return string
      */
@@ -115,7 +105,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set address
+     * Set address.
      *
      * @param string $address
      *
@@ -129,7 +119,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get address
+     * Get address.
      *
      * @return string
      */
@@ -139,7 +129,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set zip
+     * Set zip.
      *
      * @param string $zip
      *
@@ -153,7 +143,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get zip
+     * Get zip.
      *
      * @return string
      */
@@ -163,7 +153,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set city
+     * Set city.
      *
      * @param string $city
      *
@@ -177,7 +167,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get city
+     * Get city.
      *
      * @return string
      */
@@ -187,7 +177,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set country
+     * Set country.
      *
      * @param string $country
      *
@@ -201,7 +191,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get country
+     * Get country.
      *
      * @return string
      */
@@ -211,7 +201,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set phone
+     * Set phone.
      *
      * @param string $phone
      *
@@ -225,7 +215,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get phone
+     * Get phone.
      *
      * @return string
      */
@@ -235,7 +225,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set fax
+     * Set fax.
      *
      * @param string $fax
      *
@@ -249,7 +239,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get fax
+     * Get fax.
      *
      * @return string
      */
@@ -259,7 +249,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set mobilePhone
+     * Set mobilePhone.
      *
      * @param string $mobilePhone
      *
@@ -273,7 +263,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get mobilePhone
+     * Get mobilePhone.
      *
      * @return string
      */
@@ -283,7 +273,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Set email
+     * Set email.
      *
      * @param string $email
      *
@@ -297,7 +287,7 @@ class CustomerAddresses {
     }
 
     /**
-     * Get email
+     * Get email.
      *
      * @return string
      */
@@ -307,13 +297,13 @@ class CustomerAddresses {
     }
 
     /**
-     * Add customer
+     * Add customer.
      *
      * @param \App\Entity\Customer $customer
      *
      * @return CustomerAddresses
      */
-    public function addCustomer(\App\Entity\Customer $customer)
+    public function addCustomer(Customer $customer)
     {
         $this->customers[] = $customer;
 
@@ -321,17 +311,17 @@ class CustomerAddresses {
     }
 
     /**
-     * Remove customer
+     * Remove customer.
      *
      * @param \App\Entity\Customer $customer
      */
-    public function removeCustomer(\App\Entity\Customer $customer)
+    public function removeCustomer(Customer $customer): void
     {
         $this->customers->removeElement($customer);
     }
 
     /**
-     * Get customers
+     * Get customers.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

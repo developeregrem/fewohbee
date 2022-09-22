@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,16 +13,15 @@
 
 namespace App\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
-
-use App\Entity\RegistrationBookEntry;
-use App\Entity\CustomerAddresses;
-use App\Entity\Reservation;
 use App\Controller\CustomerServiceController;
+use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
+use App\Entity\RegistrationBookEntry;
+use App\Entity\Reservation;
+use Doctrine\ORM\EntityManagerInterface;
 
 class RegistrationBookService
 {
-
     private $em = null;
 
     public function __construct(EntityManagerInterface $em)
@@ -32,23 +33,21 @@ class RegistrationBookService
     {
         $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
         $customers = $reservation->getCustomers();
-        /* @var $customer \App\Entity\Customer */
+        /* @var $customer Customer */
         foreach ($customers as $customer) {
             $entry = new RegistrationBookEntry();
-            $entry->setNumber("1");
+            $entry->setNumber('1');
             $entry->setSalutation($customer->getSalutation());
             $entry->setFirstname($customer->getFirstname());
             $entry->setLastname($customer->getLastname());
             $entry->setBirthday($customer->getBirthday());
             $addresses = $customer->getCustomerAddresses();
             $cAddress = new CustomerAddresses();
-            /* @var $address \App\Entity\CustomerAddresses */
-            foreach($addresses as $address) {
-                if($address->getType() == CustomerServiceController::$addessTypes[1]) {
-                    $cAddress = $address;
+            /* @var $address CustomerAddresses */
+            foreach ($addresses as $address) {
+                $cAddress = $address;
+                if ($address->getType() == CustomerServiceController::$addessTypes[1]) {
                     break;
-                } else {
-                    $cAddress = $address;
                 }
             }
             $entry->setCompany($cAddress->getCompany());
@@ -57,33 +56,36 @@ class RegistrationBookService
             $entry->setZip($cAddress->getZip());
             $entry->setCountry($cAddress->getCountry());
             $entry->setReservation($reservation);
+            $entry->setIdType($customer->getIdType());
+            $entry->setIDNumber($customer->getIDNumber());
             $entry->setCustomer($customer);
-            $entry->setYear($reservation->getStartDate()->format("Y"));
+            $entry->setYear($reservation->getStartDate()->format('Y'));
             $this->em->persist($entry);
         }
         $this->em->flush();
 
         return true;
     }
-    
+
     /**
-     * Delete registration book entry
+     * Delete registration book entry.
+     *
      * @param int $id
+     *
      * @return bool
      */
     public function deleteEntry($id)
     {
         /* @var $entry \Pensionsverwaltung\Database\Entity\RegistrationBookEntry */
         $entry = $this->em->getRepository(RegistrationBookEntry::class)->find($id);
-        
-        if($entry instanceof RegistrationBookEntry) {
+
+        if ($entry instanceof RegistrationBookEntry) {
             $this->em->remove($entry);
             $this->em->flush();
-            
+
             return true;
         }
-        return false;        
+
+        return false;
     }
 }
-
-?>

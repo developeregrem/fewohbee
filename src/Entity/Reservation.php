@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -6,84 +9,49 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\ReservationRepository")
- * @ORM\Table(name="reservations", indexes={@ORM\Index(name="idx_uuid", columns={"uuid"})})
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\ReservationRepository')]
+#[ORM\Table(name: 'reservations')]
+#[ORM\Index(name: 'idx_uuid', columns: ['uuid'])]
 class Reservation
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(name="start_date", type="date") * */
+    #[ORM\Column(name: 'start_date', type: 'date')]
     private $startDate;
-
-    /** @ORM\Column(name="end_date", type="date") * */
+    #[ORM\Column(name: 'end_date', type: 'date')]
     private $endDate;
-
-    /** @ORM\Column(type="smallint") * */
+    #[ORM\Column(type: 'smallint')]
     private $persons;
-
-    /** @ORM\Column(name="option_date", type="date", nullable=true) * */
+    #[ORM\Column(name: 'option_date', type: 'date', nullable: true)]
     private $optionDate;
-
-    /** @ORM\Column(type="text", nullable=true) * */
+    #[ORM\Column(type: 'text', nullable: true)]
     private $remark;
-
-    /** @ORM\Column(name="reservation_date", type="datetime") * */
+    #[ORM\Column(name: 'reservation_date', type: 'datetime')]
     private $reservationDate;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Invoice", inversedBy="reservations")
-     * @ORM\JoinTable(name="reservations_has_invoices")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Invoice', inversedBy: 'reservations')]
+    #[ORM\JoinTable(name: 'reservations_has_invoices')]
     private $invoices;
-    
-    /**
-     * @ORM\ManyToOne(targetEntity="Appartment", inversedBy="reservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Appartment', inversedBy: 'reservations')]
     private $appartment;
-
-    /**
-     * @ORM\ManyToMany(targetEntity="Customer", inversedBy="reservations")
-     * @ORM\JoinTable(name="reservations_has_customers")
-     */
+    #[ORM\ManyToMany(targetEntity: 'Customer', inversedBy: 'reservations')]
+    #[ORM\JoinTable(name: 'reservations_has_customers')]
     private $customers;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="bookedReservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'bookedReservations')]
     private $booker;
-
-    /**
-     * @ORM\OneToMany(targetEntity="RegistrationBookEntry", mappedBy="reservation")
-     */
+    #[ORM\OneToMany(targetEntity: 'RegistrationBookEntry', mappedBy: 'reservation')]
     private $registrationBookEntries;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="ReservationOrigin", inversedBy="reservations")
-     */
+    #[ORM\ManyToOne(targetEntity: 'ReservationOrigin', inversedBy: 'reservations')]
     private $reservationOrigin;
-    
-    /**
-     * @ORM\OneToMany(targetEntity="Correspondence", mappedBy="reservation", cascade={"remove"})
-     */
+    #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
-
-    /**
-     * @ORM\ManyToMany(targetEntity=Price::class)
-     */
+    #[ORM\ManyToMany(targetEntity: Price::class)]
     private $prices;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=ReservationStatus::class, inversedBy="reservations")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: ReservationStatus::class, inversedBy: 'reservations')]
+    #[ORM\JoinColumn(nullable: false)]
     private $reservationStatus;
-
-    /**
-     * @ORM\Column(type="uuid", unique=true)
-     */
+    #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
 
     public function __construct()
@@ -125,7 +93,7 @@ class Reservation
     {
         return $this->remark;
     }
-    
+
     public function getRemarkF()
     {
         return nl2br($this->remark);
@@ -137,7 +105,6 @@ class Reservation
     }
 
     /**
-     * 
      * @return Appartment
      */
     public function getAppartment()
@@ -145,79 +112,76 @@ class Reservation
         return $this->appartment;
     }
 
-    public function getCustomer()
-    {
-        return $this->customer;
-    }
-
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setStartDate($startDate)
+    public function setStartDate($startDate): void
     {
         $this->startDate = $startDate;
     }
 
-    public function setEndDate($endDate)
+    public function setEndDate($endDate): void
     {
         $this->endDate = $endDate;
     }
 
-    public function setPersons($persons)
+    public function setPersons($persons): void
     {
         $this->persons = $persons;
     }
 
-    public function setOptionDate($optionDate)
+    public function setOptionDate($optionDate): void
     {
         $this->optionDate = $optionDate;
     }
 
-    public function setRemark($remark)
+    public function setRemark($remark): void
     {
         $this->remark = $remark;
     }
 
-    public function setReservationDate($reservationDate)
+    public function setReservationDate($reservationDate): void
     {
         $this->reservationDate = $reservationDate;
     }
 
-    public function setAppartment($appartment)
+    public function setAppartment($appartment): void
     {
         $this->appartment = $appartment;
     }
 
-    public function setCustomers($customers)
+    public function setCustomers($customers): void
     {
         $this->customers = $customers;
     }
 
-    public function setRegistrationBookEntries($registrationBookEntries)
+    public function setRegistrationBookEntries($registrationBookEntries): void
     {
         $this->registrationBookEntries = $registrationBookEntries;
     }
 
-    public function addRegistrationBookEntry(\App\Entity\RegistrationBookEntry $registrationBookEntry)
+    public function addRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry)
     {
         $this->registrationBookEntries[] = $registrationBookEntry;
+
         return $this;
     }
 
-    public function removeRegistrationBookEntry(\App\Entity\RegistrationBookEntry $registrationBookEntry)
+    public function removeRegistrationBookEntry(RegistrationBookEntry $registrationBookEntry): void
     {
         $this->registrationBookEntries->removeElement($registrationBookEntry);
     }
 
     /**
-     * Add customers
+     * Add customers.
      *
      * @param \App\Entity\Customer $customers
+     *
      * @return Reservation
      */
-    public function addCustomer(\App\Entity\Customer $customers)
+    public function addCustomer(Customer $customers)
     {
         $this->customers[] = $customers;
 
@@ -225,17 +189,17 @@ class Reservation
     }
 
     /**
-     * Remove customers
+     * Remove customers.
      *
      * @param \App\Entity\Customer $customers
      */
-    public function removeCustomer(\App\Entity\Customer $customers)
+    public function removeCustomer(Customer $customers): void
     {
         $this->customers->removeElement($customers);
     }
 
     /**
-     * Get customers
+     * Get customers.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -245,7 +209,7 @@ class Reservation
     }
 
     /**
-     * Get registrationBookEntries
+     * Get registrationBookEntries.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -255,12 +219,13 @@ class Reservation
     }
 
     /**
-     * Set booker
+     * Set booker.
      *
      * @param \App\Entity\Customer $booker
+     *
      * @return Reservation
      */
-    public function setBooker(\App\Entity\Customer $booker = null)
+    public function setBooker(Customer $booker = null)
     {
         $this->booker = $booker;
 
@@ -268,7 +233,7 @@ class Reservation
     }
 
     /**
-     * Get booker
+     * Get booker.
      *
      * @return \App\Entity\Customer
      */
@@ -280,16 +245,18 @@ class Reservation
     public function getAmount()
     {
         $interval = $this->startDate->diff($this->endDate);
+
         return $interval->format('%a');
     }
 
     /**
-     * Set reservationOrigin
+     * Set reservationOrigin.
      *
      * @param \App\Entity\ReservationOrigin $reservationOrigin
+     *
      * @return Reservation
      */
-    public function setReservationOrigin(\App\Entity\ReservationOrigin $reservationOrigin = null)
+    public function setReservationOrigin(ReservationOrigin $reservationOrigin = null)
     {
         $this->reservationOrigin = $reservationOrigin;
 
@@ -297,9 +264,9 @@ class Reservation
     }
 
     /**
-     * Get reservationOrigin
+     * Get reservationOrigin.
      *
-     * @return \App\Entity\ReservationOrigin 
+     * @return \App\Entity\ReservationOrigin
      */
     public function getReservationOrigin()
     {
@@ -307,13 +274,13 @@ class Reservation
     }
 
     /**
-     * Add correspondence
+     * Add correspondence.
      *
      * @param \App\Entity\Correspondence $correspondence
      *
      * @return Reservation
      */
-    public function addCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function addCorrespondence(Correspondence $correspondence)
     {
         $this->correspondences[] = $correspondence;
 
@@ -321,17 +288,17 @@ class Reservation
     }
 
     /**
-     * Remove correspondence
+     * Remove correspondence.
      *
      * @param \App\Entity\Correspondence $correspondence
      */
-    public function removeCorrespondence(\App\Entity\Correspondence $correspondence)
+    public function removeCorrespondence(Correspondence $correspondence): void
     {
         $this->correspondences->removeElement($correspondence);
     }
 
     /**
-     * Get correspondences
+     * Get correspondences.
      *
      * @return \Doctrine\Common\Collections\Collection
      */
@@ -341,13 +308,13 @@ class Reservation
     }
 
     /**
-     * Add invoice
+     * Add invoice.
      *
      * @param \App\Entity\Invoice $invoice
      *
      * @return Reservation
      */
-    public function addInvoice(\App\Entity\Invoice $invoice)
+    public function addInvoice(Invoice $invoice)
     {
         $this->invoices[] = $invoice;
 
@@ -355,17 +322,17 @@ class Reservation
     }
 
     /**
-     * Remove invoice
+     * Remove invoice.
      *
      * @param \App\Entity\Invoice $invoice
      */
-    public function removeInvoice(\App\Entity\Invoice $invoice)
+    public function removeInvoice(Invoice $invoice): void
     {
         $this->invoices->removeElement($invoice);
     }
 
     /**
-     * Get invoices
+     * Get invoices.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

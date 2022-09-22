@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -34,7 +36,7 @@ class ReservationObject
         return $this->customerId;
     }
 
-    public function setCustomerId($customerId)
+    public function setCustomerId($customerId): void
     {
         $this->customerId = $customerId;
     }
@@ -64,12 +66,12 @@ class ReservationObject
         return $this->persons;
     }
 
-    public function setReservationStatus($status)
+    public function setReservationStatus($status): void
     {
         $this->reservationStatus = $status;
     }
 
-    public function setPersons($persons)
+    public function setPersons($persons): void
     {
         $this->persons = $persons;
     }

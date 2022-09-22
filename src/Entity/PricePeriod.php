@@ -1,35 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\PricePeriodRepository")
- */
+#[ORM\Entity(repositoryClass: 'App\Repository\PricePeriodRepository')]
 class PricePeriod
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Column(type: 'date')]
     private $start;
-
-    /**
-     * @ORM\Column(type="date")
-     */
+    #[ORM\Column(type: 'date')]
     private $end;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Price", inversedBy="pricePeriods")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Price', inversedBy: 'pricePeriods')]
+    #[ORM\JoinColumn(nullable: false)]
     private $price;
 
     public function getId(): ?int

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -13,16 +15,20 @@ namespace App\Service;
 
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class MpdfService {
-    
+class MpdfService
+{
     private $requestStack;
-    public function __construct(RequestStack $requestStack) {
+
+    public function __construct(RequestStack $requestStack)
+    {
         $this->requestStack = $requestStack;
     }
-    //put your code here
-    public function getMpdf() {
+
+    // put your code here
+    public function getMpdf()
+    {
         $locale = $this->requestStack->getCurrentRequest()->getLocale();
-        $config = Array(
+        $config = [
             'mode' => $locale,
             'format' => 'A4',
             'orientation' => 'P',
@@ -31,8 +37,9 @@ class MpdfService {
             'margin_top' => 20,
             'margin_bottom' => 20,
             'margin_header' => 9,
-            'margin_footer' => 9        
-        );
+            'margin_footer' => 9,
+        ];
+
         return new \Mpdf\Mpdf($config);
     }
 }

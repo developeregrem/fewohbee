@@ -1,0 +1,11 @@
+<fieldset id="entry-form-fieldset-{{ user.id }}" {% if user.id != null %} disabled {% endif %}>
+    {{ form_widget(form) }}
+    <div class="row">
+        <label for="inputPassword" class="col-sm-4 col-form-label text-end">{{ 'user.lastaction'|trans }}</label>
+        <div class="col-sm">
+            {% if user.lastaction is not null %}
+                <label class="col-form-label text-end">{{ user.lastaction|date('Y-m-d H:i:s') }}</label>
+            {% endif %}
+        </div>
+    </div>
+</fieldset>
