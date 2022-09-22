@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,92 +13,92 @@
 
 namespace App\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
-
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Enum\IDCardType;
 use App\Entity\PostalCodeData;
-
-use Symfony\Component\HttpFoundation\Request;
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class CustomerService implements ITemplateRenderer
 {
 
-    private $em = null;
-
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em)
     {
-        $this->em = $em;
     }
 
     public function getCustomerFromForm(Request $request, $id = 'new')
     {
         $customer = null;
 
-        if ($id === 'new') {
+        if ('new' === $id) {
             $customer = new Customer();
         } else {
             $customer = $this->em->getRepository(Customer::class)->find($id);
         }
-        
-        $customer->setSalutation($request->request->get("salutation-" . $id));
-        $customer->setFirstname($request->request->get("firstname-" . $id));
-        $customer->setLastname($request->request->get("lastname-" . $id));
-        if (strlen($request->request->get("birthday-" . $id)) > 0) {
-            $customer->setBirthday(new \DateTime($request->request->get("birthday-" . $id)));
+
+        $customer->setSalutation($request->request->get('salutation-'.$id));
+        $customer->setFirstname($request->request->get('firstname-'.$id));
+        $customer->setLastname($request->request->get('lastname-'.$id));
+        if (strlen($request->request->get('birthday-'.$id)) > 0) {
+            $customer->setBirthday(new \DateTime($request->request->get('birthday-'.$id)));
         } else {
             $customer->setBirthday(null);
         }
-        
-        $addressTypes = $request->request->all("addresstype-" . $id) ?? [];
+
+        $addressTypes = $request->request->all('addresstype-'.$id) ?? [];
         $addressCount = count($addressTypes);
-        $newAddresses = Array();
-        for($i = 0; $i < $addressCount; $i++) {
-            if ($id === 'new') {
+        $newAddresses = [];
+        for ($i = 0; $i < $addressCount; ++$i) {
+            if ('new' === $id) {
                 $address = new CustomerAddresses();
             } else {
                 // if exist use it or create one
-                $atid = $request->request->all("addresstypeid-" . $id)[$i];
+                $atid = $request->request->all('addresstypeid-'.$id)[$i];
                 $address = $this->em->getRepository(CustomerAddresses::class)->find($atid);
-                if(!$address instanceof CustomerAddresses) {
+                if (!$address instanceof CustomerAddresses) {
                     $address = new CustomerAddresses();
                 }
-            }          
-            
-            $address->setType($request->request->all("addresstype-" . $id)[$i]);
-            $address->setCompany($request->request->all("company-" . $id)[$i]);
-            $address->setAddress($request->request->all("address-" . $id)[$i]);
-            $address->setZip($request->request->all("zip-" . $id)[$i]);
-            $address->setCity($request->request->all("city-" . $id)[$i]);
-            $address->setCountry($request->request->all("country-" . $id)[$i]);
-            $address->setPhone($request->request->all("phone-" . $id)[$i]);
-            $address->setFax($request->request->all("fax-" . $id)[$i]);
-            $address->setMobilePhone($request->request->all("mobilephone-" . $id)[$i]);
-            $address->setEmail($request->request->all("email-" . $id)[$i]);
-            
+            }
+
+            $address->setType($request->request->all('addresstype-'.$id)[$i]);
+            $address->setCompany($request->request->all('company-'.$id)[$i]);
+            $address->setAddress($request->request->all('address-'.$id)[$i]);
+            $address->setZip($request->request->all('zip-'.$id)[$i]);
+            $address->setCity($request->request->all('city-'.$id)[$i]);
+            $address->setCountry($request->request->all('country-'.$id)[$i]);
+            $address->setPhone($request->request->all('phone-'.$id)[$i]);
+            $address->setFax($request->request->all('fax-'.$id)[$i]);
+            $address->setMobilePhone($request->request->all('mobilephone-'.$id)[$i]);
+            $address->setEmail($request->request->all('email-'.$id)[$i]);
+
             $newAddresses[] = $address;
         }
-        $customer->setRemark($request->request->get("remark-" . $id));
-        
+        $customer->setIdType(IDCardType::tryFrom($request->request->get('id-type-'.$id)));
+        $customer->setIDNumber($request->request->get('id-'.$id));
+        $customer->setIDNumber($request->request->get('id-'.$id));
+        $customer->setRemark($request->request->get('remark-'.$id));
+
         // first remove all old addresses
-        $oldAddresses = clone $customer->getCustomerAddresses();        
-        
-        foreach($oldAddresses as $oldAddress) {
+        $oldAddresses = clone $customer->getCustomerAddresses();
+
+        foreach ($oldAddresses as $oldAddress) {
             $customer->removeCustomerAddress($oldAddress);
         }
-        //
-        foreach($newAddresses as $newAddress) {
+
+        foreach ($newAddresses as $newAddress) {
             $customer->addCustomerAddress($newAddress);
             $this->em->persist($newAddress);
         }
         // todo delete address whics is not used by other customers
         // at the moment it does not work since old address is still assigned to customer
-        foreach($oldAddresses as $oldAddress) {
-            //var_dump($oldAddress->getId());
-            //var_dump($oldAddress->getCustomers()->count());
-            if($oldAddress->getCustomers()->count() == 0) {
+        foreach ($oldAddresses as $oldAddress) {
+            // var_dump($oldAddress->getId());
+            // var_dump($oldAddress->getCustomers()->count());
+            if (0 == $oldAddress->getCustomers()->count()) {
                 $this->em->remove($oldAddress);
             }
         }
@@ -113,7 +115,8 @@ class CustomerService implements ITemplateRenderer
         $registrationBookEntries = $customer->getRegistrationBookEntries();
         $bookedReservations = $customer->getBookedReservations();
         $reservationsArray = new ArrayCollection(
-            array_merge($reservations->toArray(), $bookedReservations->toArray())); // combine both arrays
+            array_merge($reservations->toArray(), $bookedReservations->toArray())
+        ); // combine both arrays
         $today = new \DateTime();
         $canBeDeleted = true;
 
@@ -130,7 +133,7 @@ class CustomerService implements ITemplateRenderer
         if ($canBeDeleted) {
             $criteria = [
                 'firstname' => 'Anonym',
-                'lastname' => 'Anonym'
+                'lastname' => 'Anonym',
             ];
             $deletedCustomer = $this->em->getRepository(Customer::class)->findOneBy($criteria);
 
@@ -145,7 +148,7 @@ class CustomerService implements ITemplateRenderer
             foreach ($bookedReservations as $reservation) {
                 $reservation->setBooker($deletedCustomer);
                 $this->em->persist($reservation);
-            }            
+            }
             // assign all registration book entries to our anonym user
             foreach ($registrationBookEntries as $entry) {
                 $entry->setCustomer($deletedCustomer);
@@ -160,11 +163,13 @@ class CustomerService implements ITemplateRenderer
             return false;
         }
     }
-    
+
     /**
-     * Returns the city connected to the given plz
+     * Returns the city connected to the given plz.
+     *
      * @param string $country
      * @param string $zip
+     *
      * @return array
      */
     public function getCitiesByZIP($country, $zip)
@@ -172,22 +177,23 @@ class CustomerService implements ITemplateRenderer
         $cities = $this->em->getRepository(PostalCodeData::class)->findPlacesByCode($country, $zip);
         $result = [];
         /* @var $city PostalCodeData */
-        foreach($cities as $city) {
-            $result [] = [
+        foreach ($cities as $city) {
+            $result[] = [
                 'postalCode' => $city->getPostalCode(),
                 'placeName' => $city->getPlaceName(),
-                'search' => $city->getPostalCode() . ' - ' . $city->getPlaceName()
+                'search' => $city->getPostalCode().' - '.$city->getPlaceName(),
             ];
         }
 
         return $result;
     }
 
-    public function getRenderParams($template, $param) {
-        $params = array(
-                'customer' => $param,                  
-            );
+    public function getRenderParams(Template $template, mixed $param)
+    {
+        $params = [
+                'customer' => $param,
+            ];
+
         return $params;
     }
-
 }

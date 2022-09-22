@@ -1,39 +1,28 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Entity\User;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="roles")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'roles')]
 class Role
 {
-    /**
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /**
-     * @ORM\Column(name="name", type="string", length=30)
-     */
+    #[ORM\Column(name: 'name', type: 'string', length: 30)]
     private $name;
-
-    /**
-     * @ORM\Column(name="role", type="string", length=20, unique=true)
-     */
+    #[ORM\Column(name: 'role', type: 'string', length: 20, unique: true)]
     private $role;
-
-    /**
-     * @ORM\OneToMany(targetEntity="User", mappedBy="role")
-     */
+    #[ORM\OneToMany(targetEntity: 'User', mappedBy: 'role')]
     private $users;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
@@ -60,30 +49,29 @@ class Role
         return $this->users;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setName($name)
+    public function setName($name): void
     {
         $this->name = $name;
     }
 
-    public function setUsers($users)
+    public function setUsers($users): void
     {
         $this->users = $users;
     }
 
-    public function setRole($role)
+    public function setRole($role): void
     {
         $this->role = $role;
     }
 
     /**
-     * Add users
+     * Add users.
      *
-     * @param \App\Entity\User $users
      * @return Role
      */
     public function addUser(User $users)
@@ -94,11 +82,9 @@ class Role
     }
 
     /**
-     * Remove users
-     *
-     * @param \App\Entity\User $users
+     * Remove users.
      */
-    public function removeUser(User $users)
+    public function removeUser(User $users): void
     {
         $this->users->removeElement($users);
     }

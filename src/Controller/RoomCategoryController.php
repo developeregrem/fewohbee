@@ -1,20 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\RoomCategory;
 use App\Form\RoomCategoryType;
 use App\Repository\RoomCategoryRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\Persistence\ManagerRegistry;
 
 #[Route('/settings/category')]
 class RoomCategoryController extends AbstractController
 {
-
     #[Route('/', name: 'room_category_index', methods: ['GET'])]
     public function index(RoomCategoryRepository $roomCategoryRepository): Response
     {
@@ -37,7 +38,7 @@ class RoomCategoryController extends AbstractController
 
             // add succes message
             $this->addFlash('success', 'category.flash.create.success');
-            
+
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
@@ -46,16 +47,6 @@ class RoomCategoryController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-
-    /**
-     * @Route("/{id}", name="room_category_show", methods={"GET"})
-     */
-//    public function show(RoomCategory $roomCategory): Response
-//    {
-//        return $this->render('RoomCategory/show.html.twig', [
-//            'room_category' => $roomCategory,
-//        ]);
-//    }
 
     #[Route('/{id}/edit', name: 'room_category_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
@@ -66,8 +57,9 @@ class RoomCategoryController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $doctrine->getManager()->flush();
 
-            // add succes message
+            // add success message
             $this->addFlash('success', 'category.flash.edit.success');
+
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
@@ -80,20 +72,20 @@ class RoomCategoryController extends AbstractController
     #[Route('/{id}/delete', name: 'room_category_delete', methods: ['GET', 'DELETE'])]
     public function delete(ManagerRegistry $doctrine, Request $request, RoomCategory $roomCategory): Response
     {
-        if ($request->getMethod() === 'GET') {
-            // initial get load (ask for deleting)           
+        if ('GET' === $request->getMethod()) {
+            // initial get load (ask for deleting)
             return $this->render('common/form_delete_ask.html.twig', [
                 'id' => $roomCategory->getId(),
             ]);
-        } else if ($this->isCsrfTokenValid('delete'.$roomCategory->getId(), $request->request->get('_token'))) {
-            if($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
+        } elseif ($this->isCsrfTokenValid('delete'.$roomCategory->getId(), $request->request->get('_token'))) {
+            if ($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
                 $this->addFlash('warning', 'category.flash.delete.error.still.in.use');
             } else {
                 $entityManager = $doctrine->getManager();
                 $entityManager->remove($roomCategory);
                 $entityManager->flush();
                 $this->addFlash('success', 'category.flash.delete.success');
-            }            
+            }
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);

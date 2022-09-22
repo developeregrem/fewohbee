@@ -1,56 +1,35 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CashJournalRepository")
- * @ORM\Table(name="cash_journal")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\CashJournalRepository')]
+#[ORM\Table(name: 'cash_journal')]
 class CashJournal
 {
-    /** 
-     * @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue 
-     **/
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** 
-     * @ORM\Column(type="smallint", options={"unsigned"=true}) 
-     **/
+    #[ORM\Column(type: 'smallint', options: ['unsigned' => true])]
     private $cashYear;
-
-     /** 
-     * @ORM\Column(type="smallint", options={"unsigned"=true}) 
-     **/
+    #[ORM\Column(type: 'smallint', options: ['unsigned' => true])]
     private $cashMonth;
-
-    /** 
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=false) 
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: false)]
     private $cashStart;
-
-    /** 
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true) 
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $cashEnd;
-
-    /** 
-     * @ORM\Column(type="boolean", ) 
-     **/
+    #[ORM\Column(type: 'boolean')]
     private $isClosed;
-    
-     /** 
-      * @ORM\Column(type="boolean", ) 
-      **/
+    #[ORM\Column(type: 'boolean')]
     private $isBooked;
-
-    /**
-     * @ORM\OneToMany(targetEntity="CashJournalEntry", mappedBy="cashJournal", cascade={"remove"})
-     * @ORM\OrderBy({"date" = "ASC"})
-     */
+    #[ORM\OneToMany(targetEntity: 'CashJournalEntry', mappedBy: 'cashJournal', cascade: ['remove'])]
+    #[ORM\OrderBy(['date' => 'ASC'])]
     private $cashJournalEntries;
-
 
     public function __construct()
     {
@@ -60,9 +39,9 @@ class CashJournal
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -70,7 +49,7 @@ class CashJournal
     }
 
     /**
-     * Set cashYear
+     * Set cashYear.
      *
      * @param string $cashYear
      *
@@ -84,7 +63,7 @@ class CashJournal
     }
 
     /**
-     * Get cashYear
+     * Get cashYear.
      *
      * @return string
      */
@@ -94,7 +73,7 @@ class CashJournal
     }
 
     /**
-     * Set cashMonth
+     * Set cashMonth.
      *
      * @param string $cashMonth
      *
@@ -108,7 +87,7 @@ class CashJournal
     }
 
     /**
-     * Get cashMonth
+     * Get cashMonth.
      *
      * @return string
      */
@@ -118,7 +97,7 @@ class CashJournal
     }
 
     /**
-     * Set cashStart
+     * Set cashStart.
      *
      * @param string $cashStart
      *
@@ -132,27 +111,23 @@ class CashJournal
     }
 
     /**
-     * Get cashStart
-     *
-     * @return string
+     * Get cashStart.
      */
-    public function getCashStart()
+    public function getCashStart(): float
     {
-        return $this->cashStart;
-    }
-    
-    /**
-     * Get cashStart
-     *
-     * @return string
-     */
-    public function getCashStartF()
-    {
-        return number_format($this->cashStart, 2, ',', '.');
+        return (float) $this->cashStart;
     }
 
     /**
-     * Set cashEnd
+     * Get cashStart.
+     */
+    public function getCashStartF(): string
+    {
+        return number_format((float) $this->cashStart, 2, ',', '.');
+    }
+
+    /**
+     * Set cashEnd.
      *
      * @param string $cashEnd
      *
@@ -166,7 +141,7 @@ class CashJournal
     }
 
     /**
-     * Get cashEnd
+     * Get cashEnd.
      *
      * @return string
      */
@@ -174,25 +149,21 @@ class CashJournal
     {
         return $this->cashEnd;
     }
-    
+
     /**
-     * Get cashStart
-     *
-     * @return string
+     * Get cashStart.
      */
-    public function getCashEndF()
+    public function getCashEndF(): string
     {
-        return number_format($this->cashEnd, 2, ',', '.');
+        return number_format((float) $this->cashEnd, 2, ',', '.');
     }
 
     /**
-     * Set isClosed
-     *
-     * @param boolean $isClosed
+     * Set isClosed.
      *
      * @return CashJournal
      */
-    public function setIsClosed($isClosed)
+    public function setIsClosed(bool $isClosed): static
     {
         $this->isClosed = $isClosed;
 
@@ -200,23 +171,19 @@ class CashJournal
     }
 
     /**
-     * Get isClosed
-     *
-     * @return boolean
+     * Get isClosed.
      */
-    public function getIsClosed()
+    public function getIsClosed(): bool
     {
         return $this->isClosed;
     }
 
     /**
-     * Set isBooked
-     *
-     * @param boolean $isBooked
+     * Set isBooked.
      *
      * @return CashJournal
      */
-    public function setIsBooked($isBooked)
+    public function setIsBooked(bool $isBooked): static
     {
         $this->isBooked = $isBooked;
 
@@ -224,23 +191,21 @@ class CashJournal
     }
 
     /**
-     * Get isBooked
-     *
-     * @return boolean
+     * Get isBooked.
      */
-    public function getIsBooked()
+    public function getIsBooked(): bool
     {
         return $this->isBooked;
     }
 
     /**
-     * Add cashJournalEntry
+     * Add cashJournalEntry.
      *
      * @param \App\Entity\CashJournalEntry $cashJournalEntry
      *
      * @return CashJournal
      */
-    public function addCashJournalEntry(\App\Entity\CashJournalEntry $cashJournalEntry)
+    public function addCashJournalEntry(CashJournalEntry $cashJournalEntry)
     {
         $this->cashJournalEntries[] = $cashJournalEntry;
 
@@ -248,17 +213,17 @@ class CashJournal
     }
 
     /**
-     * Remove cashJournalEntry
+     * Remove cashJournalEntry.
      *
      * @param \App\Entity\CashJournalEntry $cashJournalEntry
      */
-    public function removeCashJournalEntry(\App\Entity\CashJournalEntry $cashJournalEntry)
+    public function removeCashJournalEntry(CashJournalEntry $cashJournalEntry): void
     {
         $this->cashJournalEntries->removeElement($cashJournalEntry);
     }
 
     /**
-     * Get cashJournalEntries
+     * Get cashJournalEntries.
      *
      * @return \Doctrine\Common\Collections\Collection
      */

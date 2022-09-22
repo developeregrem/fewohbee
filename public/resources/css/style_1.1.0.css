@@ -119,11 +119,6 @@ body {
     z-index: 9999; 
 }
 
-/* reduce default font size of labels in modals */
-.modal-body .col-form-label {
-    font-size: 14px;
-}
-
 .price-period .badge {
     font-size: 90%;
     margin: 4px;
@@ -196,4 +191,17 @@ div .reservation-yearly-day {
 .month-reservation-end.dummy-day {
     left: -1.4rem;
     transform: skewX(-45deg);
+}
+
+/*
+ * Forms
+ */
+/* reduce default font size of labels in modals */
+.modal-body .col-form-label {
+    font-size: 14px;
+}
+
+/* add hint to required fields */
+label.required:after {
+    /*content: " *";*/
 }

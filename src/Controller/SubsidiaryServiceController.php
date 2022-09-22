@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,20 +13,18 @@
 
 namespace App\Controller;
 
+use App\Entity\Subsidiary;
+use App\Service\CSRFProtectionService;
+use App\Service\SubsidiaryService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Doctrine\Persistence\ManagerRegistry;
-
-use App\Service\CSRFProtectionService;
-use App\Entity\Subsidiary;
-use App\Service\SubsidiaryService;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/objects')]
 class SubsidiaryServiceController extends AbstractController
 {
-
     #[Route('/', name: 'objects.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
     {
@@ -33,9 +33,9 @@ class SubsidiaryServiceController extends AbstractController
 
         return $this->render(
             'Subsidiary/index.html.twig',
-            array(
-                "objects" => $objects
-            )
+            [
+                'objects' => $objects,
+            ]
         );
     }
 
@@ -47,10 +47,10 @@ class SubsidiaryServiceController extends AbstractController
 
         return $this->render(
             'Subsidiary/object_form_edit.html.twig',
-            array(
+            [
                 'object' => $object,
-                'token' => $csrf->getCSRFTokenForForm()
-            )
+                'token' => $csrf->getCSRFTokenForForm(),
+            ]
         );
     }
 
@@ -59,13 +59,14 @@ class SubsidiaryServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $sub = new Subsidiary();
-        $sub->setId("new");
+        $sub->setId('new');
+
         return $this->render(
             'Subsidiary/object_form_create.html.twig',
-            array(
+            [
                 'object' => $sub,
-                'token' => $csrf->getCSRFTokenForForm()
-            )
+                'token' => $csrf->getCSRFTokenForForm(),
+            ]
         );
     }
 
@@ -73,12 +74,12 @@ class SubsidiaryServiceController extends AbstractController
     public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
+        if ($csrf->validateCSRFToken($request)) {
             /* @var $object \Pensionsverwaltung\Database\Entity\Subsidiary */
-            $object = $sub->getObjectFromForm($request, "new");
+            $object = $sub->getObjectFromForm($request, 'new');
 
             // check for mandatory fields
-            if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {
+            if (0 == strlen($object->getName()) || 0 == strlen($object->getDescription())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -93,9 +94,9 @@ class SubsidiaryServiceController extends AbstractController
 
         return $this->render(
             'feedback.html.twig',
-            array(
-                "error" => $error
-            )
+            [
+                'error' => $error,
+            ]
         );
     }
 
@@ -103,39 +104,39 @@ class SubsidiaryServiceController extends AbstractController
     public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
         $error = false;
-        if (($csrf->validateCSRFToken($request))) {
+        if ($csrf->validateCSRFToken($request)) {
             /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
             $object = $sub->getObjectFromForm($request, $id);
             $em = $doctrine->getManager();
-            
+
             // check for mandatory fields
-            if (strlen($object->getName()) == 0 || strlen($object->getDescription()) == 0) {
+            if (0 == strlen($object->getName()) || 0 == strlen($object->getDescription())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->clear(Subsidiary::class);
-            } else {                
+            } else {
                 $em->persist($object);
                 $em->flush();
 
-                // add succes message           
+                // add succes message
                 $this->addFlash('success', 'object.flash.edit.success');
             }
         }
 
         return $this->render(
             'feedback.html.twig',
-            array(
-                "error" => $error
-            )
+            [
+                'error' => $error,
+            ]
         );
     }
 
     #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['GET', 'POST'])]
     public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
     {
-        if ($request->getMethod() == 'POST') {
-            if (($csrf->validateCSRFToken($request, true))) {
+        if ('POST' == $request->getMethod()) {
+            if ($csrf->validateCSRFToken($request, true)) {
                 $object = $sub->deleteObject($id);
 
                 if ($object) {
@@ -147,15 +148,14 @@ class SubsidiaryServiceController extends AbstractController
 
             return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)           
+            // initial get load (ask for deleting)
             return $this->render(
                 'common/form_delete_entry.html.twig',
-                array(
-                    "id" => $id,
-                    'token' => $csrf->getCSRFTokenForForm()
-                )
+                [
+                    'id' => $id,
+                    'token' => $csrf->getCSRFTokenForForm(),
+                ]
             );
         }
-
     }
 }

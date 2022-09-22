@@ -1,3 +1,7 @@
+parameters:
+    # fallback parameters
+    env(USE_PASSWORD_BLACKLIST): 'true'
+
 framework:
     secret: '%env(APP_SECRET)%'
     #default_locale: en
@@ -37,3 +41,18 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+
+when@dev:
+    framework:
+        validation:
+            not_compromised_password:
+                enabled: false
+
+when@prod: &pw_blacklist_prod
+        framework:
+            validation:
+                not_compromised_password:
+                    enabled: '%env(bool:USE_PASSWORD_BLACKLIST)%'
+
+# use same config as in prod
+when@redis: *pw_blacklist_prod

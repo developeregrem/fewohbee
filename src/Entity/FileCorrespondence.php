@@ -1,21 +1,19 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
-use App\Entity\Correspondence;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
-class FileCorrespondence extends Correspondence 
+#[ORM\Entity]
+class FileCorrespondence extends Correspondence
 {
-    /** 
-     * @ORM\Column(type="string", length=100) 
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $fileName;
 
     /**
-     * Set fileName
+     * Set fileName.
      *
      * @param string $fileName
      *
@@ -29,7 +27,7 @@ class FileCorrespondence extends Correspondence
     }
 
     /**
-     * Get fileName
+     * Get fileName.
      *
      * @return string
      */

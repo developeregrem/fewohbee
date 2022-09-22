@@ -1,63 +1,54 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
+use App\Entity\Enum\IDCardType;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity (repositoryClass="App\Repository\RegistrationBookEntryRepository")
- * @ORM\Table(name="registration_book")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\RegistrationBookEntryRepository')]
+#[ORM\Table(name: 'registration_book')]
 class RegistrationBookEntry
 {
-
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=10) * */
+    #[ORM\Column(type: 'string', length: 10)]
     private $number;
-
-    /** @ORM\Column(type="datetime", nullable=false) * */
+    #[ORM\Column(type: 'datetime', nullable: false)]
     private $date;
-
-    /** @ORM\Column(type="string", length=20, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $salutation;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $firstname;
-
-    /** @ORM\Column(type="string", length=45, nullable=false) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: false)]
     private $lastname;
-
-    /** @ORM\Column(type="string", length=255, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $company;
-
-    /** @ORM\Column(type="date", nullable=true) * */
+    #[ORM\Column(type: 'date', nullable: true)]
     private $birthday;
-
-    /** @ORM\Column(type="string", length=150, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 150, nullable: true)]
     private $address;
-
-    /** @ORM\Column(type="string", length=10, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
     private $zip;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $city;
-
-    /** @ORM\Column(type="string", length=45, nullable=true) * */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private $country;
-
-    /** @ORM\Column(type="string", length=4, nullable=false) * */
+    #[ORM\Column(type: 'string', length: 4, nullable: false)]
     private $year;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Customer", inversedBy="registrationBookEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Customer', inversedBy: 'registrationBookEntries')]
     private $customer;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="Reservation", inversedBy="registrationBookEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'Reservation', inversedBy: 'registrationBookEntries')]
     private $reservation;
+
+    #[ORM\Column(type: 'string', nullable: true, enumType: IDCardType::class)]
+    private ?IDCardType $idType = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $IDNumber = null;
 
     public function __construct()
     {
@@ -114,52 +105,52 @@ class RegistrationBookEntry
         return $this->city;
     }
 
-    public function setId($id)
+    public function setId($id): void
     {
         $this->id = $id;
     }
 
-    public function setNumber($number)
+    public function setNumber($number): void
     {
         $this->number = $number;
     }
 
-    public function setDate($date)
+    public function setDate($date): void
     {
         $this->date = $date;
     }
 
-    public function setSalutation($salutation)
+    public function setSalutation($salutation): void
     {
         $this->salutation = $salutation;
     }
 
-    public function setFirstname($firstname)
+    public function setFirstname($firstname): void
     {
         $this->firstname = $firstname;
     }
 
-    public function setLastname($lastname)
+    public function setLastname($lastname): void
     {
         $this->lastname = $lastname;
     }
 
-    public function setCompany($company)
+    public function setCompany($company): void
     {
         $this->company = $company;
     }
 
-    public function setAddress($address)
+    public function setAddress($address): void
     {
         $this->address = $address;
     }
 
-    public function setZip($zip)
+    public function setZip($zip): void
     {
         $this->zip = $zip;
     }
 
-    public function setCity($city)
+    public function setCity($city): void
     {
         $this->city = $city;
     }
@@ -179,25 +170,26 @@ class RegistrationBookEntry
         return $this->reservation;
     }
 
-    public function setCountry($country)
+    public function setCountry($country): void
     {
         $this->country = $country;
     }
 
-    public function setCustomer($customer)
+    public function setCustomer($customer): void
     {
         $this->customer = $customer;
     }
 
-    public function setReservation($reservation)
+    public function setReservation($reservation): void
     {
         $this->reservation = $reservation;
     }
 
     /**
-     * Set birthday
+     * Set birthday.
      *
      * @param \DateTime $birthday
+     *
      * @return RegistrationBookEntry
      */
     public function setBirthday($birthday)
@@ -208,7 +200,7 @@ class RegistrationBookEntry
     }
 
     /**
-     * Get birthday
+     * Get birthday.
      *
      * @return \DateTime
      */
@@ -218,9 +210,10 @@ class RegistrationBookEntry
     }
 
     /**
-     * Set year
+     * Set year.
      *
      * @param string $year
+     *
      * @return RegistrationBookEntry
      */
     public function setYear($year)
@@ -231,12 +224,40 @@ class RegistrationBookEntry
     }
 
     /**
-     * Get year
+     * Get year.
      *
      * @return string
      */
     public function getYear()
     {
         return $this->year;
+    }
+
+    public function getIDNumber(): ?string
+    {
+        return $this->IDNumber;
+    }
+
+    public function setIDNumber(?string $IDNumber): self
+    {
+        $this->IDNumber = $IDNumber;
+
+        return $this;
+    }
+
+    /**
+     * @return IDCardType|null
+     */
+    public function getIdType(): ?IDCardType
+    {
+        return $this->idType;
+    }
+
+    /**
+     * @param IDCardType|null $idType
+     */
+    public function setIdType(?IDCardType $idType): void
+    {
+        $this->idType = $idType;
     }
 }

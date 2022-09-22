@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,17 +13,15 @@
 
 namespace App\Service;
 
+use App\Entity\ReservationOrigin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-use App\Entity\ReservationOrigin;
-
 class ReservationOriginService
 {
-
     private $em = null;
-	private $requestStack;
+    private $requestStack;
 
     /**
      * @param Application $app
@@ -29,38 +29,40 @@ class ReservationOriginService
     public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
     {
         $this->em = $em;
-		$this->requestStack = $requestStack;
+        $this->requestStack = $requestStack;
     }
 
     /**
-     * Extract form data and return ReservationOrigin object
-     * @param Request $request
+     * Extract form data and return ReservationOrigin object.
+     *
      * @param string $id
+     *
      * @return ReservationOrigin
      */
     public function getOriginFromForm(Request $request, $id = 'new')
     {
-
         $origin = new ReservationOrigin();
-        if ($id !== 'new') {
+        if ('new' !== $id) {
             $origin = $this->em->getRepository(ReservationOrigin::class)->find($id);
         }
 
-        $origin->setName(trim($request->request->get("name-" . $id)));
+        $origin->setName(trim($request->request->get('name-'.$id)));
 
         return $origin;
     }
 
     /**
-     * Delete origin if its not used in reservations
+     * Delete origin if its not used in reservations.
+     *
      * @param int $id
+     *
      * @return bool
      */
     public function deleteOrigin($id)
     {
         $origin = $this->em->getRepository(ReservationOrigin::class)->find($id);
 
-        if(count($origin->getReservations()) == 0) {
+        if (0 == count($origin->getReservations())) {
             $this->em->remove($origin);
             $this->em->flush();
 

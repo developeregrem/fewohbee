@@ -1,32 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Form;
 
+use App\Entity\CalendarSync;
+use App\Entity\ReservationStatus;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-
-use App\Entity\ReservationStatus;
-use App\Entity\CalendarSync;
 
 class CalendarSyncExportType extends AbstractType
 {
-    public function buildForm(FormBuilderInterface $builder, array $options)
+    public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('isPublic', CheckboxType::class, [
                 'label' => 'calendar.sync.export.access.public.label',
                 'help' => 'calendar.sync.export.access.public.hint',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
-                'required' => false
+                'required' => false,
                 ])
             ->add('exportGuestName', CheckboxType::class, [
                 'label' => 'calendar.sync.export.option.guestname.label',
                 'help' => 'calendar.sync.export.option.guestname.hint',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
-                'required' => false
+                'required' => false,
                 ])
             ->add('reservationStatus', EntityType::class, [
                 // looks for choices from this entity
@@ -41,7 +42,7 @@ class CalendarSyncExportType extends AbstractType
         ;
     }
 
-    public function configureOptions(OptionsResolver $resolver)
+    public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => CalendarSync::class,

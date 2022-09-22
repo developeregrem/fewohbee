@@ -1,26 +1,21 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
-use App\Entity\Correspondence;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- */
-class MailCorrespondence extends Correspondence 
+#[ORM\Entity]
+class MailCorrespondence extends Correspondence
 {
-    /** 
-     * @ORM\Column(type="string", length=100) 
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     protected $recipient;
-    
-    /** 
-     * @ORM\Column(type="string", length=200) 
-     */
+    #[ORM\Column(type: 'string', length: 200)]
     protected $subject;
 
     /**
-     * Set recipient
+     * Set recipient.
      *
      * @param string $recipient
      *
@@ -34,7 +29,7 @@ class MailCorrespondence extends Correspondence
     }
 
     /**
-     * Get recipient
+     * Get recipient.
      *
      * @return string
      */
@@ -44,7 +39,7 @@ class MailCorrespondence extends Correspondence
     }
 
     /**
-     * Set subject
+     * Set subject.
      *
      * @param string $subject
      *
@@ -58,7 +53,7 @@ class MailCorrespondence extends Correspondence
     }
 
     /**
-     * Get subject
+     * Get subject.
      *
      * @return string
      */

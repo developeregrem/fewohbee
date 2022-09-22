@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
+use App\Service\MailService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
-use App\Service\MailService;
-use Doctrine\Persistence\ManagerRegistry;
 
 #[Route('/reset-password')]
 class ResetPasswordController extends AbstractController
@@ -32,7 +34,6 @@ class ResetPasswordController extends AbstractController
 
     /**
      * Display & process form to request a password reset.
-     *
      */
     #[Route('/', name: 'app_forgot_password_request', methods: ['GET', 'POST'])]
     public function request(Request $request, MailService $mailer, TranslatorInterface $translator): Response
@@ -55,7 +56,6 @@ class ResetPasswordController extends AbstractController
 
     /**
      * Confirmation page after a user has requested a password reset.
-     *
      */
     #[Route('/check-email', name: 'app_check_email', methods: ['GET'])]
     public function checkEmail(): Response
@@ -72,7 +72,6 @@ class ResetPasswordController extends AbstractController
 
     /**
      * Validates and process the reset URL that the user clicked in their email.
-     *
      */
     #[Route('/reset/{token}', name: 'app_reset_password', methods: ['GET', 'POST'])]
     public function reset(Request $request, UserPasswordHasherInterface $passwordHasher, string $token = null): Response
@@ -156,8 +155,8 @@ class ResetPasswordController extends AbstractController
         }
 
         $mailService->sendTemplatedMail(
-            $user->getEmail(), 
-            $translator->trans('login.pwforgotten.mail.subject'), 
+            $user->getEmail(),
+            $translator->trans('login.pwforgotten.mail.subject'),
             'reset_password/email.html.twig',
             ['resetToken' => $resetToken]
         );

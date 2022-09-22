@@ -1,37 +1,40 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity @ORM\Table(name="objects")
- **/
-
+#[ORM\Entity]
+#[ORM\Table(name: 'objects')]
 class Subsidiary
 {
-    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue * */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
-
-    /** @ORM\Column(type="string", length=45)
-     * **/
+    #[ORM\Column(type: 'string', length: 45)]
     private $name;
-
-    /** @ORM\Column(type="string", length=255)
-     * **/
+    #[ORM\Column(type: 'string', length: 255)]
     private $description;
+    #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
+    private $appartments;
+
+    public function __construct()
+    {
+        $this->appartments = new ArrayCollection();
+    }
 
     /**
-     * @ORM\OneToMany(targetEntity="Appartment", mappedBy="object")
-     */
-    private $appartments;
-    
-    /**
-     * Set id
+     * Set id.
      *
      * @param int $id
+     *
      * @return Subsidiary
      */
-    public function setId($id)
+    public function setId($id): static
     {
         $this->id = $id;
 
@@ -43,52 +46,42 @@ class Subsidiary
         return $this->id;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getDescription()
+    public function getDescription(): string
     {
         return $this->description;
     }
 
-    public function getAppartments()
+    public function getAppartments(): ArrayCollection
     {
         return $this->appartments;
     }
 
-    public function setName($name)
+    public function setName(string $name): void
     {
         $this->name = $name;
     }
 
-    public function setDescription($description)
+    public function setDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    public function setAppartments($appartments)
+    public function setAppartments($appartments): void
     {
         $this->appartments = $appartments;
     }
 
-
     /**
-     * Constructor
-     */
-    public function __construct()
-    {
-        $this->appartments = new \Doctrine\Common\Collections\ArrayCollection();
-    }
-
-    /**
-     * Add appartments
+     * Add appartments.
      *
-     * @param \App\Entity\Appartment $appartments
      * @return Subsidiary
      */
-    public function addAppartment(\App\Entity\Appartment $appartments)
+    public function addAppartment(Appartment $appartments)
     {
         $this->appartments[] = $appartments;
 
@@ -96,11 +89,9 @@ class Subsidiary
     }
 
     /**
-     * Remove appartments
-     *
-     * @param \App\Entity\Appartment $appartments
+     * Remove appartments.
      */
-    public function removeAppartment(\App\Entity\Appartment $appartments)
+    public function removeAppartment(Appartment $appartments): void
     {
         $this->appartments->removeElement($appartments);
     }

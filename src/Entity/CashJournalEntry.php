@@ -1,69 +1,42 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass="App\Repository\CashJournalEntryRepository")
- * @ORM\Table(name="cash_journal_entries")
- **/
+#[ORM\Entity(repositoryClass: 'App\Repository\CashJournalEntryRepository')]
+#[ORM\Table(name: 'cash_journal_entries')]
 class CashJournalEntry
 {
-    /** 
-     * @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue 
-     **/
-    private $id;    
-
-     /** 
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true) 
-     **/
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private $id;
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $incomes;
-
-    /** 
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true) 
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $expenses;
-
-    /** 
-     * @ORM\Column(type="decimal", precision=13, scale=2, nullable=true) 
-     **/
+    #[ORM\Column(type: 'decimal', precision: 13, scale: 2, nullable: true)]
     private $inventory;
-
-    /** 
-     * @ORM\Column(type="string", length=50, nullable=true) 
-     **/
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $counterAccount;
-    
-    /** 
-     * @ORM\Column(type="string", length=50, nullable=true) 
-     **/
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private $invoiceNumber;
-    
-    /** 
-     * @ORM\Column(type="integer") 
-     **/
+    #[ORM\Column(type: 'integer')]
     private $documentNumber;
-    
-    /** 
-     * @ORM\Column(type="date") 
-     **/
+    #[ORM\Column(type: 'date')]
     private $date;
-    
-    /** 
-     * @ORM\Column(type="text", length=255, nullable=true) 
-     **/
+    #[ORM\Column(type: 'text', length: 255, nullable: true)]
     private $remark;
-
-    /**
-     * @ORM\ManyToOne(targetEntity="CashJournal", inversedBy="cashJournalEntries")
-     */
+    #[ORM\ManyToOne(targetEntity: 'CashJournal', inversedBy: 'cashJournalEntries')]
     private $cashJournal;
 
-
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -71,13 +44,13 @@ class CashJournalEntry
     }
 
     /**
-     * Set incomes
+     * Set incomes.
      *
      * @param string $incomes
      *
      * @return CashJournalEntry
      */
-    public function setIncomes($incomes)
+    public function setIncomes($incomes): static
     {
         $this->incomes = $incomes;
 
@@ -85,7 +58,7 @@ class CashJournalEntry
     }
 
     /**
-     * Get incomes
+     * Get incomes.
      *
      * @return string
      */
@@ -95,13 +68,13 @@ class CashJournalEntry
     }
 
     /**
-     * Set expenses
+     * Set expenses.
      *
      * @param string $expenses
      *
      * @return CashJournalEntry
      */
-    public function setExpenses($expenses)
+    public function setExpenses($expenses): static
     {
         $this->expenses = $expenses;
 
@@ -109,7 +82,7 @@ class CashJournalEntry
     }
 
     /**
-     * Get expenses
+     * Get expenses.
      *
      * @return string
      */
@@ -119,13 +92,11 @@ class CashJournalEntry
     }
 
     /**
-     * Set counterAccount
-     *
-     * @param string $counterAccount
+     * Set counterAccount.
      *
      * @return CashJournalEntry
      */
-    public function setCounterAccount($counterAccount)
+    public function setCounterAccount(string $counterAccount): static
     {
         $this->counterAccount = $counterAccount;
 
@@ -133,23 +104,19 @@ class CashJournalEntry
     }
 
     /**
-     * Get counterAccount
-     *
-     * @return string
+     * Get counterAccount.
      */
-    public function getCounterAccount()
+    public function getCounterAccount(): ?string
     {
         return $this->counterAccount;
     }
 
     /**
-     * Set invoiceNumber
-     *
-     * @param string $invoiceNumber
+     * Set invoiceNumber.
      *
      * @return CashJournalEntry
      */
-    public function setInvoiceNumber($invoiceNumber)
+    public function setInvoiceNumber(string $invoiceNumber): static
     {
         $this->invoiceNumber = $invoiceNumber;
 
@@ -157,23 +124,19 @@ class CashJournalEntry
     }
 
     /**
-     * Get invoiceNumber
-     *
-     * @return string
+     * Get invoiceNumber.
      */
-    public function getInvoiceNumber()
+    public function getInvoiceNumber(): ?string
     {
         return $this->invoiceNumber;
     }
 
     /**
-     * Set documentNumber
-     *
-     * @param integer $documentNumber
+     * Set documentNumber.
      *
      * @return CashJournalEntry
      */
-    public function setDocumentNumber($documentNumber)
+    public function setDocumentNumber(int $documentNumber): static
     {
         $this->documentNumber = $documentNumber;
 
@@ -181,23 +144,19 @@ class CashJournalEntry
     }
 
     /**
-     * Get documentNumber
-     *
-     * @return integer
+     * Get documentNumber.
      */
-    public function getDocumentNumber()
+    public function getDocumentNumber(): int
     {
         return $this->documentNumber;
     }
 
     /**
-     * Set date
-     *
-     * @param \DateTime $date
+     * Set date.
      *
      * @return CashJournalEntry
      */
-    public function setDate($date)
+    public function setDate(\DateTime $date): static
     {
         $this->date = $date;
 
@@ -205,23 +164,19 @@ class CashJournalEntry
     }
 
     /**
-     * Get date
-     *
-     * @return \DateTime
+     * Get date.
      */
-    public function getDate()
+    public function getDate(): \DateTime
     {
         return $this->date;
     }
 
     /**
-     * Set remark
-     *
-     * @param string $remark
+     * Set remark.
      *
      * @return CashJournalEntry
      */
-    public function setRemark($remark)
+    public function setRemark(string $remark): static
     {
         $this->remark = $remark;
 
@@ -229,23 +184,19 @@ class CashJournalEntry
     }
 
     /**
-     * Get remark
-     *
-     * @return string
+     * Get remark.
      */
-    public function getRemark()
+    public function getRemark(): ?string
     {
         return $this->remark;
     }
 
     /**
-     * Set cashJournal
-     *
-     * @param \App\Entity\CashJournal $cashJournal
+     * Set cashJournal.
      *
      * @return CashJournalEntry
      */
-    public function setCashJournal(\App\Entity\CashJournal $cashJournal = null)
+    public function setCashJournal(CashJournal $cashJournal = null): static
     {
         $this->cashJournal = $cashJournal;
 
@@ -253,51 +204,45 @@ class CashJournalEntry
     }
 
     /**
-     * Get cashJournal
-     *
-     * @return \App\Entity\CashJournal
+     * Get cashJournal.
      */
-    public function getCashJournal()
+    public function getCashJournal(): CashJournal
     {
         return $this->cashJournal;
     }
 
     /**
-     * Set inventory
+     * Set inventory.
      *
      * @param string $inventory
      *
      * @return CashJournalEntry
      */
-    public function setInventory($inventory)
+    public function setInventory($inventory): static
     {
         $this->inventory = $inventory;
 
         return $this;
     }
-    
+
     /**
-     * Get incomes formatted
-     *
-     * @return string
+     * Get incomes formatted.
      */
-    public function getIncomesF()
+    public function getIncomesF(): string
     {
-        return number_format($this->incomes, 2, ',', '.');
-    }
-    
-    /**
-     * Get expenses formatted
-     *
-     * @return string
-     */
-    public function getExpensesF()
-    {
-        return number_format($this->expenses, 2, ',', '.');
+        return number_format((float) $this->incomes, 2, ',', '.');
     }
 
     /**
-     * Get inventory formatted
+     * Get expenses formatted.
+     */
+    public function getExpensesF(): string
+    {
+        return number_format((float) $this->expenses, 2, ',', '.');
+    }
+
+    /**
+     * Get inventory formatted.
      *
      * @return string
      */
@@ -305,20 +250,17 @@ class CashJournalEntry
     {
         return $this->inventory;
     }
-    
-    public function getInventoryF()
+
+    public function getInventoryF(): string
     {
-        return number_format($this->inventory, 2, ',', '.');
+        return number_format((float) $this->inventory, 2, ',', '.');
     }
-    
+
     /**
-     * Get documentNumber formatted
-     *
-     * @return integer
+     * Get documentNumber formatted.
      */
-    public function getDocumentNumberF()
+    public function getDocumentNumberF(): string
     {
-        return sprintf("%04d", $this->documentNumber);
+        return sprintf('%04d', $this->documentNumber);
     }
-    
 }

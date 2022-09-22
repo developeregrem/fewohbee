@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the guesthouse administration package.
  *
@@ -11,13 +13,12 @@
 
 namespace App\Service;
 
-use Symfony\Component\HttpFoundation\Request;
-use Doctrine\ORM\EntityManagerInterface;
-
 use App\Entity\Appartment;
-use App\Entity\Subsidiary;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
+use App\Entity\Subsidiary;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class AppartmentService
 {
@@ -30,22 +31,21 @@ class AppartmentService
 
     public function getAppartmentFromForm(Request $request, $id = 'new')
     {
-
         $appartment = null;
 
-        if ($id === 'new') {
+        if ('new' === $id) {
             $appartment = new Appartment();
         } else {
             $appartment = $this->em->getRepository(Appartment::class)->find($id);
         }
 
-        $appartment->setNumber($request->request->get("number-" . $id));
-        $appartment->setBedsMax($request->request->get("bedsmax-" . $id));
-        $appartment->setDescription($request->request->get("description-" . $id));
+        $appartment->setNumber($request->request->get('number-'.$id));
+        $appartment->setBedsMax($request->request->get('bedsmax-'.$id));
+        $appartment->setDescription($request->request->get('description-'.$id));
 
-        $object = $this->em->getRepository(Subsidiary::class)->find($request->request->get("object-" . $id));
+        $object = $this->em->getRepository(Subsidiary::class)->find($request->request->get('object-'.$id));
         $appartment->setObject($object);
-        $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get("category-" . $id));
+        $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get('category-'.$id));
         $appartment->setRoomCategory($category);
 
         return $appartment;
@@ -57,7 +57,7 @@ class AppartmentService
 
         $reservations = $this->em->getRepository(Reservation::class)->findByAppartment($appartment);
 
-        if (count($reservations) == 0) {
+        if (0 == count($reservations)) {
             $this->em->remove($appartment);
             $this->em->flush();
 
