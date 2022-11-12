@@ -138,7 +138,7 @@ class Customer
         $this->remark = $remark;
     }
 
-    public function getRegistrationBookEntries(): ArrayCollection
+    public function getRegistrationBookEntries(): ArrayCollection|Collection
     {
         return $this->registrationBookEntries;
     }
