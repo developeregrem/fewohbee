@@ -49,6 +49,7 @@ class AppTwigExtensions extends AbstractExtension
             new TwigFunction('existsById', [$this, 'existsById']),
             new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
             new TwigFunction('getReservationsForDay', [$this, 'getReservationsForDay']),
+            new TwigFunction('getReservationsMultipleOccupancy', [$this, 'getReservationsMultipleOccupancy']),
         ];
     }
 
@@ -201,6 +202,29 @@ class AppTwigExtensions extends AbstractExtension
             // todo store all reservation dates as UTC time
             if ($day >= $start && $day <= $end) {
                 $result[] = $reservation;
+            }
+        }
+
+        return $result;
+    }
+
+    public function getReservationsMultipleOccupancy(array $reservations): array
+    {
+        $result = [[]];
+        /* @var $reservation Reservation */
+        foreach ($reservations as $reservation) {
+            $start = new \DateTimeImmutable($reservation->getStartDate()->format('Y-m-d') . ' UTC');
+            $end = new \DateTimeImmutable($reservation->getEndDate()->format('Y-m-d') . ' UTC');
+            $rowCount = 0;
+            foreach ($reservations as $key=>$compare) {
+                $start2 = new \DateTimeImmutable($compare->getStartDate()->format('Y-m-d') . ' UTC');
+                $end2 = new \DateTimeImmutable($compare->getEndDate()->format('Y-m-d') . ' UTC');
+
+                if (($start > $start2 && $end <= $end2) || ($start <= $start2 && $end <= $end2)) {
+                    $result[$rowCount][] = $compare;
+                    $rowCount++;
+                    unset($reservations[$key]);
+                }
             }
         }
 

@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
+use App\Entity\Appartment;
 
 /**
  * ReservationRepository.
@@ -15,7 +16,7 @@ use Doctrine\ORM\NoResultException;
  */
 class ReservationRepository extends EntityRepository
 {
-    public function loadReservationsForPeriodForSingleAppartment($startDate, $period, \App\Entity\Appartment $appartment)
+    public function loadReservationsForPeriodForSingleAppartment($startDate, $period, \App\Entity\Appartment $appartment) : ?array
     {
         $start = date('Y-m-d', $startDate);
         $end = date('Y-m-d', $startDate + ($period * 3600 * 24));
@@ -93,11 +94,8 @@ class ReservationRepository extends EntityRepository
         || is_subclass_of($class, $this->getEntityName());
     }
 
-    public function loadReservationsForPeriodForSingleAppartmentWithoutStartAndEndDate($startDate, $period, \App\Entity\Appartment $appartment)
+    public function loadReservationsForPeriodForSingleAppartment2(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
     {
-        $start = date('Y-m-d', $startDate);
-        $end = date('Y-m-d', $startDate + ($period * 3600 * 24));
-
         $q = $this
             ->createQueryBuilder('u')
             ->select('u')
@@ -108,11 +106,11 @@ class ReservationRepository extends EntityRepository
                 .'(u.startDate <= :start AND u.endDate >= :end))')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->setParameter('app', $appartment->getId())
+            ->setParameter('app', $apartment->getId())
             ->addOrderBy('u.endDate', 'ASC')
             ->getQuery();
 
-        $reservations = null;
+        $reservations = [];
         try {
             $reservations = $q->getResult();
         } catch (NoResultException $e) {

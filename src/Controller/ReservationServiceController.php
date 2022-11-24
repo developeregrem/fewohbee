@@ -771,26 +771,6 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    /**
-     * @return mixed
-     */
-    #[Route('/edit/appartment/change', name: 'reservations.edit.appartment.change', methods: ['POST'])]
-    public function editChangeAppartmentAction(ReservationService $rs, Request $request)
-    {
-        $id = $request->request->get('id');
-        $reservations = $rs->updateReservation($request);
-        if (count($reservations) > 0) {
-            $this->addFlash('warning', 'reservation.flash.update.conflict');
-        } else {
-            $this->addFlash('success', 'reservation.flash.update.success');
-        }
-
-        return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
-            'id' => $id,
-            'error' => true,
-        ]);
-    }
-
     #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
     public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     {
@@ -817,19 +797,18 @@ class ReservationServiceController extends AbstractController
     /**
      * @return mixed
      */
-    #[Route('/edit/reservation/change', name: 'reservations.edit.reservation.change', methods: ['POST'])]
-    public function editChangeReservationAction(ReservationService $rs, Request $request)
+    #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
+    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
     {
-        $id = $request->request->get('id');
-        $reservations = $rs->updateReservation($request);
-        if (count($reservations) > 0) {
+        $success = $rs->updateReservation($request, $reservation);
+        if (!$success) {
             $this->addFlash('warning', 'reservation.flash.update.conflict');
         } else {
             $this->addFlash('success', 'reservation.flash.update.success');
         }
 
         return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
-            'id' => $id,
+            'id' => $reservation->getId(),
             'error' => true,
         ]);
     }

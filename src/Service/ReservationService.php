@@ -64,8 +64,6 @@ class ReservationService implements ITemplateRenderer
 
     /**
      * Returns a list of apartments that can be selected (free) for the given period.
-     *
-     * @param Appartment $apartment
      */
     public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment = null, string $propertyId = 'all'): array
     {
@@ -73,17 +71,28 @@ class ReservationService implements ITemplateRenderer
             $propertyId = $apartment->getObject()->getId();
         }
         $result = [];
-        $appartmentsDb = $this->em->getRepository(Appartment::class)->loadAvailableAppartmentsForPeriod($start, $end, $propertyId);
+        if ('all' == $propertyId) {
+            $appartments = $this->em->getRepository(Appartment::class)->findAll();
+        } else {
+            $appartments = $this->em->getRepository(Appartment::class)->findByObject($propertyId);
+        }
+        $availableApartments = [];
+        foreach ($appartments as $ap) {
+            $available = $this->isApartmentAvailable($start, $end, $ap);
+            if ($available) {
+                $availableApartments[] = $ap;
+            }
+        }
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
 
         if (0 != count($newReservationsInformationArray)) {
-            foreach ($appartmentsDb as $apartment) {
+            foreach ($availableApartments as $apartment) {
                 if (!$this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $apartment, $start, $end)) {
                     $result[] = $apartment;
                 }
             }
         } else {
-            $result = $appartmentsDb;
+            $result = $availableApartments;
         }
 
         return $result;
@@ -155,10 +164,9 @@ class ReservationService implements ITemplateRenderer
         }
     }
 
-    public function updateReservation(Request $request)
+    public function updateReservation(Request $request, Reservation $reservation) : bool
     {
-        $id = $request->request->get('id');
-        $appartmentId = $request->request->get('aid');
+        $apartmentId = $request->request->get('aid');
         $persons = $request->request->get('persons');
         $status = $request->request->get('status');
         $start = new \DateTime($request->request->get('from'));
@@ -167,9 +175,7 @@ class ReservationService implements ITemplateRenderer
         // number of days
         $interval = $dateInterval->format('%a');
 
-        /* @var $reservation \App\Entity\Reservation */
-        $reservation = $this->em->getRepository(Reservation::class)->findById($id)[0];
-        $appartment = $this->em->getRepository(Appartment::class)->findById($appartmentId)[0];
+        $apartment = $this->em->getRepository(Appartment::class)->find($apartmentId);
         $reservationStatus = $this->em->getRepository(ReservationStatus::class)->find($status);
 
         if ($start > $end) {
@@ -178,30 +184,62 @@ class ReservationService implements ITemplateRenderer
             $end = $tmp;
         }
 
-        $reservationsArray = []; // holds the reservations that are in conflict with current reservation
-        $reservationsForAppartment = $this->em->getRepository(Reservation::class)
-            ->loadReservationsForPeriodForSingleAppartmentWithoutStartAndEndDate($start->getTimestamp(), $interval, $appartment);
-        if (is_array($reservationsForAppartment)) {
-            foreach ($reservationsForAppartment as $reservationForAppartment) {
-                // we dont need the reservation that we want to update
-                if ($reservationForAppartment->getId() !== $reservation->getId()) {
-                    $reservationsArray[] = $reservationForAppartment;
-                }
-            }
-        }
+        $available = $this->isApartmentAvailable($start, $end, $apartment, $reservation);
+
         // update reservation if no other stands in conflict
-        if (0 == count($reservationsArray)) {
+        if ($available) {
             $reservation->setStartDate($start);
             $reservation->setEndDate($end);
+            $reservation->setPersons($persons);
         }
-        $reservation->setAppartment($appartment);
+        $reservation->setAppartment($apartment);
+        $reservation->setAppartment($apartment);
         $reservation->setReservationStatus($reservationStatus);
-        $reservation->setPersons($persons);
 
         $this->em->persist($reservation);
         $this->em->flush();
 
-        return $reservationsArray;
+        return $available;
+    }
+
+    /**
+     * Check if an apartment is available for the given time
+     * @param \DateTimeInterface $start
+     * @param \DateTimeInterface $end
+     * @param Appartment $apartment
+     * @param Reservation|null $reservation
+     * @return bool
+     */
+    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, Reservation $reservation = null) : bool
+    {
+        $reservationsForApartment = $this->em->getRepository(Reservation::class)
+            ->loadReservationsForPeriodForSingleAppartment2($start, $end, $apartment);
+        // during update process we ignore the reservation that we want to update
+        if(null !== $reservation) {
+            $reservationsForApartment = array_filter($reservationsForApartment,
+                fn($v, $k) => $v->getId() !== $reservation->getId(),
+                ARRAY_FILTER_USE_BOTH);
+        }
+
+        if (count($reservationsForApartment) > 0) {
+            if(!$apartment->isMultipleOccupancy()) {
+                return false;
+            }
+            $bedsSum = 0;
+            foreach ($reservationsForApartment as $reservationForApartment) {
+                $bedsSum += $reservationForApartment->getPersons();
+            }
+            // room has still some free beds
+            // todo over booking is possible because number of beds for current reservation is not taken into account
+            if($bedsSum < $apartment->getBedsMax()) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            // no other reservations for the given time period
+            return true;
+        }
     }
 
     public function updateReservationCustomers($reservation, $customer, $tab): void

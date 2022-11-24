@@ -50,6 +50,14 @@
                 <source>appartment.category</source>
                 <target>Zimmerkategorie</target>
             </trans-unit>
+            <trans-unit id="apartment.multiple.occupancy.text">
+                <source>apartment.multiple.occupancy.text</source>
+                <target>Mehrfachbelegung</target>
+            </trans-unit>
+            <trans-unit id="apartment.multiple.occupancy.hint">
+                <source>apartment.multiple.occupancy.hint</source>
+                <target>Belegung durch versch. Gäste möglich.</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.title">
                 <source>calendar.sync.title</source>
                 <target>Kalender synchronisieren</target>
