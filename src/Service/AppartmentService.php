@@ -15,50 +15,21 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Reservation;
-use App\Entity\RoomCategory;
-use App\Entity\Subsidiary;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 class AppartmentService
 {
-    private $em = null;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em)
     {
-        $this->em = $em;
     }
 
-    public function getAppartmentFromForm(Request $request, $id = 'new')
+    public function deleteAppartment(Appartment $apartment): bool
     {
-        $appartment = null;
-
-        if ('new' === $id) {
-            $appartment = new Appartment();
-        } else {
-            $appartment = $this->em->getRepository(Appartment::class)->find($id);
-        }
-
-        $appartment->setNumber($request->request->get('number-'.$id));
-        $appartment->setBedsMax($request->request->get('bedsmax-'.$id));
-        $appartment->setDescription($request->request->get('description-'.$id));
-
-        $object = $this->em->getRepository(Subsidiary::class)->find($request->request->get('object-'.$id));
-        $appartment->setObject($object);
-        $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get('category-'.$id));
-        $appartment->setRoomCategory($category);
-
-        return $appartment;
-    }
-
-    public function deleteAppartment($id)
-    {
-        $appartment = $this->em->getRepository(Appartment::class)->find($id);
-
-        $reservations = $this->em->getRepository(Reservation::class)->findByAppartment($appartment);
+        $reservations = $this->em->getRepository(Reservation::class)->findByAppartment($apartment);
 
         if (0 == count($reservations)) {
-            $this->em->remove($appartment);
+            $this->em->remove($apartment);
             $this->em->flush();
 
             return true;

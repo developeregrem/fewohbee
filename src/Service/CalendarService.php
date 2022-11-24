@@ -126,7 +126,7 @@ class CalendarService
         $room = $sync->getApartment();
         $content = $this->getIcalHeader($room);
 
-        /* @var $reservation \App\Entity\Reservation */
+        /* @var $reservation Reservation */
         foreach ($room->getReservations() as $reservation) {
             // filter reservation status
             if ($sync->getReservationStatus()->contains($reservation->getReservationStatus())) {

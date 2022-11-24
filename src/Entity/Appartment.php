@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\AppartmentRepository')]
@@ -16,20 +17,23 @@ class Appartment
     #[ORM\Column(type: 'integer')]
     private $id;
     #[ORM\Column(type: 'string', length: 10)]
-    private $number;
+    private string $number;
     #[ORM\Column(type: 'smallint')]
-    private $beds_max;
+    private int $beds_max;
     #[ORM\Column(type: 'string', length: 255)]
-    private $description;
+    private string $description;
     #[ORM\ManyToOne(targetEntity: 'Subsidiary', inversedBy: 'appartments')]
-    private $object;
-    #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'appartment')]
-    private $reservations;
+    private Subsidiary $object;
+    #[ORM\OneToMany(mappedBy: 'appartment', targetEntity: 'Reservation')]
+    private Collection $reservations;
     #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'apartments')]
     #[ORM\JoinColumn(nullable: true)]
-    private $roomCategory;
-    #[ORM\OneToOne(targetEntity: CalendarSync::class, mappedBy: 'apartment', cascade: ['persist', 'remove'])]
-    private $calendarSync;
+    private ?RoomCategory $roomCategory = null;
+    #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
+    private CalendarSync $calendarSync;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $multipleOccupancy = false;
 
     public function __construct()
     {
@@ -142,6 +146,18 @@ class Appartment
         }
 
         $this->calendarSync = $calendarSync;
+
+        return $this;
+    }
+
+    public function isMultipleOccupancy(): ?bool
+    {
+        return $this->multipleOccupancy;
+    }
+
+    public function setMultipleOccupancy(?bool $multipleOccupancy): self
+    {
+        $this->multipleOccupancy = $multipleOccupancy;
 
         return $this;
     }
