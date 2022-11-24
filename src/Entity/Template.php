@@ -55,7 +55,7 @@ class Template
     /**
      * Get id.
      */
-    public function getId(): int
+    public function getId()
     {
         return $this->id;
     }
@@ -75,7 +75,7 @@ class Template
     /**
      * Get name.
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -95,7 +95,7 @@ class Template
     /**
      * Get text.
      */
-    public function getText(): string
+    public function getText(): ?string
     {
         return $this->text;
     }
@@ -115,7 +115,7 @@ class Template
     /**
      * Get templateType.
      */
-    public function getTemplateType(): TemplateType
+    public function getTemplateType(): ?TemplateType
     {
         return $this->templateType;
     }
@@ -165,7 +165,7 @@ class Template
     /**
      * Get params.
      */
-    public function getParams(): string
+    public function getParams(): ?string
     {
         return $this->params;
     }
