@@ -208,26 +208,59 @@ class AppTwigExtensions extends AbstractExtension
         return $result;
     }
 
+    /**
+     * Resolves overlapping reservation conflicts for displaying the reservations
+     * Each row of the array returns a list of reservations without conflicts
+     * @param array $reservations
+     * @return array[]
+     * @throws \Exception
+     */
     public function getReservationsMultipleOccupancy(array $reservations): array
     {
         $result = [[]];
+        $rowCount = 0;  // holds the current line for an overlapping reservation
         /* @var $reservation Reservation */
         foreach ($reservations as $reservation) {
             $start = new \DateTimeImmutable($reservation->getStartDate()->format('Y-m-d') . ' UTC');
             $end = new \DateTimeImmutable($reservation->getEndDate()->format('Y-m-d') . ' UTC');
-            $rowCount = 0;
+            $lastRowEnd = $end;
             foreach ($reservations as $key=>$compare) {
                 $start2 = new \DateTimeImmutable($compare->getStartDate()->format('Y-m-d') . ' UTC');
                 $end2 = new \DateTimeImmutable($compare->getEndDate()->format('Y-m-d') . ' UTC');
-
-                if (($start > $start2 && $end <= $end2) || ($start <= $start2 && $end <= $end2)) {
+                // if reservations overlap put this one to a new line
+                if (($start > $start2 && $end <= $end2) || ($start <= $start2 && $end <= $end2 && $end > $start2)) {
                     $result[$rowCount][] = $compare;
                     $rowCount++;
                     unset($reservations[$key]);
+                } else if($lastRowEnd <= $start2) {
+                    // otherwise check whether the reservation can be added to the same line (after the current one)
+                    $resPosition = $this->getPositionOfReservation($result, $reservation);
+                    if(false !== $resPosition) {
+                        $result[$resPosition][] = $compare;
+                        $lastRowEnd = $end2;
+                        unset($reservations[$key]);
+                    }
                 }
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Finds the position (line) of a given reservation in multidimensional array of reservations
+     * @param array $reservationLines
+     * @param Reservation $reservation
+     * @return int|bool
+     */
+    private function getPositionOfReservation(array $reservationLines, Reservation $reservation) : int|bool {
+        foreach($reservationLines as $line=>$reservations) {
+            foreach($reservations as $res) {
+                if($res->getId() === $reservation->getId()) {
+                    return $line;
+                }
+            }
+        }
+        return false;
     }
 }
