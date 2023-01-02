@@ -1,3 +1,8 @@
+apartment:
+  multiple:
+    occupancy:
+      hint: Occupancy by different guests possible.
+      text: Multiple occupancy
 appartment:
   action: Action
   bedsmax: Max. people
