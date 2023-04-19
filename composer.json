@@ -14,7 +14,6 @@
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.14",
         "mpdf/mpdf": "^8.1",
-        "sensio/framework-extra-bundle": "^6.1",
         "symfony/asset": "6.2.*",
         "symfony/console": "6.2.*",
         "symfony/dotenv": "6.2.*",
