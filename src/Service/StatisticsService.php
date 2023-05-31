@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Invoice;
 use App\Entity\Reservation;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -63,5 +64,46 @@ class StatisticsService
         }
 
         return $data;
+    }
+
+    /**
+     * Calculates the turnover for the given period based on invoices
+     * @param InvoiceService $is
+     * @param \DateTimeInterface $start
+     * @param \DateTimeInterface $end
+     * @param int $status
+     * @return float
+     */
+    private function loadTurnover(InvoiceService $is, \DateTimeInterface $start, \DateTimeInterface $end, int $status = 2): float
+    {
+        $turnover = 0.0;
+        $invoices = $this->em->getRepository(Invoice::class)->getInvoicesForYear($start, $end, $status);
+        /* @var $invoice Invoice */
+        foreach($invoices as $invoice) {
+            $vatSums = []; $brutto = 0; $netto = 0; $apartmentTotal = 0; $miscTotal = 0;
+            $is->calculateSums($invoice->getAppartments(), $invoice->getPositions(),
+                $vatSums, $brutto, $netto, $apartmentTotal, $miscTotal);
+            $turnover += $brutto;
+        }
+        return $turnover;
+    }
+
+    public function loadTurnoverForYear(InvoiceService $is, int $year, int $status = 2): float
+    {
+        $start = new \DateTime($year.'-01-01');
+        $end = new \DateTime($year.'-12-31');
+        return $this->loadTurnover($is, $start, $end, $status);
+    }
+
+    public function loadTurnoverForMonth(InvoiceService $is, int $year, int $status = 2): array
+    {
+        $result = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $start = new \DateTime($year . '-' . $i . '-01');
+            $end = new \DateTime($year . '-' . $i . '-' . $start->format('t'));
+
+            $result[] = $this->loadTurnover($is, $start, $end, $status);
+        }
+        return $result;
     }
 }

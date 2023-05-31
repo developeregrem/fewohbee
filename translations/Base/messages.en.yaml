@@ -46,6 +46,7 @@ nav.settings: Settings
 nav.statistics: Statistics
 nav.status: Reservation Status
 nav.templates: Templates
+nav.turnover: Turnovers
 nav.user: Users
 nav.user.add: Add User
 nav.user.overview: Users Overview
