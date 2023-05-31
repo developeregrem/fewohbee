@@ -48,6 +48,7 @@
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.utilization" %} active{% endif %}" href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.origin" %} active{% endif %}" href="{{ path('statistics.origin') }}">{{ 'nav.origin'|trans }}</a>
+                                <a class="dropdown-item{% if activeRouteName starts with "statistics.turnover" %} active{% endif %}" href="{{ path('statistics.turnover') }}">{{ 'nav.turnover'|trans }}</a>
                             </div>
                         </li>
                         <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
@@ -130,6 +131,8 @@
         }
         var config = new Config();
         var loader = '<img src="'+config.basePath+'/resources/images/ajax-loader.gif" />';
+        var loaderNode = document.createElement("img")
+        loaderNode.src = config.basePath+"/resources/images/ajax-loader.gif";
         var modalLoader = '<div class="modal-body">' + loader + '</div>';
     </script>
     {% block bodyjs %}
