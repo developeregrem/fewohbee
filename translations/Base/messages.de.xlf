@@ -170,6 +170,10 @@
                 <source>nav.origin</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
+            <trans-unit id="nav.turnover">
+                <source>nav.turnover</source>
+                <target>Umsätze</target>
+            </trans-unit>
             <trans-unit id="nav.templates">
                 <source>nav.templates</source>
                 <target>Vorlagen</target>

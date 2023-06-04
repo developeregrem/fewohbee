@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'statistics.turnover.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'statistics.turnover.title'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.turnover.monthly'|trans }}
+                         <i id="refreshMonthly" class="fas fa-sync-alt float-end" aria-hidden="true" 
+                            style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
+                    </div>
+                    <div class="card-body">
+                        <div id="monthlyLoader"></div>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="card-footer pt-0">
+                        <form role="form">
+                            <div class="row justify-content-md-center">
+                                <div class="col-md-2">
+                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select">
+                                        {% set currentYear = 'now'|date('Y') %}
+                                        {% for i in maxYear..minYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1 col-form-label text-center">
+                                    -
+                                </div>
+                                <div class="col-md-2">
+                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select">
+                                        {% for i in maxYear..minYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card" id="yearlyCard">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.turnover.yearly'|trans }}
+                         <i id="refreshYearly" class="fas fa-sync-alt float-end mouse-pointer" aria-hidden="true" 
+                            onclick="drawYearlyChart();"></i>
+                    </div>
+                    <div class="card-body">
+                        <div id="yearlyLoader"></div>
+                        <canvas id="yearlyChart"></canvas>
+                    </div>
+                    <div class="card-footer pt-0">
+                        <form role="form">
+                            <div class="row justify-content-md-center">
+                                <div class="col-md-2">
+                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select">
+                                        {% for i in maxYear..minYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-1 col-form-label text-center">
+                                    -
+                                </div>
+                                <div class="col-md-2">
+                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select">
+                                        {% for i in maxYear..minYear %}
+                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'statistics.turnover.help'|trans }}</span>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.3.0.js"></script>
+{% endblock %}
+
+{% block bodyjs %}
+    {{ parent() }}
+    <script>
+        function clearCtx(name) {
+            let chartStatus = Chart.getChart(name);
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            }
+        }
+
+        /**
+         *
+         * @param type monthly|yearly
+         * @param cfg
+         * @param url
+         * @returns {Promise<void>}
+         */
+        async function drawChart(type, cfg, url) {
+            const loaderWrap = document.getElementById(type + "Loader");
+            const ctx = document.getElementById(type + 'Chart');
+
+            loaderWrap.append(loaderNode);
+
+            let startYear = parseInt(document.getElementById(type + "StartYear").value);
+            let endYear = parseInt(document.getElementById(type + "EndYear").value);
+
+            const source = await fetch(url + '?' + new URLSearchParams({
+                yearStart: startYear,
+                yearEnd: endYear
+            }));
+
+            const data = await source.json();
+            cfg.data.labels = data.labels;
+            cfg.data.datasets = data.datasets;
+
+            clearCtx(type + "Chart");
+            new Chart(ctx, cfg);
+            loaderWrap.innerHTML = "";
+        }
+        async function drawYearlyChart() {
+            let url = '{{ path('statistics.turnover.yearly') }}';
+            const cfg = {
+                type: 'bar',
+                data: {
+                    labels: {},
+                    datasets: {},
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            };
+            await drawChart("yearly", cfg, url);
+        }
+
+        async function drawMonthlyChart() {
+            let url = '{{ path('statistics.turnover.monthly') }}';
+            const cfg = {
+                type: 'bar',
+                data: {
+                    labels: {},
+                    datasets: {}
+                }
+            };
+            await drawChart("monthly", cfg, url);
+        }
+
+        drawYearlyChart();
+        drawMonthlyChart();
+        document.querySelectorAll('#yearlyStartYear, #yearlyEndYear, #refreshYearly').forEach(item => {
+            item.addEventListener('change', event => {
+                drawYearlyChart();
+            });
+        });
+        document.querySelectorAll(' #monthlyStartYear, #monthlyEndYear, #refreshMonthly').forEach(item => {
+            item.addEventListener('change', event => {
+                drawMonthlyChart();
+            });
+        });
+    </script>
+{% endblock %}
