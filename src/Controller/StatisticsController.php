@@ -17,9 +17,11 @@ use App\Entity\Appartment;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
+use App\Service\InvoiceService;
 use App\Service\StatisticsService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,27 +38,13 @@ class StatisticsController extends AbstractController
      * @return mixed
      */
     #[Route('/utilization', name: 'statistics.utilization', methods: ['GET'])]
-    public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack)
+    public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
     {
-        $em = $doctrine->getManager();
-        $objects = $em->getRepository(Subsidiary::class)->findAll();
-        $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
-
-        $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
-        $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();
-        $minDate = new \DateTime($minStr);
-        $maxDate = new \DateTime($maxStr);
-
-        return $this->render('Statistics/utilization.html.twig', [
-            'objects' => $objects,
-            'objectId' => $objectId,
-            'minYear' => $minDate->format('Y'),
-            'maxYear' => $maxDate->format('Y'),
-        ]);
+        return $this->loadIndex('Statistics/utilization.html.twig', $doctrine, $requestStack);
     }
 
     #[Route('/utilization/monthtly', name: 'statistics.utilization.monthtly', methods: ['GET'])]
-    public function getUtilizationForMonthAction(ManagerRegistry $doctrine, Request $request)
+    public function getUtilizationForMonthAction(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
 
@@ -94,18 +82,16 @@ class StatisticsController extends AbstractController
             $currentDate->add($interval);
         }
 
-        return new Response(
-            json_encode($result),
-            200,
-            ['Content-Type' => 'application/json']
+        return new JsonResponse(
+            $result
         );
     }
 
     #[Route('/utilization/yearly', name: 'statistics.utilization.yearly', methods: ['GET'])]
-    public function getUtilizationForYearAction(ManagerRegistry $doctrine, StatisticsService $ss, Request $request)
+    public function getUtilizationForYearAction(ManagerRegistry $doctrine, StatisticsService $ss, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
-        $objectId = $request->query->get('objectId');
+        $objectId = $request->query->get('objectId', 'all');
         $yearStart = $request->query->get('yearStart');
         $yearEnd = $request->query->get('yearEnd');
 
@@ -119,10 +105,8 @@ class StatisticsController extends AbstractController
             $result[] = $tmpResult;
         }
 
-        return new Response(
-            json_encode($result),
-            200,
-            ['Content-Type' => 'application/json']
+        return new JsonResponse(
+            $result
         );
     }
 
@@ -132,30 +116,16 @@ class StatisticsController extends AbstractController
     #[Route('/origin', name: 'statistics.origin', methods: ['GET'])]
     public function originAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
     {
-        $em = $doctrine->getManager();
-        $objects = $em->getRepository(Subsidiary::class)->findAll();
-        $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
-
-        $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
-        $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();
-        $minDate = new \DateTime($minStr);
-        $maxDate = new \DateTime($maxStr);
-
-        return $this->render('Statistics/reservationorigin.html.twig', [
-            'objects' => $objects,
-            'objectId' => $objectId,
-            'minYear' => $minDate->format('Y'),
-            'maxYear' => $maxDate->format('Y'),
-        ]);
+        return $this->loadIndex('Statistics/reservationorigin.html.twig', $doctrine, $requestStack);
     }
 
     /**
      * Load Statistics for origins for a given period.
      *
-     * @return Response
+     * @return JsonResponse
      */
     #[Route('/origin/monthtly', name: 'statistics.origin.monthtly', methods: ['GET'])]
-    public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request)
+    public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
 
@@ -179,20 +149,18 @@ class StatisticsController extends AbstractController
             $result[] = ['label' => $origin->getName(), 'data' => $single['origins']];
         }
 
-        return new Response(
-            json_encode($result),
-            200,
-            ['Content-Type' => 'application/json']
+        return new JsonResponse(
+            $result
         );
     }
 
     /**
      * Load Statistics for origins per year.
      *
-     * @return Response
+     * @return JsonResponse
      */
     #[Route('/origin/yearly', name: 'statistics.origin.yearly', methods: ['GET'])]
-    public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request)
+    public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId');
@@ -211,11 +179,97 @@ class StatisticsController extends AbstractController
             $result[] = ['label' => $origin->getName(), 'data' => $single['origins']];
         }
 
-        return new Response(
-            json_encode($result),
-            200,
-            ['Content-Type' => 'application/json']
+        return new JsonResponse(
+            $result
         );
+    }
+
+    #[Route('/turnover', name: 'statistics.turnover', methods: ['GET'])]
+    public function turnoverAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
+    {
+        return $this->loadIndex('Statistics/turnover.html.twig', $doctrine, $requestStack);
+    }
+
+    /**
+     * @param ManagerRegistry $doctrine
+     * @param StatisticsService $ss
+     * @param Request $request
+     * @return Response
+     */
+    #[Route('/turnover/yearly', name: 'statistics.turnover.yearly', methods: ['GET'])]
+    public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    {
+        $yearStart = (int)$request->query->get('yearStart');
+        $yearEnd = (int)$request->query->get('yearEnd');
+
+        $result = [
+            'labels' => [],
+            'datasets' => []
+        ];
+        for ($y = $yearStart; $y <= $yearEnd; ++$y) {
+            $result['labels'][] = $y;
+            $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y);
+        }
+
+        return new JsonResponse(
+            $result,
+        );
+    }
+
+    #[Route('/turnover/monthly', name: 'statistics.turnover.monthly', methods: ['GET'])]
+    public function getTurnoverForMonthAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    {
+        $yearStart = (int)$request->query->get('yearStart');
+        $yearEnd = (int)$request->query->get('yearEnd');
+
+        $result = [
+            'labels' => [],
+            'datasets' => []
+        ];
+
+        for($i=1;$i<=12;$i++) {
+            $result['labels'][] = $this->getLocalizedDate($i, 'MMM', $request->getLocale());
+        }
+
+        for ($y = $yearStart; $y <= $yearEnd; ++$y) {
+            $tmpResult = [
+                'label' => $y,
+                'data' => $ss->loadTurnoverForMonth($is
+                    , $y)
+            ];
+            $result['datasets'][] = $tmpResult;
+        }
+
+        return new JsonResponse(
+            $result,
+        );
+    }
+
+    /**
+     * General index page wich is the same for all statistics sites
+     * @param string $template
+     * @param ManagerRegistry $doctrine
+     * @param RequestStack $requestStack
+     * @return Response
+     * @throws \Exception
+     */
+    private function loadIndex(string $template, ManagerRegistry $doctrine, RequestStack $requestStack): Response
+    {
+        $em = $doctrine->getManager();
+        $objects = $em->getRepository(Subsidiary::class)->findAll();
+        $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
+
+        $minStr = $em->getRepository(Reservation::class)->getMinEndDate();
+        $maxStr = $em->getRepository(Reservation::class)->getMaxStartDate();
+        $minDate = new \DateTime($minStr);
+        $maxDate = new \DateTime($maxStr);
+
+        return $this->render($template, [
+            'objects' => $objects,
+            'objectId' => $objectId,
+            'minYear' => $minDate->format('Y'),
+            'maxYear' => $maxDate->format('Y'),
+        ]);
     }
 
     private function getLocalizedDate($monthNumber, $pattern, $locale)
