@@ -5,7 +5,8 @@
                 {% include 'feedback.html.twig' with {'app': app } %}
             </div>
         </div>
-{% if reservations|length > 0 %}
+    {% set lastStartDate, lastEndDate = "", "" %}
+    {% if reservations|length > 0 %}
         <div class="row">
             <h4>{{ 'reservation.new.reservation.appartments.selected.heading'|trans }}</h4>
         </div>
@@ -52,6 +53,8 @@
                                 </form>
                             </td>
                         </tr>
+                        {% set lastStartDate = reservation.startdate|date('Y-m-d')  %}
+                        {% set lastEndDate = reservation.enddate|date('Y-m-d')  %}
                     {% endfor %}
                     </tbody>
                 </table>
@@ -73,12 +76,16 @@
                 <div class="col">
                     <input type="date" class="form-control" id="from" name="from"
                            placeholder="{{ 'reservation.startdate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod()">
+                           onchange="getAvailableAppartmentsForPeriod()"
+                           value="{{ lastStartDate }}"
+                    >
                 </div>            
                 <div class="col">
                     <input type="date" class="form-control" id="end" name="end"
                            placeholder="{{ 'reservation.enddate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod()">
+                           onchange="getAvailableAppartmentsForPeriod()"
+                           value="{{ lastEndDate }}"
+                    >
                 </div>
                 <div class="col text-end">
                     <select id="objects" name="object" class="form-select"
@@ -90,6 +97,11 @@
                                     {% if objectSelected == object.id %}selected{% endif %}>{{ object.name }}</option>
                         {% endfor %}
                     </select>
+                </div>
+                <div class="col-sm-1 align-self-center">
+                    <a href="#" title="{{ 'button.accept'|trans }}">
+                        <i class="fa-solid fa-check fa-lg" onclick="getAvailableAppartmentsForPeriod()"></i>
+                    </a>
                 </div>
             </div>
             <div class="col mt-4" id="available-appartments"></div>
