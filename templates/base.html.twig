@@ -105,7 +105,6 @@
     {% block flashMessage %}
         <div class="container mt-3">
             <div class="row" id="flash-message-container">
-                <div class="col">
                 {% for type, flashMessages in app.flashes %}
                     {% for flashMessage in flashMessages %}
                         <div class="col">
@@ -121,6 +120,13 @@
     {% endblock %}
 
     {% block content %}{% endblock %}
+
+    {% block firstSteps %}
+        {% if showFirstSteps is defined and showFirstSteps %}
+            {% include 'common/first_steps.html.twig' %}
+        {% endif %}
+    {% endblock %}
+
     <script>
         class Config {
             constructor() {
