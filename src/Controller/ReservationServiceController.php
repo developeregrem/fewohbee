@@ -68,7 +68,8 @@ class ReservationServiceController extends AbstractController
         $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
 
         $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
-        $selectedApartmentId = $requestStack->getSession()->get('reservation-overview-apartment', $apartments[0]->getId());
+        $firstApartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
+        $selectedApartmentId = $requestStack->getSession()->get('reservation-overview-apartment', $firstApartmentId);
 
         $show = $requestStack->getSession()->get('reservation-overview', 'table');
 
@@ -84,6 +85,7 @@ class ReservationServiceController extends AbstractController
             'selectedCountry' => 'DE',
             'selectedSubdivision' => 'all',
             'show' => $show,
+            'showFirstSteps' => ($firstApartmentId == 0),
         ]);
     }
 
