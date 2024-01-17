@@ -5,7 +5,6 @@ parameters:
     fromMail:  '%env(FROM_MAIL)%'
     fromName: '%env(FROM_NAME)%'
     returnPath: '%env(RETURN_PATH)%'
-    mailHost:  '%env(MAIL_HOST)%'
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
