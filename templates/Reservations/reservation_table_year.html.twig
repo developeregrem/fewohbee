@@ -1,4 +1,4 @@
-<div id="calendar" class="row row-cols-4">
+<div id="calendar" class="row row-cols-xl-4">
     {% for i in 1..12 %}
     <div class="col">
         {% include 'Reservations/reservation_table_month.html.twig' with {year: year, month: i, apartment: apartment} %}
