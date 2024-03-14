@@ -9,7 +9,7 @@
             <div class="col">
                 <h4 class="invoice-edit-field d-none">{{ 'invoice.guest'|trans }}&nbsp;
                     <small>
-                    <a href="#" onclick="return changeInvoiceCustomer({{ invoice.id }});"
+                    <a href="#" onclick="return getContentForModal('{{ path('invoices.get.invoice.customer.change', {'id': invoice.id}) }}')"
                        title="{{ 'button.edit'|trans }}" class="text-secondary">
                         <i class="fas fa-edit"></i>
                     </a>
@@ -20,7 +20,7 @@
             <div class="col text-end">
                 <h4 class="invoice-edit-field d-none">
                     <small>
-                        <a href="#" onclick="return changeInvoiceNumber({{ invoice.id }});"
+                        <a href="#" onclick="return getContentForModal('{{ path('invoices.edit.invoice.number.show', {'id': invoice.id}) }}')"
                            title="{{ 'button.edit'|trans }}" class="text-secondary">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -295,54 +295,6 @@
         } else {
             fields.addClass("d-none");
         }
-    }
-    
-    function changeInvoiceCustomer(id) {
-        var url = "{{ path('invoices.get.invoice.customer.change', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "get",
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    
-    function changeInvoiceNumber(id) {
-        var url = "{{ path('invoices.edit.invoice.number.show', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "get",
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
     }
 
     function removeAppartmentPositionFromInvoicePositions(id) {
