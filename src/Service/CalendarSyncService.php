@@ -24,7 +24,7 @@ use Symfony\Component\Uid\Uuid;
  */
 class CalendarSyncService
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {

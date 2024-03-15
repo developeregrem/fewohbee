@@ -229,8 +229,6 @@ class RegistrationBookServiceController extends AbstractController
     /**
      * delete entity.
      *
-     * @param $id
-     *
      * @return string
      */
     #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['GET', 'POST'])]

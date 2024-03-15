@@ -46,29 +46,29 @@ class CustomerServiceController extends AbstractController
         // calculate the number of pages for pagination
         $pages = ceil($customers->count() / $this->perPage);
 
-//        $customers2 = $em->getRepository(Customer::class)->findAll();
-//        /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
-//        foreach($customers2 as $customer) {
-//            if(empty($customer->getAddress()) && empty($customer->getCity()) && empty($customer->getEmail()) && empty($customer->getFax())
-//                    && empty($customer->getCompany()) && empty($customer->getMobilePhone()) && empty($customer->getPhone()) && empty($customer->getZip()))
-//                continue;
-//            $address = new CustomerAddresses();
-//            $address->setType((empty($customer->getCompany()) ? self::$addessTypes[0] : self::$addessTypes[1]));
-//            $address->setAddress($customer->getAddress());
-//            $address->setCity($customer->getCity());
-//            $address->setCompany($customer->getCompany());
-//            $address->setCountry($customer->getCountry());
-//            $address->setEmail($customer->getEmail());
-//            $address->setFax($customer->getFax());
-//            $address->setMobilePhone($customer->getMobilePhone());
-//            $address->setPhone($customer->getPhone());
-//            $address->setZip($customer->getZip());
-//
-//            $em->persist($address);
-//            $customer->addCustomerAddress($address);
-//            $em->persist($customer);
-//        }
-//        $em->flush();
+        //        $customers2 = $em->getRepository(Customer::class)->findAll();
+        //        /* @var $customer \Pensionsverwaltung\Database\Entity\Customer */
+        //        foreach($customers2 as $customer) {
+        //            if(empty($customer->getAddress()) && empty($customer->getCity()) && empty($customer->getEmail()) && empty($customer->getFax())
+        //                    && empty($customer->getCompany()) && empty($customer->getMobilePhone()) && empty($customer->getPhone()) && empty($customer->getZip()))
+        //                continue;
+        //            $address = new CustomerAddresses();
+        //            $address->setType((empty($customer->getCompany()) ? self::$addessTypes[0] : self::$addessTypes[1]));
+        //            $address->setAddress($customer->getAddress());
+        //            $address->setCity($customer->getCity());
+        //            $address->setCompany($customer->getCompany());
+        //            $address->setCountry($customer->getCountry());
+        //            $address->setEmail($customer->getEmail());
+        //            $address->setFax($customer->getFax());
+        //            $address->setMobilePhone($customer->getMobilePhone());
+        //            $address->setPhone($customer->getPhone());
+        //            $address->setZip($customer->getZip());
+        //
+        //            $em->persist($address);
+        //            $customer->addCustomerAddress($address);
+        //            $em->persist($customer);
+        //        }
+        //        $em->flush();
 
         return $this->render('Customers/index.html.twig', [
             'customers' => $customers,
@@ -105,7 +105,7 @@ class CustomerServiceController extends AbstractController
 
         return $this->render('Customers/customer_form_show.html.twig', [
             'customer' => $customer,
-            'token' => $csrf->getCSRFTokenForForm()
+            'token' => $csrf->getCSRFTokenForForm(),
         ]);
     }
 

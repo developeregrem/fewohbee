@@ -124,11 +124,9 @@ class Correspondence
     /**
      * Set template.
      *
-     * @param \App\Entity\Template $template
-     *
      * @return Correspondence
      */
-    public function setTemplate(Template $template = null)
+    public function setTemplate(?Template $template = null)
     {
         $this->template = $template;
 
@@ -138,7 +136,7 @@ class Correspondence
     /**
      * Get template.
      *
-     * @return \App\Entity\Template
+     * @return Template
      */
     public function getTemplate()
     {
@@ -148,11 +146,9 @@ class Correspondence
     /**
      * Set reservation.
      *
-     * @param \App\Entity\Reservation $reservation
-     *
      * @return Correspondence
      */
-    public function setReservation(Reservation $reservation = null)
+    public function setReservation(?Reservation $reservation = null)
     {
         $this->reservation = $reservation;
 
@@ -162,7 +158,7 @@ class Correspondence
     /**
      * Get reservation.
      *
-     * @return \App\Entity\Reservation
+     * @return Reservation
      */
     public function getReservation()
     {
@@ -171,8 +167,6 @@ class Correspondence
 
     /**
      * Add child.
-     *
-     * @param \App\Entity\Correspondence $child
      *
      * @return Correspondence
      */
@@ -185,8 +179,6 @@ class Correspondence
 
     /**
      * Remove child.
-     *
-     * @param \App\Entity\Correspondence $child
      */
     public function removeChild(Correspondence $child): void
     {
@@ -206,8 +198,6 @@ class Correspondence
     /**
      * Add parent.
      *
-     * @param \App\Entity\Correspondence $parent
-     *
      * @return Correspondence
      */
     public function addParent(Correspondence $parent)
@@ -219,8 +209,6 @@ class Correspondence
 
     /**
      * Remove parent.
-     *
-     * @param \App\Entity\Correspondence $parent
      */
     public function removeParent(Correspondence $parent): void
     {

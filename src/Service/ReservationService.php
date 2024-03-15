@@ -49,10 +49,10 @@ class ReservationService implements ITemplateRenderer
                 $endDateToBeChecked = $end->getTimestamp();
 
                 if (
-                    (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked >= $endReservation)) ||
-                    (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation)) ||
-                    (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked < $endReservation) && ($endDateToBeChecked >= $endReservation)) ||
-                    (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation))
+                    (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked >= $endReservation))
+                    || (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation))
+                    || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked < $endReservation) && ($endDateToBeChecked >= $endReservation))
+                    || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation))
                 ) {
                     return true;
                 }
@@ -64,10 +64,8 @@ class ReservationService implements ITemplateRenderer
 
     /**
      * Returns a list of apartments that can be selected (free) for the given period.
-     *
-     * @param Appartment $apartment
      */
-    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment = null, string $propertyId = 'all'): array
+    public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all'): array
     {
         if ($apartment instanceof Appartment) {
             $propertyId = $apartment->getObject()->getId();
@@ -105,7 +103,7 @@ class ReservationService implements ITemplateRenderer
         return $result;
     }
 
-    public function createReservationsFromReservationInformationArray($newReservationsInformationArray, Customer $customer = null)
+    public function createReservationsFromReservationInformationArray($newReservationsInformationArray, ?Customer $customer = null)
     {
         $reservations = [];
 

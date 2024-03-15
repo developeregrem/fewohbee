@@ -89,8 +89,8 @@ class AppTwigExtensions extends AbstractExtension
         if ('end' == $type) {
             $compareReservationIdx = $reservationIdx + 1;
             // wenn es eine nachfolgende reservierung gibt und diese nicht am gleichen tag startet wie die andere endet
-            if (array_key_exists($compareReservationIdx, $reservations) &&
-                    $reservations[$compareReservationIdx]->getStartDate()->getTimestamp() == $currentReservation->getEndDate()->getTimestamp()
+            if (array_key_exists($compareReservationIdx, $reservations)
+                    && $reservations[$compareReservationIdx]->getStartDate()->getTimestamp() == $currentReservation->getEndDate()->getTimestamp()
             ) {
                 return false;
             } else { // entweder es gibt keine nachfolgende oder am gleichen tag beginnt keine neue reservierung
@@ -104,8 +104,8 @@ class AppTwigExtensions extends AbstractExtension
         } else {
             $compareReservationIdx = $reservationIdx - 1;
             // wenn es eine vorherige reservierung gibt und diese nicht am gleichen tag endet wie die andere startet
-            if (array_key_exists($compareReservationIdx, $reservations) &&
-                    $reservations[$compareReservationIdx]->getEndDate()->getTimestamp() == $currentReservation->getStartDate()->getTimestamp()
+            if (array_key_exists($compareReservationIdx, $reservations)
+                    && $reservations[$compareReservationIdx]->getEndDate()->getTimestamp() == $currentReservation->getStartDate()->getTimestamp()
             ) {
                 return false;
             } else { // entweder es gibt keine vorherige oder am gleichen tag endet keine neue reservierung

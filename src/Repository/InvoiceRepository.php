@@ -49,22 +49,21 @@ class InvoiceRepository extends EntityRepository
     }
 
     /**
-     * @param int $year
-     * @param int $status
      * @return Invoice[]
      */
-    public function getInvoicesForYear(\DateTimeInterface $start, \DateTimeInterface $end, int $status = 2) : array {
+    public function getInvoicesForYear(\DateTimeInterface $start, \DateTimeInterface $end, int $status = 2): array
+    {
         $q = $this
             ->createQueryBuilder('i')
             ->select('i, ip, ia')
-            ->leftJoin("i.positions", "ip")
-            ->leftJoin("i.appartments", "ia")
-            ->where("i.status = :status")
-            ->andWhere("i.date >= :start and i.date <= :end")
-            ->setParameter("status", $status)
-            ->setParameter("start", $start)
-            ->setParameter("end", $end)
-            ;
+            ->leftJoin('i.positions', 'ip')
+            ->leftJoin('i.appartments', 'ia')
+            ->where('i.status = :status')
+            ->andWhere('i.date >= :start and i.date <= :end')
+            ->setParameter('status', $status)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+        ;
         try {
             return $q->getQuery()->getResult();
         } catch (NoResultException $e) {
