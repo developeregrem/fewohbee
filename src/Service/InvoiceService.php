@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Customer;
-use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -28,8 +27,8 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class InvoiceService implements ITemplateRenderer
 {
-    private $em = null;
-    private $ps = null;
+    private $em;
+    private $ps;
 
     public function __construct(EntityManagerInterface $em, PriceService $ps)
     {
@@ -363,10 +362,7 @@ class InvoiceService implements ITemplateRenderer
     }
 
     /**
-     * Sets the default customer
-     * @param Customer $customer
-     * @param RequestStack $requestStack
-     * @return void
+     * Sets the default customer.
      */
     public function setDefaultCustomer(Customer $customer, RequestStack $requestStack): void
     {
@@ -391,18 +387,17 @@ class InvoiceService implements ITemplateRenderer
      */
     public function getInvoiceInCreation(RequestStack $requestStack): Invoice
     {
-        if(!$requestStack->getSession()->has('newInvoice')) {
+        if (!$requestStack->getSession()->has('newInvoice')) {
             $requestStack->getSession()->set('newInvoice', new Invoice());
         }
+
         return $requestStack->getSession()->get('newInvoice');
     }
 
     /**
-     * Reset session variables used during invoice creation process
-     * @param RequestStack $requestStack
-     * @return void
+     * Reset session variables used during invoice creation process.
      */
-    public function unsetInvoiceInCreation(RequestStack $requestStack) : void
+    public function unsetInvoiceInCreation(RequestStack $requestStack): void
     {
         $requestStack->getSession()->remove('invoiceInCreation');
         $requestStack->getSession()->remove('invoicePositionsMiscellaneous');
@@ -413,26 +408,29 @@ class InvoiceService implements ITemplateRenderer
     }
 
     /**
-     * Returns a list of reservations that a connected with the current invoice creation process
-     * @param RequestStack $requestStack
+     * Returns a list of reservations that a connected with the current invoice creation process.
+     *
      * @return Resrvation[]
      */
-    public function getInvoiceReservationsInCreation(RequestStack $requestStack) : array
+    public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
     {
         $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
         $reservations = [];
         foreach ($reservationIds as $reservationId) {
             $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);
         }
+
         return $reservations;
     }
 
     /**
-     * Collect all unique bookers and customers for recommendation list
+     * Collect all unique bookers and customers for recommendation list.
+     *
      * @param Reservation[] $reservations
+     *
      * @return Customer[]
      */
-    public function getCustomersForRecommendation(array|Collection $reservations) : array
+    public function getCustomersForRecommendation(array|Collection $reservations): array
     {
         $result = [];
         foreach ($reservations as $reservation) {
@@ -447,6 +445,7 @@ class InvoiceService implements ITemplateRenderer
                 $result[$booker->getId()] = $booker;
             }
         }
+
         return $result;
     }
 

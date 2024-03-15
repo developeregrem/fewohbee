@@ -37,27 +37,27 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-//        $journal = $em->getRepository(CashJournal::class)->find(6);
-//        for($i=0; $i<100;$i++) {
-//            $entry = new CashJournalEntry();
-//
-//            if($i % 2 == 0) {
-//                $entry->setIncomes(rand(1, 500));
-//            } else {
-//                $entry->setExpenses(rand(1, 500));
-//            }
-//            $entry->setCounterAccount('');
-//            $entry->setInvoiceNumber($i);
-//            $entry->setDocumentNumber($i);
-//            $entry->setDate(new \DateTime());
-//            $entry->setRemark('Tolle Bemerkung');
-//
-//            $entry->setCashJournal($journal);
-//            $em->persist($entry);
-//        }
-//        $em->flush();
-//
-//        $cjs->recalculateCashEnd($journal);
+        //        $journal = $em->getRepository(CashJournal::class)->find(6);
+        //        for($i=0; $i<100;$i++) {
+        //            $entry = new CashJournalEntry();
+        //
+        //            if($i % 2 == 0) {
+        //                $entry->setIncomes(rand(1, 500));
+        //            } else {
+        //                $entry->setExpenses(rand(1, 500));
+        //            }
+        //            $entry->setCounterAccount('');
+        //            $entry->setInvoiceNumber($i);
+        //            $entry->setDocumentNumber($i);
+        //            $entry->setDate(new \DateTime());
+        //            $entry->setRemark('Tolle Bemerkung');
+        //
+        //            $entry->setCashJournal($journal);
+        //            $em->persist($entry);
+        //        }
+        //        $em->flush();
+        //
+        //        $cjs->recalculateCashEnd($journal);
 
         $journalYears = $em->getRepository(CashJournal::class)->getJournalYears();
 
@@ -91,8 +91,6 @@ class CashJournalServiceController extends AbstractController
 
     /**
      * Gets the reservation overview as a table.
-     *
-     * @return mixed
      */
     #[Route('/journal/list', name: 'cashjournal.table.get', methods: ['GET'])]
     public function getJournalTableAction(ManagerRegistry $doctrine, Request $request)

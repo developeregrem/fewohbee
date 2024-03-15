@@ -163,7 +163,6 @@ class Customer
     /**
      * Add bookedReservations.
      *
-     * @param Reservation $bookedReservations
      * @return Customer
      */
     public function addBookedReservation(Reservation $bookedReservations): static
@@ -175,8 +174,6 @@ class Customer
 
     /**
      * Remove bookedReservations.
-     *
-     * @param Reservation $bookedReservations
      */
     public function removeBookedReservation(Reservation $bookedReservations): void
     {
@@ -185,8 +182,6 @@ class Customer
 
     /**
      * Get bookedReservations.
-     *
-     * @return ArrayCollection|Collection
      */
     public function getBookedReservations(): ArrayCollection|Collection
     {
@@ -195,8 +190,6 @@ class Customer
 
     /**
      * Add customerAddress.
-     *
-     * @param CustomerAddresses $customerAddress
      *
      * @return Customer
      */
@@ -209,8 +202,6 @@ class Customer
 
     /**
      * Remove customerAddress.
-     *
-     * @param CustomerAddresses $customerAddress
      */
     public function removeCustomerAddress(CustomerAddresses $customerAddress): void
     {
@@ -219,8 +210,6 @@ class Customer
 
     /**
      * Get customerAddresses.
-     *
-     * @return ArrayCollection|Collection
      */
     public function getCustomerAddresses(): ArrayCollection|Collection
     {
@@ -239,17 +228,11 @@ class Customer
         return $this;
     }
 
-    /**
-     * @return IDCardType|null
-     */
     public function getIdType(): ?IDCardType
     {
         return $this->idType;
     }
 
-    /**
-     * @param IDCardType|null $idType
-     */
     public function setIdType(?IDCardType $idType): void
     {
         $this->idType = $idType;

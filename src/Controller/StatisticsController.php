@@ -121,8 +121,6 @@ class StatisticsController extends AbstractController
 
     /**
      * Load Statistics for origins for a given period.
-     *
-     * @return JsonResponse
      */
     #[Route('/origin/monthtly', name: 'statistics.origin.monthtly', methods: ['GET'])]
     public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request): JsonResponse
@@ -156,8 +154,6 @@ class StatisticsController extends AbstractController
 
     /**
      * Load Statistics for origins per year.
-     *
-     * @return JsonResponse
      */
     #[Route('/origin/yearly', name: 'statistics.origin.yearly', methods: ['GET'])]
     public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request): JsonResponse
@@ -191,20 +187,17 @@ class StatisticsController extends AbstractController
     }
 
     /**
-     * @param ManagerRegistry $doctrine
-     * @param StatisticsService $ss
-     * @param Request $request
      * @return Response
      */
     #[Route('/turnover/yearly', name: 'statistics.turnover.yearly', methods: ['GET'])]
     public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
     {
-        $yearStart = (int)$request->query->get('yearStart');
-        $yearEnd = (int)$request->query->get('yearEnd');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
 
         $result = [
             'labels' => [],
-            'datasets' => []
+            'datasets' => [],
         ];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['labels'][] = $y;
@@ -219,23 +212,22 @@ class StatisticsController extends AbstractController
     #[Route('/turnover/monthly', name: 'statistics.turnover.monthly', methods: ['GET'])]
     public function getTurnoverForMonthAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
     {
-        $yearStart = (int)$request->query->get('yearStart');
-        $yearEnd = (int)$request->query->get('yearEnd');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
 
         $result = [
             'labels' => [],
-            'datasets' => []
+            'datasets' => [],
         ];
 
-        for($i=1;$i<=12;$i++) {
+        for ($i = 1; $i <= 12; ++$i) {
             $result['labels'][] = $this->getLocalizedDate($i, 'MMM', $request->getLocale());
         }
 
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $tmpResult = [
                 'label' => $y,
-                'data' => $ss->loadTurnoverForMonth($is
-                    , $y)
+                'data' => $ss->loadTurnoverForMonth($is, $y),
             ];
             $result['datasets'][] = $tmpResult;
         }
@@ -246,11 +238,8 @@ class StatisticsController extends AbstractController
     }
 
     /**
-     * General index page wich is the same for all statistics sites
-     * @param string $template
-     * @param ManagerRegistry $doctrine
-     * @param RequestStack $requestStack
-     * @return Response
+     * General index page wich is the same for all statistics sites.
+     *
      * @throws \Exception
      */
     private function loadIndex(string $template, ManagerRegistry $doctrine, RequestStack $requestStack): Response

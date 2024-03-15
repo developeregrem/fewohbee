@@ -196,7 +196,7 @@ class CashJournalEntry
      *
      * @return CashJournalEntry
      */
-    public function setCashJournal(CashJournal $cashJournal = null): static
+    public function setCashJournal(?CashJournal $cashJournal = null): static
     {
         $this->cashJournal = $cashJournal;
 

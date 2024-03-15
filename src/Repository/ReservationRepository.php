@@ -48,7 +48,7 @@ class ReservationRepository extends EntityRepository
         $start = date('Y-m-d', strtotime($startDate));
         $end = date('Y-m-d', strtotime($endDate));
 
-//        if($customer == null) {
+        //        if($customer == null) {
         $q = $this
             ->createQueryBuilder('u')
             ->select('u')
@@ -61,22 +61,22 @@ class ReservationRepository extends EntityRepository
             ->setParameter('end', $end)
             ->addOrderBy('u.endDate', 'ASC')
             ->getQuery();
-//        } else {
-//            $q = $this
-//                ->createQueryBuilder('u')
-//                ->select('u')
-//                ->andWhere('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
-//                         .  '(u.startDate <= :start AND u.endDate > :start AND u.endDate <= :end) OR'
-//                         .  '(u.startDate >= :start AND u.startDate < :end AND u.endDate > :end) OR'
-//                         .  '(u.startDate <= :start AND u.endDate >= :end))')
-//                ->andWhere('u.invoice IS NULL')
-//                ->andWhere('u.booker = :customer')
-//                ->setParameter('start', $start)
-//                ->setParameter('end', $end)
-//                ->setParameter('customer', $customer)
-//                ->addOrderBy('u.endDate', 'ASC')
-//                ->getQuery();
-//        }
+        //        } else {
+        //            $q = $this
+        //                ->createQueryBuilder('u')
+        //                ->select('u')
+        //                ->andWhere('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
+        //                         .  '(u.startDate <= :start AND u.endDate > :start AND u.endDate <= :end) OR'
+        //                         .  '(u.startDate >= :start AND u.startDate < :end AND u.endDate > :end) OR'
+        //                         .  '(u.startDate <= :start AND u.endDate >= :end))')
+        //                ->andWhere('u.invoice IS NULL')
+        //                ->andWhere('u.booker = :customer')
+        //                ->setParameter('start', $start)
+        //                ->setParameter('end', $end)
+        //                ->setParameter('customer', $customer)
+        //                ->addOrderBy('u.endDate', 'ASC')
+        //                ->getQuery();
+        //        }
 
         $reservations = null;
         try {

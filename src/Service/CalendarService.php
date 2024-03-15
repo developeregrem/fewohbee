@@ -26,7 +26,7 @@ use Yasumi\Yasumi;
 class CalendarService
 {
     /* @var $holidays AbstractProvider */
-    private static $holidays = null;
+    private static $holidays;
 
     public function __construct(private TranslatorInterface $translator)
     {

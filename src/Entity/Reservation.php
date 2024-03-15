@@ -177,8 +177,6 @@ class Reservation
     /**
      * Add customers.
      *
-     * @param \App\Entity\Customer $customers
-     *
      * @return Reservation
      */
     public function addCustomer(Customer $customers)
@@ -190,8 +188,6 @@ class Reservation
 
     /**
      * Remove customers.
-     *
-     * @param \App\Entity\Customer $customers
      */
     public function removeCustomer(Customer $customers): void
     {
@@ -201,7 +197,7 @@ class Reservation
     /**
      * Get customers.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getCustomers()
     {
@@ -211,7 +207,7 @@ class Reservation
     /**
      * Get registrationBookEntries.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getRegistrationBookEntries()
     {
@@ -221,11 +217,9 @@ class Reservation
     /**
      * Set booker.
      *
-     * @param \App\Entity\Customer $booker
-     *
      * @return Reservation
      */
-    public function setBooker(Customer $booker = null)
+    public function setBooker(?Customer $booker = null)
     {
         $this->booker = $booker;
 
@@ -235,7 +229,7 @@ class Reservation
     /**
      * Get booker.
      *
-     * @return \App\Entity\Customer
+     * @return Customer
      */
     public function getBooker()
     {
@@ -252,11 +246,9 @@ class Reservation
     /**
      * Set reservationOrigin.
      *
-     * @param \App\Entity\ReservationOrigin $reservationOrigin
-     *
      * @return Reservation
      */
-    public function setReservationOrigin(ReservationOrigin $reservationOrigin = null)
+    public function setReservationOrigin(?ReservationOrigin $reservationOrigin = null)
     {
         $this->reservationOrigin = $reservationOrigin;
 
@@ -266,7 +258,7 @@ class Reservation
     /**
      * Get reservationOrigin.
      *
-     * @return \App\Entity\ReservationOrigin
+     * @return ReservationOrigin
      */
     public function getReservationOrigin()
     {
@@ -275,8 +267,6 @@ class Reservation
 
     /**
      * Add correspondence.
-     *
-     * @param \App\Entity\Correspondence $correspondence
      *
      * @return Reservation
      */
@@ -289,8 +279,6 @@ class Reservation
 
     /**
      * Remove correspondence.
-     *
-     * @param \App\Entity\Correspondence $correspondence
      */
     public function removeCorrespondence(Correspondence $correspondence): void
     {
@@ -300,7 +288,7 @@ class Reservation
     /**
      * Get correspondences.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getCorrespondences()
     {
@@ -309,8 +297,6 @@ class Reservation
 
     /**
      * Add invoice.
-     *
-     * @param \App\Entity\Invoice $invoice
      *
      * @return Reservation
      */
@@ -323,8 +309,6 @@ class Reservation
 
     /**
      * Remove invoice.
-     *
-     * @param \App\Entity\Invoice $invoice
      */
     public function removeInvoice(Invoice $invoice): void
     {
@@ -334,7 +318,7 @@ class Reservation
     /**
      * Get invoices.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getInvoices()
     {

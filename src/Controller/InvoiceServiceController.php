@@ -802,9 +802,8 @@ class InvoiceServiceController extends AbstractController
         return new Response('');
     }
 
-
     #[Route('/{id}/edit/customer/change', name: 'invoices.get.invoice.customer.change', methods: ['GET', 'POST'])]
-    public function showChangeCustomerInvoiceEditAction(ManagerRegistry $doctrine, InvoiceService $is, Request $request, RequestStack $requestStack, Invoice $invoice) : Response
+    public function showChangeCustomerInvoiceEditAction(ManagerRegistry $doctrine, InvoiceService $is, Request $request, RequestStack $requestStack, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
 

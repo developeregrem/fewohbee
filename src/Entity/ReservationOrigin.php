@@ -82,8 +82,6 @@ class ReservationOrigin
     /**
      * Add prices.
      *
-     * @param \App\Entity\Price $prices
-     *
      * @return ReservationOrigin
      */
     public function addPrice(Price $prices)
@@ -95,8 +93,6 @@ class ReservationOrigin
 
     /**
      * Remove prices.
-     *
-     * @param \App\Entity\Price $prices
      */
     public function removePrice(Price $prices): void
     {
@@ -116,8 +112,6 @@ class ReservationOrigin
     /**
      * Add reservations.
      *
-     * @param \App\Entity\Reservation $reservations
-     *
      * @return ReservationOrigin
      */
     public function addReservation(Reservation $reservations)
@@ -129,8 +123,6 @@ class ReservationOrigin
 
     /**
      * Remove reservations.
-     *
-     * @param \App\Entity\Reservation $reservations
      */
     public function removeReservation(Reservation $reservations): void
     {
