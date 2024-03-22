@@ -1,4 +1,6 @@
+{% set periodStartDate = timestamp2UTC(today) %}
 {% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
+{% set periodEndDate = timestamp2UTC(displayEndDate) %}
 <table class="table table-hover table-bordered table-reservation" id="reservation-table">
     <thead>
     <tr>
@@ -14,7 +16,7 @@
                 {% set tmpDate = tmpDate|date_modify("+1 hour") %}
             {% endif %}
             {% set curWeek = tmpDate|date('W') %}
-            {# add 2 to colcount since we are at the end of the displayed period 
+            {# add 2 to colcount since we are at the end of the displayed period
                but add it only if the last day is not a monday (last cw was already printed #}
             {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
             {# be aware that when the last cw is printed while we are on monday already #}
@@ -28,7 +30,7 @@
                 {% endif %}
             {% else %}
                 {% set colCount = colCount + 2 %}
-            {% endif %}         
+            {% endif %}
         {% endfor %}
     </tr>
     <tr class="table-days">
@@ -68,7 +70,7 @@
                 {% set holidayPopover = "" %}
                 {% set holidayCss = "" %}
             {% endif %}
-            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }} 
+            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}
                 style="width: {{ 100 / (intervall+1) }}%">{{ tmpDate|date('d') }}</th>
         {% endfor %}
     </tr>
@@ -111,26 +113,28 @@
                         {% set periodFilled = 1 %}
                         {% set period = date_difference(startDate|date('d.m.Y'), endDate|date_modify("+1 day")|date('d.m.Y')) %}
                         {% set colspan = (2 * period) - 2 %}
+
                         {# if we found a reservation for that day, jump in the loop to the enddate of the reservation #}
                         {% set j = i + period %}
                         {% set printSpacerBefore = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'start') %}
                         {% set printSpacerAfter = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'end') %}
 
                         {% if printSpacerBefore %}
-                            <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%" 
-                                data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" 
+                            <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                                data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}"
                                 data-tdnumber="{{ emptyTdNr }}"></td>
                         {% endif %}
                         {# if whe have 2 reservations at one day we must decrase j in order to look at this date twice
                         but only if reservation is not at the end of the displayed period, otherwise we draw two unneeded tds in the last col #}
-                        {% if printSpacerAfter != true and reservation.enddate.timestamp <= displayEndDate %}
+                        {% if printSpacerAfter != true and date2UTC(reservation.endDate) <= periodEndDate %}
                             {% set j = j - 1 %}
                         {% endif %}
+
                         {# we have to add one colspan if reservation started earlier or ends later than the displayed period #}
-                        {% if reservation.startDate.timestamp < today %}
+                        {% if date2UTC(reservation.startDate) < periodStartDate %}
                             {% set colspan = colspan + 1 %}
                         {% endif %}
-                        {% if reservation.endDate.timestamp > displayEndDate %}
+                        {% if date2UTC(reservation.endDate) > periodEndDate %}
                             {% set colspan = colspan + 1 %}
                         {% endif %}
 
@@ -140,33 +144,34 @@
                         {% if shortName != name %}
                             {% set shortName = shortName ~ "..." %}
                         {% endif %}
-                        
-                        {# popover #}                        
+
+                        {# popover #}
                         {% use 'Reservations/_resevation_popover.html.twig' %}
 
-                        <td class="reservation text-center" colspan="{{ colspan }}">
+                        <td class="reservation text-center" colspan="{{ colspan }}" style="width: {{ (50 / (intervall+1)) * colspan }}%">
                             <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                                  class="reservation-inner text-center"
                                  title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
                         </td>
 
                         {% if printSpacerAfter %}
-                            <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%" 
-                                data-day="{{ reservation.enddate|date('Y-m-d')  }}" data-appartment="{{ appartment.id }}" 
+                            <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                                data-day="{{ reservation.enddate|date('Y-m-d')  }}" data-appartment="{{ appartment.id }}"
                                 data-tdnumber="{{ emptyTdNr + 1 }}"></td>
                         {% endif %}
                         {% set emptyTdNr = emptyTdNr + 1 %}{# now we must increase the number #}
                     {% endif %}
                 {% endfor %}
+
                 {% if reservations|length == 0 or periodFilled == 0 %}
                     {#  50 / (intervall+1) means
                         100% total width for all cells,
                         1 day consist of two cells, therefore we have ((100% / 2) = 50 / number of days) for each cell
                         we have to add +1 for the first col (Zimmer)
                          #}
-                    <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                    <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
                         data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
-                    <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%" 
+                    <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
                         data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
                 {% endif %}
               {% endif %}
@@ -199,7 +204,7 @@
                 tdStartDate = $(ui.selecting).attr("data-day");
                 tdStartAppartment = $(ui.selecting).attr("data-appartment");
                 lastTdNumber = $(ui.selecting).attr("data-tdnumber");
-            } else {                
+            } else {
                 var curAppartment = $(ui.selecting).attr("data-appartment");
                 // check if its not the same row
                 if(curAppartment !== tdStartAppartment) {
@@ -208,12 +213,12 @@
                 } else if($(ui.selecting).attr("data-tdnumber") !== lastTdNumber) {
                     // check if user selects over an existing reservation
                     $(ui.selecting).removeClass("ui-selectee");
-                    $(ui.selecting).removeClass("ui-selecting");                    
+                    $(ui.selecting).removeClass("ui-selecting");
                 } else if($(ui.selecting).attr("data-day") !== tdStartDate) {
                     // only if end is not the same day as start
                     tdEndDate = $(ui.selecting).attr("data-day");
                 }
-            }            
+            }
         },
         unselecting: function( event, ui ) {
             // only between an existing reservation

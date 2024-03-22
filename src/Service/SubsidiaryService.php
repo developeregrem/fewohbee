@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class SubsidiaryService
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {

@@ -182,6 +182,14 @@
                 <source>invoice.status.payed</source>
                 <target>bezahlt</target>
             </trans-unit>
+            <trans-unit id="invoice.status.prepayment">
+                <source>invoice.status.prepayment</source>
+                <target>angezahlt</target>
+            </trans-unit>
+            <trans-unit id="invoice.status.canceled">
+                <source>invoice.status.canceled</source>
+                <target>storniert</target>
+            </trans-unit>
             <trans-unit id="invoice.select.customer.search.input.placeholder">
                 <source>invoice.select.customer.search.input.placeholder</source>
                 <target>Nachname Kunde</target>

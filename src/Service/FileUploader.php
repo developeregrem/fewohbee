@@ -14,8 +14,8 @@ class FileUploader
     public function __construct(
         private readonly string $targetDirectory,
         private readonly string $publicDirectory,
-        private readonly ValidatorInterface $validator)
-    {
+        private readonly ValidatorInterface $validator
+    ) {
     }
 
     public function upload(UploadedFile $file): string

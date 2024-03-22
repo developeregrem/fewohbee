@@ -8,7 +8,7 @@ statistics:
     description: Turnovers
     help: >-
       Turnover is based on invoices (gross) with invoice date in the respective
-      month and status: paid.
+      month and the following status:
     monthly: monthly turnover
     title: Turnovers
     yearly: annual turnover

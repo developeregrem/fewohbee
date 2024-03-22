@@ -4,47 +4,46 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "azuyalabs/yasumi": "2.6.*",
-        "doctrine/annotations": "^1.0",
-        "doctrine/doctrine-bundle": "^2.8",
-        "doctrine/doctrine-fixtures-bundle": "^3.4",
-        "doctrine/doctrine-migrations-bundle": "^3.2",
-        "doctrine/orm": "^2.14",
-        "mpdf/mpdf": "^8.1",
-        "symfony/asset": "6.3.*",
-        "symfony/console": "6.3.*",
-        "symfony/dotenv": "6.3.*",
-        "symfony/expression-language": "6.3.*",
+        "azuyalabs/yasumi": "2.7.*",
+        "doctrine/doctrine-bundle": "^2.11",
+        "doctrine/doctrine-fixtures-bundle": "^3.5",
+        "doctrine/doctrine-migrations-bundle": "^3.3",
+        "doctrine/orm": "^2.17",
+        "mpdf/mpdf": "^8.2",
+        "symfony/asset": "7.0.*",
+        "symfony/console": "7.0.*",
+        "symfony/dotenv": "7.0.*",
+        "symfony/expression-language": "7.0.*",
         "symfony/flex": "^2",
-        "symfony/form": "6.3.*",
-        "symfony/framework-bundle": "6.3.*",
-        "symfony/http-client": "6.3.*",
-        "symfony/intl": "6.3.*",
-        "symfony/mailer": "6.3.*",
-        "symfony/mime": "6.3.*",
+        "symfony/form": "7.0.*",
+        "symfony/framework-bundle": "7.0.*",
+        "symfony/http-client": "7.0.*",
+        "symfony/intl": "7.0.*",
+        "symfony/mailer": "7.0.*",
+        "symfony/mime": "7.0.*",
         "symfony/monolog-bundle": "^3.1",
-        "symfony/security-bundle": "6.3.*",
-        "symfony/serializer": "6.3.*",
-        "symfony/translation": "6.3.*",
-        "symfony/twig-bundle": "6.3.*",
-        "symfony/uid": "6.3.*",
-        "symfony/validator": "6.3.*",
-        "symfony/web-link": "6.3.*",
-        "symfony/yaml": "6.3.*",
-        "symfonycasts/reset-password-bundle": "^1.14"
+        "symfony/security-bundle": "7.0.*",
+        "symfony/serializer": "7.0.*",
+        "symfony/translation": "7.0.*",
+        "symfony/twig-bundle": "7.0.*",
+        "symfony/uid": "7.0.*",
+        "symfony/validator": "7.0.*",
+        "symfony/web-link": "7.0.*",
+        "symfony/yaml": "7.0.*",
+        "symfonycasts/reset-password-bundle": "^1.18"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
-        "symfony/browser-kit": "6.3.*",
-        "symfony/css-selector": "6.3.*",
-        "symfony/debug-bundle": "6.3.*",
+        "symfony/browser-kit": "7.0.*",
+        "symfony/css-selector": "7.0.*",
+        "symfony/debug-bundle": "7.0.*",
         "symfony/maker-bundle": "^1.0",
-        "symfony/phpunit-bridge": "^6.3",
-        "symfony/stopwatch": "6.2.*",
-        "symfony/web-profiler-bundle": "6.3.*",
+        "symfony/phpunit-bridge": "^7.0",
+        "symfony/stopwatch": "7.0.*",
+        "symfony/web-profiler-bundle": "7.0.*",
         "rector/rector": "^0.15.0"
     },
     "config": {
@@ -54,6 +53,7 @@
         },
         "sort-packages": true,
         "allow-plugins": {
+            "php-http/discovery": true,
             "symfony/flex": true,
             "symfony/runtime": true
         }
@@ -75,7 +75,8 @@
         "symfony/polyfill-php73": "*",
         "symfony/polyfill-php74": "*",
         "symfony/polyfill-php80": "*",
-        "symfony/polyfill-php81": "*"
+        "symfony/polyfill-php81": "*",
+        "symfony/polyfill-php82": "*"
     },
     "scripts": {
         "auto-scripts": {
@@ -95,7 +96,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "6.3.*"
+            "require": "7.0.*"
         }
     }
 }

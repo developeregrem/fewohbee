@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class PriceService
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -211,7 +211,7 @@ class PriceService
      * Based on the given reservation, price categories will be returned for each day of stay ordered by priority
      * The result is an array where ech key represents a day of stay. idx 0 startday idx, 1 next day, ...
      */
-    public function getPricesForReservationDays(Reservation $reservation, int $type, Collection $prices = null): array
+    public function getPricesForReservationDays(Reservation $reservation, int $type, ?Collection $prices = null): array
     {
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
         if (1 === $type && null === $prices) {

@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 class AppartmentService
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {
