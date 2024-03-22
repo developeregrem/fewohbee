@@ -194,6 +194,7 @@ class StatisticsController extends AbstractController
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
+        $invoiceStatus = $request->query->all('invoice-status');
 
         $result = [
             'labels' => [],
@@ -201,7 +202,7 @@ class StatisticsController extends AbstractController
         ];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['labels'][] = $y;
-            $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y);
+            $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y, $invoiceStatus);
         }
 
         return new JsonResponse(
@@ -214,6 +215,7 @@ class StatisticsController extends AbstractController
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
+        $invoiceStatus = $request->query->all('invoice-status');
 
         $result = [
             'labels' => [],
@@ -227,7 +229,7 @@ class StatisticsController extends AbstractController
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $tmpResult = [
                 'label' => $y,
-                'data' => $ss->loadTurnoverForMonth($is, $y),
+                'data' => $ss->loadTurnoverForMonth($is, $y, $invoiceStatus),
             ];
             $result['datasets'][] = $tmpResult;
         }

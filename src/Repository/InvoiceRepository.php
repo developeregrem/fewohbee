@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -51,16 +53,16 @@ class InvoiceRepository extends EntityRepository
     /**
      * @return Invoice[]
      */
-    public function getInvoicesForYear(\DateTimeInterface $start, \DateTimeInterface $end, int $status = 2): array
+    public function getInvoicesForYear(\DateTimeInterface $start, \DateTimeInterface $end, array $status): array
     {
         $q = $this
             ->createQueryBuilder('i')
             ->select('i, ip, ia')
             ->leftJoin('i.positions', 'ip')
             ->leftJoin('i.appartments', 'ia')
-            ->where('i.status = :status')
+            ->where('i.status IN (:status)')
             ->andWhere('i.date >= :start and i.date <= :end')
-            ->setParameter('status', $status)
+            ->setParameter('status', $status, ArrayParameterType::INTEGER)
             ->setParameter('start', $start)
             ->setParameter('end', $end)
         ;
