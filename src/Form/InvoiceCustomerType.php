@@ -17,31 +17,31 @@ class InvoiceCustomerType extends AbstractType
         $builder
             ->add('salutation', TextType::class, [
                 'label' => 'customer.salutation',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('firstname', TextType::class, [
                 'label' => 'customer.firstname',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('lastname', TextType::class, [
                 'label' => 'customer.lastname',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('company', TextType::class, [
                 'label' => 'customer.company',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('address', TextType::class, [
                 'label' => 'customer.address',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('zip', TextType::class, [
                 'label' => 'customer.zip',
-//                'required' => false,
+                'required' => false,
             ])
             ->add('city', TextType::class, [
                 'label' => 'customer.city',
-//                'required' => false,
+                'required' => false,
             ])
         ;
     }
