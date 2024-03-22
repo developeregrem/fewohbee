@@ -69,7 +69,7 @@ class StatisticsService
     /**
      * Calculates the turnover for the given period based on invoices.
      */
-    private function loadTurnover(InvoiceService $is, \DateTimeInterface $start, \DateTimeInterface $end, int $status = 2): float
+    private function loadTurnover(InvoiceService $is, \DateTimeInterface $start, \DateTimeInterface $end, array $status): float
     {
         $turnover = 0.0;
         $invoices = $this->em->getRepository(Invoice::class)->getInvoicesForYear($start, $end, $status);
@@ -95,7 +95,7 @@ class StatisticsService
         return $turnover;
     }
 
-    public function loadTurnoverForYear(InvoiceService $is, int $year, int $status = 2): float
+    public function loadTurnoverForYear(InvoiceService $is, int $year, array $status): float
     {
         $start = new \DateTime($year.'-01-01');
         $end = new \DateTime($year.'-12-31');
@@ -103,7 +103,7 @@ class StatisticsService
         return $this->loadTurnover($is, $start, $end, $status);
     }
 
-    public function loadTurnoverForMonth(InvoiceService $is, int $year, int $status = 2): array
+    public function loadTurnoverForMonth(InvoiceService $is, int $year, array $status): array
     {
         $result = [];
         for ($i = 1; $i <= 12; ++$i) {
