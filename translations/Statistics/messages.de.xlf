@@ -52,7 +52,7 @@
             </trans-unit>
             <trans-unit id="statistics.turnover.help">
                 <source>statistics.turnover.help</source>
-                <target>Umsätze basieren auf Rechnungen (brutto) mit Rechnungsdatum im jeweiligen Monat und Status: bezahlt.</target>
+                <target>Umsätze basieren auf Rechnungen (brutto) mit Rechnungsdatum im jeweiligen Monat und dem folgenden Status:</target>
             </trans-unit>
         </body>
     </file>
