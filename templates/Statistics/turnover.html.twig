@@ -1,3 +1,4 @@
+
 {% extends 'base.html.twig' %}
 
 {% block title %}
@@ -90,13 +91,33 @@
                 <span class="text-info"><i class="fas fa-info-circle"></i> {{ 'statistics.turnover.help'|trans }}</span>
             </div>
         </div>
+        <div class="row mt-3">
+                <form id="invoice-status" role="form">
+                    <div class="form-check form-switch form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-1" name="invoice-status[]" value="1">
+                        <label class="form-check-label" for="invoice-status-1">{{ 'invoice.status.notpayed'|trans }}</label>
+                    </div>
+                    <div class="col form-check form-switch form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-3" name="invoice-status[]" value="3">
+                        <label class="form-check-label" for="invoice-status-3">{{ 'invoice.status.prepayment'|trans }}</label>
+                    </div>
+                    <div class="col form-check form-switch form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-2" name="invoice-status[]" value="2" checked="checked">
+                        <label class="form-check-label" for="invoice-status-2">{{ 'invoice.status.payed'|trans }}</label>
+                    </div>
+                    <div class="col form-check form-switch form-check-inline">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-4" name="invoice-status[]" value="4">
+                        <label class="form-check-label" for="invoice-status-4">{{ 'invoice.status.canceled'|trans }}</label>
+                    </div>
+                </form>
 
+        </div>
     </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.3.0.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.4.2.js"></script>
 {% endblock %}
 
 {% block bodyjs %}
@@ -122,13 +143,14 @@
 
             loaderWrap.append(loaderNode);
 
-            let startYear = parseInt(document.getElementById(type + "StartYear").value);
-            let endYear = parseInt(document.getElementById(type + "EndYear").value);
+            let startYear = parseInt(document.getElementById(type + "StartYear").value).toString();
+            let endYear = parseInt(document.getElementById(type + "EndYear").value).toString();
 
-            const source = await fetch(url + '?' + new URLSearchParams({
-                yearStart: startYear,
-                yearEnd: endYear
-            }));
+            let formData = new URLSearchParams(new FormData(document.querySelector("#invoice-status")));
+            formData.append("yearStart", startYear);
+            formData.append("yearEnd", endYear);
+
+            const source = await fetch(url + '?' + formData);
 
             const data = await source.json();
             cfg.data.labels = data.labels;
@@ -179,6 +201,13 @@
         document.querySelectorAll(' #monthlyStartYear, #monthlyEndYear, #refreshMonthly').forEach(item => {
             item.addEventListener('change', event => {
                 drawMonthlyChart();
+            });
+        });
+        document.querySelectorAll('input[name="invoice-status[]"]').forEach(item => {
+            item.addEventListener('change', event => {
+                console.log('moo');
+                drawMonthlyChart();
+                drawYearlyChart();
             });
         });
     </script>

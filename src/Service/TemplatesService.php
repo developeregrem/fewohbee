@@ -29,8 +29,8 @@ use Twig\Environment;
 
 class TemplatesService
 {
-    private $em = null;
-    private $app = null;
+    private $em;
+    private $app;
     private $requestStack;
     private $mpdfs;
     private $twig;

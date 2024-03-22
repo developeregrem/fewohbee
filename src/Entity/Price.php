@@ -260,8 +260,6 @@ class Price
     /**
      * Add reservationOrigins.
      *
-     * @param \App\Entity\ReservationOrigin $reservationOrigins
-     *
      * @return Price
      */
     public function addReservationOrigin(ReservationOrigin $reservationOrigins)
@@ -275,8 +273,6 @@ class Price
 
     /**
      * Remove reservationOrigins.
-     *
-     * @param \App\Entity\ReservationOrigin $reservationOrigins
      */
     public function removeReservationOrigin(ReservationOrigin $reservationOrigins)
     {
@@ -290,7 +286,7 @@ class Price
     /**
      * Get reservationOrigins.
      *
-     * @return \Doctrine\Common\Collections\Collection
+     * @return Collection
      */
     public function getReservationOrigins()
     {
