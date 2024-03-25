@@ -16,6 +16,15 @@ button.hide: Hide
 button.save: Save
 copy.sucess: Copied text to clipboard!
 copy.text: Copy
+first.apartments: 'Creating the rooms:'
+first.categories: 'Creating the room categories:'
+first.origin: 'Creating the reservation origins:'
+first.prices: 'Creating the prices:'
+first.status: 'Creating the reservation status:'
+first.templates: 'Add templates:'
+first.txt: >-
+  FewohBee has been successfully installed. There are only a few steps left to
+  use the application.
 flash.access.denied: Access denied.
 flash.invalidtoken: Invalid Token.
 flash.mandatory: Please fill in all required fields.
@@ -46,6 +55,7 @@ nav.settings: Settings
 nav.statistics: Statistics
 nav.status: Reservation Status
 nav.templates: Templates
+nav.turnover: Turnovers
 nav.user: Users
 nav.user.add: Add User
 nav.user.overview: Users Overview

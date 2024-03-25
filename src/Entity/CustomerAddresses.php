@@ -299,8 +299,6 @@ class CustomerAddresses
     /**
      * Add customer.
      *
-     * @param \App\Entity\Customer $customer
-     *
      * @return CustomerAddresses
      */
     public function addCustomer(Customer $customer)
@@ -312,8 +310,6 @@ class CustomerAddresses
 
     /**
      * Remove customer.
-     *
-     * @param \App\Entity\Customer $customer
      */
     public function removeCustomer(Customer $customer): void
     {

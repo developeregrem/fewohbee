@@ -21,7 +21,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class CashJournalService implements ITemplateRenderer
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {

@@ -170,6 +170,10 @@
                 <source>nav.origin</source>
                 <target>Reservierungsherkunft</target>
             </trans-unit>
+            <trans-unit id="nav.turnover">
+                <source>nav.turnover</source>
+                <target>Umsätze</target>
+            </trans-unit>
             <trans-unit id="nav.templates">
                 <source>nav.templates</source>
                 <target>Vorlagen</target>
@@ -214,6 +218,35 @@
                 <source>copy.sucess</source>
                 <target>Text in die Zwischenablage kopiert!</target>
             </trans-unit>
+            <trans-unit id="first.txt">
+                <source>first.txt</source>
+                <target>FewohBee wurde erfolgreich installiert. Es sind nur noch ein paar Schritte notwendig, um die Anwendung zu verwenden.</target>
+            </trans-unit>
+            <trans-unit id="first.origin">
+                <source>first.origin</source>
+                <target>Anlegen der Reservierungsherkunft:</target>
+            </trans-unit>
+            <trans-unit id="first.categories">
+                <source>first.categories</source>
+                <target>Anlegen der Zimmerkategorien:</target>
+            </trans-unit>
+            <trans-unit id="first.apartments">
+                <source>first.apartments</source>
+                <target>Anlegen der Zimmer:</target>
+            </trans-unit>
+            <trans-unit id="first.prices">
+                <source>first.prices</source>
+                <target>Anlegen der Preise:</target>
+            </trans-unit>
+            <trans-unit id="first.status">
+                <source>first.status</source>
+                <target>Anlegen des Reservierungsstatus:</target>
+            </trans-unit>
+            <trans-unit id="first.templates">
+                <source>first.templates</source>
+                <target>Vorlagen hinzufügen:</target>
+            </trans-unit>
+
         </body>
     </file>
 </xliff>

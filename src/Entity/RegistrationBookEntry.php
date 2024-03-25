@@ -245,17 +245,11 @@ class RegistrationBookEntry
         return $this;
     }
 
-    /**
-     * @return IDCardType|null
-     */
     public function getIdType(): ?IDCardType
     {
         return $this->idType;
     }
 
-    /**
-     * @param IDCardType|null $idType
-     */
     public function setIdType(?IDCardType $idType): void
     {
         $this->idType = $idType;

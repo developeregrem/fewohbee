@@ -52,8 +52,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Show single entity.
-     *
-     * @param $id
      */
     #[Route('/{id}/get', name: 'settings.templates.get', defaults: ['id' => '0'], methods: ['GET'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
@@ -121,8 +119,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * update entity end show update result.
-     *
-     * @param $id
      */
     #[Route('/{id}/edit', name: 'settings.templates.edit', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, Request $request, $id): Response
@@ -154,8 +150,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * delete entity.
-     *
-     * @param $id
      */
     #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['GET', 'DELETE'])]
     public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template): Response
@@ -186,8 +180,6 @@ class TemplatesServiceController extends AbstractController
 
     /**
      * Preview single entity.
-     *
-     * @param $id
      */
     #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
     public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id): Response

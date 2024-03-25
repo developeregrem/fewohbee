@@ -19,8 +19,12 @@
             <td>
                 {% if invoice.status == 1 %}
                     {{ 'invoice.status.notpayed'|trans }}
-                {% else %}
+                {% elseif invoice.status == 2 %}
                     {{ 'invoice.status.payed'|trans }}
+                {% elseif invoice.status == 3 %}
+                    {{ 'invoice.status.prepayment'|trans }}
+                {% else %}
+                    {{ 'invoice.status.canceled'|trans }}
                 {% endif %}
             </td>
             <td>

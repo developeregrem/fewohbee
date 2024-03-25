@@ -1,4 +1,6 @@
+{% set periodStartDate = timestamp2UTC(today) %}
 {% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
+{% set periodEndDate = timestamp2UTC(displayEndDate) %}
 {% use 'Reservations/_reservation_table_day.html.twig' %}
 <table class="table table-hover table-bordered table-reservation" id="reservation-table">
     <thead>
@@ -15,7 +17,7 @@
                 {% set tmpDate = tmpDate|date_modify("+1 hour") %}
             {% endif %}
             {% set curWeek = tmpDate|date('W') %}
-            {# add 2 to colcount since we are at the end of the displayed period 
+            {# add 2 to colcount since we are at the end of the displayed period
                but add it only if the last day is not a monday (last cw was already printed #}
             {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
             {# be aware that when the last cw is printed while we are on monday already #}
@@ -29,7 +31,7 @@
                 {% endif %}
             {% else %}
                 {% set colCount = colCount + 2 %}
-            {% endif %}         
+            {% endif %}
         {% endfor %}
     </tr>
     <tr class="table-days">
@@ -69,7 +71,7 @@
                 {% set holidayPopover = "" %}
                 {% set holidayCss = "" %}
             {% endif %}
-            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }} 
+            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}
                 style="width: {{ 100 / (intervall+1) }}%">{{ tmpDate|date('d') }}</th>
         {% endfor %}
     </tr>
@@ -136,7 +138,7 @@
                 tdStartDate = $(ui.selecting).attr("data-day");
                 tdStartAppartment = $(ui.selecting).attr("data-appartment");
                 lastTdNumber = $(ui.selecting).attr("data-tdnumber");
-            } else {                
+            } else {
                 var curAppartment = $(ui.selecting).attr("data-appartment");
                 // check if its not the same row
                 if(curAppartment !== tdStartAppartment) {
@@ -145,12 +147,12 @@
                 } else if($(ui.selecting).attr("data-tdnumber") !== lastTdNumber) {
                     // check if user selects over an existing reservation
                     $(ui.selecting).removeClass("ui-selectee");
-                    $(ui.selecting).removeClass("ui-selecting");                    
+                    $(ui.selecting).removeClass("ui-selecting");
                 } else if($(ui.selecting).attr("data-day") !== tdStartDate) {
                     // only if end is not the same day as start
                     tdEndDate = $(ui.selecting).attr("data-day");
                 }
-            }            
+            }
         },
         unselecting: function( event, ui ) {
             // only between an existing reservation

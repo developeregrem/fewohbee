@@ -105,7 +105,7 @@ class Template
      *
      * @return Template
      */
-    public function setTemplateType(TemplateType $templateType = null): static
+    public function setTemplateType(?TemplateType $templateType = null): static
     {
         $this->templateType = $templateType;
 

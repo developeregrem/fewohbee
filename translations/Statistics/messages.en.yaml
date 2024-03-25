@@ -1,8 +1,19 @@
-statistics.origin.description: Origin
-statistics.origin.monthly: Monthly Overview of Origin
-statistics.origin.title: Origin Title
-statistics.origin.yearly: Annual Overview of Origin
-statistics.utilization.description: Utilization
-statistics.utilization.monthly: Monthly Utilization
-statistics.utilization.title: Utilization
-statistics.utilization.yearly: Annual Overview of Utilization
+statistics:
+  origin:
+    description: Origin
+    monthly: Monthly Overview of Origin
+    title: Origin Title
+    yearly: Annual Overview of Origin
+  turnover:
+    description: Turnovers
+    help: >-
+      Turnover is based on invoices (gross) with invoice date in the respective
+      month and the following status:
+    monthly: monthly turnover
+    title: Turnovers
+    yearly: annual turnover
+  utilization:
+    description: Utilization
+    monthly: Monthly Utilization
+    title: Utilization
+    yearly: Annual Overview of Utilization

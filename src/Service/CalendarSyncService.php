@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/PHPClass.php to edit this template
+ */
+
 namespace App\Service;
 
 use App\Entity\Appartment;
@@ -19,18 +24,22 @@ use Symfony\Component\Uid\Uuid;
  */
 class CalendarSyncService
 {
+    private $em = null;
 
-    public function __construct(private readonly EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em)
     {
+        $this->em = $em;
     }
 
     public function initSync(Appartment $room): void
     {
-        $sync = new CalendarSync();
-        $sync->setApartment($room)
-             ->setUuid(Uuid::v4());
-        $this->em->persist($sync);
-        $this->em->flush();
+        if (null === $room->getCalendarSync()) {
+            $sync = new CalendarSync();
+            $sync->setApartment($room)
+                 ->setUuid(Uuid::v4());
+            $this->em->persist($sync);
+            $this->em->flush();
+        }
     }
 
     public function updateExportDate(CalendarSync $sync): void

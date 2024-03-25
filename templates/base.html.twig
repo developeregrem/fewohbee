@@ -7,16 +7,16 @@
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.1.3.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.3.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style_1.1.0.css">
     {% endblock %}
     {% block javascripts %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.6.0.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.1.1.min.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.4.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.1.3.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.3.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
@@ -48,6 +48,7 @@
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.utilization" %} active{% endif %}" href="{{ path('statistics.utilization') }}">{{ 'nav.utilization'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.origin" %} active{% endif %}" href="{{ path('statistics.origin') }}">{{ 'nav.origin'|trans }}</a>
+                                <a class="dropdown-item{% if activeRouteName starts with "statistics.turnover" %} active{% endif %}" href="{{ path('statistics.turnover') }}">{{ 'nav.turnover'|trans }}</a>
                             </div>
                         </li>
                         <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
@@ -104,7 +105,6 @@
     {% block flashMessage %}
         <div class="container mt-3">
             <div class="row" id="flash-message-container">
-                <div class="col">
                 {% for type, flashMessages in app.flashes %}
                     {% for flashMessage in flashMessages %}
                         <div class="col">
@@ -120,6 +120,13 @@
     {% endblock %}
 
     {% block content %}{% endblock %}
+
+    {% block firstSteps %}
+        {% if showFirstSteps is defined and showFirstSteps %}
+            {% include 'common/first_steps.html.twig' %}
+        {% endif %}
+    {% endblock %}
+
     <script>
         class Config {
             constructor() {
@@ -130,6 +137,8 @@
         }
         var config = new Config();
         var loader = '<img src="'+config.basePath+'/resources/images/ajax-loader.gif" />';
+        var loaderNode = document.createElement("img")
+        loaderNode.src = config.basePath+"/resources/images/ajax-loader.gif";
         var modalLoader = '<div class="modal-body">' + loader + '</div>';
     </script>
     {% block bodyjs %}

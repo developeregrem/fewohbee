@@ -51,6 +51,7 @@ class Invoice
         $this->positions = new ArrayCollection();
         $this->appartments = new ArrayCollection();
         $this->reservations = new ArrayCollection();
+        $this->status = 1; // not payed yet
     }
 
     public function getId()

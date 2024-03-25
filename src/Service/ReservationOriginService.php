@@ -20,12 +20,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class ReservationOriginService
 {
-    private $em = null;
+    private $em;
     private $requestStack;
 
-    /**
-     * @param Application $app
-     */
     public function __construct(EntityManagerInterface $em, RequestStack $requestStack)
     {
         $this->em = $em;
