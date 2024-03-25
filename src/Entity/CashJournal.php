@@ -201,8 +201,6 @@ class CashJournal
     /**
      * Add cashJournalEntry.
      *
-     * @param \App\Entity\CashJournalEntry $cashJournalEntry
-     *
      * @return CashJournal
      */
     public function addCashJournalEntry(CashJournalEntry $cashJournalEntry)
@@ -214,8 +212,6 @@ class CashJournal
 
     /**
      * Remove cashJournalEntry.
-     *
-     * @param \App\Entity\CashJournalEntry $cashJournalEntry
      */
     public function removeCashJournalEntry(CashJournalEntry $cashJournalEntry): void
     {

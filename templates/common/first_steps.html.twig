@@ -1,0 +1,18 @@
+<div class="container mt-3">
+    <div class="row" id="flash-message-container">
+        <div class="col">
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                {{ 'first.txt'|trans }}
+                <ul>
+                    <li>{{ 'first.origin'|trans }} <a href="{{ path('reservationorigin.overview') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.reservationorigin'|trans }}</a></li>
+                    <li>{{ 'first.categories'|trans }} <a href="{{ path('room_category_index') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.category'|trans }}</a></li>
+                    <li>{{ 'first.apartments'|trans }} <a href="{{ path('appartments.overview') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.appartment'|trans }}</a></li>
+                    <li>{{ 'first.prices'|trans }} <a href="{{ path('prices.overview') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.prices'|trans }}</a></li>
+                    <li>{{ 'first.status'|trans }} <a href="{{ path('reservation_status_index') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.status'|trans }}</a></li>
+                    <li>{{ 'first.templates'|trans }} <a href="{{ path('settings.templates.overview') }}">{{ 'nav.settings'|trans }} -> {{ 'nav.templates'|trans }}</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

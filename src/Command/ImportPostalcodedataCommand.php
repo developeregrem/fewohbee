@@ -20,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class ImportPostalcodedataCommand extends Command
 {
-    public function __construct(EntityManagerInterface $em, string $name = null)
+    public function __construct(EntityManagerInterface $em, ?string $name = null)
     {
         $this->em = $em;
         parent::__construct($name);

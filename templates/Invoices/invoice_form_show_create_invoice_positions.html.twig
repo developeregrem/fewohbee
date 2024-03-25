@@ -20,18 +20,18 @@
             <div class="col">
                 <h4 class="mt-4">{{ 'invoice.guest'|trans }}&nbsp;
                     <small>
-                    <a href="#" onclick="return changeInvoiceCustomer();"
+                    <a href="#" onclick="return getContentForModal('{{ path('invoices.show.change.customer') }}')"
                        title="{{ 'button.edit'|trans }}" class="text-secondary">
                         <i class="fas fa-edit"></i></a>
                     </small>
                 </h4>
-                {{ customer.salutation }} <br />
-                {{ customer.firstname }} {{ customer.lastname }}<br />
-                {% if customer.company is not empty %}
-                    {{ customer.company }}<br/>
+                {{ invoice.salutation }} <br />
+                {{ invoice.firstname }} {{ invoice.lastname }}<br />
+                {% if invoice.company is not empty %}
+                    {{ invoice.company }}<br/>
                 {% endif %}
-                {{ customer.address }}<br />
-                {{ customer.zip }} {{ customer.city }}
+                {{ invoice.address }}<br />
+                {{ invoice.zip }} {{ invoice.city }}
             </div>
         </div>
         <div class="row mt-4">
@@ -187,26 +187,4 @@ function selectReservation() {
     return false;
 }
 
-function changeInvoiceCustomer() {
-    var url = "{{ path('invoices.show.change.customer') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
 </script>

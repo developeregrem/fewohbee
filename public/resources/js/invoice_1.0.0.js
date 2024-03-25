@@ -14,6 +14,28 @@ function editApartmentInvoicePosition(elm) {
     return _doPost('#'+elm.id, elm.action);
 }
 
+function changeInvoiceCustomerSave(elm)  {
+    return _doPost('#'+elm.id, elm.action);
+}
+
+function fillCustomerRecommendation(elm) {
+    let values = elm.value.split("|");
+
+    // ignore first empty line
+    if(values.length === 1) {
+        return false;
+    }
+    document.getElementById("invoice_customer_salutation").value = values[0];
+    document.getElementById("invoice_customer_firstname").value = values[1];
+    document.getElementById("invoice_customer_lastname").value = values[2];
+    document.getElementById("invoice_customer_company").value = values[3];
+    document.getElementById("invoice_customer_address").value = values[4];
+    document.getElementById("invoice_customer_zip").value = values[5];
+    document.getElementById("invoice_customer_city").value = values[6];
+
+    return false;
+}
+
 function fillFieldsFromPriceCategory(elm) {    
     let values = elm.value.split("|");
     // first empty option is selected

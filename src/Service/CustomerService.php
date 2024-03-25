@@ -25,7 +25,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CustomerService implements ITemplateRenderer
 {
-
     public function __construct(private readonly EntityManagerInterface $em)
     {
     }

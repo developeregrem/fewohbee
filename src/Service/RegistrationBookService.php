@@ -22,7 +22,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class RegistrationBookService
 {
-    private $em = null;
+    private $em;
 
     public function __construct(EntityManagerInterface $em)
     {

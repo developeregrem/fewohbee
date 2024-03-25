@@ -118,8 +118,6 @@ class TemplateType
     /**
      * Add template.
      *
-     * @param \App\Entity\Template $template
-     *
      * @return TemplateType
      */
     public function addTemplate(Template $template)
@@ -131,8 +129,6 @@ class TemplateType
 
     /**
      * Remove template.
-     *
-     * @param \App\Entity\Template $template
      */
     public function removeTemplate(Template $template): void
     {

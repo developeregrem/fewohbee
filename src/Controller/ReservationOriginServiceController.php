@@ -27,8 +27,6 @@ class ReservationOriginServiceController extends AbstractController
 {
     /**
      * Index-View.
-     *
-     * @return mixed
      */
     #[Route('/', name: 'reservationorigin.overview', methods: ['GET'])]
     public function indexAction(ManagerRegistry $doctrine)
@@ -43,10 +41,6 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Show single entity.
-     *
-     * @param $id
-     *
-     * @return mixed
      */
     #[Route('/{id}/get', name: 'reservationorigin.get.origin', methods: ['GET'], defaults: ['id' => '0'])]
     public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
@@ -62,8 +56,6 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Show form for new entity.
-     *
-     * @return mixed
      */
     #[Route('/new', name: 'reservationorigin.new.origin', methods: ['GET'])]
     public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
@@ -81,8 +73,6 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * Create new entity.
-     *
-     * @return mixed
      */
     #[Route('/create', name: 'reservationorigin.create.origin', methods: ['POST'])]
     public function createAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request)
@@ -112,10 +102,6 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * update entity end show update result.
-     *
-     * @param $id
-     *
-     * @return mixed
      */
     #[Route('/{id}/edit', name: 'reservationorigin.edit.origin', methods: ['POST'], defaults: ['id' => '0'])]
     public function editAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
@@ -147,8 +133,6 @@ class ReservationOriginServiceController extends AbstractController
 
     /**
      * delete entity.
-     *
-     * @param $id
      *
      * @return string
      */

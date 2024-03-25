@@ -1,6 +1,6 @@
-<div id="calendar" class="row row-cols-4">
+<div id="calendar" class="row justify-content-md-center">
     {% for i in 1..12 %}
-    <div class="col">
+    <div class="col-md-auto">
         {% include 'Reservations/reservation_table_month.html.twig' with {year: year, month: i, apartment: apartment} %}
     </div>
     {% endfor %}

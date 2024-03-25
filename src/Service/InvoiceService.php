@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Customer;
-use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -22,13 +21,14 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class InvoiceService implements ITemplateRenderer
 {
-    private $em = null;
-    private $ps = null;
+    private $em;
+    private $ps;
 
     public function __construct(EntityManagerInterface $em, PriceService $ps)
     {
@@ -98,94 +98,6 @@ class InvoiceService implements ITemplateRenderer
             $vats[$key]['nettoFormated'] = number_format(round($vat['netto'], 2), 2, ',', '.');
         }
         ksort($vats);
-    }
-
-    public function getNewInvoiceForCustomer(Customer $customer, $number)
-    {
-        $invoice = new Invoice();
-        $address = $customer->getCustomerAddresses()[0];
-        $invoice->setNumber($number);
-        $invoice->setDate(new \DateTime());
-        $invoice->setSalutation($customer->getSalutation());
-        $invoice->setFirstname($customer->getFirstname());
-        $invoice->setLastname($customer->getLastname());
-        $invoice->setCompany($address->getCompany());
-        $invoice->setAddress($address->getAddress());
-        $invoice->setZip($address->getZip());
-        $invoice->setCity($address->getCity());
-        $invoice->setRemark('');
-        $invoice->setStatus(1);
-
-        return $invoice;
-    }
-
-    public function makeInvoiceCustomerArray(Customer $customer)
-    {
-        $arr = [];
-        $addresses = $customer->getCustomerAddresses();
-        // set first address as default address for invoice
-        if (count($addresses) > 0) {
-            $arr['company'] = $addresses[0]->getCompany();
-            $arr['address'] = $addresses[0]->getAddress();
-            $arr['zip'] = $addresses[0]->getZip();
-            $arr['city'] = $addresses[0]->getCity();
-        } else {
-            $arr['company'] = '';
-            $arr['address'] = '';
-            $arr['zip'] = '';
-            $arr['city'] = '';
-        }
-        $arr['salutation'] = $customer->getSalutation();
-        $arr['firstname'] = $customer->getFirstname();
-        $arr['lastname'] = $customer->getLastname();
-
-        return $arr;
-    }
-
-    public function makeInvoiceCustomerArrayFromRequest($request)
-    {
-        $arr = [];
-        $arr['salutation'] = $request->request->get('salutation');
-        $arr['firstname'] = $request->request->get('firstname');
-        $arr['lastname'] = $request->request->get('lastname');
-        $arr['company'] = $request->request->get('company');
-        $arr['address'] = $request->request->get('address');
-        $arr['zip'] = $request->request->get('zip');
-        $arr['city'] = $request->request->get('city');
-
-        return $arr;
-    }
-
-    public function makeInvoiceCustomerFromArray($arr)
-    {
-        $customer = new Customer();
-        $address = new CustomerAddresses();
-        $address->setCompany($arr['company']);
-        $address->setAddress($arr['address']);
-        $address->setZip($arr['zip']);
-        $address->setCity($arr['city']);
-        $customer->setSalutation($arr['salutation']);
-        $customer->setFirstname($arr['firstname']);
-        $customer->setLastname($arr['lastname']);
-        $customer->addCustomerAddress($address);
-
-        return $customer;
-    }
-
-    public function makeInvoiceCustomerFromInvoice(Invoice $invoice)
-    {
-        $customer = new Customer();
-        $address = new CustomerAddresses();
-        $address->setCompany($invoice->getCompany());
-        $address->setAddress($invoice->getAddress());
-        $address->setZip($invoice->getZip());
-        $address->setCity($invoice->getCity());
-        $customer->setSalutation($invoice->getSalutation());
-        $customer->setFirstname($invoice->getFirstname());
-        $customer->setLastname($invoice->getLastname());
-        $customer->addCustomerAddress($address);
-
-        return $customer;
     }
 
     /**
@@ -447,6 +359,94 @@ class InvoiceService implements ITemplateRenderer
         $newInvoicePositionsMiscArray[] = $position;
 
         $requestStack->getSession()->set('invoicePositionsMiscellaneous', $newInvoicePositionsMiscArray);
+    }
+
+    /**
+     * Sets the default customer.
+     */
+    public function setDefaultCustomer(Customer $customer, RequestStack $requestStack): void
+    {
+        $invoice = $this->getInvoiceInCreation($requestStack);
+        $invoice->setSalutation($customer->getSalutation());
+        $invoice->setFirstname($customer->getFirstname());
+        $invoice->setLastname($customer->getLastname());
+
+        $addresses = $customer->getCustomerAddresses();
+        // set first address as default address for invoice
+        if (count($addresses) > 0) {
+            $invoice->setCompany($addresses[0]->getCompany());
+            $invoice->setAddress($addresses[0]->getAddress());
+            $invoice->setZip($addresses[0]->getZip());
+            $invoice->setCity($addresses[0]->getCity());
+        }
+        $requestStack->getSession()->set('newInvoice', $invoice);
+    }
+
+    /**
+     * Returns the stored invoice used during creation process from session.
+     */
+    public function getInvoiceInCreation(RequestStack $requestStack): Invoice
+    {
+        if (!$requestStack->getSession()->has('newInvoice')) {
+            $requestStack->getSession()->set('newInvoice', new Invoice());
+        }
+
+        return $requestStack->getSession()->get('newInvoice');
+    }
+
+    /**
+     * Reset session variables used during invoice creation process.
+     */
+    public function unsetInvoiceInCreation(RequestStack $requestStack): void
+    {
+        $requestStack->getSession()->remove('invoiceInCreation');
+        $requestStack->getSession()->remove('invoicePositionsMiscellaneous');
+        $requestStack->getSession()->remove('invoicePositionsAppartments');
+        $requestStack->getSession()->remove('new-invoice-id');
+        $requestStack->getSession()->remove('invoiceDate');
+        $requestStack->getSession()->remove('newInvoice');
+    }
+
+    /**
+     * Returns a list of reservations that a connected with the current invoice creation process.
+     *
+     * @return Resrvation[]
+     */
+    public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
+    {
+        $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
+        $reservations = [];
+        foreach ($reservationIds as $reservationId) {
+            $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);
+        }
+
+        return $reservations;
+    }
+
+    /**
+     * Collect all unique bookers and customers for recommendation list.
+     *
+     * @param Reservation[] $reservations
+     *
+     * @return Customer[]
+     */
+    public function getCustomersForRecommendation(array|Collection $reservations): array
+    {
+        $result = [];
+        foreach ($reservations as $reservation) {
+            $booker = $reservation->getBooker();
+            $customers = $reservation->getCustomers();
+            foreach ($customers as $customer) {
+                if (!array_key_exists($customer->getId(), $result)) {
+                    $result[$customer->getId()] = $customer;
+                }
+            }
+            if (!array_key_exists($booker->getId(), $result)) {
+                $result[$booker->getId()] = $booker;
+            }
+        }
+
+        return $result;
     }
 
     /**

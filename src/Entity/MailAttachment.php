@@ -12,7 +12,7 @@ namespace App\Entity;
 class MailAttachment
 {
     private string $body;
-    private string$name;
+    private string $name;
     private string $contentType;
 
     public function __construct(string $body, string $name, string $contentType)

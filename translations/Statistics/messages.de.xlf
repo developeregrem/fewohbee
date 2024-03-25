@@ -34,6 +34,26 @@
                 <source>statistics.origin.yearly</source>
                 <target>jährliche Herkunftsübersicht</target>
             </trans-unit>
+            <trans-unit id="statistics.turnover.title">
+                <source>statistics.turnover.title</source>
+                <target>Umsätze</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.description">
+                <source>statistics.turnover.description</source>
+                <target>Umsätze</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.monthly">
+                <source>statistics.turnover.monthly</source>
+                <target>monatliche Umsätze</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.yearly">
+                <source>statistics.turnover.yearly</source>
+                <target>jährliche Umsätze</target>
+            </trans-unit>
+            <trans-unit id="statistics.turnover.help">
+                <source>statistics.turnover.help</source>
+                <target>Umsätze basieren auf Rechnungen (brutto) mit Rechnungsdatum im jeweiligen Monat und dem folgenden Status:</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

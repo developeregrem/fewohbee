@@ -39,7 +39,7 @@ class UserService
         return $this->hasher->hashPassword($user, $password);
     }
 
-    public function isPasswordValid(string $password, User $user, FormInterface $form = null, $pwField = 'password'): bool
+    public function isPasswordValid(string $password, User $user, ?FormInterface $form = null, $pwField = 'password'): bool
     {
         $success = true;
         // check password during create and when it's not empty during edit

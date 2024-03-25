@@ -26,7 +26,7 @@ use Yasumi\Yasumi;
 class CalendarService
 {
     /* @var $holidays AbstractProvider */
-    private static $holidays = null;
+    private static $holidays;
 
     public function __construct(private TranslatorInterface $translator)
     {
@@ -175,7 +175,7 @@ class CalendarService
                 'DTSTART;VALUE=DATE:'.$resevation->getStartDate()->format('Ymd')."\r\n".
                 'DTEND;VALUE=DATE:'.$endDate->format('Ymd')."\r\n".
                 // the date of the cration of this ics file
-                'DTSTAMP: '.date('Ymd').'T'.date('His')."Z\r\n".
+                'DTSTAMP:'.date('Ymd').'T'.date('His')."Z\r\n".
                 'UID:'.$resevation->getUuid()->toBase32()."@fewohbee\r\n".
                 // the date of the creation of the reservation itself
                 'CREATED:'.$resevation->getReservationDate()->format('Ymd').'T'.$resevation->getReservationDate()->format('His')."Z\r\n".
