@@ -109,6 +109,10 @@ body {
     background-color: #EEE !important;
 }
 
+#reservation-table th,td {
+    background-color: transparent !important;
+}
+
 #reservation-table .room-info {
     white-space: nowrap;
     vertical-align: middle;
