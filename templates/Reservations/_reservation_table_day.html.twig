@@ -38,14 +38,14 @@
                     {% endif %}
                     {# if whe have 2 reservations at one day we must decrase j in order to look at this date twice
                         but only if reservation is not at the end of the displayed period, otherwise we draw two unneeded tds in the last col #}
-                    {% if printSpacerAfter != true and reservation.enddate.timestamp <= displayEndDate %}
+                    {% if printSpacerAfter != true and date2UTC(reservation.endDate) <= periodEndDate %}
                         {% set j = j - 1 %}
                     {% endif %}
                     {# we have to add one colspan if reservation started earlier or ends later than the displayed period #}
-                    {% if reservation.startDate.timestamp < today %}
+                    {% if date2UTC(reservation.startDate) < periodStartDate %}
                         {% set colspan = colspan + 1 %}
                     {% endif %}
-                    {% if reservation.endDate.timestamp > displayEndDate %}
+                    {% if date2UTC(reservation.endDate) > periodEndDate %}
                         {% set colspan = colspan + 1 %}
                     {% endif %}
 
@@ -59,7 +59,7 @@
                     {# popover #}
                     {% use 'Reservations/_resevation_popover.html.twig' %}
 
-                    <td class="reservation text-center" colspan="{{ colspan }}">
+                    <td class="reservation text-center" colspan="{{ colspan }}" style="width: {{ (50 / (intervall+1)) * colspan }}%">
                         <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                              class="reservation-inner text-center"
                              title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
