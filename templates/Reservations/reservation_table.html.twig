@@ -102,8 +102,8 @@
         </tr>
         {% if appartment.multipleOccupancy and multipleReservations|length > 1 %}
             {% for i in 1..multipleReservations|length-1 %}
-            <tr>
-                <td class="border-start-0"></td>
+            <tr class="border-top-0">
+                <td></td>
                 {% with %}
                     {% set reservations = attribute(multipleReservations, i) %}
                     {{ block('table_day') }}
