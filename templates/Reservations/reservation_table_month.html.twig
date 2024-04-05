@@ -6,6 +6,11 @@
 {% set showCalenderWeek = true %}
 {% set daysInMonth = startDate|date('t') %}
 {% set reservations = get_reservations_for_period(startDate.timestamp, daysInMonth-1, apartment) %}
+{# for the moment we ignore multiple reservations for one apartment for the same period #}
+{% if apartment.multipleOccupancy %}
+    {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
+    {% set reservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}
+{% endif %}
 {# popover #}                        
 {% use 'Reservations/_resevation_popover.html.twig' %}
 <table class="table table-hover table-bordered table-reservation" id="reservation-table-month">
@@ -18,7 +23,7 @@
     <tr>    
     {# placeholder for calendarweek #}
     {% if showCalenderWeek %}
-        <th class="text-center text-muted"><small>W</small</th>
+        <th class="text-center text-muted"><small>W</small></th>
     {% endif %}
     {# print week days #}
     {% for i in 0..6 %}         
