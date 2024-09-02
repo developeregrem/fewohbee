@@ -19,6 +19,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
+use App\Entity\CustomerAddresses;
 use App\Interfaces\ITemplateRenderer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -410,7 +411,7 @@ class ReservationService implements ITemplateRenderer
         // params need to be an array containing a list of Reservation Objects
         $params = [
                 'reservation1' => $param[0],
-                'address' => (0 == count($param[0]->getBooker()->getCustomerAddresses()) ? null : $param[0]->getBooker()->getCustomerAddresses()[0]),
+                'address' => (0 == count($param[0]->getBooker()->getCustomerAddresses()) ? new CustomerAddresses() : $param[0]->getBooker()->getCustomerAddresses()[0]),
                 'reservations' => $param,
             ];
         $prices = $this->getTotalPricesForTemplate($param);
