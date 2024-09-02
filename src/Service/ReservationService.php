@@ -78,13 +78,14 @@ class ReservationService implements ITemplateRenderer
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {
-            $available = $this->isApartmentAvailable($start, $end, $ap);
+            $available = $this->isApartmentAvailable($start, $end, $ap, 2);
             if ($available) {
                 $availableApartments[] = $ap;
             }
         }
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
 
+        // during creation process remove reservation that is already in session
         if (0 != count($newReservationsInformationArray)) {
             foreach ($availableApartments as $apartment) {
                 if (!$this->isAppartmentAlreadyBookedInCreationProcess($newReservationsInformationArray, $apartment, $start, $end)) {
@@ -167,7 +168,7 @@ class ReservationService implements ITemplateRenderer
     public function updateReservation(Request $request, Reservation $reservation) : bool
     {
         $apartmentId = $request->request->get('aid');
-        $persons = $request->request->get('persons');
+        $persons = (int)$request->request->get('persons');
         $status = $request->request->get('status');
         $start = new \DateTime($request->request->get('from'));
         $end = new \DateTime($request->request->get('end'));
@@ -184,7 +185,7 @@ class ReservationService implements ITemplateRenderer
             $end = $tmp;
         }
 
-        $available = $this->isApartmentAvailable($start, $end, $apartment, $reservation);
+        $available = $this->isApartmentAvailable($start, $end, $apartment, $persons, $reservation);
 
         // update reservation if no other stands in conflict
         if ($available) {
@@ -210,10 +211,11 @@ class ReservationService implements ITemplateRenderer
      * @param Reservation|null $reservation
      * @return bool
      */
-    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, Reservation $reservation = null) : bool
+    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, Reservation $reservation = null) : bool
     {
         $reservationsForApartment = $this->em->getRepository(Reservation::class)
             ->loadReservationsForPeriodForSingleAppartment2($start, $end, $apartment);
+
         // during update process we ignore the reservation that we want to update
         if(null !== $reservation) {
             $reservationsForApartment = array_filter($reservationsForApartment,
@@ -225,13 +227,13 @@ class ReservationService implements ITemplateRenderer
             if(!$apartment->isMultipleOccupancy()) {
                 return false;
             }
-            $bedsSum = 0;
+
             foreach ($reservationsForApartment as $reservationForApartment) {
-                $bedsSum += $reservationForApartment->getPersons();
+                $numberOfPersons += $reservationForApartment->getPersons();
             }
             // room has still some free beds
             // todo over booking is possible because number of beds for current reservation is not taken into account
-            if($bedsSum < $apartment->getBedsMax()) {
+            if($numberOfPersons <= $apartment->getBedsMax()) {
                 return true;
             } else {
                 return false;
