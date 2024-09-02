@@ -183,7 +183,7 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $reservations = [];
-        $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation');
+        $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation', []);
 
         $potentialReservations = $em->getRepository(
             Reservation::class
@@ -209,7 +209,6 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $reservations = [];
-        $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation');
 
         $customer = $em->getRepository(Customer::class)->findOneByLastname(
             $request->request->get('lastname')
@@ -220,7 +219,7 @@ class InvoiceServiceController extends AbstractController
                 Reservation::class
             )->loadReservationsWithoutInvoiceForCustomer($customer);
 
-            $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation');
+            $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation', []);
 
             foreach ($potentialReservations as $reservation) {
                 if (!in_array($reservation->getId(), $newInvoiceInformationArray)) {
@@ -247,6 +246,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         if (null != $request->request->get('reservationid')) {
+            $newInvoiceInformationArray = $requestStack->getSession()->get('invoiceInCreation', []);
             $newInvoiceInformationArray[] = $request->request->get('reservationid');
             $requestStack->getSession()->set('invoiceInCreation', $newInvoiceInformationArray);
         }
