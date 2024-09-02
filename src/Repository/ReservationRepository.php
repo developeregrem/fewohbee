@@ -100,10 +100,10 @@ class ReservationRepository extends EntityRepository
             ->createQueryBuilder('u')
             ->select('u')
             ->where('u.appartment = :app ')
-            ->andWhere('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
-                .'(u.startDate <= :start AND u.endDate > :start AND u.endDate <= :end) OR'
-                .'(u.startDate >= :start AND u.startDate < :end AND u.endDate > :end) OR'
-                .'(u.startDate <= :start AND u.endDate >= :end))')
+            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
+                .'(u.startDate < :start AND u.endDate >= :start) OR'
+                .'(u.startDate <= :end AND u.endDate > :end) OR'
+                .'(u.startDate < :start AND u.endDate > :end))')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
