@@ -79,11 +79,11 @@ class AppTwigExtensions extends AbstractExtension
         }
     }
 
-    public function getReservationsForPeriodFilter($today, $intervall, $appartment)
+    public function getReservationsForPeriodFilter($today, $intervall, $apartment)
     {
-        $reservations = $this->em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartment($today, $intervall, $appartment);
-
-        return $reservations;
+        $start = new \DateTime(date('Y-m-d', $today));
+        $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
+        return $this->em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartment2($start, $end, $apartment);
     }
 
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start') : bool
