@@ -20,7 +20,7 @@
         "symfony/flex": "^2",
         "symfony/form": "7.0.*",
         "symfony/framework-bundle": "7.0.*",
-        "symfony/http-client": "7.0.*",
+        "symfony/http-client": "7.1.*",
         "symfony/intl": "7.0.*",
         "symfony/mailer": "7.0.*",
         "symfony/mime": "7.0.*",
