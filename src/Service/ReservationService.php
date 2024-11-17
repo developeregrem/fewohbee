@@ -79,7 +79,7 @@ class ReservationService implements ITemplateRenderer
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {
-            $available = $this->isApartmentAvailable($start, $end, $ap, 2);
+            $available = $this->isApartmentAvailable($start, $end, $ap, 99);    // todo get real number of persons
             if ($available) {
                 $availableApartments[] = $ap;
             }
@@ -224,6 +224,7 @@ class ReservationService implements ITemplateRenderer
                 ARRAY_FILTER_USE_BOTH);
         }
 
+        // check wheather multiple reserv ations are allowed and check if there is still place for new geuests in it
         if (count($reservationsForApartment) > 0) {
             if(!$apartment->isMultipleOccupancy()) {
                 return false;
