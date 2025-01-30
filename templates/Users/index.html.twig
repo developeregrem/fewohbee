@@ -100,7 +100,7 @@
 
     function doDeleteEntry(id) {
         let url = replacePlaceholder("{{ path('users.delete.user', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
+        return _doDelete('#entry-form-'+id, url);
     }
 
     function createNewUser() {

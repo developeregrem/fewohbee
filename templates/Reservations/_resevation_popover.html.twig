@@ -1,7 +1,8 @@
 
 {% block popTitle %}
     {% if reservation is defined and reservation is not null %}
-        {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname %}
+        {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname ~
+            " (" ~reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
         {{ popTitle }}
     {% endif %}
 {% endblock %}

@@ -20,6 +20,7 @@ doctrine:
                     charset: utf8mb4
                     collate: utf8mb4_unicode_ci
                 url: '%env(resolve:DATABASE_URL)%'
+                use_savepoints: true
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
         enable_lazy_ghost_objects: true

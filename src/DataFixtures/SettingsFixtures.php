@@ -96,7 +96,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         // create 10 room, 5 single, 5 double
         for ($i = 1; $i <= 10; ++$i) {
             $app = new Appartment();
-            $app->setNumber($i);
+            $app->setNumber((string)$i);
             $app->setObject($subsidiary);
             if ($i > 5) {
                 $app->setBedsMax(2);

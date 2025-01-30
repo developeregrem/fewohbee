@@ -74,10 +74,8 @@ class UserService
         return $success;
     }
 
-    public function deleteUser($id)
+    public function deleteUser(User $user): bool
     {
-        $user = $this->em->getRepository(User::class)->find($id);
-
         $this->em->remove($user);
         $this->em->flush();
 

@@ -43,7 +43,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
         return ['reservation', 'invoices'];
     }
 
-    public function getDependencies()
+    public function getDependencies(): array
     {
         return [
             SettingsFixtures::class,
