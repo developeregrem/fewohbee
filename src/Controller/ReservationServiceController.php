@@ -354,7 +354,7 @@ class ReservationServiceController extends AbstractController
             $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get('appartmentid'));
 
-            $isselactable = $rs->isApartmentSelectable($fromDate, $endDate, $room);
+            $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
                     $request->request->get('appartmentid'),
@@ -640,6 +640,9 @@ class ReservationServiceController extends AbstractController
                     // we need to fetch the entity again because it is not managed anymore by the entitymanager when loading from the session
                     $price = $em->getRepository(Price::class)->find($priceInCreation->getId());
                     $reservation->addPrice($price);
+                }
+                if(!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
+                    $this->addFlash('warning', 'reservation.flash.update.conflict.persons');
                 }
                 $em->persist($reservation);
             }

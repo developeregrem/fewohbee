@@ -83,7 +83,7 @@ class AppTwigExtensions extends AbstractExtension
     {
         $start = new \DateTime(date('Y-m-d', $today));
         $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
-        return $this->em->getRepository(Reservation::class)->loadReservationsForPeriodForSingleAppartment2($start, $end, $apartment);
+        return $this->em->getRepository(Reservation::class)->loadReservationsForApartment($start, $end, $apartment);
     }
 
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start') : bool
@@ -225,8 +225,14 @@ class AppTwigExtensions extends AbstractExtension
     {
         $result = [[]];
         $rowCount = 0;  // holds the current line for an overlapping reservation
+        $removedKeys = [];
         /* @var $reservation Reservation */
-        foreach ($reservations as $reservation) {
+        foreach ($reservations as $outerKey=>$reservation) {
+            // unset has no effect to outer loop and reservations will be still used here therefore we need to skip them
+            if(in_array($outerKey, $removedKeys)) {
+                continue;
+            }
+
             $start = new \DateTimeImmutable($reservation->getStartDate()->format('Y-m-d') . ' UTC');
             $end = new \DateTimeImmutable($reservation->getEndDate()->format('Y-m-d') . ' UTC');
             $lastRowEnd = $end;
@@ -238,6 +244,7 @@ class AppTwigExtensions extends AbstractExtension
                     $result[$rowCount][] = $compare;
                     $rowCount++;
                     unset($reservations[$key]);
+                    $removedKeys[] = $key;
                 } else if($lastRowEnd <= $start2) {
                     // otherwise check whether the reservation can be added to the same line (after the current one)
                     $resPosition = $this->getPositionOfReservation($result, $reservation);
@@ -245,6 +252,7 @@ class AppTwigExtensions extends AbstractExtension
                         $result[$resPosition][] = $compare;
                         $lastRowEnd = $end2;
                         unset($reservations[$key]);
+                        $removedKeys[] = $key;
                     }
                 }
             }

@@ -1,3 +1,6 @@
+{% if apartment.multipleOccupancy %}
+    <p><span class="text-info"><i class="fas fa-info-circle"></i> {{ 'reservation.table.view.yearly.multiple.hint'|trans }}</span></p>
+{% endif %}
 <div id="calendar" class="row justify-content-md-center">
     {% for i in 1..12 %}
     <div class="col-md-auto">
