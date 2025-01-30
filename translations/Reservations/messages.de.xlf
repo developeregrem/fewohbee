@@ -106,6 +106,10 @@
                 <source>reservation.flash.update.conflict</source>
                 <target>Bitte Zeitraum anpassen. Der gewählte Zeitraum steht im Konflikt mit einer anderen Reservierung dieses Zimmers.</target>
             </trans-unit>
+            <trans-unit id="reservation.flash.update.conflict.persons">
+                <source>reservation.flash.update.conflict.persons</source>
+                <target>Bitte Personenanzahl anpassen. Die Anzahl der Personen steht im Konflikt mit einer anderen Reservierung im gewählten Zeitraum.</target>
+            </trans-unit>
             <trans-unit id="reservation.flash.update.success">
                 <source>reservation.flash.update.success</source>
                 <target>Reservierung wurde erfolgreich bearbeitet.</target>
@@ -253,6 +257,10 @@
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.view.yearly.multiple.hint">
+                <source>reservation.table.view.yearly.multiple.hint</source>
+                <target>Diese Ansicht ist nicht optimiert für Zimmer mit Mehrfachbelegung. Bitte die tabellarische Ansicht nutzen.</target>
             </trans-unit>
             <trans-unit id="reservation.table.view.table">
                 <source>reservation.table.view.table</source>

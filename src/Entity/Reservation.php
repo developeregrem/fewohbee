@@ -79,7 +79,7 @@ class Reservation
         return $this->endDate;
     }
 
-    public function getPersons()
+    public function getPersons() : int
     {
         return $this->persons;
     }
@@ -127,7 +127,7 @@ class Reservation
         $this->endDate = $endDate;
     }
 
-    public function setPersons($persons): void
+    public function setPersons(int $persons): void
     {
         $this->persons = $persons;
     }

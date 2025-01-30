@@ -39,12 +39,14 @@ class ReservationService implements ITemplateRenderer
         $this->is = $is;
     }
 
-    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $appartment, \DateTimeInterface $start, \DateTimeInterface $end)
+    public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
     {
         foreach ($reservations as $reservation) {
-            if ($appartment->getId() == $reservation->getAppartmentId()) {
+            if ($apartment->getId() == $reservation->getAppartmentId()) {
                 $startReservation = strtotime($reservation->getStart());
                 $endReservation = strtotime($reservation->getEnd());
+                $persons = $reservation->getPersons();
+                $bedsMax = $apartment->getBedsMax();
 
                 $startDateToBeChecked = $start->getTimestamp();
                 $endDateToBeChecked = $end->getTimestamp();
@@ -53,8 +55,14 @@ class ReservationService implements ITemplateRenderer
                     (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked >= $endReservation))
                     || (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation))
                     || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked < $endReservation) && ($endDateToBeChecked >= $endReservation))
-                    || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation))
+                    || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation)
+                    )
                 ) {
+                    // still some space free in room
+                    if($apartment->isMultipleOccupancy() && ($persons < $bedsMax)) {
+                        return false;
+                    }
+
                     return true;
                 }
             }
@@ -79,11 +87,12 @@ class ReservationService implements ITemplateRenderer
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {
-            $available = $this->isApartmentAvailable($start, $end, $ap, 99);    // todo get real number of persons
+            $available = $this->isApartmentAvailable($start, $end, $ap, 0);
             if ($available) {
                 $availableApartments[] = $ap;
             }
         }
+        
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
 
         // during creation process remove reservation that is already in session
@@ -126,7 +135,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
             $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
             $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
-            $reservation->setPersons($reservationInformation->getPersons());
+            $reservation->setPersons((int)$reservationInformation->getPersons());
 
             if (isset($customer)) {
                 $reservation->setBooker($customer);
@@ -215,8 +224,8 @@ class ReservationService implements ITemplateRenderer
     public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, Reservation $reservation = null) : bool
     {
         $reservationsForApartment = $this->em->getRepository(Reservation::class)
-            ->loadReservationsForPeriodForSingleAppartment2($start, $end, $apartment);
-
+            ->loadReservationsForApartmentWithoutStartEnd($start, $end, $apartment);
+        
         // during update process we ignore the reservation that we want to update
         if(null !== $reservation) {
             $reservationsForApartment = array_filter($reservationsForApartment,
@@ -224,7 +233,7 @@ class ReservationService implements ITemplateRenderer
                 ARRAY_FILTER_USE_BOTH);
         }
 
-        // check wheather multiple reserv ations are allowed and check if there is still place for new geuests in it
+        // check wheather multiple reservations are allowed and check if there is still place for new geuests in it
         if (count($reservationsForApartment) > 0) {
             if(!$apartment->isMultipleOccupancy()) {
                 return false;

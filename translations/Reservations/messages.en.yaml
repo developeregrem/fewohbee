@@ -26,6 +26,9 @@ reservation.flash.delete.success: Reservation has been successfully deleted.
 reservation.flash.update.conflict: >-
   Please adjust the period. The selected period conflicts with another
   reservation of this room.
+reservation.flash.update.conflict.persons: >-
+  Please adjust the number of persons. The number of persons conflicts with
+  another reservation in the selected period.
 reservation.flash.update.customeralreadyinlist: The guest has already been added to the room.
 reservation.flash.update.success: Reservation has been successfully updated.
 reservation.flash.update.toomuchcustomers: No more guests can be assigned!
@@ -65,4 +68,7 @@ reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View
 reservation.table.view.yearly: Annual View
+reservation.table.view.yearly.multiple.hint: >-
+  This view is not optimized for rooms with multiple occupancy. Please use the
+  tabular view.
 reservation.templates.availableprices: existing invoices

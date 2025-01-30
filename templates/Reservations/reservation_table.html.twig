@@ -90,6 +90,9 @@
         {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
         {% set emptyTdNr = 0 %}
         {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
+        {% if appartment.multipleOccupancy %} 
+            {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
+        {% endif %}
         <tr>
             <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
                 {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
@@ -124,7 +127,7 @@
         html: true,
         trigger: 'hover'
     });
-    $('.room-info').popover();
+    $('.room-info').popover({html: true});
     $('.holiday-info').popover();
 
     $( ".table-reservation" ).selectable({

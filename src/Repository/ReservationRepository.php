@@ -16,34 +16,6 @@ use App\Entity\Appartment;
  */
 class ReservationRepository extends EntityRepository
 {
-    public function loadReservationsForPeriodForSingleAppartment($startDate, $period, \App\Entity\Appartment $appartment) : ?array
-    {
-        $start = date('Y-m-d', $startDate);
-        $end = date('Y-m-d', $startDate + ($period * 3600 * 24));
-
-        $q = $this
-            ->createQueryBuilder('u')
-            ->select('u')
-            ->where('u.appartment = :app ')
-            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
-                .'(u.startDate < :start AND u.endDate >= :start) OR'
-                .'(u.startDate <= :end AND u.endDate > :end) OR'
-                .'(u.startDate < :start AND u.endDate > :end))')
-            ->setParameter('start', $start)
-            ->setParameter('end', $end)
-            ->setParameter('app', $appartment->getId())
-            ->addOrderBy('u.endDate', 'ASC')
-            ->getQuery();
-
-        $reservations = null;
-        try {
-            $reservations = $q->getResult();
-        } catch (NoResultException $e) {
-        }
-
-        return $reservations;
-    }
-
     public function loadReservationsForPeriod($startDate, $endDate)
     {
         $start = date('Y-m-d', strtotime($startDate));
@@ -94,7 +66,10 @@ class ReservationRepository extends EntityRepository
         || is_subclass_of($class, $this->getEntityName());
     }
 
-    public function loadReservationsForPeriodForSingleAppartment2(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
+    /**
+     * Loads reservations that fits into the period and will include reservations that end at the given start date or starts at the given end date.
+     */
+    public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
     {
         $q = $this
             ->createQueryBuilder('u')
@@ -103,6 +78,34 @@ class ReservationRepository extends EntityRepository
             ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
                 .'(u.startDate < :start AND u.endDate >= :start) OR'
                 .'(u.startDate <= :end AND u.endDate > :end) OR'
+                .'(u.startDate < :start AND u.endDate > :end))')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('app', $apartment->getId())
+            ->addOrderBy('u.endDate', 'ASC')
+            ->getQuery();
+
+        $reservations = [];
+        try {
+            $reservations = $q->getResult();
+        } catch (NoResultException $e) {
+        }
+
+        return $reservations;
+    }
+
+    /**
+     * Loads only reservations that fits into the given period. A reservation which ends at the start date or starts at the end date will be ignored
+     */
+    public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
+    {
+        $q = $this
+            ->createQueryBuilder('u')
+            ->select('u')
+            ->where('u.appartment = :app ')
+            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
+                .'(u.startDate < :start AND u.endDate > :start) OR'
+                .'(u.startDate < :end AND u.endDate > :end) OR'
                 .'(u.startDate < :start AND u.endDate > :end))')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
