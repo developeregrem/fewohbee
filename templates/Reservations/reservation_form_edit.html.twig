@@ -5,7 +5,7 @@
                 {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
         </div>
-        <form id="reservation-period">
+        <form id="reservation-period" data-target="{{ path('reservations.edit.reservation.change', {id: reservation.id}) }}">
             <div class="row">
                 <div class="col">
                     <input type="date" class="form-control" id="from" name="from"
@@ -105,7 +105,7 @@
         }
         return false;
     }
-    function editUpdateReservation(appartmentId, mode) {
+    function editUpdateReservation(appartmentId) {
         var reservationId = {{ reservation.id }};
         var options = "status=" + $("#appartment-" + appartmentId).find("#status :selected").val()
                 + "&persons=" + $("#appartment-" + appartmentId).find("#persons :selected").val();
@@ -113,19 +113,15 @@
         $("#available-appartments").html("");
 
         if (($("#from").val() !== '') && ($("#end").val() !== '')) {
-            if (mode === 'changeAppartment')
-                var url = "{{ path('reservations.edit.appartment.change') }}";
-            else
-                var url = "{{ path('reservations.edit.reservation.change') }}";
-            var content = '<div class="modal-body">' +
+            let url = document.getElementById("reservation-period").dataset.target;
+            let content = '<div class="modal-body">' +
                     '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
                     '</div>';
 
             $.ajax({
                 url: url,
                 type: "post",
-                data: (options + "&id=" + reservationId + "&aid=" + appartmentId + "&from=" + $("#from").val() + "&end=" + $("#end").val() + "&" + $("#reservation-remark").serialize()
-                        + "&" + $("#reservation-origin").serialize()),
+                data: (options + "&id=" + reservationId + "&aid=" + appartmentId + "&from=" + $("#from").val() + "&end=" + $("#end").val()),
                 beforeSend: function () {
                     $("#modal-content-ajax").html(content);
                 },
@@ -134,8 +130,6 @@
                 },
                 success: function (data) {
                     $("#modal-content-ajax").html(data);
-                    //$("#from, .dateFrom").datepicker(fromOptions);
-                    //$("#end, .dateEnd").datepicker(endOptions);
                     getNewTable();
                 }
             });

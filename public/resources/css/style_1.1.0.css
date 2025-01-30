@@ -79,10 +79,10 @@ body {
 }
 
 .table-reservation .ui-selecting { 
-    background: #FECA40; 
+    background: #FECA40 !important;
 }
 .table-reservation .ui-selected { 
-    background: #F39814; 
+    background: #F39814;
 }
 
 /* reset 2px border of tbody */
@@ -107,6 +107,15 @@ body {
     bottom: -5000px;
     z-index: -1;
     background-color: #EEE !important;
+}
+
+#reservation-table th,td {
+    background-color: transparent !important;
+}
+
+/* remove bottom border of tr for multiple reservations of one apartment (select tr where the next tr has border-top-0 class) */
+#reservation-table tr:has( + .border-top-0) {
+    border-bottom: 0 !important;
 }
 
 #reservation-table .room-info {

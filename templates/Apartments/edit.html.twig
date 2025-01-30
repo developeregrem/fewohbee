@@ -1,4 +1,4 @@
-<form id="entry-form-{{ appartment.id }}" role="form" onsubmit="return saveAppartment({{ appartment.id }})">
+{{ form_start(form, {'attr': {'id':'entry-form-'~apartment.id, 'onsubmit':'return saveAppartment('~ apartment.id ~');'} }) }}
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
@@ -6,7 +6,7 @@
             <div class="col">
                 <h4 class="pb-2">
                     <small>
-                    <a href="#" onclick="return enableEditForm({{ appartment.id }})"
+                    <a href="#" onclick="return enableEditForm({{ apartment.id }})"
                        title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>
@@ -14,14 +14,14 @@
             </div>
         </div>
         <div class="row mt-3">
-            <div class="col"> 
-                {% include 'Appartments/appartment_form_input_fields.html.twig' %}
+            <div class="col">                             
+                {{ include('Apartments/_form.html.twig') }}
             </div>
         </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ appartment.id }}"
-                class="btn btn-primary d-none">
-    </div>            
-</form>
+        <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ apartment.id }}"
+               class="btn btn-primary d-none"/>
+    </div>
+{{ form_end(form) }}

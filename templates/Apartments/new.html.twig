@@ -1,11 +1,15 @@
-<form id="entry-form-new" role="form" onsubmit="return createNewAppartment()">
+{{ form_start(form, {'attr': {'id':'entry-form-new', 'onsubmit':'return createNewApartment();'} }) }}
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
-        {% include 'Appartments/appartment_form_input_fields.html.twig' %}
+        <div class="row">
+            <div class="col">                             
+                {{ include('Apartments/_form.html.twig') }}
+            </div>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
-</form>
+{{ form_end(form) }}

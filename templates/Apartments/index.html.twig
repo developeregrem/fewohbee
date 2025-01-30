@@ -29,24 +29,24 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for appartment in appartments %}
+                    {% for apartment in apartments %}
                         <tr>
-                            <td>{{ appartment.number }}</td>
-                            <td>{{ appartment.description }}</td>
-                            <td>{{ appartment.bedsmax }}</td>
+                            <td>{{ apartment.number }}</td>
+                            <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}</td>
+                            <td>{{ apartment.bedsmax }}</td>
                             <td>
                                 <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="getEntry({{ appartment.id }})" class="fas fa-info-circle"></i></a>
+                                    <i onclick="getEntry({{ apartment.id }})" class="fas fa-info-circle"></i></a>
                                 <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="editEntry({{ appartment.id }})" class="fas fa-edit"></i></a>
+                                    <i onclick="editEntry({{ apartment.id }})" class="fas fa-edit"></i></a>
                                 <a href="#" title="{{ 'calendar.sync.title'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="getContentForModal('{{ path('apartments.sync.edit', {'id': appartment.calendarSync.id }) }}', '{{ 'calendar.sync.title'|trans }}')" class="fas fa-calendar-check"></i></a>
+                                    <i onclick="getContentForModal('{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id }) }}', '{{ 'calendar.sync.title'|trans }}')" class="fas fa-calendar-check"></i></a>
                                 <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="deleteEntry({{ appartment.id }})" class="fas fa-trash-alt"></i></a>
+                                    <i onclick="deleteEntry({{ apartment.id }})" class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
-                        <tr id="entry-{{ appartment.id }}" class="d-none">
-                            <td colspan="6" id="entry-cell-{{ appartment.id }}">
+                        <tr id="entry-{{ apartment.id }}" class="d-none">
+                            <td colspan="6" id="entry-cell-{{ apartment.id }}">
                                 <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                             </td>
                         </tr>
@@ -75,23 +75,23 @@
     });        
 
     function showCreateAppartmentForm() {
-        getContentForModal("{{ path('appartments.new.appartment') }}");
+        getContentForModal("{{ path('apartments.new.apartment') }}");
     }
     
     function getEntry(id) {
-        let url = replacePlaceholder("{{ path('appartments.get.appartment', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
         getContentForModal(url);        
     }
     
     function editEntry(id) {
-        let url = replacePlaceholder("{{ path('appartments.get.appartment', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
         getContentForModal(url, "", function() {
             enableEditForm(id);
         });        
     }
 
     function saveAppartment(id) {
-        let url = replacePlaceholder("{{ path('appartments.edit.appartment', {'id': 'placeholder'}) }}", id);
+        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
         return _doPost('#entry-form-'+id, url);
     }
 
@@ -102,12 +102,12 @@
 
     function doDeleteEntry(id) {
         let url = replacePlaceholder("{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
+        return _doDelete('#entry-form-'+id, url);
     }
 
-    function createNewAppartment() {
-        let url = "{{ path('appartments.create.appartment')}}";
-        _doPost('#entry-form-new', url, '{{ path('appartments.overview') }}');
+    function createNewApartment() {
+        let url = "{{ path('apartments.new.apartment')}}";
+        _doPost('#entry-form-new', url, '{{ path('apartments.overview') }}');
         return false;
     }
     

@@ -354,7 +354,7 @@ class ReservationServiceController extends AbstractController
             $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get('appartmentid'));
 
-            $isselactable = $rs->isApartmentSelectable($fromDate, $endDate, $room);
+            $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
                     $request->request->get('appartmentid'),
@@ -641,6 +641,9 @@ class ReservationServiceController extends AbstractController
                     $price = $em->getRepository(Price::class)->find($priceInCreation->getId());
                     $reservation->addPrice($price);
                 }
+                if(!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
+                    $this->addFlash('warning', 'reservation.flash.update.conflict.persons');
+                }
                 $em->persist($reservation);
             }
             $em->flush();
@@ -740,23 +743,6 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/edit/appartment/change', name: 'reservations.edit.appartment.change', methods: ['POST'])]
-    public function editChangeAppartmentAction(ReservationService $rs, Request $request)
-    {
-        $id = $request->request->get('id');
-        $reservations = $rs->updateReservation($request);
-        if (count($reservations) > 0) {
-            $this->addFlash('warning', 'reservation.flash.update.conflict');
-        } else {
-            $this->addFlash('success', 'reservation.flash.update.success');
-        }
-
-        return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
-            'id' => $id,
-            'error' => true,
-        ]);
-    }
-
     #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
     public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     {
@@ -781,19 +767,21 @@ class ReservationServiceController extends AbstractController
         }
     }
 
-    #[Route('/edit/reservation/change', name: 'reservations.edit.reservation.change', methods: ['POST'])]
-    public function editChangeReservationAction(ReservationService $rs, Request $request)
+    /**
+     * @return mixed
+     */
+    #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
+    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
     {
-        $id = $request->request->get('id');
-        $reservations = $rs->updateReservation($request);
-        if (count($reservations) > 0) {
+        $success = $rs->updateReservation($request, $reservation);
+        if (!$success) {
             $this->addFlash('warning', 'reservation.flash.update.conflict');
         } else {
             $this->addFlash('success', 'reservation.flash.update.success');
         }
 
         return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
-            'id' => $id,
+            'id' => $reservation->getId(),
             'error' => true,
         ]);
     }
@@ -1032,7 +1020,7 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
-     * @return Response
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     #[Route('/edit/customer/edit/save', name: 'reservations.edit.customer.edit.save', methods: ['POST'])]
     public function saveEditCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
