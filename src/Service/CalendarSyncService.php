@@ -33,13 +33,11 @@ class CalendarSyncService
 
     public function initSync(Appartment $room): void
     {
-        if (null === $room->getCalendarSync()) {
-            $sync = new CalendarSync();
-            $sync->setApartment($room)
-                 ->setUuid(Uuid::v4());
-            $this->em->persist($sync);
-            $this->em->flush();
-        }
+        $sync = new CalendarSync();
+        $sync->setApartment($room)
+                ->setUuid(Uuid::v4());
+        $this->em->persist($sync);
+        $this->em->flush();
     }
 
     public function updateExportDate(CalendarSync $sync): void
