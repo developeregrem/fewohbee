@@ -221,7 +221,7 @@ class ReservationService implements ITemplateRenderer
      * @param Reservation|null $reservation
      * @return bool
      */
-    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, Reservation $reservation = null) : bool
+    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null) : bool
     {
         $reservationsForApartment = $this->em->getRepository(Reservation::class)
             ->loadReservationsForApartmentWithoutStartEnd($start, $end, $apartment);

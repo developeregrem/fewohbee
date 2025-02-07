@@ -24,8 +24,10 @@ use App\Form\InvoiceApartmentPositionType;
 use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Service\CSRFProtectionService;
+use App\Entity\InvoiceSettingsData;
 use App\Service\InvoiceService;
 use App\Service\TemplatesService;
+use App\Service\XRechnungService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -929,6 +931,22 @@ class InvoiceServiceController extends AbstractController
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+
+        return $response;
+    }
+
+    #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
+    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, XRechnungService $xrechnung, Invoice $invoice): Response
+    {
+        $em = $doctrine->getManager();
+        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findBy(['isActive' => true]);
+        if(!($invoiceSettings instanceof InvoiceSettingsData)) {
+            // todo: error handling
+        }
+        $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+
+        $response = new Response($xml);
+        $response->headers->set('Content-Type', 'text/xml');
 
         return $response;
     }

@@ -32,6 +32,7 @@ use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -672,11 +673,11 @@ class ReservationServiceController extends AbstractController
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
 
-        $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
+        $requestStack->getSession()->set('invoicePositionsMiscellaneous', new ArrayCollection());
         $is->prefillMiscPositionsWithReservations([$reservation], $requestStack, true);
         $miscPricePositions = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
 
-        $requestStack->getSession()->set('invoicePositionsAppartments', []);
+        $requestStack->getSession()->set('invoicePositionsAppartments', new ArrayCollection());
         $is->prefillAppartmentPositions($reservation, $requestStack);
         $apartmentPricePositions = $requestStack->getSession()->get('invoicePositionsAppartments');
 

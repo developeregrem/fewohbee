@@ -12,6 +12,7 @@
         "doctrine/doctrine-fixtures-bundle": "^3.5",
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^2.17",
+        "horstoeko/zugferd": "^1.0",
         "mpdf/mpdf": "^8.2",
         "symfony/asset": "7.2.*",
         "symfony/console": "7.2.*",
