@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -38,7 +39,7 @@ class InvoiceAppartment
     private $price;
     #[ORM\Column(type: 'decimal', scale: 2)]
     #[Assert\PositiveOrZero]
-    private $vat;
+    private float $vat;
     #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'appartments')]
     private $invoice;
     #[ORM\Column(type: 'boolean', nullable: true)]
@@ -72,12 +73,12 @@ class InvoiceAppartment
         return $this->persons;
     }
 
-    public function getStartDate()
+    public function getStartDate(): \DateTime
     {
         return $this->startDate;
     }
 
-    public function getEndDate()
+    public function getEndDate(): \DateTime
     {
         return $this->endDate;
     }
@@ -87,7 +88,7 @@ class InvoiceAppartment
         return $this->price;
     }
 
-    public function getVat()
+    public function getVat(): float
     {
         return $this->vat;
     }
@@ -102,7 +103,7 @@ class InvoiceAppartment
         return $this->description;
     }
 
-    public function getAmount()
+    public function getAmount(): int
     {
         if ($this->isFlatPrice) {
             return 1;
@@ -110,7 +111,7 @@ class InvoiceAppartment
         // else
         $interval = $this->startDate->diff($this->endDate);
 
-        return $interval->format('%a');
+        return (int) $interval->format('%a');
     }
 
     public function getTotalPriceRaw(): float
@@ -202,5 +203,10 @@ class InvoiceAppartment
         $this->isFlatPrice = $isFlatPrice;
 
         return $this;
+    }
+
+    public function getNetPrice(): float
+    {
+        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : $this->price;
     }
 }

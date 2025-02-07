@@ -46,6 +46,15 @@ class Invoice
     #[ORM\ManyToMany(targetEntity: 'Reservation', mappedBy: 'invoices')]
     private $reservations;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $phone = null;
+
+    #[ORM\Column(length: 2, nullable: true)]
+    private ?string $country = null;
+
+    #[ORM\Column(length: 60, nullable: true)]
+    private ?string $email = null;
+
     public function __construct()
     {
         $this->positions = new ArrayCollection();
@@ -64,7 +73,7 @@ class Invoice
         return $this->number;
     }
 
-    public function getDate()
+    public function getDate():  \DateTime
     {
         return $this->date;
     }
@@ -253,5 +262,41 @@ class Invoice
     public function removeReservation(Reservation $reservation): void
     {
         $this->reservations->removeElement($reservation);
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): static
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?string $country): static
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
     }
 }

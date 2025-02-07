@@ -19,7 +19,7 @@ class Price
     #[ORM\Column(type: 'decimal', scale: 2)]
     private $price;
     #[ORM\Column(type: 'decimal', scale: 2)]
-    private $vat;
+    private float $vat;
     #[ORM\Column(type: 'string', length: 100)]
     private $description;
     #[ORM\Column(type: 'smallint', nullable: true)]
