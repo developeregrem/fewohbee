@@ -572,8 +572,8 @@ class ReservationServiceController extends AbstractController
         $apartmentTotal = 0;
         $miscTotal = 0;
         $is->calculateSums(
-            $apartmentPricePositions,
-            $miscPricePositions,
+            new ArrayCollection($apartmentPricePositions),
+            new ArrayCollection($miscPricePositions),
             $vatSums,
             $brutto,
             $netto,

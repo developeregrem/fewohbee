@@ -1,0 +1,18 @@
+<div class="modal-body">
+    <div class="ps-3 pe-3">
+        <div class="row mb-4">
+            <div class="accordion" id="accordionSettings">
+            {# idx is 1 as we have only one form during new process #}
+            {% include 'Invoices/_settings_form.html.twig' with {'form': form, 'idx': 1} %}
+            </div>
+        </div>
+        <span class="text-info me-auto"><i class="fas fa-info-circle"></i> {{ 'invoice.settings.help.general'|trans }}</span>
+    </div>
+</div>
+<div class="modal-footer">
+    <ul class="pagination me-auto">
+        <li class="page-item " onclick="
+            return showSettingsForm(this)" data-bs-target="#modalCenter" data-target="{{ path('invoices.settings.get') }}">
+            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+    </ul>
+</div>

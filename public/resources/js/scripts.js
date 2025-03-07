@@ -91,3 +91,49 @@ function copyToClipboard(elm) {
         }
     }
 }
+
+/**
+ * Creates a confirmation popover (yes/no) when clicking on an element which has the data-popover="delete" attribute assigned
+ * @returns {void}
+ */
+function enableDeletePopover() {
+    const myDefaultAllowList = bootstrap.Tooltip.Default.allowList;
+    myDefaultAllowList.form = ['action'];
+    myDefaultAllowList.input = ['type', 'name', 'value'];
+
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-popover="delete"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        popoverTriggerEl.setAttribute('data-bs-toggle', 'popover');
+        popoverTriggerEl.addEventListener('shown.bs.popover', () => {
+            
+            // add event listener to all delete/confirm buttons
+            let deleteBut = document.getElementsByClassName('popover-delete');
+            for (let i = 0; i < deleteBut.length; i++) {
+                deleteBut[i].addEventListener('click', function (e) {
+                    let form = e.target.closest('form');
+                    let action = form.action;
+                    let popover = bootstrap.Popover.getInstance(popoverTriggerEl);
+                    popover.hide();
+                    _doDelete(form, action);
+                });
+            }
+
+            // add event listener to all cancel buttons
+            let cancelBut = document.getElementsByClassName('popover-cancel');
+            for (let i = 0; i < cancelBut.length; i++) {
+                cancelBut[i].addEventListener('click', function (e) {
+
+                    let popover = bootstrap.Popover.getInstance(popoverTriggerEl);
+                    popover.hide();
+                });
+            }
+          })
+
+        let config = {
+            'placement': 'top',
+            'html': true,
+            'trigger': 'focus',
+        };
+        return new bootstrap.Popover(popoverTriggerEl, config);
+    });
+}

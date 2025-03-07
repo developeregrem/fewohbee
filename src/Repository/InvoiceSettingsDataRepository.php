@@ -15,4 +15,18 @@ class InvoiceSettingsDataRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, InvoiceSettingsData::class);
     }
+
+    /**
+     * @param int $id The ID of the setting which should not be updated
+     */
+    public function setAllInactive(int $id = 0): void
+    {
+        $this->createQueryBuilder('i')
+            ->update()
+            ->set('i.isActive', '0')
+            ->where('i.id != :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->execute();
+    }
 }
