@@ -25,6 +25,7 @@ use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Service\CSRFProtectionService;
 use App\Entity\InvoiceSettingsData;
+use App\Form\InvoiceSettingsType;
 use App\Service\InvoiceService;
 use App\Service\TemplatesService;
 use App\Service\XRechnungService;
@@ -949,6 +950,99 @@ class InvoiceServiceController extends AbstractController
         $response->headers->set('Content-Type', 'text/xml');
 
         return $response;
+    }
+
+    #[Route('/settings', name: 'invoices.settings.get', methods: ['GET'])]
+    public function getSettings(ManagerRegistry $doctrine, Request $request, RequestStack $requestStack, TemplatesService $ts): Response
+    {
+        $settings = $doctrine->getRepository(InvoiceSettingsData::class)->findBy([], ['isActive' => 'DESC']);
+        $forms = [];
+        foreach ($settings as $setting) {
+            $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+                'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
+            ]);
+            $forms[] = $form->createView();
+        }
+        $em = $doctrine->getManager();
+        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+        $defaultTemplate = $ts->getDefaultTemplate($templates);
+
+        $templateId = 1;
+        if (null != $defaultTemplate) {
+            $templateId = $defaultTemplate->getId();
+        }
+
+        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
+
+
+        return $this->render('Invoices/invoice_form_settings.html.twig', [
+            'settings' => $settings,
+            'forms' => $forms,
+            'templates' => $templates,
+            'templateId' => $templateId,
+        ]);
+    }
+
+    #[Route('/settings/new', name: 'invoices.settings.new', methods: ['GET', 'POST'])]
+    public function newSettings(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $setting = new InvoiceSettingsData();
+        $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+            'action' => $this->generateUrl('invoices.settings.new'),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
+            }
+            $doctrine->getManager()->persist($setting);
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.create.success');
+
+            return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+        }
+
+        return $this->render('Invoices/invoice_form_settings_new.html.twig', [
+            'setting' => $setting,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/settings/{id}/edit', name: 'invoices.settings.edit', methods: ['POST'])]
+    public function editSettings(ManagerRegistry $doctrine, Request $request, InvoiceSettingsData $setting): Response
+    {
+        $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+            'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
+
+            }
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.edit.success');            
+        }
+        return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+    }
+
+    #[Route('/settings/{id}/delete', name: 'invoices.settings.delete', methods: ['DELETE'])]
+    public function delete(ManagerRegistry $doctrine, Request $request, InvoiceSettingsData $setting): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$setting->getId(), $request->request->get('_token'))) {
+            $entityManager = $doctrine->getManager();
+            $entityManager->remove($setting);
+            $entityManager->flush();
+            $this->addFlash('success', 'invoice.settings.flash.delete.success');
+        }
+
+        return $this->forward('App\Controller\InvoiceServiceController::getSettings');
     }
 
     /**

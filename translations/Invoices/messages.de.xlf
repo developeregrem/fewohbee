@@ -258,6 +258,122 @@
                 <source>invoice.vatwarning</source>
                 <target>Sie nutzen Preiskategorien sowohl mit inkludierter MwSt. als auch ohne. Dieser Mix kann zu unstimmigen Anzeigen führen. Es wird empfohlen einheitliche Preiskategorien zu verwenden.</target>
             </trans-unit>
+            <trans-unit id="invoice.settings.text">
+                <source>invoice.settings.text</source>
+                <target>Einstellungen</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.no_settings">
+                <source>invoice.settings.no_settings</source>
+                <target>Keine weiteren Einstellungen vorhanden. Bitte hinzufügen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.add">
+                <source>invoice.settings.add</source>
+                <target>Neue Einstellungen hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyName">
+                <source>invoice.settings.companyName</source>
+                <target>Firmenname</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.taxNumber">
+                <source>invoice.settings.taxNumber</source>
+                <target>Steuernummer</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.vatID">
+                <source>invoice.settings.vatID</source>
+                <target>USt-IdNr.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.contactName">
+                <source>invoice.settings.contactName</source>
+                <target>Kontaktname</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.contactDepartment">
+                <source>invoice.settings.contactDepartment</source>
+                <target>Abteilung</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.contactPhone">
+                <source>invoice.settings.contactPhone</source>
+                <target>Telefonnummer</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.contactMail">
+                <source>invoice.settings.contactMail</source>
+                <target>E-Mail</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyInvoiceMail">
+                <source>invoice.settings.companyInvoiceMail</source>
+                <target>Rechnungs-E-Mail</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyAddress">
+                <source>invoice.settings.companyAddress</source>
+                <target>Adresse</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyPostCode">
+                <source>invoice.settings.companyPostCode</source>
+                <target>Postleitzahl</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyCity">
+                <source>invoice.settings.companyCity</source>
+                <target>Stadt</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.companyCountry">
+                <source>invoice.settings.companyCountry</source>
+                <target>Land</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.accountIBAN">
+                <source>invoice.settings.accountIBAN</source>
+                <target>IBAN</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.accountName">
+                <source>invoice.settings.accountName</source>
+                <target>Kontoinhaber</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.accountBIC">
+                <source>invoice.settings.accountBIC</source>
+                <target>BIC</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.paymentTerms">
+                <source>invoice.settings.paymentTerms</source>
+                <target>Zahlungsbedingungen</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.paymentDueDays">
+                <source>invoice.settings.paymentDueDays</source>
+                <target>Zahlungsfrist (Tage)</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.active">
+                <source>invoice.settings.active</source>
+                <target>Aktiv</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.inactive">
+                <source>invoice.settings.inactive</source>
+                <target>Inaktiv</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.help.general">
+                <source>invoice.settings.help.general</source>
+                <target>Die hier eingetragenen Informationen sind für den digitalen Rechnungsexport (XRechnung) erforderlich.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.help.invoiceMail">
+                <source>invoice.settings.help.invoiceMail</source>
+                <target>Gibt die E-Mail-Adresse an, an die die Antwort auf eine Rechnung gesendet werden kann.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.flash.create.success">
+                <source>invoice.settings.flash.create.success</source>
+                <target>Neue Einstellungen erfolgreich hinzugefügt.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.flash.edit.success">
+                <source>invoice.settings.flash.edit.success</source>
+                <target>Einstellungen erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.flash.delete.success">
+                <source>invoice.settings.flash.delete.success</source>
+                <target>Einstellungen erfolgreich gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.title.xrechnung">
+                <source>invoice.settings.title.xrechnung</source>
+                <target>XRechnung</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.title.template">
+                <source>invoice.settings.title.template</source>
+                <target>Rechnungsvorlage</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

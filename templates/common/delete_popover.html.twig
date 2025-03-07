@@ -1,0 +1,23 @@
+{# This template is used to render the delete popover. 
+    In order to use it in a template, you need to include it and call the block deletePopoverContent.
+    e.g. 
+    {% set id = setting.id %}
+    {% set targetUrl = path('invoices.settings.delete', {'id': setting.id}) %}
+    {% use "common/delete_popover.html.twig" %}
+
+    and assign the attribute data-popover="delete" to the button that should trigger the popover.
+    e.g.
+    <button type="button" class="btn btn-danger" 
+        title="{{ 'registrationbook.delete.ask'|trans }}"
+        data-popover="delete" data-bs-content='{{ block('deletePopoverContent') }}'>
+#}
+
+{% block deletePopoverContent %}
+<form id="entry-form-{{ id }}" action="{{ targetUrl }}">
+    <div class="text-center">
+        <a class="btn btn-danger btn-sm popover-delete">{{ "button.delete" | trans }}</a>
+        <a class="btn btn-secondary btn-sm popover-cancel">{{ "button.cancel" | trans }}</a>
+    </div>
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ id) }}">
+</form>
+{% endblock %}
