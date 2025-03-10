@@ -104,7 +104,7 @@ class InvoicePosition
 
     public function setVat($vat): void
     {
-        $this->vat = $vat;
+        $this->vat = (float)$vat;
     }
 
     public function setInvoice($invoice): void
@@ -143,6 +143,6 @@ class InvoicePosition
 
     public function getNetPrice(): float
     {
-        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : $this->price;
+        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : (float)$this->price;
     }
 }

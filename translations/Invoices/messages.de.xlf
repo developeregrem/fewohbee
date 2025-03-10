@@ -374,6 +374,14 @@
                 <source>invoice.settings.title.template</source>
                 <target>Rechnungsvorlage</target>
             </trans-unit>
+            <trans-unit id="invoice.settings.active.error">
+                <source>invoice.settings.active.error</source>
+                <target>Es konnten keine als aktiv gekennzeichneten Einstellungen für den Rechnungsexport gefunden werden.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.error">
+                <source>invoice.xrechnung.mandatory.error</source>
+                <target>Die Werte für Land, Telefon und E-Mail des Rechnungsempfängers müssen zur Erstellung der XRechnung vorhanden sein. Bitte die Rechnung bearbeiten und Werte ergänzen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

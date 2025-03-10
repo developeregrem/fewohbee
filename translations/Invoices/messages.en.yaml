@@ -94,3 +94,6 @@ invoice.settings.flash.edit.success: Settings edited successfully.
 invoice.settings.flash.delete.success: Settings deleted successfully.
 invoice.settings.title.xrechnung: XRechnung
 invoice.settings.title.template: Invoice Template
+invoice.settings.active.error: No settings marked as active for invoice export could be found.
+invoice.xrechnung.mandatory.error: >-
+  The values for country, phone, and email of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the values.

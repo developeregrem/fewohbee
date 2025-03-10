@@ -7,6 +7,7 @@ namespace App\Form;
 use App\Entity\Invoice;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -41,6 +42,20 @@ class InvoiceCustomerType extends AbstractType
             ])
             ->add('city', TextType::class, [
                 'label' => 'customer.city',
+                'required' => false,
+            ])
+            ->add('country', CountryType::class, [
+                'label' => 'customer.country',
+            ])
+            ->add('phone', TextType::class, [
+                'label' => 'invoice.settings.contactPhone',
+            ])
+            ->add('email', TextType::class, [
+                'label' => 'customer.email',
+            ])
+            ->add('buyerReference', TextType::class, [
+                'label' => 'customer.buyerReference.label',
+                'help' => 'customer.buyerReference.hint',
                 'required' => false,
             ])
         ;

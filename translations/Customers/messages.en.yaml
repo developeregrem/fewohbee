@@ -44,3 +44,6 @@ customer.salutation: Title
 customer.search.addresses: Search addresses ...
 customer.template: Template
 customer.zip: Zip code
+customer.buyerReference.label: Customer Reference
+customer.buyerReference.hint: >-
+  A designation assigned by the guest and used for internal control purposes, also known as Leitweg-ID.
