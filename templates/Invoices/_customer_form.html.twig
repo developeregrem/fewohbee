@@ -7,7 +7,7 @@
             {% for customer in customers %}
                 {% for address in customer.customerAddresses %}
                     <option
-                            value="{{ customer.salutation }}|{{ customer.firstname }}|{{ customer.lastname }}|{{ address.company }}|{{ address.address }}|{{ address.zip }}|{{ address.city }}">
+                            value="{{ customer.salutation }}|{{ customer.firstname }}|{{ customer.lastname }}|{{ address.company }}|{{ address.address }}|{{ address.zip }}|{{ address.city }}|{{ address.country }}|{{ address.phone }}|{{ address.email }}">
                         {{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}{% if address.company %} | {{ 'customer.company'|trans }}: {{ address.company }}{% endif %}
                     </option>
                 {% endfor %}

@@ -31,7 +31,10 @@ function fillCustomerRecommendation(elm) {
     document.getElementById("invoice_customer_company").value = values[3];
     document.getElementById("invoice_customer_address").value = values[4];
     document.getElementById("invoice_customer_zip").value = values[5];
-    document.getElementById("invoice_customer_city").value = values[6];
+    document.getElementById("invoice_customer_country").value = values[7];
+    document.getElementById("invoice_customer_phone").value = values[8];
+    document.getElementById("invoice_customer_email").value = values[9];
+    
 
     return false;
 }

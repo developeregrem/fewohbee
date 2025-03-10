@@ -30,12 +30,14 @@ use App\Service\InvoiceService;
 use App\Service\TemplatesService;
 use App\Service\XRechnungService;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 
 #[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
@@ -309,14 +311,14 @@ class InvoiceServiceController extends AbstractController
         $newInvoiceReservationsArray = $requestStack->getSession()->get('invoiceInCreation');
 
         if (!$requestStack->getSession()->has('invoicePositionsMiscellaneous')) {
-            $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
+            $requestStack->getSession()->set('invoicePositionsMiscellaneous', new ArrayCollection());
             // prefill positions for all selected reservations
             $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $requestStack, true);
         }
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
 
         if (!$requestStack->getSession()->has('invoicePositionsAppartments')) {
-            $requestStack->getSession()->set('invoicePositionsAppartments', []);
+            $requestStack->getSession()->set('invoicePositionsAppartments', new ArrayCollection());
             // prefill positions for all selected reservations
             foreach ($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);
@@ -940,14 +942,27 @@ class InvoiceServiceController extends AbstractController
     public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, XRechnungService $xrechnung, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
-        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findBy(['isActive' => true]);
+        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
         if(!($invoiceSettings instanceof InvoiceSettingsData)) {
-            // todo: error handling
+            $this->addFlash('danger', 'invoice.settings.active.error');
+            return $this->redirect($this->generateUrl('invoices.overview'));
         }
-        $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+        $xml = "";
+        try {
+            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
 
         $response = new Response($xml);
         $response->headers->set('Content-Type', 'text/xml');
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'XRechnung-'.$invoice->getNumber().'.xml'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }
@@ -973,7 +988,6 @@ class InvoiceServiceController extends AbstractController
         }
 
         $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
-
 
         return $this->render('Invoices/invoice_form_settings.html.twig', [
             'settings' => $settings,

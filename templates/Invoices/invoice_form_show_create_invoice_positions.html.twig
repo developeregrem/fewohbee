@@ -31,7 +31,13 @@
                     {{ invoice.company }}<br/>
                 {% endif %}
                 {{ invoice.address }}<br />
-                {{ invoice.zip }} {{ invoice.city }}
+                {% if invoice.country is not empty %}{{ invoice.country }}-{% endif %}{{ invoice.zip }} {{ invoice.city }}
+                {% if invoice.phone is not empty %}
+                <br /><i class="fa-solid fa-phone"></i> {{ invoice.phone }}
+                {% endif %}
+                {% if invoice.email is not empty %}
+                <br /><i class="fa-solid fa-envelope"></i> {{ invoice.email }}
+                {% endif %}
             </div>
         </div>
         <div class="row mt-4">

@@ -73,7 +73,7 @@ class InvoiceService implements ITemplateRenderer
             }
 
             $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + $apartment->getNetPrice() * $apartment->getAmount();
+            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + round($apartment->getNetPrice(), 2) * $apartment->getAmount();
             $appartmentTotal += $apartmentPrice;
         }
 
@@ -91,7 +91,7 @@ class InvoiceService implements ITemplateRenderer
             }
 
             $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + $pos->getNetPrice() * $pos->getAmount();
+            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + round($pos->getNetPrice(), 2) * $pos->getAmount();
             $miscTotal += $miscPrice;
         }
 
@@ -381,6 +381,9 @@ class InvoiceService implements ITemplateRenderer
             $invoice->setAddress($addresses[0]->getAddress());
             $invoice->setZip($addresses[0]->getZip());
             $invoice->setCity($addresses[0]->getCity());
+            $invoice->setCountry($addresses[0]->getCountry());
+            $invoice->setPhone($addresses[0]->getPhone());
+            $invoice->setEmail($addresses[0]->getEmail());
         }
         $requestStack->getSession()->set('newInvoice', $invoice);
     }

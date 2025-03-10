@@ -25,13 +25,19 @@ use horstoeko\zugferd\codelists\ZugferdVatCategoryCodes;
 use horstoeko\zugferd\codelists\ZugferdVatTypeCodes;
 use horstoeko\zugferd\ZugferdDocumentBuilder;
 use horstoeko\zugferd\ZugferdProfiles;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use InvalidArgumentException;
 
 class XRechnungService
 {
-    public function __construct(private InvoiceService $is) {}
+    public function __construct(private InvoiceService $is, private TranslatorInterface $translator) {}
 
     public function createInvoice(Invoice $invoice, InvoiceSettingsData $settings): string
     {
+        if (empty($invoice->getPhone()) || empty($invoice->getEmail()) || empty($invoice->getCountry())) {
+            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.error'));
+        }
+
         $documentBuilder = ZugferdDocumentBuilder::createNew(ZugferdProfiles::PROFILE_XRECHNUNG_3);
 
         // General invoice Information
@@ -41,7 +47,7 @@ class XRechnungService
             ZugferdInvoiceType::INVOICE,                        // Type "Invoice" (BT-3)
             $invoice->getDate(),      // Invoice fate (BT-2)
             ZugferdCurrencyCodes::EURO,                          // Invoice currency is EUR (Euro) (BT-5)
-            'Rechnung-'.$invoice->getNumber(),                   // A document title
+            $this->translator->trans('invoice.number.short').'-'.$invoice->getNumber(),                   // A document title
         );
 
         // seller information
@@ -65,46 +71,48 @@ class XRechnungService
         $dueDate = (!is_null($settings->getPaymentDueDays()) ? $invoice->getDate()->modify('+' . $settings->getPaymentDueDays() . ' days') : null);
         $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate); // Payment term
 
-        $documentBuilder->setDocumentBuyerReference('not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
+        $documentBuilder->setDocumentBuyerReference($invoice->getBuyerReference() !== null ? $invoice->getBuyerReference() : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
 
 
         // invoice positions
         $pos = 1;
-        $vats = [];
+        $netSums = [];
         /* @var $apartmentPosition \App\Entity\InvoiceAppartment */
         foreach($invoice->getAppartments() as $apartmentPosition) {
+            $sum = round($apartmentPosition->getNetPrice() * $apartmentPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string)$pos);
             $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y') .' - ' . $apartmentPosition->getEndDate()->format('d.m.Y'));
             $documentBuilder->setDocumentPositionNetPrice($apartmentPosition->getNetPrice());
             $documentBuilder->setDocumentPositionQuantity($apartmentPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $apartmentPosition->getVat());
-            $documentBuilder->setDocumentPositionLineSummation($apartmentPosition->getNetPrice() * $apartmentPosition->getAmount());
+            $documentBuilder->setDocumentPositionLineSummation($sum);
+            $netSums[$apartmentPosition->getVat()] = ($netSums[$apartmentPosition->getVat()] ?? 0) + $sum;
             $pos++;
         }
         
         // invoice misc positions
         /* @var $miscPosition \App\Entity\InvoicePosition */
         foreach($invoice->getPositions() as $miscPosition) {
+            $sum = round($miscPosition->getNetPrice() * $miscPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string)$pos);
             $documentBuilder->setDocumentPositionProductDetails($miscPosition->getDescription(), '');
             $documentBuilder->setDocumentPositionNetPrice($miscPosition->getNetPrice());
             $documentBuilder->setDocumentPositionQuantity($miscPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $miscPosition->getVat());
-            $documentBuilder->setDocumentPositionLineSummation($miscPosition->getNetPrice() * $miscPosition->getAmount());
+            $documentBuilder->setDocumentPositionLineSummation($sum);
+            $netSums[$miscPosition->getVat()] = ($netSums[$miscPosition->getVat()] ?? 0) + $sum;
             $pos++;
         }
-        $vats = [];
-        $gross = 0;
-        $net = 0;
-        $apartmentTotal = 0;
-        $miscTotal = 0;
-        $this->is->calculateSums($invoice->getAppartments(), $invoice->getPositions(), $vats, $gross, $net, $apartmentTotal, $miscTotal);
-
-        foreach($vats as $key=>$vat) {
-            $documentBuilder->addDocumentTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $vat['netSum'], $vat['netto'], $key);
+        
+        $vatSum = 0;
+        $netSum = 0;
+        foreach($netSums as $vat=>$sum) {
+            $documentBuilder->addDocumentTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $sum, $sum*($vat/100), $vat);
+            $vatSum += round($sum*($vat/100), 2);
+            $netSum += $sum;
         }
 
-        $documentBuilder->setDocumentSummation($gross, $gross, $gross - $net, 0.0, 0.0, $gross - $net, $net);
+        $documentBuilder->setDocumentSummation($netSum + $vatSum, $netSum + $vatSum, $netSum, 0.0, 0.0, $netSum, $vatSum);
 
         return $documentBuilder->getContent();
     }

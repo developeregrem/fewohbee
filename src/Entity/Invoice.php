@@ -55,6 +55,9 @@ class Invoice
     #[ORM\Column(length: 60, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $buyerReference = null;
+
     public function __construct()
     {
         $this->positions = new ArrayCollection();
@@ -296,6 +299,18 @@ class Invoice
     public function setEmail(?string $email): static
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getBuyerReference(): ?string
+    {
+        return $this->buyerReference;
+    }
+
+    public function setBuyerReference(?string $buyerReference): static
+    {
+        $this->buyerReference = $buyerReference;
 
         return $this;
     }
