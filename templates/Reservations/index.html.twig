@@ -33,6 +33,7 @@
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
+            {% if is_granted('ROLE_USER') %}
             <div class="col-md-auto">
                 <a href="#" class="me-3" onclick="getNewTable();" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt"></i></a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
@@ -40,6 +41,7 @@
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
                 </button>
             </div>
+            {% endif %}
             <div class="col col-md-2 text-end ms-auto">
                 <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}">
                     <i class="fas fa-list"></i></a>

@@ -49,7 +49,8 @@ class UserType extends AbstractType
             ])
             ->add('role', EntityType::class, [
                 'class' => Role::class,
-                'choice_label' => 'name',
+                'choice_label' => 'role',
+                'choice_translation_domain' => true,
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'user.active',

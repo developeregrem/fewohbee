@@ -14,3 +14,6 @@ user.password.error: Your password may be too short.
 user.password.hint: The password must be at least 8 characters long.
 user.role: Role
 user.username: Username
+ROLE_ADMIN: Admin
+ROLE_USER: User
+ROLE_RESERVATIONS_RO: Reservations read-only
