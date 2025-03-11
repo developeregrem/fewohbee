@@ -36,7 +36,8 @@
                 </button>                
             
                 <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    {% if is_granted('ROLE_USER') %}              
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}">{{ 'nav.customers'|trans }}</a></li>
                         <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}">{{ 'nav.invoices'|trans }}</a></li>
@@ -53,7 +54,8 @@
                         </li>
                         <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
                     </ul>
-                    <ul class="navbar-nav d-flex">
+                    {% endif %}
+                    <ul class="navbar-nav d-flex ms-auto">
                         {% if is_granted('ROLE_ADMIN') %}
                             <li class="nav-item dropdown{% if activeRouteName starts with "settings" %} active{% endif %}">
                                 <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">

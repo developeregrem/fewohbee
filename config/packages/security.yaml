@@ -21,7 +21,7 @@ security:
                 default_target_path: start
             logout:
                 path:   /logout
-                target: /
+                target: start
             remember_me:
                 secret:   '%kernel.secret%'
             lazy:   true
@@ -33,6 +33,9 @@ security:
 
             # form_login: true
             # https://symfony.com/doc/current/security/form_login_setup.html
+    
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
@@ -40,5 +43,8 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
+        - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_USER]}
         - { path: ^/users, roles: ROLE_ADMIN }
-        - { path: ^/, roles: IS_AUTHENTICATED_REMEMBERED }
+        - { path: ^/logout, roles: IS_AUTHENTICATED }
+        - { path: ^/, roles: ROLE_USER }
+        
