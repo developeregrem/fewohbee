@@ -142,6 +142,10 @@
                 <source>button.export.pdf</source>
                 <target>als PDF exportieren</target>
             </trans-unit>
+            <trans-unit id="button.export.xrechnung">
+                <source>button.export.xrechnung</source>
+                <target>als XRechnung exportieren</target>
+            </trans-unit>
             <trans-unit id="button.add">
                 <source>button.add</source>
                 <target>Hinzufügen</target>
