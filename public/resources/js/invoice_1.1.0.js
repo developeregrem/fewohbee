@@ -87,6 +87,19 @@ function fillApartmentDescription(elm) {
     return false;
 }
 
+function updateTemplateIdOnChange() {
+    let templateSelect = document.getElementById("template");
+    let templateId = getLocalStorageItem('invoice-template-id')
+    if(templateId !== null) {
+        templateSelect.value = templateId;
+    }
+    templateSelect.addEventListener('change', event => {
+        let templateId = templateSelect.value;
+        setLocalStorageItemIfNotExists('invoice-template-id', templateId, true);
+        updatePDFExportLinks(templateId);
+    });
+}
+
 function showSettingsForm(elm) {
     let url = elm.dataset.target;
     let hint = elm.title;
