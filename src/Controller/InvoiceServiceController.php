@@ -49,16 +49,7 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
-
-        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
-
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
         $search = $request->query->get('search', '');
         $page = $request->query->get('page', 1);
 
@@ -71,7 +62,6 @@ class InvoiceServiceController extends AbstractController
             'Invoices/index.html.twig',
             [
                 'invoices' => $invoices,
-                'templates' => $templates,
                 'templateId' => $templateId,
                 'page' => $page,
                 'pages' => $pages,
@@ -91,13 +81,7 @@ class InvoiceServiceController extends AbstractController
         // calculate the number of pages for pagination
         $pages = ceil($invoices->count() / $this->perPage);
 
-        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
 
         $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
 
@@ -921,15 +905,21 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]
-    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, int $id, int $templateId): Response
+    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, int $templateId): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('invoice-template-id', $templateId);
 
-        $templateOutput = $ts->renderTemplate($templateId, $id, $is);
+        $templateOutput = null;
+        try {
+            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+        
         $template = $em->getRepository(Template::class)->find($templateId);
-        $invoice = $em->getRepository(Invoice::class)->find($id);
 
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
         $response = new Response($pdfOutput);
@@ -980,15 +970,9 @@ class InvoiceServiceController extends AbstractController
         }
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
-
-        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
-
+        
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
+        
         return $this->render('Invoices/invoice_form_settings.html.twig', [
             'settings' => $settings,
             'forms' => $forms,

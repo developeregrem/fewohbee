@@ -56,6 +56,7 @@ templates.flash.delete.inuse.reservations: Template cannot be deleted because it
 templates.flash.delete.success: Template successfully deleted.
 templates.flash.edit.success: Template successfully updated.
 templates.name: Name
+templates.notfound: No template could be found. Please ensure a template exists for the selected action.
 templates.params: Additional parameters (JSON string)
 templates.preview: Preview
 templates.recipient: Recipient

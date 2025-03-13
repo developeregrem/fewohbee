@@ -254,6 +254,10 @@
                 <source>templates.editor.misc.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Sonstigepositionen ein. Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
             </trans-unit>
+            <trans-unit id="templates.notfound">
+                <source>templates.notfound</source>
+                <target>Es konnte keine Vorlage gefunden werden. Stelle bitte sicher, dass ein Template für die ausgewählte Aktion existiert.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
