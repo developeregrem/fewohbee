@@ -47,22 +47,8 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
+        setLocalStorageItemIfNotExists('invoice-template-id', '{{ templateId }}');
         $(document).ready(function () {
-            $("#template").change(function () {
-                var templateId = $(this).val();
-
-                // loop through each download link
-                $(".export-link").each(function (index) {
-                    var src = $(this).attr("href");
-                    var pos = src.lastIndexOf('/');
-                    // replace old template id with new one
-                    var str = src.substring(0, pos + 1) + templateId;
-                    // set new href
-                    $(this).attr("href", str);
-                });
-
-            });
-
             if ($("#search").val() != "") {
                 doSearch();
             }
@@ -70,6 +56,11 @@
             $("#search").delayKeyup(function () {
                 doSearch();
             }, 400);
+
+            let templateId = getLocalStorageItem('invoice-template-id')
+            if(templateId !== null) {
+                updatePDFExportLinks(templateId);
+            }
         });
 
         $.ajaxSetup({

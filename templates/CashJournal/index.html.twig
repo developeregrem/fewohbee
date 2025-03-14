@@ -49,14 +49,22 @@
     <script>
         $(function()
         {
+            setLocalStorageItemIfNotExists('cashjournal-template-id', '{{ templateId }}');
             getJournalTable();
             
             $("#cashJournalYear").change(function() {
                 getJournalTable();
             });
-            
+
+            let templateSelect = document.getElementById("template");
+            let templateId = getLocalStorageItem('cashjournal-template-id')
+            if(templateId !== null) {
+                templateSelect.value = templateId;
+            }
             $("#template").change(function () {
-                changeTemplateId();
+                var templateId = $("#template").val();
+                setLocalStorageItemIfNotExists('cashjournal-template-id', templateId, true);
+                updatePDFExportLinks(templateId);
             });
             // the default modal width is used here
             $("#modalCenter .modal-dialog").removeClass('modal-lg');
@@ -66,20 +74,6 @@
         $.ajaxSetup({
             cache: false
         });
-        
-        function changeTemplateId() {
-            var templateId = $("#template").val();
-
-            // loop through each download link
-            $(".export-link").each(function (index) {
-                var src = $(this).attr("href");
-                var pos = src.lastIndexOf('/');
-                // replace old template id with new one
-                var str = src.substring(0, pos + 1) + templateId;
-                // set new href
-                $(this).attr("href", str);
-            });
-        }
         
         function getJournalTable(page) {
             var url = "{{ path('cashjournal.table.get') }}";
@@ -100,7 +94,8 @@
                 },
                 success: function (data) {
                     $("#table-ajax").html(data);
-                    changeTemplateId();
+                    let templateId = getLocalStorageItem('cashjournal-template-id')
+                    updatePDFExportLinks(templateId);
                 }
             });
 

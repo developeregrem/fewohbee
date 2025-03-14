@@ -38,6 +38,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\Form\FormError;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
@@ -49,16 +51,7 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
-
-        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
-
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
         $search = $request->query->get('search', '');
         $page = $request->query->get('page', 1);
 
@@ -71,7 +64,6 @@ class InvoiceServiceController extends AbstractController
             'Invoices/index.html.twig',
             [
                 'invoices' => $invoices,
-                'templates' => $templates,
                 'templateId' => $templateId,
                 'page' => $page,
                 'pages' => $pages,
@@ -91,13 +83,7 @@ class InvoiceServiceController extends AbstractController
         // calculate the number of pages for pagination
         $pages = ceil($invoices->count() / $this->perPage);
 
-        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
 
         $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
 
@@ -921,15 +907,21 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]
-    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, int $id, int $templateId): Response
+    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, int $templateId): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('invoice-template-id', $templateId);
 
-        $templateOutput = $ts->renderTemplate($templateId, $id, $is);
+        $templateOutput = null;
+        try {
+            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+        
         $template = $em->getRepository(Template::class)->find($templateId);
-        $invoice = $em->getRepository(Invoice::class)->find($id);
 
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
         $response = new Response($pdfOutput);
@@ -972,33 +964,39 @@ class InvoiceServiceController extends AbstractController
     {
         $settings = $doctrine->getRepository(InvoiceSettingsData::class)->findBy([], ['isActive' => 'DESC']);
         $forms = [];
+        $editSettingId = 0;
         foreach ($settings as $setting) {
             $form = $this->createForm(InvoiceSettingsType::class, $setting, [
                 'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
             ]);
+
+            // here we handel the edit request which is forwarded to this route when clicking on save in the modal
+            $parentRequest = $requestStack->getParentRequest();
+            if($parentRequest instanceof Request) {
+                $routeParameters = $parentRequest->attributes->get('_route_params');
+                if($routeParameters !== null && isset($routeParameters['id']) && $routeParameters['id'] == $setting->getId()) {
+                	$form->handleRequest($parentRequest);
+                    $editSettingId = $setting->getId();
+                }
+            }
             $forms[] = $form->createView();
         }
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
-
-        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
-
+        
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
+        
         return $this->render('Invoices/invoice_form_settings.html.twig', [
             'settings' => $settings,
             'forms' => $forms,
             'templates' => $templates,
             'templateId' => $templateId,
+            'editSettingId' => $editSettingId,
         ]);
     }
 
     #[Route('/settings/new', name: 'invoices.settings.new', methods: ['GET', 'POST'])]
-    public function newSettings(ManagerRegistry $doctrine, Request $request): Response
+    public function newSettings(ManagerRegistry $doctrine, Request $request, TranslatorInterface $translator): Response
     {
         $setting = new InvoiceSettingsData();
         $form = $this->createForm(InvoiceSettingsType::class, $setting, [
@@ -1007,21 +1005,29 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if($setting->isActive()) {
-                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
-            }
-            $doctrine->getManager()->persist($setting);
-            $doctrine->getManager()->flush();
+            if(!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms()) ) 
+            {
+                if($setting->isActive()) {
+                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
+                }
+                $doctrine->getManager()->persist($setting);
+                $doctrine->getManager()->flush();
 
-            // add success message
-            $this->addFlash('success', 'invoice.settings.flash.create.success');
+                // add success message
+                $this->addFlash('success', 'invoice.settings.flash.create.success');
 
-            return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+                return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+            } else {
+                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
+                $form['paymentDueDays']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
+                $form['paymentTerms']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
+            }   
         }
 
         return $this->render('Invoices/invoice_form_settings_new.html.twig', [
             'setting' => $setting,
             'form' => $form->createView(),
+            'editSettingId' => 0,
         ]);
     }
 
@@ -1034,14 +1040,19 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if($setting->isActive()) {
-                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
+            if(!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms()) ) 
+            {
+                if($setting->isActive()) {
+                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
 
-            }
-            $doctrine->getManager()->flush();
+                }
+                $doctrine->getManager()->flush();
 
-            // add success message
-            $this->addFlash('success', 'invoice.settings.flash.edit.success');            
+                // add success message
+                $this->addFlash('success', 'invoice.settings.flash.edit.success');  
+            } else {
+                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
+            }           
         }
         return $this->forward('App\Controller\InvoiceServiceController::getSettings');
     }

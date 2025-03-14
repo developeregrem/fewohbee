@@ -62,15 +62,7 @@ class CashJournalServiceController extends AbstractController
         $journalYears = $em->getRepository(CashJournal::class)->getJournalYears();
 
         $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_CASHJOURNAL_PDF']);
-        $defaultTemplate = $ts->getDefaultTemplate($templates);
-
-        $templateId = 1;
-        if (null != $defaultTemplate) {
-            $templateId = $defaultTemplate->getId();
-        }
-
-        $templateId = $requestStack->getSession()->get('cashjournal-template-id', $templateId); // get previously selected id
-        //
+        $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_CASHJOURNAL_PDF', 'cashjournal-template-id');
         // initialy select the joungest year available
         if (count($journalYears) > 0) {
             $search = $journalYears[0]['cashYear'];
@@ -435,15 +427,20 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/{id}/export/pdf/{templateId}', name: 'cashjournal.journal.export.pdf', methods: ['GET'])]
-    public function exportJournalToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, int $id, TemplatesService $ts, CashJournalService $cjs, int $templateId)
+    public function exportJournalToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, CashJournal $journal, TemplatesService $ts, CashJournalService $cjs, int $templateId)
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('cashjournal-template-id', $templateId);
+        $templateOutput = null;
+        try {
+            $templateOutput = $ts->renderTemplate($templateId, $journal->getId(), $cjs);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirect($this->generateUrl('cashjournal.overview'));
+        }
 
-        $templateOutput = $ts->renderTemplate($templateId, $id, $cjs);
         $template = $em->getRepository(Template::class)->find($templateId);
-        $journal = $em->getRepository(CashJournal::class)->find($id);
 
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Kassenblatt-'.$journal->getCashYear().'-'.$journal->getCashMonth(), $template);
         $response = new Response($pdfOutput);

@@ -220,7 +220,7 @@
        
         <button type="button" class="btn btn-secondary " id="invoiceEditButton" 
                 onclick="return toggleInvoiceEditFields();">{{ 'button.edit'|trans }}</button>
-        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}" class="btn btn-secondary" target="_blank">{{ 'button.export.pdf'|trans }}</a>
+        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}" class="btn btn-secondary export-link" target="_blank">{{ 'button.export.pdf'|trans }}</a>
         {% if is_granted('ROLE_ADMIN') %}
         <button type="button" class="btn btn-danger"
                     onclick="return toggleInvoiceDelete();">{{ 'button.delete'|trans }}</button>
@@ -271,6 +271,7 @@
         $("#invoce-status").change(function () {
             $("#save-status").fadeIn().removeClass("d-none");
         });
+        updatePDFExportLinks(getLocalStorageItem('invoice-template-id'));
     });
 
     function updateInvoiceStatus(id) {
