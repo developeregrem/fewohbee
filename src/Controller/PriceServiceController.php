@@ -98,7 +98,7 @@ class PriceServiceController extends AbstractController
             $price = $ps->getPriceFromForm($request, 'new');
 
             // check for mandatory fields
-            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 == strlen($price->getVat())
+            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
                 || 0 == count($price->getReservationOrigins())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
@@ -135,7 +135,7 @@ class PriceServiceController extends AbstractController
             $em = $doctrine->getManager();
 
             // check for mandatory fields
-            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 == strlen($price->getVat())
+            if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
                 || 0 == count($price->getReservationOrigins())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
