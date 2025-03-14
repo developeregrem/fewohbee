@@ -129,7 +129,7 @@
     });
     $('.room-info').popover({html: true});
     $('.holiday-info').popover();
-
+    {% if is_granted('ROLE_USER') %}
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
         cancel:'.reservation',
@@ -188,6 +188,7 @@
             $(".td-empty").removeClass("ui-selected");
         }
     });
+    {% endif %}
     {#var lastRowDate = "";
     $( ".reservation-inner" ).draggable({
         revert: true,

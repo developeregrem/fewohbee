@@ -66,6 +66,18 @@
                 <source>user.password.error</source>
                 <target>Dein Passwort ist möglicherweise zu kurz.</target>
             </trans-unit>
+            <trans-unit id="ROLE_ADMIN">
+                <source>ROLE_ADMIN</source>
+                <target>Admin</target>
+            </trans-unit>
+            <trans-unit id="ROLE_USER">
+                <source>ROLE_USER</source>
+                <target>Standardnutzer</target>
+            </trans-unit>
+            <trans-unit id="ROLE_RESERVATIONS_RO">
+                <source>ROLE_RESERVATIONS_RO</source>
+                <target>Reservierungsübersicht lesend</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

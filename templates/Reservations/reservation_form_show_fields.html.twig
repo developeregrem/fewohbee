@@ -29,6 +29,7 @@
                             <input id="tab" type="hidden" value="booker" name="tab"/>
                             <input name="_csrf_token" value="{{ token }}" type="hidden">
                         </form>
+                        {% if is_granted('ROLE_USER') %}
                         <small>
                         <a href="#" onclick="return editReservationCustomerEdit({{ booker.id }}, '#actions-booker-{{ booker.id }}');"
                            title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
@@ -39,6 +40,7 @@
                             <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
                         </a>
                         </small>
+                        {% endif %}
                     {% endif %}
                 </h4>
             </div>          
@@ -50,12 +52,14 @@
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}
+            {% if is_granted('ROLE_USER') %}
             <small>
                 <a href="#" onclick="return editReservation({{ reservationId }});"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
             </small>
+            {% endif %}
             {% endif %}
         </h4>
 
@@ -82,7 +86,7 @@
         <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
-                {% if mode is defined and mode == 'edit' %}
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
                 <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
@@ -101,7 +105,7 @@
         <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
-                {% if mode is defined and mode == 'edit' %}
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
                 <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
@@ -133,11 +137,13 @@
         <div class="row">
             <div class="col">            
                 <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
+                    {% if is_granted('ROLE_USER') %}
                     <small>
                     <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
                        title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-plus"></i></a>
                     </small>
+                    {% endif %}
                 </h4>
             </div> 
         </div>                           
@@ -170,12 +176,14 @@
                             <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
                             <input name="_csrf_token" value="{{ token }}" type="hidden">
                         </form>
+                        {% if is_granted('ROLE_USER') %}
                         <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
                            title="{{ 'button.edit'|trans }}">
                             <i class="fas fa-edit"></i></a>
                         <a href="#" onclick="return deleteReservationCustomer(this, {{ customer.id }});"
                            title="{{ 'button.delete'|trans }}">
                             <i class="fas fa-trash-alt"></i></a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endif %}
@@ -189,7 +197,7 @@
         <div class="row">
             <div class="col">
                 <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
-                    {% if mode is defined and mode == 'edit' %}
+                    {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
                         <small>
                             <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
@@ -224,8 +232,10 @@
                     <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
                        title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
                     {% endif %}
+                    {% if is_granted('ROLE_USER') %}
                     <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
-                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>                                    
+                       title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  
+                    {% endif %}                                  
                 </td>
             </tr>
             {% endfor %}

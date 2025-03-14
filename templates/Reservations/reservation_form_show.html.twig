@@ -8,6 +8,7 @@
         {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'edit', 'reservationId':  attribute(reservations, 0).id } %}
     </div>
 </div>
+{% if is_granted('ROLE_USER') %}
 <form id="reservationShowForm">
     <div class="modal-footer">
         <div class="col p-0" id="boxDefault">
@@ -40,6 +41,7 @@
         </div>
     </div>
 </form>
+{% endif %}
 <script>
     function toggleReservationDelete() {
         if ($("#boxDelete").is(":hidden")) {
