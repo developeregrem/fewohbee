@@ -21,6 +21,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -42,18 +43,18 @@ class InvoiceService implements ITemplateRenderer
      * @param array $apps            The invoice positions for apartment prices
      * @param array $poss            The invoice positions for miscellaneous prices
      * @param array $vats            Returns array of all vat values
-     * @param type  $brutto          Returns the total price including vat
-     * @param type  $netto           Returns the toal price for all vats
-     * @param type  $appartmentTotal Returns the total sum for all apartment prices
-     * @param type  $miscTotal       Returns the total price for all miscellaneous prices
+     * @param float  $brutto          Returns the total price including vat
+     * @param float  $netto           Returns the toal price for all vats
+     * @param float  $appartmentTotal Returns the total sum for all apartment prices
+     * @param float  $miscTotal       Returns the total price for all miscellaneous prices
      */
-    public function calculateSums($apps, $poss, &$vats, &$brutto, &$netto, &$appartmentTotal, &$miscTotal): void
+    public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
         $vats = [];
-        $brutto = 0;
-        $netto = 0;
-        $appartmentTotal = 0;
-        $miscTotal = 0;
+        $brutto = 0.0;
+        $netto = 0.0;
+        $appartmentTotal = 0.0;
+        $miscTotal = 0.0;
 
         /* @var $apartment InvoiceAppartment */
         // $apps = $invoice->getAppartments();
@@ -72,6 +73,7 @@ class InvoiceService implements ITemplateRenderer
             }
 
             $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
+            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + round($apartment->getNetPrice(), 2) * $apartment->getAmount();
             $appartmentTotal += $apartmentPrice;
         }
 
@@ -89,6 +91,7 @@ class InvoiceService implements ITemplateRenderer
             }
 
             $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
+            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + round($pos->getNetPrice(), 2) * $pos->getAmount();
             $miscTotal += $miscPrice;
         }
 
@@ -344,7 +347,7 @@ class InvoiceService implements ITemplateRenderer
      */
     public function saveNewAppartmentPosition(InvoiceAppartment $position, RequestStack $requestStack): void
     {
-        $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments', []);
+        $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments', new ArrayCollection());
         $newInvoicePositionsAppartmentsArray[] = $position;
 
         $requestStack->getSession()->set('invoicePositionsAppartments', $newInvoicePositionsAppartmentsArray);
@@ -355,7 +358,7 @@ class InvoiceService implements ITemplateRenderer
      */
     public function saveNewMiscPosition(InvoicePosition $position, RequestStack $requestStack): void
     {
-        $newInvoicePositionsMiscArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous', []);
+        $newInvoicePositionsMiscArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous', new ArrayCollection());
         $newInvoicePositionsMiscArray[] = $position;
 
         $requestStack->getSession()->set('invoicePositionsMiscellaneous', $newInvoicePositionsMiscArray);
@@ -378,6 +381,9 @@ class InvoiceService implements ITemplateRenderer
             $invoice->setAddress($addresses[0]->getAddress());
             $invoice->setZip($addresses[0]->getZip());
             $invoice->setCity($addresses[0]->getCity());
+            $invoice->setCountry($addresses[0]->getCountry());
+            $invoice->setPhone($addresses[0]->getPhone());
+            $invoice->setEmail($addresses[0]->getEmail());
         }
         $requestStack->getSession()->set('newInvoice', $invoice);
     }

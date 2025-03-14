@@ -211,6 +211,6 @@ div .reservation-yearly-day {
 }
 
 /* add hint to required fields */
-label.required:after {
-    /*content: " *";*/
+#accordionSettings label.required:after {
+    content: " *";
 }

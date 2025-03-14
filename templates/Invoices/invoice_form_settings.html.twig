@@ -1,0 +1,55 @@
+<div class="modal-body">
+	<div class="ps-3 pe-3">
+        <div id="flash-message-overlay">
+            <div class="col">
+                {% include 'feedback.html.twig' %}
+            </div>
+        </div>
+		<nav>
+			<div class="nav nav-tabs" id="nav-tab" role="tablist">
+				<button class="nav-link active" id="nav-template-tab" data-bs-toggle="tab" data-bs-target="#nav-template" type="button" role="tab" aria-controls="nav-template" aria-selected="true">{{ 'invoice.settings.title.template'|trans }}</button>
+				<button class="nav-link" id="nav-einvoice-tab" data-bs-toggle="tab" data-bs-target="#nav-einvoice" type="button" role="tab" aria-controls="nav-einvoice" aria-selected="false">{{ 'invoice.settings.title.xrechnung'|trans }}</button>
+			</div>
+		</nav>
+		<div class="tab-content p-4" id="nav-tabContent">
+			<div class="tab-pane fade show active" id="nav-template" role="tabpanel" aria-labelledby="nav-template-tab" tabindex="0">
+				<div class="row">
+					<label for="object" class="col-sm-4 col-form-label text-end">{{ 'invoice.template'|trans }}</label>
+					<div class="col-sm">
+						<select id="template" name="template" class="form-select">
+							{% for template in templates %}
+								<option value="{{ template.id }}" {% if template.id==templateId %} selected {% endif %}>{{
+                        template.name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="tab-pane fade" id="nav-einvoice" role="tabpanel" aria-labelledby="nav-einvoice-tab" tabindex="0">
+				<div class="row">
+					<div class="accordion" id="accordionSettings">
+						{% for form in forms %}
+							{% include 'Invoices/_settings_form.html.twig' with {'form': form, 'idx': loop.index, 'setting': settings[loop.index0]}%}
+						{% else %}
+							<div class="row mt-4 mb-4">
+								<div class="col-md-12 text-center">
+									<p class="text-muted">{{ 'invoice.settings.no_settings'|trans }}</p>
+								</div>
+							</div>
+						{% endfor %}
+					</div>
+
+				</div>
+				<div class="text-center pt-4">
+					<button type="button" class="btn btn-default" onclick="showSettingsForm(this)" data-bs-target="#modalCenter" 
+                        data-target="{{ path('invoices.settings.new') }}" title="{{ 'invoice.settings.add'|trans }}">
+						<i class="fas fa-plus"></i>
+						{{ 'invoice.settings.add'|trans }}</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+    enableDeletePopover();
+</script>

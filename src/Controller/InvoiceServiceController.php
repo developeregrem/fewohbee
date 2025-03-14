@@ -24,15 +24,20 @@ use App\Form\InvoiceApartmentPositionType;
 use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Service\CSRFProtectionService;
+use App\Entity\InvoiceSettingsData;
+use App\Form\InvoiceSettingsType;
 use App\Service\InvoiceService;
 use App\Service\TemplatesService;
+use App\Service\XRechnungService;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 
 #[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
@@ -306,14 +311,14 @@ class InvoiceServiceController extends AbstractController
         $newInvoiceReservationsArray = $requestStack->getSession()->get('invoiceInCreation');
 
         if (!$requestStack->getSession()->has('invoicePositionsMiscellaneous')) {
-            $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
+            $requestStack->getSession()->set('invoicePositionsMiscellaneous', new ArrayCollection());
             // prefill positions for all selected reservations
             $is->prefillMiscPositionsWithReservationIds($newInvoiceReservationsArray, $requestStack, true);
         }
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
 
         if (!$requestStack->getSession()->has('invoicePositionsAppartments')) {
-            $requestStack->getSession()->set('invoicePositionsAppartments', []);
+            $requestStack->getSession()->set('invoicePositionsAppartments', new ArrayCollection());
             // prefill positions for all selected reservations
             foreach ($newInvoiceReservationsArray as $resId) {
                 $reservation = $em->getRepository(Reservation::class)->find($resId);
@@ -931,6 +936,127 @@ class InvoiceServiceController extends AbstractController
         $response->headers->set('Content-Type', 'application/pdf');
 
         return $response;
+    }
+
+    #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
+    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, XRechnungService $xrechnung, Invoice $invoice): Response
+    {
+        $em = $doctrine->getManager();
+        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+        if(!($invoiceSettings instanceof InvoiceSettingsData)) {
+            $this->addFlash('danger', 'invoice.settings.active.error');
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+        $xml = "";
+        try {
+            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        $response = new Response($xml);
+        $response->headers->set('Content-Type', 'text/xml');
+
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'XRechnung-'.$invoice->getNumber().'.xml'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    #[Route('/settings', name: 'invoices.settings.get', methods: ['GET'])]
+    public function getSettings(ManagerRegistry $doctrine, Request $request, RequestStack $requestStack, TemplatesService $ts): Response
+    {
+        $settings = $doctrine->getRepository(InvoiceSettingsData::class)->findBy([], ['isActive' => 'DESC']);
+        $forms = [];
+        foreach ($settings as $setting) {
+            $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+                'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
+            ]);
+            $forms[] = $form->createView();
+        }
+        $em = $doctrine->getManager();
+        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+        $defaultTemplate = $ts->getDefaultTemplate($templates);
+
+        $templateId = 1;
+        if (null != $defaultTemplate) {
+            $templateId = $defaultTemplate->getId();
+        }
+
+        $templateId = $requestStack->getSession()->get('invoice-template-id', $templateId); // get previously selected id
+
+        return $this->render('Invoices/invoice_form_settings.html.twig', [
+            'settings' => $settings,
+            'forms' => $forms,
+            'templates' => $templates,
+            'templateId' => $templateId,
+        ]);
+    }
+
+    #[Route('/settings/new', name: 'invoices.settings.new', methods: ['GET', 'POST'])]
+    public function newSettings(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $setting = new InvoiceSettingsData();
+        $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+            'action' => $this->generateUrl('invoices.settings.new'),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
+            }
+            $doctrine->getManager()->persist($setting);
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.create.success');
+
+            return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+        }
+
+        return $this->render('Invoices/invoice_form_settings_new.html.twig', [
+            'setting' => $setting,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/settings/{id}/edit', name: 'invoices.settings.edit', methods: ['POST'])]
+    public function editSettings(ManagerRegistry $doctrine, Request $request, InvoiceSettingsData $setting): Response
+    {
+        $form = $this->createForm(InvoiceSettingsType::class, $setting, [
+            'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            if($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
+
+            }
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.edit.success');            
+        }
+        return $this->forward('App\Controller\InvoiceServiceController::getSettings');
+    }
+
+    #[Route('/settings/{id}/delete', name: 'invoices.settings.delete', methods: ['DELETE'])]
+    public function delete(ManagerRegistry $doctrine, Request $request, InvoiceSettingsData $setting): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$setting->getId(), $request->request->get('_token'))) {
+            $entityManager = $doctrine->getManager();
+            $entityManager->remove($setting);
+            $entityManager->flush();
+            $this->addFlash('success', 'invoice.settings.flash.delete.success');
+        }
+
+        return $this->forward('App\Controller\InvoiceServiceController::getSettings');
     }
 
     /**
