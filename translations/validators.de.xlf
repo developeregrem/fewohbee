@@ -22,6 +22,10 @@
                 <source>form.username.na</source>
                 <target>Der angegebene Anmeldename {{ string }} wird bereits verwendet.</target>
             </trans-unit>
+            <trans-unit id="form.vatid.invalid_country">
+                <source>form.vatid.invalid_country</source>
+                <target>Die USt-IdNr. muss mit einem gültigen Ländercode beginnen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

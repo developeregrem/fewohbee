@@ -97,3 +97,4 @@ invoice.settings.title.template: Invoice Template
 invoice.settings.active.error: No settings marked as active for invoice export could be found.
 invoice.xrechnung.mandatory.error: >-
   The values for country, phone, and email of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the values.
+invoice.settings.paymentterm.error: At least one of the fields "Payment Terms" or "Payment Due Days" must be filled.
