@@ -962,10 +962,21 @@ class InvoiceServiceController extends AbstractController
     {
         $settings = $doctrine->getRepository(InvoiceSettingsData::class)->findBy([], ['isActive' => 'DESC']);
         $forms = [];
+        $editSettingId = 0;
         foreach ($settings as $setting) {
             $form = $this->createForm(InvoiceSettingsType::class, $setting, [
                 'action' => $this->generateUrl('invoices.settings.edit', ['id' => $setting->getId()]),
             ]);
+
+            // here we handel the edit request which is forwarded to this route when clicking on save in the modal
+            $parentRequest = $requestStack->getParentRequest();
+            if($parentRequest instanceof Request) {
+                $routeParameters = $parentRequest->attributes->get('_route_params');
+                if($routeParameters !== null && isset($routeParameters['id']) && $routeParameters['id'] == $setting->getId()) {
+                	$form->handleRequest($parentRequest);
+                    $editSettingId = $setting->getId();
+                }
+            }
             $forms[] = $form->createView();
         }
         $em = $doctrine->getManager();
@@ -978,6 +989,7 @@ class InvoiceServiceController extends AbstractController
             'forms' => $forms,
             'templates' => $templates,
             'templateId' => $templateId,
+            'editSettingId' => $editSettingId,
         ]);
     }
 
@@ -1006,6 +1018,7 @@ class InvoiceServiceController extends AbstractController
         return $this->render('Invoices/invoice_form_settings_new.html.twig', [
             'setting' => $setting,
             'form' => $form->createView(),
+            'editSettingId' => 0,
         ]);
     }
 
