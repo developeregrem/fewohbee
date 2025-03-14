@@ -382,6 +382,10 @@
                 <source>invoice.xrechnung.mandatory.error</source>
                 <target>Die Werte für Land, Telefon und E-Mail des Rechnungsempfängers müssen zur Erstellung der XRechnung vorhanden sein. Bitte die Rechnung bearbeiten und Werte ergänzen.</target>
             </trans-unit>
+            <trans-unit id="invoice.settings.paymentterm.error">
+                <source>invoice.settings.paymentterm.error</source>
+                <target>Mindestens eines der Felder "Zahlungsbedingungen" oder "Zahlungsfrist (Tage)" muss ausgefüllt sein.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

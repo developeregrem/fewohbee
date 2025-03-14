@@ -93,6 +93,45 @@ function copyToClipboard(elm) {
 }
 
 /**
+ * Sets a value in localStorage if it doesn't already exist
+ * @param {string} key
+ * @param {string} value
+ * @param {boolean} forceUpdate
+ * @returns {void}
+ */
+function setLocalStorageItemIfNotExists(key, value, forceUpdate) {
+    forceUpdate = forceUpdate || false;
+    if (localStorage.getItem(key) === null || forceUpdate) {
+        localStorage.setItem(key, value);
+    }
+}
+
+/**
+ * Gets a value from localStorage
+ * @param {string} key
+ * @returns {string|null}
+ */
+function getLocalStorageItem(key) {
+    return localStorage.getItem(key);
+}
+
+/**
+ * Update all export links with a new template id
+ * @param {*} templateId 
+ */
+function updatePDFExportLinks(templateId) {
+    let linksToUpdate = document.querySelectorAll('.export-link');
+    linksToUpdate.forEach(function(link) {
+        let src = link.getAttribute("href");
+        let pos = src.lastIndexOf('/');
+        // replace old template id with new one
+        var str = src.substring(0, pos + 1) + templateId;
+        // set new href
+        link.setAttribute("href", str);
+    });
+}
+
+/**
  * Creates a confirmation popover (yes/no) when clicking on an element which has the data-popover="delete" attribute assigned
  * @returns {void}
  */

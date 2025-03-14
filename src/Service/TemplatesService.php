@@ -22,6 +22,8 @@ use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Interfaces\ITemplateRenderer;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -29,22 +31,16 @@ use Twig\Environment;
 
 class TemplatesService
 {
-    private $em;
-    private $app;
-    private $requestStack;
-    private $mpdfs;
-    private $twig;
     private $webHost;
-    private $translator;
 
-    public function __construct(string $webHost, Environment $twig, EntityManagerInterface $em, RequestStack $requestStack, MpdfService $mpdfs, TranslatorInterface $translator)
+    public function __construct(string $webHost, 
+        private Environment $twig, 
+        private EntityManagerInterface $em, 
+        private RequestStack $requestStack, 
+        private MpdfService $mpdfs, 
+        private TranslatorInterface $translator)
     {
-        $this->em = $em;
-        $this->requestStack = $requestStack;
-        $this->mpdfs = $mpdfs;
-        $this->twig = $twig;
         $this->webHost = $webHost;
-        $this->translator = $translator;
     }
 
     /**
@@ -111,6 +107,9 @@ class TemplatesService
     {
         /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
+        if(!($template instanceof Template)) {
+            throw new InvalidArgumentException($this->translator->trans('templates.notfound'));
+        }
 
         $params = [];
         $service = $template->getTemplateType()->getService();
@@ -289,8 +288,23 @@ class TemplatesService
                 return $template;
             }
         }
+        // if no default template is set, return the first one
+        if (count($templates) > 0) {
+            return $templates[0];
+        }
 
         return null;
+    }
+
+    public function getTemplateId(ManagerRegistry $doctrine, RequestStack $requestStack, string $typeName, string $sessionName): int
+    {
+        $templates = $doctrine->getManager()->getRepository(Template::class)->loadByTypeName([$typeName]);
+        $defaultTemplate = $this->getDefaultTemplate($templates);
+        $templateId = 0;
+        if (null != $defaultTemplate) {
+            $templateId = $defaultTemplate->getId();
+        }
+        return $requestStack->getSession()->get($sessionName, $templateId);
     }
 
     private function replaceTwigSyntax(string $string): string
