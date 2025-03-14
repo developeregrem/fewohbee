@@ -26,7 +26,7 @@ class InvoicePosition
     private $price;
     #[ORM\Column(type: 'decimal', scale: 2)]
     #[Assert\PositiveOrZero]
-    private $vat;
+    private float $vat;
     #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'positions')]
     private $invoice;
     #[ORM\Column(type: 'boolean', nullable: true)]
@@ -55,7 +55,7 @@ class InvoicePosition
         return $this->price;
     }
 
-    public function getVat()
+    public function getVat(): float
     {
         return $this->vat;
     }
@@ -104,7 +104,7 @@ class InvoicePosition
 
     public function setVat($vat): void
     {
-        $this->vat = $vat;
+        $this->vat = (float)$vat;
     }
 
     public function setInvoice($invoice): void
@@ -139,5 +139,10 @@ class InvoicePosition
         $this->isFlatPrice = $isFlatPrice;
 
         return $this;
+    }
+
+    public function getNetPrice(): float
+    {
+        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : (float)$this->price;
     }
 }

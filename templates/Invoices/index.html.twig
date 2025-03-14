@@ -16,14 +16,11 @@
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
             </div>
-            <div class="col-md-3">                
-                    <select id="template" name="template" class="form-select">
-                        <option disabled>{{ 'invoice.template'|trans }}:</option>
-                        <option disabled>──────────</option>
-                        {% for template in templates %}
-                            <option value="{{ template.id }}"{% if template.id == templateId %} selected{% endif %}>{{ template.name }}</option>
-                        {% endfor %}
-                    </select>
+            <div class="col-md-3 text-end">
+                <a href="#" class="fs-5 text-secondary" title="{{ 'invoice.settings.text'|trans }}" 
+                data-target="{{ path('invoices.settings.get') }}" data-bs-toggle="modal" data-bs-target="#modalCenter" onclick="showSettingsForm(this); return false;">
+                    <i class="fas fa-cog"></i>
+                </a>             
             </div>
         </div>
         <form class="form" id="invoices-search-form" onsubmit="return false;">
@@ -169,5 +166,5 @@
 
 {% block bodyjs %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.0.0.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.1.0.js"></script>
 {% endblock %}

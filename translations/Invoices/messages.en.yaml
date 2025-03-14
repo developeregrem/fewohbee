@@ -65,3 +65,35 @@ invoice.vatwarning: >-
   You use price categories both with VAT included and without. This mix can lead
   to inconsistent listings. It is recommended to use consistent price
   categories.
+invoice.settings.text: Settings
+invoice.settings.no_settings: No further settings available. Please add.
+invoice.settings.add: Add new settings
+invoice.settings.companyName: Company Name
+invoice.settings.taxNumber: Tax Number
+invoice.settings.vatID: VAT ID
+invoice.settings.contactName: Contact Name
+invoice.settings.contactDepartment: Department
+invoice.settings.contactPhone: Phone Number
+invoice.settings.contactMail: Email
+invoice.settings.companyInvoiceMail: Invoice Email
+invoice.settings.companyAddress: Address
+invoice.settings.companyPostCode: Postal Code
+invoice.settings.companyCity: City
+invoice.settings.companyCountry: Country
+invoice.settings.accountIBAN: IBAN
+invoice.settings.accountName: Account Holder
+invoice.settings.accountBIC: BIC
+invoice.settings.paymentTerms: Payment Terms
+invoice.settings.paymentDueDays: Payment Due Days
+invoice.settings.active: Active
+invoice.settings.inactive: Inactive
+invoice.settings.help.general: The information entered here is required for the digital invoice export (XRechnung).
+invoice.settings.help.invoiceMail: Specifies the email address to which the response to an invoice can be sent.
+invoice.settings.flash.create.success: New settings added successfully.
+invoice.settings.flash.edit.success: Settings edited successfully.
+invoice.settings.flash.delete.success: Settings deleted successfully.
+invoice.settings.title.xrechnung: XRechnung
+invoice.settings.title.template: Invoice Template
+invoice.settings.active.error: No settings marked as active for invoice export could be found.
+invoice.xrechnung.mandatory.error: >-
+  The values for country, phone, and email of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the values.
