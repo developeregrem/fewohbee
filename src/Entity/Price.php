@@ -19,7 +19,7 @@ class Price
     #[ORM\Column(type: 'decimal', scale: 2)]
     private $price;
     #[ORM\Column(type: 'decimal', scale: 2)]
-    private float $vat;
+    private ?float $vat = null;
     #[ORM\Column(type: 'string', length: 100)]
     private $description;
     #[ORM\Column(type: 'smallint', nullable: true)]
@@ -172,7 +172,7 @@ class Price
         $this->price = $price;
     }
 
-    public function setVat($vat): void
+    public function setVat(float $vat): void
     {
         $this->vat = $vat;
     }
