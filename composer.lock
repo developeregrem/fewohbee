@@ -1804,16 +1804,16 @@
         },
         {
             "name": "horstoeko/zugferd",
-            "version": "v1.0.109",
+            "version": "v1.0.110",
             "source": {
                 "type": "git",
                 "url": "https://github.com/horstoeko/zugferd.git",
-                "reference": "af678afb24260a988b27e26893443dbc8d582e4f"
+                "reference": "7323d947b6d6b4b4df466733228c812e9cb88c99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/horstoeko/zugferd/zipball/af678afb24260a988b27e26893443dbc8d582e4f",
-                "reference": "af678afb24260a988b27e26893443dbc8d582e4f",
+                "url": "https://api.github.com/repos/horstoeko/zugferd/zipball/7323d947b6d6b4b4df466733228c812e9cb88c99",
+                "reference": "7323d947b6d6b4b4df466733228c812e9cb88c99",
                 "shasum": ""
             },
             "require": {
@@ -1872,9 +1872,9 @@
             ],
             "support": {
                 "issues": "https://github.com/horstoeko/zugferd/issues",
-                "source": "https://github.com/horstoeko/zugferd/tree/v1.0.109"
+                "source": "https://github.com/horstoeko/zugferd/tree/v1.0.110"
             },
-            "time": "2025-03-11T11:36:08+00:00"
+            "time": "2025-03-13T01:48:45+00:00"
         },
         {
             "name": "jms/metadata",
