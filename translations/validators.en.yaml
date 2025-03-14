@@ -7,3 +7,5 @@ form:
     notblank: Please enter a password.
   username:
     na: 'The selected login name {{ string }} is already taken.'
+  vatid:
+    invalid_country: The VAT ID must start with a valid country code.

@@ -1,5 +1,10 @@
 <div class="modal-body">
     <div class="ps-3 pe-3">
+        <div id="flash-message-overlay">
+            <div class="col">
+                {% include 'feedback.html.twig' %}
+            </div>
+        </div>
         <div class="row mb-4">
             <div class="accordion" id="accordionSettings">
             {# idx is 1 as we have only one form during new process #}
