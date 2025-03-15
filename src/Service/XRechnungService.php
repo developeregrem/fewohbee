@@ -34,7 +34,7 @@ class XRechnungService
 
     public function createInvoice(Invoice $invoice, InvoiceSettingsData $settings): string
     {
-        if (empty($invoice->getPhone()) || empty($invoice->getEmail()) || empty($invoice->getCountry())) {
+        if (empty($invoice->getCountry())) {
             throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.error'));
         }
 
