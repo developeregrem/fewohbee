@@ -185,14 +185,25 @@
         {% endif %}
         <div class="row mt-3">
             <div class="col">
-                <h4>{{ 'invoice.remark'|trans }}&nbsp;
+                <h5>{{ 'invoice.paymentmeans.label'|trans }}&nbsp;
                     <small>
                         <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
                            title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
                             <i class="fas fa-edit"></i>
                         </a>
                     </small>
-                </h4>
+                </h5>
+                <div>{% if invoice.paymentMeans %}{{ invoice.paymentMeans.name|trans }}{% else %}-{% endif%}</div>
+            </div>
+            <div class="col">
+                <h5>{{ 'invoice.remark'|trans }}&nbsp;
+                    <small>
+                        <a href="#" onclick="return changeInvoiceRemark({{ invoice.id }});"
+                           title="{{ 'button.edit'|trans }}" class="small invoice-edit-field d-none text-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </small>
+                </h5>
                 <div class="text-muted">{%if invoice.remark %}{{ invoice.remark|nl2br }}{% else %}-{% endif%}</div>
             </div>
         </div>

@@ -13,19 +13,20 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
-use horstoeko\zugferd\codelists\ZugferdCountryCodes;
 use horstoeko\zugferd\codelists\ZugferdCurrencyCodes;
 use horstoeko\zugferd\codelists\ZugferdElectronicAddressScheme;
 use horstoeko\zugferd\codelists\ZugferdInvoiceType;
-use horstoeko\zugferd\codelists\ZugferdReferenceCodeQualifiers;
 use horstoeko\zugferd\codelists\ZugferdUnitCodes;
 use horstoeko\zugferd\codelists\ZugferdVatCategoryCodes;
 use horstoeko\zugferd\codelists\ZugferdVatTypeCodes;
+use horstoeko\zugferd\codelists\ZugferdPaymentMeans;
 use horstoeko\zugferd\ZugferdDocumentBuilder;
 use horstoeko\zugferd\ZugferdProfiles;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use App\Entity\Enum\InvoiceStatus;
 use InvalidArgumentException;
 
 class XRechnungService
@@ -35,7 +36,11 @@ class XRechnungService
     public function createInvoice(Invoice $invoice, InvoiceSettingsData $settings): string
     {
         if (empty($invoice->getCountry())) {
-            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.error'));
+            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.buyerCountry'));
+        }
+
+        if(!($invoice->getPaymentMeans() instanceof PaymentMeansCode)) {
+            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.paymentmeans'));
         }
 
         $documentBuilder = ZugferdDocumentBuilder::createNew(ZugferdProfiles::PROFILE_XRECHNUNG_3);
@@ -45,7 +50,7 @@ class XRechnungService
         $documentBuilder->setDocumentInformation(
             $invoice->getNumber(),                                     // Invoice number (BT-1)
             ZugferdInvoiceType::INVOICE,                        // Type "Invoice" (BT-3)
-            $invoice->getDate(),      // Invoice fate (BT-2)
+            $invoice->getDate(),      // Invoice date (BT-2)
             ZugferdCurrencyCodes::EURO,                          // Invoice currency is EUR (Euro) (BT-5)
             $this->translator->trans('invoice.number.short').'-'.$invoice->getNumber(),                   // A document title
         );
@@ -61,15 +66,52 @@ class XRechnungService
         // customer information
         $customerName = $invoice->getSalutation() . ' ' . $invoice->getFirstname() . ' ' . $invoice->getLastname();
         $documentBuilder->setDocumentBuyer((!empty($invoice->getCompany()) ? $invoice->getCompany() : $customerName));
-        $documentBuilder->setDocumentBuyerAddress($invoice->getAddress(), '', '', $invoice->getZip(), $invoice->getCity(), $invoice->getCountry()); // todo ländercode
-        $documentBuilder->setDocumentBuyerContact($customerName, null, $invoice->getPhone(), null, $invoice->getEmail()); // todo telefon, mail
+        $documentBuilder->setDocumentBuyerAddress($invoice->getAddress(), '', '', $invoice->getZip(), $invoice->getCity(), $invoice->getCountry());
+        $documentBuilder->setDocumentBuyerContact($customerName, null, $invoice->getPhone(), null, $invoice->getEmail());
         $documentBuilder->setDocumentBuyerCommunication(ZugferdElectronicAddressScheme::UNECE3155_EM, $invoice->getEmail());
 
-        $documentBuilder->addDocumentPaymentMeanToCreditTransfer($settings->getAccountIBAN(), $settings->getAccountName(), null, $settings->getAccountBIC()); // Payment information
-        
+        $mandateReference = null;
+        if($invoice->getPaymentMeans() === PaymentMeansCode::CASH) {
+            $documentBuilder->addDocumentPaymentMean(ZugferdPaymentMeans::UNTDID_4461_10);
+        }
+        // CREDIT TRANSFER (BG-17) must be supplied with IBAN (mandatory) and BIC (optional)
+        if($invoice->getPaymentMeans() === PaymentMeansCode::SEPA_CREDIT_TRANSFER) {
+            if(empty($settings->getAccountIBAN())) {
+                throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBAN'));
+            }
+            $documentBuilder->addDocumentPaymentMeanToCreditTransfer($settings->getAccountIBAN(), $settings->getAccountName(), null, $settings->getAccountBIC()); // Payment information
+        }
+        // CREDIT TRANSFER (BG-17) must be supplied with IBAN (mandatory) and BIC (mandatory)
+        if($invoice->getPaymentMeans() === PaymentMeansCode::CREDIT_TRANSFER) {
+            if(empty($settings->getAccountIBAN()) || empty($settings->getAccountBIC())) {
+                throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBAN_BIC'));
+            }
+            $documentBuilder->addDocumentPaymentMeanToCreditTransferNonSepa($settings->getAccountIBAN(), $settings->getAccountName(), null, $settings->getAccountBIC()); // Payment information
+        }
+        // CARD INFORMATION (BG-18) must be supplied with card number (mandatory) and card holder (optional)
+        if($invoice->getPaymentMeans() === PaymentMeansCode::CARD_PAYMENT) {
+            if(empty($invoice->getCardNumber())) {
+                throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.cardNumber'));
+            }
+            $documentBuilder->addDocumentPaymentMeanToPaymentCard('', $invoice->getCardNumberShort(), $invoice->getCardHolder());
+        }
+
+        // DIRECT DEBIT (BG-19) must be supplied with buyer IBAN (mandatory) and creditor identifier (mandatory)
+        if($invoice->getPaymentMeans() === PaymentMeansCode::SEPA_DIRECT_DEBIT) {
+            if(empty($invoice->getCustomerIBAN()) || empty($invoice->getMandateReference())) {
+                throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBANBuyer'));
+            }
+            if(empty($settings->getCreditorReference())) {
+                throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.creditorReference'));
+            }
+            $documentBuilder->addDocumentPaymentMeanToDirectDebit($invoice->getCustomerIBAN(), $settings->getCreditorReference());
+            $mandateReference = $invoice->getMandateReference();
+        }
+
+
         // payment terms and due date
         $dueDate = (!is_null($settings->getPaymentDueDays()) ? $invoice->getDate()->modify('+' . $settings->getPaymentDueDays() . ' days') : null);
-        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate); // Payment term
+        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate, $mandateReference); // Payment term
 
         $documentBuilder->setDocumentBuyerReference($invoice->getBuyerReference() !== null ? $invoice->getBuyerReference() : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
 
@@ -112,7 +154,14 @@ class XRechnungService
             $netSum += $sum;
         }
 
-        $documentBuilder->setDocumentSummation($netSum + $vatSum, $netSum + $vatSum, $netSum, 0.0, 0.0, $netSum, $vatSum);
+        $prepaidAmount = null;
+        $duePayableAmount = $netSum + $vatSum;
+        if($invoice->getStatus() === InvoiceStatus::{'PAID'}->value) {
+            $prepaidAmount = $netSum + $vatSum;
+            $duePayableAmount = 0.0;
+        } // todo collect amount if status is prepaid
+            
+        $documentBuilder->setDocumentSummation($netSum + $vatSum, $duePayableAmount, $netSum, 0.0, 0.0, $netSum, $vatSum, null, $prepaidAmount);
 
         return $documentBuilder->getContent();
     }

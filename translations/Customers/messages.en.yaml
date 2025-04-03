@@ -47,3 +47,11 @@ customer.zip: Zip code
 customer.buyerReference.label: Customer Reference
 customer.buyerReference.hint: >-
   A designation assigned by the guest and used for internal control purposes, also known as Leitweg-ID.
+customer.cardNumber: Card Number
+customer.cardHolder.label: Cardholder
+customer.cardHolder.hint: >-
+  The Cardholder (optional) and Card Number (mandatory) fields are part of the payment method card payment.
+customer.accountIBAN.label: IBAN
+customer.accountIBAN.hint: >-
+  The IBAN and mandate reference number must be filled in for the direct debit payment method.
+customer.mandateReference.label: Mandate Reference Number

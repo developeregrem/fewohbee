@@ -16,7 +16,7 @@ class Role
     private $id;
     #[ORM\Column(name: 'name', type: 'string', length: 30)]
     private $name;
-    #[ORM\Column(name: 'role', type: 'string', length: 20, unique: true)]
+    #[ORM\Column(name: 'role', type: 'string', length: 30, unique: true)]
     private $role;
     #[ORM\OneToMany(targetEntity: 'User', mappedBy: 'role')]
     private $users;
