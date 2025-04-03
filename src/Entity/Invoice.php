@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PaymentMeansCode;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -57,6 +58,21 @@ class Invoice
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $buyerReference = null;
+
+    #[ORM\Column(nullable: true, enumType: PaymentMeansCode::class)]
+    private ?PaymentMeansCode $paymentMeans = null;
+
+    #[ORM\Column(length: 19, nullable: true)]
+    private ?string $cardNumber = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $customerIBAN = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $cardHolder = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $mandateReference = null;
 
     public function __construct()
     {
@@ -311,6 +327,93 @@ class Invoice
     public function setBuyerReference(?string $buyerReference): static
     {
         $this->buyerReference = $buyerReference;
+
+        return $this;
+    }
+
+    public function getPaymentMeans(): ?PaymentMeansCode
+    {
+        return $this->paymentMeans;
+    }
+
+    public function setPaymentMeans(?PaymentMeansCode $paymentMeans): static
+    {
+        $this->paymentMeans = $paymentMeans;
+
+        return $this;
+    }
+
+    public function getCardNumber(): ?string
+    {
+        return $this->cardNumber;
+    }
+
+    public function getCardNumberShort(): ?string
+    {
+        if (strlen($this->cardNumber) < 10) {
+            return $this->cardNumber; // Not enough characters to mask
+        }
+        return substr($this->cardNumber, -10);
+    }
+
+    public function setCardNumber(?string $cardNumber): static
+    {
+        $this->cardNumber = $this->maskCardNumber($cardNumber);;
+
+        return $this;
+    }
+
+    public function getCustomerIBAN(): ?string
+    {
+        return $this->customerIBAN;
+    }
+
+    public function setCustomerIBAN(?string $customerIBAN): static
+    {
+        $this->customerIBAN = $customerIBAN;
+
+        return $this;
+    }
+
+    public function getCardHolder(): ?string
+    {
+        return $this->cardHolder;
+    }
+
+    public function setCardHolder(?string $cardHolder): static
+    {
+        $this->cardHolder = $cardHolder;
+
+        return $this;
+    }
+
+    /**
+     * Mask the card number to hide sensitive information (first 2 and last 4 characters are visible)
+     */ 
+    private function maskCardNumber(?string $cardNumber): ?string
+    {
+        if ($cardNumber === null) {
+            return null;
+        }
+        if (strlen($cardNumber) < 6) {
+            return $cardNumber; // Not enough characters to mask
+        }
+
+        $start = substr($cardNumber, 0, 2);
+        $end = substr($cardNumber, -4);
+        $masked = str_repeat('X', strlen($cardNumber) - 6);
+
+        return $start . $masked . $end;
+    }
+
+    public function getMandateReference(): ?string
+    {
+        return $this->mandateReference;
+    }
+
+    public function setMandateReference(?string $mandateReference): static
+    {
+        $this->mandateReference = $mandateReference;
 
         return $this;
     }

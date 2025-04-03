@@ -1,4 +1,4 @@
-<form id="create-new-invoice" role="form" onsubmit="return createNewInvoice()">
+{{ form_start(form, {'attr': {'onsubmit': 'return _doPost("#"+this.id, this.action, "'~path('invoices.overview')~'")', 'id': 'create-new-invoice' }}) }}
     <div class="modal-body">
         <div class="ps-4 pe-4">
             <div id="flash-message-overlay">
@@ -66,14 +66,8 @@
             </div>
             {% endif %}
             <div class="row mt-4">
-                <div class="col-sm-3 text-end">
-                    <label for="invoice-remark">{{ 'invoice.remark'|trans }}</label>
-                </div>
-                <div class="col-sm-9">
-                    <textarea id="invoice-remark" class="form-control" name="remark">{{ invoice.remark }}</textarea>
-                </div>
+                {{ form_widget(form) }}
             </div>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
         </div>
     </div>
     <div class="modal-footer" id="newInvoicePreview">
@@ -85,31 +79,4 @@
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"
                onclick="return createNewInvoice()"/>
     </div>
-</form>
-<script>
-    function createNewInvoice() {
-        var url = "{{ path('invoices.create.invoice') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#create-new-invoice").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    window.location.href = "{{ path('invoices.overview') }}";
-                }
-            }
-        });
-
-        return false;
-    }
-</script>
+{{ form_end(form) }}
