@@ -68,6 +68,9 @@ class InvoiceSettingsData
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $paymentDueDays = null;
 
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $creditorReference = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -285,6 +288,18 @@ class InvoiceSettingsData
     public function setPaymentDueDays(?int $paymentDueDays): static
     {
         $this->paymentDueDays = $paymentDueDays;
+
+        return $this;
+    }
+
+    public function getCreditorReference(): ?string
+    {
+        return $this->creditorReference;
+    }
+
+    public function setCreditorReference(?string $creditorReference): static
+    {
+        $this->creditorReference = $creditorReference;
 
         return $this;
     }

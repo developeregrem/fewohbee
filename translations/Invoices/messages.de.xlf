@@ -378,13 +378,77 @@
                 <source>invoice.settings.active.error</source>
                 <target>Es konnten keine als aktiv gekennzeichneten Einstellungen für den Rechnungsexport gefunden werden.</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.error">
-                <source>invoice.xrechnung.mandatory.error</source>
-                <target>Die Werte für Land, Telefon und E-Mail des Rechnungsempfängers müssen zur Erstellung der XRechnung vorhanden sein. Bitte die Rechnung bearbeiten und Werte ergänzen.</target>
+            <trans-unit id="invoice.xrechnung.mandatory.buyerCountry">
+                <source>invoice.xrechnung.mandatory.buyerCountry</source>
+                <target>Der Wert für Land muss zur Erstellung der XRechnung vorhanden sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.paymentMeans">
+                <source>invoice.xrechnung.mandatory.paymentMeans</source>
+                <target>Keine Zahlungsmethode hinterlegt. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.IBAN">
+                <source>invoice.xrechnung.mandatory.IBAN</source>
+                <target>Das Feld IBAN muss ausgefüllt sein. Bitte die Einstellungen bearbeiten und den Wert ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.IBAN_BIC">
+                <source>invoice.xrechnung.mandatory.IBAN_BIC</source>
+                <target>Die Felder IBAN und BIC müssen ausgefüllt sein. Bitte die Einstellungen bearbeiten und die Werte ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.IBANBuyer">
+                <source>invoice.xrechnung.mandatory.IBANBuyer</source>
+                <target>Bei Zahlungen via Lastschrift muss die Kunden-IBAN und Mandatsreferenznummer ausgefüllt sein. Bitte die Rechnung bearbeiten und die Werte ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.creditorReference">
+                <source>invoice.xrechnung.mandatory.creditorReference</source>
+                <target>Bei Zahlungen via Lastschrift muss die Gläubiger-ID ausgefüllt sein. Bitte die Einstellungen bearbeiten und den Wert ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.cardNumber">
+                <source>invoice.xrechnung.mandatory.cardNumber</source>
+                <target>Die Kartennummer muss ausgefüllt sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
             </trans-unit>
             <trans-unit id="invoice.settings.paymentterm.error">
                 <source>invoice.settings.paymentterm.error</source>
                 <target>Mindestens eines der Felder "Zahlungsbedingungen" oder "Zahlungsfrist (Tage)" muss ausgefüllt sein.</target>
+            </trans-unit>
+            <trans-unit id="invoice.paymentmeans.label">
+                <source>invoice.paymentmeans.label</source>
+                <target>Zahlungsmethode</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.creditorReference.label">
+                <source>invoice.settings.creditorReference.label</source>
+                <target>Gläubiger-ID</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.creditorReference.hint">
+                <source>invoice.settings.creditorReference.hint</source>
+                <target>Die eindeutige Kennung für SEPA-Lastschrift</target>
+            </trans-unit>
+            <trans-unit id="CASH">
+                <source>CASH</source>
+                <target>Barzahlung</target>
+            </trans-unit>
+            <trans-unit id="CHEQUE">
+                <source>CHEQUE</source>
+                <target>Scheck</target>
+            </trans-unit>
+            <trans-unit id="CREDIT_TRANSFER">
+                <source>CREDIT_TRANSFER</source>
+                <target>Überweisung (Non-SEPA)</target>
+            </trans-unit>
+            <trans-unit id="CARD_PAYMENT">
+                <source>CARD_PAYMENT</source>
+                <target>Kartenzahlung</target>
+            </trans-unit>
+            <trans-unit id="CREDIT_CARD_PAYMENT">
+                <source>CREDIT_CARD_PAYMENT</source>
+                <target>Kreditkartenzahlung</target>
+            </trans-unit>
+            <trans-unit id="SEPA_CREDIT_TRANSFER">
+                <source>SEPA_CREDIT_TRANSFER</source>
+                <target>SEPA-Überweisung</target>
+            </trans-unit>
+            <trans-unit id="SEPA_DIRECT_DEBIT">
+                <source>SEPA_DIRECT_DEBIT</source>
+                <target>SEPA-Lastschrift</target>
             </trans-unit>
         </body>
     </file>

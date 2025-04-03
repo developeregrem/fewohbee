@@ -25,6 +25,7 @@ use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Service\CSRFProtectionService;
 use App\Entity\InvoiceSettingsData;
+use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
 use App\Service\InvoiceService;
 use App\Service\TemplatesService;
@@ -690,8 +691,11 @@ class InvoiceServiceController extends AbstractController
     public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is)
     {
         $em = $doctrine->getManager();
-
         $invoice = $is->getInvoiceInCreation($requestStack);
+
+        $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
+            'action' => $this->generateUrl('invoices.create.invoice'),
+        ]);
 
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments');
@@ -727,7 +731,7 @@ class InvoiceServiceController extends AbstractController
                 'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
                 'apartmentTotal' => $apartmentTotal,
                 'miscTotal' => $miscTotal,
-                'token' => $csrf->getCSRFTokenForForm(),
+                'form' => $form->createView(),
             ]
         );
     }
@@ -737,16 +741,19 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $error = false;
+        $invoice = $is->getInvoiceInCreation($requestStack);
 
-        if ($csrf->validateCSRFToken($request)) {
+        $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
+            'action' => $this->generateUrl('invoices.create.invoice'),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
             $newInvoiceReservationsArray = $requestStack->getSession()->get('invoiceInCreation');
-
-            $invoice = $is->getInvoiceInCreation($requestStack);
 
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
             $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments');
 
-            $invoice->setRemark($request->request->get('remark'));
             $em->persist($invoice);
 
             foreach ($newInvoicePositionsAppartmentsArray as $appartmentPosition) {
@@ -767,7 +774,7 @@ class InvoiceServiceController extends AbstractController
 
             $em->flush();
 
-            $this->addFlash('success', 'invoice.flash.create.success');
+            $this->addFlash('success', 'invoice.flash.create.success'); 
         }
 
         return $this->render(
@@ -869,11 +876,25 @@ class InvoiceServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit/remark/show', name: 'invoices.edit.invoice.remark.show', methods: ['GET'], defaults: ['id' => '0'])]
-    public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/edit/remark', name: 'invoices.edit.invoice.remark.show', methods: ['GET', 'POST'], defaults: ['id' => '0'])]
+    public function showChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, Request $request, Invoice $invoice)
     {
         $em = $doctrine->getManager();
-        $invoice = $em->getRepository(Invoice::class)->find($id);
+        $form = $this->createForm(InvoicePaymentRemarkType::class, $invoice, [
+            'action' => $this->generateUrl('invoices.edit.invoice.remark.show', ['id' => $invoice->getId()]),
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->persist($invoice);
+            $em->flush();
+            $this->addFlash('success', 'invoice.flash.edit.success');  
+            
+            return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+                'id' => $invoice->getId(),
+            ]);
+        }
+
         $reservations = $invoice->getReservations();
 
         return $this->render(
@@ -881,29 +902,9 @@ class InvoiceServiceController extends AbstractController
             [
                 'reservations' => $reservations,
                 'invoice' => $invoice,
-                'invoiceId' => $invoice->getId(),
-                'token' => $csrf->getCSRFTokenForForm(),
+                'form' => $form->createView(),
             ]
         );
-    }
-
-    #[Route('/edit/remark/save', name: 'invoices.edit.invoice.remark.save', methods: ['POST'])]
-    public function saveChangeRemarkInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
-    {
-        $em = $doctrine->getManager();
-        $id = $request->request->get('invoice-id');
-        if ($csrf->validateCSRFToken($request, true)) {
-            $invoice = $em->getRepository(Invoice::class)->find($id);
-            $invoice->setRemark($request->request->get('remark'));
-            $em->persist($invoice);
-            $em->flush();
-
-            $this->addFlash('success', 'invoice.flash.edit.success');
-        }
-
-        return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-            'id' => $id,
-        ]);
     }
 
     #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]

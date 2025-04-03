@@ -96,6 +96,11 @@ class InvoiceSettingsType extends AbstractType
                 'label' => 'invoice.settings.paymentDueDays',
                 'required' => false,
             ])
+            ->add('creditorReference', TextType::class, [
+                'label' => 'invoice.settings.creditorReference.label',
+                'help' => 'invoice.settings.creditorReference.hint',
+                'required' => false,
+            ])
             ->add('isActive', CheckboxType::class, [
                 'label' => 'invoice.settings.active',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
