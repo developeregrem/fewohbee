@@ -178,6 +178,30 @@
                 <source>customer.buyerReference.hint</source>
                 <target>Ein vom Gast zugewiesener und für interne Lenkungszwecke benutzter Bezeichner, auch als Leitweg-ID bekannt.</target>
             </trans-unit>
+            <trans-unit id="customer.cardNumber">
+                <source>customer.cardNumber</source>
+                <target>Kartennummer</target>
+            </trans-unit>
+            <trans-unit id="customer.cardHolder.label">
+                <source>customer.cardHolder.label</source>
+                <target>Karteninhaber</target>
+            </trans-unit>
+            <trans-unit id="customer.cardHolder.hint">
+                <source>customer.cardHolder.hint</source>
+                <target>Das Feld Karteninhaber (optional) und Kartennummer (Pflicht) sind Bestandtteil der Zahlungsmethode Kartenzahlung.</target>
+            </trans-unit>
+            <trans-unit id="customer.accountIBAN.label">
+                <source>customer.accountIBAN.label</source>
+                <target>IBAN</target>
+            </trans-unit>
+            <trans-unit id="customer.accountIBAN.hint">
+                <source>customer.accountIBAN.hint</source>
+                <target>Die IBAN und Mandatsreferenznummer muss bei der Zahlungsmethode Lastschrift ausgefüllt werden.</target>
+            </trans-unit>
+            <trans-unit id="customer.mandateReference.label">
+                <source>customer.mandateReference.label</source>
+                <target>Mandatsreferenznr.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

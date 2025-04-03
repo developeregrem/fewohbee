@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Iban;
 
 class InvoiceCustomerType extends AbstractType
 {
@@ -52,6 +53,27 @@ class InvoiceCustomerType extends AbstractType
             ])
             ->add('email', TextType::class, [
                 'label' => 'customer.email',
+            ])
+            ->add('cardHolder', TextType::class, [
+                'label' => 'customer.cardHolder.label',
+                'help' => 'customer.cardHolder.hint',
+                'required' => false,
+            ])
+            ->add ('cardNumber', TextType::class, [
+                'label' => 'customer.cardNumber',
+                'required' => false,
+            ])
+            ->add('customerIBAN', TextType::class, [
+                'label' => 'customer.accountIBAN.label',
+                'help' => 'customer.accountIBAN.hint',
+                'required' => false,
+                'constraints' => [
+                    new Iban()
+                ]
+            ])
+            ->add('mandateReference', TextType::class, [
+                'label' => 'customer.mandateReference.label',
+                'required' => false,
             ])
             ->add('buyerReference', TextType::class, [
                 'label' => 'customer.buyerReference.label',

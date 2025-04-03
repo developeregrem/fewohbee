@@ -95,6 +95,23 @@ invoice.settings.flash.delete.success: Settings deleted successfully.
 invoice.settings.title.xrechnung: XRechnung
 invoice.settings.title.template: Invoice Template
 invoice.settings.active.error: No settings marked as active for invoice export could be found.
+invoice.settings.creditorReference.label: Creditor ID
+invoice.settings.creditorReference.hint: The unique identifier for SEPA direct debit
 invoice.xrechnung.mandatory.error: >-
-  The values for country, phone, and email of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the values.
+  The value for country of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the value.
+invoice.xrechnung.mandatory.buyerCountry: The value for country must be present to create the XRechnung. Please edit the invoice and add the value.
+invoice.xrechnung.mandatory.paymentMeans: No payment method provided. Please edit the invoice and add the value.
+invoice.xrechnung.mandatory.IBAN: The IBAN field must be filled. Please edit the settings and add the value.
+invoice.xrechnung.mandatory.IBAN_BIC: The IBAN and BIC fields must be filled. Please edit the settings and add the values.
+invoice.xrechnung.mandatory.IBANBuyer: For payments via direct debit, the customer's IBAN and mandate reference number must be filled. Please edit the invoice and add the values.
+invoice.xrechnung.mandatory.creditorReference: For payments via direct debit, the creditor ID must be filled. Please edit the settings and add the value.
+invoice.xrechnung.mandatory.cardNumber: The card number must be filled. Please edit the invoice and add the value.
 invoice.settings.paymentterm.error: At least one of the fields "Payment Terms" or "Payment Due Days" must be filled.
+invoice.paymentmeans.label: Payment Method
+CASH: Cash payment
+CHEQUE: Check
+CREDIT_TRANSFER: Bank transfer (Non-SEPA)
+CARD_PAYMENT: Card payment
+CREDIT_CARD_PAYMENT: Credit card payment
+SEPA_CREDIT_TRANSFER: SEPA bank transfer
+SEPA_DIRECT_DEBIT: SEPA direct debit
