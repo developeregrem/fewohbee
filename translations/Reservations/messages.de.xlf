@@ -254,6 +254,14 @@
                 <source>reservation.table.settings.holidays</source>
                 <target>Anzeige der Feiertage</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.displayMonth">
+                <source>reservation.table.settings.displayMonth</source>
+                <target>Monatsnamen anzeigen</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.settings.displayWeek">
+                <source>reservation.table.settings.displayWeek</source>
+                <target>Kalenderwoche anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>
