@@ -62,6 +62,8 @@ reservation.table.calendarweek: CW
 reservation.table.reload: Update
 reservation.table.settings.all: all
 reservation.table.settings.country: Country
+reservation.table.settings.displayMonth: Display month names
+reservation.table.settings.displayWeek: Display calendar week
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.subdivision: Subdivision
