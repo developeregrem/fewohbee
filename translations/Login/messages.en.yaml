@@ -40,3 +40,4 @@ login:
   title: Login
   username:
     placeholder: Username
+  passkey: Login with Passkey

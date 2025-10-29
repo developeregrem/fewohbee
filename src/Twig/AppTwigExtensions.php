@@ -19,6 +19,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
+use Twig\TwigFilter;
 
 class AppTwigExtensions extends AbstractExtension
 {
@@ -31,6 +32,11 @@ class AppTwigExtensions extends AbstractExtension
         $this->em = $em;
         $this->requestStack = $requestStack;
         $this->calendarService = $cs;
+    }
+
+    public function getFilters(): array
+    {
+        return [new TwigFilter('toBase64', 'base64_encode'), new TwigFilter('toHex', 'bin2hex')];
     }
 
     public function getFunctions(): array

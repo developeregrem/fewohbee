@@ -26,35 +26,44 @@
 {% block body %}
         
 <main class="form-signin text-center">
-  <form action="{{ path('login-password') }}" method="post">    
+  {# usernameField: '_username', #}
+  <form 
+  {{ stimulus_controller('@web-auth/webauthn-stimulus',
+        {
+            useBrowserAutofill: true,
+            requestSuccessRedirectUri: path('start'),
+            requestResultUrl: path('webauthn.controller.security.main.request.result'),
+            requestOptionsUrl: path('webauthn.controller.security.main.request.options')
+        }
+    ) }}
+    {{ stimulus_controller('login') }}
+    {{ stimulus_action('login', 'onFailure', 'webauthn:request:failure') }}
+    {{ stimulus_action('login', 'onSuccess', 'webauthn:request:success') }}
+    >    
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
 
     {% if error %}
         <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
     {% endif %}
+    {# Platz für Fehlermeldungen bei 401 etc. #}
+    <div id="login-error" class="alert alert-danger mt-3 d-none" role="alert"></div>
+
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}">
+      <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}" autocomplete="username webauthn">
       <label for="floatingInput">{{ 'login.username.placeholder'|trans }}</label>
-    </div>
-    <div class="form-floating">
-      <input type="password" class="form-control" id="floatingPassword" name="_password"  placeholder="{{ 'login.password.placeholder'|trans }}">
-      <label for="floatingPassword">{{ 'login.password.placeholder'|trans }}</label>
     </div>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
     
-    <div class="checkbox mb-3">
+    <div class="checkbox mt-3 mb-3">
       <label>
         <input type="checkbox" name="_remember_me"> {{ 'login.rememberme'|trans }}
       </label>
     </div>
-    <button class="w-100 btn btn-lg btn-primary" type="submit">{{ 'login.submit.value'|trans }}</button>
-    <a href="{{ path('login') }}" class="w-100 btn btn-lg btn-secondary mt-2">
-        <i class="fas fa-key"></i> {{ 'login.passkey'|trans }}
-    </a>
-    <div class="row mt-3">
-        <div class="col text-end"><a href="{{ path('app_forgot_password_request') }}">{{ 'login.pwforgotten.link'|trans }}</a></div>
-    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit"
+    {{ stimulus_action('@web-auth/webauthn-stimulus', 'signin') }}
+    ><i class="fas fa-key"></i> {{ 'login.submit.value'|trans }}</button>
+    
     <p class="mt-4 mb-3 text-muted">&copy; Copyright {{ "now"|date("Y") }} - {{ 'login.copy'|trans }}</p>
   </form>
 </main>

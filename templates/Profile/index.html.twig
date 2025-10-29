@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  Profil
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  Profil
+{% endblock %}
+
+{% block content %}
+<div class="container">    
+    <div>
+        <h3 class="text-gray-600">Passwortlose Anmeldung (Passkeys)</h3>
+    </div>
+    <div class="row">        
+        <div class="col" {{ stimulus_controller(
+            '@web-auth/webauthn-stimulus',
+            {
+                creationOptionsUrl: path('webauthn.controller.creation.request.from_user_account'),
+                creationResultUrl: path('webauthn.controller.creation.response.from_user_account'),
+                creationSuccessRedirectUri: path('profile')
+            }
+        ) }}>
+            <button type="button" class="btn btn-default" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
+                    <i class="fas fa-plus"></i> {{ 'nav.user.add'|trans }}
+                </button>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Public Key</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for credential in credentials %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ credential.credentialPublicKey|toBase64 }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i onclick="_deleteEntry('{{ loop.index }}', '{{ path('profile_delete_credential', {id: credential.publicKeyCredentialId|toBase64|url_encode }) }}'); return false;" class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr id="entry-{{ loop.index }}" class="d-none">
+                        <td colspan="3" id="entry-cell-{{ loop.index }}">
+                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 text-center text-gray-400">No Passkeys registered.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+{% endblock %}
+{% block bodyjs %}
+    {{ parent() }}
+    <script>
+        function doDeleteEntry(id) {
+        let url = replacePlaceholder("{{ path('profile_delete_credential', {'id': 'placeholder'}) }}", id);
+        return _doDelete('#entry-form-'+id, url);
+    }
+    </script>
+{% endblock %}

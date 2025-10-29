@@ -37,6 +37,11 @@
         <!-- Delivery is disabled by default via "null://localhost" -->
         <env name="MAILER_URL" value="null://localhost"/>
         <!-- ###- symfony/swiftmailer-bundle ### -->
+
+        <!-- ###+ web-auth/webauthn-symfony-bundle ### -->
+        <env name="RELYING_PARTY_ID" value="example.com"/>
+        <env name="RELYING_PARTY_NAME" value="My Application"/>
+        <!-- ###- web-auth/webauthn-symfony-bundle ### -->
     </php>
 
     <testsuites>
