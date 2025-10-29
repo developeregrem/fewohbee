@@ -98,6 +98,10 @@
                 <source>nav.invoices</source>
                 <target>Rechnungsübersicht</target>
             </trans-unit>
+            <trans-unit id="nav.profile">
+                <source>nav.profile</source>
+                <target>Profil</target>
+            </trans-unit>
             <trans-unit id="button.continue">
                 <source>button.continue</source>
                 <target>Weiter</target>

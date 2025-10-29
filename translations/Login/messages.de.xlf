@@ -114,6 +114,10 @@
                 <source>login.pwforgotten.reset.passwordrepeat</source>
                 <target>Passwort wiederholen</target>
             </trans-unit>
+            <trans-unit id="login.passkey">
+                <source>login.passkey</source>
+                <target>Anmelden mit Passkey</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

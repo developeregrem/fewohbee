@@ -13,6 +13,7 @@
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style_1.1.0.css">
     {% endblock %}
     {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.4.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js"></script>
@@ -78,6 +79,8 @@
                                 {{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user"></i> {{ 'nav.profile'|trans }}</a>
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a>
                             </div>
                         </li>

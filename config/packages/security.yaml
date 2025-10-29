@@ -15,9 +15,15 @@ security:
         main:
             #pattern:    ^/
             provider: our_db_provider
+            webauthn: 
+                registration:
+                    enabled: true
+                secured_rp_ids:
+                   - 'localhost'
+                   - 'alexanders-mbp.localdomain'
             form_login:
-                login_path: login
-                check_path: login
+                login_path: login-password
+                check_path: login-password
                 default_target_path: start
             logout:
                 path:   /logout
@@ -41,9 +47,12 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/login-password, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_USER]}
+        - { path: ^/profile,  roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/users, roles: ROLE_ADMIN }
         - { path: ^/logout, roles: IS_AUTHENTICATED }
         - { path: ^/, roles: ROLE_USER }
