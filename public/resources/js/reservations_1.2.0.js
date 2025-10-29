@@ -30,6 +30,7 @@ function loadTableSettings(url, initial) {
             getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
             getNewTable();
         }
+        updateDisplaySettingsOnChange();
     });
 }
 
@@ -131,6 +132,58 @@ function selectableDeselect(item, c) {
     item.selecting = false;
     item.node.classList.remove(c.selecting);
     item.node.classList.remove(c.selected);
+}
+
+/**
+ * Stores the display settings in localstorate and add event listener to checkbox
+ * @param {string} name
+ * @returns {void}
+ */
+function updateDisplaySettingsOnChange() {
+    updateDisplaySettings('show-week');
+    updateDisplaySettings('show-month');
+}
+
+/**
+ * See above
+ * @param {string} name
+ * @returns {void}
+ */
+function updateDisplaySettings(name) {
+    let target = document.getElementById(name);
+    let checked = getLocalStorageItem('reservation-settings-' + name)
+    
+    if(checked !== null) {
+        target.checked = checked == 'true' ? true : false;
+    }
+    target.addEventListener('click', event => {
+        let checked = target.checked;
+        setLocalStorageItemIfNotExists('reservation-settings-' + name, checked, true);
+        toggleDisplayTableRows();
+    });
+}
+
+/**
+ * Toggles the display of the table rows based on localstorage settings
+ * @returns {void}
+ */
+function toggleDisplayTableRows() {
+    let displayMonth = getLocalStorageItem('reservation-settings-show-month');
+    let displayWeek = getLocalStorageItem('reservation-settings-show-week');
+    toggleRow('reservation-table-header-month', displayMonth);
+    toggleRow('reservation-table-header-week', displayWeek);
+
+}
+
+/**
+ * See above
+ * @param {string} name 
+ * @param {string} show 
+ */
+function toggleRow(name, show) {
+    console.log(show);
+    let row = document.getElementById(name);
+    row.style.display = show == 'true' ? '' : 'none';
 }
 
 var selectable, lastSelectedMonthDay, startSlectedDay, endSelectedDay;
