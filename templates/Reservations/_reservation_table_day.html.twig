@@ -32,7 +32,7 @@
                     {% set printSpacerAfter = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'end') %}
 
                     {% if printSpacerBefore %}
-                        <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                        <td class="two-td-left td-empty"
                             data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}"
                             data-tdnumber="{{ emptyTdNr }}"></td>
                     {% endif %}
@@ -59,14 +59,14 @@
                     {# popover #}
                     {% use 'Reservations/_resevation_popover.html.twig' %}
 
-                    <td class="reservation text-center" colspan="{{ colspan }}" style="width: {{ (50 / (intervall+1)) * colspan }}%">
+                    <td class="reservation text-center" colspan="{{ colspan }}">
                         <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                              class="reservation-inner text-center"
                              title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
                     </td>
 
                     {% if printSpacerAfter %}
-                        <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                        <td class="two-td-right td-empty"
                             data-day="{{ reservation.enddate|date('Y-m-d')  }}" data-appartment="{{ appartment.id }}"
                             data-tdnumber="{{ emptyTdNr + 1 }}"></td>
                     {% endif %}
@@ -79,9 +79,9 @@
                         1 day consist of two cells, therefore we have ((100% / 2) = 50 / number of days) for each cell
                         we have to add +1 for the first col (Zimmer)
                 #}
-                <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                <td class="two-td-left td-empty" 
                     data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
-                <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                <td class="two-td-right td-empty" 
                     data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
             {% endif %}
         {% endif %}
