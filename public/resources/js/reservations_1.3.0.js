@@ -228,9 +228,12 @@ function setStickyHeaderOffsets(table)
   function fitTableToViewport(el, extraBottom = 0)
   {
     const rect = el.getBoundingClientRect();
+    const minHeight = parseInt(el.dataset.minHeight || 0, 10) || 200;
     // verbleibender Platz vom oberen Rand des Wrappers bis zum unteren Viewportrand
-    const available = Math.max(0, window.innerHeight - rect.top - extraBottom);
-    el.style.maxHeight = available + 'px';
+    const available = window.innerHeight - rect.top - extraBottom;
+    const height = available > 0 ? Math.max(minHeight, available) : minHeight;
+    el.style.maxHeight = height + 'px';
+    el.style.minHeight = minHeight + 'px';
     el.style.overflow = 'auto';
   }
 

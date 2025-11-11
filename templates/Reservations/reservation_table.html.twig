@@ -5,7 +5,7 @@
 {% set displayWeek = true %}
 
 {% use 'Reservations/_reservation_table_day.html.twig' %}
-<div class="table-responsive js-fit-vh">
+<div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table">
         <thead>
         {% if displayMonth %}
@@ -181,6 +181,9 @@
     initFit();
 
     {% if is_granted('ROLE_USER') %}
+    // disable it on mobile devices without a mouse pointer
+    const enableSelection = window.matchMedia('(pointer: fine)').matches;
+    if (enableSelection) {
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
         cancel:'.reservation',
@@ -239,6 +242,7 @@
             $(".td-empty").removeClass("ui-selected");
         }
     });
+    }   
     {% endif %}
     {#var lastRowDate = "";
     $( ".reservation-inner" ).draggable({
