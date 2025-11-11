@@ -181,9 +181,68 @@ function toggleDisplayTableRows() {
  * @param {string} show 
  */
 function toggleRow(name, show) {
-    console.log(show);
     let row = document.getElementById(name);
+    if (!row) {
+        return;
+    }
     row.style.display = show == 'true' ? '' : 'none';
+    // make sure header rows are sticky after toggling
+    initStickyTables();
 }
+
+/**
+ * Set sticky header offsets for tables
+ * @param {*} table 
+ */
+function setStickyHeaderOffsets(table)
+    {
+        const rows = Array.from(table.querySelectorAll('thead tr')).filter((row) => {
+            return window.getComputedStyle(row).display !== 'none';
+        });
+        let offset = 0;
+        const n = rows.length;
+
+        rows.forEach((row, i) => {
+            const h = row.getBoundingClientRect().height;
+            row.querySelectorAll('th,td').forEach(th => {
+                th.style.top = offset + 'px';
+                th.style.zIndex = (n - i + 2).toString(); // erste Reihe über allen
+            });
+            offset += h;
+        });
+    }
+
+    /**
+     * Initialize sticky tables
+     */
+  function initStickyTables()
+  {
+        document.querySelectorAll('.table-sticky').forEach(setStickyHeaderOffsets);
+  }
+
+  /**
+   * Fit table to viewport height
+   * @param {*} el 
+   * @param {*} extraBottom 
+   */
+  function fitTableToViewport(el, extraBottom = 0)
+  {
+    const rect = el.getBoundingClientRect();
+    const minHeight = parseInt(el.dataset.minHeight || 0, 10) || 200;
+    // verbleibender Platz vom oberen Rand des Wrappers bis zum unteren Viewportrand
+    const available = window.innerHeight - rect.top - extraBottom;
+    const height = available > 0 ? Math.max(minHeight, available) : minHeight;
+    el.style.maxHeight = height + 'px';
+    el.style.minHeight = minHeight + 'px';
+    el.style.overflow = 'auto';
+  }
+
+  /**
+   * Initialize fit to viewport for elements with .js-fit-vh class
+   */
+  function initFit()
+  {
+    document.querySelectorAll('.js-fit-vh').forEach(el => fitTableToViewport(el));
+  }
 
 var selectable, lastSelectedMonthDay, startSlectedDay, endSelectedDay;
