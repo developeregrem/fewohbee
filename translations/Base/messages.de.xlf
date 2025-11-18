@@ -110,6 +110,10 @@
                 <source>button.back</source>
                 <target>Zurück</target>
             </trans-unit>
+            <trans-unit id="button.next">
+                <source>button.next</source>
+                <target>Nächste</target>
+            </trans-unit>
             <trans-unit id="button.continue.with">
                 <source>button.continue.with</source>
                 <target>Weiter mit</target>

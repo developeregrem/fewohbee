@@ -119,6 +119,24 @@ body {
     inset 0 -1px 0 var(--bs-border-color);  /* untere Linie */
 }
 
+/* left sticky column in reservation overview*/
+.table.table-sticky tbody tr > *:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: var(--bs-table-bg, var(--bs-body-bg));
+  box-shadow: 
+    inset  1px 0 0 var(--bs-border-color), /* linke Linie */
+    inset -1px 0 0 var(--bs-border-color); /* rechte Linie */
+  background-clip: padding-box;
+  border-right: 0;
+  border-left: 0;
+}
+
+.table.table-sticky tbody tr > *:nth-child(2) {
+  border-left: 0;
+}
+
 
 .reservation-table-weekend {
     background-color: #EEE !important;
