@@ -61,7 +61,7 @@ class ReservationServiceController extends AbstractController
 
         $today = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
         $start = $requestStack->getSession()->get('reservation-overview-start', $today);
-        $interval = $requestStack->getSession()->get('reservation-overview-interval', 15);
+        $interval = $requestStack->getSession()->get('reservation-overview-interval', 30);
 
         $year = $requestStack->getSession()->get('reservation-overview-year', date('Y'));
 
