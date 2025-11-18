@@ -75,6 +75,15 @@
         delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter #year, #table-filter input[name="interval"], #table-filter select[name="apartment"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
             getNewTable();            
         });
+
+        delegate(document.getElementById("table-filter"), 'click', '.js-shift-date', (event) => {
+            event.preventDefault();
+            const trigger = event.target.closest('.js-shift-date');
+            if (!trigger) {
+                return;
+            }
+            shiftStartDate(trigger.dataset.direction);
+        });
         
         // add dynamic onchange listener for holiday country field to load subdivisions of the country
         delegate(document.getElementById("modal-content-settings"), 'change', '#holidayCountry', (event) => {
