@@ -182,8 +182,8 @@
 
     {% if is_granted('ROLE_USER') %}
     // disable it on mobile devices without a mouse pointer
-    const enableSelection = window.matchMedia('(pointer: fine)').matches;
-    if (enableSelection) {
+    var enableSelectable = window.matchMedia('(pointer: fine)').matches;
+    if (enableSelectable) {
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
         cancel:'.reservation',
