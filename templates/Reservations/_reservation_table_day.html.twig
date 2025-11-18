@@ -50,10 +50,13 @@
                     {% endif %}
 
                     {% set letterCount = get_letter_count_for_display(period, intervall) %}
-                    {% set name = reservation.booker.salutation ~ " " ~ reservation.booker.lastname %}
-                    {% set shortName = name|slice(0, letterCount) %}
-                    {% if shortName != name %}
-                        {% set shortName = shortName ~ "..." %}
+                    {% set displayName = reservation.booker.lastname %}
+                    {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
+                        {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                    {% endif %}
+                    {% set shortName = displayName|slice(0, letterCount) %}
+                    {% if shortName != displayName %}
+                        {% set displayName = shortName ~ "..." %}
                     {% endif %}
 
                     {# popover #}
@@ -62,7 +65,7 @@
                     <td class="reservation text-center" colspan="{{ colspan }}">
                         <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                              class="reservation-inner text-center"
-                             title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
+                             title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ displayName }}</div>
                     </td>
 
                     {% if printSpacerAfter %}
