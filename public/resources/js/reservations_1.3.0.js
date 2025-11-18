@@ -245,4 +245,37 @@ function setStickyHeaderOffsets(table)
     document.querySelectorAll('.js-fit-vh').forEach(el => fitTableToViewport(el));
   }
 
+  /**
+   * Shift the start date forward or backward based on the interval
+   * @param {string} direction 
+   * @returns 
+   */
+  function shiftStartDate(direction) 
+{
+    const startInput = document.getElementById('start');
+    const intervalInput = document.querySelector('#table-filter input[name="interval"]');
+    if (!startInput || !intervalInput) {
+        return;
+    }
+    const intervalValue = parseInt(intervalInput.value, 10);
+    const interval = !isNaN(intervalValue) && intervalValue > 0 ? intervalValue : 1;
+    const currentDate = startInput.value ? new Date(startInput.value) : new Date();
+    if (Number.isNaN(currentDate.getTime())) {
+        return;
+    }
+    const offset = direction === 'forward' ? interval : -interval;
+    currentDate.setDate(currentDate.getDate() + offset);
+    const formatted = formatDateInputValue(currentDate);
+    startInput.value = formatted;
+    startInput.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function formatDateInputValue(date) 
+{
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 var selectable, lastSelectedMonthDay, startSlectedDay, endSelectedDay;
