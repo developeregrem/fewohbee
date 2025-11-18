@@ -1,5 +1,5 @@
 {% set periodStartDate = timestamp2UTC(today) %}
-{% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
+{% set displayEndDate = today|date_modify("+" ~ interval ~ "day")|date('U') %}
 {% set periodEndDate = timestamp2UTC(displayEndDate) %}
 {% set displayMonth = true %}
 {% set displayWeek = true %}
@@ -14,7 +14,7 @@
             {% set firstWasSummer = today|date('I') %}
             {% set lastMonth = today|date('m') %}
             {% set colCount = 0 %}
-            {% for i in 0..intervall %}
+            {% for i in 0..interval %}
                 {% set addToDate = "+" ~ i ~ "day" %}
                 {% set tmpDate = today|date_modify(addToDate) %}
                 {# if there is a change from summer to winter time #}
@@ -24,14 +24,14 @@
                 {% set curMonth = tmpDate|date('m') %}
                 {# add 2 to colcount since we are at the end of the displayed period
                     but add it only if the last day is not the first of the next month (last month was already printed #}
-                {% if i == intervall and tmpDate|date('j') != 1 %}{% set colCount = colCount + 2 %}{% endif %}
+                {% if i == interval and tmpDate|date('j') != 1 %}{% set colCount = colCount + 2 %}{% endif %}
                 {# be aware that when the last month is printed while we are on the first day of the next month already #}
-                {% if lastMonth != curMonth or i == intervall %}
+                {% if lastMonth != curMonth or i == interval %}
                     <td class="text-center p-1" colspan="{{ colCount }}">{{ getLocalizedMonth(lastMonth, 'MMM', app.request.locale) }}</td>
                     {% set colCount = 2 %}
                     {% set lastMonth = curMonth %}
                     {# if we reached the end of the period and last day is the first of the next month we need to print the last td #}
-                    {% if tmpDate|date('j') == 1 and i == intervall %}
+                    {% if tmpDate|date('j') == 1 and i == interval %}
                         <td class="text-center p-1" colspan="2">{{ getLocalizedMonth(curMonth, 'MMM', app.request.locale) }}</td>
                     {% endif %}
                 {% else %}
@@ -46,7 +46,7 @@
             {% set firstWasSummer = today|date('I') %}
             {% set lastWeek = today|date('W') %}
             {% set colCount = 0 %}
-            {% for i in 0..intervall %}
+            {% for i in 0..interval %}
                 {% set addToDate = "+" ~ i ~ "day" %}
                 {% set tmpDate = today|date_modify(addToDate) %}
                 {# if there is a change from summer to winter time #}
@@ -56,14 +56,14 @@
                 {% set curWeek = tmpDate|date('W') %}
                 {# add 2 to colcount since we are at the end of the displayed period
                 but add it only if the last day is not a monday (last cw was already printed #}
-                {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
+                {% if i == interval and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
                 {# be aware that when the last cw is printed while we are on monday already #}
-                {% if lastWeek != curWeek  or i == intervall %}
+                {% if lastWeek != curWeek  or i == interval %}
                     <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
                     {% set colCount = 2 %}
                     {% set lastWeek = curWeek %}
                     {# if we reached the end of the period and last day is a monday we need to print the last td #}
-                    {% if tmpDate|date('N') == 1 and i == intervall %}
+                    {% if tmpDate|date('N') == 1 and i == interval %}
                         <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
                     {% endif %}
                 {% else %}
@@ -75,7 +75,7 @@
         <tr class="table-days">
             <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
             {% set firstWasSummer = today|date('I') %}
-            {% for i in 0..intervall %}
+            {% for i in 0..interval %}
                 {% set addToDate = "+" ~ i ~ "day" %}
                 {% set tmpDate = today|date_modify(addToDate) %}
                 {# if there is a change from summer to winter time #}
@@ -116,7 +116,7 @@
         </thead>
         <tbody>
         {% for appartment in appartments %}
-            {% set reservations = get_reservations_for_period(today, intervall, appartment) %}
+            {% set reservations = get_reservations_for_period(today, interval, appartment) %}
             {% if appartment.multipleOccupancy %}
                 {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
                 {% set printReservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}

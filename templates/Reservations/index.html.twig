@@ -72,7 +72,7 @@
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
         
         // add dynamic onchage listener for table settings fields
-        delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter #year, #table-filter select[name="intervall"], #table-filter select[name="apartment"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
+        delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter #year, #table-filter input[name="interval"], #table-filter select[name="apartment"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
             getNewTable();            
         });
         
@@ -82,7 +82,7 @@
         });
         
         // initially load table settings based on local storage values
-        getLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        getLocalTableSetting('interval', 'reservations-intervall', 'int');
         getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         getLocalTableSetting('apartment', 'reservations-apartment', 'int');
         loadTableSettings(tableSettingsUrl, true);  
@@ -147,7 +147,7 @@
                 '</div>';
         
         // save selected settings for reuse
-        setLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        setLocalTableSetting('interval', 'reservations-intervall', 'int');
         setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
         setLocalTableSetting('apartment', 'reservations-apartment', 'int');

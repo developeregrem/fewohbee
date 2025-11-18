@@ -125,7 +125,7 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
-        $intervall = $request->query->get('intervall');
+        $interval = $request->query->get('interval');
         $objectId = $request->query->get('object');
         $holidayCountry = $request->query->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
@@ -136,8 +136,14 @@ class ReservationServiceController extends AbstractController
             $date = strtotime($date.' UTC');   // set timezone to UTC to ignore daylight saving changes
         }
 
-        if (null == $intervall) {
-            $intervall = 15;
+        if (null == $interval) {
+            $interval = 30;
+        } else if($interval < 8) {
+            $interval = 8;
+        } else if($interval > 180) {
+            $interval = 180;
+        } else {
+            $interval = (int)$interval;
         }
 
         if (null == $objectId || 'all' == $objectId) {
@@ -148,14 +154,14 @@ class ReservationServiceController extends AbstractController
         }
 
         $requestStack->getSession()->set('reservation-overview-start', $date);
-        $requestStack->getSession()->set('reservation-overview-interval', $intervall);
+        $requestStack->getSession()->set('reservation-overview-interval', $interval);
         $requestStack->getSession()->set('reservation-overview-objectid', $objectId);
         $requestStack->getSession()->set('reservation-overview', 'table');
 
         return $this->render('Reservations/reservation_table.html.twig', [
             'appartments' => $appartments,
             'today' => $date,
-            'intervall' => $intervall,
+            'interval' => $interval,
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
         ]);
