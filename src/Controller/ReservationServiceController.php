@@ -619,6 +619,10 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $error = false;
+        $arrivalTimeInput = $request->request->get('arrivalTime');
+        $departureTimeInput = $request->request->get('departureTime');
+        $arrivalTime = $this->createTimeFromRequestValue($arrivalTimeInput);
+        $departureTime = $this->createTimeFromRequestValue($departureTimeInput);
 
         if ($csrf->validateCSRFToken($request)) {
             $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
@@ -635,6 +639,8 @@ class ReservationServiceController extends AbstractController
 
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->request->get('remark'));
+                $reservation->setArrivalTime($arrivalTime ? clone $arrivalTime : null);
+                $reservation->setDepartureTime($departureTime ? clone $departureTime : null);
                 $reservation->setReservationOrigin($origin);
                 $reservation->setUuid(Uuid::v4());
 
@@ -1179,5 +1185,19 @@ class ReservationServiceController extends AbstractController
         }
 
         return new Response('', Response::HTTP_OK);
+    }
+
+    private function createTimeFromRequestValue(?string $value): ?\DateTime
+    {
+        if (null === $value) {
+            return null;
+        }
+        $value = trim($value);
+        if ('' === $value) {
+            return null;
+        }
+        $time = \DateTime::createFromFormat('H:i', $value);
+
+        return false === $time ? null : $time;
     }
 }
