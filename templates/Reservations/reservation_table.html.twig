@@ -115,7 +115,18 @@
         </tr>
         </thead>
         <tbody>
+        {% set totalColumnCount = ((interval + 1) * 2) + 1 %}
+        {% set previousSubsidiaryId = null %}
         {% for appartment in appartments %}
+            {% set currentSubsidiaryId = appartment.object is defined and appartment.object ? appartment.object.id : null %}
+            {% if previousSubsidiaryId != currentSubsidiaryId and objectId == "all" %}
+                <tr>
+                    <td colspan="{{ totalColumnCount }}" class="fw-semibold">
+                        {{ appartment.object.name ?? '' }}
+                    </td>
+                </tr>
+                {% set previousSubsidiaryId = currentSubsidiaryId %}
+            {% endif %}
             {% set reservations = get_reservations_for_period(today, interval, appartment) %}
             {% if appartment.multipleOccupancy %}
                 {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
