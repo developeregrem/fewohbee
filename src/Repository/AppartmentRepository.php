@@ -8,6 +8,7 @@ use App\Entity\Appartment;
 use App\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,6 +22,28 @@ class AppartmentRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Appartment::class);
+    }
+
+    private function createBaseQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('a')
+            ->leftJoin('a.object', 'o')
+            ->addSelect('o');
+    }
+
+    private function addDefaultSorting(QueryBuilder $qb): QueryBuilder
+    {
+        return $qb
+            ->addOrderBy('o.name', 'ASC')
+            ->addOrderBy('LENGTH(a.number)', 'ASC')
+            ->addOrderBy('a.number', 'ASC');
+    }
+
+    public function findAll(): array
+    {
+        return $this->addDefaultSorting($this->createBaseQueryBuilder())
+            ->getQuery()
+            ->getResult();
     }
 
     public function loadSumBedsMinForObject($objectId)
@@ -52,9 +75,11 @@ class AppartmentRepository extends ServiceEntityRepository
             return $this->findAll();
         }
 
-        return $this->createQueryBuilder('a')
-            ->andWhere('a.object = :id')
-            ->setParameter('id', $propertyId)
+        return $this->addDefaultSorting(
+            $this->createBaseQueryBuilder()
+                ->andWhere('a.object = :id')
+                ->setParameter('id', $propertyId)
+        )
             ->getQuery()
             ->getResult();
     }

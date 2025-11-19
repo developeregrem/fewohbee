@@ -47,7 +47,7 @@ class SubsidiaryService
     {
         $object = $this->em->getRepository(Subsidiary::class)->find($id);
 
-        $appartments = $this->em->getRepository(Appartment::class)->findByObject($id);
+        $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $id]);
 
         if (0 == count($appartments)) {
             $this->em->remove($object);
