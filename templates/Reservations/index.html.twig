@@ -521,7 +521,11 @@
         $.ajax({
             url: url,
             type: "post",
-            data: $("#_csrf_token").serialize() + "&" + $("#reservation-remark").serialize() + "&" + $("#reservation-origin").serialize(),
+            data: $("#_csrf_token").serialize()
+                + "&" + $("#reservation-remark").serialize()
+                + "&" + $("#reservation-origin").serialize()
+                + "&" + $("#reservation-arrivalTime").serialize()
+                + "&" + $("#reservation-departureTime").serialize(),
             beforeSend: function () {
                 $("#modal-content-ajax").html(content);
             },

@@ -62,6 +62,10 @@
                 <source>reservation.persons</source>
                 <target>Personen</target>
             </trans-unit>
+            <trans-unit id="reservation.departureTime">
+                <source>reservation.departureTime</source>
+                <target>Abreise</target>
+            </trans-unit>
             <trans-unit id="reservation.status">
                 <source>reservation.status</source>
                 <target>Status</target>
@@ -177,6 +181,10 @@
             <trans-unit id="reservation.appartment.name">
                 <source>reservation.appartment.name</source>
                 <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="reservation.arrivalTime">
+                <source>reservation.arrivalTime</source>
+                <target>Ankunft</target>
             </trans-unit>
             <trans-unit id="reservation.correspondences">
                 <source>reservation.correspondences</source>
