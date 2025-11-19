@@ -59,11 +59,11 @@
                 <target>Adresse</target>
             </trans-unit>
             <trans-unit id="customer.mr">
-                <source>customer.mr</source>
+                <source>Mr</source>
                 <target>Herr</target>
             </trans-unit>
             <trans-unit id="customer.ms">
-                <source>customer.ms</source>
+                <source>Ms</source>
                 <target>Frau</target>
             </trans-unit>
             <trans-unit id="customer.flash.delete.success">
@@ -83,7 +83,7 @@
                 <target>Diesen Gast wirklich löschen? Hinweis: Alle bisherigen Buchungen wurden dann von einem "gelöschten" Gast getätigt.</target>
             </trans-unit>
             <trans-unit id="customer.family">
-                <source>customer.family</source>
+                <source>Family</source>
                 <target>Familie</target>
             </trans-unit>
             <trans-unit id="customer.remark">

@@ -39,7 +39,7 @@ class CustomerService implements ITemplateRenderer
             $customer = $this->em->getRepository(Customer::class)->find($id);
         }
 
-        $customer->setSalutation($request->request->get('salutation-'.$id));
+        $customer->setSalutation($request->request->get('salutation-'.$id, ""));
         $customer->setFirstname($request->request->get('firstname-'.$id));
         $customer->setLastname($request->request->get('lastname-'.$id));
         if (strlen($request->request->get('birthday-'.$id)) > 0) {

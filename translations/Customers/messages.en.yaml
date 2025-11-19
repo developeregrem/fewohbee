@@ -19,7 +19,7 @@ customer.delete.ask: >-
   "deleted" guest.
 customer.details: Guest Details
 customer.email: E-Mail
-customer.family: Family
+family: Family
 customer.fax: Fax
 customer.firstname: First Name
 customer.flash.create.success: Guest was created successfully.
@@ -35,8 +35,8 @@ customer.id.type.national_id: ID card
 customer.id.type.passport: Passport
 customer.lastname: Last Name
 customer.mobilephone: Mobile Phone
-customer.mr: Mr
-customer.ms: Ms
+Mr: Mr
+Ms: Ms
 customer.person: Person
 customer.phone: Phone
 customer.remark: Remark

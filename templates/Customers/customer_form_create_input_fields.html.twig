@@ -24,9 +24,15 @@
 
                     <div class="col-sm-8">
                         <select name="salutation-{{ customer.id }}" class="form-select">
-                            <option value="{{ 'customer.mr'|trans }}" {% if customer.salutation ==  'customer.mr'|trans %} selected {% endif %}>{{ 'customer.mr'|trans }}</option>
-                            <option value="{{ 'customer.ms'|trans }}" {% if customer.salutation ==  'customer.ms'|trans %} selected {% endif %}>{{ 'customer.ms'|trans }}</option>
-                            <option value="{{ 'customer.family'|trans }}" {% if customer.salutation == 'customer.family'|trans %} selected {% endif %}>{{ 'customer.family'|trans }}</option>
+                            {% for salutation in customer_salutations %}
+                                {% set translatedSalutation = salutation|trans %}
+                                <option value="{{ translatedSalutation }}"
+                                        {% if customer.salutation == translatedSalutation %}
+                                            selected
+                                        {% endif %}>
+                                    {{ translatedSalutation }}
+                                </option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>
