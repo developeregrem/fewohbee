@@ -29,7 +29,18 @@
                     </tr>
                     </thead>
                     <tbody>
+                    {% set columnCount = 4 %}
+                    {% set previousSubsidiaryId = null %}
                     {% for apartment in apartments %}
+                        {% set currentSubsidiaryId = apartment.object is defined and apartment.object ? apartment.object.id : null %}
+                        {% if previousSubsidiaryId != currentSubsidiaryId %}
+                            <tr>
+                                <td colspan="{{ columnCount }}" class="fw-semibold text-center">
+                                    {{ apartment.object.name ?? '' }}
+                                </td>
+                            </tr>
+                            {% set previousSubsidiaryId = currentSubsidiaryId %}
+                        {% endif %}
                         <tr>
                             <td>{{ apartment.number }}</td>
                             <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}</td>
