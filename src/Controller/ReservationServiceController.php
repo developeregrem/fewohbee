@@ -149,8 +149,7 @@ class ReservationServiceController extends AbstractController
         if (null == $objectId || 'all' == $objectId) {
             $appartments = $em->getRepository(Appartment::class)->findAll();
         } else {
-            $object = $em->getRepository(Subsidiary::class)->findById($objectId);
-            $appartments = $em->getRepository(Appartment::class)->findByObject($object);
+            $appartments = $em->getRepository(Appartment::class)->findBy(['object' => $objectId], ['number' => 'ASC']);
         }
 
         $requestStack->getSession()->set('reservation-overview-start', $date);
@@ -164,6 +163,7 @@ class ReservationServiceController extends AbstractController
             'interval' => $interval,
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
+            'objectId' => $objectId
         ]);
     }
 
@@ -178,7 +178,12 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $year = $request->query->get('year', date('Y'));
         $apartmentId = $request->query->get('apartment');
+        if(null == $apartmentId) {
+            $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
+            $apartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
+        }
         $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
+
 
         if (!$apartment instanceof Appartment) {
             throw new NotFoundHttpException();
@@ -188,20 +193,12 @@ class ReservationServiceController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        if (null == $objectId || 'all' == $objectId) {
-            $appartments = $em->getRepository(Appartment::class)->findAll();
-        } else {
-            $object = $em->getRepository(Subsidiary::class)->findById($objectId);
-            $appartments = $em->getRepository(Appartment::class)->findByObject($object);
-        }
-
         $requestStack->getSession()->set('reservation-overview-objectid', $objectId);
         $requestStack->getSession()->set('reservation-overview-year', $year);
         $requestStack->getSession()->set('reservation-overview-apartment', $apartment->getId());
         $requestStack->getSession()->set('reservation-overview', 'yearly');
 
         return $this->render('Reservations/reservation_table_year.html.twig', [
-            'appartments' => $appartments,
             'year' => $year,
             'apartment' => $apartment,
             // "holidayCountry" => $holidayCountry,
