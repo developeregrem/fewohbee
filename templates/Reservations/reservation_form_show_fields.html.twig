@@ -84,6 +84,54 @@
             {% endfor %}
         </table>
         <div class="row mt-4">
+            <div class="col-sm-6">
+                <label for="reservation-arrivalTime">{{ 'reservation.arrivalTime'|trans }}</label>
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+                <div class="mt-2">
+                {% if mode is defined and mode == 'edit' %}
+                    <span>
+                        {% if attribute(reservations, 0).arrivalTime %}
+                            {{ attribute(reservations, 0).arrivalTime|date('H:i') }}
+                        {% else %}
+                            &ndash;
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <input type="time" id="reservation-arrivalTime" name="arrivalTime" class="form-control"
+                           value="{% if attribute(reservations, 0).arrivalTime %}{{ attribute(reservations, 0).arrivalTime|date('H:i') }}{% endif %}">
+                {% endif %}
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <label for="reservation-departureTime">{{ 'reservation.departureTime'|trans }}</label>
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+                <div class="mt-2">
+                {% if mode is defined and mode == 'edit' %}
+                    <span>
+                        {% if attribute(reservations, 0).departureTime %}
+                            {{ attribute(reservations, 0).departureTime|date('H:i') }}
+                        {% else %}
+                            &ndash;
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <input type="time" id="reservation-departureTime" name="departureTime" class="form-control"
+                           value="{% if attribute(reservations, 0).departureTime %}{{ attribute(reservations, 0).departureTime|date('H:i') }}{% endif %}">
+                {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
                 {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
@@ -292,4 +340,3 @@
         </div>
     </div>
 </div>
-
