@@ -141,7 +141,7 @@ class CustomerServiceController extends AbstractController
             $customer = $cs->getCustomerFromForm($request, 'new');
 
             // check for mandatory fields
-            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
+            if (0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -186,7 +186,7 @@ class CustomerServiceController extends AbstractController
             $customer = $cs->getCustomerFromForm($request, $id);
 
             // check for mandatory fields
-            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
+            if (0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
