@@ -48,10 +48,14 @@ class UserEditType extends AbstractType
                 'empty_data' => '',
                 'required' => false,
             ])
-            ->add('role', EntityType::class, [
+            ->add('roleEntities', EntityType::class, [
                 'class' => Role::class,
                 'choice_label' => 'role',
                 'choice_translation_domain' => true,
+                'label' => 'user.role',
+                'multiple' => true,
+                'expanded' => true,
+                'by_reference' => false,
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'user.active',

@@ -98,14 +98,18 @@ class FirstRunCommand extends Command
             return $input;
         });
 
-        $role1 = new Role();
-        $role1->setName('Admin');
-        $role1->setRole('ROLE_ADMIN');
-        $role2 = new Role();
-        $role2->setName('Nutzer');
-        $role2->setRole('ROLE_USER');
-        $this->em->persist($role1);
-        $this->em->persist($role2);
+        $rolesToCreate = [
+            'ROLE_ADMIN' => 'Admin',
+            // other roles are created via migration
+        ];
+        $createdRoles = [];
+        foreach ($rolesToCreate as $roleCode => $roleName) {
+            $role = new Role();
+            $role->setName($roleName);
+            $role->setRole($roleCode);
+            $this->em->persist($role);
+            $createdRoles[$roleCode] = $role;
+        }
 
         $user = new User();
         $user->setActive(true);
@@ -114,7 +118,9 @@ class FirstRunCommand extends Command
         $user->setLastname($lastName);
         $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
-        $user->setRole($role1);
+        if (isset($createdRoles['ROLE_ADMIN'])) {
+            $user->addRole($createdRoles['ROLE_ADMIN']);
+        }
         $this->em->persist($user);
         $io->note('User and Roles created.');
 

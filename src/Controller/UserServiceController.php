@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/users')]
+#[Route('/settings/users')]
 class UserServiceController extends AbstractController
 {
     #[Route('/', name: 'users.overview', methods: ['GET'])]
@@ -36,20 +36,6 @@ class UserServiceController extends AbstractController
 
         return $this->render('Users/index.html.twig', [
             'users' => $users,
-        ]);
-    }
-
-    #[Route('/{id}/get', name: 'users.get.user', defaults: ['id' => '0'], methods: ['GET'])]
-    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
-    {
-        $em = $doctrine->getManager();
-        $user = $em->getRepository(User::class)->find($id);
-        $roles = $em->getRepository(Role::class)->findAll();
-
-        return $this->render('Users/user_form_edit.html.twig', [
-            'user' => $user,
-            'roles' => $roles,
-            'token' => $csrf->getCSRFTokenForForm(),
         ]);
     }
 
