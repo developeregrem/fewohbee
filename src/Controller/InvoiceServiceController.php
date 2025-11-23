@@ -41,7 +41,9 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\Form\FormError;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_INVOICES')]
 #[Route('/invoices')]
 class InvoiceServiceController extends AbstractController
 {

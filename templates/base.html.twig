@@ -28,20 +28,36 @@
 {% block body %}
     {% block menu %}
         {% set activeRouteName = getActiveRouteName() %}
+        {% set showReservations = is_granted('ROLE_RESERVATIONS') %}
+        {% set showReservationsRO = is_granted('ROLE_RESERVATIONS_RO') %}
         <nav class="navbar navbar-expand-md navbar-dark bg-primary">
             <div class="container-fluid">
+                {% if showReservations or showReservationsRO %}
                 <a class="navbar-brand" href="{{ path('start') }}">{{ 'nav.reservation.overview'|trans }}</a>
+                {% endif %}
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>                
             
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    {% if is_granted('ROLE_USER') %}              
+                    {% set showCustomers = is_granted('ROLE_CUSTOMERS') %}
+                    {% set showInvoices = is_granted('ROLE_INVOICES') %}
+                    {% set showRegistrationbook = is_granted('ROLE_REGISTRATIONBOOK') %}
+                    {% set showStatistics = is_granted('ROLE_STATISTICS') %}
+                    {% set showCashjournal = is_granted('ROLE_CASHJOURNAL') %}
+                    {% if showCustomers or showInvoices or showRegistrationbook or showStatistics or showCashjournal %}
                     <ul class="navbar-nav me-auto">
+                        {% if showCustomers %}
                         <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}">{{ 'nav.customers'|trans }}</a></li>
+                        {% endif %}
+                        {% if showInvoices %}
                         <li class="nav-item{% if activeRouteName starts with "invoices" %} active{% endif %}"><a class="nav-link" href="{{ path('invoices.overview') }}">{{ 'nav.invoices'|trans }}</a></li>
+                        {% endif %}
+                        {% if showRegistrationbook %}
                         <li class="nav-item{% if activeRouteName starts with "registrationbook" %} active{% endif %}"><a class="nav-link" href="{{ path('registrationbook.overview') }}">{{ 'nav.registrationbook'|trans }}</a></li>
+                        {% endif %}
+                        {% if showStatistics %}
                         <li class="nav-item dropdown{% if activeRouteName starts with "statistics" %} active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 {{ 'nav.statistics'|trans }}
@@ -52,7 +68,10 @@
                                 <a class="dropdown-item{% if activeRouteName starts with "statistics.turnover" %} active{% endif %}" href="{{ path('statistics.turnover') }}">{{ 'nav.turnover'|trans }}</a>
                             </div>
                         </li>
+                        {% endif %}
+                        {% if showCashjournal %}
                         <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
+                        {% endif %}
                     </ul>
                     {% endif %}
                     <ul class="navbar-nav d-flex ms-auto">

@@ -33,7 +33,7 @@
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
-            {% if is_granted('ROLE_USER') %}
+            {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
                 <a href="#" class="me-3" onclick="getNewTable();" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt"></i></a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"

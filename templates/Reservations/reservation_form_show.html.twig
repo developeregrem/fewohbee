@@ -8,10 +8,11 @@
         {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'edit', 'reservationId':  attribute(reservations, 0).id } %}
     </div>
 </div>
-{% if is_granted('ROLE_USER') %}
+{% if is_granted('ROLE_RESERVATIONS') %}
 <form id="reservationShowForm">
     <div class="modal-footer">
         <div class="col p-0" id="boxDefault">
+            {% if is_granted('ROLE_INVOICES') %}
             <div class="btn-group dropup float-start">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownInvoice" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   {{ 'reservation.invoices'|trans }} <span class="caret"></span>
@@ -26,6 +27,7 @@
                     <a class="dropdown-item" href="#" onclick="return selectReservatioForInvoice({{ attribute(reservations, 0).id }})">{{ 'reservation.button.create.invoice'|trans }}</a>
                 </div>                
             </div>
+            {% endif %}
             
             <button type="button" class="btn btn-danger float-end"
                     onclick="return toggleReservationDelete();">{{ 'button.delete'|trans }}</button>

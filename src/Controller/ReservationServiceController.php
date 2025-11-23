@@ -45,6 +45,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_RESERVATIONS_RO')] // ROLE_RESERVATIONS is included
 #[Route('/reservation')]
 class ReservationServiceController extends AbstractController
 {
@@ -441,7 +442,7 @@ class ReservationServiceController extends AbstractController
      * Gets all Customers which fit the given criteria.
      */
     #[Route('/customers/get', name: 'reservations.get.customers', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function getCustomersAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
@@ -492,7 +493,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/customers/create', name: 'reservations.get.customer.create', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function createNewCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $em = $doctrine->getManager();
@@ -611,7 +612,7 @@ class ReservationServiceController extends AbstractController
      * Creates a new reservation with the information which have been entered in the process before.
      */
     #[Route('/reservation/create', name: 'reservations.create.reservations', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
@@ -735,7 +736,7 @@ class ReservationServiceController extends AbstractController
      * @param bool $error
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, $id, $error = false)
     {
         $em = $doctrine->getManager();
@@ -759,7 +760,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     {
         $form = $this->createForm(ReservationMetaType::class, $reservation);
@@ -787,7 +788,7 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
     {
         $success = $rs->updateReservation($request, $reservation);
@@ -804,7 +805,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/{id}/customer', name: 'reservations.edit.reservation.customer', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerAction(ManagerRegistry $doctrine, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -823,7 +824,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/{id}/customer/create', name: 'reservations.edit.reservation.customer.create', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerCreateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -862,7 +863,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/customers/get', name: 'reservations.edit.customers.get', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomersGetAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
@@ -888,7 +889,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/edit/{id}/customer/change', name: 'reservations.edit.customer.change', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerChangeAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, ReservationService $rs, Request $request, $id)
     {
         $tab = $request->request->get('tab', 'booker');
@@ -943,7 +944,7 @@ class ReservationServiceController extends AbstractController
      * @return string
      */
     #[Route('/reservation/delete', name: 'reservations.dodelete.reservation', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteReservationAction(CSRFProtectionService $csrf, ReservationService $rs, Request $request)
     {
         if ($csrf->validateCSRFToken($request, true)) {
@@ -965,7 +966,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/edit/delete/customer', name: 'reservations.edit.delete.customer', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteReservationCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $customerId = $request->request->get('customer-id');
@@ -1046,7 +1047,7 @@ class ReservationServiceController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\Response
      */
     #[Route('/edit/customer/edit/save', name: 'reservations.edit.customer.edit.save', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function saveEditCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $id = $request->request->get('customer-id');

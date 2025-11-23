@@ -33,7 +33,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Uid\Uuid;
 
-#[Route('/apartments')]
+#[Route('/settings/apartments')]
 class ApartmentServiceController extends AbstractController
 {
     #[Route('/', name: 'apartments.overview', methods: ['GET'])]
