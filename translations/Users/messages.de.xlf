@@ -70,9 +70,29 @@
                 <source>ROLE_ADMIN</source>
                 <target>Admin</target>
             </trans-unit>
-            <trans-unit id="ROLE_USER">
-                <source>ROLE_USER</source>
-                <target>Standardnutzer</target>
+            <trans-unit id="ROLE_RESERVATIONS">
+                <source>ROLE_RESERVATIONS</source>
+                <target>Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="ROLE_CUSTOMERS">
+                <source>ROLE_CUSTOMERS</source>
+                <target>Gäste</target>
+            </trans-unit>
+            <trans-unit id="ROLE_INVOICES">
+                <source>ROLE_INVOICES</source>
+                <target>Rechnungen</target>
+            </trans-unit>
+            <trans-unit id="ROLE_REGISTRATIONBOOK">
+                <source>ROLE_REGISTRATIONBOOK</source>
+                <target>Meldebuch</target>
+            </trans-unit>
+            <trans-unit id="ROLE_STATISTICS">
+                <source>ROLE_STATISTICS</source>
+                <target>Statistik</target>
+            </trans-unit>
+            <trans-unit id="ROLE_CASHJOURNAL">
+                <source>ROLE_CASHJOURNAL</source>
+                <target>Kassenbuch</target>
             </trans-unit>
             <trans-unit id="ROLE_RESERVATIONS_RO">
                 <source>ROLE_RESERVATIONS_RO</source>

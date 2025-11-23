@@ -15,5 +15,10 @@ user.password.hint: The password must be at least 8 characters long.
 user.role: Role
 user.username: Username
 ROLE_ADMIN: Admin
-ROLE_USER: User
+ROLE_RESERVATIONS: Reservations
+ROLE_CUSTOMERS: Customers
+ROLE_INVOICES: Invoices
+ROLE_REGISTRATIONBOOK: Registration book
+ROLE_STATISTICS: Statistics
+ROLE_CASHJOURNAL: Cash journal
 ROLE_RESERVATIONS_RO: Reservations read-only

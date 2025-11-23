@@ -191,7 +191,7 @@
     initStickyTables();
     initFit();
 
-    {% if is_granted('ROLE_USER') %}
+    {% if is_granted('ROLE_RESERVATIONS') %}
     // disable it on mobile devices without a mouse pointer
     var enableSelectable = window.matchMedia('(pointer: fine)').matches;
     if (enableSelectable) {
