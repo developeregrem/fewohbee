@@ -83,4 +83,9 @@ final class Version20251121120640 extends AbstractMigration
         $this->addSql('DELETE FROM roles WHERE roles.role = "ROLE_USER"');
         $this->addSql('INSERT INTO roles (id, name, role) VALUES (NULL, "User", "ROLE_USER")');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
