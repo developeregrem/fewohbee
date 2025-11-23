@@ -28,7 +28,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_REGISTRATIONBOOK')]
 #[Route('/registrationbook')]
 class RegistrationBookServiceController extends AbstractController
 {
