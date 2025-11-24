@@ -83,7 +83,7 @@ class ReservationService implements ITemplateRenderer
         if ('all' == $propertyId) {
             $appartments = $this->em->getRepository(Appartment::class)->findAll();
         } else {
-            $appartments = $this->em->getRepository(Appartment::class)->findByObject($propertyId);
+            $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId]);
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {

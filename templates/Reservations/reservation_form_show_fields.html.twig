@@ -29,7 +29,7 @@
                             <input id="tab" type="hidden" value="booker" name="tab"/>
                             <input name="_csrf_token" value="{{ token }}" type="hidden">
                         </form>
-                        {% if is_granted('ROLE_USER') %}
+                        {% if is_granted('ROLE_RESERVATIONS') %}
                         <small>
                         <a href="#" onclick="return editReservationCustomerEdit({{ booker.id }}, '#actions-booker-{{ booker.id }}');"
                            title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
@@ -52,7 +52,7 @@
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}
-            {% if is_granted('ROLE_USER') %}
+            {% if is_granted('ROLE_RESERVATIONS') %}
             <small>
                 <a href="#" onclick="return editReservation({{ reservationId }});"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
@@ -84,9 +84,57 @@
             {% endfor %}
         </table>
         <div class="row mt-4">
+            <div class="col-sm-6">
+                <label for="reservation-arrivalTime">{{ 'reservation.arrivalTime'|trans }}</label>
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+                <div class="mt-2">
+                {% if mode is defined and mode == 'edit' %}
+                    <span>
+                        {% if attribute(reservations, 0).arrivalTime %}
+                            {{ attribute(reservations, 0).arrivalTime|date('H:i') }}
+                        {% else %}
+                            &ndash;
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <input type="time" id="reservation-arrivalTime" name="arrivalTime" class="form-control"
+                           value="{% if attribute(reservations, 0).arrivalTime %}{{ attribute(reservations, 0).arrivalTime|date('H:i') }}{% endif %}">
+                {% endif %}
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <label for="reservation-departureTime">{{ 'reservation.departureTime'|trans }}</label>
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
+                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                {% endif %}
+                <div class="mt-2">
+                {% if mode is defined and mode == 'edit' %}
+                    <span>
+                        {% if attribute(reservations, 0).departureTime %}
+                            {{ attribute(reservations, 0).departureTime|date('H:i') }}
+                        {% else %}
+                            &ndash;
+                        {% endif %}
+                    </span>
+                {% else %}
+                    <input type="time" id="reservation-departureTime" name="departureTime" class="form-control"
+                           value="{% if attribute(reservations, 0).departureTime %}{{ attribute(reservations, 0).departureTime|date('H:i') }}{% endif %}">
+                {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                 <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
@@ -105,7 +153,7 @@
         <div class="row mt-4">
             <div class="col-sm-3">
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
-                {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
+                {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                 <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
@@ -137,7 +185,7 @@
         <div class="row">
             <div class="col">            
                 <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
-                    {% if is_granted('ROLE_USER') %}
+                    {% if is_granted('ROLE_RESERVATIONS') %}
                     <small>
                     <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
                        title="{{ 'button.add'|trans }}" class="float-end text-secondary">
@@ -176,7 +224,7 @@
                             <input id="appartmentId" type="hidden" value="{{ reservation.appartment.id }}" name="appartmentId"/>
                             <input name="_csrf_token" value="{{ token }}" type="hidden">
                         </form>
-                        {% if is_granted('ROLE_USER') %}
+                        {% if is_granted('ROLE_RESERVATIONS') %}
                         <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
                            title="{{ 'button.edit'|trans }}">
                             <i class="fas fa-edit"></i></a>
@@ -197,7 +245,7 @@
         <div class="row">
             <div class="col">
                 <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
-                    {% if mode is defined and mode == 'edit' and is_granted('ROLE_USER') %}
+                    {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                         <small>
                             <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
@@ -232,7 +280,7 @@
                     <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
                        title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
                     {% endif %}
-                    {% if is_granted('ROLE_USER') %}
+                    {% if is_granted('ROLE_RESERVATIONS') %}
                     <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
                        title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  
                     {% endif %}                                  
@@ -292,4 +340,3 @@
         </div>
     </div>
 </div>
-

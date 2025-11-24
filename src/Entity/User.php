@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -19,8 +21,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $id;
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     private $username;
-    #[ORM\ManyToOne(targetEntity: 'Role', inversedBy: 'users')]
-    private $role;
+    #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
+    #[ORM\JoinTable(name: 'user_roles')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'role_id', referencedColumnName: 'id')]
+    private Collection $roleEntities;
     /**
      * @var string The hashed password
      */
@@ -36,6 +41,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $lastAction;
     #[ORM\Column(type: 'boolean')]
     private $active;
+
+    public function __construct()
+    {
+        $this->roleEntities = new ArrayCollection();
+    }
 
     public function getId()
     {
@@ -71,22 +81,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getRole()
-    {
-        return $this->role;
-    }
-
-    public function setRole($role): void
-    {
-        $this->role = $role;
-    }
-
     /**
      * @see UserInterface
      */
     public function getRoles(): array
     {
-        return [$this->role->getRole()];
+        $roles = [];
+        foreach ($this->roleEntities as $role) {
+            $roles[] = $role->getRole();
+        }
+
+        return array_values(array_unique($roles));
     }
 
     /**
@@ -169,6 +174,55 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setActive(bool $active): self
     {
         $this->active = $active;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Role>
+     */
+    public function getRoleEntities(): Collection
+    {
+        return $this->roleEntities;
+    }
+
+    public function addRole(Role $role): self
+    {
+        if (!$this->roleEntities->contains($role)) {
+            $this->roleEntities->add($role);
+        }
+
+        return $this;
+    }
+
+    public function removeRole(Role $role): self
+    {
+        $this->roleEntities->removeElement($role);
+
+        return $this;
+    }
+
+    public function setRole(?Role $role): self
+    {
+        $this->roleEntities->clear();
+        if (null !== $role) {
+            $this->addRole($role);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param iterable<Role> $roles
+     */
+    public function setRoleEntities(iterable $roles): self
+    {
+        $this->roleEntities->clear();
+        foreach ($roles as $role) {
+            if ($role instanceof Role) {
+                $this->addRole($role);
+            }
+        }
 
         return $this;
     }

@@ -45,6 +45,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_RESERVATIONS_RO')] // ROLE_RESERVATIONS is included
 #[Route('/reservation')]
 class ReservationServiceController extends AbstractController
 {
@@ -61,7 +62,7 @@ class ReservationServiceController extends AbstractController
 
         $today = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
         $start = $requestStack->getSession()->get('reservation-overview-start', $today);
-        $interval = $requestStack->getSession()->get('reservation-overview-interval', 15);
+        $interval = $requestStack->getSession()->get('reservation-overview-interval', 30);
 
         $year = $requestStack->getSession()->get('reservation-overview-year', date('Y'));
 
@@ -125,7 +126,7 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
-        $intervall = $request->query->get('intervall');
+        $interval = $request->query->get('interval');
         $objectId = $request->query->get('object');
         $holidayCountry = $request->query->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
@@ -136,28 +137,34 @@ class ReservationServiceController extends AbstractController
             $date = strtotime($date.' UTC');   // set timezone to UTC to ignore daylight saving changes
         }
 
-        if (null == $intervall) {
-            $intervall = 15;
+        if (null == $interval) {
+            $interval = 30;
+        } else if($interval < 8) {
+            $interval = 8;
+        } else if($interval > 180) {
+            $interval = 180;
+        } else {
+            $interval = (int)$interval;
         }
 
         if (null == $objectId || 'all' == $objectId) {
             $appartments = $em->getRepository(Appartment::class)->findAll();
         } else {
-            $object = $em->getRepository(Subsidiary::class)->findById($objectId);
-            $appartments = $em->getRepository(Appartment::class)->findByObject($object);
+            $appartments = $em->getRepository(Appartment::class)->findBy(['object' => $objectId], ['number' => 'ASC']);
         }
 
         $requestStack->getSession()->set('reservation-overview-start', $date);
-        $requestStack->getSession()->set('reservation-overview-interval', $intervall);
+        $requestStack->getSession()->set('reservation-overview-interval', $interval);
         $requestStack->getSession()->set('reservation-overview-objectid', $objectId);
         $requestStack->getSession()->set('reservation-overview', 'table');
 
         return $this->render('Reservations/reservation_table.html.twig', [
             'appartments' => $appartments,
             'today' => $date,
-            'intervall' => $intervall,
+            'interval' => $interval,
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
+            'objectId' => $objectId
         ]);
     }
 
@@ -172,7 +179,12 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $year = $request->query->get('year', date('Y'));
         $apartmentId = $request->query->get('apartment');
+        if(null == $apartmentId) {
+            $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
+            $apartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
+        }
         $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
+
 
         if (!$apartment instanceof Appartment) {
             throw new NotFoundHttpException();
@@ -182,20 +194,12 @@ class ReservationServiceController extends AbstractController
             throw new NotFoundHttpException();
         }
 
-        if (null == $objectId || 'all' == $objectId) {
-            $appartments = $em->getRepository(Appartment::class)->findAll();
-        } else {
-            $object = $em->getRepository(Subsidiary::class)->findById($objectId);
-            $appartments = $em->getRepository(Appartment::class)->findByObject($object);
-        }
-
         $requestStack->getSession()->set('reservation-overview-objectid', $objectId);
         $requestStack->getSession()->set('reservation-overview-year', $year);
         $requestStack->getSession()->set('reservation-overview-apartment', $apartment->getId());
         $requestStack->getSession()->set('reservation-overview', 'yearly');
 
         return $this->render('Reservations/reservation_table_year.html.twig', [
-            'appartments' => $appartments,
             'year' => $year,
             'apartment' => $apartment,
             // "holidayCountry" => $holidayCountry,
@@ -438,7 +442,7 @@ class ReservationServiceController extends AbstractController
      * Gets all Customers which fit the given criteria.
      */
     #[Route('/customers/get', name: 'reservations.get.customers', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function getCustomersAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
@@ -489,7 +493,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/customers/create', name: 'reservations.get.customer.create', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function createNewCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $em = $doctrine->getManager();
@@ -608,11 +612,15 @@ class ReservationServiceController extends AbstractController
      * Creates a new reservation with the information which have been entered in the process before.
      */
     #[Route('/reservation/create', name: 'reservations.create.reservations', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
+        $arrivalTimeInput = $request->request->get('arrivalTime');
+        $departureTimeInput = $request->request->get('departureTime');
+        $arrivalTime = $this->createTimeFromRequestValue($arrivalTimeInput);
+        $departureTime = $this->createTimeFromRequestValue($departureTimeInput);
 
         if ($csrf->validateCSRFToken($request)) {
             $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
@@ -629,6 +637,8 @@ class ReservationServiceController extends AbstractController
 
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->request->get('remark'));
+                $reservation->setArrivalTime($arrivalTime ? clone $arrivalTime : null);
+                $reservation->setDepartureTime($departureTime ? clone $departureTime : null);
                 $reservation->setReservationOrigin($origin);
                 $reservation->setUuid(Uuid::v4());
 
@@ -726,7 +736,7 @@ class ReservationServiceController extends AbstractController
      * @param bool $error
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, $id, $error = false)
     {
         $em = $doctrine->getManager();
@@ -750,7 +760,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route(path: '/{id}/edit/remark', name: 'reservations.edit.remark', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationRemark(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
     {
         $form = $this->createForm(ReservationMetaType::class, $reservation);
@@ -778,7 +788,7 @@ class ReservationServiceController extends AbstractController
      * @return mixed
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
     {
         $success = $rs->updateReservation($request, $reservation);
@@ -795,7 +805,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/{id}/customer', name: 'reservations.edit.reservation.customer', methods: ['GET'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerAction(ManagerRegistry $doctrine, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -814,7 +824,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/{id}/customer/create', name: 'reservations.edit.reservation.customer.create', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerCreateAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, CustomerService $cs, Request $request, $id)
     {
         $em = $doctrine->getManager();
@@ -823,7 +833,7 @@ class ReservationServiceController extends AbstractController
         if ($csrf->validateCSRFToken($request)) {
             $customer = $cs->getCustomerFromForm($request);
 
-            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
+            if (0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -853,7 +863,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/edit/customers/get', name: 'reservations.edit.customers.get', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomersGetAction(ManagerRegistry $doctrine, Request $request)
     {
         $search = $request->request->get('lastname', '');
@@ -879,7 +889,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/edit/{id}/customer/change', name: 'reservations.edit.customer.change', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function editReservationCustomerChangeAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, ReservationService $rs, Request $request, $id)
     {
         $tab = $request->request->get('tab', 'booker');
@@ -934,7 +944,7 @@ class ReservationServiceController extends AbstractController
      * @return string
      */
     #[Route('/reservation/delete', name: 'reservations.dodelete.reservation', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteReservationAction(CSRFProtectionService $csrf, ReservationService $rs, Request $request)
     {
         if ($csrf->validateCSRFToken($request, true)) {
@@ -956,7 +966,7 @@ class ReservationServiceController extends AbstractController
      * @return Response
      */
     #[Route('/edit/delete/customer', name: 'reservations.edit.delete.customer', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteReservationCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
     {
         $customerId = $request->request->get('customer-id');
@@ -1037,7 +1047,7 @@ class ReservationServiceController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\Response
      */
     #[Route('/edit/customer/edit/save', name: 'reservations.edit.customer.edit.save', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function saveEditCustomerAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, CSRFProtectionService $csrf, CustomerService $cs, Request $request)
     {
         $id = $request->request->get('customer-id');
@@ -1049,7 +1059,7 @@ class ReservationServiceController extends AbstractController
             $customer = $cs->getCustomerFromForm($request, $id);
 
             // check for mandatory fields
-            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
+            if (0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -1173,5 +1183,19 @@ class ReservationServiceController extends AbstractController
         }
 
         return new Response('', Response::HTTP_OK);
+    }
+
+    private function createTimeFromRequestValue(?string $value): ?\DateTime
+    {
+        if (null === $value) {
+            return null;
+        }
+        $value = trim($value);
+        if ('' === $value) {
+            return null;
+        }
+        $time = \DateTime::createFromFormat('H:i', $value);
+
+        return false === $time ? null : $time;
     }
 }

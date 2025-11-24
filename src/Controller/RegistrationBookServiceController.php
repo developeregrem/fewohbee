@@ -28,7 +28,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_REGISTRATIONBOOK')]
 #[Route('/registrationbook')]
 class RegistrationBookServiceController extends AbstractController
 {
@@ -210,7 +212,7 @@ class RegistrationBookServiceController extends AbstractController
             $customer = $cs->getCustomerFromForm($request, $id);
 
             // check for mandatory fields
-            if (0 == strlen($customer->getSalutation()) || 0 == strlen($customer->getLastname())) {
+            if (0 == strlen($customer->getLastname())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {

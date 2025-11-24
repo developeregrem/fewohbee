@@ -1,122 +1,172 @@
 {% set periodStartDate = timestamp2UTC(today) %}
-{% set displayEndDate = today|date_modify("+" ~ intervall ~ "day")|date('U') %}
+{% set displayEndDate = today|date_modify("+" ~ interval ~ "day")|date('U') %}
 {% set periodEndDate = timestamp2UTC(displayEndDate) %}
+{% set displayMonth = true %}
+{% set displayWeek = true %}
+
 {% use 'Reservations/_reservation_table_day.html.twig' %}
-<table class="table table-hover table-bordered table-reservation" id="reservation-table">
-    <thead>
-    <tr>
-        <td class="text-center"></td>
-        {% set firstWasSummer = today|date('I') %}
-        {% set lastWeek = today|date('W') %}
-        {% set colCount = 0 %}
-        {% for i in 0..intervall %}
-            {% set addToDate = "+" ~ i ~ "day" %}
-            {% set tmpDate = today|date_modify(addToDate) %}
-            {# if there is a change from summer to winter time #}
-            {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-            {% endif %}
-            {% set curWeek = tmpDate|date('W') %}
-            {# add 2 to colcount since we are at the end of the displayed period
-               but add it only if the last day is not a monday (last cw was already printed #}
-            {% if i == intervall and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
-            {# be aware that when the last cw is printed while we are on monday already #}
-            {% if lastWeek != curWeek  or i == intervall %}
-                <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
-                {% set colCount = 2 %}
-                {% set lastWeek = curWeek %}
-                {# if we reached the end of the period and last day is a monday we need to print the last td #}
-                {% if tmpDate|date('N') == 1 and i == intervall %}
-                    <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
+<div class="table-responsive js-fit-vh" data-min-height="200">
+    <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table">
+        <thead>
+        {% if displayMonth %}
+        <tr id="reservation-table-header-month">
+            <td class="text-center"></td>
+            {% set firstWasSummer = today|date('I') %}
+            {% set lastMonth = today|date('m') %}
+            {% set colCount = 0 %}
+            {% for i in 0..interval %}
+                {% set addToDate = "+" ~ i ~ "day" %}
+                {% set tmpDate = today|date_modify(addToDate) %}
+                {# if there is a change from summer to winter time #}
+                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
                 {% endif %}
-            {% else %}
-                {% set colCount = colCount + 2 %}
-            {% endif %}
-        {% endfor %}
-    </tr>
-    <tr class="table-days">
-        <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
-        {% set firstWasSummer = today|date('I') %}
-        {% for i in 0..intervall %}
-            {% set addToDate = "+" ~ i ~ "day" %}
-            {% set tmpDate = today|date_modify(addToDate) %}
-            {# if there is a change from summer to winter time #}
-            {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-            {% endif %}
-            {# check for weekend #}
-            {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
-                {% set weekendCss = ' reservation-table-weekend' %}
-            {% else %}
-                {% set weekendCss = '' %}
-            {% endif %}
-            {# Holidays #}
-            {% if selectedSubdivision == 'all' %}
-                {% set showCountry =  holidayCountry %}
-            {% else %}
-                {% set showCountry =  selectedSubdivision %}
-            {% endif %}
-            {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
-            {% set holidayText = "" %}
-            {% for holiday in publicdays %}
-                {% set holidayText = holidayText ~ holiday.name %}
-                {% if loop.last == false %}
-                    {% set holidayText = holidayText ~ "<br />" %}
+                {% set curMonth = tmpDate|date('m') %}
+                {# add 2 to colcount since we are at the end of the displayed period
+                    but add it only if the last day is not the first of the next month (last month was already printed #}
+                {% if i == interval and tmpDate|date('j') != 1 %}{% set colCount = colCount + 2 %}{% endif %}
+                {# be aware that when the last month is printed while we are on the first day of the next month already #}
+                {% if lastMonth != curMonth or i == interval %}
+                    <td class="text-center p-1" colspan="{{ colCount }}">{{ getLocalizedMonth(lastMonth, 'MMM', app.request.locale) }}</td>
+                    {% set colCount = 2 %}
+                    {% set lastMonth = curMonth %}
+                    {# if we reached the end of the period and last day is the first of the next month we need to print the last td #}
+                    {% if tmpDate|date('j') == 1 and i == interval %}
+                        <td class="text-center p-1" colspan="2">{{ getLocalizedMonth(curMonth, 'MMM', app.request.locale) }}</td>
+                    {% endif %}
+                {% else %}
+                    {% set colCount = colCount + 2 %}
                 {% endif %}
             {% endfor %}
-            {% if holidayText|length > 0 %}
-                {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
-                {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
-            {% else %}
-                {% set holidayPopover = "" %}
-                {% set holidayCss = "" %}
-            {% endif %}
-            <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}
-                style="width: {{ 100 / (intervall+1) }}%">{{ tmpDate|date('d') }}</th>
-        {% endfor %}
-    </tr>
-    </thead>
-    <tbody>
-    {% for appartment in appartments %}
-        {% set reservations = get_reservations_for_period(today, intervall, appartment) %}
-        {% if appartment.multipleOccupancy %}
-            {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
-            {% set printReservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}
-        {% else %}
-            {% set printReservations = reservations %}
-        {% endif %}
-
-        {% set j = 0 %}
-        {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
-        {% set emptyTdNr = 0 %}
-        {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
-        {% if appartment.multipleOccupancy %} 
-            {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
-        {% endif %}
-        <tr>
-            <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
-                {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
-            </td>
-            {% with %}
-                {% set reservations = printReservations %}
-                {{ block('table_day') }}
-            {% endwith %}
-
         </tr>
-        {% if appartment.multipleOccupancy and multipleReservations|length > 1 %}
-            {% for i in 1..multipleReservations|length-1 %}
-            <tr class="border-top-0">
-                <td></td>
+        {% endif %}
+        {% if displayWeek %}
+        <tr id="reservation-table-header-week">
+            <td class="text-center"></td>
+            {% set firstWasSummer = today|date('I') %}
+            {% set lastWeek = today|date('W') %}
+            {% set colCount = 0 %}
+            {% for i in 0..interval %}
+                {% set addToDate = "+" ~ i ~ "day" %}
+                {% set tmpDate = today|date_modify(addToDate) %}
+                {# if there is a change from summer to winter time #}
+                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+                {% endif %}
+                {% set curWeek = tmpDate|date('W') %}
+                {# add 2 to colcount since we are at the end of the displayed period
+                but add it only if the last day is not a monday (last cw was already printed #}
+                {% if i == interval and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
+                {# be aware that when the last cw is printed while we are on monday already #}
+                {% if lastWeek != curWeek  or i == interval %}
+                    <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
+                    {% set colCount = 2 %}
+                    {% set lastWeek = curWeek %}
+                    {# if we reached the end of the period and last day is a monday we need to print the last td #}
+                    {% if tmpDate|date('N') == 1 and i == interval %}
+                        <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
+                    {% endif %}
+                {% else %}
+                    {% set colCount = colCount + 2 %}
+                {% endif %}
+            {% endfor %}
+        </tr>
+        {% endif %}
+        <tr class="table-days">
+            <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
+            {% set firstWasSummer = today|date('I') %}
+            {% for i in 0..interval %}
+                {% set addToDate = "+" ~ i ~ "day" %}
+                {% set tmpDate = today|date_modify(addToDate) %}
+                {# if there is a change from summer to winter time #}
+                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+                {% endif %}
+                {# check for weekend #}
+                {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
+                    {% set weekendCss = ' reservation-table-weekend' %}
+                {% else %}
+                    {% set weekendCss = '' %}
+                {% endif %}
+                {# Holidays #}
+                {% if selectedSubdivision == 'all' %}
+                    {% set showCountry =  holidayCountry %}
+                {% else %}
+                    {% set showCountry =  selectedSubdivision %}
+                {% endif %}
+                {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
+                {% set holidayText = "" %}
+                {% for holiday in publicdays %}
+                    {% set holidayText = holidayText ~ holiday.name %}
+                    {% if loop.last == false %}
+                        {% set holidayText = holidayText ~ "<br />" %}
+                    {% endif %}
+                {% endfor %}
+                {% if holidayText|length > 0 %}
+                    {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
+                    {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
+                {% else %}
+                    {% set holidayPopover = "" %}
+                    {% set holidayCss = "" %}
+                {% endif %}
+                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}
+                    >{{ tmpDate|date('d') }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% set totalColumnCount = ((interval + 1) * 2) + 1 %}
+        {% set previousSubsidiaryId = null %}
+        {% for appartment in appartments %}
+            {% set currentSubsidiaryId = appartment.object is defined and appartment.object ? appartment.object.id : null %}
+            {% if previousSubsidiaryId != currentSubsidiaryId and objectId == "all" %}
+                <tr>
+                    <td colspan="{{ totalColumnCount }}" class="fw-semibold">
+                        {{ appartment.object.name ?? '' }}
+                    </td>
+                </tr>
+                {% set previousSubsidiaryId = currentSubsidiaryId %}
+            {% endif %}
+            {% set reservations = get_reservations_for_period(today, interval, appartment) %}
+            {% if appartment.multipleOccupancy %}
+                {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
+                {% set printReservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}
+            {% else %}
+                {% set printReservations = reservations %}
+            {% endif %}
+
+            {% set j = 0 %}
+            {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
+            {% set emptyTdNr = 0 %}
+            {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
+            {% if appartment.multipleOccupancy %} 
+                {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
+            {% endif %}
+            <tr>
+                <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
+                    {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
+                </td>
                 {% with %}
-                    {% set reservations = attribute(multipleReservations, i) %}
+                    {% set reservations = printReservations %}
                     {{ block('table_day') }}
                 {% endwith %}
+
             </tr>
-            {% endfor %}
-        {% endif %}
-    {% endfor %}
-    </tbody>
-</table>
+            {% if appartment.multipleOccupancy and multipleReservations|length > 1 %}
+                {% for i in 1..multipleReservations|length-1 %}
+                <tr class="border-top-0">
+                    <td></td>
+                    {% with %}
+                        {% set reservations = attribute(multipleReservations, i) %}
+                        {{ block('table_day') }}
+                    {% endwith %}
+                </tr>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 <script type="text/javascript">
     var tdStartDate = "";
     var tdEndDate = "";
@@ -129,7 +179,22 @@
     });
     $('.room-info').popover({html: true});
     $('.holiday-info').popover();
-    {% if is_granted('ROLE_USER') %}
+    
+
+    // initial + bei Resize neu berechnen
+    window.addEventListener('load', initStickyTables);
+    window.addEventListener('resize', initStickyTables);
+    // initial und bei Resize/Scroll (Scroll, falls sich rect.top durch Layout ändert)
+    window.addEventListener('load', initFit);
+    window.addEventListener('resize', initFit);
+    window.addEventListener('orientationchange', initFit);
+    initStickyTables();
+    initFit();
+
+    {% if is_granted('ROLE_RESERVATIONS') %}
+    // disable it on mobile devices without a mouse pointer
+    var enableSelectable = window.matchMedia('(pointer: fine)').matches;
+    if (enableSelectable) {
     $( ".table-reservation" ).selectable({
         filter:'.td-empty',
         cancel:'.reservation',
@@ -188,6 +253,7 @@
             $(".td-empty").removeClass("ui-selected");
         }
     });
+    }   
     {% endif %}
     {#var lastRowDate = "";
     $( ".reservation-inner" ).draggable({

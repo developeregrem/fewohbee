@@ -33,7 +33,7 @@
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
-            {% if is_granted('ROLE_USER') %}
+            {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
                 <a href="#" class="me-3" onclick="getNewTable();" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt"></i></a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
@@ -66,11 +66,23 @@
     var lastClickedReservationId = 0;
     var tableSettingsUrl = "{{ path('reservations.table.settings') }}";
     
-    $(document).ready(function () {                    
+    $(document).ready(function () {      
+        
+        setLocalStorageItemIfNotExists('reservation-settings-show-month', 'true');
+        setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
         
         // add dynamic onchage listener for table settings fields
-        delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter #year, #table-filter select[name="intervall"], #table-filter select[name="apartment"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
+        delegate(document.getElementById("table-filter"), 'change', '#table-filter #start, #table-filter #year, #table-filter input[name="interval"], #table-filter select[name="apartment"], #objects, #holidayCountry, #holidaySubdivision', (event) => {
             getNewTable();            
+        });
+
+        delegate(document.getElementById("table-filter"), 'click', '.js-shift-date', (event) => {
+            event.preventDefault();
+            const trigger = event.target.closest('.js-shift-date');
+            if (!trigger) {
+                return;
+            }
+            shiftStartDate(trigger.dataset.direction);
         });
         
         // add dynamic onchange listener for holiday country field to load subdivisions of the country
@@ -79,7 +91,7 @@
         });
         
         // initially load table settings based on local storage values
-        getLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        getLocalTableSetting('interval', 'reservations-intervall', 'int');
         getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         getLocalTableSetting('apartment', 'reservations-apartment', 'int');
         loadTableSettings(tableSettingsUrl, true);  
@@ -103,6 +115,7 @@
             },
             success: function (data) {
                 $("#modal-content-ajax").html(data);
+                toggleDisplayTableRows();
             }
         });
 
@@ -143,7 +156,7 @@
                 '</div>';
         
         // save selected settings for reuse
-        setLocalTableSetting('intervall', 'reservations-intervall', 'int');
+        setLocalTableSetting('interval', 'reservations-intervall', 'int');
         setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
         setLocalTableSetting('apartment', 'reservations-apartment', 'int');
@@ -159,6 +172,8 @@
             },
             success: function (data) {
                 $("#table-ajax").html(data);
+                toggleDisplayTableRows();
+                initStickyTables();
             }
         });
 
@@ -506,7 +521,11 @@
         $.ajax({
             url: url,
             type: "post",
-            data: $("#_csrf_token").serialize() + "&" + $("#reservation-remark").serialize() + "&" + $("#reservation-origin").serialize(),
+            data: $("#_csrf_token").serialize()
+                + "&" + $("#reservation-remark").serialize()
+                + "&" + $("#reservation-origin").serialize()
+                + "&" + $("#reservation-arrivalTime").serialize()
+                + "&" + $("#reservation-departureTime").serialize(),
             beforeSend: function () {
                 $("#modal-content-ajax").html(content);
             },
@@ -986,6 +1005,6 @@
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/selectable-0.22.0.min.js"></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/reservations_1.2.0.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/reservations_1.3.0.js"></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.1.0.js"></script>
 {% endblock %}
