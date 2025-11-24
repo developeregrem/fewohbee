@@ -29,7 +29,6 @@
   <form 
   {{ stimulus_controller('@web-auth/webauthn-stimulus',
         {
-            usernameField: '_username',
             creationSuccessRedirectUri: path('start'),
             creationResultUrl: path('webauthn.controller.security.main.creation.result'),
             creationOptionsUrl: path('webauthn.controller.security.main.creation.options'),
