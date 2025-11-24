@@ -55,8 +55,28 @@ Run the following command to initialize the database and the application:
     php bin/console doctrine:migration:migrate
     php bin/console app:first-run
 
+If you need to bootstrap the system in a non-interactive environment provide all answers via options:
+
+    php bin/console app:first-run \
+        --username=admin \
+        --password="change-me-please" \
+        --first-name=Admin \
+        --last-name=User \
+        --email=admin@example.com \
+        --accommodation-name="My Guesthouse"
+
     // optional: add some test data
     php bin/console doctrine:fixtures:load --append
+
+### Automated test run
+
+Use the helper script to reset the test database, seed initial data (including `app:first-run`), load fixtures and run PHPUnit in one go:
+
+```
+bin/run-tests.sh
+```
+
+The script defaults to `APP_ENV=test`. Override credentials or metadata by exporting variables such as `FIRST_RUN_USERNAME`, `FIRST_RUN_PASSWORD`, `FIRST_RUN_EMAIL`, etc. Any extra arguments are forwarded to PHPUnit: `bin/run-tests.sh --filter Kernel`.
 
 Now, you are ready to open a browser, navigate to the installation folder e.g. 
 http://localhost/fewohbee/public/index.php
