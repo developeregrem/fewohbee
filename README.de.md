@@ -55,8 +55,28 @@ Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialis
     php bin/console doctrine:migration:migrate
     php bin/console app:first-run
 
+Wenn der Einrichtungsprozess ohne Rückfragen (z.B. in CI/CD) laufen soll, können alle Antworten als Optionen übergeben werden:
+
+    php bin/console app:first-run \
+        --username=admin \
+        --password="Bitte-ändern" \
+        --first-name=Admin \
+        --last-name=User \
+        --email=admin@example.com \
+        --accommodation-name="Meine Pension"
+
     // optional: Testdaten hinzufügen
     php bin/console doctrine:fixtures:load --append
+
+### Automatisierter Testlauf
+
+Mit dem Skript `bin/run-tests.sh` werden die Testdatenbank zurückgesetzt, Migrationen ausgeführt, `app:first-run` mit Standardwerten abgewickelt, Fixtures geladen und anschließend PHPUnit gestartet:
+
+```
+bin/run-tests.sh
+```
+
+Standardmäßig wird `APP_ENV=test` verwendet. Über Umgebungsvariablen wie `FIRST_RUN_USERNAME`, `FIRST_RUN_PASSWORD`, `FIRST_RUN_EMAIL` usw. lassen sich die Werte anpassen. Zusätzlich übergebene Argumente werden an PHPUnit durchgereicht, z.B. `bin/run-tests.sh --filter Kernel`.
 
 Anschließend kann mit einem Webbrowser zu dem Installationsordner gewechselt werden  z.B.
 http://localhost/fewohbee/public/index.php
