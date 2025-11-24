@@ -31,6 +31,7 @@
   {{ stimulus_controller('@web-auth/webauthn-stimulus',
         {
             useBrowserAutofill: true,
+            usernameField: '_username',
             requestSuccessRedirectUri: path('start'),
             requestResultUrl: path('webauthn.controller.security.main.request.result'),
             requestOptionsUrl: path('webauthn.controller.security.main.request.options')
