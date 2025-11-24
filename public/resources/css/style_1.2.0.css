@@ -85,33 +85,63 @@ body {
     background: #F39814;
 }
 
-/* reset 2px border of tbody */
-.table-reservation > :not(:first-child) {
-    border-top: 1px solid currentColor;
-}
-
-.table-reservation {
-    overflow: hidden;
-}
-
 .table-reservation .table-days > th {
     position: relative;
 }
 
-.reservation-table-weekend::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -1px;
-    right: -1px;
-    bottom: -5000px;
-    z-index: -1;
+/* remove border because of box-shadow for sticky header */
+.table.table-sticky,.table-sticky tbody tr:first-child { 
+    border-top: 0 !important;
+}
+
+/* remove border because of box-shadow for sticky header */
+.table-sticky thead tr, .table-sticky thead th { 
+    border-top: 0 !important; 
+    border-bottom: 0 !important;
+}
+
+.table-responsive { position: relative; }
+
+.table.table-sticky thead th, .table.table-sticky thead td {
+  position: sticky;
+  z-index: 3;
+  /* fester Hintergrund, damit nichts durchscheint */
+  background-color: var(--bs-table-bg, var(--bs-body-bg));
+  /* klare Unterkante auch bei border-collapse */
+  box-shadow: inset 0 -1px 0 var(--bs-border-color);
+  background-clip: padding-box; /* verhindert „Border-Bleeding“ */
+}
+
+.table.table-sticky thead tr:first-child td{
+  /* top + bottom Schatten kombinieren: */
+  box-shadow:
+    inset 0  1px 0 var(--bs-border-color),  /* obere Linie */
+    inset 0 -1px 0 var(--bs-border-color);  /* untere Linie */
+}
+
+/* left sticky column in reservation overview*/
+.table.table-sticky tbody tr > *:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: var(--bs-table-bg, var(--bs-body-bg));
+  box-shadow: 
+    inset  1px 0 0 var(--bs-border-color), /* linke Linie */
+    inset -1px 0 0 var(--bs-border-color); /* rechte Linie */
+  background-clip: padding-box;
+  border-right: 0;
+  border-left: 0;
+}
+
+.table.table-sticky tbody tr > *:nth-child(2) {
+  border-left: 0;
+}
+
+
+.reservation-table-weekend {
     background-color: #EEE !important;
 }
 
-#reservation-table th,td {
-    background-color: transparent !important;
-}
 
 /* remove bottom border of tr for multiple reservations of one apartment (select tr where the next tr has border-top-0 class) */
 #reservation-table tr:has( + .border-top-0) {

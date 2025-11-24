@@ -2,6 +2,7 @@ base.action: Action
 button.accept: Accept
 button.add: Add
 button.back: Back
+button.next: Forward
 button.cancel: Cancel
 button.close: Close
 button.continue: Continue

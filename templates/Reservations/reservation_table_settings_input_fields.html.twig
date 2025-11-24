@@ -1,40 +1,70 @@
 
 <div class="modal-body">
-    <h6 class="text-start mt-3">{{ 'reservation.table.settings.general'|trans }}</h6>
-    <div class="row">
-        <label for="object" class="col-sm-4 col-form-label text-end">{{ 'object.name'|trans }}</label>
-        <div class="col-sm">
-            <select id="objects" name="object" class="form-select">
-                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
-                {% for object in objects %}
-                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+    <div class="ps-3 pe-3">
+        <nav>
+			<div class="nav nav-tabs" id="nav-tab" role="tablist">
+				<button class="nav-link active" id="nav-general-tab" data-bs-toggle="tab" data-bs-target="#nav-general" type="button" role="tab" aria-controls="nav-general" aria-selected="true">{{ 'reservation.table.settings.general'|trans }}</button>
+				<button class="nav-link" id="nav-holidays-tab" data-bs-toggle="tab" data-bs-target="#nav-holidays" type="button" role="tab" aria-controls="nav-holidays" aria-selected="false">{{ 'reservation.table.settings.holidays'|trans }}</button>
+			</div>
+		</nav>
+		<div class="tab-content p-4" id="nav-tabContent">
+			<div class="tab-pane fade show active" id="nav-general" role="tabpanel" aria-labelledby="nav-general-tab" tabindex="0">
+				<div class="row">
+                    <label for="object" class="col-sm-4 col-form-label text-end">{{ 'object.name'|trans }}</label>
+                    <div class="col-sm">
+                        <select id="objects" name="object" class="form-select">
+                            <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                            {% for object in objects %}
+                                <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-sm-4"></div>
+                    <div class="col-sm text-start">
+                        <div class="form-check form-check-inline form-switch">
+                            <input type="checkbox" name="show-month" id="show-month" class="form-check-input" value="1">
+                            <label class="checkbox-inline checkbox-switch form-check-label" for="show-month">{{ 'reservation.table.settings.displayMonth'|trans }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-sm-4"></div>
+                    <div class="col-sm text-start">
+                        <div class="form-check form-check-inline form-switch">
+                            <input type="checkbox" name="show-week" id="show-week" class="form-check-input" value="1">
+                            <label class="checkbox-inline checkbox-switch form-check-label" for="show-month">{{ 'reservation.table.settings.displayWeek'|trans }}</label>
+                        </div>
+                    </div>
+                </div>
+			</div>
 
-    <h6 class="text-start mt-4">{{ 'reservation.table.settings.holidays'|trans }}</h6>
-    <div class="row">
-        <label for="holidayCountry" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.country'|trans }}</label>
-        <div class="col-sm">
-            <select id="holidayCountry" name="holidayCountry" class="form-select">
-                {% for code, country in holidayCountries %}
-                    <option value="{{ code }}"{% if code == selectedCountry %} selected{% endif %}>{{ country.name }}</option>
-                {% endfor %}
-            </select>
+            <div class="tab-pane fade" id="nav-holidays" role="tabpanel" aria-labelledby="nav-holidays-tab" tabindex="1">
+				<div class="row">
+                    <label for="holidayCountry" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.country'|trans }}</label>
+                    <div class="col-sm">
+                        <select id="holidayCountry" name="holidayCountry" class="form-select">
+                            {% for code, country in holidayCountries %}
+                                <option value="{{ code }}"{% if code == selectedCountry %} selected{% endif %}>{{ country.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% if holidayCountries[selectedCountry] is defined and holidayCountries[selectedCountry].subdivisions|length > 0 %}
+                <div class="row">
+                    <label for="holidaySubdivision" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.subdivision'|trans }}</label>
+                    <div class="col-sm">
+                        <select id="holidaySubdivision" name="holidaySubdivision" class="form-select">
+                            <option value="all"{% if selectedSubdivision == 'all' %} selected{% endif %}>-- {{ 'reservation.table.settings.all'|trans }} --</option>
+                            {% for code, division in holidayCountries[selectedCountry].subdivisions %}
+                                <option value="{{ code }}"{% if code == selectedSubdivision %} selected{% endif %}>{{ division.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+			</div>
         </div>
-    </div>
-    {% if holidayCountries[selectedCountry] is defined and holidayCountries[selectedCountry].subdivisions|length > 0 %}
-    <div class="row">
-        <label for="holidaySubdivision" class="col-sm-4 col-form-label text-end">{{ 'reservation.table.settings.subdivision'|trans }}</label>
-        <div class="col-sm">
-            <select id="holidaySubdivision" name="holidaySubdivision" class="form-select">
-                <option value="all"{% if selectedSubdivision == 'all' %} selected{% endif %}>-- {{ 'reservation.table.settings.all'|trans }} --</option>
-                {% for code, division in holidayCountries[selectedCountry].subdivisions %}
-                    <option value="{{ code }}"{% if code == selectedSubdivision %} selected{% endif %}>{{ division.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-    {% endif %}
+    </div>  
 </div>

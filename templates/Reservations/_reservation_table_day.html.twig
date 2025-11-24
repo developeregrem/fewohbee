@@ -1,5 +1,5 @@
 {% block table_day %}
-    {% for i in 0..intervall %}
+    {% for i in 0..interval %}
         {% if i >= j %}
             {% set addToDate = "+" ~ i ~ "day" %}
             {% set curDate = today|date_modify(addToDate) %}
@@ -28,11 +28,11 @@
                     {% set colspan = (2 * period) - 2 %}
                     {# if we found a reservation for that day, jump in the loop to the enddate of the reservation #}
                     {% set j = i + period %}
-                    {% set printSpacerBefore = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'start') %}
-                    {% set printSpacerAfter = is_single_reservation_for_day(today, intervall, loop.index0, reservations, 'end') %}
+                    {% set printSpacerBefore = is_single_reservation_for_day(today, interval, loop.index0, reservations, 'start') %}
+                    {% set printSpacerAfter = is_single_reservation_for_day(today, interval, loop.index0, reservations, 'end') %}
 
                     {% if printSpacerBefore %}
-                        <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                        <td class="two-td-left td-empty"
                             data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}"
                             data-tdnumber="{{ emptyTdNr }}"></td>
                     {% endif %}
@@ -49,24 +49,27 @@
                         {% set colspan = colspan + 1 %}
                     {% endif %}
 
-                    {% set letterCount = get_letter_count_for_display(period, intervall) %}
-                    {% set name = reservation.booker.salutation ~ " " ~ reservation.booker.lastname %}
-                    {% set shortName = name|slice(0, letterCount) %}
-                    {% if shortName != name %}
-                        {% set shortName = shortName ~ "..." %}
+                    {% set letterCount = get_letter_count_for_display(period, interval) %}
+                    {% set displayName = reservation.booker.lastname %}
+                    {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
+                        {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                    {% endif %}
+                    {% set shortName = displayName|slice(0, letterCount) %}
+                    {% if shortName != displayName %}
+                        {% set displayName = shortName ~ "..." %}
                     {% endif %}
 
                     {# popover #}
                     {% use 'Reservations/_resevation_popover.html.twig' %}
 
-                    <td class="reservation text-center" colspan="{{ colspan }}" style="width: {{ (50 / (intervall+1)) * colspan }}%">
+                    <td class="reservation text-center" colspan="{{ colspan }}">
                         <div onclick="return getReservation({{ reservation.id }});" style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                              class="reservation-inner text-center"
-                             title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ shortName }}</div>
+                             title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ displayName }}</div>
                     </td>
 
                     {% if printSpacerAfter %}
-                        <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                        <td class="two-td-right td-empty"
                             data-day="{{ reservation.enddate|date('Y-m-d')  }}" data-appartment="{{ appartment.id }}"
                             data-tdnumber="{{ emptyTdNr + 1 }}"></td>
                     {% endif %}
@@ -74,14 +77,14 @@
                 {% endif %}
             {% endfor %}
             {% if reservations|length == 0 or periodFilled == 0 %}
-                {#  50 / (intervall+1) means
+                {#  50 / (interval+1) means
                         100% total width for all cells,
                         1 day consist of two cells, therefore we have ((100% / 2) = 50 / number of days) for each cell
                         we have to add +1 for the first col (Zimmer)
                 #}
-                <td class="two-td-left td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                <td class="two-td-left td-empty" 
                     data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
-                <td class="two-td-right td-empty" style="width: {{ 50 / (intervall+1) }}%"
+                <td class="two-td-right td-empty" 
                     data-day="{{ tmpDate  }}" data-appartment="{{ appartment.id }}" data-tdnumber="{{ emptyTdNr }}"></td>
             {% endif %}
         {% endif %}

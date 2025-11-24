@@ -11,6 +11,7 @@ parameters:
     version: '3.8.1'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
+    customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
 
 services:
     # default configuration for services in *this* file

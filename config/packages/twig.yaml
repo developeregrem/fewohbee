@@ -1,5 +1,11 @@
+parameters:
+    # define default when env variable is not defined
+    env(CUSTOMER_SALUTATIONS): 'Ms,Mr,Family'
+
 twig:
     default_path: '%kernel.project_dir%/templates'
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
     form_themes: ['form/fewohbee_bootstrap_5_layout.html.twig']
+    globals:
+        customer_salutations: '%customer_salutations%'

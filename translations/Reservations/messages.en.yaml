@@ -4,6 +4,7 @@ reservation.add.another.appartment: Add rooms
 reservation.appartment: Select room
 reservation.appartment.available: Available rooms
 reservation.appartment.name: Room
+reservation.arrivalTime: Arrival
 reservation.button.change.customer: Change guest
 reservation.button.changeBooker: Change Booker
 reservation.button.create.invoice: Create an invoice
@@ -15,6 +16,7 @@ reservation.correspondences.reservation: Conversations of this reservation
 reservation.customer: Select guest
 reservation.custumer.selected: 'Selected guests:'
 reservation.days: Days
+reservation.departureTime: Departure
 reservation.delete.ask: Are you sure you want to delete this reservation?
 reservation.details: Reservation details
 reservation.edit.change.appartment: Assign new room
@@ -62,6 +64,8 @@ reservation.table.calendarweek: CW
 reservation.table.reload: Update
 reservation.table.settings.all: all
 reservation.table.settings.country: Country
+reservation.table.settings.displayMonth: Display month names
+reservation.table.settings.displayWeek: Display calendar week
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.subdivision: Subdivision
