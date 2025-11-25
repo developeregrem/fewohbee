@@ -1,0 +1,11 @@
+profile:
+  passkeys:
+    title: Passwortlose Anmeldung (Passkeys)
+    create: Passkey anlegen
+    device: Gerät
+    created_at: Angelegt am
+    public_key: Public Key
+    actions: Aktionen
+    unknown: unbekannt
+    none: Keine Passkeys hinterlegt.
+    delete: Passkey wurde erfolgreich gelöscht.

@@ -56,6 +56,9 @@ final class ProfileController extends AbstractController
                 'credentialPublicKey' => $source->credentialPublicKey,
                 //'userHandle' => Base64UrlSafe::encodeUnpadded($this->userHandle),
                 'counter' => $source->counter,
+                'clientLabel' => $source instanceof \App\Entity\WebauthnCredential ? $source->getClientLabel() : null,
+                'userAgent' => $source instanceof \App\Entity\WebauthnCredential ? $source->getUserAgent() : null,
+                'createdAt' => $source instanceof \App\Entity\WebauthnCredential ? $source->getCreatedAt() : null,
                 //'otherUI' => $this->otherUI,
             ];
 
@@ -105,7 +108,7 @@ final class ProfileController extends AbstractController
                 }
             }
 
-            $this->addFlash('success', 'user.flash.delete.success');
+            $this->addFlash('success', 'profile.passkeys.delete');
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
