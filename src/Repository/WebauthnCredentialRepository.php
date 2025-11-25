@@ -2,7 +2,6 @@
 
 namespace App\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Webauthn\PublicKeyCredentialSource;
@@ -10,11 +9,14 @@ use Webauthn\PublicKeyCredentialUserEntity;
 use Webauthn\Bundle\Repository\PublicKeyCredentialSourceRepositoryInterface;
 use Webauthn\Bundle\Repository\CanSaveCredentialSource;
 use App\Entity\WebauthnCredential;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 final class WebauthnCredentialRepository extends ServiceEntityRepository implements PublicKeyCredentialSourceRepositoryInterface, CanSaveCredentialSource
 {
-    public function __construct(ManagerRegistry $registry)
-    {
+    public function __construct(
+        ManagerRegistry $registry,
+        private readonly RequestStack $requestStack
+    ) {
         parent::__construct($registry, WebauthnCredential::class);
     }
 
@@ -32,6 +34,13 @@ final class WebauthnCredentialRepository extends ServiceEntityRepository impleme
                 $publicKeyCredentialSource->userHandle,
                 $publicKeyCredentialSource->counter
             );
+        }
+
+        if ($publicKeyCredentialSource instanceof WebauthnCredential) {
+            $request = $this->requestStack->getCurrentRequest();
+            $userAgent = $request?->headers->get('user-agent');
+            $publicKeyCredentialSource->setUserAgent($userAgent);
+            $publicKeyCredentialSource->setClientLabel($this->detectClientLabel($userAgent));
         }
         $this->getEntityManager()->persist($publicKeyCredentialSource);
         $this->getEntityManager()->flush();
@@ -56,5 +65,39 @@ final class WebauthnCredentialRepository extends ServiceEntityRepository impleme
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
+    }
+
+    private function detectClientLabel(?string $userAgent): ?string
+    {
+        if ($userAgent === null) {
+            return null;
+        }
+
+        $ua = strtolower($userAgent);
+        $isSafari = str_contains($ua, 'safari') && !str_contains($ua, 'chrome');
+        $isChrome = str_contains($ua, 'chrome');
+        $isFirefox = str_contains($ua, 'firefox') || str_contains($ua, 'fxios');
+
+        if (str_contains($ua, 'iphone') || str_contains($ua, 'ipad') || str_contains($ua, 'ipod')) {
+            return 'iOS' . ($isSafari ? ' (Safari)' : '');
+        }
+
+        if (str_contains($ua, 'android')) {
+            return 'Android' . ($isChrome ? ' (Chrome)' : '');
+        }
+
+        if (str_contains($ua, 'macintosh') || str_contains($ua, 'mac os')) {
+            return 'macOS' . ($isSafari ? ' (Safari)' : ($isChrome ? ' (Chrome)' : ''));
+        }
+
+        if (str_contains($ua, 'windows')) {
+            return 'Windows' . ($isChrome ? ' (Chrome)' : ($isFirefox ? ' (Firefox)' : ''));
+        }
+
+        if (str_contains($ua, 'cros')) {
+            return 'ChromeOS';
+        }
+
+        return null;
     }
 }

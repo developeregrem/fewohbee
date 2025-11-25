@@ -32,4 +32,9 @@ final class Version20250407071506 extends AbstractMigration
             DROP TABLE webauthn_credentials
         SQL);
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

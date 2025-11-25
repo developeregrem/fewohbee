@@ -26,7 +26,7 @@
 {% block body %}
         
 <main class="form-signin text-center">
-  <form action="{{ path('login-password') }}" method="post">    
+  <form action="{{ path('login-password') }}" method="post" data-turbo="false">    
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
 

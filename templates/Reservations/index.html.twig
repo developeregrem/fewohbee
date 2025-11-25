@@ -66,7 +66,7 @@
     var lastClickedReservationId = 0;
     var tableSettingsUrl = "{{ path('reservations.table.settings') }}";
     
-    $(document).ready(function () {      
+    window.addEventListener("DOMContentLoaded", function() {      
         
         setLocalStorageItemIfNotExists('reservation-settings-show-month', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');

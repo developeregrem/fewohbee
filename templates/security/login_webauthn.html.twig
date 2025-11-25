@@ -14,11 +14,6 @@
     <script>
         if ($("body nav").length > 0) {
             window.location.href = "{{ path('start') }}";
-        } else {
-            $(document).ready(function () {
-                $("body div").removeClass("d-none");
-                $("body p").removeClass("d-none");
-            });
         }
     </script>
 {% endblock %}
@@ -32,14 +27,11 @@
         {
             useBrowserAutofill: true,
             usernameField: '_username',
-            requestSuccessRedirectUri: path('start'),
+            requestSuccessRedirectUri: path('dashboard.redirect'),
             requestResultUrl: path('webauthn.controller.security.main.request.result'),
             requestOptionsUrl: path('webauthn.controller.security.main.request.options')
         }
     ) }}
-    {{ stimulus_controller('login') }}
-    {{ stimulus_action('login', 'onFailure', 'webauthn:request:failure') }}
-    {{ stimulus_action('login', 'onSuccess', 'webauthn:request:success') }}
     >    
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
@@ -47,8 +39,6 @@
     {% if error %}
         <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
     {% endif %}
-    {# Platz für Fehlermeldungen bei 401 etc. #}
-    <div id="login-error" class="alert alert-danger mt-3 d-none" role="alert"></div>
 
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}" autocomplete="username webauthn">
