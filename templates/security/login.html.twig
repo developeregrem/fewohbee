@@ -11,21 +11,11 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script>
-        if ($("body nav").length > 0) {
-            window.location.href = "{{ path('start') }}";
-        } else {
-            $(document).ready(function () {
-                $("body div").removeClass("d-none");
-                $("body p").removeClass("d-none");
-            });
-        }
-    </script>
 {% endblock %}
 
 {% block body %}
         
-<main class="form-signin text-center">
+<main class="form-signin text-center" {{ stimulus_controller('login', { startUrl: path('dashboard.redirect') }) }}>
   <form action="{{ path('login-password') }}" method="post" data-turbo="false">    
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
