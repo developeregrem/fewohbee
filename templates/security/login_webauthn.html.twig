@@ -15,6 +15,35 @@
         if ($("body nav").length > 0) {
             window.location.href = "{{ path('start') }}";
         }
+        let webauthnAuthFailed = false;
+        function showWebauthnError() {
+            const el = document.getElementById('login-error');
+            if (el) {
+                el.classList.remove('d-none');
+            }
+        }
+
+        // Detect 401 responses on /login (assertion result)
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = async (...args) => {
+            const response = await originalFetch(...args);
+            try {
+                if (response?.status === 401) {
+                    webauthnAuthFailed = true;
+                    showWebauthnError();
+                }
+            } catch (e) {
+                // ignore wrapper errors
+            }
+            return response;
+        };
+
+        // Only surface UI on assertion failure when we saw a 401
+        document.addEventListener('webauthn:assertion:failure', () => {
+            if (webauthnAuthFailed) {
+                showWebauthnError();
+            }
+        }, true);
     </script>
 {% endblock %}
 
@@ -22,7 +51,7 @@
         
 <main class="form-signin text-center">
   {# usernameField: '_username', #}
-  <form 
+  <form id="webauthn-login-form"
   {{ stimulus_controller('@web-auth/webauthn-stimulus',
         {
             useBrowserAutofill: true,
@@ -32,6 +61,9 @@
             requestOptionsUrl: path('webauthn.controller.security.main.request.options')
         }
     ) }}
+    {{ stimulus_action('login', 'onWebauthnFailure', 'webauthn:assertion:failure') }}
+    {{ stimulus_action('login', 'onWebauthnFailure', 'webauthn:attestation:failure') }}
+    {{ stimulus_action('login', 'onWebauthnFailure', 'webauthn:unsupported') }}
     >    
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
@@ -39,6 +71,9 @@
     {% if error %}
         <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
     {% endif %}
+    <div id="login-error" data-login-target="error" class="alert alert-danger mt-3 d-none" role="alert">
+        {{ 'login.webauthn.failure'|trans }}
+    </div>
 
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}" autocomplete="username webauthn">
