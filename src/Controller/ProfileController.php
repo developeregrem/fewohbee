@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Form\ProfilePersonalDataType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,9 +16,9 @@ use App\Repository\WebauthnCredentialRepository;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Service\UserService;
 
 #[Route('/profile')]
 final class ProfileController extends AbstractController
@@ -30,12 +31,25 @@ final class ProfileController extends AbstractController
     ) {
     }
     
-    #[Route('/', name: 'profile', methods: [Request::METHOD_GET])]
-    public function __invoke(TokenStorageInterface $tokenStorage): Response
+    #[Route('/', name: 'profile', methods: [Request::METHOD_GET, Request::METHOD_POST])]
+    public function __invoke(TokenStorageInterface $tokenStorage, Request $request, ManagerRegistry $doctrine, UserService $userService): Response
     {
         $user = $this->getUser();
         if (! $user instanceof User) {
             throw new AccessDeniedHttpException();
+        }
+
+        $form = $this->createForm(ProfilePersonalDataType::class, $user);
+        $form->handleRequest($request);
+        $plainPassword = (string) $form->get('password')->getData();
+        if ($form->isSubmitted() && $form->isValid() && $userService->isPasswordValid($plainPassword, $user, $form)) {
+            if (!empty($plainPassword)) {
+                $user->setPassword($userService->hashPassword($plainPassword, $user));
+            }
+            $doctrine->getManager()->flush();
+            $this->addFlash('success', 'profile.personal_data.updated');
+
+            return $this->redirectToRoute('profile');
         }
 
         $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
@@ -66,6 +80,7 @@ final class ProfileController extends AbstractController
         return $this->render('Profile/index.html.twig', [
             'token' => $tokenStorage->getToken(),
             'credentials' => $credentials,
+            'personalDataForm' => $form->createView(),
         ]);
     }
 
@@ -89,7 +104,6 @@ final class ProfileController extends AbstractController
             }
 
             // $id is base64 encoded, decode it
-            //var_dump($id);
             $credentialId = base64_decode(hex2bin($id));
             //var_dump($credentialId);
             if ($credentialId === false) {
@@ -101,9 +115,6 @@ final class ProfileController extends AbstractController
                 if ($credential->publicKeyCredentialId === $credentialId) {
                     $doctrine->getManager()->remove($credential);
                     $doctrine->getManager()->flush();
-                    // Alternatively, you can use the repository method if it exists
-                    // $this->keyCredentialSourceRepository->delete($credential, true);
-                    //$this->keyCredentialSourceRepository->remove($credential, true);
                     break;
                 }
             }
@@ -112,40 +123,5 @@ final class ProfileController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
-    }
-
-    #[Route('/delete/{id}', name: 'profile_delete_credential2', methods: [Request::METHOD_POST])]
-    public function deleteCredential2(string $id, Request $request): RedirectResponse
-    {
-        $user = $this->getUser();
-        if (! $user instanceof User) {
-            throw new AccessDeniedHttpException();
-        }
-
-        $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
-        if ($userEntity === null) {
-            throw new AccessDeniedHttpException();
-        }
-
-        $tokenId = 'delete_credential_' . $id;
-        if (!$this->csrfTokenManager->isTokenValid(new \Symfony\Component\Security\Csrf\CsrfToken($tokenId, $request->request->get('_token')))) {
-            throw new AccessDeniedHttpException('Invalid CSRF token');
-        }
-
-        // $id is base64 encoded, decode it
-        $credentialId = base64_decode($id, true);
-        if ($credentialId === false) {
-            throw new AccessDeniedHttpException('Invalid credential id');
-        }
-
-        $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
-        foreach ($credentials as $credential) {
-            if ($credential->publicKeyCredentialId === $credentialId) {
-                $this->keyCredentialSourceRepository->remove($credential, true);
-                break;
-            }
-        }
-
-        return $this->redirectToRoute('profile');
     }
 }
