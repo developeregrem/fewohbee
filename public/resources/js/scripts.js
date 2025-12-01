@@ -60,39 +60,6 @@ const delegate = (element, type, selector, handler) => {
 };
 
 /**
- * Copy the text of a near textfield to clipboard
- * @param {Element} elm
- * @returns {void}
- */
-function copyToClipboard(elm) {
-    if (elm) {
-        let target = elm.closest('div').querySelector('input[type=text]');
-        if (target) {
-            target.select();
-            target.setSelectionRange(0, target.value.lengt);
-            let suceed;
-            try {
-                suceed = navigator.clipboard.writeText(target.value);
-            } catch (e) {
-                console.warn(e);
-                suceed = false;
-            }
-
-            if (suceed) {
-                var popover = new bootstrap.Popover(target, {
-                    'content': elm.dataset.hint,
-                    'placement': 'top',
-                });
-                popover.show();
-                setTimeout(function () {
-                    popover.dispose();
-                }, 1500);
-            }
-        }
-    }
-}
-
-/**
  * Sets a value in localStorage if it doesn't already exist
  * @param {string} key
  * @param {string} value
