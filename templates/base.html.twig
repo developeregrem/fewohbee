@@ -14,14 +14,14 @@
     {% endblock %}
     {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.4.0.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.3.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/ajax_1.0.1.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.4.0.min.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.3.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js" async></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/ajax_1.0.1.js" defer></script>
     {% endblock %}
     <!--<link rel="icon" type="image/x-icon" href="" />-->
 </head>
@@ -171,7 +171,7 @@
         window.modalLoader = window.modalLoader || '<div class="modal-body">' + window.loader + '</div>';
     </script>
     {% block bodyjs %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bodyevents.js"></script>
+        
     {% endblock %}
 
 {% endblock %}

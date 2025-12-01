@@ -71,19 +71,15 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js" defer></script>
 {% endblock %}
 {% block bodyjs %}
     {{ parent() }}
     <script>
-    $(function() {
-        $.ajaxSetup({
-            cache: false
-        });
         
-        // the default modal width is used here
-        $("#modalCenter .modal-dialog").removeClass('modal-lg');
-    });        
+    // the default modal width is used here
+    document.querySelector("#modalCenter .modal-dialog").classList.remove('modal-lg');
+       
 
     function showCreateAppartmentForm() {
         getContentForModal("{{ path('apartments.new.apartment') }}");
