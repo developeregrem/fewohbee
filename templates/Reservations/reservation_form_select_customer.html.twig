@@ -10,7 +10,8 @@
         <div class="row">
             <div class="col">
                 <input type="text" class="form-control" id="lastname" name="lastname"
-                       placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
+                       placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}"
+                       data-reservations-customer-search="true">
             </div>
             <div class="col text-end">
                 <button class="btn btn-default" type="button" onclick="getCustomers(1)">
@@ -50,9 +51,3 @@
     </ul>
     {% endif %}
 </div>
-<script type="text/javascript">
-    // enable keyup for search
-    $("#lastname").delayKeyup(function () {
-        getCustomers(1);
-    }, 400);
-</script>

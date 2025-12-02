@@ -21,23 +21,3 @@
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>  
 </div>
-<script>
-    $(function()
-    {
-        if(tinymce.get("editor1") !== null)
-            tinymce.get("editor1").remove();
-
-        tinymce.init({
-            selector: '#editor1',
-            language: '{{ app.request.locale }}',
-            branding: false,
-            promotion: false,
-            valid_children: '+body[style]',
-            relative_urls: false,
-            protect: [
-                /<\/?.*(html)?pageheader.*?>/g, // allow page header and footer
-                /<\/?.*(html)?pagefooter.*?>/g
-            ]
-        });
-    });
-</script>

@@ -7,7 +7,11 @@
         <div class="row">
             <div class="col">
                 <input type="text" class="form-control" id="lastname" name="lastname"
-                       placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}">
+                       placeholder="{{ 'reservation.select.customer.search.input.placeholder'|trans }}"
+                       data-reservations-customer-search="true"
+                       data-search-mode="edit"
+                       data-search-tab="{{ tab }}"
+                       data-search-appartment="{{ appartmentId }}">
             </div>
             <div class="col text-end">
                 <span class="input-group-btn">
@@ -40,9 +44,3 @@
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>
-<script type="text/javascript">
-    // enable keyup for search
-    $("#lastname").delayKeyup(function () {
-        getCustomers(1, 'edit', '{{ tab }}', {{ appartmentId }});
-    }, 400);
-</script>

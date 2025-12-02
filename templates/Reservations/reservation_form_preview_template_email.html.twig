@@ -60,33 +60,3 @@
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" />
     </div>
 </form>
-    
-<script>
-    function deleteAttachment(id) {
-        var url = "{{ path('settings.templates.attachment.remove') }}";
-
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        // set current content of editor as value, otherwise changes in editor are not taken
-        $.ajax({
-            url: url,
-            type: "post",
-            data: {id: id, _csrf_token: "{{ token }}"},
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);                    
-                } else {
-                    // success
-                    $("#aid-"+id).remove();
-                }
-            }
-        });
-
-        return false;
-    }
-</script>
