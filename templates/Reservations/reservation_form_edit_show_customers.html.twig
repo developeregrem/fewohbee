@@ -16,11 +16,9 @@
     {% endfor %}
 </table>
 
-{% include 'paginator.html.twig' with { 'url' : '#' } %}
-
-<script type="text/javascript">
-    // enable js click for selecting pages
-    $("#pagination a").click(function () {
-        getCustomers($(this).attr("data-page"), 'edit', '{{ tab }}', {{ appartmentId }});
-    });
-</script>
+<div data-reservations-pagination="customers"
+     data-reservations-pagination-mode="edit"
+     data-reservations-pagination-tab="{{ tab }}"
+     data-reservations-pagination-appartment-id="{{ appartmentId }}">
+    {% include 'paginator.html.twig' with { 'url' : '#' } %}
+</div>

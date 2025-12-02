@@ -1,6 +1,22 @@
- $.ajaxSetup({
-    cache: false
-});
+if (window.$ && $.ajaxSetup) {
+    $.ajaxSetup({ cache: false });
+}
+
+function serializeFormData(formId) {
+    const form = typeof formId === 'string' ? document.querySelector(formId) : formId;
+    if (!form) {
+        return '';
+    }
+    if (form instanceof HTMLFormElement) {
+        return new URLSearchParams(new FormData(form)).toString();
+    }
+    const params = new URLSearchParams();
+    if (form.name) {
+        params.append(form.name, form.value ?? '');
+    }
+    return params.toString();
+}
+
 /**
  * Loads content into the modal via get
  * @param {string} url
@@ -10,11 +26,24 @@
 function getContentForModal(url, title, successFunc) {
     title = title || "";
     successFunc = successFunc || function(){};
-    $("#modalCenter .modal-title").text(title);
-    $("#modal-content-ajax").html(modalLoader);
-    $("#modal-content-ajax").load(url, function (response, status, xhr) {
-        successFunc();
-    });
+    const loader = window.modalLoader || "";
+    const modalTitle = document.querySelector("#modalCenter .modal-title");
+    const modalBody = document.getElementById("modal-content-ajax");
+    if (modalTitle) {
+        modalTitle.textContent = title;
+    }
+    if (modalBody) {
+        modalBody.innerHTML = loader;
+    }
+    fetch(url, { method: "GET" })
+        .then((response) => response.text())
+        .then((data) => {
+            if (modalBody) {
+                modalBody.innerHTML = data;
+            }
+            successFunc();
+        })
+        .catch((err) => alert(err.message || 'Fehler beim Laden'));
 }
 
 /**
@@ -31,32 +60,38 @@ function _doPost(formId, url, successUrl, type, successFunc) {
     type = type || "POST";
     successFunc = successFunc || null;
 
-    $.ajax({
-        url: url,
-        type: type,
-        data: $(formId).serialize(),
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
+    const body = serializeFormData(formId);
+
+    fetch(url, {
+        method: type,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: body
+    }).then((response) => response.text())
+        .then((data) => {
             if(successFunc !== null) {
                 successFunc(data);
             } else {
-                // if the whole modal content is returned
-                if($(data).filter('.modal-body').length > 0 || $(data).find('.modal-body').length > 0) {
-                    $("#modal-content-ajax").html(data);
-                // if only flash messages are returned
-                } else if (data && data.length > 0) {   
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
+                const modal = document.getElementById("modal-content-ajax");
+                const flash = document.getElementById("flash-message-overlay");
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                if (doc.querySelector('.modal-body')) {
+                    if (modal) {
+                        modal.innerHTML = data;
+                    }
+                } else if (data && data.length > 0) {
+                    if (flash) {
+                        flash.innerHTML = '';
+                        flash.insertAdjacentHTML('beforeend', data);
+                    }
                 } else if(successUrl.length > 0 ) {
                     location.href = successUrl;
                 } else {
                     location.reload();
                 }
             }
-        }
-    });
+        })
+        .catch((err) => alert(err.status || err.message));
     return false;
 }
 
