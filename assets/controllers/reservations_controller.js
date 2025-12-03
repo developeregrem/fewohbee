@@ -1,4 +1,9 @@
 import { Controller } from '@hotwired/stimulus';
+import {
+    request as httpRequest,
+    serializeForm as httpSerializeForm,
+    serializeSelectors as httpSerializeSelectors,
+} from './http_controller.js';
 
 export default class extends Controller {
     static values = {
@@ -8,9 +13,22 @@ export default class extends Controller {
     };
 
     connect() {
+        const isPreview = document.documentElement.hasAttribute('data-turbo-preview');
+        const spinnerPreview = document.getElementById('table-filter')?.querySelector('[data-reservations-table-spinner]');
+        const tablePreview = document.getElementById('table-ajax');
+        // Skip heavy init when Turbo preview is rendered
+        if (isPreview) {
+            if (spinnerPreview) {
+                spinnerPreview.classList.add('fa-spin');
+            }
+            if (tablePreview) {
+                tablePreview.innerHTML = '';
+            }
+            return;
+        }
         this.urls = this.urlsValue || {};
         this.modalContent = document.getElementById('modal-content-ajax');
-        this.tableContainer = document.getElementById('table-ajax');
+        this.tableContainer = tablePreview;
         this.tableFilter = document.getElementById('table-filter');
         this.modalSettingsContainer = document.getElementById('modal-content-settings');
         window.lastClickedReservationId = window.lastClickedReservationId || 0;
@@ -58,7 +76,6 @@ export default class extends Controller {
             editReservationCustomerChange: this.editReservationCustomerChange.bind(this),
             toggleMoreInfo: this.toggleMoreInfo.bind(this),
             doDeleteReservation: this.doDeleteReservation.bind(this),
-            showInvoice: this.showInvoice.bind(this),
             deleteReservationCustomer: this.deleteReservationCustomer.bind(this),
             editReservationCustomerEdit: this.editReservationCustomerEdit.bind(this),
             saveEditCustomer: this.saveEditCustomer.bind(this),
@@ -162,25 +179,24 @@ export default class extends Controller {
         if (!url || !this.tableFilter) {
             return false;
         }
-        if (!window.jQuery) {
-            window.setTimeout(() => this.getNewTable(), 50);
-            return false;
-        }
 
         this.setLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
         this.setLocalTableSetting('apartment', 'reservations-apartment', 'int');
 
-        if (this.tableContainer) {
-            this.tableContainer.innerHTML = window.modalLoader || '';
+        // set custom spinner here, so that the reservation table content is not replaced
+        const spinner = this.tableFilter ? this.tableFilter.querySelector('[data-reservations-table-spinner]') : null;
+        if (spinner) {
+            spinner.classList.add('fa-spin');
         }
 
-        this.request({
+        httpRequest({
             url,
             method: 'GET',
-            data: this.serializeForm(this.tableFilter),
+            data: httpSerializeForm(this.tableFilter),
             target: this.tableContainer,
+            loader: false,  // we handle the spinner ourselves
             onSuccess: (data) => {
                 if (this.tableContainer) {
                     this.tableContainer.innerHTML = data;
@@ -189,6 +205,15 @@ export default class extends Controller {
                 this.initStickyTables();
                 this.initFit();
                 this.initTableInteractions();
+                //this.tableLoaded = true;
+                window.__reservationsTableLoaded = true;
+            },
+            onComplete: () => {
+                // disable spinner
+                const spinnerEl = this.tableFilter ? this.tableFilter.querySelector('[data-reservations-table-spinner]') : null;
+                if (spinnerEl) {
+                    spinnerEl.classList.remove('fa-spin');
+                }
             }
         });
 
@@ -500,7 +525,7 @@ export default class extends Controller {
 
     selectReservatioForInvoice(id) {
         const url = this.urls.selectInvoice;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { reservationid: id, createNewInvoice: 'true' },
@@ -519,7 +544,7 @@ export default class extends Controller {
         const url = this.urls.selectTemplateReservation;
         window.lastClickedReservationId = id;
         $('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { reservationid: id, createNew: 'true' },
@@ -531,8 +556,8 @@ export default class extends Controller {
     selectAppartment(createNewReservation) {
         const url = this.urls.selectAppartment;
         $('#modalCenter .modal-title').text(this.translate('nav.reservation.add'));
-        const data = this.serializeSelectors(['#objects']) + '&createNewReservation=' + createNewReservation;
-        this.request({
+        const data = httpSerializeSelectors(['#objects']) + '&createNewReservation=' + createNewReservation;
+        httpRequest({
             url,
             method: 'GET',
             data,
@@ -546,10 +571,10 @@ export default class extends Controller {
         iniStartOrEndDate('from', 'end', 1);
         if ($('#from').val() !== '' && $('#end').val() !== '') {
             const url = mode === 'edit' ? this.urls.getEditAvailableAppartments : this.urls.getAvailableAppartments;
-            this.request({
+            httpRequest({
                 url,
                 method: 'POST',
-                data: this.serializeForm('#reservation-period'),
+                data: httpSerializeForm('#reservation-period'),
                 target: document.getElementById('available-appartments')
             });
         }
@@ -561,12 +586,12 @@ export default class extends Controller {
         const content = window.modalLoader || '';
         let data;
         if (id) {
-            data = 'appartmentid=' + id + '&' + this.serializeForm('#reservation-period') + '&' + this.serializeForm('#appartment-options-' + id);
+            data = 'appartmentid=' + id + '&' + httpSerializeForm('#reservation-period') + '&' + httpSerializeForm('#appartment-options-' + id);
         } else {
-            data = this.serializeForm('#reservation-period');
+            data = httpSerializeForm('#reservation-period');
         }
         data = data + '&createNewReservation=false';
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data,
@@ -592,10 +617,10 @@ export default class extends Controller {
 
     deleteAppartmentFromSelection(id) {
         const url = this.urls.removeAppartment;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeSelectors(['#from', '#end']) + '&appartmentid=' + id + '&createNewReservation=false',
+            data: httpSerializeSelectors(['#from', '#end']) + '&appartmentid=' + id + '&createNewReservation=false',
             target: this.modalContent
         });
         return false;
@@ -603,10 +628,10 @@ export default class extends Controller {
 
     saveAppartmentOptions(id) {
         const url = this.urls.modifyAppartmentOptions;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: (this.serializeSelectors(['#from', '#end']) + '&' + this.serializeForm('#appartment-options-' + id) + '&appartmentid=' + id + '&createNewReservation=false'),
+            data: (httpSerializeSelectors(['#from', '#end']) + '&' + httpSerializeForm('#appartment-options-' + id) + '&appartmentid=' + id + '&createNewReservation=false'),
             target: this.modalContent
         });
         return false;
@@ -627,10 +652,10 @@ export default class extends Controller {
         } else {
             $('#breadcrumb-appartments').wrap('<a href="#" />');
             $('#breadcrumb-customer').removeClass('d-none');
-            this.request({
+            httpRequest({
                 url,
                 method: 'POST',
-                data: this.serializeForm('#reservation-period'),
+                data: httpSerializeForm('#reservation-period'),
                 target: this.modalContent
             });
         }
@@ -642,10 +667,10 @@ export default class extends Controller {
         const content = window.modalLoader || '';
         const safeTab = tab || '';
         $('#customer-selection .btn-primary').addClass('d-none');
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm('#lastname') + '&tab=' + safeTab + '&page=' + page + '&appartmentId=' + appartmentId,
+            data: httpSerializeForm('#lastname') + '&tab=' + safeTab + '&page=' + page + '&appartmentId=' + appartmentId,
             target: document.getElementById('customers'),
             loader: true
         });
@@ -654,7 +679,7 @@ export default class extends Controller {
 
     getFormForNewCustomer() {
         const url = this.urls.getCustomerNewForm;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             target: document.getElementById('customers'),
@@ -668,10 +693,10 @@ export default class extends Controller {
 
     createNewCustomer() {
         const url = this.urls.createCustomer;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm('#customer-selection'),
+            data: httpSerializeForm('#customer-selection'),
             target: this.modalContent
         });
         return false;
@@ -682,7 +707,7 @@ export default class extends Controller {
         if (displayWait && this.modalContent) {
             this.modalContent.innerHTML = window.modalLoader || '';
         }
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { customerid: id, tab },
@@ -710,10 +735,10 @@ export default class extends Controller {
 
     createNewReservations() {
         const url = this.urls.createReservations;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeSelectors(['#_csrf_token', '#reservation-remark', '#reservation-origin', '#reservation-arrivalTime', '#reservation-departureTime']),
+            data: httpSerializeSelectors(['#_csrf_token', '#reservation-remark', '#reservation-origin', '#reservation-arrivalTime', '#reservation-departureTime']),
             target: this.modalContent,
             onSuccess: (data) => {
                 if (data.length > 0) {
@@ -741,7 +766,7 @@ export default class extends Controller {
             }
             $('#modalCenter .modal-title').text(this.translate('reservation.details'));
             $('#modalCenter').modal('show');
-            this.request({
+            httpRequest({
                 url,
                 method: 'GET',
                 target: this.modalContent,
@@ -763,10 +788,10 @@ export default class extends Controller {
         let url = this.urls.editReservation;
         url = url ? url.replace('placeholder', id) : null;
         $('#modalCenter .modal-title').text(this.translate('nav.reservation.edit'));
-        this.request({
+        httpRequest({
             url,
             method: 'GET',
-            data: this.serializeSelectors(['#objects']),
+            data: httpSerializeSelectors(['#objects']),
             target: this.modalContent
         });
         return false;
@@ -775,7 +800,7 @@ export default class extends Controller {
     changeReservationCustomer(id, tab, appartmentId) {
         let url = this.urls.changeReservationCustomer;
         url = url ? url.replace('placeholder', id) : null;
-        this.request({
+        httpRequest({
             url,
             method: 'GET',
             data: { tab, appartmentId },
@@ -787,10 +812,10 @@ export default class extends Controller {
     editReservationNewCustomer(id, tab) {
         let url = this.urls.editReservationNewCustomer;
         url = url ? url.replace('placeholder', id) : null;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm('#customer-selection'),
+            data: httpSerializeForm('#customer-selection'),
             target: this.modalContent,
             onSuccess: (data) => {
                 if (data.length > 0) {
@@ -809,7 +834,7 @@ export default class extends Controller {
     editReservationCustomerChange(id, tab, appartmentId) {
         let url = this.urls.editReservationCustomerChange;
         url = url ? url.replace('placeholder', $('#reservation-id').val()) : null;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { customerId: id, tab, appartmentId },
@@ -839,29 +864,22 @@ export default class extends Controller {
     doDeleteReservation() {
         const form = '#reservationShowForm';
         const url = this.urls.deleteReservation;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(form),
+            data: httpSerializeForm(form),
             success: () => location.reload()
         });
-        return false;
-    }
-
-    showInvoice(id) {
-        let url = this.urls.getInvoice;
-        url = url ? url.replace('placeholder', id) : null;
-        this.loadIntoModal(url);
         return false;
     }
 
     deleteReservationCustomer(elm, customerId) {
         const form = document.getElementById('actions-customer-' + customerId);
         const url = this.urls.deleteReservationCustomer;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(form),
+            data: httpSerializeForm(form),
             target: this.modalContent
         });
         return false;
@@ -869,10 +887,10 @@ export default class extends Controller {
 
     editReservationCustomerEdit(customerId, form) {
         const url = this.urls.editReservationCustomerEdit;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(form),
+            data: httpSerializeForm(form),
             target: this.modalContent
         });
         return false;
@@ -880,10 +898,10 @@ export default class extends Controller {
 
     saveEditCustomer(id, form) {
         const url = this.urls.saveEditCustomer;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(form),
+            data: httpSerializeForm(form),
             target: this.modalContent
         });
         return false;
@@ -891,8 +909,8 @@ export default class extends Controller {
 
     selectTemplateForReservations(templateId, inProcess = false) {
         const url = this.urls.selectTemplate;
-        const formData = inProcess ? this.serializeForm('#template-form') : null;
-        this.request({
+        const formData = inProcess ? httpSerializeForm('#template-form') : null;
+        httpRequest({
             url,
             method: 'POST',
             data: { templateId, inProcess, formData },
@@ -908,7 +926,7 @@ export default class extends Controller {
     previewTemplateForReservation(id, inProcess = false) {
         let url = this.urls.previewTemplate;
         url = url ? url.replace('placeholder', id) : null;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { inProcess },
@@ -928,10 +946,10 @@ export default class extends Controller {
         if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
             editor.value = tinymce.get('editor1').getContent();
         }
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(formEl),
+            data: httpSerializeForm(formEl),
             target: this.modalContent,
             onSuccess: (data) => {
                 if (data.length > 0) {
@@ -951,10 +969,10 @@ export default class extends Controller {
         if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
             editor.value = tinymce.get('editor1').getContent();
         }
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(formEl),
+            data: httpSerializeForm(formEl),
             target: this.modalContent,
             onSuccess: (data) => {
                 if (data.length > 0) {
@@ -1003,10 +1021,10 @@ export default class extends Controller {
         if (!url) {
             return false;
         }
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
-            data: this.serializeForm(form),
+            data: httpSerializeForm(form),
             success: () => location.reload()
         });
         return false;
@@ -1027,7 +1045,7 @@ export default class extends Controller {
 
     deleteCorrespondence(id, reservationId) {
         const url = this.urls.deleteCorrespondence;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { id, _csrf_token: $('#_csrf_token').val() },
@@ -1068,7 +1086,7 @@ export default class extends Controller {
         if (!url) {
             return false;
         }
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: (options + '&id=' + reservationId + '&aid=' + appartmentId + '&from=' + $('#from').val() + '&end=' + $('#end').val()),
@@ -1086,7 +1104,7 @@ export default class extends Controller {
     selectReservation(id) {
         const url = this.urls.selectReservationForTemplate;
         $('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { reservationid: id },
@@ -1097,7 +1115,7 @@ export default class extends Controller {
 
     addAsAttachment(id, isInvoice) {
         const url = this.urls.addAttachment;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { id, isInvoice },
@@ -1109,7 +1127,7 @@ export default class extends Controller {
 
     deleteAttachment(id) {
         const url = this.urls.deleteAttachment;
-        this.request({
+        httpRequest({
             url,
             method: 'POST',
             data: { id, _csrf_token: $('#_csrf_token').val() },
@@ -1212,107 +1230,6 @@ export default class extends Controller {
                     this.getCustomers(page, mode, tab, appartmentId);
                 }
             });
-        });
-    }
-
-    request({ url, method = 'GET', data = null, target = null, loader = true, onSuccess = null, onError = null }) {
-        const serialized = this.serializeData(data);
-        let finalUrl = url;
-        const fetchOptions = { method: method.toUpperCase(), headers: {} };
-
-        if (fetchOptions.method === 'GET') {
-            if (serialized) {
-                finalUrl += (finalUrl.includes('?') ? '&' : '?') + serialized;
-            }
-        } else {
-            fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
-            fetchOptions.body = serialized;
-        }
-
-        const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
-        if (targetEl && loader) {
-            targetEl.innerHTML = window.modalLoader || '';
-        }
-
-        fetch(finalUrl, fetchOptions)
-            .then(async (response) => {
-                const text = await response.text();
-                if (!response.ok) {
-                    const message = text || response.statusText || 'Unbekannter Fehler';
-                    throw new Error(`${response.status} ${message}`.trim());
-                }
-                if (onSuccess) {
-                    onSuccess(text);
-                } else if (targetEl) {
-                    targetEl.innerHTML = text;
-                }
-            })
-            .catch((err) => {
-                const message = err && err.message ? err.message : 'Request fehlgeschlagen';
-                if (onError) {
-                    onError(message);
-                } else {
-                    alert(message);
-                }
-            });
-    }
-
-    serializeData(data) {
-        if (!data) {
-            return '';
-        }
-        if (typeof data === 'string') {
-            return data;
-        }
-        if (data instanceof FormData) {
-            return new URLSearchParams([...data.entries()]).toString();
-        }
-        if (typeof data === 'object') {
-            return new URLSearchParams(Object.entries(data)).toString();
-        }
-        return '';
-    }
-
-    serializeForm(selectorOrNode) {
-        const node = typeof selectorOrNode === 'string' ? document.querySelector(selectorOrNode) : selectorOrNode;
-        if (!node) {
-            return '';
-        }
-        if (node instanceof HTMLFormElement) {
-            return this.serializeData(new FormData(node));
-        }
-        const params = new URLSearchParams();
-        if (node.name) {
-            params.append(node.name, node.value ?? '');
-        }
-        return params.toString();
-    }
-
-    serializeSelectors(selectors = []) {
-        const params = new URLSearchParams();
-        selectors.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((node) => {
-                if (node.name) {
-                    params.append(node.name, node.value ?? '');
-                }
-            });
-        });
-        return params.toString();
-    }
-
-    loadIntoModal(url, callback) {
-        this.request({
-            url,
-            method: 'GET',
-            target: this.modalContent,
-            onSuccess: (data) => {
-                if (this.modalContent) {
-                    this.modalContent.innerHTML = data;
-                }
-                if (callback) {
-                    callback();
-                }
-            }
         });
     }
 
