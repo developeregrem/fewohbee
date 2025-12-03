@@ -55,7 +55,6 @@
             editReservationNewCustomer: path('reservations.edit.reservation.customer.create', {'id': 'placeholder'}),
             editReservationCustomerChange: path('reservations.edit.customer.change', {'id': 'placeholder'}),
             deleteReservation: path('reservations.dodelete.reservation'),
-            getInvoice: path('invoices.get.invoice', {'id': 'placeholder'}),
             deleteReservationCustomer: path('reservations.edit.delete.customer'),
             editReservationCustomerEdit: path('reservations.edit.customer.edit'),
             saveEditCustomer: path('reservations.edit.customer.edit.save'),
@@ -94,7 +93,7 @@
             {% endif %}
             {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
-                <a href="#" class="me-3" onclick="getNewTable();" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt"></i></a>
+                <a href="#" class="me-3" onclick="getNewTable(); return false;" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
@@ -113,7 +112,6 @@
     </form>
     <div class="row mt-2" >
         <div class="col" id="table-ajax">
-            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
         </div>
     </div>
 </div>

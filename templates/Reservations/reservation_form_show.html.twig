@@ -19,7 +19,7 @@
                 </button>
                 <div class="dropdown-menu">
                     {% for invoice in attribute(reservations, 0).invoices %}
-                        <a class="dropdown-item" href="#" onclick="return showInvoice({{ invoice.id }});">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a>
+                        <a class="dropdown-item" href="#" onclick="return getContentForModal('{{ path('invoices.get.invoice', {'id':  invoice.id}) }}');">{{ 'reservation.invoice'|trans }} {{ invoice.number }}</a>
                     {% endfor %}
                     {% if attribute(reservations, 0).invoices|length > 0 %}
                     <div class="dropdown-divider"></div>
