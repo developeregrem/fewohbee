@@ -93,8 +93,8 @@
             {% endif %}
             {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
-                <a href="#" class="me-3" onclick="getNewTable(); return false;" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2" onclick="return selectAppartment(true)"
+                <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2" data-action="click->reservations#selectAppartmentAction" data-reservations-create-new="true"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
                 </button>

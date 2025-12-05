@@ -6,7 +6,8 @@
     </tr>
     {% for customer in customers %}
         {% if customer.id != 0 %}
-            <tr class="mouse-pointer" onclick="return editReservationCustomerChange({{ customer.id }}, '{{ tab }}', {{ appartmentId }})"
+            <tr class="mouse-pointer" data-action="click->reservations#editCustomerChangeAction"
+                data-customer-id="{{ customer.id }}" data-tab="{{ tab }}" data-appartment-id="{{ appartmentId }}"
                 title="{{ 'button.accept'|trans }}">
                 <td>{{ customer.firstname }}</td>
                 <td>{{ customer.lastname }}</td>
