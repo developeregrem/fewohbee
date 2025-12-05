@@ -9,7 +9,7 @@
     </thead>
     <tbody>
     {% for reservation in reservations %}
-    <tr onclick="return selectReservation({{ reservation.id }})">
+    <tr data-action="click->reservations#selectReservationAction" data-reservation-id="{{ reservation.id }}">
         <td>{{ reservation.appartment.number }}</td>
         <td>{{ reservation.startdate|date('d.m.Y') }}</td>
         <td>{{ reservation.enddate|date('d.m.Y') }}</td>

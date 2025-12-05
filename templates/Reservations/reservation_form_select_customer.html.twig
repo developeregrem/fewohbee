@@ -14,10 +14,10 @@
                        data-reservations-customer-search="true">
             </div>
             <div class="col text-end">
-                <button class="btn btn-default" type="button" onclick="getCustomers(1)">
+                <button class="btn btn-default" type="button" data-action="click->reservations#getCustomersAction" data-page="1">
                     <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                 </button>
-                <button class="btn btn-default" type="button" onclick="getFormForNewCustomer()">
+                <button class="btn btn-default" type="button" data-action="click->reservations#getFormForNewCustomerAction">
                     <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}
                 </button>
             </div>
@@ -40,12 +40,12 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return selectAppartment(false)">
+        <li class="page-item" data-action="click->reservations#selectAppartmentAction" data-reservations-create-new="false">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
     {% if customer %}
     <ul class="pagination">
-        <li class="page-item" onclick="return getReservationPreview({{ customer.id }})">
+        <li class="page-item" data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
             <a class="page-link" href="#">{{ 'button.continue.with'|trans }} {{ customer.firstname }} {{ customer.lastname }}&rarr;</a>
         </li>
     </ul>

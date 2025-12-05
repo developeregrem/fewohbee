@@ -172,6 +172,83 @@ export default class extends Controller {
         this.attachPaginationLinks();
     }
 
+    // Stimulus actions
+    getNewTableAction(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        this.getNewTable();
+    }
+
+    selectAppartmentAction(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        const createNew = event?.currentTarget?.dataset.reservationsCreateNew === 'true';
+        this.selectAppartment(createNew);
+    }
+
+    reservationPreviewAction(event) {
+        event.preventDefault();
+        const customerId = event.currentTarget.dataset.customerId || null;
+        const tab = event.currentTarget.dataset.tab || null;
+        this.getReservationPreview(customerId, tab);
+    }
+
+    editCustomerChangeAction(event) {
+        event.preventDefault();
+        const customerId = event.currentTarget.dataset.customerId;
+        const tab = event.currentTarget.dataset.tab;
+        const appartmentId = event.currentTarget.dataset.appartmentId;
+        this.editReservationCustomerChange(customerId, tab, appartmentId);
+    }
+
+    selectReservationAction(event) {
+        event.preventDefault();
+        const reservationId = event.currentTarget.dataset.reservationId;
+        if (reservationId) {
+            this.selectReservation(reservationId);
+        }
+    }
+
+    getCustomersAction(event) {
+        event.preventDefault();
+        const page = event.currentTarget.dataset.page || 1;
+        const mode = event.currentTarget.dataset.mode;
+        const tab = event.currentTarget.dataset.tab;
+        const appartmentId = event.currentTarget.dataset.appartmentId;
+        this.getCustomers(page, mode, tab, appartmentId);
+    }
+
+    getFormForNewCustomerAction(event) {
+        event.preventDefault();
+        this.getFormForNewCustomer();
+    }
+
+    openReservationAction(event) {
+        event.preventDefault();
+        const reservationId = event.currentTarget.dataset.reservationId;
+        const tab = event.currentTarget.dataset.tab || null;
+        if (reservationId) {
+            this.getReservation(reservationId, tab);
+        }
+    }
+
+    selectCustomerAction(event) {
+        event.preventDefault();
+        this.selectCustomer();
+    }
+
+    createReservationsAction(event) {
+        event.preventDefault();
+        this.createNewReservations();
+    }
+
+    toggleDeleteAction(event) {
+        event.preventDefault();
+        this.toggleReservationDelete();
+    }
+
     // ----- table helpers -----
 
     getNewTable() {
