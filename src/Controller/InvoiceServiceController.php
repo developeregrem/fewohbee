@@ -689,8 +689,8 @@ class InvoiceServiceController extends AbstractController
         }
     }
 
-    #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['POST'])]
-    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is)
+    #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['GET'])]
+    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is)
     {
         $em = $doctrine->getManager();
         $invoice = $is->getInvoiceInCreation($requestStack);
@@ -1078,7 +1078,7 @@ class InvoiceServiceController extends AbstractController
      *
      * @return string
      */
-    #[Route('/invoice/delete', name: 'invoices.dodelete.invoice', methods: ['POST'])]
+    #[Route('/invoice/delete', name: 'invoices.dodelete.invoice', methods: ['DELETE'])]
     public function deleteInvoiceAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, InvoiceService $is, Request $request)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
@@ -1093,6 +1093,6 @@ class InvoiceServiceController extends AbstractController
             }
         }
 
-        return new Response('ok');
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

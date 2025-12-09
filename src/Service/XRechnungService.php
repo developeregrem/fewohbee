@@ -40,7 +40,7 @@ class XRechnungService
         }
 
         if(!($invoice->getPaymentMeans() instanceof PaymentMeansCode)) {
-            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.paymentmeans'));
+            throw new InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.paymentMeans'));
         }
 
         $documentBuilder = ZugferdDocumentBuilder::createNew(ZugferdProfiles::PROFILE_XRECHNUNG_3);

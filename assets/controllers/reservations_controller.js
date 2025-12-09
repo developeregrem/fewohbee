@@ -4,6 +4,11 @@ import {
     serializeForm as httpSerializeForm,
     serializeSelectors as httpSerializeSelectors,
 } from './http_controller.js';
+import {
+    setLocalStorageItemIfNotExists,
+    getLocalStorageItem,
+    iniStartOrEndDate,
+} from './utils_controller.js';
 
 export default class extends Controller {
     static values = {
@@ -92,7 +97,6 @@ export default class extends Controller {
             editUpdateReservation: this.editUpdateReservation.bind(this),
             selectReservationForTemplate: this.selectReservationForTemplate.bind(this),
             selectReservatioForInvoice: this.selectReservatioForInvoice.bind(this),
-            selectReservation: this.selectReservation.bind(this),
             addAsAttachment: this.addAsAttachment.bind(this),
             deleteAttachment: this.deleteAttachment.bind(this),
             loadTableSettings: this.loadTableSettings.bind(this),
@@ -107,8 +111,8 @@ export default class extends Controller {
             return;
         }
 
-        this.ensureLocalStorage('reservation-settings-show-month', 'true');
-        this.ensureLocalStorage('reservation-settings-show-week', 'true');
+        setLocalStorageItemIfNotExists('reservation-settings-show-month', 'true');
+        setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
 
         this.tableFilter.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -201,14 +205,6 @@ export default class extends Controller {
         const tab = event.currentTarget.dataset.tab;
         const appartmentId = event.currentTarget.dataset.appartmentId;
         this.editReservationCustomerChange(customerId, tab, appartmentId);
-    }
-
-    selectReservationAction(event) {
-        event.preventDefault();
-        const reservationId = event.currentTarget.dataset.reservationId;
-        if (reservationId) {
-            this.selectReservation(reservationId);
-        }
     }
 
     getCustomersAction(event) {
@@ -353,20 +349,20 @@ export default class extends Controller {
         if (!target) {
             return;
         }
-        const checked = this.getLocalStorageItem('reservation-settings-' + name);
+        const checked = getLocalStorageItem('reservation-settings-' + name);
         if (checked !== null) {
             target.checked = checked === 'true';
         }
         target.addEventListener('click', () => {
             const value = target.checked;
-            this.setLocalStorageItemIfNotExists('reservation-settings-' + name, value, true);
+            setLocalStorageItemIfNotExists('reservation-settings-' + name, value, true);
             this.toggleDisplayTableRows();
         });
     }
 
     toggleDisplayTableRows() {
-        this.toggleRow('reservation-table-header-month', this.getLocalStorageItem('reservation-settings-show-month'));
-        this.toggleRow('reservation-table-header-week', this.getLocalStorageItem('reservation-settings-show-week'));
+        this.toggleRow('reservation-table-header-month', getLocalStorageItem('reservation-settings-show-month'));
+        this.toggleRow('reservation-table-header-week', getLocalStorageItem('reservation-settings-show-week'));
     }
 
     toggleRow(name, show) {
@@ -1178,17 +1174,7 @@ export default class extends Controller {
         return false;
     }
 
-    selectReservation(id) {
-        const url = this.urls.selectReservationForTemplate;
-        $('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
-        httpRequest({
-            url,
-            method: 'POST',
-            data: { reservationid: id },
-            target: this.modalContent
-        });
-        return false;
-    }
+    
 
     addAsAttachment(id, isInvoice) {
         const url = this.urls.addAttachment;
@@ -1310,26 +1296,8 @@ export default class extends Controller {
         });
     }
 
-    ensureLocalStorage(key, value) {
-        if (localStorage.getItem(key) === null) {
-            localStorage.setItem(key, value);
-        }
-    }
-
-    getLocalStorageItem(key) {
-        return localStorage.getItem(key);
-    }
-
-    setLocalStorageItemIfNotExists(key, value) {
-        if (localStorage.getItem(key) === null) {
-            localStorage.setItem(key, value);
-        } else {
-            localStorage.setItem(key, value);
-        }
-    }
-
     getLocalTableSetting(targetFieldName, settingName, type = 'string') {
-        const setting = localStorage.getItem(settingName);
+        const setting = getLocalStorageItem(settingName);
         if (setting !== null && setting.length > 0) {
             let value = setting;
             if (type === 'int') {

@@ -1,92 +1,15 @@
+<div data-controller="invoices">
 {% include 'Reservations/reservation_form_selected_reservations_fields.html.twig' %}
 <div class="modal-footer">
     <ul class="pagination ms-auto">
-        <li class="page-item" onclick="return showCreateInvoiceForm('false')">
+        <li class="page-item" data-action="click->invoices#showCreateInvoiceFormAction" data-url="{{ path('invoices.new.invoice') }}" data-create-new="false" data-title="{{ 'invoice.select.open.reservation'|trans }}">
             <a class="page-link" href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a>
         </li>
         {% if arrayContainsReservations %}
-        <li class="page-item" onclick="return showCreateInvoicePositions('true')">
+        <li class="page-item" data-action="click->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="true">
             <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
         </li>
         {% endif %}
     </ul>
 </div>
-<script>
-    function showCreateInvoicePositions(createNewPositionsSessionObject) {
-        var url = "{{ path('invoices.create.invoice.positions') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#new-invoice-id").serialize() + "&createInvoicePositions=" + createNewPositionsSessionObject,
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-
-    function showCreateInvoiceForm(createNewInvoiceSessionObject) {
-        var url = "{{ path('invoices.new.invoice') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $(".modal-header .modal-title").html("{{ 'invoice.select.open.reservation'|trans }}");
-
-        $("#modal-content-ajax").html(content);
-
-        $.ajax({
-            url: url,
-            type: "get",
-            data: { createNewInvoice: createNewInvoiceSessionObject },
-            beforeSend: function () {
-                $("modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function deleteReservationFromSelection(key) {
-        var url = "{{ path('invoices.remove.reservation.from.selection') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { reservationkey: key },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-</script>
+</div>

@@ -75,6 +75,8 @@ export function request({ url, method = 'GET', data = null, target = null, loade
                 onSuccess(text);
             } else if (targetEl) {
                 targetEl.innerHTML = text;
+            } else {
+                location.reload();
             }
         })
         .catch((err) => {
