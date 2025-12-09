@@ -9,7 +9,7 @@
     </thead>
     <tbody>
     {% for reservation in reservations %}
-    <tr data-action="click->reservations#selectReservationAction" data-reservation-id="{{ reservation.id }}">
+    <tr data-action="click->invoices#selectReservationAction" data-reservation-id="{{ reservation.id }}" data-url="{{ path('invoices.select.reservation') }}">
         <td>{{ reservation.appartment.number }}</td>
         <td>{{ reservation.startdate|date('d.m.Y') }}</td>
         <td>{{ reservation.enddate|date('d.m.Y') }}</td>
