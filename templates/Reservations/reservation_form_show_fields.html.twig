@@ -247,8 +247,11 @@
                 <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
                     {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                         <small>
-                            <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
-                               title="{{ 'button.add'|trans }}" class="float-end text-secondary">
+                            <a href="#" data-action="click->reservations#selectReservationForTemplateAction" 
+                                data-url="{{ path('settings.templates.select.reservation') }}" 
+                                data-reservation-id="{{ reservationId }}" 
+                                data-create-new="true"
+                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                                 <i class="fas fa-plus"></i></a>
                         </small>
                     {% endif %}

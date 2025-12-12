@@ -1085,6 +1085,9 @@ class ReservationServiceController extends AbstractController
         return $this->forward($forwardController, $params, $query);
     }
 
+    /**
+     * Shown in conversations when clicking on next after reservation selection.
+     */
     #[Route('/select/template', name: 'reservations.select.template', methods: ['POST'])]
     public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
     {
@@ -1122,11 +1125,7 @@ class ReservationServiceController extends AbstractController
         $em = $doctrine->getManager();
         $inProcess = $request->request->get('inProcess');
 
-        $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
-        $reservations = [];
-        foreach ($selectedReservationIds as $reservationId) {
-            $reservations[] = $em->getRepository(Reservation::class)->find($reservationId);
-        }
+        $reservations = $rs->getSelectedReservations();
         $selectedTemplateId = $requestStack->getSession()->get('selectedTemplateId');
         // now we came back from attachment and view previously mail (with new attachment)
 
@@ -1183,6 +1182,61 @@ class ReservationServiceController extends AbstractController
         }
 
         return new Response('', Response::HTTP_OK);
+    }
+
+    #[Route('/get/reservations/in/period', name: 'reservations.get.reservations.in.period', methods: ['POST'])]
+    public function getReservationsInPeriodAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
+    {
+        $em = $doctrine->getManager();
+        $reservations = [];
+
+        $potentialReservations = $em->getRepository(
+            Reservation::class
+        )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
+
+        foreach ($potentialReservations as $reservation) {
+            // make sure that already selected reservation can not be choosen twice
+            if (!$reservationService->isReservationAlreadySelected($reservation->getId())) {
+                $reservations[] = $reservation;
+            }
+        }
+
+        return $this->render(
+            'Reservations/reservation_matching_reservations.html.twig',
+            [
+                'reservations' => $reservations,
+            ]
+        );
+    }
+
+    #[Route('/get/reservations/for/customer', name: 'reservations.get.reservations.for.customer', methods: ['POST'])]
+    public function getReservationsForCustomerAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
+    {
+        $em = $doctrine->getManager();
+        $reservations = [];
+
+        $customer = $em->getRepository(Customer::class)->findOneByLastname(
+            $request->request->get('lastname')
+        );
+
+        if ($customer instanceof Customer) {
+            $potentialReservations = $em->getRepository(
+                Reservation::class
+            )->loadReservationsWithoutInvoiceForCustomer($customer);
+
+            foreach ($potentialReservations as $reservation) {
+                if (!$reservationService->isReservationAlreadySelected($reservation->getId())) {
+                    $reservations[] = $reservation;
+                }
+            }
+        }
+
+        return $this->render(
+            'Reservations/reservation_matching_reservations.html.twig',
+            [
+                'reservations' => $reservations,
+            ]
+        );
     }
 
     private function createTimeFromRequestValue(?string $value): ?\DateTime

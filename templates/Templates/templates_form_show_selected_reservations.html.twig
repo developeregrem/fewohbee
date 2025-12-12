@@ -1,69 +1,19 @@
+<div data-controller="reservations" data-delete-url="{{ path('settings.templates.remove.reservation.from.selection') }}">
 {% include 'Reservations/reservation_form_selected_reservations_fields.html.twig' %}
 <div class="modal-footer">
     <ul class="pagination ms-auto">
-        <li class="page-item" onclick="return showGetReservations('false')">
+        <li class="page-item" data-action="click->reservations#showAddReservationToSelectionAction" 
+            data-url="{{ path('settings.templates.get.reservations') }}" 
+            data-create-new="false" data-title="{{ 'templates.select.reservations'|trans }}">
             <a class="page-link" href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a>
         </li>
         {% if reservations|length > 0 %}
-        <li class="page-item" onclick="return selectTemplateForReservations()">
+        <li class="page-item" data-action="click->reservations#selectTemplateForReservationsAction" 
+            data-url="{{ path('reservations.select.template') }}" 
+            data-title="{{ 'templates.select.template'|trans }}">
             <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
         </li>
         {% endif %}
     </ul>
 </div>
-<script>
-
-    function showGetReservations(createNew) {
-        var url = "{{ path('settings.templates.get.reservations') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
-
-        $("#modal-content-ajax").html(content);
-
-        $.ajax({
-            url: url,
-            type: "get",
-            data: { createNew: createNew },
-            beforeSend: function () {
-                $("modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function deleteReservationFromSelection(key) {
-        var url = "{{ path('settings.templates.remove.reservation.from.selection') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { reservationkey: key },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-</script>
+</div>

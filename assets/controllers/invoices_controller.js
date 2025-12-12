@@ -9,7 +9,7 @@ import {
     getLocalStorageItem,
     updatePDFExportLinks,
     enableDeletePopover,
-    iniStartOrEndDate
+    setModalTitle
 } from './utils_controller.js';
 
 const debounce = (fn, delay = 300) => {
@@ -40,20 +40,11 @@ export default class extends Controller {
     }
 
     // Actions
-    showCreateInvoiceFormAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const createNewInvoice = event.currentTarget.dataset.createNew === 'true';
-        if (!url) return;
-        this.setModalTitle(event.currentTarget.dataset.title);
-        httpGetContentForModal(`${url}?createNewInvoice=${createNewInvoice}`, event.currentTarget.dataset.title || '');
-    }
-
     openModalAction(event) {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         if (!url) return;
-        this.setModalTitle(event.currentTarget.dataset.title);
+        setModalTitle(event.currentTarget.dataset.title);
         httpGetContentForModal(url, event.currentTarget.dataset.title || '', () => {
             enableDeletePopover();
         });
@@ -149,15 +140,6 @@ export default class extends Controller {
                 location.href = successUrl;
             }
          });
-    }
-
-    selectReservationAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const reservationId = event.currentTarget.dataset.reservationId || null;
-        if (url) {
-            this.selectReservation(reservationId, url);
-        }
     }
 
     fillCustomerRecommendationAction(event) {
@@ -297,69 +279,6 @@ export default class extends Controller {
         httpGetContentForModal(url, '');
     }
 
-    getReservationsInPeriodAction(event) {
-        event.preventDefault();
-        iniStartOrEndDate('from', 'end', 1);
-        const url = event.currentTarget.dataset.url;
-        const form = document.getElementById('invoice-filter-reservations-period');
-        if (!url || !form) return;
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(form),
-            target: document.getElementById('container-invoice-filter-reservations-result'),
-        });
-    }
-
-    getReservationsByCustomerNameAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const form = document.getElementById('invoice-filter-reservations-customer-name');
-        if (!url || !form) return;
-        httpRequest({
-            url,
-            method: 'POST',
-            data: httpSerializeForm(form),
-            target: document.getElementById('container-invoice-filter-reservations-result'),
-        });
-    }
-
-    showTimeFilterAction(event) {
-        event.preventDefault();
-        const btnTime = document.getElementById('button-filter-time');
-        const btnCustomer = document.getElementById('button-filter-customer');
-        const boxTime = document.getElementById('container-invoice-filter-reservations-period');
-        const boxCustomer = document.getElementById('container-invoice-filter-reservations-customer');
-        if (btnTime) {
-            btnTime.classList.add('btn-primary');
-            btnTime.classList.remove('btn-secondary');
-        }
-        if (btnCustomer) {
-            btnCustomer.classList.add('btn-secondary');
-            btnCustomer.classList.remove('btn-primary');
-        }
-        if (boxTime) boxTime.classList.remove('d-none');
-        if (boxCustomer) boxCustomer.classList.add('d-none');
-    }
-
-    showCustomerFilterAction(event) {
-        event.preventDefault();
-        const btnTime = document.getElementById('button-filter-time');
-        const btnCustomer = document.getElementById('button-filter-customer');
-        const boxTime = document.getElementById('container-invoice-filter-reservations-period');
-        const boxCustomer = document.getElementById('container-invoice-filter-reservations-customer');
-        if (btnCustomer) {
-            btnCustomer.classList.add('btn-primary');
-            btnCustomer.classList.remove('btn-secondary');
-        }
-        if (btnTime) {
-            btnTime.classList.add('btn-secondary');
-            btnTime.classList.remove('btn-primary');
-        }
-        if (boxTime) boxTime.classList.add('d-none');
-        if (boxCustomer) boxCustomer.classList.remove('d-none');
-    }
-
     showCreateInvoicePositionsAction(event) {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
@@ -375,23 +294,6 @@ export default class extends Controller {
         });
     }
 
-    deleteReservationFromSelectionAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const key = event.currentTarget.dataset.reservationKey;
-        if (!url) return;
-        httpRequest({ url, method: 'POST', data: { reservationkey: key }, target: this.modalContent });
-    }
-
-    showCreateInvoiceFormAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const createNewInvoice = event.currentTarget.dataset.createNew === 'true';
-        if (!url) return;
-        this.setModalTitle(event.currentTarget.dataset.title);
-        httpGetContentForModal(`${url}?createNewInvoice=${createNewInvoice}`, event.currentTarget.dataset.title || '');
-    }
-
     toggleInvoiceEditFields() {
         const fields = document.querySelectorAll('.invoice-edit-field');
         const editButton = document.getElementById('invoiceEditButton');
@@ -400,24 +302,6 @@ export default class extends Controller {
         if (editButton && hidden) {
             editButton.classList.add('d-none');
         }
-    }
-
-    setModalTitle(title) {
-        if (!title) return;
-        const modalTitle = document.querySelector('#modalCenter .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = title;
-        }
-    }
-
-    selectReservation(id, url) {
-        httpRequest({
-            url,
-            method: 'POST',
-            data: id ? { reservationid: id } : {},
-            target: this.modalContent
-        });
-        return false;
     }
 
     bindStatusWatcher() {
