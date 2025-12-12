@@ -1,4 +1,4 @@
-<div data-controller="invoices">
+<div data-controller="invoices reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <form id="new-invoice-id" class="form" role="form" data-action="submit->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
@@ -64,7 +64,7 @@
 </div>
 <div class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " data-action="click->invoices#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
+        <li class="page-item " data-action="click->reservations#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
     {% if appartmentPositionExists %}

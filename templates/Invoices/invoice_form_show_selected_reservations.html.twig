@@ -1,8 +1,8 @@
-<div data-controller="invoices">
+<div data-controller="invoices reservations" data-delete-url="{{ path('invoices.remove.reservation.from.selection') }}">
 {% include 'Reservations/reservation_form_selected_reservations_fields.html.twig' %}
 <div class="modal-footer">
     <ul class="pagination ms-auto">
-        <li class="page-item" data-action="click->invoices#showCreateInvoiceFormAction" data-url="{{ path('invoices.new.invoice') }}" data-create-new="false" data-title="{{ 'invoice.select.open.reservation'|trans }}">
+        <li class="page-item" data-action="click->reservations#showAddReservationToSelectionAction" data-url="{{ path('invoices.new.invoice') }}" data-create-new="false" data-title="{{ 'invoice.select.open.reservation'|trans }}">
             <a class="page-link" href="#">&larr; {{ 'invoice.add.another.reservation'|trans }}</a>
         </li>
         {% if arrayContainsReservations %}

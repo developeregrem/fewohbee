@@ -24,6 +24,7 @@ use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
 use App\Service\InvoiceService;
 use App\Service\MailService;
+use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -198,28 +199,17 @@ class TemplatesServiceController extends AbstractController
      * Called when clicking add conversation in the reservation overview.
      */
     #[Route('/select/reservation', name: 'settings.templates.select.reservation', methods: ['POST'])]
-    public function selectReservationAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    public function selectReservationAction(ReservationService $reservationService, Request $request): Response
     {
-        $em = $doctrine->getManager();
-
         if ('true' == $request->request->get('createNew')) {
-            $selectedReservationIds = [];
-            $requestStack->getSession()->set('selectedReservationIds', $selectedReservationIds);
-        // reset session variables
-        // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
-        } else {
-            $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
+            $reservationService->resetSelectedReservations();
         }
 
         if (null != $request->request->get('reservationid')) {
-            $selectedReservationIds[] = $request->request->get('reservationid');
-            $requestStack->getSession()->set('selectedReservationIds', $selectedReservationIds);
+            $reservationService->addReservationToSelection((int) $request->request->get('reservationid'));
         }
 
-        $reservations = [];
-        foreach ($selectedReservationIds as $reservationId) {
-            $reservations[] = $em->getRepository(Reservation::class)->find($reservationId);
-        }
+        $reservations = $reservationService->getSelectedReservations();
 
         return $this->render(
             'Templates/templates_form_show_selected_reservations.html.twig',
@@ -230,20 +220,15 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/get/reservations', name: 'settings.templates.get.reservations', methods: ['GET'])]
-    public function getReservationsAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request)
+    public function getReservationsAction(ReservationService $reservationService, Request $request)
     {
-        $em = $doctrine->getManager();
-
         if ('true' == $request->query->get('createNew')) {
-            $selectedReservationIds = [];
-            $requestStack->getSession()->set('selectedReservationIds', $selectedReservationIds);
+            $reservationService->resetSelectedReservations();
         // reset session variables
         // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
-        } else {
-            $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
         }
 
-        if (0 == count($selectedReservationIds)) {
+        if (!$reservationService->hasSelectedReservations()) {
             $objectContainsReservations = 'false';
         } else {
             $objectContainsReservations = 'true';
@@ -258,72 +243,16 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/remove/reservation/from/selection', name: 'settings.templates.remove.reservation.from.selection', methods: ['POST'])]
-    public function removeReservationFromSelectionAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
+    public function removeReservationFromSelectionAction(ReservationService $reservationService, Request $request)
     {
-        $em = $doctrine->getManager();
-
-        $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
-
         if (null != $request->request->get('reservationkey')) {
-            unset($selectedReservationIds[$request->request->get('reservationkey')]);
-            $requestStack->getSession()->set('selectedReservationIds', $selectedReservationIds);
-        }
-
-        return $this->selectReservationAction($requestStack, $request);
-    }
-
-    #[Route('/get/reservations/in/period', name: 'settings.templates.get.reservations.in.period', methods: ['POST'])]
-    public function getReservationsInPeriodAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
-    {
-        $em = $doctrine->getManager();
-        $reservations = [];
-        $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
-        $potentialReservations = $em->getRepository(
-            Reservation::class
-        )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
-
-        foreach ($potentialReservations as $reservation) {
-            // make sure that already selected reservation can not be choosen twice
-            if (!in_array($reservation->getId(), $selectedReservationIds)) {
-                $reservations[] = $reservation;
-            }
+            $reservationService->removeReservationFromSelection((int) $request->request->get('reservationkey'));
         }
 
         return $this->render(
-            'Reservations/reservation_matching_reservations.html.twig',
+            'Templates/templates_form_show_selected_reservations.html.twig',
             [
-                'reservations' => $reservations,
-            ]
-        );
-    }
-
-    #[Route('/get/reservations/for/customer', name: 'settings.templates.get.reservations.for.customer', methods: ['POST'])]
-    public function getReservationsForCustomerAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request)
-    {
-        $em = $doctrine->getManager();
-        $reservations = [];
-        $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
-
-        $customer = $em->getRepository(Customer::class)->findOneByLastname(
-            $request->request->get('lastname')
-        );
-
-        if ($customer instanceof Customer) {
-            $potentialReservations = $em->getRepository(
-                Reservation::class
-            )->loadReservationsWithoutInvoiceForCustomer($customer);
-
-            foreach ($potentialReservations as $reservation) {
-                if (!in_array($reservation->getId(), $selectedReservationIds)) {
-                    $reservations[] = $reservation;
-                }
-            }
-        }
-
-        return $this->render(
-            'Reservations/reservation_matching_reservations.html.twig',
-            [
-                'reservations' => $reservations,
+                'reservations' => $reservationService->getSelectedReservations(),
             ]
         );
     }

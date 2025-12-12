@@ -8,6 +8,7 @@ import {
     setLocalStorageItemIfNotExists,
     getLocalStorageItem,
     iniStartOrEndDate,
+    setModalTitle,
 } from './utils_controller.js';
 
 export default class extends Controller {
@@ -84,7 +85,6 @@ export default class extends Controller {
             deleteReservationCustomer: this.deleteReservationCustomer.bind(this),
             editReservationCustomerEdit: this.editReservationCustomerEdit.bind(this),
             saveEditCustomer: this.saveEditCustomer.bind(this),
-            selectTemplateForReservations: this.selectTemplateForReservations.bind(this),
             previewTemplateForReservation: this.previewTemplateForReservation.bind(this),
             sendEmail: this.sendEmail.bind(this),
             saveTemplateFile: this.saveTemplateFile.bind(this),
@@ -95,7 +95,6 @@ export default class extends Controller {
             deleteCorrespondence: this.deleteCorrespondence.bind(this),
             toggleReservationEditAppartments: this.toggleReservationEditAppartments.bind(this),
             editUpdateReservation: this.editUpdateReservation.bind(this),
-            selectReservationForTemplate: this.selectReservationForTemplate.bind(this),
             selectReservatioForInvoice: this.selectReservatioForInvoice.bind(this),
             addAsAttachment: this.addAsAttachment.bind(this),
             deleteAttachment: this.deleteAttachment.bind(this),
@@ -243,6 +242,112 @@ export default class extends Controller {
     toggleDeleteAction(event) {
         event.preventDefault();
         this.toggleReservationDelete();
+    }
+
+    showAddReservationToSelectionAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const createNew = event.currentTarget.dataset.createNew === 'true';
+        const title = event.currentTarget.dataset.title || '';
+        if (!url) return;
+        setModalTitle(title);
+        httpRequest({
+            url: url,
+            method: 'GET',
+            target: this.modalContent,
+            data: { createNew: createNew },    
+        });
+    }
+
+    showTimeFilterAction(event) {
+        event.preventDefault();
+        const btnTime = document.getElementById('button-filter-time');
+        const btnCustomer = document.getElementById('button-filter-customer');
+        const boxTime = document.getElementById('container-filter-reservations-period');
+        const boxCustomer = document.getElementById('container-filter-reservations-customer');
+        if (btnTime) {
+            btnTime.classList.add('btn-primary');
+            btnTime.classList.remove('btn-secondary');
+        }
+        if (btnCustomer) {
+            btnCustomer.classList.add('btn-secondary');
+            btnCustomer.classList.remove('btn-primary');
+        }
+        if (boxTime) boxTime.classList.remove('d-none');
+        if (boxCustomer) boxCustomer.classList.add('d-none');
+    }
+
+    showCustomerFilterAction(event) {
+        event.preventDefault();
+        const btnTime = document.getElementById('button-filter-time');
+        const btnCustomer = document.getElementById('button-filter-customer');
+        const boxTime = document.getElementById('container-filter-reservations-period');
+        const boxCustomer = document.getElementById('container-filter-reservations-customer');
+        if (btnCustomer) {
+            btnCustomer.classList.add('btn-primary');
+            btnCustomer.classList.remove('btn-secondary');
+        }
+        if (btnTime) {
+            btnTime.classList.add('btn-secondary');
+            btnTime.classList.remove('btn-primary');
+        }
+        if (boxTime) boxTime.classList.add('d-none');
+        if (boxCustomer) boxCustomer.classList.remove('d-none');
+    }
+
+    getReservationsInPeriodAction(event) {
+        event.preventDefault();
+        iniStartOrEndDate('from', 'end', 1);
+        const url = event.currentTarget.dataset.url;
+        const form = document.getElementById('filter-reservations-period');
+        if (!url || !form) return;
+        httpRequest({
+            url,
+            method: 'POST',
+            data: httpSerializeForm(form),
+            target: document.getElementById('container-filter-reservations-result'),
+        });
+    }
+
+    getReservationsByCustomerNameAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const form = document.getElementById('filter-reservations-customer-name');
+        console.log('getReservationsByCustomerNameAction', url, form);
+        if (!url || !form) return;
+        httpRequest({
+            url,
+            method: 'POST',
+            data: httpSerializeForm(form),
+            target: document.getElementById('container-filter-reservations-result'),
+        });
+    }
+
+    selectReservationAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url || event.target.closest('[data-select-url]')?.dataset.selectUrl;
+        console.log('selectReservationAction', url);
+        const reservationId = event.currentTarget.dataset.reservationId || null;
+        if (url) {
+            httpRequest({
+                url,
+                method: 'POST',
+                data: { reservationid: reservationId },
+                target: this.modalContent
+            });
+        }
+    }
+
+    deleteReservationFromSelectionAction(event) {
+        event.preventDefault();
+        const url = event.target.closest('[data-delete-url]')?.dataset.deleteUrl;
+        const key = event.currentTarget.dataset.reservationKey;
+        if (!url) return;
+        httpRequest({ 
+            url, method: 'POST', 
+            data: { reservationkey: key }, 
+            target: this.modalContent 
+        });
     }
 
     // ----- table helpers -----
@@ -613,17 +718,21 @@ export default class extends Controller {
         return false;
     }
 
-    selectReservationForTemplate(id) {
-        const url = this.urls.selectTemplateReservation;
+    selectReservationForTemplateAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const id = event.currentTarget.dataset.reservationId;
+        const createNew = event.currentTarget.dataset.createNew === 'true';
+        if (!url) return;
+        console.log('selectReservationForTemplate', id, url);
         window.lastClickedReservationId = id;
-        $('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
+        //$('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
         httpRequest({
             url,
             method: 'POST',
-            data: { reservationid: id, createNew: 'true' },
+            data: id ? { reservationid: id, createNew: createNew } : { createNew: createNew },
             target: this.modalContent
         });
-        return false;
     }
 
     selectAppartment(createNewReservation) {
@@ -980,18 +1089,18 @@ export default class extends Controller {
         return false;
     }
 
-    selectTemplateForReservations(templateId, inProcess = false) {
-        const url = this.urls.selectTemplate;
-        const formData = inProcess ? httpSerializeForm('#template-form') : null;
+    selectTemplateForReservationsAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const templateId = event.currentTarget.dataset.templateId || null;
+        const inProgress = event.currentTarget.dataset.inprocess === 'true';
+        const formData = inProgress ? httpSerializeForm('#template-form') : null;
+        setModalTitle(event.currentTarget.dataset.title || '');
         httpRequest({
             url,
             method: 'POST',
-            data: { templateId, inProcess, formData },
-            target: this.modalContent,
-            onSuccess: (data) => {
-                $('#modalCenter .modal-title').text(this.translate('templates.select.template'));
-                $('#modal-content-ajax').html(data);
-            }
+            data: { templateId, inProgress, formData },
+            target: this.modalContent
         });
         return false;
     }

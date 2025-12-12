@@ -21,6 +21,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
+use App\Service\ReservationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -406,6 +407,7 @@ class InvoiceService implements ITemplateRenderer
     public function unsetInvoiceInCreation(RequestStack $requestStack): void
     {
         $requestStack->getSession()->remove('invoiceInCreation');
+        $requestStack->getSession()->remove(ReservationService::SESSION_SELECTED_RESERVATIONS);
         $requestStack->getSession()->remove('invoicePositionsMiscellaneous');
         $requestStack->getSession()->remove('invoicePositionsAppartments');
         $requestStack->getSession()->remove('new-invoice-id');
@@ -420,7 +422,12 @@ class InvoiceService implements ITemplateRenderer
      */
     public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
     {
-        $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
+        $reservationIds = $requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS, []);
+
+        // legacy support if old session key is still present
+        if (0 === count($reservationIds)) {
+            $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
+        }
         $reservations = [];
         foreach ($reservationIds as $reservationId) {
             $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);

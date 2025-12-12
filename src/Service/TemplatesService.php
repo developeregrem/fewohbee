@@ -21,6 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Interfaces\ITemplateRenderer;
+use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Doctrine\Persistence\ManagerRegistry;
@@ -127,8 +128,8 @@ class TemplatesService
     public function getReferencedReservationsInSession()
     {
         $reservations = [];
-        if ($this->requestStack->getSession()->has('selectedReservationIds')) {
-            $selectedReservationIds = $this->requestStack->getSession()->get('selectedReservationIds');
+        if ($this->requestStack->getSession()->has(ReservationService::SESSION_SELECTED_RESERVATIONS)) {
+            $selectedReservationIds = $this->requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS);
             foreach ($selectedReservationIds as $id) {
                 $reservations[] = $this->em->getReference(Reservation::class, $id);
             }
@@ -139,7 +140,7 @@ class TemplatesService
 
     public function getCorrespondencesForAttachment()
     {
-        $selectedReservationIds = $this->requestStack->getSession()->get('selectedReservationIds');
+        $selectedReservationIds = $this->requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS);
         $correspondences = [];
         foreach ($selectedReservationIds as $reservationId) {
             $reservation = $this->em->getReference(Reservation::class, $reservationId);

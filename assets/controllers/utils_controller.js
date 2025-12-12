@@ -67,6 +67,14 @@ export function enableDeletePopover() {
     });
 }
 
+export function setModalTitle(title) {
+        if (!title) return;
+        const modalTitle = document.querySelector('#modalCenter .modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = title;
+        }
+    }
+
 /**
  * Inits two date input fields if one of the fields is empty. It will add e.g. in the other field + 1 day
  * @param {string} idStart
@@ -120,4 +128,5 @@ export default {
     updatePDFExportLinks,
     enableDeletePopover,
     iniStartOrEndDate,
+    setModalTitle
 };

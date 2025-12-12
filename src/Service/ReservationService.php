@@ -29,14 +29,71 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class ReservationService implements ITemplateRenderer
 {
-    private $em;
-    private $requestStack;
+    public const SESSION_SELECTED_RESERVATIONS = 'selectedReservationIds';
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, InvoiceService $is)
+
+    public function __construct(
+        private readonly EntityManagerInterface $em, 
+        private readonly RequestStack $requestStack, 
+        private readonly InvoiceService $is)
     {
-        $this->em = $em;
-        $this->requestStack = $requestStack;
-        $this->is = $is;
+    }
+
+    public function resetSelectedReservations(): void
+    {
+        $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, []);
+    }
+
+    public function addReservationToSelection(int $reservationId): void
+    {
+        $selectedReservationIds = $this->getSelectedReservationIds();
+
+        if (!in_array($reservationId, $selectedReservationIds, true)) {
+            $selectedReservationIds[] = $reservationId;
+            $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, $selectedReservationIds);
+        }
+    }
+
+    public function removeReservationFromSelection(int|string $reservationKey): void
+    {
+        $selectedReservationIds = $this->getSelectedReservationIds();
+
+        if (array_key_exists($reservationKey, $selectedReservationIds)) {
+            unset($selectedReservationIds[$reservationKey]);
+            $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, $selectedReservationIds);
+        }
+    }
+
+    public function getSelectedReservationIds(): array
+    {
+        return $this->requestStack->getSession()->get(self::SESSION_SELECTED_RESERVATIONS, []);
+    }
+
+    public function hasSelectedReservations(): bool
+    {
+        return count($this->getSelectedReservationIds()) > 0;
+    }
+
+    /**
+     * Returns the selected Reservation Objects.
+     * @return Reservation[]
+     */
+    public function getSelectedReservations(): array
+    {
+        $reservations = [];
+        foreach ($this->getSelectedReservationIds() as $reservationId) {
+            $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+            if ($reservation instanceof Reservation) {
+                $reservations[] = $reservation;
+            }
+        }
+
+        return $reservations;
+    }
+
+    public function isReservationAlreadySelected(int $reservationId): bool
+    {
+        return in_array($reservationId, $this->getSelectedReservationIds(), true);
     }
 
     public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
@@ -360,7 +417,7 @@ class ReservationService implements ITemplateRenderer
      */
     public function getInvoicesForReservationsInProgress()
     {
-        $ids = $this->requestStack->getSession()->get('selectedReservationIds');
+        $ids = $this->getSelectedReservationIds();
         $totalInvoices = [];
         foreach ($ids as $reservationId) {
             $reservation = $this->em->find(Reservation::class, $reservationId);

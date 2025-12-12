@@ -1,8 +1,8 @@
-<div data-controller="invoices">
+<div data-controller="reservations" data-select-url="{{ path('invoices.select.reservation') }}">
     {% include 'Reservations/reservation_form_select_reservation_fields.html.twig' %}
     <div class="modal-footer {% if objectContainsReservations == "false" %} d-none {% endif %}">
         <ul class="pagination ms-auto">
-            <li class="page-item" data-action="click->invoices#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
+            <li class="page-item" data-action="click->reservations#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
                 <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
             </li>
         </ul>
