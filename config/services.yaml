@@ -12,6 +12,7 @@ parameters:
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
     customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
+    passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
 
 services:
     # default configuration for services in *this* file

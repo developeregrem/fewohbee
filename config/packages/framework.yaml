@@ -1,6 +1,7 @@
 parameters:
     # fallback parameters
     env(USE_PASSWORD_BLACKLIST): 'true'
+    env(PASSKEY_ENABLED): 'false'
 
 framework:
     secret: '%env(APP_SECRET)%'

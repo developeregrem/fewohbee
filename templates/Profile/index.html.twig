@@ -50,74 +50,76 @@
             </div>
         </div>
     </div>
-    <div>
-        <h4 class="text-gray-600">{{ 'profile.passkeys.title'|trans }}</h4>
-    </div>
-    <div class="row mt-3">        
-        <div class="col" {{ stimulus_controller(
-            '@web-auth/webauthn-stimulus',
-            {
-                creationOptionsUrl: path('webauthn.controller.creation.request.from_user_account'),
-                creationResultUrl: path('webauthn.controller.creation.response.from_user_account'),
-                creationSuccessRedirectUri: path('profile')
-            }
-        ) }}>
-            <button type="button" class="btn btn-default" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
-                    <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
-                </button>
+    {% if passkey_enabled %}
+        <div>
+            <h4 class="text-gray-600">{{ 'profile.passkeys.title'|trans }}</h4>
+        </div>
+        <div class="row mt-3">        
+            <div class="col" {{ stimulus_controller(
+                '@web-auth/webauthn-stimulus',
+                {
+                    creationOptionsUrl: path('webauthn.controller.creation.request.from_user_account'),
+                    creationResultUrl: path('webauthn.controller.creation.response.from_user_account'),
+                    creationSuccessRedirectUri: path('profile')
+                }
+            ) }}>
+                <button type="button" class="btn btn-default" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
+                        <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
+                    </button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{{ 'profile.passkeys.device'|trans }}</th>
+                        <th>{{ 'profile.passkeys.created_at'|trans }}</th>
+                        <th>{{ 'profile.passkeys.public_key'|trans }}</th>
+                        <th>{{ 'profile.passkeys.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for credential in credentials %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                {% if credential.clientLabel %}
+                                    {{ credential.clientLabel }}
+                                {% else %}
+                                    <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if credential.createdAt %}
+                                    {{ credential.createdAt|date('Y-m-d H:i') }}
+                                {% else %}
+                                    <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey|toBase64 }}</td>
+                            <td>
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i onclick="_deleteEntry('{{ loop.index }}', '{{ path('profile_delete_credential', {id: credential.publicKeyCredentialId|toBase64|url_encode }) }}'); return false;" class="fas fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr id="entry-{{ loop.index }}" class="d-none">
+                            <td colspan="5" id="entry-cell-{{ loop.index }}">
+                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-400">{{ 'profile.passkeys.none'|trans }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="row mt-3">
-        <div class="col">
-            <table class="table table-bordered table-hover">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>{{ 'profile.passkeys.device'|trans }}</th>
-                    <th>{{ 'profile.passkeys.created_at'|trans }}</th>
-                    <th>{{ 'profile.passkeys.public_key'|trans }}</th>
-                    <th>{{ 'profile.passkeys.actions'|trans }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for credential in credentials %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td>
-                            {% if credential.clientLabel %}
-                                {{ credential.clientLabel }}
-                            {% else %}
-                                <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if credential.createdAt %}
-                                {{ credential.createdAt|date('Y-m-d H:i') }}
-                            {% else %}
-                                <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey|toBase64 }}</td>
-                        <td>
-                            <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="_deleteEntry('{{ loop.index }}', '{{ path('profile_delete_credential', {id: credential.publicKeyCredentialId|toBase64|url_encode }) }}'); return false;" class="fas fa-trash-alt"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    <tr id="entry-{{ loop.index }}" class="d-none">
-                        <td colspan="5" id="entry-cell-{{ loop.index }}">
-                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-400">{{ 'profile.passkeys.none'|trans }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    {% endif %}
 </div>
 {% endblock content %}
 {% block javascripts %}
