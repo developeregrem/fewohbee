@@ -78,10 +78,10 @@ body {
     background-color: #f5f5f5;
 }
 
-.table-reservation .ui-selecting { 
+.table-reservation .ui-selecting, .table-reservation-year .ui-selecting { 
     background: #FECA40 !important;
 }
-.table-reservation .ui-selected { 
+.table-reservation .ui-selected, .table-reservation-year .ui-selected { 
     background: #F39814;
 }
 

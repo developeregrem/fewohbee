@@ -1,3 +1,4 @@
+<div data-controller="reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
@@ -5,20 +6,26 @@
                 {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
             </div>
         </div>
-        <form id="reservation-period" data-target="{{ path('reservations.edit.reservation.change', {id: reservation.id}) }}">
+        <form id="reservation-period"
+              data-target="{{ path('reservations.edit.reservation.change', {id: reservation.id}) }}"
+              data-available-edit-url="{{ path('reservations.get.edit.available.appartments') }}"
+              data-modify-appartment-options-url="{{ path('reservations.modify.appartment.options') }}"
+              data-remove-appartment-url="{{ path('reservations.remove.appartment.from.reservation') }}">
             <div class="row">
                 <div class="col">
                     <input type="date" class="form-control" id="from" name="from"
                            value="{{ reservation.startdate|date('Y-m-d') }}"
                            placeholder="{{ 'reservation.startdate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod('edit')">
+                           data-action="change->reservations#getAvailableAppartmentsAction"
+                           data-mode="edit">
                 </div>
                     
                 <div class="col">
                     <input type="date" class="form-control" id="end" name="end"
                            value="{{ reservation.enddate|date('Y-m-d') }}"
                            placeholder="{{ 'reservation.enddate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod('edit')">
+                           data-action="change->reservations#getAvailableAppartmentsAction"
+                           data-mode="edit">
                 </div>
             </div>
             <div class="row mt-4">
@@ -32,7 +39,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr onclick="return toggleAppartmentOptions({{ reservation.appartment.id }})">
+                        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ reservation.appartment.id }}">
                             <td>{{ reservation.appartment.number }}</td>
                             <td>{{ reservation.appartment.bedsmax }}</td>
                             <td>{{ reservation.appartment.description }}</td>
@@ -56,7 +63,8 @@
                         </div>
                         <div class="col text-end">
                             <select id="objects" name="object" class="form-select"
-                                    onchange="getAvailableAppartmentsForPeriod('edit')">
+                                    data-action="change->reservations#getAvailableAppartmentsAction"
+                                    data-mode="edit">
                                 <option value="all"
                                         {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
                                 {% for object in objects %}
@@ -77,15 +85,21 @@
 </div>
 <div class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item" onclick="return getReservation({{ reservation.id }})">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a>
+        <li class="page-item">
+            <a class="page-link" href="#"
+               data-action="click->reservations#openReservationAction"
+               data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+               data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
         </li>
-        <li class="page-item" onclick="return toggleReservationEditAppartments({{ reservation.appartment.id }});">
-            <a class="page-link"href="#">{{ 'reservation.edit.change.appartment'|trans }}</a>
+        <li class="page-item">
+            <a class="page-link" href="#"
+               data-action="click->reservations#toggleReservationEditAppartmentsAction"
+               data-appartment-id="{{ reservation.appartment.id }}">{{ 'reservation.edit.change.appartment'|trans }}</a>
         </li>
     </ul>
     <button id="reservation-edit-save" class="btn btn-primary" type="button"
-                    onclick="return editUpdateReservation({{ reservation.appartment.id }})">{{ 'button.save'|trans }}</button>
+            data-action="click->reservations#editUpdateReservationAction"
+            data-appartment-id="{{ reservation.appartment.id }}">{{ 'button.save'|trans }}</button>
 </div>
 
-</script>
+</div>

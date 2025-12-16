@@ -64,6 +64,7 @@
 
                     <td class="reservation text-center" colspan="{{ colspan }}">
                         <div data-action="click->reservations#openReservationAction" data-reservation-id="{{ reservation.id }}"
+                             data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
                              style="background-color: {{ reservation.reservationStatus.color }}; color: {{ reservation.reservationStatus.contrastColor }}"
                              class="reservation-inner text-center"
                              title="{{ block('popTitle') }}" data-bs-content="{{ block('popBody') }}">{{ displayName }}</div>
