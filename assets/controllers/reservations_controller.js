@@ -84,6 +84,7 @@ export default class extends Controller {
 
         setLocalStorageItemIfNotExists('reservation-settings-show-month', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
+        setLocalStorageItemIfNotExists('reservation-settings-show-weekday', 'false');
 
         this.tableFilter.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -655,6 +656,7 @@ export default class extends Controller {
     updateDisplaySettingsOnChange() {
         this.updateDisplaySettings('show-week');
         this.updateDisplaySettings('show-month');
+        this.updateDisplaySettings('show-weekday');
     }
 
     updateDisplaySettings(name) {
@@ -676,6 +678,7 @@ export default class extends Controller {
     toggleDisplayTableRows() {
         this.toggleRow('reservation-table-header-month', getLocalStorageItem('reservation-settings-show-month'));
         this.toggleRow('reservation-table-header-week', getLocalStorageItem('reservation-settings-show-week'));
+        this.toggleRow('reservation-table-header-weekday', getLocalStorageItem('reservation-settings-show-weekday'));
     }
 
     toggleRow(name, show) {
