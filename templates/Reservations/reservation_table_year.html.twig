@@ -2,6 +2,7 @@
     <p><span class="text-info"><i class="fas fa-info-circle"></i> {{ 'reservation.table.view.yearly.multiple.hint'|trans }}</span></p>
 {% endif %}
 <div id="calendar" class="row justify-content-md-center"
+     data-controller="reservations"
      data-reservations-apartment-id="{{ apartment.id }}"
      data-reservations-yearly="true">
     {% for i in 1..12 %}

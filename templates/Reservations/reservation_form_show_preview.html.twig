@@ -1,17 +1,20 @@
-<div class="modal-body">
-    <div class="container-fluid">
-        <div id="flash-message-overlay">
-            <div class="col">
-                {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
+<div data-controller="reservations" data-create-reservations-url="{{ path('reservations.create.reservations') }}"
+    data-preview-url="{{ path('reservations.create.preview') }}">
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div id="flash-message-overlay">
+                <div class="col">
+                    {% include 'feedback.html.twig' with {'error': error, 'app': app } %}
+                </div>
             </div>
+            {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'new', 'reservationId':  'new'} %}
         </div>
-        {% include 'Reservations/reservation_form_show_fields.html.twig' with {'mode': 'new', 'reservationId':  'new'} %}
     </div>
-</div>
-<div id="newReservationPreview" class="modal-footer">
-    <ul class="pagination me-auto">
-        <li class="page-item" data-action="click->reservations#selectCustomerAction"><a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
-    </ul>
-    <button type="button" class="btn btn-default" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-    <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" data-action="click->reservations#createReservationsAction"/>
+    <div id="newReservationPreview" class="modal-footer">
+        <ul class="pagination me-auto">
+            <li class="page-item" data-action="click->reservations#selectCustomerAction" data-url="{{ path('reservations.select.customer') }}"><a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        </ul>
+        <button type="button" class="btn btn-default" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" data-action="click->reservations#createReservationsAction" data-url="{{ path('reservations.create.reservations') }}"/>
+    </div>
 </div>

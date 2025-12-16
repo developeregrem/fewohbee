@@ -28,50 +28,7 @@
 <div class="container-fluid"
      data-controller="reservations"
      data-reservations-can-select-value="{{ is_granted('ROLE_RESERVATIONS') ? 'true' : 'false' }}"
-     data-reservations-urls-value="{{
-        {
-            tableSettings: path('reservations.table.settings'),
-            reservationTable: path('reservations.get.table'),
-            selectInvoice: path('invoices.select.reservation'),
-            selectTemplateReservation: path('settings.templates.select.reservation'),
-            selectReservationForTemplate: path('settings.templates.select.reservation'),
-            selectAppartment: path('reservations.select.appartment'),
-            getEditAvailableAppartments: path('reservations.get.edit.available.appartments'),
-            getAvailableAppartments: path('reservations.get.available.appartments'),
-            addAppartment: path('reservations.add.appartment.to.reservation'),
-            addAppartmentSelectable: path('reservations.add.appartment.to.reservation.selectable'),
-            removeAppartment: path('reservations.remove.appartment.from.reservation'),
-            modifyAppartmentOptions: path('reservations.modify.appartment.options'),
-            selectCustomer: path('reservations.select.customer'),
-            getCustomers: path('reservations.get.customers'),
-            getCustomersEdit: path('reservations.edit.customers.get'),
-            getCustomerNewForm: path('reservations.get.customer.new.form'),
-            createCustomer: path('reservations.get.customer.create'),
-            createPreview: path('reservations.create.preview'),
-            createReservations: path('reservations.create.reservations'),
-            getReservation: path('reservations.get.reservation', {'id': 'placeholder'}),
-            editReservation: path('reservations.edit.reservation', {'id': 'placeholder'}),
-            changeReservationCustomer: path('reservations.edit.reservation.customer', {'id': 'placeholder'}),
-            editReservationNewCustomer: path('reservations.edit.reservation.customer.create', {'id': 'placeholder'}),
-            editReservationCustomerChange: path('reservations.edit.customer.change', {'id': 'placeholder'}),
-            deleteReservation: path('reservations.dodelete.reservation'),
-            deleteReservationCustomer: path('reservations.edit.delete.customer'),
-            editReservationCustomerEdit: path('reservations.edit.customer.edit'),
-            saveEditCustomer: path('reservations.edit.customer.edit.save'),
-            selectTemplate: path('reservations.select.template'),
-            previewTemplate: path('reservations.select.template.preview', {'id': 'placeholder'}),
-            sendEmail: path('settings.templates.email.send'),
-            saveTemplateFile: path('settings.templates.file.save'),
-            exportCorrespondencePdf: path('settings.templates.correspondence.export.pdf', {'id': 'placeholder'}),
-            showCorrespondence: path('settings.templates.correspondence.show', {'id': 'placeholder'}),
-            deleteInvoice: is_granted('ROLE_ADMIN') ? path('invoices.dodelete.invoice') : '',
-            deleteCorrespondence: path('settings.templates.correspondence.remove'),
-            addAttachment: path('settings.templates.attachment.add'),
-            deleteAttachment: path('settings.templates.attachment.remove'),
-            selectReservationForTemplate: path('settings.templates.select.reservation'),
-            startUrl: path('start')
-        }|json_encode|e('html_attr')
-     }}"
+     data-reservations-start-url="{{ path('start') }}"
      data-reservations-translations-value="{{
         {
             'templates.select.reservations': 'templates.select.reservations'|trans,
@@ -84,7 +41,10 @@
             'templates.preview': 'templates.preview'|trans
         }|json_encode|e('html_attr')
      }}">
-    <form id="table-filter" role="form" onsubmit="return getNewTable()">
+    <form id="table-filter" role="form"
+          data-reservations-table-url="{{ path('reservations.get.table') }}"
+          data-reservations-table-settings-url="{{ path('reservations.table.settings') }}"
+          data-action="submit->reservations#getNewTableAction">
         <div class="row">
             {% if show == 'table' %}
                 {% include 'Reservations/_index_table_form.html.twig' %}
@@ -93,8 +53,11 @@
             {% endif %}
             {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
-                <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
-                <button type="button" class="btn btn-secondary mb-2 me-sm-2" data-action="click->reservations#selectAppartmentAction" data-reservations-create-new="true"
+                <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
+                <button type="button" class="btn btn-secondary mb-2 me-sm-2"
+                        data-action="click->reservations#selectAppartmentAction"
+                        data-reservations-create-new="true"
+                        data-url="{{ path('reservations.select.appartment') }}"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
                 </button>
@@ -111,7 +74,7 @@
         </div>
     </form>
     <div class="row mt-2" >
-        <div class="col" id="table-ajax">
+        <div class="col" id="table-ajax" data-reservations-add-appartment-selectable-url="{{ path('reservations.add.appartment.to.reservation.selectable') }}">
         </div>
     </div>
 </div>
@@ -119,7 +82,7 @@
 
 {% block bodyjs %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/selectable-0.22.0.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js"></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js" defer></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/selectable-0.22.0.min.js" defer></script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js" defer></script>
 {% endblock %}

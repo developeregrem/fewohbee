@@ -1,4 +1,6 @@
-<div class="modal-body">
+<div class="modal-body" data-controller="reservations"
+     data-edit-reservation-customer-change-url-template="{{ path('reservations.edit.customer.change', {'id': 'placeholder'}) }}"
+     data-reservation-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col">
@@ -28,8 +30,12 @@
         </div>
         <div class="row mt-4">   
             <div class="col">
-                <form id="customer-selection" onsubmit="return editReservationNewCustomer('{{ reservation.id }}', '{{ tab }}')">
-                    <div id="customers"></div>
+                <form id="customer-selection"
+                      data-action="submit->reservations#editReservationNewCustomerAction"
+                      data-url="{{ path('reservations.edit.reservation.customer.create', {'id': reservation.id}) }}">
+                    <div id="customers"
+                         data-customers-edit-url="{{ path('reservations.edit.customers.get') }}"
+                         data-customer-new-form-url="{{ path('reservations.get.customer.new.form') }}"></div>
                     <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary float-end mt-3 d-none"/>
                     <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
                     <input id="tab" type="hidden" value="{{ tab }}" name="tab"/>
@@ -41,7 +47,11 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return getReservation('{{ reservation.id }}', '{{ tab }}')">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="page-item ">
+            <a class="page-link" href="#"
+               data-action="click->reservations#openReservationAction"
+               data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
+               data-reservation-id="{{ reservation.id }}"
+               data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>

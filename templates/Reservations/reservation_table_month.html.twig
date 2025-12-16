@@ -13,7 +13,7 @@
 {% endif %}
 {# popover #}                        
 {% use 'Reservations/_resevation_popover.html.twig' %}
-<table class="table table-hover table-bordered table-reservation" id="reservation-table-month">
+<table class="table table-hover table-bordered table-reservation-year" id="reservation-table-month">
     <thead>
     {# placeholder for calendarweek #}
     {% if showCalenderWeek %}{% set headerColspan = 15 %}{% else %}{% set headerColspan = 14 %}{% endif %}
@@ -81,7 +81,7 @@
         {# currently max two events are allowed for one day (end of one reservation and start of another reservation) #}
         {% for reservation in reservationsForDay %}
             {% set style = 'background-color:' ~ reservation.reservationStatus.color %}
-            {% set action = ' onclick="return getReservation(' ~ reservation.id ~ ');"' %}
+            {% set action = ' data-action="click->reservations#openReservationAction" data-url="' ~ path('reservations.get.reservation', {'id': reservation.id}) ~ '" data-reservation-id="' ~ reservation.id ~ '"' %}
             {% set noEvents = ' no-pointer-events' %}
             {% if loop.length == 1 %}
                 {% set resCol = 2 %} 

@@ -13,9 +13,9 @@ import {
 
 export default class extends Controller {
     static values = {
-        urls: Object,
         canSelect: { type: Boolean, default: false },
-        translations: Object
+        translations: Object,
+        startUrl: String,
     };
 
     connect() {
@@ -32,14 +32,28 @@ export default class extends Controller {
             }
             return;
         }
-        this.urls = this.urlsValue || {};
         this.modalContent = document.getElementById('modal-content-ajax');
         this.tableContainer = tablePreview;
         this.tableFilter = document.getElementById('table-filter');
         this.modalSettingsContainer = document.getElementById('modal-content-settings');
-        window.lastClickedReservationId = window.lastClickedReservationId || 0;
+        this.tableUrl = this.tableFilter?.dataset.reservationsTableUrl || null;
+        this.tableSettingsUrl = this.tableFilter?.dataset.reservationsTableSettingsUrl || null;
+        this.addAppartmentSelectableUrl = this.tableContainer?.dataset.reservationsAddAppartmentSelectableUrl || null;
+        const inheritedStartUrl = document.querySelector('[data-reservations-start-url]')?.dataset.reservationsStartUrl;
+        this.startUrl = this.hasStartUrlValue ? this.startUrlValue : (this.element.dataset.reservationsStartUrl || inheritedStartUrl || '/');
+        this.translations = this.translationsValue && Object.keys(this.translationsValue).length > 0
+            ? this.translationsValue
+            : this.readTranslationsFromDom();
 
-        this.registerGlobalFunctions();
+        this.modalContent = document.getElementById('modal-content-ajax');
+        const invoicesBootstrapped = this.modalContent.hasAttribute('data-reservations-bootstrapped');
+        if (invoicesBootstrapped) {
+            return;
+        }
+        this.modalContent.dataset.reservationsBootstrapped = 'true';
+        window.lastClickedReservationId = window.lastClickedReservationId || 0;
+        window.lastClickedReservationUrl = window.lastClickedReservationUrl || null;
+
         this.setupTableFilterListeners();
         this.applyStoredTableSettings();
         this.observeModalContent();
@@ -57,52 +71,10 @@ export default class extends Controller {
             window.removeEventListener('resize', this.boundResize);
             window.removeEventListener('orientationchange', this.boundResize);
         }
-    }
 
-    registerGlobalFunctions() {
-        const bindings = {
-            getNewTable: this.getNewTable.bind(this),
-            selectAppartment: this.selectAppartment.bind(this),
-            getAvailableAppartmentsForPeriod: this.getAvailableAppartmentsForPeriod.bind(this),
-            addAppartmentToSelection: this.addAppartmentToSelection.bind(this),
-            selectableAddAppartmentToSelection: this.selectableAddAppartmentToSelection.bind(this),
-            deleteAppartmentFromSelection: this.deleteAppartmentFromSelection.bind(this),
-            saveAppartmentOptions: this.saveAppartmentOptions.bind(this),
-            selectCustomer: this.selectCustomer.bind(this),
-            getCustomers: this.getCustomers.bind(this),
-            getFormForNewCustomer: this.getFormForNewCustomer.bind(this),
-            createNewCustomer: this.createNewCustomer.bind(this),
-            getReservationPreview: this.getReservationPreview.bind(this),
-            toggleAppartmentOptions: this.toggleAppartmentOptions.bind(this),
-            createNewReservations: this.createNewReservations.bind(this),
-            getReservation: this.getReservation.bind(this),
-            editReservation: this.editReservation.bind(this),
-            changeReservationCustomer: this.changeReservationCustomer.bind(this),
-            editReservationNewCustomer: this.editReservationNewCustomer.bind(this),
-            editReservationCustomerChange: this.editReservationCustomerChange.bind(this),
-            toggleMoreInfo: this.toggleMoreInfo.bind(this),
-            doDeleteReservation: this.doDeleteReservation.bind(this),
-            deleteReservationCustomer: this.deleteReservationCustomer.bind(this),
-            editReservationCustomerEdit: this.editReservationCustomerEdit.bind(this),
-            saveEditCustomer: this.saveEditCustomer.bind(this),
-            previewTemplateForReservation: this.previewTemplateForReservation.bind(this),
-            sendEmail: this.sendEmail.bind(this),
-            saveTemplateFile: this.saveTemplateFile.bind(this),
-            exportPDFCorrespondence: this.exportPDFCorrespondence.bind(this),
-            showMailCorrespondence: this.showMailCorrespondence.bind(this),
-            doDeleteInvoice: this.doDeleteInvoice.bind(this),
-            toggleReservationDelete: this.toggleReservationDelete.bind(this),
-            deleteCorrespondence: this.deleteCorrespondence.bind(this),
-            toggleReservationEditAppartments: this.toggleReservationEditAppartments.bind(this),
-            editUpdateReservation: this.editUpdateReservation.bind(this),
-            selectReservatioForInvoice: this.selectReservatioForInvoice.bind(this),
-            addAsAttachment: this.addAsAttachment.bind(this),
-            deleteAttachment: this.deleteAttachment.bind(this),
-            loadTableSettings: this.loadTableSettings.bind(this),
-            shiftStartDate: this.shiftStartDate.bind(this)
-        };
-
-        Object.assign(window, bindings);
+        if (tinymce && tinymce.get('editor1')) {
+            tinymce.get('editor1').destroy();
+        }
     }
 
     setupTableFilterListeners() {
@@ -137,24 +109,23 @@ export default class extends Controller {
             event.preventDefault();
             this.shiftStartDate(trigger.dataset.direction);
         });
-
         if (this.modalSettingsContainer) {
             this.modalSettingsContainer.addEventListener('change', (event) => {
                 if (event.target && event.target.matches('#holidayCountry')) {
-                    this.loadTableSettings(this.urls.tableSettings);
+                    this.loadTableSettings(this.tableSettingsUrl);
                 }
             });
         }
     }
 
     applyStoredTableSettings() {
-        if (!this.tableFilter || !this.urls.tableSettings) {
+        if (!this.tableFilter || !this.tableSettingsUrl) {
             return;
         }
         this.getLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
         this.getLocalTableSetting('apartment', 'reservations-apartment', 'int');
-        this.loadTableSettings(this.urls.tableSettings, true);
+        this.loadTableSettings(this.tableSettingsUrl, true);
     }
 
     observeModalContent() {
@@ -166,13 +137,21 @@ export default class extends Controller {
             this.afterModalContentChange();
         });
         observer.observe(this.modalContent, { childList: true, subtree: true });
+        this.modalObserver = observer;
     }
 
     afterModalContentChange() {
+        if (this.isHandlingModalChange) {
+            return;
+        }
+        this.isHandlingModalChange = true;
         this.enablePriceOptionsMisc();
         this.initTinyMceEditor();
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
+        window.setTimeout(() => {
+            this.isHandlingModalChange = false;
+        }, 0);
     }
 
     // Stimulus actions
@@ -180,7 +159,8 @@ export default class extends Controller {
         if (event) {
             event.preventDefault();
         }
-        this.getNewTable();
+        const url = event?.currentTarget?.dataset.url || event?.currentTarget?.dataset.reservationsTableUrl || this.tableUrl;
+        this.getNewTable(url);
     }
 
     selectAppartmentAction(event) {
@@ -188,7 +168,8 @@ export default class extends Controller {
             event.preventDefault();
         }
         const createNew = event?.currentTarget?.dataset.reservationsCreateNew === 'true';
-        this.selectAppartment(createNew);
+        const url = event?.currentTarget?.dataset.url;
+        this.selectAppartment(createNew, url);
     }
 
     reservationPreviewAction(event) {
@@ -220,22 +201,48 @@ export default class extends Controller {
         this.getFormForNewCustomer();
     }
 
+    submitFormAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        if (!form) {
+            return;
+        }
+        const url = form.dataset.url || form.getAttribute('action');
+        const targetSelector = form.dataset.target;
+        const target = targetSelector ? document.querySelector(targetSelector) : this.modalContent;
+        httpRequest({
+            url,
+            method: form.method || 'POST',
+            data: httpSerializeForm(form),
+            target
+        });
+    }
+
     openReservationAction(event) {
         event.preventDefault();
-        const reservationId = event.currentTarget.dataset.reservationId;
         const tab = event.currentTarget.dataset.tab || null;
-        if (reservationId) {
-            this.getReservation(reservationId, tab);
+        const url = event.currentTarget.dataset.url;
+        window.lastClickedReservationUrl = url;
+        if (url) {
+            this.getReservation(url, tab);
         }
     }
 
     selectCustomerAction(event) {
         event.preventDefault();
-        this.selectCustomer();
+        const url = event.currentTarget.dataset.url;
+        if (url && this.modalContent) {
+            this.modalContent.dataset.selectCustomerUrl = url;
+        }
+        this.selectCustomer(url);
     }
 
     createReservationsAction(event) {
         event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (url && this.modalContent) {
+            this.modalContent.dataset.createReservationsUrl = url;
+        }
         this.createNewReservations();
     }
 
@@ -313,7 +320,6 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         const form = document.getElementById('filter-reservations-customer-name');
-        console.log('getReservationsByCustomerNameAction', url, form);
         if (!url || !form) return;
         httpRequest({
             url,
@@ -326,7 +332,6 @@ export default class extends Controller {
     selectReservationAction(event) {
         event.preventDefault();
         const url = event.currentTarget.dataset.url || event.target.closest('[data-select-url]')?.dataset.selectUrl;
-        console.log('selectReservationAction', url);
         const reservationId = event.currentTarget.dataset.reservationId || null;
         if (url) {
             httpRequest({
@@ -350,17 +355,218 @@ export default class extends Controller {
         });
     }
 
+    openModalContentAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const title = event.currentTarget.dataset.title || '';
+        if (!url) {
+            return;
+        }
+        setModalTitle(title);
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent
+        });
+    }
+
+    deleteReservationAction(event) {
+        event.preventDefault();
+        this.doDeleteReservation();
+    }
+
+    selectReservationForInvoiceAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const reservationId = event.currentTarget.dataset.reservationId;
+        this.selectReservatioForInvoice(reservationId, url);
+    }
+
+    toggleAppartmentOptionsAction(event) {
+        const appartmentId = event.currentTarget.dataset.appartmentId;
+        event.preventDefault();
+        this.toggleAppartmentOptions(appartmentId);
+    }
+
+    deleteAppartmentAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.appartmentId;
+        this.deleteAppartmentFromSelection(id);
+    }
+
+    saveAppartmentOptionsAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.appartmentId;
+        this.saveAppartmentOptions(id);
+    }
+
+    addAppartmentToSelectionAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.appartmentId;
+        const url = event.currentTarget.dataset.url;
+        if (url && this.modalContent) {
+            this.modalContent.dataset.addAppartmentUrl = url;
+        }
+        this.addAppartmentToSelection(id, url);
+    }
+
+    getAvailableAppartmentsAction(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        this.getAvailableAppartmentsForPeriod(event?.currentTarget?.dataset.mode);
+    }
+
+    toggleReservationEditAppartmentsAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.appartmentId;
+        this.toggleReservationEditAppartments(id);
+    }
+
+    editUpdateReservationAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.appartmentId;
+        this.editUpdateReservation(id);
+    }
+
+    sendEmailAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        this.sendEmail(form);
+    }
+
+    saveTemplateFileAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        this.saveTemplateFile(form);
+    }
+
+    exportPDFCorrespondenceAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const id = event.currentTarget.dataset.attachmentId || event.currentTarget.dataset.id;
+        this.exportPDFCorrespondence(id, url);
+    }
+
+    deleteAttachmentAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.attachmentId;
+        const url = event.currentTarget.dataset.url;
+        const form = event.currentTarget.closest('form');
+        this.deleteAttachment(id, url, form);
+    }
+
+    addAttachmentAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.attachmentId;
+        const isInvoice = event.currentTarget.dataset.isInvoice === 'true';
+        const url = event.currentTarget.dataset.url;
+        if (url && this.modalContent) {
+            this.modalContent.dataset.addAttachmentUrl = url;
+        }
+        this.addAsAttachment(id, isInvoice);
+    }
+
+    previewTemplateForReservationAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.templateId;
+        const url = event.currentTarget.dataset.url;
+        const inProcess = event.currentTarget.dataset.inprocess || false;
+        this.previewTemplateForReservation(id, inProcess, url);
+    }
+
+    saveEditCustomerAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        if (!form) {
+            return;
+        }
+        this.saveEditCustomer(null, form);
+    }
+
+    editReservationNewCustomerAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        if (!form) {
+            return;
+        }
+        const tab = form.querySelector('#tab')?.value;
+        const url = form.dataset.url;
+        this.editReservationNewCustomer(url, tab);
+    }
+
+    changeReservationCustomerAction(event) {
+        event.preventDefault();
+        const reservationId = event.currentTarget.dataset.reservationId;
+        const tab = event.currentTarget.dataset.tab;
+        const appartmentId = event.currentTarget.dataset.appartmentId;
+        const url = event.currentTarget.dataset.url;
+        this.changeReservationCustomer(reservationId, tab, appartmentId, url);
+    }
+
+    editReservationCustomerEditAction(event) {
+        event.preventDefault();
+        const customerId = event.currentTarget.dataset.customerId;
+        const formSelector = event.currentTarget.dataset.formSelector;
+        const url = event.currentTarget.dataset.url;
+        const form = formSelector ? document.querySelector(formSelector) : null;
+        if (form && url) {
+            form.dataset.editUrl = url;
+        }
+        this.editReservationCustomerEdit(customerId, form);
+    }
+
+    deleteReservationCustomerAction(event) {
+        event.preventDefault();
+        const customerId = event.currentTarget.dataset.customerId;
+        const url = event.currentTarget.dataset.url;
+        const form = document.getElementById('actions-customer-' + customerId);
+        if (form && url) {
+            form.dataset.deleteUrl = url;
+        }
+        this.deleteReservationCustomer(null, customerId);
+    }
+
+    editReservationAction(event) {
+        event.preventDefault();
+        const reservationId = event.currentTarget.dataset.reservationId;
+        const url = event.currentTarget.dataset.url;
+        this.editReservation(reservationId, url);
+    }
+
+    showMailCorrespondenceAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        const reservationId = event.currentTarget.dataset.reservationId;
+        const correspondenceId = event.currentTarget.dataset.correspondenceId || reservationId;
+        this.showMailCorrespondence(correspondenceId, reservationId, url);
+    }
+
+    deleteCorrespondenceAction(event) {
+        event.preventDefault();
+        const id = event.currentTarget.dataset.correspondenceId;
+        const url = event.currentTarget.dataset.url;
+        if (url && this.modalContent) {
+            this.modalContent.dataset.deleteCorrespondenceUrl = url;
+        }
+        this.deleteCorrespondence(id);
+    }
+
+    createNewCustomerAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        this.createNewCustomer(null, form);
+    }
+
     // ----- table helpers -----
 
-    getNewTable() {
-        const url = this.urls.reservationTable;
-        if (!url || !this.tableFilter) {
+    getNewTable(url = null) {
+        const targetUrl = url || this.tableUrl;
+        if (!targetUrl || !this.tableFilter) {
             return false;
         }
 
         this.setLocalTableSetting('interval', 'reservations-intervall', 'int');
-        this.setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
-        this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
         this.setLocalTableSetting('apartment', 'reservations-apartment', 'int');
 
         // set custom spinner here, so that the reservation table content is not replaced
@@ -370,7 +576,7 @@ export default class extends Controller {
         }
 
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'GET',
             data: httpSerializeForm(this.tableFilter),
             target: this.tableContainer,
@@ -378,13 +584,12 @@ export default class extends Controller {
             onSuccess: (data) => {
                 if (this.tableContainer) {
                     this.tableContainer.innerHTML = data;
+                    this.addAppartmentSelectableUrl = this.tableContainer.dataset.reservationsAddAppartmentSelectableUrl || this.addAppartmentSelectableUrl;
                 }
                 this.toggleDisplayTableRows();
                 this.initStickyTables();
                 this.initFit();
                 this.initTableInteractions();
-                //this.tableLoaded = true;
-                window.__reservationsTableLoaded = true;
             },
             onComplete: () => {
                 // disable spinner
@@ -402,20 +607,23 @@ export default class extends Controller {
         if (!url) {
             return;
         }
-        if (typeof _doPost === 'undefined') {
-            window.setTimeout(() => this.loadTableSettings(url, initial), 50);
-            return;
-        }
-        _doPost('#table-filter', url, '', 'POST', (data) => {
-            const container = document.getElementById('modal-content-settings');
-            if (container) {
-                container.innerHTML = data;
+
+        this.setLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
+        this.setLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+
+        httpRequest({
+            url,
+            method: 'POST',
+            data: httpSerializeForm(this.tableFilter),
+            target: this.modalSettingsContainer,
+            loader: false,
+            onComplete: () => { 
+                if (initial) {
+                    this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                    this.getNewTable();
+                }
+                this.updateDisplaySettingsOnChange();
             }
-            if (initial) {
-                this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
-                this.getNewTable();
-            }
-            this.updateDisplaySettingsOnChange();
         });
     }
 
@@ -701,10 +909,13 @@ export default class extends Controller {
 
     // ----- modal helpers -----
 
-    selectReservatioForInvoice(id) {
-        const url = this.urls.selectInvoice;
+    selectReservatioForInvoice(id, url = null) {
+        const targetUrl = url || this.getContextValue('reservationsSelectInvoiceUrl');
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data: { reservationid: id, createNewInvoice: 'true' },
             target: this.modalContent,
@@ -724,7 +935,6 @@ export default class extends Controller {
         const id = event.currentTarget.dataset.reservationId;
         const createNew = event.currentTarget.dataset.createNew === 'true';
         if (!url) return;
-        console.log('selectReservationForTemplate', id, url);
         window.lastClickedReservationId = id;
         //$('.modal-header .modal-title').text(this.translate('templates.select.reservations'));
         httpRequest({
@@ -735,12 +945,15 @@ export default class extends Controller {
         });
     }
 
-    selectAppartment(createNewReservation) {
-        const url = this.urls.selectAppartment;
+    selectAppartment(createNewReservation, url = null) {
+        const targetUrl = url || this.element.dataset.reservationsSelectAppartmentUrl || this.tableFilter?.dataset.reservationsSelectAppartmentUrl;
+        if (!targetUrl) {
+            return false;
+        }
         $('#modalCenter .modal-title').text(this.translate('nav.reservation.add'));
         const data = httpSerializeSelectors(['#objects']) + '&createNewReservation=' + createNewReservation;
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'GET',
             data,
             target: this.modalContent
@@ -748,13 +961,19 @@ export default class extends Controller {
         return false;
     }
 
-    getAvailableAppartmentsForPeriod(mode) {
+    getAvailableAppartmentsForPeriod(mode, url = null) {
         $('#available-appartments').html('');
         iniStartOrEndDate('from', 'end', 1);
         if ($('#from').val() !== '' && $('#end').val() !== '') {
-            const url = mode === 'edit' ? this.urls.getEditAvailableAppartments : this.urls.getAvailableAppartments;
+            const form = document.getElementById('reservation-period');
+            const targetUrl = url || (mode === 'edit'
+                ? form?.dataset.availableEditUrl
+                : form?.dataset.availableUrl);
+            if (!targetUrl) {
+                return false;
+            }
             httpRequest({
-                url,
+                url: targetUrl,
                 method: 'POST',
                 data: httpSerializeForm('#reservation-period'),
                 target: document.getElementById('available-appartments')
@@ -763,9 +982,12 @@ export default class extends Controller {
         return false;
     }
 
-    addAppartmentToSelection(id) {
-        const url = this.urls.addAppartment;
+    addAppartmentToSelection(id, url = null) {
+        const targetUrl = url || document.getElementById('reservation-period')?.dataset.addAppartmentUrl || this.getContextValue('addAppartmentUrl');
         const content = window.modalLoader || '';
+        if (!targetUrl) {
+            return false;
+        }
         let data;
         if (id) {
             data = 'appartmentid=' + id + '&' + httpSerializeForm('#reservation-period') + '&' + httpSerializeForm('#appartment-options-' + id);
@@ -774,7 +996,7 @@ export default class extends Controller {
         }
         data = data + '&createNewReservation=false';
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data,
             target: this.modalContent
@@ -782,25 +1004,28 @@ export default class extends Controller {
         return false;
     }
 
-    selectableAddAppartmentToSelection(id, start, end) {
-        const url = this.urls.addAppartmentSelectable;
-        const content = window.modalLoader || '';
+    selectableAddAppartmentToSelection(id, start, end, url = null) {
+        const targetUrl = url || this.addAppartmentSelectableUrl || document.getElementById('reservation-period')?.dataset.addAppartmentSelectableUrl;
         const data = 'appartmentid=' + id + '&from=' + start + '&end=' + end + '&createNewReservation=true';
-        this.ajax({
-            url,
-            type: 'post',
+        if (!targetUrl) {
+            return false;
+        }
+        httpRequest({
+            url: targetUrl,
+            method: 'POST',
             data,
-            beforeSend: () => $('#modal-content-ajax').html(content),
-            error: (xhr) => alert(xhr.status),
-            success: (data) => $('#modal-content-ajax').html(data)
+            target: this.modalContent
         });
         return false;
     }
 
-    deleteAppartmentFromSelection(id) {
-        const url = this.urls.removeAppartment;
+    deleteAppartmentFromSelection(id, url = null) {
+        const targetUrl = url || document.getElementById('reservation-period')?.dataset.removeAppartmentUrl || this.getContextValue('removeAppartmentUrl');
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data: httpSerializeSelectors(['#from', '#end']) + '&appartmentid=' + id + '&createNewReservation=false',
             target: this.modalContent
@@ -808,10 +1033,13 @@ export default class extends Controller {
         return false;
     }
 
-    saveAppartmentOptions(id) {
-        const url = this.urls.modifyAppartmentOptions;
+    saveAppartmentOptions(id, url = null) {
+        const targetUrl = url || document.getElementById('reservation-period')?.dataset.modifyAppartmentOptionsUrl || this.getContextValue('modifyAppartmentOptionsUrl');
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data: (httpSerializeSelectors(['#from', '#end']) + '&' + httpSerializeForm('#appartment-options-' + id) + '&appartmentid=' + id + '&createNewReservation=false'),
             target: this.modalContent
@@ -819,8 +1047,11 @@ export default class extends Controller {
         return false;
     }
 
-    selectCustomer() {
-        const url = this.urls.selectCustomer;
+    selectCustomer(url = null) {
+        const targetUrl = url || document.getElementById('reservation-period')?.dataset.selectCustomerUrl || this.getContextValue('selectCustomerUrl');
+        if (!targetUrl) {
+            return false;
+        }
         const content = window.modalLoader || '';
         const message = '<div class="col-md-10 col-md-offset-1">' +
             '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
@@ -835,7 +1066,7 @@ export default class extends Controller {
             $('#breadcrumb-appartments').wrap('<a href="#" />');
             $('#breadcrumb-customer').removeClass('d-none');
             httpRequest({
-                url,
+                url: targetUrl,
                 method: 'POST',
                 data: httpSerializeForm('#reservation-period'),
                 target: this.modalContent
@@ -845,7 +1076,13 @@ export default class extends Controller {
     }
 
     getCustomers(page, mode, tab, appartmentId) {
-        const url = mode === 'edit' ? this.urls.getCustomersEdit : this.urls.getCustomers;
+        const customersContainer = document.getElementById('customers');
+        const url = mode === 'edit'
+            ? customersContainer?.dataset.customersEditUrl
+            : customersContainer?.dataset.customersUrl;
+        if (!url) {
+            return false;
+        }
         const content = window.modalLoader || '';
         const safeTab = tab || '';
         $('#customer-selection .btn-primary').addClass('d-none');
@@ -860,7 +1097,11 @@ export default class extends Controller {
     }
 
     getFormForNewCustomer() {
-        const url = this.urls.getCustomerNewForm;
+        const container = document.getElementById('customers');
+        const url = container?.dataset.customerNewFormUrl;
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
@@ -873,31 +1114,36 @@ export default class extends Controller {
         return false;
     }
 
-    createNewCustomer() {
-        const url = this.urls.createCustomer;
+    createNewCustomer(url = null, form = null) {
+        const formEl = form || document.getElementById('customer-selection');
+        const targetUrl = url || formEl?.dataset.url || formEl?.action;
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
-            data: httpSerializeForm('#customer-selection'),
+            data: httpSerializeForm(formEl),
             target: this.modalContent
         });
         return false;
     }
 
-    getReservationPreview(id, tab, displayWait = true) {
-        const url = this.urls.createPreview;
-        if (displayWait && this.modalContent) {
-            this.modalContent.innerHTML = window.modalLoader || '';
+    getReservationPreview(customerId, tab) {
+        const url = this.getContextValue('previewUrl') || document.getElementById('reservation-period')?.dataset.previewUrl;
+        if (!url) {
+            return false;
+        }
+        const data = { customerid: customerId ? customerId : '' };
+        if (tab !== null) {
+            data.tab = tab;
         }
         httpRequest({
             url,
             method: 'POST',
-            data: { customerid: id, tab },
+            data: data,
             target: this.modalContent,
-            onSuccess: (data) => {
-                if (this.modalContent) {
-                    this.modalContent.innerHTML = data;
-                }
+            onComplete: () => {
                 this.enablePriceOptionsMisc();
             }
         });
@@ -916,7 +1162,10 @@ export default class extends Controller {
     }
 
     createNewReservations() {
-        const url = this.urls.createReservations;
+        const url = this.getContextValue('createReservationsUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
@@ -926,52 +1175,49 @@ export default class extends Controller {
                 if (data.length > 0) {
                     $('#flash-message-overlay').empty().append(data);
                 } else {
-                    window.location.href = this.urls.startUrl || '/';
+                    window.location.href = this.startUrl || '/';
                 }
             }
         });
         return false;
     }
 
-    getReservation(id, tab, displayWait = true) {
-        if (id !== 'new') {
-            let url = this.urls.getReservation;
-            url = url ? url.replace('placeholder', id) : null;
-            if (!url) {
-                return false;
-            }
-            if (tab != null) {
-                url += '?tab=' + tab;
-            }
-            if (displayWait && this.modalContent) {
-                this.modalContent.innerHTML = window.modalLoader || '';
-            }
-            $('#modalCenter .modal-title').text(this.translate('reservation.details'));
-            $('#modalCenter').modal('show');
-            httpRequest({
-                url,
-                method: 'GET',
-                target: this.modalContent,
-                onSuccess: (data) => {
-                    if (data.length > 0) {
-                        this.modalContent.innerHTML = data;
-                    } else {
-                        window.location.href = this.urls.startUrl || '/';
-                    }
-                }
-            });
-        } else {
-            this.getReservationPreview(null, tab, displayWait);
+    getReservation(url, tab, loader=true) {
+        const isNew = url === 'new';
+        if (isNew) {
+            this.currentReservationUrl = null;
+            this.getReservationPreview(null, tab);
+            return false;
         }
-        return false;
-    }
-
-    editReservation(id) {
-        let url = this.urls.editReservation;
-        url = url ? url.replace('placeholder', id) : null;
-        $('#modalCenter .modal-title').text(this.translate('nav.reservation.edit'));
+        
+        const data = {}
+        if(tab != null) {
+            data.tab = tab;
+        }
+        
+        $('#modalCenter .modal-title').text(this.translate('reservation.details'));
+        $('#modalCenter').modal('show');
         httpRequest({
             url,
+            method: 'GET',
+            data: data,
+            loader: loader,
+            target: this.modalContent,
+        });
+    }
+
+    editReservation(id, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('editReservationUrlTemplate') || this.getContextValue('reservationsEditReservationUrlTemplate');
+            targetUrl = template && id ? template.replace('placeholder', id) : null;
+        }
+        if (!targetUrl) {
+            return false;
+        }
+        $('#modalCenter .modal-title').text(this.translate('nav.reservation.edit'));
+        httpRequest({
+            url: targetUrl,
             method: 'GET',
             data: httpSerializeSelectors(['#objects']),
             target: this.modalContent
@@ -979,11 +1225,17 @@ export default class extends Controller {
         return false;
     }
 
-    changeReservationCustomer(id, tab, appartmentId) {
-        let url = this.urls.changeReservationCustomer;
-        url = url ? url.replace('placeholder', id) : null;
+    changeReservationCustomer(id, tab, appartmentId, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('changeReservationCustomerUrlTemplate');
+            targetUrl = template && id ? template.replace('placeholder', id) : null;
+        }
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'GET',
             data: { tab, appartmentId },
             target: this.modalContent
@@ -991,11 +1243,12 @@ export default class extends Controller {
         return false;
     }
 
-    editReservationNewCustomer(id, tab) {
-        let url = this.urls.editReservationNewCustomer;
-        url = url ? url.replace('placeholder', id) : null;
+    editReservationNewCustomer(url, tab) {
+        if (!url) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: url,
             method: 'POST',
             data: httpSerializeForm('#customer-selection'),
             target: this.modalContent,
@@ -1003,8 +1256,9 @@ export default class extends Controller {
                 if (data.length > 0) {
                     $('#flash-message-overlay').empty().append(data);
                 } else {
-                    this.getReservation(id, tab);
-                    if (id !== 'new' && tab === 'booker') {
+                    const resUrl = this.getContextValue('reservationUrl') || null;
+                    this.getReservation(resUrl, tab);
+                    if (url !== 'new' && tab === 'booker') {
                         this.getNewTable();
                     }
                 }
@@ -1013,11 +1267,18 @@ export default class extends Controller {
         return false;
     }
 
-    editReservationCustomerChange(id, tab, appartmentId) {
-        let url = this.urls.editReservationCustomerChange;
-        url = url ? url.replace('placeholder', $('#reservation-id').val()) : null;
+    editReservationCustomerChange(id, tab, appartmentId, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('editReservationCustomerChangeUrlTemplate');
+            const reservationId = $('#reservation-id').val();
+            targetUrl = template && reservationId ? template.replace('placeholder', reservationId) : null;
+        }
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data: { customerId: id, tab, appartmentId },
             target: this.modalContent,
@@ -1045,19 +1306,26 @@ export default class extends Controller {
 
     doDeleteReservation() {
         const form = '#reservationShowForm';
-        const url = this.urls.deleteReservation;
+        const formEl = document.querySelector(form);
+        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('deleteReservationUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
             data: httpSerializeForm(form),
-            success: () => location.reload()
+            onSuccess: () => location.reload()
         });
         return false;
     }
 
     deleteReservationCustomer(elm, customerId) {
         const form = document.getElementById('actions-customer-' + customerId);
-        const url = this.urls.deleteReservationCustomer;
+        const url = form?.dataset.deleteUrl || form?.action || this.getContextValue('deleteReservationCustomerUrl');
+        if (!form || !url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
@@ -1068,22 +1336,30 @@ export default class extends Controller {
     }
 
     editReservationCustomerEdit(customerId, form) {
-        const url = this.urls.editReservationCustomerEdit;
+        const formEl = typeof form === 'string' ? document.querySelector(form) : form;
+        const url = formEl?.dataset.editUrl || formEl?.action || this.getContextValue('editReservationCustomerEditUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
-            data: httpSerializeForm(form),
+            data: httpSerializeForm(formEl),
             target: this.modalContent
         });
         return false;
     }
 
     saveEditCustomer(id, form) {
-        const url = this.urls.saveEditCustomer;
+        const formEl = typeof form === 'string' ? document.querySelector(form) : form;
+        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('saveEditCustomerUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
-            data: httpSerializeForm(form),
+            data: httpSerializeForm(formEl),
             target: this.modalContent
         });
         return false;
@@ -1093,23 +1369,29 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         const templateId = event.currentTarget.dataset.templateId || null;
-        const inProgress = event.currentTarget.dataset.inprocess === 'true';
-        const formData = inProgress ? httpSerializeForm('#template-form') : null;
+        const inProcess = event.currentTarget.dataset.inprocess === 'true';
+        const formData = inProcess ? httpSerializeForm('#template-form') : null;
         setModalTitle(event.currentTarget.dataset.title || '');
         httpRequest({
             url,
             method: 'POST',
-            data: { templateId, inProgress, formData },
+            data: { templateId, inProcess, formData },
             target: this.modalContent
         });
         return false;
     }
 
-    previewTemplateForReservation(id, inProcess = false) {
-        let url = this.urls.previewTemplate;
-        url = url ? url.replace('placeholder', id) : null;
+    previewTemplateForReservation(id, inProcess = false, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('previewTemplateUrl');
+            targetUrl = template && id !== undefined ? template.replace('placeholder', id) : null;
+        }
+        if (!targetUrl) {
+            return false;
+        }
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
             data: { inProcess },
             target: this.modalContent,
@@ -1122,9 +1404,13 @@ export default class extends Controller {
     }
 
     sendEmail(form) {
-        const url = this.urls.sendEmail;
         const formEl = typeof form === 'string' ? document.querySelector(form) : form;
+        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('sendEmailUrl');
         const editor = formEl ? formEl.querySelector('#editor1') : null;
+        const refreshUrl = formEl?.dataset.refreshUrl || this.currentReservationUrl;
+        if (!formEl || !url) {
+            return false;
+        }
         if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
             editor.value = tinymce.get('editor1').getContent();
         }
@@ -1137,7 +1423,7 @@ export default class extends Controller {
                 if (data.length > 0) {
                     $('#flash-message-overlay').empty().append(data);
                 } else {
-                    this.getReservation(window.lastClickedReservationId, 'correspondence');
+                    this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
                 }
             }
         });
@@ -1145,9 +1431,13 @@ export default class extends Controller {
     }
 
     saveTemplateFile(form) {
-        const url = this.urls.saveTemplateFile;
         const formEl = typeof form === 'string' ? document.querySelector(form) : form;
+        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('saveTemplateFileUrl');
         const editor = formEl ? formEl.querySelector('#editor1') : null;
+        const refreshUrl = formEl?.dataset.refreshUrl || this.currentReservationUrl;
+        if (!formEl || !url) {
+            return false;
+        }
         if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
             editor.value = tinymce.get('editor1').getContent();
         }
@@ -1163,35 +1453,45 @@ export default class extends Controller {
                         this.previewTemplateForReservation(0, 'false');
                     }
                 } else {
-                    this.getReservation(window.lastClickedReservationId, 'correspondence');
+                    this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
                 }
             }
         });
         return false;
     }
 
-    exportPDFCorrespondence(id) {
-        let url = this.urls.exportCorrespondencePdf;
-        url = url ? url.replace('placeholder', id) : null;
-        if (url) {
-            window.location.href = url;
+    exportPDFCorrespondence(id, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('exportCorrespondencePdfUrlTemplate');
+            targetUrl = template && id ? template.replace('placeholder', id) : null;
+        }
+        if (targetUrl) {
+            window.location.href = targetUrl;
         }
         return false;
     }
 
-    showMailCorrespondence(id, reservationId) {
-        let url = this.urls.showCorrespondence;
-        url = url ? url.replace('placeholder', id) : null;
-        const content = window.modalLoader || '';
-        this.ajax({
-            url,
-            type: 'post',
+    showMailCorrespondence(id, reservationId, url = null) {
+        let targetUrl = url;
+        if (!targetUrl) {
+            const template = this.getContextValue('showCorrespondenceUrlTemplate');
+            targetUrl = template && id ? template.replace('placeholder', id) : null;
+        }
+        if (!targetUrl) {
+            return false;
+        }
+        httpRequest({
+            url: targetUrl,
+            method: 'POST',
             data: { reservationId },
-            beforeSend: () => $('#modal-content-ajax').html(content),
-            error: (xhr) => alert(xhr.status),
-            success: (data) => {
+            target: this.modalContent,
+            onSuccess: (data) => {
                 $('#modalCenter .modal-title').text(this.translate('templates.preview'));
-                $('#modal-content-ajax').html(data);
+                const modalBody = document.getElementById('modal-content-ajax');
+                if (modalBody) {
+                    modalBody.innerHTML = data;
+                }
             }
         });
         return false;
@@ -1199,15 +1499,16 @@ export default class extends Controller {
 
     doDeleteInvoice() {
         const form = '#invoiceDeleteForm';
-        const url = this.urls.deleteInvoice;
+        const formEl = document.querySelector(form);
+        const url = formEl?.dataset.url || formEl?.action || this.getContextValue('deleteInvoiceUrl');
         if (!url) {
             return false;
         }
         httpRequest({
             url,
             method: 'POST',
-            data: httpSerializeForm(form),
-            success: () => location.reload()
+            data: httpSerializeForm(formEl),
+            onSuccess: () => location.reload()
         });
         return false;
     }
@@ -1225,8 +1526,11 @@ export default class extends Controller {
         return false;
     }
 
-    deleteCorrespondence(id, reservationId) {
-        const url = this.urls.deleteCorrespondence;
+    deleteCorrespondence(id) {
+        const url = this.getContextValue('deleteCorrespondenceUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
@@ -1236,7 +1540,7 @@ export default class extends Controller {
                 if (data.length > 0) {
                     $('#flash-message-overlay').empty().append(data);
                 } else {
-                    this.getReservation(reservationId, 'correspondence');
+                    this.getReservation(window.lastClickedReservationUrl, 'correspondence');
                 }
             }
         });
@@ -1286,7 +1590,10 @@ export default class extends Controller {
     
 
     addAsAttachment(id, isInvoice) {
-        const url = this.urls.addAttachment;
+        const url = this.getContextValue('addAttachmentUrl');
+        if (!url) {
+            return false;
+        }
         httpRequest({
             url,
             method: 'POST',
@@ -1297,12 +1604,17 @@ export default class extends Controller {
         return false;
     }
 
-    deleteAttachment(id) {
-        const url = this.urls.deleteAttachment;
+    deleteAttachment(id, url = null, form = null) {
+        const targetUrl = url || this.getContextValue('deleteAttachmentUrl');
+        if (!targetUrl) {
+            return false;
+        }
+        const token = form?.querySelector("input[name='_csrf_token']").value;
         httpRequest({
-            url,
+            url: targetUrl,
             method: 'POST',
-            data: { id, _csrf_token: $('#_csrf_token').val() },
+            data: { id, _csrf_token: token },
+            loader: false,
             target: this.modalContent,
             onSuccess: (data) => {
                 if (data.length > 0) {
@@ -1327,16 +1639,26 @@ export default class extends Controller {
             }
             item.dataset.enhanced = 'true';
             item.addEventListener('click', () => {
-                const form = item.closest('form');
-                this.saveMiscPriceForReservation(item.dataset.reservationid, form, form.action);
+                const form = item.closest('form')
+                const reservationId = item.dataset.reservationId;
+                this.saveMiscPriceForReservation(form, form.action, reservationId);
                 item.disabled = true;
             });
         });
     }
 
-    saveMiscPriceForReservation(reservationId, form, url) {
-        const successFunc = () => this.getReservation(reservationId, 'prices', false);
-        _doPost('#' + form.id, url, '', null, successFunc);
+    saveMiscPriceForReservation(form, url, reservationId) {
+        if (!url) {
+            return false;
+        }
+        httpRequest({
+            url,
+            method: 'POST',
+            loader: false,
+            data: httpSerializeForm(form),
+            onSuccess: 
+                () => this.getReservation(reservationId == 'new' ? reservationId : window.lastClickedReservationUrl, 'prices', false)
+        });
         return false;
     }
 
@@ -1348,9 +1670,12 @@ export default class extends Controller {
         if (!editorNode) {
             return;
         }
-        if (tinymce.get('editor1') !== null) {
-            tinymce.get('editor1').remove();
+    
+        if (editorNode.dataset.tinymceInitialized === 'true' || tinymce.get('editor1') !== null) {
+            return;
         }
+
+        editorNode.dataset.tinymceInitialized = 'true';
         tinymce.init({
             selector: '#editor1',
             language: document.documentElement.lang || 'de',
@@ -1437,10 +1762,49 @@ export default class extends Controller {
         localStorage.setItem(settingName, value);
     }
 
+    appendTab(url, tab) {
+        if (!tab) {
+            return url;
+        }
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}tab=${tab}`;
+    }
+
+    getContextValue(key) {
+        if (this.modalContent && this.modalContent.dataset && this.modalContent.dataset[key]) {
+            return this.modalContent.dataset[key];
+        }
+        const scoped = this.modalContent?.querySelector('[data-controller="reservations"]');
+        if (scoped && scoped.dataset && scoped.dataset[key]) {
+            return scoped.dataset[key];
+        }
+        if (this.element && this.element.dataset && this.element.dataset[key]) {
+            return this.element.dataset[key];
+        }
+        return null;
+    }
+
     translate(key) {
-        if (this.hasTranslationsValue && this.translationsValue[key]) {
-            return this.translationsValue[key];
+        const translations = this.translations || this.readTranslationsFromDom();
+        if (translations && translations[key]) {
+            return translations[key];
         }
         return key;
+    }
+
+    readTranslationsFromDom() {
+        const source = document.querySelector('[data-reservations-translations-value]');
+        if (!source) {
+            return {};
+        }
+        const raw = source.dataset.reservationsTranslationsValue;
+        if (!raw) {
+            return {};
+        }
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            return {};
+        }
     }
 }

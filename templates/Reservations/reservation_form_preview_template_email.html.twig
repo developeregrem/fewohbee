@@ -1,4 +1,8 @@
-<form id="template-form" class="form-horizontal" role="form" onsubmit="return sendEmail('#template-form');">
+<form id="template-form" class="form-horizontal" role="form"
+      data-controller="reservations"
+      data-action="submit->reservations#sendEmailAction"
+      data-url="{{ path('settings.templates.email.send') }}"
+      data-refresh-url="{{ path('reservations.get.reservation', {'id': attribute(reservations, 0).id, 'tab': 'correspondence'}) }}">
     <fieldset id="template-form-fieldset-primary-">
         <div class="row">
             <label for="to" class="col-sm-3 col-form-label">{{ 'templates.recipient'|trans }} *</label>
@@ -29,7 +33,11 @@
         <div class="col-sm-10">{{ 'templates.attachment'|trans }}</div>
         <div class="col-sm-2">
             <small>
-            <a href="#" onclick="return selectTemplateForReservations({{ template.id }}, true);"
+            <a href="#"
+               data-action="click->reservations#selectTemplateForReservationsAction"
+               data-url="{{ path('reservations.select.template') }}"
+               data-template-id="{{ template.id }}"
+               data-inprocess="true"
                title="{{ 'button.add'|trans }}" class="float-end"><i class="fas fa-plus"></i></a>
             </small>
         </div>
@@ -42,9 +50,14 @@
                     <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
                     <td class="text-end">
-                        <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
-                                       title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
-                        <a href="#" onclick="return deleteAttachment({{ attachment.id }})"
+                        <a href="#"
+                           data-action="click->reservations#exportPDFCorrespondenceAction"
+                           data-url="{{ path('settings.templates.correspondence.export.pdf', {'id': attachment.id}) }}"
+                           title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
+                        <a href="#"
+                           data-action="click->reservations#deleteAttachmentAction"
+                           data-url="{{ path('settings.templates.attachment.remove') }}"
+                           data-attachment-id="{{ attachment.id }}"
                             title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
                     </td>
                 </tr>
