@@ -39,6 +39,7 @@ final class ProfileController extends AbstractController
             throw new AccessDeniedHttpException();
         }
 
+        $passkeyEnabled = $this->isPasskeyEnabled();
         $form = $this->createForm(ProfilePersonalDataType::class, $user);
         $form->handleRequest($request);
         $plainPassword = (string) $form->get('password')->getData();
@@ -52,31 +53,34 @@ final class ProfileController extends AbstractController
             return $this->redirectToRoute('profile');
         }
 
-        $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
-        if ($userEntity === null) {
-            throw new AccessDeniedHttpException();
+        $credentials = [];
+        if ($passkeyEnabled) {
+            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
+            if ($userEntity === null) {
+                throw new AccessDeniedHttpException();
+            }
+
+            $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
+            $credentials = array_map(static function (PublicKeyCredentialSource $source) {
+
+                return [
+                    'publicKeyCredentialId' => $source->publicKeyCredentialId,
+                    'type' => $source->type,
+                    'transports' => $source->transports,
+                    'attestationType' => $source->attestationType,
+                    //'trustPath' => $this->trustPath->jsonSerialize(),
+                    'aaguid' => $source->aaguid->toRfc4122(),
+                    'credentialPublicKey' => $source->credentialPublicKey,
+                    //'userHandle' => Base64UrlSafe::encodeUnpadded($this->userHandle),
+                    'counter' => $source->counter,
+                    'clientLabel' => $source instanceof \App\Entity\WebauthnCredential ? $source->getClientLabel() : null,
+                    'userAgent' => $source instanceof \App\Entity\WebauthnCredential ? $source->getUserAgent() : null,
+                    'createdAt' => $source instanceof \App\Entity\WebauthnCredential ? $source->getCreatedAt() : null,
+                    //'otherUI' => $this->otherUI,
+                ];
+
+            }, $credentials);
         }
-
-        $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
-        $credentials = array_map(static function (PublicKeyCredentialSource $source) {
-
-            return [
-                'publicKeyCredentialId' => $source->publicKeyCredentialId,
-                'type' => $source->type,
-                'transports' => $source->transports,
-                'attestationType' => $source->attestationType,
-                //'trustPath' => $this->trustPath->jsonSerialize(),
-                'aaguid' => $source->aaguid->toRfc4122(),
-                'credentialPublicKey' => $source->credentialPublicKey,
-                //'userHandle' => Base64UrlSafe::encodeUnpadded($this->userHandle),
-                'counter' => $source->counter,
-                'clientLabel' => $source instanceof \App\Entity\WebauthnCredential ? $source->getClientLabel() : null,
-                'userAgent' => $source instanceof \App\Entity\WebauthnCredential ? $source->getUserAgent() : null,
-                'createdAt' => $source instanceof \App\Entity\WebauthnCredential ? $source->getCreatedAt() : null,
-                //'otherUI' => $this->otherUI,
-            ];
-
-        }, $credentials);
         return $this->render('Profile/index.html.twig', [
             'token' => $tokenStorage->getToken(),
             'credentials' => $credentials,
@@ -87,6 +91,10 @@ final class ProfileController extends AbstractController
     #[Route('/passkey/delete/{id}', name: 'profile_delete_credential', methods: ['GET', 'DELETE'], requirements: ['id' => '.+'])]
     public function deleteCredential(Request $request, ManagerRegistry $doctrine, string $id): Response
     {
+        if (! $this->isPasskeyEnabled()) {
+            throw $this->createNotFoundException();
+        }
+
         if ('GET' === $request->getMethod()) {
             // initial get load (ask for deleting)
             return $this->render('common/form_delete_ask.html.twig', [
@@ -123,5 +131,10 @@ final class ProfileController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    private function isPasskeyEnabled(): bool
+    {
+        return (bool) $this->getParameter('passkey_enabled');
     }
 }
