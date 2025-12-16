@@ -3,6 +3,7 @@
 {% set periodEndDate = timestamp2UTC(displayEndDate) %}
 {% set displayMonth = true %}
 {% set displayWeek = true %}
+{% set displayWeekday = true %}
 
 {% use 'Reservations/_reservation_table_day.html.twig' %}
 <div class="table-responsive js-fit-vh" data-min-height="200">
@@ -69,6 +70,59 @@
                 {% else %}
                     {% set colCount = colCount + 2 %}
                 {% endif %}
+            {% endfor %}
+        </tr>
+        {% endif %}
+        {% if displayWeekday %}
+        <tr id="reservation-table-header-weekday" class="table-weekdays">
+            <th class="text-center"></th>
+            {% set firstWasSummer = today|date('I') %}
+            {% set weekdayLabels = {
+                1: 'reservation.table.weekday.monday'|trans,
+                2: 'reservation.table.weekday.tuesday'|trans,
+                3: 'reservation.table.weekday.wednesday'|trans,
+                4: 'reservation.table.weekday.thursday'|trans,
+                5: 'reservation.table.weekday.friday'|trans,
+                6: 'reservation.table.weekday.saturday'|trans,
+                7: 'reservation.table.weekday.sunday'|trans,
+            } %}
+            {% for i in 0..interval %}
+                {% set addToDate = "+" ~ i ~ "day" %}
+                {% set tmpDate = today|date_modify(addToDate) %}
+                {# if there is a change from summer to winter time #}
+                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
+                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
+                {% endif %}
+                {# check for weekend #}
+                {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
+                    {% set weekendCss = ' reservation-table-weekend' %}
+                {% else %}
+                    {% set weekendCss = '' %}
+                {% endif %}
+                {# Holidays #}
+                {% if selectedSubdivision == 'all' %}
+                    {% set showCountry =  holidayCountry %}
+                {% else %}
+                    {% set showCountry =  selectedSubdivision %}
+                {% endif %}
+                {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
+                {% set holidayText = "" %}
+                {% for holiday in publicdays %}
+                    {% set holidayText = holidayText ~ holiday.name %}
+                    {% if loop.last == false %}
+                        {% set holidayText = holidayText ~ "<br />" %}
+                    {% endif %}
+                {% endfor %}
+                {% if holidayText|length > 0 %}
+                    {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
+                    {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
+                {% else %}
+                    {% set holidayPopover = "" %}
+                    {% set holidayCss = "" %}
+                {% endif %}
+                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}>
+                    {{ weekdayLabels[tmpDate|date('N')] ?? '' }}
+                </th>
             {% endfor %}
         </tr>
         {% endif %}
