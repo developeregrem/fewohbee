@@ -1,6 +1,7 @@
-<div class="modal-body" data-controller="reservations"
+<div data-controller="reservations"
      data-edit-reservation-customer-change-url-template="{{ path('reservations.edit.customer.change', {'id': 'placeholder'}) }}"
      data-reservation-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}">
+<div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
             <div class="col">
@@ -54,4 +55,5 @@
                data-reservation-id="{{ reservation.id }}"
                data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
+</div>
 </div>

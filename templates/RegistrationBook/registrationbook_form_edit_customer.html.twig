@@ -1,3 +1,6 @@
+<div data-controller="customer-form"
+    data-customer-form-city-lookup-url-value="{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}"
+    data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}">
 <div class="modal-body ps-5 pe-5">
     <div id="flash-message-overlay">
         <div class="col">
@@ -20,4 +23,5 @@
         <li class="page-item " onclick="return showAddReservationsForm()">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
+</div>
 </div>
