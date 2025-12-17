@@ -484,6 +484,7 @@ class ReservationServiceController extends AbstractController
             'customersForTemplate' => $customersForTemplate,
             'addresstypes' => CustomerServiceController::$addessTypes,
             'cardTypes' => IDCardType::cases(),
+            'withController' => true,
         ]);
     }
 

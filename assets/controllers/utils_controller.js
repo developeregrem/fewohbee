@@ -25,6 +25,9 @@ export function updatePDFExportLinks(templateId) {
     });
 }
 
+/**
+ * Creates a confirmation popover (yes/no) when clicking on an element which has the data-popover="delete" attribute assigned
+ */
 export function enableDeletePopover() {
     if (!window.bootstrap || !window.bootstrap.Tooltip || !window.bootstrap.Popover) {
         return;

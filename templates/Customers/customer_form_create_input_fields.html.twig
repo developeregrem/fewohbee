@@ -1,15 +1,31 @@
+{# 
+    This template contains the input fields for creating or editing a customer.
+    It can be included in other templates and optionally wrapped with a Stimulus controller.
+#}
+{% set withController = withController|default(false) %}
+{% if withController %}
+  <div
+    data-controller="customer-form"
+    data-customer-form-mode-value="create"
+    data-customer-form-city-lookup-url-value="{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}"
+    data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}"
+    >
+{% endif %}
 <div class="row mb-3">
     <div class="col">
-        <button type="button" class="btn btn-default" onclick="addAddressFields()">
+        <button type="button" class="btn btn-default"
+                data-action="click->customer-form#addAddressFieldsAction">
             <i class="fas fa-plus"></i> {{ 'customer.address.add'|trans }}
         </button>
     </div>
     <div class="col">
-        <input name="customer-address" id="customer-address" class="form-control ms-auto" placeholder="{{ 'customer.search.addresses'|trans }}" />
+        <input name="customer-address" id="customer-address" class="form-control ms-auto"
+               data-customer-form-target="addressSearch"
+               placeholder="{{ 'customer.search.addresses'|trans }}" />
     </div>
 </div>
-    
-<div id="accordion" class="accordion">
+
+<div id="accordion" class="accordion" data-customer-form-target="accordion">
     <div class="accordion-item" id="firstPanel">
         <h2 class="accordion-header" id="headingOne">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
@@ -41,7 +57,8 @@
                            class="col-sm-4 col-form-label text-end">{{ 'customer.firstname'|trans }}</label>
 
                     <div class="col-sm-8">
-                        <input type="text" class="form-control" name="firstname-{{ customer.id }}" 
+                        <input type="text" class="form-control" name="firstname-{{ customer.id }}"
+                               data-action="input->customer-form#capitalizeNameAction"
                                value="{{ customer.firstname }}">
                     </div>
                 </div>
@@ -51,6 +68,7 @@
 
                     <div class="col-sm-8">
                         <input type="text" class="form-control" name="lastname-{{ customer.id }}"
+                               data-action="input->customer-form#capitalizeNameAction"
                                value="{{ customer.lastname }}" required>
                     </div>
                 </div>
@@ -62,9 +80,9 @@
         <h6 class="accordion-header" id="address-heading-{{ loop.index }}">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#address{{ loop.index }}" aria-expanded="false" aria-controls="address{{ loop.index }}">
                 {{ 'customer.contactdata'|trans }}
-                <i class="fas fa-trash-alt mouse-pointer ms-3 text-secondary" 
+                <i class="fas fa-trash-alt mouse-pointer ms-3 text-secondary"
                       title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
+                      data-action="click->customer-form#deleteAddressAction"></i>
             </button>            
         </h6>
         <div id="address{{ loop.index }}" class="accordion-collapse collapse addressfields" aria-labelledby="address-heading-{{ loop.index }}" data-bs-parent="#accordion">
@@ -219,14 +237,14 @@
 
 <input name="_csrf_token" value="{{ token }}" type="hidden">
 
-<div class="d-none" id="address-forms">
+<div class="d-none" id="address-forms" data-customer-form-target="addressTemplate">
     <div class="accordion-item">
         <h6 class="accordion-header" id="address-heading-XXX">
             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#addressXX" aria-expanded="true" aria-controls="addressXX">
                 {{ 'customer.contactdata'|trans }}
                 <i class="fas fa-trash-alt mouse-pointer ms-3 text-secondary" 
                       title="{{ 'customer.address.delete'|trans }}"
-                      onclick="deleteAddress(this);"></i>
+                      data-action="click->customer-form#deleteAddressAction"></i>
             </button>            
         </h6>
         <div id="addressXX" class="accordion-collapse collapse show addressfields" aria-labelledby="address-heading-XXX" data-bs-parent="#accordion">
@@ -237,87 +255,4 @@
         <input type="hidden" name="addresstypeid-{{ customer.id }}[]" value="0" />
     </div>
 </div>
-    
-
-<script>
-{% if customer.id == 'new' %}
-    $(document).ready(function() {
-        $("#customer-template").change(function() {
-            if($(this).val() === '0') return;
-
-            var values = $(this).val().split("|");
-            $("select[name='salutation-new']").val(values[0]);
-            $("input[name='firstname-new']").val(values[1]);
-            $("input[name='lastname-new']").val(values[2]);
-            $("input[name='company-new']").val(values[3]);
-            $("input[name='address-new']").val($.trim(values[4]));
-            $("input[name='zip-new']").val(values[5]);
-            $("input[name='city-new']").val(values[6]);
-            $("input[name='birthday-new']").val(values[7]);
-            $("select[name='country-new']").val(values[8]);
-            $("input[name='phone-new']").val($.trim(values[9]));
-            $("input[name='fax-new']").val(values[10]);
-            $("input[name='mobilephone-new']").val(values[11]);
-            $("input[name='email-new']").val(values[12]);
-        });
-
-        preselectLastname();
-    });
-
-    function preselectLastname()
-    {
-        // preselect lastname from search input field
-        if($("#lastname").length != 0) {
-            $("input[name='lastname-new']").val($.trim($("#lastname").val()));
-        }
-    }
-{% endif %}
-    var cityLookupPath = '{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}';
-    var addressLookupPath = "{{ path('customers.search.address', {'address': 'placeholder'}) }}";
-    initCityLookup();  
-    addAutocompleteAddressLookup(document.getElementById("customer-address"));
-    
-    addCaptializeEvent();
-    
-    $(document).ready(function() {
-        // disable all fields for hidden form, so it will not be send via post
-        $("#address-forms :input").prop('disabled', true);
-    });
-    function addAddressFields() {
-        $addressForms = $("#address-forms").children().clone(false);        
-        $newId = $(".addressfields").length + 1;    // count existing addresses
-        $addressForms.find("#addressXX").attr("aria-labelledby", "address-heading-"+$newId);
-        $addressForms.find("#addressXX").prop("id", "address"+$newId);  // change id
-        $addressForms.find("h6").prop("id", "#address-heading-"+$newId);  // change id
-        $addressForms.find("button").attr("data-bs-target", "#address"+$newId);  // change id
-        $addressForms.find("button").attr("aria-controls", "address"+$newId);  // change id
-        $addressForms.find(":input").prop('disabled', false);
-        $("#firstPanel").after($addressForms);
-        
-        $("#address"+$newId).collapse("show");
-        //alert($(".addressfields").length);
-        initCityLookup();
-    }
-    
-    function deleteAddress(elm) {
-        $panel = $(elm).parents(".accordion-item");
-        $panel.remove();
-    }
-    
-    function fillAddressFields(item) {
-        addAddressFields();
-        $id = $(".addressfields").length;   // number of address panels
-        
-        $("#address"+$id).find("select[name^='addresstype-']").val(item.type);
-        $("#address"+$id).find("input[name^='company-']").val(item.company);
-        $("#address"+$id).find("input[name^='address-']").val(item.address);
-        $("#address"+$id).find("input[name^='zip-']").val(item.zip);
-        $("#address"+$id).find("input[name^='city-']").val(item.city);
-        $("#address"+$id).find("select[name^='country-']").val(item.country);
-        $("#address"+$id).find("input[name^='phone-']").val(item.phone);
-        $("#address"+$id).find("input[name^='fax-']").val(item.fax);
-        $("#address"+$id).find("input[name^='mobilephone-']").val(item.mobile_phone);
-        $("#address"+$id).find("input[name^='email-']").val(item.email);
-    }
-    
-</script>
+{% if withController %}</div>{% endif %}

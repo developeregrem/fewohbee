@@ -38,13 +38,14 @@ class CustomerRepository extends EntityRepository
     {
         $q = $this
             ->createQueryBuilder('c')
-            ->select('c, a')
+            ->select('c')
             ->where('c.id > 1 AND ((c.lastname LIKE :search or c.firstname LIKE :search) OR '
                     .'(a.company LIKE :search or a.email LIKE :search or a.mobile_phone LIKE :search '
                     .'or a.address LIKE :search or a.phone LIKE :search))')
             ->leftJoin('c.customerAddresses', 'a')
             ->setParameter('search', '%'.$search.'%')
             ->addOrderBy('c.lastname', 'ASC')
+            ->groupBy('c.id')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->distinct()

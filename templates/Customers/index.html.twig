@@ -9,23 +9,32 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container"
+         data-controller="customers"
+         data-customers-search-url-value="{{ path('customers.search') }}">
         <div class="row">
             <div class="col-md-6">
-                <form class="form" id="customers-search-form" onsubmit="return false;">                    
+                <form class="form" id="customers-search-form"
+                      data-customers-target="searchForm"
+                      data-action="submit->customers#searchAction">
                     <input type="search" class="form-control" id="search" name="search"
+                           data-customers-target="searchInput"
+                           data-action="input->customers#searchInputAction"
                            placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </form>
             </div>
             <div class="col-md ps-0">
-                <button class="btn btn-secondary" type="button" onclick="doSearch();">
+                <button class="btn btn-secondary" type="button"
+                        data-action="click->customers#searchAction">
                     <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                 </button>
             </div>
             <div class="col-md text-end">
                 <div class="btn-group">
                     <button type="button" class="btn btn-default" 
-                            onclick="getContentForModal('{{ path('customers.new.customer') }}', '{{ 'nav.customer.add'|trans }}')" 
+                            data-action="click->customers#openModalAction"
+                            data-url="{{ path('customers.new.customer') }}"
+                            data-title="{{ 'nav.customer.add'|trans }}"
                             data-bs-toggle="modal"
                             data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'nav.customer.add'|trans }}</button>
@@ -34,157 +43,9 @@
         </div>
 
         <div class="row mt-3">
-            <div id="customers-table" class="col">
+            <div id="customers-table" class="col" data-customers-target="table">
                 {% include 'Customers/customer_table.html.twig' %}
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/customers_1.0.0.js"></script>
-    <script>
-        $(document).ready(function () {
-            if ($("#search").val() != "") {
-                doSearch();
-            }
-
-            $("#search").delayKeyup(function () {
-                doSearch();
-            }, 400);
-        });
-
-        $.ajaxSetup({
-            cache: false
-        });
-
-        function collapseCustomer(id) {
-            var row = "#customer-" + id;
-            var cell = "#customer-cell-" + id;
-
-            if ($(row).is(':hidden')) {
-                $(row).show();
-                return true;
-            } else {
-                $(row).hide();
-                $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-                return false;
-            }
-        }
-
-        function enableCustomerForm(id) {
-            var formFieldset = "#customer-form-fieldset-" + id;
-            var cancelButton = "#customer-cancel-" + id;
-            var editButton = "#customer-edit-" + id;
-            var saveButton = "#customer-submit-" + id;
-            var birthdayInput = "#birthday-" + id;
-            $(cancelButton).html('Abbrechen');
-            $(editButton).addClass('button-hidden');
-            $(saveButton).removeClass('button-hidden');
-            $(formFieldset).removeAttr('disabled');
-
-            return false;
-        }
-
-        function saveCustomer(id) {
-            var form = "#customer-form-" + id;
-            var url = "{{ path('customers.edit.customer', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-
-        function deleteCustomer(id) {
-            if (collapseCustomer(id)) {
-                var cell = "#customer-cell-" + id;
-                var url = "{{ path('customers.delete.customer', {'id': 'placeholder'}) }}";
-                url = url.replace("placeholder", id);
-
-                $(cell).load(url, function (response, status, xhr) {
-                    //if(status == "success") location.reload();
-                });
-            }
-
-
-            return false;
-        }
-
-        function doDeleteCustomer(id) {
-            var form = "#customer-form-" + id;
-            var url = "{{ path('customers.delete.customer', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-
-            return false;
-        }
-
-        function createNewCustomer() {
-            var url = "{{ path('customers.create.customer')}}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#customer-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        window.location.href = "{{ path('customers.overview') }}";
-                    }
-                }
-            });
-
-            return false;
-        }
-
-        function doSearch() {
-            var url = "{{ path('customers.search')}}";
-            var content = '<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />';
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#customers-search-form").serialize()+'&'+$("#page").serialize(),
-                beforeSend: function () {
-                    $("#customers-table").html(content);
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    $("#customers-table").html(data);
-                }
-            });
-
-            return false;
-        }
-    </script>
 {% endblock %}

@@ -1,10 +1,12 @@
-<div class="modal-body ps-5 pe-5">
+<div class="modal-body ps-5 pe-5" data-controller="customers">
     <div class="row">
         <div class="col">
             <h4 class="border-bottom pb-2">{{ 'reservation.preview.customer'|trans }}
                 <small>
                 <a href="#" 
-                   onclick="return getContentForModal('{{ path('customers.edit.customer.show', {'id': customer.id}) }}', '{{ 'customer.details'|trans }}');"
+                   data-action="click->customers#openModalAction"
+                   data-url="{{ path('customers.edit.customer.show', {'id': customer.id}) }}"
+                   data-title="{{ 'customer.details'|trans }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-edit"></i></a>
                 </small>
@@ -17,33 +19,22 @@
         {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : customer} %}
 </div>
 
-<form id="customer-form-{{ customer.id }}">
+<form id="customer-form-{{ customer.id }}"
+      data-controller="customer-form"
+      data-customer-form-delete-url-value="{{ path('customers.delete.customer', {'id': customer.id}) }}">
     <div class="modal-footer">
-        <div id="boxDelete" class="d-none me-auto">
+        <div id="boxDelete" class="d-none me-auto" data-customer-form-target="deleteBox">
             {{ 'customer.delete.ask'|trans }}<br />
-            <button class="btn btn-danger" onclick="return doDeleteCustomer({{ customer.id }});">{{ 'button.delete'|trans }}</button>
+            <button class="btn btn-danger" data-action="click->customer-form#deleteAction">{{ 'button.delete'|trans }}</button>
             <button class="btn btn-secondary"
-                    onclick="return toggleCustomerDelete();">{{ 'button.cancel'|trans }}</button>
+                    data-action="click->customer-form#toggleDeleteAction">{{ 'button.cancel'|trans }}</button>
             <input type="hidden" name="id" value="{{ customer.id }}"/>
             <input name="_csrf_token" value="{{ token }}" type="hidden">
         </div>
-        <div id="boxDefault">
+        <div id="boxDefault" data-customer-form-target="defaultBox">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
             <button type="button" class="btn btn-danger"
-                    onclick="return toggleCustomerDelete();">{{ 'button.delete'|trans }}</button>
+                    data-action="click->customer-form#toggleDeleteAction">{{ 'button.delete'|trans }}</button>
         </div>        
     </div>
 </form>
-<script>
-    function toggleCustomerDelete() {
-        if ($("#boxDelete").is(":hidden")) {
-            $("#boxDelete").fadeIn().removeClass('d-none');
-            $("#boxDefault").addClass('d-none');
-        }
-        else {
-            $("#boxDelete").addClass('d-none');
-            $("#boxDefault").fadeIn().removeClass('d-none');
-        }
-        return false;
-    }
-</script>
