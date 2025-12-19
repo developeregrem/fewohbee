@@ -50,6 +50,7 @@ class InvoiceCustomerType extends AbstractType
             ])
             ->add('phone', TextType::class, [
                 'label' => 'invoice.settings.contactPhone',
+                'required' => false,
             ])
             ->add('email', TextType::class, [
                 'label' => 'customer.email',
