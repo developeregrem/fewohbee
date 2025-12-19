@@ -72,7 +72,7 @@ export default class extends Controller {
             window.removeEventListener('orientationchange', this.boundResize);
         }
 
-        if (tinymce && tinymce.get('editor1')) {
+        if (typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
             tinymce.get('editor1').destroy();
         }
     }
@@ -1089,10 +1089,11 @@ export default class extends Controller {
         const content = window.modalLoader || '';
         const safeTab = tab || '';
         $('#customer-selection .btn-primary').addClass('d-none');
+        const extraParams = customersContainer?.dataset.customersExtraParams || '';
         httpRequest({
             url,
             method: 'POST',
-            data: httpSerializeForm('#lastname') + '&tab=' + safeTab + '&page=' + page + '&appartmentId=' + appartmentId,
+            data: httpSerializeForm('#lastname') + '&tab=' + safeTab + '&page=' + page + '&appartmentId=' + appartmentId + (extraParams ? '&' + extraParams : ''),
             target: document.getElementById('customers'),
             loader: true
         });

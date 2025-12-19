@@ -869,6 +869,8 @@ class ReservationServiceController extends AbstractController
     {
         $search = $request->request->get('lastname', '');
         $page = $request->request->get('page', 1);
+        $selectAction = $request->request->get('selectAction', 'reservations#editCustomerChangeAction');
+        $changeUrl = $request->request->get('changeUrl', null);
 
         $em = $doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike('%'.$request->request->get('lastname').'%', $page, $this->perPage);
@@ -883,6 +885,8 @@ class ReservationServiceController extends AbstractController
             'search' => $search,
             'tab' => $request->request->get('tab', 'booker'), // from wihich tab this method was called
             'appartmentId' => $request->request->get('appartmentId', 0), // for which appartment we want to change customer (0 = booker of the reservation)
+            'selectAction' => $selectAction,
+            'changeUrl' => $changeUrl,
         ]);
     }
 
