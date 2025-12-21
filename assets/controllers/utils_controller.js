@@ -32,6 +32,7 @@ export function enableDeletePopover() {
     if (!window.bootstrap || !window.bootstrap.Tooltip || !window.bootstrap.Popover) {
         return;
     }
+    const doRequestDelete = window.HttpHelper?.request || null;
     const myDefaultAllowList = window.bootstrap.Tooltip.Default.allowList;
     myDefaultAllowList.form = ['action'];
     myDefaultAllowList.input = ['type', 'name', 'value'];
@@ -49,8 +50,12 @@ export function enableDeletePopover() {
                     if (instance) {
                         instance.hide();
                     }
-                    if (action && typeof _doDelete === 'function') {
-                        _doDelete(form, action);
+                    if (action && doRequestDelete) {
+                        doRequestDelete({
+                            url: action,
+                            method: 'DELETE',
+                            data: form ? new FormData(form) : null,
+                        });
                     }
                 });
             });
