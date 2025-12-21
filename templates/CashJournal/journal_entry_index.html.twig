@@ -10,12 +10,17 @@
 
 {% block content %}
 
-    <div class="container">
+    <div class="container"
+         data-controller="cashjournal"
+         data-cashjournal-entry-table-url-value="{{ path('cashjournal.journal.entry.index', {'id': journal.id}) }}">
         <div class="row">
             <div class="col-md-4">
                 {% if not journal.isClosed %}
                 <div class="btn-group">
-                    <button type="button" class="btn btn-default" onclick="addJournalEntry({{ journal.id }})"
+                    <button type="button" class="btn btn-default"
+                            data-action="click->cashjournal#openModalAction"
+                            data-url="{{ path('cashjournal.journal.entry.new', {'id': journal.id}) }}"
+                            data-title="{{ 'journal.entry.add'|trans }}"
                             data-bs-toggle="modal" data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'journal.entry.add'|trans }}</button>
                 </div>
@@ -27,7 +32,7 @@
             </div>
         </div>
         <div class="row mt-4">
-            <div id="table-ajax" class="col">
+            <div id="table-ajax" class="col" data-cashjournal-target="table">
                 {% include 'CashJournal/journal_entry_table.html.twig' %}
             </div>
         </div>
@@ -41,144 +46,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script>
-        $(function(){
-            // the default modal width is used here
-            $("#modalCenter .modal-dialog").removeClass('modal-lg');
-        });
-
-        $.ajaxSetup({
-            cache: false
-        });
-    {% if not journal.isClosed %}
-        function addJournalEntry(journalId) {
-            var url = "{{ path('cashjournal.journal.entry.new') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-
-            $(".modal-header .modal-title").html("{{ 'journal.entry.add'|trans }}");
-
-            $("#modal-content-ajax").html(content);
-
-            $.ajax({
-                url: url,
-                type: "get",
-                data: { id: journalId },
-                beforeSend: function () {
-                    $("modal-content-ajax").html(content);
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    $("#modal-content-ajax").html(data);
-                }
-            });
-
-            return false;
-        }
-
-        function createNewJournalEntry() {
-            var url = "{{ path('cashjournal.journal.entry.create')}}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#entity-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        location.reload();
-                    }
-                }
-            });
-
-            return false;
-        }
-        
-        function getEntry(entryId) {
-            var url = "{{ path('cashjournal.journal.entry', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", entryId);
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-
-            $(".modal-header .modal-title").html("{{ 'journal.entry.edit'|trans }}");
-
-            $("#modal-content-ajax").html(content);
-
-            $.ajax({
-                url: url,
-                type: "get",
-                data: { },
-                beforeSend: function () {
-                    $("modal-content-ajax").html(content);
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    $("#modal-content-ajax").html(data);
-                }
-            });
-
-            return false;
-        }
-        
-        function editEntry(entryId) {
-            var url = "{{ path('cashjournal.journal.entry.edit', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", entryId);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#entity-form-new").serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    if (data.length > 0) {
-                        $("#flash-message-overlay").empty();
-                        $("#flash-message-overlay").append(data);
-                    } else {
-                        location.reload();
-                    }
-                }
-            });
-
-            return false;
-        }
-        
-        {% if is_granted('ROLE_ADMIN') %}
-        function doDeleteEntry(entryId) {
-            var form = "#deleteForm";
-            var url = "{{ path('cashjournal.journal.entry.delete', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", entryId);
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-            return false;
-        }
-        {% endif %}
-    {% endif %}
-    </script>
 {% endblock %}

@@ -7,6 +7,7 @@ import InvoicesController from './controllers/invoices_controller.js';
 import CustomersController from './controllers/customers_controller.js';
 import CustomerFormController from './controllers/customer_form_controller.js';
 import RegistrationbookController from './controllers/registrationbook_controller.js';
+import CashjournalController from './controllers/cashjournal_controller.js';
 
 const app = startStimulusApp();
 app.register('login', LoginController);
@@ -17,3 +18,4 @@ app.register('invoices', InvoicesController);
 app.register('customers', CustomersController);
 app.register('customer-form', CustomerFormController);
 app.register('registrationbook', RegistrationbookController);
+app.register('cashjournal', CashjournalController);
