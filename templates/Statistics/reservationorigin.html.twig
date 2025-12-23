@@ -15,11 +15,16 @@
 {% endfor %}
 
 {% block content %}
-    <div class="container">
+    <div class="container"
+         data-controller="statistics"
+         data-statistics-monthly-origin-url-value="{{ path('statistics.origin.monthtly') }}"
+         data-statistics-yearly-origin-url-value="{{ path('statistics.origin.yearly') }}">
         <div class="row justify-content-end">
             <div class="col-md-3">
                 <form id="table-filter" role="form">                   
-                    <select id="objects" name="object" class="form-select">
+                    <select id="objects" name="object" class="form-select"
+                            data-statistics-target="objects"
+                            data-action="change->statistics#drawMonthlyOriginAction change->statistics#drawYearlyOriginAction">
                         <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                         {% for object in objects %}
                             <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
@@ -34,16 +39,20 @@
                     <div class="card-header bg-primary text-white">
                         {{ 'statistics.origin.monthly'|trans }}
                          <i id="refreshMonthly" class="fas fa-sync-alt float-end" aria-hidden="true" 
-                            style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
+                            style="cursor: pointer;" data-action="click->statistics#drawMonthlyOriginAction"></i>
                     </div>
                     <div class="card-body">
-                        <div id="monthlyChart" style="height: 300px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
+                        <div style="position: relative; height:45vh;">
+                            <canvas id="monthlyChart" data-statistics-target="monthlyChart"></canvas>
+                        </div>
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
                             <div class="row justify-content-md-center">
                                 <div class="col-md-3">
-                                    <select id="monthlyStart" name="monthtlyStart" class="form-select">
+                                    <select id="monthlyStart" name="monthtlyStart" class="form-select"
+                                            data-statistics-target="monthlyStart"
+                                            data-action="change->statistics#drawMonthlyOriginAction">
                                         {% set currentMonth = 'now'|date('n') %}
                                         {% for month in monthList %}
                                             <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
@@ -51,7 +60,9 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select">
+                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select"
+                                            data-statistics-target="monthlyStartYear"
+                                            data-action="change->statistics#drawMonthlyOriginAction">
                                         {% set currentYear = 'now'|date('Y') %}
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
@@ -62,14 +73,18 @@
                                     -
                                 </div>
                                 <div class="col-md-3">
-                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-select">
+                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-select"
+                                            data-statistics-target="monthlyEnd"
+                                            data-action="change->statistics#drawMonthlyOriginAction">
                                         {% for month in monthList %}
                                             <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select">
+                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select"
+                                            data-statistics-target="monthlyEndYear"
+                                            data-action="change->statistics#drawMonthlyOriginAction">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -85,16 +100,20 @@
                     <div class="card-header bg-primary text-white">
                         {{ 'statistics.origin.yearly'|trans }}
                          <i id="refreshYearly" class="fas fa-sync-alt float-end" aria-hidden="true" 
-                            style="cursor: pointer;" onclick="drawYearlyChart();"></i>
+                            style="cursor: pointer;" data-action="click->statistics#drawYearlyOriginAction"></i>
                     </div>
                     <div class="card-body">
-                        <div id="yearlyChart" style="height: 300px"><img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" /></div>
+                        <div style="position: relative; height:45vh;">
+                            <canvas id="yearlyChart" data-statistics-target="yearlyChart"></canvas>
+                        </div>
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
-                            <div class="row">
+                            <div class="row justify-content-md-center">
                                 <div class="col-md-2">
-                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select">
+                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select"
+                                            data-statistics-target="yearlyStartYear"
+                                            data-action="change->statistics#drawYearlyOriginAction">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -104,7 +123,9 @@
                                     -
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select">
+                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select"
+                                            data-statistics-target="yearlyEndYear"
+                                            data-action="change->statistics#drawYearlyOriginAction">
                                         {% for i in minYear..maxYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -117,104 +138,9 @@
             </div>
         </div>
     </div>
-    <div id='tooltip'></div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.pie.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery.flot.resize.js"></script>
-    <script>
-
-    $(document).ready(function () {
-        
-        $("#objects").change(function () {
-            drawMonthlyChart();
-            drawYearlyChart();
-        });
-        
-        $("#monthlyStart, #monthlyEnd, #monthlyStartYear, #monthlyEndYear").change(function () {
-            drawMonthlyChart();
-        });
-        
-        $("#refreshMonthly").click(function () {
-            drawMonthlyChart();
-        });
-        
-        $("#yearlyStartYear, #yearlyEndYear").change(function () {
-            drawYearlyChart();
-        });
-        
-        $("#refreshYearly").click(function () {
-            drawYearlyChart();
-        });
-        
-        drawMonthlyChart();
-        drawYearlyChart();
-    });
-        
-    function drawMonthlyChart() {
-        var objId = $("#objects").val();
-        var start = $("#monthlyStart").val();
-        var end = $("#monthlyEnd").val();
-        var startYear = $("#monthlyStartYear").val();
-        var endYear = $("#monthlyEndYear").val();
-        $("#monthlyChart").html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-        $.ajax({
-            url: '{{ path('statistics.origin.monthtly') }}',
-            data: {monthStart: start, monthEnd: end, yearStart: startYear, yearEnd: endYear, objectId: objId}
-        }).done(function (values) {
-            
-            
-            $.plot($("#monthlyChart"), values, {
-                series: {
-                    pie: {
-                        show: true,
-                        label: {
-                            show: true,
-                            radius: 1,
-                            formatter: labelFormatter,
-                            background: {
-                                opacity: 0.8
-                            }
-                        }
-                    }
-                }
-            }); 
-        });
-    }
-    
-    function drawYearlyChart() {
-        var objId = $("#objects").val();
-        var startYear = $("#yearlyStartYear").val();
-        var endYear = $("#yearlyEndYear").val();
-        $("#yearlyChart").html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-        $.ajax({
-            url: '{{ path('statistics.origin.yearly') }}',
-            data: {yearStart: startYear, yearEnd: endYear, objectId: objId}
-        }).done(function (values) {
-
-            $.plot($("#yearlyChart"), values, {
-                series: {
-                    pie: {
-                        show: true,
-                        label: {
-                            show: true,
-                            radius: 1,
-                            formatter: labelFormatter,
-                            background: {
-                                opacity: 0.8
-                            }
-                        }
-                    }
-                }
-            }); 
-        });
-    }
-    
-    function labelFormatter(label, series) {
-        return "<div style='font-size:8pt; text-align:center; padding:2px; color:white;'>" + Math.round(series.percent) + "%</div>";
-    }
-    </script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
 {% endblock %}

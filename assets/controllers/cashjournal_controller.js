@@ -19,6 +19,10 @@ export default class extends Controller {
     };
 
     connect() {
+        const isPreview = document.documentElement.hasAttribute('data-turbo-preview');
+         if(isPreview) {
+             return;
+         }
         this.modalContent = document.getElementById('modal-content-ajax');
         if (this.hasTemplateTarget) {
             const stored = getLocalStorageItem('cashjournal-template-id');
