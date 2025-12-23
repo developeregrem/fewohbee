@@ -10,24 +10,28 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container"
+         data-controller="statistics"
+         data-statistics-monthly-url-value="{{ path('statistics.turnover.monthly') }}"
+         data-statistics-yearly-url-value="{{ path('statistics.turnover.yearly') }}">
         <div class="row justify-content-center mt-4">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         {{ 'statistics.turnover.monthly'|trans }}
                          <i id="refreshMonthly" class="fas fa-sync-alt float-end" aria-hidden="true" 
-                            style="cursor: pointer;" onclick="drawMonthlyChart();"></i>
+                            style="cursor: pointer;" data-action="click->statistics#drawMonthlyTurnoverAction"></i>
                     </div>
                     <div class="card-body">
-                        <div id="monthlyLoader"></div>
-                        <canvas id="monthlyChart"></canvas>
+                        <canvas id="monthlyChart" data-statistics-target="monthlyChart"></canvas>
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
                             <div class="row justify-content-md-center">
                                 <div class="col-md-2">
-                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select">
+                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select"
+                                            data-statistics-target="monthlyStartYear"
+                                            data-action="change->statistics#drawMonthlyTurnoverAction">
                                         {% set currentYear = 'now'|date('Y') %}
                                         {% for i in maxYear..minYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
@@ -38,7 +42,9 @@
                                     -
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select">
+                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select"
+                                            data-statistics-target="monthlyEndYear"
+                                            data-action="change->statistics#drawMonthlyTurnoverAction">
                                         {% for i in maxYear..minYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -52,19 +58,20 @@
             <div class="col-md-6">
                 <div class="card" id="yearlyCard">
                     <div class="card-header bg-primary text-white">
-                        {{ 'statistics.turnover.yearly'|trans }}
+                         {{ 'statistics.turnover.yearly'|trans }}
                          <i id="refreshYearly" class="fas fa-sync-alt float-end mouse-pointer" aria-hidden="true" 
-                            onclick="drawYearlyChart();"></i>
+                            data-action="click->statistics#drawYearlyTurnoverAction"></i>
                     </div>
                     <div class="card-body">
-                        <div id="yearlyLoader"></div>
-                        <canvas id="yearlyChart"></canvas>
+                        <canvas id="yearlyChart" data-statistics-target="yearlyChart"></canvas>
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
                             <div class="row justify-content-md-center">
                                 <div class="col-md-2">
-                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select">
+                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select"
+                                            data-statistics-target="yearlyStartYear"
+                                            data-action="change->statistics#drawYearlyTurnoverAction">
                                         {% for i in maxYear..minYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -74,7 +81,9 @@
                                     -
                                 </div>
                                 <div class="col-md-2">
-                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select">
+                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select"
+                                            data-statistics-target="yearlyEndYear"
+                                            data-action="change->statistics#drawYearlyTurnoverAction">
                                         {% for i in maxYear..minYear %}
                                             <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
                                         {% endfor %}
@@ -92,21 +101,25 @@
             </div>
         </div>
         <div class="row mt-3">
-                <form id="invoice-status" role="form">
+                <form id="invoice-status" role="form" data-statistics-target="invoiceStatusForm">
                     <div class="form-check form-switch form-check-inline">
-                        <input type="checkbox" class="form-check-input" id="invoice-status-1" name="invoice-status[]" value="1">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-1" name="invoice-status[]" value="1"
+                               data-action="change->statistics#drawMonthlyTurnoverAction change->statistics#drawYearlyTurnoverAction">
                         <label class="form-check-label" for="invoice-status-1">{{ 'invoice.status.notpayed'|trans }}</label>
                     </div>
                     <div class="col form-check form-switch form-check-inline">
-                        <input type="checkbox" class="form-check-input" id="invoice-status-3" name="invoice-status[]" value="3">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-3" name="invoice-status[]" value="3"
+                               data-action="change->statistics#drawMonthlyTurnoverAction change->statistics#drawYearlyTurnoverAction">
                         <label class="form-check-label" for="invoice-status-3">{{ 'invoice.status.prepayment'|trans }}</label>
                     </div>
                     <div class="col form-check form-switch form-check-inline">
-                        <input type="checkbox" class="form-check-input" id="invoice-status-2" name="invoice-status[]" value="2" checked="checked">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-2" name="invoice-status[]" value="2" checked="checked"
+                               data-action="change->statistics#drawMonthlyTurnoverAction change->statistics#drawYearlyTurnoverAction">
                         <label class="form-check-label" for="invoice-status-2">{{ 'invoice.status.payed'|trans }}</label>
                     </div>
                     <div class="col form-check form-switch form-check-inline">
-                        <input type="checkbox" class="form-check-input" id="invoice-status-4" name="invoice-status[]" value="4">
+                        <input type="checkbox" class="form-check-input" id="invoice-status-4" name="invoice-status[]" value="4"
+                               data-action="change->statistics#drawMonthlyTurnoverAction change->statistics#drawYearlyTurnoverAction">
                         <label class="form-check-label" for="invoice-status-4">{{ 'invoice.status.canceled'|trans }}</label>
                     </div>
                 </form>
@@ -117,98 +130,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.4.2.js"></script>
-{% endblock %}
-
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-        function clearCtx(name) {
-            let chartStatus = Chart.getChart(name);
-            if (chartStatus != undefined) {
-                chartStatus.destroy();
-            }
-        }
-
-        /**
-         *
-         * @param type monthly|yearly
-         * @param cfg
-         * @param url
-         * @returns {Promise<void>}
-         */
-        async function drawChart(type, cfg, url) {
-            const loaderWrap = document.getElementById(type + "Loader");
-            const ctx = document.getElementById(type + 'Chart');
-
-            loaderWrap.append(loaderNode);
-
-            let startYear = parseInt(document.getElementById(type + "StartYear").value).toString();
-            let endYear = parseInt(document.getElementById(type + "EndYear").value).toString();
-
-            let formData = new URLSearchParams(new FormData(document.querySelector("#invoice-status")));
-            formData.append("yearStart", startYear);
-            formData.append("yearEnd", endYear);
-
-            const source = await fetch(url + '?' + formData);
-
-            const data = await source.json();
-            cfg.data.labels = data.labels;
-            cfg.data.datasets = data.datasets;
-
-            clearCtx(type + "Chart");
-            new Chart(ctx, cfg);
-            loaderWrap.innerHTML = "";
-        }
-        async function drawYearlyChart() {
-            let url = '{{ path('statistics.turnover.yearly') }}';
-            const cfg = {
-                type: 'bar',
-                data: {
-                    labels: {},
-                    datasets: {},
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            };
-            await drawChart("yearly", cfg, url);
-        }
-
-        async function drawMonthlyChart() {
-            let url = '{{ path('statistics.turnover.monthly') }}';
-            const cfg = {
-                type: 'bar',
-                data: {
-                    labels: {},
-                    datasets: {}
-                }
-            };
-            await drawChart("monthly", cfg, url);
-        }
-
-        drawYearlyChart();
-        drawMonthlyChart();
-        document.querySelectorAll('#yearlyStartYear, #yearlyEndYear, #refreshYearly').forEach(item => {
-            item.addEventListener('change', event => {
-                drawYearlyChart();
-            });
-        });
-        document.querySelectorAll(' #monthlyStartYear, #monthlyEndYear, #refreshMonthly').forEach(item => {
-            item.addEventListener('change', event => {
-                drawMonthlyChart();
-            });
-        });
-        document.querySelectorAll('input[name="invoice-status[]"]').forEach(item => {
-            item.addEventListener('change', event => {
-                console.log('moo');
-                drawMonthlyChart();
-                drawYearlyChart();
-            });
-        });
-    </script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
 {% endblock %}
