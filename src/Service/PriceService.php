@@ -197,10 +197,8 @@ class PriceService
         return new ArrayCollection($prices);
     }
 
-    public function deletePrice($id)
+    public function deletePrice(Price $price): bool
     {
-        $price = $this->em->getRepository(Price::class)->find($id);
-
         $this->em->remove($price);
         $this->em->flush();
 

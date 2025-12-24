@@ -170,22 +170,16 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['GET', 'POST'])]
-    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
+    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['DELETE'])]
+    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, Price $entry)
     {
-        if ('POST' == $request->getMethod()) {
-            if ($csrf->validateCSRFToken($request, true)) {
-                $price = $ps->deletePrice($id);
+        if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
+                $price = $ps->deletePrice($entry);
                 $this->addFlash('success', 'price.flash.delete.success');
-            }
-
-            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_entry.html.twig', [
-                'id' => $id,
-                'token' => $csrf->getCSRFTokenForForm(),
-            ]);
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

@@ -40,7 +40,24 @@ export function enableDeletePopover() {
     const popoverTriggerList = Array.from(document.querySelectorAll('[data-popover="delete"]'));
     popoverTriggerList.forEach((popoverTriggerEl) => {
         popoverTriggerEl.setAttribute('data-bs-toggle', 'popover');
-        const popover = new window.bootstrap.Popover(popoverTriggerEl, { html: true });
+        popoverTriggerEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Hide any other open delete popovers before toggling the current one
+            popoverTriggerList.forEach((otherEl) => {
+                if (otherEl === popoverTriggerEl) {
+                    return;
+                }
+                const otherInstance = window.bootstrap.Popover.getInstance(otherEl);
+                if (otherInstance) {
+                    otherInstance.hide();
+                }
+            });
+        });
+        const title = popoverTriggerEl.getAttribute('data-title') || popoverTriggerEl.getAttribute('title') || '';
+        const popover = new window.bootstrap.Popover(popoverTriggerEl, { 
+            html: true,
+            title: title
+        });
         popoverTriggerEl.addEventListener('shown.bs.popover', () => {
             document.querySelectorAll('.popover-delete').forEach((btn) => {
                 btn.addEventListener('click', (e) => {
