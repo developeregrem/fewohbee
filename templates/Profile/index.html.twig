@@ -10,7 +10,7 @@
 
 {% block content %}
 {% trans_default_domain 'messages' %}
-<div class="container">
+<div class="container" data-controller="settings">
     <div class="row mb-4">
         <div class="col-lg">
             <div class="card shadow-sm">
@@ -100,14 +100,15 @@
                             </td>
                             <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey|toBase64 }}</td>
                             <td>
+                                {% set id = credential.id %}
+                                {% set targetUrl = path('profile_delete_credential', {id: credential.id }) %}
+                                {% use "common/delete_popover.html.twig" %}
                                 <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="_deleteEntry('{{ loop.index }}', '{{ path('profile_delete_credential', {id: credential.publicKeyCredentialId|toBase64|url_encode }) }}'); return false;" class="fas fa-trash-alt"></i>
+                                    <i class="fas fa-trash-alt"
+                                        data-popover="delete"
+                                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                                 </a>
-                            </td>
-                        </tr>
-                        <tr id="entry-{{ loop.index }}" class="d-none">
-                            <td colspan="5" id="entry-cell-{{ loop.index }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                             </td>
                         </tr>
                     {% else %}
@@ -122,16 +123,3 @@
     {% endif %}
 </div>
 {% endblock content %}
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-        function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('profile_delete_credential', {'id': 'placeholder'}) }}", id);
-        return _doDelete('#entry-form-'+id, url);
-    }
-    </script>
-{% endblock %}
