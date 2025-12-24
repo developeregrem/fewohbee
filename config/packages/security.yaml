@@ -22,8 +22,8 @@ security:
                    - 'localhost'
                    - 'alexanders-mbp.localdomain'
             form_login:
-                login_path: login-password
-                check_path: login-password
+                login_path: login
+                check_path: login
                 default_target_path: /dashboard
             logout:
                 path:   /logout
@@ -54,7 +54,6 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
-        - { path: ^/login-password, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
