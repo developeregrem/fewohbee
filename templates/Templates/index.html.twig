@@ -9,10 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" data-controller="settings templates">
     <div class="row">
         <div class="col">
-                <button type="button" class="btn btn-default" onclick="showCreateForm()" data-bs-toggle="modal"
+                <button type="button" class="btn btn-default"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('settings.templates.new') }}"
+                        data-title="{{ 'templates.add'|trans }}"
+                        data-bs-toggle="modal"
                         data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
         </div>
@@ -34,16 +38,23 @@
                     <td>{{ template.name }}</td>
                     <td>
                         {#<a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                            <i onclick="previewEntity({{ template.id }})" class="fas fa-info-circle"></i></a>#}
+                            <i class="fas fa-info-circle"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('settings.templates.preview', {'id': template.id}) }}"
+                               data-title="{{ 'templates.preview'|trans }}"></i></a>#}
                         <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                            <i onclick="editEntity({{ template.id }})" class="fas fa-edit"></i></a>
+                            <i class="fas fa-edit"
+                               data-action="click->settings#openModalAction"
+                               data-url="{{ path('settings.templates.get', {'id': template.id}) }}"
+                               data-title="{{ 'templates.edit'|trans }}"></i></a>
+                        {% set id = template.id %}
+                        {% set targetUrl = path('settings.templates.delete', {'id': template.id}) %}
+                        {% use "common/delete_popover.html.twig" %}
                         <a href="#" title="{{ 'button.delete'|trans }}">
-                            <i onclick="deleteEntry({{ template.id }})" class="fas fa-trash-alt"></i></a>
-                    </td>
-                </tr>
-                <tr id="entry-{{ template.id }}" class="d-none">
-                    <td colspan="3" id="entry-cell-{{ template.id }}">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                            <i class="fas fa-trash-alt"
+                                data-popover="delete"
+                                data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -56,64 +67,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js"></script>
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-    <script>
-
-    $.ajaxSetup({
-        cache: false
-    });
-    </script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>    
-        
-    function showCreateForm() {
-        getContentForModal("{{ path('settings.templates.new') }}");
-    }
-    
-    function previewEntity(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.preview', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "{{ 'templates.preview'|trans }}");
-    }
-    
-    function editEntity(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.get', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "{{ 'templates.edit'|trans }}");
-    }
-
-    function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.delete', {'id': 'placeholder'}) }}", id);
-        _deleteEntry(id, url);        
-    }
-
-    function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.delete', {'id': 'placeholder'}) }}", id);
-        return _doDelete('#entry-form-'+id, url);
-    }
-    
-    function saveEntity(id) {
-        let url = replacePlaceholder("{{ path('settings.templates.edit', {'id': 'placeholder'}) }}", id);
-        $("#editor1").val(tinymce.get("editor1").getContent());
-        _doPost('#entry-form-' + id, url, '{{ path('settings.templates.overview') }}');
-        return false;
-    }
-
-    function createNewEntity() {
-        var url = "{{ path('settings.templates.create')}}";
-        $("#editor1").val(tinymce.get("editor1").getContent());
-        _doPost('#entry-form-new', url, '{{ path('settings.templates.overview') }}');
-        return false;
-    }    
-            
-    // workaround for tinymce in a bootstrap modal, when opening a tinymce modal, events are not working anymore 
-    // like dropdown in the template plugin or selecting text in the code plugin
-    // Prevent Bootstrap dialog from blocking focusin
-    document.addEventListener('focusin', (e) => {
-      if (e.target.closest(".tox-tinymce, .tox-tinymce-aux, .moxman-window, .tam-assetmanager-root") !== null) {
-        e.stopImmediatePropagation();
-      }
-    });
-    </script>
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js" defer></script>
 {% endblock %}

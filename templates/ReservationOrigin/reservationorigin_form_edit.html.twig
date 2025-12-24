@@ -1,4 +1,7 @@
-<form id="entry-form-{{ origin.id }}" role="form" onsubmit="return saveOrigin({{ origin.id }})">
+<form id="entry-form-{{ origin.id }}" role="form" method="POST"
+      data-controller="settings"
+      data-action="submit->settings#submitFormAction"
+      data-url="{{ path('reservationorigin.edit.origin', {'id': origin.id}) }}">
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
@@ -6,7 +9,11 @@
             <div class="col">
                 <h4 class="pb-2">
                     <small>
-                    <a href="#" onclick="return enableEditForm({{ origin.id }})"
+                    <a href="#"
+                       data-action="click->settings#enableEditAction"
+                       data-fieldset-selector="#entry-form-fieldset-{{ origin.id }}"
+                       data-save-selector="#entry-submit-{{ origin.id }}"
+                       data-edit-area-selector="#edit-button-area"
                        title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>

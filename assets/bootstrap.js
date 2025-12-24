@@ -9,6 +9,9 @@ import CustomerFormController from './controllers/customer_form_controller.js';
 import RegistrationbookController from './controllers/registrationbook_controller.js';
 import CashjournalController from './controllers/cashjournal_controller.js';
 import StatisticsController from './controllers/statistics_controller.js';
+import SettingsController from './controllers/settings_controller.js';
+import TemplatesController from './controllers/templates_controller.js';
+import PricesController from './controllers/prices_controller.js';
 
 const app = startStimulusApp();
 app.register('login', LoginController);
@@ -21,3 +24,6 @@ app.register('customer-form', CustomerFormController);
 app.register('registrationbook', RegistrationbookController);
 app.register('cashjournal', CashjournalController);
 app.register('statistics', StatisticsController);
+app.register('settings', SettingsController);
+app.register('templates', TemplatesController);
+app.register('prices', PricesController);

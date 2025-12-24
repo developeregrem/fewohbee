@@ -1,4 +1,11 @@
-<form id="entry-form-{{ price.id }}" role="form" onsubmit="return savePrice({{ price.id }})">
+<form id="entry-form-{{ price.id }}" role="form" method="POST"
+      data-controller="settings prices"
+      data-action="submit->prices#beforeSubmitAction submit->settings#submitFormAction"
+      data-url="{{ path('prices.edit.price', {'id': price.id}) }}"
+      data-prices-price-id="{{ price.id }}"
+      data-prices-start-selector="#periodstart-{{ price.id }}"
+      data-prices-end-selector="#periodend-{{ price.id }}"
+      data-prices-periods-selector="#periods-field-{{ price.id }}">
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
@@ -6,7 +13,11 @@
             <div class="col">
                 <h4 class="pb-2">
                     <small>
-                    <a href="#" onclick="return enableEditForm({{ price.id }})"
+                    <a href="#"
+                       data-action="click->settings#enableEditAction"
+                       data-fieldset-selector="#entry-form-fieldset-{{ price.id }}"
+                       data-save-selector="#entry-submit-{{ price.id }}"
+                       data-edit-area-selector="#edit-button-area"
                        title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>

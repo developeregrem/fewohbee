@@ -152,31 +152,25 @@ class TemplatesServiceController extends AbstractController
     /**
      * delete entity.
      */
-    #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['GET', 'DELETE'])]
-    public function deleteAction(CSRFProtectionService $csrf, TemplatesService $ts, Request $request, Template $template): Response
+    #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['DELETE'])]
+    public function deleteAction(TemplatesService $ts, Request $request, Template $template): Response
     {
-        if ('DELETE' == $request->getMethod()) {
-            if ($csrf->validateCSRFToken($request, true)) {
-                $countCor = $template->getCorrespondences()->count();
+       if ($this->isCsrfTokenValid('delete'.$template->getId(), $request->request->get('_token'))) {
+            $countCor = $template->getCorrespondences()->count();
 
-                if ($countCor > 0) {
-                    $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
-                } else {
-                    $template = $ts->deleteEntity($template->getId());
-                    if ($template) {
-                        $this->addFlash('success', 'templates.flash.delete.success');
-                    }
+            if ($countCor > 0) {
+                $this->addFlash('warning', 'templates.flash.delete.inuse.reservations');
+            } else {
+                $template = $ts->deleteEntity($template->getId());
+                if ($template) {
+                    $this->addFlash('success', 'templates.flash.delete.success');
                 }
             }
-
-            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_entry.html.twig', [
-                'id' => $template->getId(),
-                'token' => $csrf->getCSRFTokenForForm(),
-            ]);
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     /**

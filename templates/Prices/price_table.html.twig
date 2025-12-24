@@ -55,16 +55,24 @@
         <td>{% if price.active == true %}{{ 'price.active'|trans }} {% else %} {{ 'price.inactive'|trans }}{% endif %}</td>
         <td>
             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                <i onclick="getEntity({{ price.id }})" class="fas fa-info-circle"></i></a>
-            <a href="#" title="{{ 'button.edit'|trans }}">
-                <i onclick="editEntry({{ price.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                <i class="fas fa-info-circle"
+                   data-action="click->settings#openModalAction"
+                   data-url="{{ path('prices.get.price', {'id': price.id}) }}"
+                   data-title="{{ 'button.details'|trans }}"></i></a>
+            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                <i class="fas fa-edit"
+                   data-action="click->settings#openModalAction"
+                   data-url="{{ path('prices.get.price', {'id': price.id}) }}"
+                   data-title="{{ 'button.edit'|trans }}"
+                   data-enable-edit="true"></i></a>
+            {% set id = price.id %}
+            {% set targetUrl = path('prices.delete.price', {'id': price.id}) %}
+            {% use "common/delete_popover.html.twig" %}
             <a href="#" title="{{ 'button.delete'|trans }}">
-                <i onclick="deleteEntry({{ price.id }})" class="fas fa-trash-alt"></i></a>
-        </td>
-    </tr>
-    <tr id="entry-{{ price.id }}" class="d-none">
-        <td colspan="9" id="entry-cell-{{ price.id }}">
-            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                <i class="fas fa-trash-alt"
+                    data-popover="delete"
+                    data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                    data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
         </td>
     </tr>
     {% endif %}

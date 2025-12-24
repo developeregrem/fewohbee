@@ -9,10 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" data-controller="settings prices">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-secondary" onclick="showCreatePriceForm()" data-bs-toggle="modal"
+            <button type="button" class="btn btn-secondary"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('prices.new.price') }}"
+                    data-title="{{ 'nav.price.add'|trans }}"
+                    data-bs-toggle="modal"
                     data-bs-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'nav.price.add'|trans }}</button>
         </div>
@@ -39,112 +43,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-    <script>
-
-    $.ajaxSetup({
-        cache: false
-    });
-    </script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-
-    $.ajaxSetup({
-        cache: false
-    });
-    
-    function showCreatePriceForm() {
-        getContentForModal("{{ path('prices.new.price') }}");
-    }
-    
-    function getEntity(id) {
-        let url = replacePlaceholder("{{ path('prices.get.price', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url);        
-    }
-    
-    function editEntry(id) {
-        let url = replacePlaceholder("{{ path('prices.get.price', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "", function() {
-            enableEditForm(id);
-            toggleStartEnd(id);
-        });        
-    }
-
-    function savePrice(id) {
-        // when the user forgot to click the + button, add the entered period automatically
-        addPeriod(document.querySelector("#addperiodbutton"), id);
-        let url = replacePlaceholder("{{ path('prices.edit.price', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
-    }
-
-    function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('prices.delete.price', {'id': 'placeholder'}) }}", id);
-        _deleteEntry(id, url);        
-    }
-
-    function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('prices.delete.price', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
-    }
-
-    function createNewPrice() {
-        // when the user forgot to click the + button, add the entered period automatically
-        addPeriod(document.querySelector("#addperiodbutton"), 'new');
-        let url = "{{ path('prices.create.price')}}";
-        _doPost('#entry-form-new', url, '{{ path('prices.overview') }}');
-        return false;
-    }
-
-    function checkIfTypeIsAppartment(id) {
-        if ($('#type-' + id).val() === "2") {
-            $('#price-form-fieldset-type-appartment-' + id).removeAttr('disabled');
-            $('#collapseThree-' + id).removeClass('collapse');
-            $('#headingThree-' + id + ' button').removeClass('text-secondary').removeClass('collapsed');
-            $('#headingThree-' + id + ' button').removeAttr('disabled');
-            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').attr('required', true);
-            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').attr('required', true);
-            $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').attr('required', true);
-        } else {
-            $('#price-form-fieldset-type-appartment-' + id).attr('disabled', true);
-            $('#collapseThree-' + id).addClass('collapse');
-            $('#headingThree-' + id + ' button').addClass('text-secondary').addClass('collapsed');
-            $('#headingThree-' + id + ' button').attr('disabled', true);
-            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-persons').removeAttr('required');
-            $('#price-form-fieldset-type-appartment-' + id + ' #number-of-beds').removeAttr('required');
-            $('#price-form-fieldset-type-appartment-' + id + ' #min-stay').removeAttr('required');
-        }
-
-        return false;
-    }
-
-    function checkAllCheckboxes(id) {
-        
-        if ($('#collapseTwo-' + id + ' #alldays-' + id).is(':checked')) {
-            $('.days-control :checkbox').prop('checked', true);
-        } else {
-            $('.days-control :checkbox').prop('checked', false);
-        }
-
-        return false;
-    }
-    
-    // enable or disable the fields to add a period depending whether the allperiods checkbox is checked or not
-    function toggleStartEnd(id) {
-        if ($('#collapseTwo-' + id + ' #allperiods-' + id).is(':checked')) {
-            $('#periodstart-'+ id).prop('disabled', true);
-            $('#periodend-'+ id).prop('disabled', true);
-        } else {
-            $('#periodstart-'+ id).prop('disabled', false);
-            $('#periodend-'+ id).prop('disabled', false);
-        }
-
-        return false;
-    }
-    </script>
 {% endblock %}

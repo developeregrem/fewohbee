@@ -1,4 +1,10 @@
-{{ form_start(form, {'attr': {'id':'entry-form-new', 'onsubmit':'return createNewApartment();'} }) }}
+{{ form_start(form, {'attr': {
+    'id':'entry-form-new',
+    'data-controller':'settings',
+    'data-action':'submit->settings#submitFormAction',
+    'data-url': path('apartments.new.apartment'),
+    'data-success-url': path('apartments.overview')
+} }) }}
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
