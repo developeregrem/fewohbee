@@ -1700,14 +1700,16 @@ export default class extends Controller {
                 return;
             }
             input.dataset.enhanced = 'true';
-            if (typeof $(input).delayKeyup === 'function') {
-                const mode = input.dataset.searchMode || '';
-                const tab = input.dataset.searchTab || '';
-                const appartment = input.dataset.searchAppartment || '';
-                $(input).delayKeyup(() => {
+            const mode = input.dataset.searchMode || '';
+            const tab = input.dataset.searchTab || '';
+            const appartment = input.dataset.searchAppartment || '';
+            let debounceTimer = null;
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = window.setTimeout(() => {
                     this.getCustomers(1, mode, tab, appartment);
                 }, 400);
-            }
+            });
         });
     }
 

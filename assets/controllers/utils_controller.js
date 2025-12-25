@@ -1,7 +1,3 @@
-/**
- * Shared utilities extracted from legacy scripts.js for reuse in Stimulus controllers.
- */
-
 export function setLocalStorageItemIfNotExists(key, value, forceUpdate = false) {
     if (localStorage.getItem(key) === null || forceUpdate) {
         localStorage.setItem(key, value);

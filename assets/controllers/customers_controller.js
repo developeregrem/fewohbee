@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest, getContentForModal } from './http_controller.js';
+import { request as httpRequest } from './http_controller.js';
 import { setModalTitle } from './utils_controller.js';
 
 export default class extends Controller {
@@ -55,7 +55,13 @@ export default class extends Controller {
             return;
         }
         setModalTitle(title);
-        getContentForModal(url, title);
+        const target = document.getElementById('modal-content-ajax');
+        
+        httpRequest({
+            url,
+            method: 'GET',
+            target,
+        });
     }
 
     performSearch() {

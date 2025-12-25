@@ -12,7 +12,7 @@
     <div class="container" data-controller="invoices">
         <div class="row justify-content-between">
             <div class="col-md-4">
-                <button type="button" class="btn btn-default" data-action="click->invoices#showCreateInvoiceFormAction"
+                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction"
                         data-url="{{ path('invoices.new.invoice') }}" data-create-new="true"
                         data-title="{{ 'invoice.select.open.reservation'|trans }}"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">

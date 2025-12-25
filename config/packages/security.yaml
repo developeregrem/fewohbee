@@ -16,11 +16,12 @@ security:
             #pattern:    ^/
             provider: our_db_provider
             webauthn: 
+                authentication:
+                    routes:
+                        options_path: /login/webauthn/options
+                        result_path: /login/webauthn
                 registration:
                     enabled: true
-                secured_rp_ids:
-                   - 'localhost'
-                   - 'alexanders-mbp.localdomain'
             form_login:
                 login_path: login
                 check_path: login
