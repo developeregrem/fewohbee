@@ -175,7 +175,7 @@ class AppTwigExtensions extends AbstractExtension
     public function getActiveRouteNameFilter()
     {
         $request = $this->requestStack->getCurrentRequest();
-        $route = $request?->attributes->get('_route');
+        $route = str_replace('_', '.', $request?->attributes->get('_route'));
 
         return $route;
     }
