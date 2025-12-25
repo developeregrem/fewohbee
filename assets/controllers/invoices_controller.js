@@ -1,7 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import {
     request as httpRequest,
-    getContentForModal as httpGetContentForModal,
     serializeForm as httpSerializeForm,
 } from './http_controller.js';
 import {
@@ -44,9 +43,17 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         if (!url) return;
-        setModalTitle(event.currentTarget.dataset.title);
-        httpGetContentForModal(url, event.currentTarget.dataset.title || '', () => {
-            enableDeletePopover();
+        const title = event.currentTarget.dataset.title || '';
+        setModalTitle(title);
+        const target = this.modalContent || document.getElementById('modal-content-ajax');
+        
+        httpRequest({
+            url,
+            method: 'GET',
+            target,
+            onComplete: () => {
+                enableDeletePopover();
+            },
         });
     }
 
@@ -55,10 +62,17 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const edit = event.currentTarget.dataset.edit === 'true';
         if (!url) return;
-        httpGetContentForModal(url, event.currentTarget.dataset.title || '', () => {
-            if (edit) {
-                this.toggleInvoiceEditFields();
-            }
+        const target = this.modalContent || document.getElementById('modal-content-ajax');
+        
+        httpRequest({
+            url,
+            method: 'GET',
+            target,
+            onComplete: () => {
+                if (edit) {
+                    this.toggleInvoiceEditFields();
+                }
+            },
         });
     }
 
@@ -123,7 +137,13 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         if (!url) return;
-        httpGetContentForModal(url, '');
+        const target = this.modalContent || document.getElementById('modal-content-ajax');
+        
+        httpRequest({
+            url,
+            method: 'GET',
+            target,
+        });
     }
 
     createInvoiceAction(event) {
