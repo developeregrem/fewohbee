@@ -42,6 +42,9 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        validation:
+            not_compromised_password:
+                enabled: false
 
 when@dev:
     framework:
