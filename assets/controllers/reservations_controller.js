@@ -223,9 +223,10 @@ export default class extends Controller {
         event.preventDefault();
         const tab = event.currentTarget.dataset.tab || null;
         const url = event.currentTarget.dataset.url;
+        const reservationId = event.currentTarget.dataset.reservationId || null;
         window.lastClickedReservationUrl = url;
         if (url) {
-            this.getReservation(url, tab);
+            this.getReservation(reservationId === 'new' ? reservationId : url, tab);
         }
     }
 

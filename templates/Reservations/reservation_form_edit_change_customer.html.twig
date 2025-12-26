@@ -1,6 +1,7 @@
 <div data-controller="reservations"
      data-edit-reservation-customer-change-url-template="{{ path('reservations.edit.customer.change', {'id': 'placeholder'}) }}"
-     data-reservation-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}">
+     data-reservation-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+     data-preview-url="{{ path('reservations.create.preview') }}">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
