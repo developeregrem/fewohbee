@@ -51,8 +51,6 @@ class ReservationOriginService
     /**
      * Delete origin if its not used in reservations.
      *
-     * @param int $id
-     *
      * @return bool
      */
     public function deleteOrigin(ReservationOrigin $origin)

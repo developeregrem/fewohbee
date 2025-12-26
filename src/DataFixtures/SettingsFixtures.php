@@ -68,9 +68,9 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
     private function createRoomCategories(ObjectManager $manager): void
     {
         $roomCats = [
-                $this->translator->trans('category.single'),
-                $this->translator->trans('category.double'),
-            ];
+            $this->translator->trans('category.single'),
+            $this->translator->trans('category.double'),
+        ];
         foreach ($roomCats as $roomCat) {
             $cat = new RoomCategory();
             $cat->setName($roomCat);
@@ -81,9 +81,9 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
     private function createOrigins(ObjectManager $manager): void
     {
         $origins = [
-                $this->translator->trans('reservationorigin.private'),
-                $this->translator->trans('reservationorigin.business'),
-            ];
+            $this->translator->trans('reservationorigin.private'),
+            $this->translator->trans('reservationorigin.business'),
+        ];
         foreach ($origins as $origin) {
             $o = new ReservationOrigin();
             $o->setName($origin);
@@ -96,7 +96,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         // create 10 room, 5 single, 5 double
         for ($i = 1; $i <= 10; ++$i) {
             $app = new Appartment();
-            $app->setNumber((string)$i);
+            $app->setNumber((string) $i);
             $app->setObject($subsidiary);
             if ($i > 5) {
                 $app->setBedsMax(2);
@@ -185,16 +185,16 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
     private function createReservationStatus(ObjectManager $manager): void
     {
         $reservationStatus = [
-                [
-                    'name' => $this->translator->trans('status.confirmed'),
-                    'color' => '#2D9434',
-                    'contrast' => '#ffffff',
-                ], [
-                    'name' => $this->translator->trans('status.option'),
-                    'color' => '#f6e95c',
-                    'contrast' => '#000000',
-                ],
-            ];
+            [
+                'name' => $this->translator->trans('status.confirmed'),
+                'color' => '#2D9434',
+                'contrast' => '#ffffff',
+            ], [
+                'name' => $this->translator->trans('status.option'),
+                'color' => '#f6e95c',
+                'contrast' => '#000000',
+            ],
+        ];
         foreach ($reservationStatus as $status) {
             $rs = new ReservationStatus();
             $rs->setName($status['name']);

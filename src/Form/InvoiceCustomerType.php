@@ -6,8 +6,8 @@ namespace App\Form;
 
 use App\Entity\Invoice;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Iban;
@@ -60,7 +60,7 @@ class InvoiceCustomerType extends AbstractType
                 'help' => 'customer.cardHolder.hint',
                 'required' => false,
             ])
-            ->add ('cardNumber', TextType::class, [
+            ->add('cardNumber', TextType::class, [
                 'label' => 'customer.cardNumber',
                 'required' => false,
             ])
@@ -69,8 +69,8 @@ class InvoiceCustomerType extends AbstractType
                 'help' => 'customer.accountIBAN.hint',
                 'required' => false,
                 'constraints' => [
-                    new Iban()
-                ]
+                    new Iban(),
+                ],
             ])
             ->add('mandateReference', TextType::class, [
                 'label' => 'customer.mandateReference.label',

@@ -35,12 +35,12 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
     {
         $baseUrl = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
         $templates = [
-                'TEMPLATE_GDPR_PDF' => 'dsgvo-export.txt',
-                'TEMPLATE_CASHJOURNAL_PDF' => 'kassenblatt.txt',
-                'TEMPLATE_RESERVATION_EMAIL' => 'email-buchungsbestätigung.txt',
-                'TEMPLATE_RESERVATION_PDF' => 'pdf-reservierungsbestätigung.txt',
-                'TEMPLATE_INVOICE_PDF' => 'rechnung-default.txt',
-            ];
+            'TEMPLATE_GDPR_PDF' => 'dsgvo-export.txt',
+            'TEMPLATE_CASHJOURNAL_PDF' => 'kassenblatt.txt',
+            'TEMPLATE_RESERVATION_EMAIL' => 'email-buchungsbestätigung.txt',
+            'TEMPLATE_RESERVATION_PDF' => 'pdf-reservierungsbestätigung.txt',
+            'TEMPLATE_INVOICE_PDF' => 'rechnung-default.txt',
+        ];
         $types = $manager->getRepository(TemplateType::class)->findAll();
         $client = HttpClient::create();
         /* @var $type TemplateType */

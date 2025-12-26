@@ -39,9 +39,9 @@ class LastActionSubscriber implements EventSubscriberInterface
     {
         // return the subscribed events, their methods and priorities
         return [
-           KernelEvents::FINISH_REQUEST => [
-               ['updateLastAction', -10],
-           ],
+            KernelEvents::FINISH_REQUEST => [
+                ['updateLastAction', -10],
+            ],
         ];
     }
 
@@ -57,9 +57,9 @@ class LastActionSubscriber implements EventSubscriberInterface
                 $user2 = $this->em->getRepository(User::class)->find($user->getId());
 
                 if ($this->em->isOpen()) {
-                    //$user2->setLastAction(new \DateTime());
-                    //$this->em->persist($user2);
-                    //$this->em->flush();
+                    // $user2->setLastAction(new \DateTime());
+                    // $this->em->persist($user2);
+                    // $this->em->flush();
                 }
             }
         }

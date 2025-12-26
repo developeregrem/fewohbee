@@ -12,7 +12,7 @@ final class WebauthnUserEntityRepository implements PublicKeyCredentialUserEntit
 {
     /**
      * The UserRepository $userRepository is the repository
-     * that already exists in the application
+     * that already exists in the application.
      */
     public function __construct(private UserRepository $userRepository)
     {
@@ -39,11 +39,11 @@ final class WebauthnUserEntityRepository implements PublicKeyCredentialUserEntit
     }
 
     /**
-     * Converts a Symfony User (if any) into a Webauthn User Entity
+     * Converts a Symfony User (if any) into a Webauthn User Entity.
      */
-    private function getUserEntity(null|User $user): ?PublicKeyCredentialUserEntity
+    private function getUserEntity(?User $user): ?PublicKeyCredentialUserEntity
     {
-        if ($user === null) {
+        if (null === $user) {
             return null;
         }
 

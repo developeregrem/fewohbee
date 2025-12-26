@@ -23,7 +23,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/settings/prices')]
 class PriceServiceController extends AbstractController
@@ -174,8 +174,8 @@ class PriceServiceController extends AbstractController
     public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, Price $entry)
     {
         if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
-                $price = $ps->deletePrice($entry);
-                $this->addFlash('success', 'price.flash.delete.success');
+            $price = $ps->deletePrice($entry);
+            $this->addFlash('success', 'price.flash.delete.success');
         } else {
             $this->addFlash('warning', 'flash.invalidtoken');
         }

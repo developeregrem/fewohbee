@@ -21,9 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Interfaces\ITemplateRenderer;
-use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -34,13 +32,14 @@ class TemplatesService
 {
     private $webHost;
 
-    public function __construct(string $webHost, 
-        private Environment $twig, 
-        private EntityManagerInterface $em, 
-        private RequestStack $requestStack, 
-        private MpdfService $mpdfs, 
-        private TranslatorInterface $translator)
-    {
+    public function __construct(
+        string $webHost,
+        private Environment $twig,
+        private EntityManagerInterface $em,
+        private RequestStack $requestStack,
+        private MpdfService $mpdfs,
+        private TranslatorInterface $translator
+    ) {
         $this->webHost = $webHost;
     }
 
@@ -108,8 +107,8 @@ class TemplatesService
     {
         /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
-        if(!($template instanceof Template)) {
-            throw new InvalidArgumentException($this->translator->trans('templates.notfound'));
+        if (!($template instanceof Template)) {
+            throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
         }
 
         $params = [];
@@ -305,6 +304,7 @@ class TemplatesService
         if (null != $defaultTemplate) {
             $templateId = $defaultTemplate->getId();
         }
+
         return $requestStack->getSession()->get($sessionName, $templateId);
     }
 

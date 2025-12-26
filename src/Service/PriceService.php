@@ -42,7 +42,7 @@ class PriceService
 
         $price->setDescription($request->request->get('description-'.$id));
         $price->setPrice(str_replace(',', '.', $request->request->get('price-'.$id)));
-        $price->setVat((float)str_replace(',', '.', $request->request->get('vat-'.$id)));
+        $price->setVat((float) str_replace(',', '.', $request->request->get('vat-'.$id)));
         $price->setType($request->request->get('type-'.$id));
 
         $this->setOrigins($request, $price, $id);

@@ -21,7 +21,6 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
-use App\Service\ReservationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -44,10 +43,10 @@ class InvoiceService implements ITemplateRenderer
      * @param array $apps            The invoice positions for apartment prices
      * @param array $poss            The invoice positions for miscellaneous prices
      * @param array $vats            Returns array of all vat values
-     * @param float  $brutto          Returns the total price including vat
-     * @param float  $netto           Returns the toal price for all vats
-     * @param float  $appartmentTotal Returns the total sum for all apartment prices
-     * @param float  $miscTotal       Returns the total price for all miscellaneous prices
+     * @param float $brutto          Returns the total price including vat
+     * @param float $netto           Returns the toal price for all vats
+     * @param float $appartmentTotal Returns the total sum for all apartment prices
+     * @param float $miscTotal       Returns the total price for all miscellaneous prices
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
@@ -229,7 +228,7 @@ class InvoiceService implements ITemplateRenderer
             'numbers' => $appartmentNumbers,
             'appartmentTotal' => number_format($appartmantTotal, 2, ',', '.'),
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
-            ];
+        ];
 
         return $params;
     }
