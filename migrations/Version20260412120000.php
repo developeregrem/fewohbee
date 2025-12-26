@@ -20,7 +20,6 @@ final class Version20260412120000 extends AbstractMigration
         $this->addSql('ALTER TABLE webauthn_credentials ADD created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP');
         $this->addSql('UPDATE webauthn_credentials SET created_at = NOW() WHERE created_at IS NULL');
         $this->addSql('ALTER TABLE webauthn_credentials ALTER created_at DROP DEFAULT');
-        $this->addSql('ALTER TABLE webauthn_credentials DROP created_at');
     }
 
     public function down(Schema $schema): void
