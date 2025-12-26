@@ -19,7 +19,6 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class AppartmentService
 {
-
     public function __construct(private readonly EntityManagerInterface $em)
     {
     }

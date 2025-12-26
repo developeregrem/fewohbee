@@ -296,7 +296,11 @@ export default class extends Controller {
         event.preventDefault();
         const url = event.currentTarget.dataset.url;
         if (!url) return;
-        httpGetContentForModal(url, '');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
     }
 
     showCreateInvoicePositionsAction(event) {

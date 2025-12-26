@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Correspondence;
-use App\Entity\Customer;
 use App\Entity\FileCorrespondence;
 use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
@@ -32,7 +31,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
@@ -155,7 +154,7 @@ class TemplatesServiceController extends AbstractController
     #[Route('/{id}/delete', name: 'settings.templates.delete', methods: ['DELETE'])]
     public function deleteAction(TemplatesService $ts, Request $request, Template $template): Response
     {
-       if ($this->isCsrfTokenValid('delete'.$template->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$template->getId(), $request->request->get('_token'))) {
             $countCor = $template->getCorrespondences()->count();
 
             if ($countCor > 0) {
@@ -218,8 +217,8 @@ class TemplatesServiceController extends AbstractController
     {
         if ('true' == $request->query->get('createNew')) {
             $reservationService->resetSelectedReservations();
-        // reset session variables
-        // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
+            // reset session variables
+            // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
         }
 
         if (!$reservationService->hasSelectedReservations()) {
@@ -541,6 +540,6 @@ class TemplatesServiceController extends AbstractController
 
         return $this->json([
             'location' => $path,
-            ]);
+        ]);
     }
 }

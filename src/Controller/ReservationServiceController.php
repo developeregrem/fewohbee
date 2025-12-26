@@ -41,9 +41,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Uid\Uuid;
 
 #[IsGranted('ROLE_RESERVATIONS_RO')] // ROLE_RESERVATIONS is included
 #[Route('/reservation')]
@@ -139,12 +139,12 @@ class ReservationServiceController extends AbstractController
 
         if (null == $interval) {
             $interval = 30;
-        } else if($interval < 8) {
+        } elseif ($interval < 8) {
             $interval = 8;
-        } else if($interval > 180) {
+        } elseif ($interval > 180) {
             $interval = 180;
         } else {
-            $interval = (int)$interval;
+            $interval = (int) $interval;
         }
 
         if (null == $objectId || 'all' == $objectId) {
@@ -164,7 +164,7 @@ class ReservationServiceController extends AbstractController
             'interval' => $interval,
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
-            'objectId' => $objectId
+            'objectId' => $objectId,
         ]);
     }
 
@@ -179,12 +179,11 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $year = $request->query->get('year', date('Y'));
         $apartmentId = $request->query->get('apartment');
-        if(null == $apartmentId) {
+        if (null == $apartmentId) {
             $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
             $apartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
         }
         $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
-
 
         if (!$apartment instanceof Appartment) {
             throw new NotFoundHttpException();
@@ -541,7 +540,7 @@ class ReservationServiceController extends AbstractController
         if (is_array($customersInSession)) {
             foreach ($customersInSession as $customer) {
                 $customers[] = ['c' => $em->getRepository(Customer::class)->find($customer['id']),
-                                     'appartmentId' => $customer['appartmentId'], ];
+                    'appartmentId' => $customer['appartmentId'], ];
             }
         } else {
             // initial set booker as customer (guest in room)
@@ -657,7 +656,7 @@ class ReservationServiceController extends AbstractController
                     $price = $em->getRepository(Price::class)->find($priceInCreation->getId());
                     $reservation->addPrice($price);
                 }
-                if(!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
+                if (!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
                     $this->addFlash('warning', 'reservation.flash.update.conflict.persons');
                 }
                 $em->persist($reservation);
@@ -790,7 +789,7 @@ class ReservationServiceController extends AbstractController
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
+    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation): Response
     {
         $success = $rs->updateReservation($request, $reservation);
         if (!$success) {
@@ -1049,7 +1048,7 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     #[Route('/edit/customer/edit/save', name: 'reservations.edit.customer.edit.save', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]

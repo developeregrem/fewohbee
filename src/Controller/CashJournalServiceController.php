@@ -24,7 +24,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -201,7 +201,7 @@ class CashJournalServiceController extends AbstractController
             }
             $em->persist($journal);
             $em->flush();
-            //$this->addFlash('success', 'journal.flash.edit.status.success');
+        // $this->addFlash('success', 'journal.flash.edit.status.success');
         } else {
             $this->addFlash('warning', 'journal.flash.edit.status.warning');
         }
@@ -220,7 +220,6 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         if ($this->isCsrfTokenValid('delete'.$journal->getId(), $request->request->get('_token'))) {
-
             // check if journal is closed
             if ($journal->getIsClosed()) {
                 $this->addFlash('warning', 'flash.access.denied');
@@ -370,7 +369,6 @@ class CashJournalServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
-
             // check if journal is closed
             if ($entry->getCashJournal()->getIsClosed()) {
                 $this->addFlash('warning', 'flash.access.denied');
@@ -402,6 +400,7 @@ class CashJournalServiceController extends AbstractController
             $templateOutput = $ts->renderTemplate($templateId, $journal->getId(), $cjs);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
+
             return $this->redirect($this->generateUrl('cashjournal.overview'));
         }
 

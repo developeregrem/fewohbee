@@ -4,38 +4,35 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Form\ProfilePersonalDataType;
+use App\Repository\WebauthnCredentialRepository;
+use App\Service\UserService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Webauthn\Bundle\Repository\PublicKeyCredentialUserEntityRepositoryInterface;
-use Webauthn\PublicKeyCredentialSource;
-use App\Repository\WebauthnCredentialRepository;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use App\Entity\User;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use Doctrine\Persistence\ManagerRegistry;
-use App\Service\UserService;
+use Webauthn\Bundle\Repository\PublicKeyCredentialUserEntityRepositoryInterface;
 
 #[Route('/profile')]
 final class ProfileController extends AbstractController
 {
-
     public function __construct(
         private readonly PublicKeyCredentialUserEntityRepositoryInterface $keyCredentialUserEntityRepository,
         private readonly WebauthnCredentialRepository $keyCredentialSourceRepository,
         private readonly CsrfTokenManagerInterface $csrfTokenManager
     ) {
     }
-    
+
     #[Route('/', name: 'profile', methods: [Request::METHOD_GET, Request::METHOD_POST])]
     public function __invoke(TokenStorageInterface $tokenStorage, Request $request, ManagerRegistry $doctrine, UserService $userService): Response
     {
         $user = $this->getUser();
-        if (! $user instanceof User) {
+        if (!$user instanceof User) {
             throw new AccessDeniedHttpException();
         }
 
@@ -55,14 +52,14 @@ final class ProfileController extends AbstractController
 
         $credentials = [];
         if ($passkeyEnabled) {
-            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
-            if ($userEntity === null) {
+            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string) $user->getId());
+            if (null === $userEntity) {
                 throw new AccessDeniedHttpException();
             }
 
             $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
-            
         }
+
         return $this->render('Profile/index.html.twig', [
             'token' => $tokenStorage->getToken(),
             'credentials' => $credentials,
@@ -73,18 +70,18 @@ final class ProfileController extends AbstractController
     #[Route('/passkey/delete/{id}', name: 'profile_delete_credential', methods: ['GET', 'DELETE'], requirements: ['id' => '.+'])]
     public function deleteCredential(Request $request, ManagerRegistry $doctrine, string $id): Response
     {
-        if (! $this->isPasskeyEnabled()) {
+        if (!$this->isPasskeyEnabled()) {
             throw $this->createNotFoundException();
         }
 
         if ($this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
             $user = $this->getUser();
-            if (! $user instanceof User) {
+            if (!$user instanceof User) {
                 throw new AccessDeniedHttpException();
             }
 
-            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string)$user->getId());
-            if ($userEntity === null) {
+            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string) $user->getId());
+            if (null === $userEntity) {
                 throw new AccessDeniedHttpException();
             }
 

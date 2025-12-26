@@ -128,8 +128,8 @@ class CashJournalService implements ITemplateRenderer
         $journal = $this->em->getRepository(CashJournal::class)->find($param);
 
         $params = [
-                'journal' => $journal,
-            ];
+            'journal' => $journal,
+        ];
 
         return $params;
     }

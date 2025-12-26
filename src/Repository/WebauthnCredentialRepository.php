@@ -2,14 +2,14 @@
 
 namespace App\Repository;
 
+use App\Entity\WebauthnCredential;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Webauthn\Bundle\Repository\CanSaveCredentialSource;
+use Webauthn\Bundle\Repository\PublicKeyCredentialSourceRepositoryInterface;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialUserEntity;
-use Webauthn\Bundle\Repository\PublicKeyCredentialSourceRepositoryInterface;
-use Webauthn\Bundle\Repository\CanSaveCredentialSource;
-use App\Entity\WebauthnCredential;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class WebauthnCredentialRepository extends ServiceEntityRepository implements PublicKeyCredentialSourceRepositoryInterface, CanSaveCredentialSource
 {
@@ -69,7 +69,7 @@ final class WebauthnCredentialRepository extends ServiceEntityRepository impleme
 
     private function detectClientLabel(?string $userAgent): ?string
     {
-        if ($userAgent === null) {
+        if (null === $userAgent) {
             return null;
         }
 
@@ -79,19 +79,19 @@ final class WebauthnCredentialRepository extends ServiceEntityRepository impleme
         $isFirefox = str_contains($ua, 'firefox') || str_contains($ua, 'fxios');
 
         if (str_contains($ua, 'iphone') || str_contains($ua, 'ipad') || str_contains($ua, 'ipod')) {
-            return 'iOS' . ($isSafari ? ' (Safari)' : '');
+            return 'iOS'.($isSafari ? ' (Safari)' : '');
         }
 
         if (str_contains($ua, 'android')) {
-            return 'Android' . ($isChrome ? ' (Chrome)' : '');
+            return 'Android'.($isChrome ? ' (Chrome)' : '');
         }
 
         if (str_contains($ua, 'macintosh') || str_contains($ua, 'mac os')) {
-            return 'macOS' . ($isSafari ? ' (Safari)' : ($isChrome ? ' (Chrome)' : ''));
+            return 'macOS'.($isSafari ? ' (Safari)' : ($isChrome ? ' (Chrome)' : ''));
         }
 
         if (str_contains($ua, 'windows')) {
-            return 'Windows' . ($isChrome ? ' (Chrome)' : ($isFirefox ? ' (Firefox)' : ''));
+            return 'Windows'.($isChrome ? ' (Chrome)' : ($isFirefox ? ' (Firefox)' : ''));
         }
 
         if (str_contains($ua, 'cros')) {

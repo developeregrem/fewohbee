@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[IsGranted('ROLE_STATISTICS')]
@@ -60,7 +60,7 @@ class StatisticsController extends AbstractController
 
         $start = new \DateTimeImmutable($yearStart.'-'.$monthStart.'-01');
         // DatePeriod excludes the end date, so we move it to the first day of the month after the end
-        $periodEnd = (new \DateTimeImmutable($yearEnd.'-'.$monthEnd.'-01'))->modify('first day of next month');
+        $periodEnd = new \DateTimeImmutable($yearEnd.'-'.$monthEnd.'-01')->modify('first day of next month');
         $period = new \DatePeriod($start, new \DateInterval('P1M'), $periodEnd);
 
         $result = [

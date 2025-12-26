@@ -13,36 +13,35 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Customer;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
+use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Form\InvoiceApartmentPositionType;
 use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
-use App\Service\CSRFProtectionService;
-use App\Entity\InvoiceSettingsData;
 use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
+use App\Service\CSRFProtectionService;
 use App\Service\InvoiceService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use App\Service\XRechnungService;
-use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Component\HttpFoundation\HeaderUtils;
-use Symfony\Component\Form\FormError;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_INVOICES')]
 #[Route('/invoices')]
@@ -453,7 +452,7 @@ class InvoiceServiceController extends AbstractController
             $this->addFlash('success', 'invoice.flash.edit.success');
 
             return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $invoiceId,
+                'id' => $invoiceId,
             ]);
         }
     }
@@ -596,7 +595,7 @@ class InvoiceServiceController extends AbstractController
             $this->addFlash('success', 'invoice.flash.edit.success');
 
             return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $invoiceId,
+                'id' => $invoiceId,
             ]);
         }
     }
@@ -688,7 +687,7 @@ class InvoiceServiceController extends AbstractController
 
             $em->flush();
 
-            $this->addFlash('success', 'invoice.flash.create.success'); 
+            $this->addFlash('success', 'invoice.flash.create.success');
         }
 
         return $this->render(
@@ -802,8 +801,8 @@ class InvoiceServiceController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($invoice);
             $em->flush();
-            $this->addFlash('success', 'invoice.flash.edit.success');  
-            
+            $this->addFlash('success', 'invoice.flash.edit.success');
+
             return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
                 'id' => $invoice->getId(),
             ]);
@@ -833,9 +832,10 @@ class InvoiceServiceController extends AbstractController
             $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
+
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
-        
+
         $template = $em->getRepository(Template::class)->find($templateId);
 
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
@@ -850,15 +850,17 @@ class InvoiceServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
-        if(!($invoiceSettings instanceof InvoiceSettingsData)) {
+        if (!($invoiceSettings instanceof InvoiceSettingsData)) {
             $this->addFlash('danger', 'invoice.settings.active.error');
+
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
-        $xml = "";
+        $xml = '';
         try {
             $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
+
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
@@ -887,10 +889,10 @@ class InvoiceServiceController extends AbstractController
 
             // here we handel the edit request which is forwarded to this route when clicking on save in the modal
             $parentRequest = $requestStack->getParentRequest();
-            if($parentRequest instanceof Request) {
+            if ($parentRequest instanceof Request) {
                 $routeParameters = $parentRequest->attributes->get('_route_params');
-                if($routeParameters !== null && isset($routeParameters['id']) && $routeParameters['id'] == $setting->getId()) {
-                	$form->handleRequest($parentRequest);
+                if (null !== $routeParameters && isset($routeParameters['id']) && $routeParameters['id'] == $setting->getId()) {
+                    $form->handleRequest($parentRequest);
                     $editSettingId = $setting->getId();
                 }
             }
@@ -898,9 +900,9 @@ class InvoiceServiceController extends AbstractController
         }
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-        
+
         $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
-        
+
         return $this->render('Invoices/invoice_form_settings.html.twig', [
             'settings' => $settings,
             'forms' => $forms,
@@ -920,9 +922,8 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if(!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms()) ) 
-            {
-                if($setting->isActive()) {
+            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
+                if ($setting->isActive()) {
                     $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
                 }
                 $doctrine->getManager()->persist($setting);
@@ -936,7 +937,7 @@ class InvoiceServiceController extends AbstractController
                 $this->addFlash('warning', 'invoice.settings.paymentterm.error');
                 $form['paymentDueDays']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
                 $form['paymentTerms']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
-            }   
+            }
         }
 
         return $this->render('Invoices/invoice_form_settings_new.html.twig', [
@@ -955,20 +956,19 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if(!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms()) ) 
-            {
-                if($setting->isActive()) {
+            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
+                if ($setting->isActive()) {
                     $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
-
                 }
                 $doctrine->getManager()->flush();
 
                 // add success message
-                $this->addFlash('success', 'invoice.settings.flash.edit.success');  
+                $this->addFlash('success', 'invoice.settings.flash.edit.success');
             } else {
                 $this->addFlash('warning', 'invoice.settings.paymentterm.error');
-            }           
+            }
         }
+
         return $this->forward('App\Controller\InvoiceServiceController::getSettings');
     }
 
