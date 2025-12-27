@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
@@ -20,7 +21,8 @@ final class Version20190802123327 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $platform = $this->connection->getDatabasePlatform();
+        $this->abortIf(! $platform instanceof AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('CREATE TABLE appartments (id INT AUTO_INCREMENT NOT NULL, object_id INT DEFAULT NULL, number VARCHAR(10) NOT NULL, beds_min SMALLINT NOT NULL, beds_max SMALLINT NOT NULL, description VARCHAR(255) NOT NULL, INDEX IDX_A67E5E3A232D562B (object_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
         $this->addSql('CREATE TABLE cash_journal (id INT AUTO_INCREMENT NOT NULL, cash_year SMALLINT UNSIGNED NOT NULL, cash_month SMALLINT UNSIGNED NOT NULL, cash_start NUMERIC(13, 2) NOT NULL, cash_end NUMERIC(13, 2) DEFAULT NULL, is_closed TINYINT(1) NOT NULL, is_booked TINYINT(1) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
@@ -76,7 +78,8 @@ final class Version20190802123327 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $platform = $this->connection->getDatabasePlatform();
+        $this->abortIf(! $platform instanceof AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE reservations DROP FOREIGN KEY FK_4DA2392714DC20');
         $this->addSql('ALTER TABLE cash_journal_entries DROP FOREIGN KEY FK_E92E3C1DF3608108');
