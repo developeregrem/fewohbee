@@ -1625,6 +1625,22 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     stimulus?: StimulusConfig,
  *     turbo?: TurboConfig,
  *     webauthn_stimulus?: WebauthnStimulusConfig,
+ *     "when@debug"?: array{
+ *         imports?: ImportsConfig,
+ *         parameters?: ParametersConfig,
+ *         services?: ServicesConfig,
+ *         framework?: FrameworkConfig,
+ *         twig?: TwigConfig,
+ *         security?: SecurityConfig,
+ *         doctrine?: DoctrineConfig,
+ *         doctrine_migrations?: DoctrineMigrationsConfig,
+ *         monolog?: MonologConfig,
+ *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
+ *         webauthn?: WebauthnConfig,
+ *         stimulus?: StimulusConfig,
+ *         turbo?: TurboConfig,
+ *         webauthn_stimulus?: WebauthnStimulusConfig,
+ *     },
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1773,6 +1789,7 @@ namespace Symfony\Component\Routing\Loader\Configurator;
  *     deprecated?: array{package:string, version:string, message?:string},
  * }
  * @psalm-type RoutesConfig = array{
+ *     "when@debug"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@dev"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@prod"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@redis"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
