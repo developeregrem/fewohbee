@@ -9,7 +9,7 @@
 <tbody>
     {% for customer in customers %}
         {% if customer.id != 0 %}
-            <tr onclick="return getReservationPreview({{ customer.id }})">
+            <tr data-action="click->reservations#reservationPreviewAction" data-customer-id="{{ customer.id }}">
                 <td>{{ customer.firstname }}</td>
                 <td>{{ customer.lastname }}</td>
                 <td>{% if customer.birthday %} {{ customer.birthday|date('d.m.Y') }} {% endif %}</td>
@@ -19,11 +19,7 @@
 </tbody>
 </table>
 
-{% include 'paginator.html.twig' with { 'url' : '#' } %}
-
-<script type="text/javascript">
-    // enable js click for selecting pages
-    $("#pagination a").click(function () {
-        getCustomers($(this).attr("data-page"));
-    });
-</script>
+<div data-reservations-pagination="customers"
+     data-reservations-pagination-mode="show">
+    {% include 'paginator.html.twig' with { 'url' : '#' } %}
+</div>

@@ -4,36 +4,36 @@
             <div class="col"> 
                 <div class="btn-group">
                         <button type="button" id="button-filter-time" class="btn btn-primary"
-                                onclick="return showTimeFilter()">{{ 'invoice.open.reservations.filter.time'|trans }}</button>
+                                data-action="click->reservations#showTimeFilterAction">{{ 'invoice.open.reservations.filter.time'|trans }}</button>
                         <button type="button" id="button-filter-customer" class="btn btn-secondary"
-                                onclick="return showCustomerFilter()">{{ 'invoice.open.reservations.filter.customer'|trans }}</button>
+                                data-action="click->reservations#showCustomerFilterAction">{{ 'invoice.open.reservations.filter.customer'|trans }}</button>
                 </div>
             </div>
         </div>
-        <div id="container-invoice-filter-reservations-period" class="mt-4">
-            <form id="invoice-filter-reservations-period" role="form">
+        <div id="container-filter-reservations-period" class="mt-4">
+            <form id="filter-reservations-period" role="form">
                 <div class="row">
                     <div class="col">
                             <input type="date" class="form-control" id="from" name="from" 
-                                   placeholder="{{ 'invoice.startdate'|trans }}" onchange="getReservationsInPeriod()">
+                                   placeholder="{{ 'invoice.startdate'|trans }}" data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
                     </div>
                     <div class="col">
                         <input type="date" class="form-control" id="end" name="end" 
-                               placeholder="{{ 'invoice.enddate'|trans }}" onchange="getReservationsInPeriod()">
+                               placeholder="{{ 'invoice.enddate'|trans }}" data-action="change->reservations#getReservationsInPeriodAction" data-url="{{ path('reservations.get.reservations.in.period') }}">
                     </div>
                 </div>
             </form>
         </div>
         <div class="row">
-            <div id="container-invoice-filter-reservations-customer" class="col d-none mt-4">
-               <form id="invoice-filter-reservations-customer-name" role="form" onsubmit="return getReservationsByCustomerName()">
+            <div id="container-filter-reservations-customer" class="col d-none mt-4">
+               <form id="filter-reservations-customer-name" role="form" data-action="submit->reservations#getReservationsByCustomerNameAction" data-url="{{ path('reservations.get.reservations.for.customer') }}">
                     <input type="input" class="form-control" id="lastname" name="lastname"
                            placeholder="{{ 'invoice.select.customer.search.input.placeholder'|trans }}">
                 </form>
             </div>
         </div>
         <div class="row mt-4">
-            <div id="container-invoice-filter-reservations-result" class="col">
+            <div id="container-filter-reservations-result" class="col">
             </div>
         </div>
     </div>

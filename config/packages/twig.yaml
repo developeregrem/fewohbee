@@ -9,3 +9,4 @@ twig:
     form_themes: ['form/fewohbee_bootstrap_5_layout.html.twig']
     globals:
         customer_salutations: '%customer_salutations%'
+        passkey_enabled: '%passkey_enabled%'

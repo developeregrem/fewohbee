@@ -1,4 +1,9 @@
-{{ form_start(form, {'attr': {'id':'entry-form-'~apartment.id, 'onsubmit':'return saveAppartment('~ apartment.id ~');'} }) }}
+{{ form_start(form, {'attr': {
+    'id':'entry-form-'~apartment.id,
+    'data-controller':'settings',
+    'data-action':'submit->settings#submitFormAction',
+    'data-url': path('apartments.edit.apartment', {'id': apartment.id})
+} }) }}
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
@@ -6,7 +11,11 @@
             <div class="col">
                 <h4 class="pb-2">
                     <small>
-                    <a href="#" onclick="return enableEditForm({{ apartment.id }})"
+                    <a href="#"
+                       data-action="click->settings#enableEditAction"
+                       data-fieldset-selector="#entry-form-fieldset-{{ apartment.id }}"
+                       data-save-selector="#entry-submit-{{ apartment.id }}"
+                       data-edit-area-selector="#edit-button-area"
                        title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>

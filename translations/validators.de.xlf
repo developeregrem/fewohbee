@@ -6,6 +6,10 @@
                 <source>form.email.notblank</source>
                 <target>Bitte geben Sie ihre E-Mail Adresse ein.</target>
             </trans-unit>
+            <trans-unit id="form.email.invalid">
+                <source>form.email.invalid</source>
+                <target>Bitte geben Sie eine gültige E-Mail-Adresse ein.</target>
+            </trans-unit>
             <trans-unit id="form.password.notblank">
                 <source>form.password.notblank</source>
                 <target>Bitte geben Sie ein Passwort ein.</target>

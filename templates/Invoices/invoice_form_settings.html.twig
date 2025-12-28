@@ -1,4 +1,4 @@
-<div class="modal-body">
+<div class="modal-body" data-controller="invoices">
 	<div class="ps-3 pe-3">
         <div id="flash-message-overlay">
             <div class="col">
@@ -16,7 +16,7 @@
 				<div class="row">
 					<label for="object" class="col-sm-4 col-form-label text-end">{{ 'invoice.template'|trans }}</label>
 					<div class="col-sm">
-						<select id="template" name="template" class="form-select">
+						<select id="template" name="template" class="form-select" data-action="change->invoices#persistTemplateSelectionAction">
 							{% for template in templates %}
 								<option value="{{ template.id }}" {% if template.id==templateId %} selected {% endif %}>{{
                         template.name }}</option>
@@ -41,8 +41,8 @@
 
 				</div>
 				<div class="text-center pt-4">
-					<button type="button" class="btn btn-default" onclick="showSettingsForm(this)" data-bs-target="#modalCenter" 
-                        data-target="{{ path('invoices.settings.new') }}" title="{{ 'invoice.settings.add'|trans }}">
+					<button type="button" class="btn btn-default" data-action="click->invoices#openModalAction" data-bs-target="#modalCenter" 
+                        data-url="{{ path('invoices.settings.new') }}" title="{{ 'invoice.settings.add'|trans }}">
 						<i class="fas fa-plus"></i>
 						{{ 'invoice.settings.add'|trans }}</button>
 				</div>
@@ -50,7 +50,3 @@
 		</div>
 	</div>
 </div>
-<script>
-    enableDeletePopover();
-	updateTemplateIdOnChange();
-</script>

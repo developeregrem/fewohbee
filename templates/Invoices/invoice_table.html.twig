@@ -28,11 +28,17 @@
                 {% endif %}
             </td>
             <td>
-                <a href="#" title="{{ 'button.details'|trans }}">
-                    <i onclick="showInvoice({{ invoice.id }})" class="fas fa-info-circle" 
-                       data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
-                <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="showInvoice({{ invoice.id }}, true)" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                <a href="#" title="{{ 'button.details'|trans }}"
+                   data-action="click->invoices#showInvoiceAction"
+                   data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                   data-bs-toggle="modal" data-bs-target="#modalCenter">
+                    <i class="fas fa-info-circle"></i></a>
+                <a href="#" title="{{ 'button.edit'|trans }}"
+                   data-action="click->invoices#showInvoiceAction"
+                   data-edit="true"
+                   data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                   data-bs-toggle="modal" data-bs-target="#modalCenter">
+                    <i class="fas fa-edit"></i></a>
                 <a class="export-link"
                    href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}"
                    title="{{ 'button.export.pdf'|trans }}" target="_blank">

@@ -20,7 +20,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/settings/reservationorigin')]
 class ReservationOriginServiceController extends AbstractController
@@ -136,24 +136,18 @@ class ReservationOriginServiceController extends AbstractController
      *
      * @return string
      */
-    #[Route('/{id}/delete', name: 'reservationorigin.delete.origin', methods: ['GET', 'POST'])]
-    public function deleteAction(CSRFProtectionService $csrf, ReservationOriginService $ros, Request $request, $id)
+    #[Route('/{id}/delete', name: 'reservationorigin.delete.origin', methods: ['DELETE'])]
+    public function deleteAction(ReservationOriginService $ros, Request $request, ReservationOrigin $entry)
     {
-        if ('POST' == $request->getMethod()) {
-            if ($csrf->validateCSRFToken($request, true)) {
-                $origin = $ros->deleteOrigin($id);
-                if ($origin) {
-                    $this->addFlash('success', 'reservationorigin.flash.delete.success');
-                }
+        if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
+            $origin = $ros->deleteOrigin($entry);
+            if ($origin) {
+                $this->addFlash('success', 'reservationorigin.flash.delete.success');
             }
-
-            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_entry.html.twig', [
-                'id' => $id,
-                'token' => $csrf->getCSRFTokenForForm(),
-            ]);
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

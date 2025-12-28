@@ -42,7 +42,7 @@ class PriceService
 
         $price->setDescription($request->request->get('description-'.$id));
         $price->setPrice(str_replace(',', '.', $request->request->get('price-'.$id)));
-        $price->setVat((float)str_replace(',', '.', $request->request->get('vat-'.$id)));
+        $price->setVat((float) str_replace(',', '.', $request->request->get('vat-'.$id)));
         $price->setType($request->request->get('type-'.$id));
 
         $this->setOrigins($request, $price, $id);
@@ -197,10 +197,8 @@ class PriceService
         return new ArrayCollection($prices);
     }
 
-    public function deletePrice($id)
+    public function deletePrice(Price $price): bool
     {
-        $price = $this->em->getRepository(Price::class)->find($id);
-
         $this->em->remove($price);
         $this->em->flush();
 

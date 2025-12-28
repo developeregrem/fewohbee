@@ -36,8 +36,8 @@ class FileUploader
     public function isValidImage(UploadedFile $file): bool
     {
         $imageConstraint = new Assert\Image([
-                'maxSize' => '5m',
-            ]);
+            'maxSize' => '5m',
+        ]);
 
         $errors = $this->validator->validate($file, $imageConstraint);
 

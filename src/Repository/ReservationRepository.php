@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Appartment;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
-use App\Entity\Appartment;
 
 /**
  * ReservationRepository.
@@ -69,7 +69,7 @@ class ReservationRepository extends EntityRepository
     /**
      * Loads reservations that fits into the period and will include reservations that end at the given start date or starts at the given end date.
      */
-    public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
+    public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
     {
         $q = $this
             ->createQueryBuilder('u')
@@ -95,9 +95,9 @@ class ReservationRepository extends EntityRepository
     }
 
     /**
-     * Loads only reservations that fits into the given period. A reservation which ends at the start date or starts at the end date will be ignored
+     * Loads only reservations that fits into the given period. A reservation which ends at the start date or starts at the end date will be ignored.
      */
-    public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment) : array
+    public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
     {
         $q = $this
             ->createQueryBuilder('u')

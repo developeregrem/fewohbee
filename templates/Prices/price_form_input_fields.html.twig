@@ -44,7 +44,8 @@
 
                         <div class="col-sm-8">
                             <select id="type-{{ price.id }}" name="type-{{ price.id }}" class="form-select"
-                                    onchange="return checkIfTypeIsAppartment('{{ price.id }}')">
+                                    data-action="change->prices#toggleTypeAction"
+                                    data-price-id="{{ price.id }}">
                                 <option value="1" {% if price.type == 1 %} selected {% endif %}>{{ 'price.miscellaneous'|trans }}</option>
                                 <option value="2" {% if price.type == 2 %} selected {% endif %}>{{ 'price.appartment'|trans }}</option>
                             </select>
@@ -94,7 +95,9 @@
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
                                 <input type="checkbox" name="allperiods-{{ price.id }}" id="allperiods-{{ price.id }}" class="form-check-input"
-                                       onclick="toggleStartEnd('{{ price.id }}')" {% if price.allPeriods %} checked{% endif %} value="1">
+                                       data-action="change->prices#toggleStartEndAction"
+                                       data-price-id="{{ price.id }}"
+                                       {% if price.allPeriods %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="allperiods-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
                             </div>
                         </div>
@@ -103,7 +106,10 @@
                                    name="periodstart"
                                    value=""
                                    placeholder="{{ 'price.from'|trans }}"
-                                   onchange="iniStartOrEndDate('periodstart-{{ price.id }}', 'periodend-{{ price.id }}', 1);"
+                                   data-action="change->prices#syncPeriodDatesAction"
+                                   data-start-selector="#periodstart-{{ price.id }}"
+                                   data-end-selector="#periodend-{{ price.id }}"
+                                   data-add-days="1"
                                    {% if price.seasonStart is null %} disabled{% endif %}>
                         </div>
                         <div class="col-sm-3">
@@ -111,18 +117,25 @@
                                    name="periodend"
                                    value=""
                                    placeholder="{{ 'price.end'|trans }}"
-                                   onchange="iniStartOrEndDate('periodstart-{{ price.id }}', 'periodend-{{ price.id }}', 1);"
+                                   data-action="change->prices#syncPeriodDatesAction"
+                                   data-start-selector="#periodstart-{{ price.id }}"
+                                   data-end-selector="#periodend-{{ price.id }}"
+                                   data-add-days="1"
                                    {% if price.seasonEnd is null %} disabled{% endif %}>
                         </div>
                         <div class="col-sm-1 align-self-center">    
-                            <a href="#" class="text-primary" id="addperiodbutton" title="{{ 'button.add'|trans }}" onclick="addPeriod(this, '{{ price.id }}')">
+                            <a href="#" class="text-primary" id="addperiodbutton-{{ price.id }}" title="{{ 'button.add'|trans }}"
+                               data-action="click->prices#addPeriodAction"
+                               data-start-selector="#periodstart-{{ price.id }}"
+                               data-end-selector="#periodend-{{ price.id }}"
+                               data-target-selector="#periods-field-{{ price.id }}">
                                 <i class="fas fa-plus"></i>
                             </a>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-sm-3"></div>                        
-                        <div class="col" id="periods-field">
+                        <div class="col" id="periods-field-{{ price.id }}" data-action="click->prices#removePeriodAction">
                         {% for pricePeriod in price.pricePeriods %}
                             <div class="price-period float-start">
                                 <span class="badge rounded-pill bg-info fw-normal">{{ pricePeriod.start|date('d.m.Y') }} - {{ pricePeriod.end|date('d.m.Y') }}
@@ -140,6 +153,8 @@
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
                                 <input type="checkbox" name="monday-{{ price.id }}" id="monday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.monday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="monday-{{ price.id }}">{{ 'price.monday'|trans }}</label>
                             </div>
@@ -147,6 +162,8 @@
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
                                 <input type="checkbox" name="tuesday-{{ price.id }}" id="tuesday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.tuesday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="tuesday-{{ price.id }}">{{ 'price.tuesday'|trans }}</label>
                             </div>
@@ -154,6 +171,8 @@
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
                                 <input type="checkbox" name="wednesday-{{ price.id }}" id="wednesday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.wednesday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="wednesday-{{ price.id }}">{{ 'price.wednesday'|trans }}</label>
                             </div>
@@ -161,6 +180,8 @@
                         <div class="checkbox col-sm-2 align-self-center">
                             <div class="form-check">
                                 <input type="checkbox" name="thursday-{{ price.id }}" id="thursday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.thursday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="thursday-{{ price.id }}">{{ 'price.thursday'|trans }}</label>
                             </div>
@@ -171,6 +192,8 @@
                         <div class="checkbox col-sm-2">
                             <div class="form-check">
                                 <input type="checkbox" name="friday-{{ price.id }}" id="friday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.friday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="friday-{{ price.id }}">{{ 'price.friday'|trans }}</label>
                             </div>
@@ -178,6 +201,8 @@
                         <div class="checkbox col-sm-2">
                             <div class="form-check">
                                 <input type="checkbox" name="saturday-{{ price.id }}" id="saturday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.saturday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="saturday-{{ price.id }}">{{ 'price.saturday'|trans }}</label>
                             </div>
@@ -185,6 +210,8 @@
                         <div class="checkbox col-sm-2">
                             <div class="form-check">
                                 <input type="checkbox" name="sunday-{{ price.id }}" id="sunday-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
                                        {% if price.sunday == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="sunday-{{ price.id }}">{{ 'price.sunday'|trans }}</label>
                             </div>
@@ -192,7 +219,9 @@
                         <div class="checkbox col-sm-2">
                             <div class="form-check">
                                 <input type="checkbox" name="alldays-{{ price.id }}" id="alldays-{{ price.id }}" class="form-check-input"
-                                       onclick="checkAllCheckboxes('{{ price.id }}')" {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
+                                       data-action="change->prices#dayCheckboxChangeAction"
+                                       data-price-id="{{ price.id }}"
+                                       {% if price.alldays == true or price.alldays == true %} checked{% endif %} value="1">
                                 <label class="form-check-label" for="alldays-{{ price.id }}">{{ 'price.alldays'|trans }}</label>
                             </div>
                         </div>
@@ -263,70 +292,3 @@
         <input type="hidden" name="period-{{ price.id }}[]" value="new" disabled />
     </div>
 </div>
-<script>
-    {% if price.id == 'new' %}
-    // initialy check all checkboxes for days
-    $('#collapseTwo-new #alldays-new').prop('checked', true);
-    checkAllCheckboxes('new');
-    {% endif %}
-    makeDismissable();
-    function makeDismissable() {
-        document.querySelectorAll('.price-period .btn-close').forEach(item => {
-            item.addEventListener('click', event => {
-              let pDiv = item.closest(".price-period");
-              pDiv.remove();
-            });
-        });
-    }
-    
-    
-    function addPeriod(elm, priceId) {
-        let parent = elm.closest(".row");
-        let start = parent.querySelector("#periodstart-"+priceId);
-        let end = parent.querySelector("#periodend-"+priceId);
-        if(start.value !== '' && end.value !== '') {
-            let template = document.getElementById("pricePeriodTemplate").querySelector(".price-period").cloneNode(true);
-            let dStart = new Date(start.value);
-            let dEnd = new Date(end.value);
-            let txtStart = ('0' + dStart.getDate()).slice(-2) + '.' + ('0' + (dStart.getMonth()+1)).slice(-2) + '.' + dStart.getFullYear();
-            let txtEnd = ('0' + dEnd.getDate()).slice(-2) + '.' + ('0' + (dEnd.getMonth()+1)).slice(-2) + '.' + dEnd.getFullYear();
-            let periodTxt = document.createTextNode(txtStart + ' - ' + txtEnd);
-            
-            template.querySelectorAll("input[type=hidden]").forEach(item => {
-                item.removeAttribute("disabled");
-            });
-            template.querySelector("input[type=hidden][name='periodstart-new[]']").value = start.value;
-            template.querySelector("input[type=hidden][name='periodend-new[]']").value = end.value;
-            template.querySelector(".period-text").appendChild(periodTxt);
-            
-            document.getElementById("periods-field").prepend(template);
-
-            start.value = '';
-            end.value = '';
-            
-            makeDismissable();
-        }
-    }
-    
-    // when a day is checked, uncheck the alldays checkbox
-    document.querySelectorAll('.days-control input[type="checkbox"]').forEach(item => {        
-        let allDay = "alldays";
-        if( item.name.substring(0, allDay.length) !== allDay ) {
-            item.addEventListener('click', event => {
-                if( ! item.checked ) {
-                    document.querySelector('input[name="alldays-{{ price.id }}"]').checked = false;
-                } else {
-                    checkIfAllChecked();   
-                }
-            })
-        }        
-    });
-    
-    // when all days are checked, check the alldays checkbox as well
-    function checkIfAllChecked() {
-        let count = document.querySelectorAll('.days-control input[type="checkbox"]:not([name^="alldays-"]):checked').length;
-        if ( count === 7 ) {
-            document.querySelector('input[name="alldays-{{ price.id }}"]').checked = true;   
-        }
-    }
-</script>

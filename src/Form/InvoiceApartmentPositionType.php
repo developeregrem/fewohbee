@@ -24,21 +24,21 @@ class InvoiceApartmentPositionType extends AbstractType
 
         $builder
             ->add('number', ChoiceType::class, [
-                    'choices' => $choicesNumber,
-                    'label' => 'invoice.appartment.position.number',
+                'choices' => $choicesNumber,
+                'label' => 'invoice.appartment.position.number',
             ])
             ->add('description_choices', HiddenType::class, [
-                    'mapped' => false,
-                    'data' => $choicesDesc,
+                'mapped' => false,
+                'data' => $choicesDesc,
             ])
             ->add('description', TextType::class, ['label' => 'invoice.appartment.position.description'])
             ->add('beds', ChoiceType::class, [
-                    'choices' => $choicesBeds,
-                    'label' => 'invoice.appartment.position.beds',
+                'choices' => $choicesBeds,
+                'label' => 'invoice.appartment.position.beds',
             ])
             ->add('persons', ChoiceType::class, [
-                    'choices' => $choicesPersons,
-                    'label' => 'invoice.appartment.position.persons',
+                'choices' => $choicesPersons,
+                'label' => 'invoice.appartment.position.persons',
             ])
             ->add('startDate', DateType::class, [
                 'label' => 'invoice.appartment.position.startdate',

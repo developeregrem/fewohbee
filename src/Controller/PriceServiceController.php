@@ -23,7 +23,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/settings/prices')]
 class PriceServiceController extends AbstractController
@@ -170,22 +170,16 @@ class PriceServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['GET', 'POST'])]
-    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, $id)
+    #[Route('/{id}/delete', name: 'prices.delete.price', methods: ['DELETE'])]
+    public function deletePriceAction(CSRFProtectionService $csrf, PriceService $ps, Request $request, Price $entry)
     {
-        if ('POST' == $request->getMethod()) {
-            if ($csrf->validateCSRFToken($request, true)) {
-                $price = $ps->deletePrice($id);
-                $this->addFlash('success', 'price.flash.delete.success');
-            }
-
-            return new Response('', Response::HTTP_NO_CONTENT);
+        if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
+            $price = $ps->deletePrice($entry);
+            $this->addFlash('success', 'price.flash.delete.success');
         } else {
-            // initial get load (ask for deleting)
-            return $this->render('common/form_delete_entry.html.twig', [
-                'id' => $id,
-                'token' => $csrf->getCSRFTokenForForm(),
-            ]);
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

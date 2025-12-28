@@ -24,6 +24,7 @@ doctrine:
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
         enable_lazy_ghost_objects: true
+        enable_native_lazy_objects: true
         default_entity_manager: default
         controller_resolver:
             auto_mapping: false

@@ -1,4 +1,4 @@
-{{ form_row(form.number) }}
+{{ form_row(form.number, {'attr': {'data-action': 'change->invoices#fillApartmentDescriptionAction', 'data-choices-id': form.description_choices.vars.id }}) }}
 {{ form_row(form.description_choices) }}
 {{ form_row(form.description) }}
 {{ form_row(form.startDate) }}
@@ -11,7 +11,7 @@
 
     <div class="col-sm">
         <select id="pricecategory" name="pricecategory" class="form-select"
-                onchange="return fillApartmentFieldsFromPriceCategory(this)">
+                data-action="change->invoices#fillApartmentFieldsFromPriceCategoryAction">
             <option value="0|0" selected></option>
             {% for price in prices %}
                 <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.includesVat }}|{{ price.isFlatPrice }}">{{ price.description }}</option>
@@ -27,7 +27,3 @@
         {{ form_widget(form.isFlatPrice) }}
     </div>
 </div>
-
-<script>
-    addChangeEvtForApartmentDescription();    
-</script>

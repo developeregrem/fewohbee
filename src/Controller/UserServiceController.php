@@ -13,17 +13,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Role;
 use App\Entity\User;
 use App\Form\UserEditType;
 use App\Form\UserType;
-use App\Service\CSRFProtectionService;
 use App\Service\UserService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/settings/users')]
 class UserServiceController extends AbstractController

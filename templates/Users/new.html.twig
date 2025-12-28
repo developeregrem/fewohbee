@@ -1,4 +1,8 @@
-{{ form_start(form, {'attr': {'id':'entry-form-new', 'onsubmit':'return createNewUser();'} }) }}
+{{ form_start(form, {'attr': {'id':'entry-form-new',
+    'data-controller':'settings',
+    'data-action':'submit->settings#submitFormAction',
+    'data-url': path('users.new.user'),
+    'data-success-url': path('users.overview') } }) }}
 <div class="modal-body ps-5 pe-5">
     <div id="flash-message-overlay">
     </div>

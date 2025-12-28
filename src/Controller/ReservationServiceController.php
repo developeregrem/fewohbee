@@ -41,9 +41,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Uid\Uuid;
 
 #[IsGranted('ROLE_RESERVATIONS_RO')] // ROLE_RESERVATIONS is included
 #[Route('/reservation')]
@@ -60,7 +60,9 @@ class ReservationServiceController extends AbstractController
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
-        $today = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
+        $todayDate = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $daysSinceMonday = ((int) $todayDate->format('N')) - 1;
+        $today = $todayDate->modify('-'.$daysSinceMonday.' days')->getTimestamp();
         $start = $requestStack->getSession()->get('reservation-overview-start', $today);
         $interval = $requestStack->getSession()->get('reservation-overview-interval', 30);
 
@@ -132,19 +134,21 @@ class ReservationServiceController extends AbstractController
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
 
         if (null == $date) {
-            $date = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
+            $dateRef = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+            $daysSinceMonday = ((int) $dateRef->format('N')) - 1;
+            $date = $dateRef->modify('-'.$daysSinceMonday.' days')->getTimestamp();
         } else {
             $date = strtotime($date.' UTC');   // set timezone to UTC to ignore daylight saving changes
         }
 
         if (null == $interval) {
             $interval = 30;
-        } else if($interval < 8) {
+        } elseif ($interval < 8) {
             $interval = 8;
-        } else if($interval > 180) {
+        } elseif ($interval > 180) {
             $interval = 180;
         } else {
-            $interval = (int)$interval;
+            $interval = (int) $interval;
         }
 
         if (null == $objectId || 'all' == $objectId) {
@@ -164,7 +168,7 @@ class ReservationServiceController extends AbstractController
             'interval' => $interval,
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
-            'objectId' => $objectId
+            'objectId' => $objectId,
         ]);
     }
 
@@ -179,12 +183,11 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $year = $request->query->get('year', date('Y'));
         $apartmentId = $request->query->get('apartment');
-        if(null == $apartmentId) {
+        if (null == $apartmentId) {
             $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
             $apartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
         }
         $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
-
 
         if (!$apartment instanceof Appartment) {
             throw new NotFoundHttpException();
@@ -484,6 +487,7 @@ class ReservationServiceController extends AbstractController
             'customersForTemplate' => $customersForTemplate,
             'addresstypes' => CustomerServiceController::$addessTypes,
             'cardTypes' => IDCardType::cases(),
+            'withController' => true,
         ]);
     }
 
@@ -540,7 +544,7 @@ class ReservationServiceController extends AbstractController
         if (is_array($customersInSession)) {
             foreach ($customersInSession as $customer) {
                 $customers[] = ['c' => $em->getRepository(Customer::class)->find($customer['id']),
-                                     'appartmentId' => $customer['appartmentId'], ];
+                    'appartmentId' => $customer['appartmentId'], ];
             }
         } else {
             // initial set booker as customer (guest in room)
@@ -656,7 +660,7 @@ class ReservationServiceController extends AbstractController
                     $price = $em->getRepository(Price::class)->find($priceInCreation->getId());
                     $reservation->addPrice($price);
                 }
-                if(!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
+                if (!$rs->isApartmentAvailable($reservation->getStartDate(), $reservation->getEndDate(), $reservation->getAppartment(), $reservation->getPersons())) {
                     $this->addFlash('warning', 'reservation.flash.update.conflict.persons');
                 }
                 $em->persist($reservation);
@@ -789,7 +793,7 @@ class ReservationServiceController extends AbstractController
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation) : Response
+    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation): Response
     {
         $success = $rs->updateReservation($request, $reservation);
         if (!$success) {
@@ -868,6 +872,8 @@ class ReservationServiceController extends AbstractController
     {
         $search = $request->request->get('lastname', '');
         $page = $request->request->get('page', 1);
+        $selectAction = $request->request->get('selectAction', 'reservations#editCustomerChangeAction');
+        $changeUrl = $request->request->get('changeUrl', null);
 
         $em = $doctrine->getManager();
         $customers = $em->getRepository(Customer::class)->getCustomersLike('%'.$request->request->get('lastname').'%', $page, $this->perPage);
@@ -882,6 +888,8 @@ class ReservationServiceController extends AbstractController
             'search' => $search,
             'tab' => $request->request->get('tab', 'booker'), // from wihich tab this method was called
             'appartmentId' => $request->request->get('appartmentId', 0), // for which appartment we want to change customer (0 = booker of the reservation)
+            'selectAction' => $selectAction,
+            'changeUrl' => $changeUrl,
         ]);
     }
 
@@ -1044,7 +1052,7 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
      */
     #[Route('/edit/customer/edit/save', name: 'reservations.edit.customer.edit.save', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
@@ -1085,6 +1093,9 @@ class ReservationServiceController extends AbstractController
         return $this->forward($forwardController, $params, $query);
     }
 
+    /**
+     * Shown in conversations when clicking on next after reservation selection.
+     */
     #[Route('/select/template', name: 'reservations.select.template', methods: ['POST'])]
     public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
     {
@@ -1122,11 +1133,7 @@ class ReservationServiceController extends AbstractController
         $em = $doctrine->getManager();
         $inProcess = $request->request->get('inProcess');
 
-        $selectedReservationIds = $requestStack->getSession()->get('selectedReservationIds');
-        $reservations = [];
-        foreach ($selectedReservationIds as $reservationId) {
-            $reservations[] = $em->getRepository(Reservation::class)->find($reservationId);
-        }
+        $reservations = $rs->getSelectedReservations();
         $selectedTemplateId = $requestStack->getSession()->get('selectedTemplateId');
         // now we came back from attachment and view previously mail (with new attachment)
 
@@ -1183,6 +1190,61 @@ class ReservationServiceController extends AbstractController
         }
 
         return new Response('', Response::HTTP_OK);
+    }
+
+    #[Route('/get/reservations/in/period', name: 'reservations.get.reservations.in.period', methods: ['POST'])]
+    public function getReservationsInPeriodAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
+    {
+        $em = $doctrine->getManager();
+        $reservations = [];
+
+        $potentialReservations = $em->getRepository(
+            Reservation::class
+        )->loadReservationsForPeriod($request->request->get('from'), $request->request->get('end'));
+
+        foreach ($potentialReservations as $reservation) {
+            // make sure that already selected reservation can not be choosen twice
+            if (!$reservationService->isReservationAlreadySelected($reservation->getId())) {
+                $reservations[] = $reservation;
+            }
+        }
+
+        return $this->render(
+            'Reservations/reservation_matching_reservations.html.twig',
+            [
+                'reservations' => $reservations,
+            ]
+        );
+    }
+
+    #[Route('/get/reservations/for/customer', name: 'reservations.get.reservations.for.customer', methods: ['POST'])]
+    public function getReservationsForCustomerAction(ManagerRegistry $doctrine, ReservationService $reservationService, Request $request)
+    {
+        $em = $doctrine->getManager();
+        $reservations = [];
+
+        $customer = $em->getRepository(Customer::class)->findOneByLastname(
+            $request->request->get('lastname')
+        );
+
+        if ($customer instanceof Customer) {
+            $potentialReservations = $em->getRepository(
+                Reservation::class
+            )->loadReservationsWithoutInvoiceForCustomer($customer);
+
+            foreach ($potentialReservations as $reservation) {
+                if (!$reservationService->isReservationAlreadySelected($reservation->getId())) {
+                    $reservations[] = $reservation;
+                }
+            }
+        }
+
+        return $this->render(
+            'Reservations/reservation_matching_reservations.html.twig',
+            [
+                'reservations' => $reservations,
+            ]
+        );
     }
 
     private function createTimeFromRequestValue(?string $value): ?\DateTime

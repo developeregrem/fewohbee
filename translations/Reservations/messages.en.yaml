@@ -66,6 +66,7 @@ reservation.table.settings.all: all
 reservation.table.settings.country: Country
 reservation.table.settings.displayMonth: Display month names
 reservation.table.settings.displayWeek: Display calendar week
+reservation.table.settings.displayWeekday: Display weekday names
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.subdivision: Subdivision
@@ -75,4 +76,11 @@ reservation.table.view.yearly: Annual View
 reservation.table.view.yearly.multiple.hint: >-
   This view is not optimized for rooms with multiple occupancy. Please use the
   tabular view.
+reservation.table.weekday.monday: Mon
+reservation.table.weekday.tuesday: Tue
+reservation.table.weekday.wednesday: Wed
+reservation.table.weekday.thursday: Thu
+reservation.table.weekday.friday: Fri
+reservation.table.weekday.saturday: Sat
+reservation.table.weekday.sunday: Sun
 reservation.templates.availableprices: existing invoices

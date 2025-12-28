@@ -43,11 +43,9 @@ class SubsidiaryService
         return $object;
     }
 
-    public function deleteObject($id)
+    public function deleteObject(Subsidiary $object)
     {
-        $object = $this->em->getRepository(Subsidiary::class)->find($id);
-
-        $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $id]);
+        $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $object]);
 
         if (0 == count($appartments)) {
             $this->em->remove($object);

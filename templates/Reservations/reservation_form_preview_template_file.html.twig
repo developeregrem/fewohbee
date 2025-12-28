@@ -1,4 +1,7 @@
-<form id="template-form" class="form-horizontal" role="form" onsubmit="return saveTemplateFile('#template-form');">
+<form id="template-form" class="form-horizontal" role="form"
+      data-controller="reservations"
+      data-action="submit->reservations#saveTemplateFileAction"
+      data-url="{{ path('settings.templates.file.save') }}">
     <fieldset id="template-form-fieldset-primary-">
         <div class="row">
             <label for="subject" class="col-sm-3 col-form-label">Bezeichnung

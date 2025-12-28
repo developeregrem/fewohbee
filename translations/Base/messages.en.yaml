@@ -63,3 +63,4 @@ nav.user.add: Add User
 nav.user.overview: Users Overview
 nav.utilization: Utilization
 nav.welcome: Welcome, %user%
+nav.profile: Profile

@@ -1,4 +1,7 @@
-{{ form_start(form, {'attr': {'id':'entry-form-'~user.id, 'onsubmit':'return saveUser('~ user.id ~');'} }) }}
+{{ form_start(form, {'attr': {'id':'entry-form-'~user.id,
+    'data-controller':'settings',
+    'data-action':'submit->settings#submitFormAction',
+    'data-url': path('users.edit.user', {'id': user.id}) } }) }}
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>
@@ -6,7 +9,11 @@
             <div class="col">
                 <h4 class="pb-2">
                     <small>
-                    <a href="#" onclick="return enableEditForm({{ user.id }})"
+                    <a href="#"
+                       data-action="click->settings#enableEditAction"
+                       data-fieldset-selector="#entry-form-fieldset-{{ user.id }}"
+                       data-save-selector="#entry-submit-{{ user.id }}"
+                       data-edit-area-selector="#edit-button-area"
                        title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i></a>
                     </small>

@@ -1,4 +1,4 @@
-{{ form_start(form, {'attr': {'onsubmit': 'return _doPost("#"+this.id, this.action, "'~path('invoices.overview')~'")', 'id': 'create-new-invoice' }}) }}
+{{ form_start(form, {'attr': {'data-controller': 'invoices', 'id': 'create-new-invoice' }}) }}
     <div class="modal-body">
         <div class="ps-4 pe-4">
             <div id="flash-message-overlay">
@@ -72,11 +72,12 @@
     </div>
     <div class="modal-footer" id="newInvoicePreview">
         <ul class="pagination me-auto">
-            <li class="page-item " onclick="return showCreateInvoicePositions(false)">
+            <li class="page-item " data-action="click->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
                 <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"
-               onclick="return createNewInvoice()"/>
+               data-action="click->invoices#createInvoiceAction" data-url="{{ path('invoices.create.invoice') }}"
+               data-success-url="{{ path('invoices.overview') }}" />
     </div>
 {{ form_end(form) }}

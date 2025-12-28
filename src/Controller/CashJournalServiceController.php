@@ -24,7 +24,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -38,28 +38,6 @@ class CashJournalServiceController extends AbstractController
     public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
     {
         $em = $doctrine->getManager();
-
-        //        $journal = $em->getRepository(CashJournal::class)->find(6);
-        //        for($i=0; $i<100;$i++) {
-        //            $entry = new CashJournalEntry();
-        //
-        //            if($i % 2 == 0) {
-        //                $entry->setIncomes(rand(1, 500));
-        //            } else {
-        //                $entry->setExpenses(rand(1, 500));
-        //            }
-        //            $entry->setCounterAccount('');
-        //            $entry->setInvoiceNumber($i);
-        //            $entry->setDocumentNumber($i);
-        //            $entry->setDate(new \DateTime());
-        //            $entry->setRemark('Tolle Bemerkung');
-        //
-        //            $entry->setCashJournal($journal);
-        //            $em->persist($entry);
-        //        }
-        //        $em->flush();
-        //
-        //        $cjs->recalculateCashEnd($journal);
 
         $journalYears = $em->getRepository(CashJournal::class)->getJournalYears();
 
@@ -163,12 +141,8 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/{id}', name: 'cashjournal.journal', methods: ['GET'])]
-    public function getJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
+    public function getJournalAction(CSRFProtectionService $csrf, CashJournal $journal)
     {
-        $em = $doctrine->getManager();
-
-        $journal = $em->getRepository(CashJournal::class)->find($id);
-
         return $this->render('CashJournal/journal_journal_form_edit.html.twig', [
             'journal' => $journal,
             'token' => $csrf->getCSRFTokenForForm(),
@@ -204,7 +178,7 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/{id}/edit/status', name: 'cashjournal.journal.edit.status', methods: ['POST'], defaults: ['id' => '0'])]
-    public function editJournalStatusAction(ManagerRegistry $doctrine, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
+    public function editJournalStatusAction(ManagerRegistry $doctrine, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, CashJournal $journal)
     {
         $em = $doctrine->getManager();
 
@@ -212,13 +186,11 @@ class CashJournalServiceController extends AbstractController
         $status = $request->request->get('status');
 
         if (in_array($status, $validStatus)) {
-            $journal = $em->getRepository(CashJournal::class)->find($id);
-
             if ('closed' === $status) {
                 if ($journal->getIsClosed() && !$authChecker->isGranted('ROLE_ADMIN')) {
                     $this->addFlash('warning', 'flash.access.denied');
 
-                    return new Response('ok');
+                    return new Response('', Response::HTTP_NO_CONTENT);
                 }
 
                 $journal->setIsClosed(!$journal->getIsClosed());
@@ -229,12 +201,12 @@ class CashJournalServiceController extends AbstractController
             }
             $em->persist($journal);
             $em->flush();
-            $this->addFlash('success', 'journal.flash.edit.status.success');
+        // $this->addFlash('success', 'journal.flash.edit.status.success');
         } else {
             $this->addFlash('warning', 'journal.flash.edit.status.warning');
         }
 
-        return new Response('ok');
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -242,29 +214,26 @@ class CashJournalServiceController extends AbstractController
      *
      * @return string
      */
-    #[Route('/journal/{id}/delete', name: 'cashjournal.journal.delete', methods: ['POST'], defaults: ['id' => '0'])]
-    public function deleteJournalAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, Request $request, $id)
+    #[Route('/journal/{id}/delete', name: 'cashjournal.journal.delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function deleteJournalAction(ManagerRegistry $doctrine, AuthorizationCheckerInterface $authChecker, Request $request, CashJournal $journal)
     {
-        if ($authChecker->isGranted('ROLE_ADMIN')) {
-            $em = $doctrine->getManager();
-            if ($csrf->validateCSRFToken($request, true)) {
-                $journal = $em->getRepository(CashJournal::class)->find($id);
-
-                // check if journal is closed
-                if ($journal->getIsClosed()) {
-                    $this->addFlash('warning', 'flash.access.denied');
-                } else {
-                    $em->remove($journal);
-                    $em->flush();
-
-                    $this->addFlash('success', 'journal.entry.flash.delete.success');
-                }
+        $em = $doctrine->getManager();
+        if ($this->isCsrfTokenValid('delete'.$journal->getId(), $request->request->get('_token'))) {
+            // check if journal is closed
+            if ($journal->getIsClosed()) {
+                $this->addFlash('warning', 'flash.access.denied');
             } else {
-                $this->addFlash('warning', 'flash.invalidtoken');
+                $em->remove($journal);
+                $em->flush();
+
+                $this->addFlash('success', 'journal.entry.flash.delete.success');
             }
+        } else {
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
 
-        return new Response('ok');
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/journal/entry/new', name: 'cashjournal.journal.entry.new', methods: ['GET'])]
@@ -323,14 +292,13 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/overview/{id}', name: 'cashjournal.journal.entry.index', methods: ['GET'])]
-    public function indexEntryAction(ManagerRegistry $doctrine, Request $request, $id)
+    public function indexEntryAction(ManagerRegistry $doctrine, Request $request, CashJournal $journal)
     {
         $em = $doctrine->getManager();
 
         $page = $request->query->get('page', 1);
         $search = $request->query->get('search', '');
 
-        $journal = $em->getRepository(CashJournal::class)->find($id);
         $entries = $em->getRepository(CashJournalEntry::class)->findByFilter($journal, $search, $page, $this->perPage);
 
         // calculate the number of pages for pagination
@@ -348,12 +316,8 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/entry/{id}', name: 'cashjournal.journal.entry', methods: ['GET'])]
-    public function getEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
+    public function getEntryAction(CSRFProtectionService $csrf, CashJournalEntry $entry)
     {
-        $em = $doctrine->getManager();
-
-        $entry = $em->getRepository(CashJournalEntry::class)->find($id);
-
         return $this->render('CashJournal/journal_entry_form_edit.html.twig', [
             'entry' => $entry,
             'token' => $csrf->getCSRFTokenForForm(),
@@ -399,33 +363,30 @@ class CashJournalServiceController extends AbstractController
      *
      * @return string
      */
-    #[Route('/journal/entry/{id}/delete', name: 'cashjournal.journal.entry.delete', methods: ['POST'], defaults: ['id' => '0'])]
-    public function deleteEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, $id)
+    #[Route('/journal/entry/{id}/delete', name: 'cashjournal.journal.entry.delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function deleteEntryAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, CashJournalService $cjs, Request $request, CashJournalEntry $entry)
     {
-        if ($authChecker->isGranted('ROLE_ADMIN')) {
-            $em = $doctrine->getManager();
-            if ($csrf->validateCSRFToken($request, true)) {
-                $entry = $em->getRepository(CashJournalEntry::class)->find($id);
-
-                // check if journal is closed
-                if ($entry->getCashJournal()->getIsClosed()) {
-                    $this->addFlash('warning', 'flash.access.denied');
-                } else {
-                    $em->remove($entry);
-                    $journal = $entry->getCashJournal();
-                    $em->flush();
-
-                    // update cash end of journal
-                    $cjs->recalculateCashEnd($journal);
-
-                    $this->addFlash('success', 'journal.entry.flash.delete.success');
-                }
+        $em = $doctrine->getManager();
+        if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
+            // check if journal is closed
+            if ($entry->getCashJournal()->getIsClosed()) {
+                $this->addFlash('warning', 'flash.access.denied');
             } else {
-                $this->addFlash('warning', 'flash.invalidtoken');
+                $em->remove($entry);
+                $journal = $entry->getCashJournal();
+                $em->flush();
+
+                // update cash end of journal
+                $cjs->recalculateCashEnd($journal);
+
+                $this->addFlash('success', 'journal.entry.flash.delete.success');
             }
+        } else {
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
 
-        return new Response('ok');
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/journal/{id}/export/pdf/{templateId}', name: 'cashjournal.journal.export.pdf', methods: ['GET'])]
@@ -439,6 +400,7 @@ class CashJournalServiceController extends AbstractController
             $templateOutput = $ts->renderTemplate($templateId, $journal->getId(), $cjs);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
+
             return $this->redirect($this->generateUrl('cashjournal.overview'));
         }
 

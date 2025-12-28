@@ -22,13 +22,13 @@ class CalendarSyncExportType extends AbstractType
                 'help' => 'calendar.sync.export.access.public.hint',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
-                ])
+            ])
             ->add('exportGuestName', CheckboxType::class, [
                 'label' => 'calendar.sync.export.option.guestname.label',
                 'help' => 'calendar.sync.export.option.guestname.hint',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
-                ])
+            ])
             ->add('reservationStatus', EntityType::class, [
                 // looks for choices from this entity
                 'class' => ReservationStatus::class,
@@ -38,7 +38,7 @@ class CalendarSyncExportType extends AbstractType
                 'expanded' => true,
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'help' => 'calendar.sync.export.option.status.hint',
-                ])
+            ])
         ;
     }
 

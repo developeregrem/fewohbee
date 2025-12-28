@@ -1,3 +1,4 @@
+<div data-controller="reservations" data-preview-template-url="{{ path('reservations.select.template.preview', {'id': '0'}) }}">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
@@ -20,7 +21,11 @@
             {% for correspondence in correspondences %}
                 {# do not allow other mails #}
                 {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
-                    <tr onclick="return addAsAttachment({{ correspondence.id }}, false);" class="mouse-pointer">
+                    <tr class="mouse-pointer"
+                        data-action="click->reservations#addAttachmentAction"
+                        data-url="{{ path('settings.templates.attachment.add') }}"
+                        data-attachment-id="{{ correspondence.id }}"
+                        data-is-invoice="false">
                         <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
                         <td>{{ correspondence.name }}</td>
                     </tr>
@@ -44,7 +49,11 @@
             </thead>
             <tbody>
             {% for invoice in invoices %}
-                    <tr onclick="return addAsAttachment({{ invoice.id }}, true);" class="mouse-pointer">
+                    <tr class="mouse-pointer"
+                        data-action="click->reservations#addAttachmentAction"
+                        data-url="{{ path('settings.templates.attachment.add') }}"
+                        data-attachment-id="{{ invoice.id }}"
+                        data-is-invoice="true">
                         <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
                         <td>{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</td>
                     </tr>
@@ -66,7 +75,11 @@
             </thead>
             <tbody>
             {% for template in templates %}
-                    <tr onclick="return previewTemplateForReservation({{ template.id }}, {{ inProcess }});" class="mouse-pointer">
+                    <tr class="mouse-pointer"
+                        data-action="click->reservations#previewTemplateForReservationAction"
+                        data-template-id="{{ template.id }}"
+                        data-inprocess="{{ inProcess }}"
+                        data-url="{{ path('reservations.select.template.preview', {'id': template.id}) }}">
                         <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
                         <td>{{ template.name }}</td>
                     </tr>
@@ -77,59 +90,10 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return {% if inProcess == 'false' %}selectReservation()
-                                             {% else %}previewTemplateForReservation({{ selectedTemplateId }}, {{ inProcess }});{% endif %}">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="page-item ">
+            <a class="page-link" href="#"
+               data-action="click->reservations#selectReservationForTemplateAction"
+               data-url="{{ path('settings.templates.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>
-    
-<script>
-function selectReservation(id) {
-    var url = "{{ path('settings.templates.select.reservation') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-    $(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
-    $.ajax({
-        url: url,
-        type: "post",
-        data: { reservationid: id },
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function addAsAttachment(id, isInvoice) {
-    var url = "{{ path('settings.templates.attachment.add') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-    //$(".modal-header .modal-title").html("{{ 'templates.select.reservations'|trans }}");
-    $.ajax({
-        url: url,
-        type: "post",
-        data: { id: id, isInvoice: isInvoice },
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            // go back to previously selected template (mail)
-            previewTemplateForReservation(0, 'false');
-        }
-    });
-
-    return false;
-}
-</script>
+</div>
