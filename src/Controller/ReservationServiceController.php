@@ -60,7 +60,9 @@ class ReservationServiceController extends AbstractController
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
 
-        $today = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
+        $todayDate = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $daysSinceMonday = ((int) $todayDate->format('N')) - 1;
+        $today = $todayDate->modify('-'.$daysSinceMonday.' days')->getTimestamp();
         $start = $requestStack->getSession()->get('reservation-overview-start', $today);
         $interval = $requestStack->getSession()->get('reservation-overview-interval', 30);
 
@@ -132,7 +134,9 @@ class ReservationServiceController extends AbstractController
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
 
         if (null == $date) {
-            $date = strtotime(date('Y').'-'.date('m').'-'.(date('d') - 2).' UTC');
+            $dateRef = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+            $daysSinceMonday = ((int) $dateRef->format('N')) - 1;
+            $date = $dateRef->modify('-'.$daysSinceMonday.' days')->getTimestamp();
         } else {
             $date = strtotime($date.' UTC');   // set timezone to UTC to ignore daylight saving changes
         }
