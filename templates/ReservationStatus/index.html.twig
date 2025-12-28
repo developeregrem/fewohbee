@@ -9,10 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" data-controller="settings">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-default" onclick="showCreateForm()" data-bs-toggle="modal"
+            <button type="button" class="btn btn-default"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('reservation_status_new') }}"
+                    data-title="{{ 'status.add'|trans }}"
+                    data-bs-toggle="modal"
                     data-bs-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'status.add'|trans }}</button>
         </div>
@@ -34,16 +38,24 @@
                         </td>
                         <td>
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i onclick="getEntity({{ status.id }})" class="fas fa-info-circle"></i></a>
+                                <i class="fas fa-info-circle"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('reservation_status_edit', {'id': status.id}) }}"
+                                   data-title="{{ 'button.details'|trans }}"></i></a>
                             <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i onclick="editEntry({{ status.id }})" class="fas fa-edit"></i></a>
+                                <i class="fas fa-edit"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('reservation_status_edit', {'id': status.id}) }}"
+                                   data-title="{{ 'button.edit'|trans }}"
+                                   data-enable-edit="true"></i></a>
+                            {% set id = status.id %}
+                            {% set targetUrl = path('reservation_status_delete', {'id': status.id}) %}
+                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="deleteEntry({{ status.id }})" class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                    <tr id="entry-{{ status.id }}" class="d-none">
-                        <td colspan="6" id="entry-cell-{{ status.id }}">
-                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                                <i class="fas fa-trash-alt"
+                                   data-popover="delete"
+                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -52,61 +64,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-        $.ajaxSetup({
-            cache: false
-        });
-        
-     $(function() {
-        // the default modal width is used here
-        $("#modalCenter .modal-dialog").removeClass('modal-lg');
-    });
-
-    function getEntity(id) {
-        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url);
-        
-    }
-    
-    function editEntry(id) {
-        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "", function() {
-            enableEditForm(id);
-        });
-        
-    }
-    
-    function saveStatus(id) {
-        let url = replacePlaceholder("{{ path('reservation_status_edit', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
-    }
-
-    function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('reservation_status_delete', {'id': 'placeholder'}) }}", id);
-        _deleteEntry(id, url);        
-    }
-
-    function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('reservation_status_delete', {'id': 'placeholder'}) }}", id);
-        return _doDelete('#entry-form-'+id, url);
-    }
-
-    function showCreateForm() {
-        getContentForModal("{{ path('reservation_status_new') }}");
-    }
-
-    function createNew() {
-        let url = "{{ path('reservation_status_new')}}";
-        _doPost('#entry-form-new', url, '{{ path('reservation_status_index') }}');
-        return false;
-    }
-    </script>
 {% endblock %}

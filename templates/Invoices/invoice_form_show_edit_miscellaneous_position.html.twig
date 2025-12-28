@@ -1,4 +1,4 @@
-{{ form_start(form, {'attr': {'onsubmit': 'return editMiscellaneousInvoicePosition(this)', 'id': 'edit-miscellaneous-position'}}) }}
+{{ form_start(form, {'attr': {'data-action': 'submit->invoices#submitFormAction', 'id': 'edit-miscellaneous-position', 'data-controller': 'invoices'}}) }}
     <div class="modal-body">
         <div class="ps-5 pe-5">
             <div class="row">
@@ -13,12 +13,12 @@
     </div>
     <div class="modal-footer">
         <ul class="pagination me-auto">
-            <li class="page-item " onclick="
+            <li class="page-item "
                 {% if invoiceId == 'new' %}
-                    return getContentForModal('{{ path('invoices.create.invoice.positions') }}')
+                    data-action="click->invoices#openModalAction" data-url="{{ path('invoices.create.invoice.positions') }}"
                 {% else %}
-                    return showInvoice({{ invoiceId }}, true)
-                {% endif %}">
+                    data-action="click->invoices#showInvoiceAction" data-url="{{ path('invoices.get.invoice', {'id': invoiceId}) }}" data-edit="true"
+                {% endif %}>
                 <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
         </ul>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary" style="margin-top: inherit;"/>

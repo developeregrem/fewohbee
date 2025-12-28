@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -168,7 +167,7 @@ class InvoiceAppartment
 
     public function setVat($vat): void
     {
-        $this->vat = (float)$vat;
+        $this->vat = (float) $vat;
     }
 
     public function setInvoice($invoice): void
@@ -207,6 +206,6 @@ class InvoiceAppartment
 
     public function getNetPrice(): float
     {
-        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : (float)$this->price;
+        return $this->includesVat ? $this->price / (1 + $this->vat / 100) : (float) $this->price;
     }
 }

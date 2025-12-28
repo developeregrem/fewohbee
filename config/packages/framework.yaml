@@ -1,6 +1,7 @@
 parameters:
     # fallback parameters
     env(USE_PASSWORD_BLACKLIST): 'true'
+    env(PASSKEY_ENABLED): 'false'
 
 framework:
     secret: '%env(APP_SECRET)%'
@@ -41,6 +42,9 @@ when@test:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        validation:
+            not_compromised_password:
+                enabled: false
 
 when@dev:
     framework:

@@ -4,48 +4,56 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "azuyalabs/yasumi": "2.7.*",
         "doctrine/doctrine-bundle": "^2.11",
         "doctrine/doctrine-fixtures-bundle": "^3.5",
         "doctrine/doctrine-migrations-bundle": "^3.3",
-        "doctrine/orm": "^2.17",
+        "doctrine/orm": "^3.6",
         "horstoeko/zugferd": "^1.0",
         "mpdf/mpdf": "^8.2",
-        "symfony/asset": "7.3.*",
-        "symfony/console": "7.3.*",
-        "symfony/dotenv": "7.3.*",
-        "symfony/expression-language": "7.3.*",
+        "symfony/asset": "7.4.*",
+        "symfony/asset-mapper": "7.4.*",
+        "symfony/console": "7.4.*",
+        "symfony/dotenv": "7.4.*",
+        "symfony/expression-language": "7.4.*",
         "symfony/flex": "^2",
-        "symfony/form": "7.3.*",
-        "symfony/framework-bundle": "7.3.*",
-        "symfony/http-client": "7.3.*",
-        "symfony/intl": "7.3.*",
-        "symfony/mailer": "7.3.*",
-        "symfony/mime": "7.3.*",
+        "symfony/form": "7.4.*",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/intl": "7.4.*",
+        "symfony/mailer": "7.4.*",
+        "symfony/mime": "7.4.*",
         "symfony/monolog-bundle": "^3.1",
-        "symfony/security-bundle": "7.3.*",
-        "symfony/serializer": "7.3.*",
-        "symfony/translation": "7.3.*",
-        "symfony/twig-bundle": "7.3.*",
-        "symfony/uid": "7.3.*",
-        "symfony/validator": "7.3.*",
-        "symfony/web-link": "7.3.*",
-        "symfony/yaml": "7.3.*",
-        "symfonycasts/reset-password-bundle": "^1.18"
+        "symfony/runtime": "7.4.*",
+        "symfony/security-bundle": "7.4.*",
+        "symfony/serializer": "7.4.*",
+        "symfony/stimulus-bundle": "^2.24",
+        "symfony/translation": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
+        "symfony/property-info": "7.4.*",
+        "symfony/uid": "7.4.*",
+        "symfony/ux-turbo": "^2.24",
+        "symfony/validator": "7.4.*",
+        "symfony/web-link": "7.4.*",
+        "symfony/yaml": "7.4.*",
+        "symfonycasts/reset-password-bundle": "^1.18",
+        "web-auth/webauthn-lib": "^5.2",
+        "web-auth/webauthn-stimulus": "^5.2",
+        "web-auth/webauthn-symfony-bundle": "^5.2"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "symfony/browser-kit": "7.3.*",
-        "symfony/css-selector": "7.3.*",
-        "symfony/debug-bundle": "7.3.*",
+        "phpunit/phpunit": "^12.4",
+        "rector/rector": "^0.15.0",
+        "symfony/browser-kit": "7.4.*",
+        "symfony/css-selector": "7.4.*",
+        "symfony/debug-bundle": "7.4.*",
         "symfony/maker-bundle": "^1.0",
-        "symfony/phpunit-bridge": "^7.3",
-        "symfony/stopwatch": "7.3.*",
-        "symfony/web-profiler-bundle": "7.3.*",
-        "rector/rector": "^0.15.0"
+        "symfony/phpunit-bridge": "^7.4",
+        "symfony/stopwatch": "7.4.*",
+        "symfony/web-profiler-bundle": "7.4.*"
     },
     "config": {
         "optimize-autoloader": true,
@@ -82,7 +90,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
         },
         "post-install-cmd": [
             "@auto-scripts"
@@ -97,7 +106,7 @@
     "extra": {
         "symfony": {
             "allow-contrib": false,
-            "require": "7.3.*"
+            "require": "7.4.*"
         }
     }
 }

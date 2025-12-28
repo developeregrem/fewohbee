@@ -4,18 +4,18 @@ namespace App\Form;
 
 use App\Entity\InvoiceSettingsData;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\CountryType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\CountryType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Validator\Constraints\Bic;
-use Symfony\Component\Validator\Constraints\Iban;
-use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\Country;
 use Symfony\Component\Validator\Constraints\Callback;
+use Symfony\Component\Validator\Constraints\Country;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\Iban;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class InvoiceSettingsType extends AbstractType
@@ -34,8 +34,8 @@ class InvoiceSettingsType extends AbstractType
                 'label' => 'invoice.settings.vatID',
                 'required' => false,
                 'constraints' => [
-                    new Callback([$this, 'validateVatIDCountry'])
-                ]
+                    new Callback([$this, 'validateVatIDCountry']),
+                ],
             ])
             ->add('contactName', TextType::class, [
                 'label' => 'invoice.settings.contactName',
@@ -50,15 +50,15 @@ class InvoiceSettingsType extends AbstractType
             ->add('contactMail', TextType::class, [
                 'label' => 'invoice.settings.contactMail',
                 'constraints' => [
-                    new Email()
-                ]
+                    new Email(),
+                ],
             ])
             ->add('companyInvoiceMail', TextType::class, [
                 'label' => 'invoice.settings.companyInvoiceMail',
                 'help' => 'invoice.settings.help.invoiceMail',
                 'constraints' => [
-                    new Email()
-                ]
+                    new Email(),
+                ],
             ])
             ->add('companyAddress', TextType::class, [
                 'label' => 'invoice.settings.companyAddress',
@@ -78,13 +78,13 @@ class InvoiceSettingsType extends AbstractType
             ->add('accountIBAN', TextType::class, [
                 'label' => 'invoice.settings.accountIBAN',
                 'constraints' => [
-                    new Iban()
-                ]
+                    new Iban(),
+                ],
             ])
             ->add('accountBIC', TextType::class, [
                 'label' => 'invoice.settings.accountBIC',
                 'constraints' => [
-                    new Bic()
+                    new Bic(),
                 ],
                 'required' => false,
             ])

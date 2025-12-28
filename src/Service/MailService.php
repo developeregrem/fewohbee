@@ -36,7 +36,7 @@ class MailService
 
     public function sendTemplatedMail(string $to, string $subject, string $template, array $parameter = []): void
     {
-        $email = (new TemplatedEmail())
+        $email = new TemplatedEmail()
             ->from(new Address($this->fromMail, $this->fromName))
             ->to($to)
             ->subject($subject)
@@ -48,7 +48,7 @@ class MailService
 
     public function sendHTMLMail(string $to, string $subject, string $body, array $attachments = []): void
     {
-        $email = (new Email())
+        $email = new Email()
             ->from(new Address($this->fromMail, $this->fromName))
             ->to(new Address($to))
             ->subject($subject)

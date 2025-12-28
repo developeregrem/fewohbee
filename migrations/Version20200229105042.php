@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
@@ -20,7 +21,8 @@ final class Version20200229105042 extends AbstractMigration
     public function up(Schema $schema) : void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $platform = $this->connection->getDatabasePlatform();
+        $this->abortIf(! $platform instanceof AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('CREATE TABLE room_category (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
         $this->addSql('ALTER TABLE appartments ADD room_category_id INT DEFAULT NULL, DROP beds_min');
@@ -35,7 +37,8 @@ final class Version20200229105042 extends AbstractMigration
     public function down(Schema $schema) : void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $platform = $this->connection->getDatabasePlatform();
+        $this->abortIf(! $platform instanceof AbstractMySQLPlatform, 'Migration can only be executed safely on \'mysql\'.');
 
         $this->addSql('ALTER TABLE appartments DROP FOREIGN KEY FK_A67E5E3A67333DD');
         $this->addSql('ALTER TABLE prices DROP FOREIGN KEY FK_E4CB6D5967333DD');

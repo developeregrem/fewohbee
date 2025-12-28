@@ -1,4 +1,9 @@
-{{ form_start(form, {'attr': {'id':'entry-form-'~sync.id, 'onsubmit':'return saveSync('~ sync.id ~', "'~ path('apartments.sync.edit', {'id': sync.id}) ~'");'} }) }}
+{{ form_start(form, {'attr': {
+    'id': 'entry-form-'~sync.id,
+    'data-controller': 'settings',
+    'data-action': 'submit->settings#submitFormAction',
+    'data-url': path('apartments.sync.edit', {'id': sync.id})
+} }) }}
 <div class="modal-body ps-5 pe-5">
     <div id="flash-message-overlay">
 </div>                             

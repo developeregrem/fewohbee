@@ -15,6 +15,13 @@ security:
         main:
             #pattern:    ^/
             provider: our_db_provider
+            webauthn: 
+                authentication:
+                    routes:
+                        options_path: /login/webauthn/options
+                        result_path: /login/webauthn
+                registration:
+                    enabled: true
             form_login:
                 login_path: login
                 check_path: login
@@ -49,6 +56,7 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
+        - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }
         - { path: ^/customers, roles: ROLE_CUSTOMERS }
@@ -57,6 +65,7 @@ security:
         - { path: ^/statistics, roles: ROLE_STATISTICS }
         - { path: ^/cashjournal, roles: ROLE_CASHJOURNAL }
         - { path: ^/settings, roles: ROLE_ADMIN }
+        - { path: ^/profile,  roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/logout, roles: IS_AUTHENTICATED }
         - { path: ^/dashboard, roles: IS_AUTHENTICATED }
         - { path: ^/, roles: IS_AUTHENTICATED }

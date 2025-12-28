@@ -86,7 +86,7 @@ class Reservation
         return $this->endDate;
     }
 
-    public function getPersons() : int
+    public function getPersons(): int
     {
         return $this->persons;
     }

@@ -1,4 +1,4 @@
-<table class="table table-hover">
+<table class="table table-hover" data-controller="reservations">
 <thead>
     <tr>
         <th class="border-top-0">{{ 'appartment.number'|trans }}</th>
@@ -8,7 +8,7 @@
 </thead>
 <tbody>
     {% for appartment in appartments %}
-        <tr onclick="return toggleAppartmentOptions({{ appartment.id }})">
+        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ appartment.id }}">
             <td>{{ appartment.number }}</td>
             <td>{{ appartment.bedsmax }}</td>
             <td>{{ appartment.description }}</td>
@@ -20,7 +20,8 @@
                     {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
                     <div class="col-sm-3">
                         <button class="btn btn-default" type="button"
-                                onclick="return addAppartmentToSelection({{ appartment.id }})">{{ 'button.continue'|trans }}</button>
+                                data-action="click->reservations#addAppartmentToSelectionAction"
+                                data-appartment-id="{{ appartment.id }}">{{ 'button.continue'|trans }}</button>
                         </div>
                     </div>
                 </form>

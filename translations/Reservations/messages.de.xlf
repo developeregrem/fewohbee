@@ -270,6 +270,10 @@
                 <source>reservation.table.settings.displayWeek</source>
                 <target>Kalenderwoche anzeigen</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.displayWeekday">
+                <source>reservation.table.settings.displayWeekday</source>
+                <target>Wochentage anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>
@@ -281,6 +285,34 @@
             <trans-unit id="reservation.table.view.table">
                 <source>reservation.table.view.table</source>
                 <target>Tabellenansicht</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.monday">
+                <source>reservation.table.weekday.monday</source>
+                <target>Mo</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.tuesday">
+                <source>reservation.table.weekday.tuesday</source>
+                <target>Di</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.wednesday">
+                <source>reservation.table.weekday.wednesday</source>
+                <target>Mi</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.thursday">
+                <source>reservation.table.weekday.thursday</source>
+                <target>Do</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.friday">
+                <source>reservation.table.weekday.friday</source>
+                <target>Fr</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.saturday">
+                <source>reservation.table.weekday.saturday</source>
+                <target>Sa</target>
+            </trans-unit>
+            <trans-unit id="reservation.table.weekday.sunday">
+                <source>reservation.table.weekday.sunday</source>
+                <target>So</target>
             </trans-unit>
         </body>
     </file>

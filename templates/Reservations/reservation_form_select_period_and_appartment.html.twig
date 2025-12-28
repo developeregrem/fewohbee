@@ -1,3 +1,5 @@
+
+<div data-controller="reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
@@ -26,7 +28,7 @@
                     </thead>
                     <tbody>
                     {% for key, reservation in reservations %}
-                        <tr onclick="return toggleAppartmentOptions({{ key }})">
+                        <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}">
                             <td>{{ reservation.appartment.number }}</td>
                             <td>{{ reservation.appartment.description }}</td>
                             <td>{{ reservation.persons }}</td>
@@ -36,8 +38,8 @@
                             <td>
                                 <a href="#" title="{{ 'button.edit'|trans }}">
                                     <i class="fas fa-edit"></i></a>
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="return deleteAppartmentFromSelection({{ key }})" class="fas fa-trash-alt"></i></a>
+                                <a href="#" title="{{ 'button.delete'|trans }}" data-action="click->reservations#deleteAppartmentAction" data-appartment-id="{{ key }}">
+                                    <i class="fas fa-trash-alt"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -47,7 +49,8 @@
                                         {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
                                         <div class="col-sm-3">                                        
                                             <button class="btn btn-default" type="button"
-                                                onclick="return saveAppartmentOptions({{ key }})">{{ 'button.save'|trans }}</button>
+                                                data-action="click->reservations#saveAppartmentOptionsAction"
+                                                data-appartment-id="{{ key }}">{{ 'button.save'|trans }}</button>
                                         </div>
                                     </div>
                                 </form>
@@ -63,7 +66,14 @@
     <hr>
 {% endif %}
 
-        <form id="reservation-period" role="form" onsubmit="return selectCustomer()">
+        <form id="reservation-period" role="form"
+              data-available-url="{{ path('reservations.get.available.appartments') }}"
+              data-add-appartment-url="{{ path('reservations.add.appartment.to.reservation') }}"
+              data-remove-appartment-url="{{ path('reservations.remove.appartment.from.reservation') }}"
+              data-modify-appartment-options-url="{{ path('reservations.modify.appartment.options') }}"
+              data-select-customer-url="{{ path('reservations.select.customer') }}"
+              data-preview-url="{{ path('reservations.create.preview') }}"
+              data-action="submit->reservations#selectCustomerAction">
             <div class="row">
                 <div class="col" id="flash-message-overlay">
                 </div>
@@ -76,20 +86,20 @@
                 <div class="col">
                     <input type="date" class="form-control" id="from" name="from"
                            placeholder="{{ 'reservation.startdate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod()"
+                           data-action="change->reservations#getAvailableAppartmentsAction"
                            value="{{ lastStartDate }}"
                     >
                 </div>            
                 <div class="col">
                     <input type="date" class="form-control" id="end" name="end"
                            placeholder="{{ 'reservation.enddate'|trans }}"
-                           onchange="getAvailableAppartmentsForPeriod()"
+                           data-action="change->reservations#getAvailableAppartmentsAction"
                            value="{{ lastEndDate }}"
                     >
                 </div>
                 <div class="col text-end">
                     <select id="objects" name="object" class="form-select"
-                            onchange="getAvailableAppartmentsForPeriod()">
+                            data-action="change->reservations#getAvailableAppartmentsAction">
                         <option value="all"
                                 {% if objectSelected == "all" %}selected{% endif %}>{{ 'reservation.objects.all'|trans }}</option>
                         {% for object in objects %}
@@ -99,8 +109,9 @@
                     </select>
                 </div>
                 <div class="col-sm-1 align-self-center">
-                    <a href="#" title="{{ 'button.accept'|trans }}">
-                        <i class="fa-solid fa-check fa-lg" onclick="getAvailableAppartmentsForPeriod()"></i>
+                    <a href="#" title="{{ 'button.accept'|trans }}"
+                       data-action="click->reservations#getAvailableAppartmentsAction">
+                        <i class="fa-solid fa-check fa-lg"></i>
                     </a>
                 </div>
             </div>
@@ -114,9 +125,12 @@
 <div class="modal-footer">
     {% if objectHasAppartments %}
     <ul class="pagination">
-        <li class="page-item" onclick="return selectCustomer()">
-            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a></li>
+        <li class="page-item">
+            <a class="page-link" href="#"
+               data-action="click->reservations#selectCustomerAction"
+               data-url="{{ path('reservations.select.customer') }}">{{ 'button.continue'|trans }} &rarr;</a></li>
     </ul>
     {% endif %}
 </div>
 {% endif %}
+</div>  

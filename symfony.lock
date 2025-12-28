@@ -14,14 +14,8 @@
             "./config/routes/annotations.yaml"
         ]
     },
-    "doctrine/cache": {
-        "version": "2.1.1"
-    },
     "doctrine/collections": {
         "version": "1.6.8"
-    },
-    "doctrine/common": {
-        "version": "3.1.2"
     },
     "doctrine/data-fixtures": {
         "version": "1.5.1"
@@ -192,12 +186,6 @@
     "sebastian/cli-parser": {
         "version": "1.0.1"
     },
-    "sebastian/code-unit": {
-        "version": "1.0.8"
-    },
-    "sebastian/code-unit-reverse-lookup": {
-        "version": "2.0.3"
-    },
     "sebastian/comparator": {
         "version": "4.0.6"
     },
@@ -228,9 +216,6 @@
     "sebastian/recursion-context": {
         "version": "4.0.4"
     },
-    "sebastian/resource-operations": {
-        "version": "3.0.3"
-    },
     "sebastian/type": {
         "version": "2.3.4"
     },
@@ -242,6 +227,21 @@
     },
     "symfony/asset": {
         "version": "v5.3.4"
+    },
+    "symfony/asset-mapper": {
+        "version": "7.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.4",
+            "ref": "5ad1308aa756d58f999ffbe1540d1189f5d7d14a"
+        },
+        "files": [
+            "assets/app.js",
+            "assets/styles/app.css",
+            "config/packages/asset_mapper.yaml",
+            "importmap.php"
+        ]
     },
     "symfony/browser-kit": {
         "version": "v5.3.4"
@@ -491,6 +491,21 @@
     "symfony/service-contracts": {
         "version": "v2.4.0"
     },
+    "symfony/stimulus-bundle": {
+        "version": "2.24",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.20",
+            "ref": "3acc494b566816514a6873a89023a35440b6386d"
+        },
+        "files": [
+            "assets/bootstrap.js",
+            "assets/controllers.json",
+            "assets/controllers/csrf_protection_controller.js",
+            "assets/controllers/hello_controller.js"
+        ]
+    },
     "symfony/stopwatch": {
         "version": "v5.3.4"
     },
@@ -531,6 +546,15 @@
     },
     "symfony/uid": {
         "version": "v6.0.3"
+    },
+    "symfony/ux-turbo": {
+        "version": "2.24",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.20",
+            "ref": "c85ff94da66841d7ff087c19cbcd97a2df744ef9"
+        }
     },
     "symfony/validator": {
         "version": "5.3",
@@ -588,5 +612,21 @@
     },
     "twig/twig": {
         "version": "v3.3.3"
+    },
+    "web-auth/webauthn-stimulus": {
+        "version": "5.2.2"
+    },
+    "web-auth/webauthn-symfony-bundle": {
+        "version": "5.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "3.0",
+            "ref": "a5dff33bd46575bea263af94069650af7742dcb6"
+        },
+        "files": [
+            "config/packages/webauthn.yaml",
+            "config/routes/webauthn_routes.yaml"
+        ]
     }
 }

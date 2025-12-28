@@ -1,3 +1,7 @@
+<div data-controller="reservations customer-form"
+    data-customer-form-city-lookup-url-value="{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}"
+    data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}"
+    data-preview-url="{{ path('reservations.create.preview') }}">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div id="flash-message-overlay">
@@ -5,7 +9,9 @@
         </div>
         <div class="row">
             <div class="col">
-                <form id="customer-form2-{{ customer.id }}" onsubmit="return saveEditCustomer({{ customer.id }}, this)">
+                <form id="customer-form2-{{ customer.id }}"
+                      data-action="submit->reservations#saveEditCustomerAction"
+                      data-url="{{ path('reservations.edit.customer.edit.save') }}">
                     <fieldset id="customer-form-fieldset-{{ customer.id }}">
                         {% include 'Customers/customer_form_create_input_fields.html.twig' %}
                     </fieldset>
@@ -20,7 +26,12 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return getReservation('{{ reservation.id }}', '{{ tab }}')">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="page-item ">
+            <a class="page-link" href="#"
+               data-action="click->reservations#openReservationAction"
+               data-url="{{ path('reservations.get.reservation', {'id': reservation.id, 'tab': tab}) }}"
+               data-reservation-id="{{ reservation.id }}"
+               data-tab="{{ tab }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
+</div>
 </div>

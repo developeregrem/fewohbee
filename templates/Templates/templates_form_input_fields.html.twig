@@ -12,7 +12,9 @@
         <label for="name-{{ template.id }}" class="col-sm-4 col-form-label text-end">{{ 'templates.type'|trans }}
             *</label>
         <div class="col-sm-8">
-            <select name="type-{{ template.id }}" class="form-select" id="template-type">
+            <select name="type-{{ template.id }}" class="form-select" id="template-type"
+                    data-action="change->templates#changeTemplateTypeAction"
+                    data-template-url="{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}">
                 {% for type in types %}
                     <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
                 {% endfor %}
@@ -47,65 +49,3 @@
 </fieldset>
 
 <input name="_csrf_token" value="{{ token }}" type="hidden">
-
-<script>
-
-    var templateUrl = "{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}";
-
-    var newTemplateUrl = templateUrl.replace("placeholder", $("#template-type").val());
-    //tinymce.execCommand("mceRemoveEditor", true, "editor1");
-
-    $(function ()
-    {
-        if (tinymce.get("editor1") !== null)
-            tinymce.get("editor1").remove();
-        tinymce.init({
-            selector: '#editor1',
-            language: '{{ app.request.locale }}',
-            toolbar_mode: 'sliding',
-            plugins: [
-                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
-                'searchreplace', 'visualblocks', 'code', 'fullscreen', 'image',
-                'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount', 'table', 'template'
-            ],
-            toolbar: 'undo redo | fontselect fontsizeselect | bold italic underline forecolor backcolor image | template | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |  table | removeformat | code | fullscreen preview | help',
-            menubar: false,
-            images_upload_url: '{{ path('templates.upload') }}',
-            relative_urls: false,
-            protect: [
-                /\{\%[\s\S]*?%\}/g, // Allow TWIG control codes
-                ///\{\{[\s\S]*?\}\}/g, // Allow TWIG output codes
-                /\{\#[\s\S]*?#\}/g, // Allow TWIG comment codes
-                /<\/?.*(html)?pageheader.*?>/g,
-                /<\/?.*(html)?pagefooter.*?>/g
-            ],
-            templates: newTemplateUrl,
-            entity_encoding: "raw",
-            branding: false,
-            promotion: false,
-            valid_children: '+body[style]',
-            content_css: [
-                '{{ app.request.basepath }}/resources/css/editor.css'
-            ],
-            fontsize_formats: "8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 24pt 36pt",
-            // for the moment we define a different class name. fields are therefore editable because they use the original class name
-            // reason: formats can not be applied to noneditable fields at the moment (https://github.com/tinymce/tinymce/issues/3355)
-            // when the issue is resolved we can remove this line here
-            noneditable_class: "mceNonEditable2",
-            setup: function (ed)
-            {
-                ed.on('init', function ()
-                {
-                    //this.getDoc().body.style.fontSize = '12';
-                    //this.getDoc().body.style.fontFamily = 'Arial';
-                });
-            },
-        });
-
-        $("#template-type").change(function () {
-            let settings = tinymce.activeEditor.options;
-            let newTemplateUrl = templateUrl.replace("placeholder", $(this).val());
-            settings.set('templates', newTemplateUrl);
-        });
-    });
-</script>

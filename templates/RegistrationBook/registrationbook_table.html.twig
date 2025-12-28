@@ -31,7 +31,10 @@
             {% if is_granted('ROLE_ADMIN') %}
             <td>                             
                 <a href="#" title="{{ 'button.delete'|trans }}">
-                    <i onclick="deleteEntry({{ bookEntry.id }})" class="fas fa-trash-alt"></i></a>
+                    <i class="fas fa-trash-alt"
+                       data-action="click->registrationbook#deleteEntryAction"
+                       data-entry-id="{{ bookEntry.id }}"
+                       data-url="{{ path('registrationbook.delete.origin', {'id': bookEntry.id}) }}"></i></a>
             </td>
             {% endif %}
         </tr>
@@ -44,4 +47,5 @@
     </tbody>
 </table>
 
-{% include 'paginator.html.twig' with { 'url' : path('registrationbook.overview') } %}
+<input id="page" type="hidden" name="page" value="{{ page }}" data-registrationbook-target="page" />
+{% include 'paginator.html.twig' with { 'url' : path('registrationbook.overview'), 'pagination_action': 'click->registrationbook#paginateAction' } %} 

@@ -7,20 +7,18 @@
     <meta name="keywords" content="{% block keywords %}{% endblock %}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.3.css">
+        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/style_1.2.0.css">
     {% endblock %}
     {% block javascripts %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-6.4.0.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.3.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/scripts.js"></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/ajax_1.0.1.js"></script>
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-3.7.1.min.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js" defer></script>
+        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js" defer></script>
     {% endblock %}
     <!--<link rel="icon" type="image/x-icon" href="" />-->
 </head>
@@ -97,6 +95,8 @@
                                 {{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user"></i> {{ 'nav.profile'|trans }}</a>
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a>
                             </div>
                         </li>
@@ -149,21 +149,26 @@
     {% endblock %}
 
     <script>
-        class Config {
-            constructor() {
-                this.basePath = '{{ app.request.basepath }}';
+        // Guard against Turbo re-evaluating this script and redeclaring globals
+        if (!window.FebConfig) {
+            window.FebConfig = class {
+                constructor() {
+                    this.basePath = '{{ app.request.basepath }}';
 
-                Object.seal(this);
-            }
+                    Object.seal(this);
+                }
+            };
         }
-        var config = new Config();
-        var loader = '<img src="'+config.basePath+'/resources/images/ajax-loader.gif" />';
-        var loaderNode = document.createElement("img")
-        loaderNode.src = config.basePath+"/resources/images/ajax-loader.gif";
-        var modalLoader = '<div class="modal-body">' + loader + '</div>';
+        window.config = window.config || new window.FebConfig();
+        window.loader = window.loader || '<img src="' + window.config.basePath + '/resources/images/ajax-loader.gif" />';
+        if (!window.loaderNode) {
+            window.loaderNode = document.createElement("img");
+            window.loaderNode.src = window.config.basePath + "/resources/images/ajax-loader.gif";
+        }
+        window.modalLoader = window.modalLoader || '<div class="modal-body">' + window.loader + '</div>';
     </script>
     {% block bodyjs %}
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bodyevents.js"></script>
+        
     {% endblock %}
 
 {% endblock %}

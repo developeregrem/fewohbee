@@ -42,13 +42,13 @@ class StatisticsService
             foreach ($reservations as $reservation) {
                 // check if startdate of reservation is not in the month, we want to utilize
                 if ($reservation->getStartDate() < $startDate) {
-                    $resStart = $startDate;
+                    $resStart = clone $startDate;
                 } else {
                     $resStart = $reservation->getStartDate();
                 }
                 // same with end date of reservation
                 if ($reservation->getEndDate() > $endDate) {
-                    $resEnd = $endDate;
+                    $resEnd = clone $endDate;
                     $resEnd->add($interval); // we have to add one day otherwise the end of month will not be counted
                 } else {
                     $resEnd = $reservation->getEndDate();
@@ -60,7 +60,7 @@ class StatisticsService
                 // var_dump($reservation->getStartDate());
             }
             $utilization = $stays * 100.0 / $maxStays;
-            $data[] = [$i, $utilization]; // x,y values
+            $data[] = $utilization;
         }
 
         return $data;

@@ -22,26 +22,26 @@ class ApartmentType extends AbstractType
     {
         $builder
             ->add('number', TextType::class, [
-                'label' => 'appartment.number'
+                'label' => 'appartment.number',
             ])
             ->add('description', TextType::class, [
-                'label' => 'appartment.description'
+                'label' => 'appartment.description',
             ])
             ->add('bedsMax', IntegerType::class, [
                 'label' => 'appartment.bedsmax',
                 'constraints' => [
-                    new GreaterThan(['value' => 0])
-                ]
+                    new GreaterThan(['value' => 0]),
+                ],
             ])
             ->add('roomCategory', EntityType::class, [
                 'class' => RoomCategory::class,
                 'choice_label' => 'name',
-                'label' => 'appartment.category'
+                'label' => 'appartment.category',
             ])
             ->add('object', EntityType::class, [
                 'class' => Subsidiary::class,
                 'choice_label' => 'name',
-                'label' => 'appartment.object'
+                'label' => 'appartment.object',
             ])
             ->add('multipleOccupancy', CheckboxType::class, [
                 'label' => 'apartment.multiple.occupancy.text',

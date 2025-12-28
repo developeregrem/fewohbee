@@ -31,11 +31,20 @@
                         </form>
                         {% if is_granted('ROLE_RESERVATIONS') %}
                         <small>
-                        <a href="#" onclick="return editReservationCustomerEdit({{ booker.id }}, '#actions-booker-{{ booker.id }}');"
+                        <a href="#"
+                           data-action="click->reservations#editReservationCustomerEditAction"
+                           data-customer-id="{{ booker.id }}"
+                           data-form-selector="#actions-booker-{{ booker.id }}"
+                           data-url="{{ path('reservations.edit.customer.edit') }}"
                            title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="#" onclick="return changeReservationCustomer({{ reservationId }}, 'booker', 0);"
+                        <a href="#"
+                           data-action="click->reservations#changeReservationCustomerAction"
+                           data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
+                           data-reservation-id="{{ reservationId }}"
+                           data-tab="booker"
+                           data-appartment-id="0"
                            title="{{ 'reservation.button.changeBooker'|trans }}" class="float-end text-secondary">
                             <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
                         </a>
@@ -54,7 +63,10 @@
             {% if mode is defined and mode == 'edit' %}
             {% if is_granted('ROLE_RESERVATIONS') %}
             <small>
-                <a href="#" onclick="return editReservation({{ reservationId }});"
+                <a href="#"
+                   data-action="click->reservations#editReservationAction"
+                   data-url="{{ path('reservations.edit.reservation', {'id': reservationId}) }}"
+                   data-reservation-id="{{ reservationId }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -87,7 +99,10 @@
             <div class="col-sm-6">
                 <label for="reservation-arrivalTime">{{ 'reservation.arrivalTime'|trans }}</label>
                 {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                <a href="#"
+                   data-action="click->reservations#openModalContentAction"
+                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
+                   data-title="{{ 'nav.reservation.edit'|trans }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -110,7 +125,10 @@
             <div class="col-sm-6">
                 <label for="reservation-departureTime">{{ 'reservation.departureTime'|trans }}</label>
                 {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                <a href="#"
+                   data-action="click->reservations#openModalContentAction"
+                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
+                   data-title="{{ 'nav.reservation.edit'|trans }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -135,7 +153,10 @@
             <div class="col-sm-3">
                 <label for="reservation-remark">{{ 'customer.remark'|trans }}</label>
                 {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                <a href="#"
+                   data-action="click->reservations#openModalContentAction"
+                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
+                   data-title="{{ 'nav.reservation.edit'|trans }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -154,7 +175,10 @@
             <div class="col-sm-3">
                 <label for="reservation-origin">{{ 'reservation.origin'|trans }}</label>
                 {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
-                <a href="#" onclick="return getContentForModal('{{ path('reservations.edit.remark', {'id': reservationId}) }}', '{{ 'nav.reservation.edit'|trans }}')"
+                <a href="#"
+                   data-action="click->reservations#openModalContentAction"
+                   data-url="{{ path('reservations.edit.remark', {'id': reservationId}) }}"
+                   data-title="{{ 'nav.reservation.edit'|trans }}"
                    title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
                     <i class="fas fa-edit"></i>
                 </a>
@@ -187,7 +211,12 @@
                 <h4 class="pb-2">{{ 'reservation.preview.customer'|trans }} {{ 'reservation.appartment.name'|trans }}: {{ reservation.appartment.number }}
                     {% if is_granted('ROLE_RESERVATIONS') %}
                     <small>
-                    <a href="#" onclick="return changeReservationCustomer('{{ reservationId }}', 'guest', {{ reservation.appartment.id }});"
+                    <a href="#"
+                       data-action="click->reservations#changeReservationCustomerAction"
+                       data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
+                       data-reservation-id="{{ reservationId }}"
+                       data-tab="guest"
+                       data-appartment-id="{{ reservation.appartment.id }}"
                        title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                         <i class="fas fa-plus"></i></a>
                     </small>
@@ -225,10 +254,17 @@
                             <input name="_csrf_token" value="{{ token }}" type="hidden">
                         </form>
                         {% if is_granted('ROLE_RESERVATIONS') %}
-                        <a href="#" onclick="return editReservationCustomerEdit({{ customer.id }}, '#actions-customer-{{ customer.id }}')"
+                        <a href="#"
+                           data-action="click->reservations#editReservationCustomerEditAction"
+                           data-customer-id="{{ customer.id }}"
+                           data-form-selector="#actions-customer-{{ customer.id }}"
+                           data-url="{{ path('reservations.edit.customer.edit') }}"
                            title="{{ 'button.edit'|trans }}">
                             <i class="fas fa-edit"></i></a>
-                        <a href="#" onclick="return deleteReservationCustomer(this, {{ customer.id }});"
+                        <a href="#"
+                           data-action="click->reservations#deleteReservationCustomerAction"
+                           data-customer-id="{{ customer.id }}"
+                           data-url="{{ path('reservations.edit.delete.customer') }}"
                            title="{{ 'button.delete'|trans }}">
                             <i class="fas fa-trash-alt"></i></a>
                         {% endif %}
@@ -247,8 +283,11 @@
                 <h4 class="pb-2">{{ 'reservation.correspondences.reservation'|trans }}
                     {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                         <small>
-                            <a href="#" onclick="return selectReservationForTemplate({{ reservationId }});"
-                               title="{{ 'button.add'|trans }}" class="float-end text-secondary">
+                            <a href="#" data-action="click->reservations#selectReservationForTemplateAction" 
+                                data-url="{{ path('settings.templates.select.reservation') }}" 
+                                data-reservation-id="{{ reservationId }}" 
+                                data-create-new="true"
+                                title="{{ 'button.add'|trans }}" class="float-end text-secondary">
                                 <i class="fas fa-plus"></i></a>
                         </small>
                     {% endif %}
@@ -274,14 +313,25 @@
                 <td style="width:10.0pt">{% if correspondence.children|length > 0 %}<i class="fas fa-paperclip"></i>{% endif %}</td>
                 <td>
                     {% if 'PDF' in correspondence.template.templateType.name %}
-                    <a href="#" onclick="return exportPDFCorrespondence({{ correspondence.id }})"
+                    <a href="#"
+                       data-action="click->reservations#exportPDFCorrespondenceAction"
+                       data-url="{{ path('settings.templates.correspondence.export.pdf', {'id': correspondence.id}) }}"
+                       data-attachment-id="{{ correspondence.id }}"
                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                     {% elseif 'EMAIL' in correspondence.template.templateType.name %}
-                    <a href="#" onclick="return showMailCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                    <a href="#"
+                       data-action="click->reservations#showMailCorrespondenceAction"
+                       data-url="{{ path('settings.templates.correspondence.show', {'id': correspondence.id}) }}"
+                       data-reservation-id="{{ reservationId }}"
+                       data-correspondence-id="{{ correspondence.id }}"
                        title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
                     {% endif %}
                     {% if is_granted('ROLE_RESERVATIONS') %}
-                    <a href="#" onclick="return deleteCorrespondence({{ correspondence.id }}, {{ reservationId }})"
+                    <a href="#"
+                       data-action="click->reservations#deleteCorrespondenceAction"
+                       data-url="{{ path('settings.templates.correspondence.remove') }}"
+                       data-correspondence-id="{{ correspondence.id }}"
+                       data-reservation-id="{{ reservationId }}"
                        title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  
                     {% endif %}                                  
                 </td>
@@ -305,7 +355,7 @@
                 <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">                                   
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
-                               data-reservationid="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
+                               data-reservation-id="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
                         <label class="form-check-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
                     </div>                
                     <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
