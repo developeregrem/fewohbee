@@ -1,4 +1,4 @@
-<form id="entry-form-{{ id }}" role="form" onsubmit="return doDeleteEntry({{ id }});">
+<form id="entry-form-{{ id }}" role="form" onsubmit="return doDeleteEntry('{{ id }}');">
     <div class="row">
         <div class="col">
             <p>{{ 'registrationbook.delete.ask'|trans }}</p>
@@ -8,7 +8,7 @@
         <div class="col">
             <input type="submit" value="{{ 'button.delete'|trans }}" class="btn btn-danger"/>
             <button class="btn btn-secondary"
-                    onclick="return collapseEntry({{ id }})">{{ 'button.cancel'|trans }}</button>
+                    onclick="return collapseEntry('{{ id }}')">{{ 'button.cancel'|trans }}</button>
         </div>
     </div>
     <input type="hidden" name="_method" value="DELETE">

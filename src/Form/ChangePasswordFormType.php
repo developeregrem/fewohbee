@@ -24,12 +24,12 @@ class ChangePasswordFormType extends AbstractType
                         new NotBlank([
                             'message' => 'form.password.notblank',
                         ]),
-                        new Length([
-                            'min' => 8,
-                            'minMessage' => 'form.password.min',
+                        new Length(
+                            min: 8,
+                            minMessage: 'form.password.min',
                             // max length allowed by Symfony for security reasons
-                            'max' => 4096,
-                        ]),
+                            max: 4096,
+                        ),
                     ],
                     'label' => 'login.pwforgotten.reset.password',
                 ],

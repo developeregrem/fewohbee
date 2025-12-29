@@ -9,10 +9,13 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" data-controller="settings">
         <div class="row">
             <div class="col">
-                <button type="button" class="btn btn-secondary" onclick="showCreateAppartmentForm()"
+                <button type="button" class="btn btn-secondary"
+                        data-action="click->settings#openModalAction"
+                        data-url="{{ path('apartments.new.apartment') }}"
+                        data-title="{{ 'nav.appartment.add'|trans }}"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.appartment.add'|trans }}</button>
             </div>
@@ -29,25 +32,47 @@
                     </tr>
                     </thead>
                     <tbody>
+                    {% set columnCount = 4 %}
+                    {% set previousSubsidiaryId = null %}
                     {% for apartment in apartments %}
+                        {% set currentSubsidiaryId = apartment.object is defined and apartment.object ? apartment.object.id : null %}
+                        {% if previousSubsidiaryId != currentSubsidiaryId %}
+                            <tr>
+                                <td colspan="{{ columnCount }}" class="fw-semibold text-center">
+                                    {{ apartment.object.name ?? '' }}
+                                </td>
+                            </tr>
+                            {% set previousSubsidiaryId = currentSubsidiaryId %}
+                        {% endif %}
                         <tr>
                             <td>{{ apartment.number }}</td>
                             <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}</td>
                             <td>{{ apartment.bedsmax }}</td>
                             <td>
                                 <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="getEntry({{ apartment.id }})" class="fas fa-info-circle"></i></a>
+                                    <i class="fas fa-info-circle"
+                                       data-action="click->settings#openModalAction"
+                                       data-url="{{ path('apartments.edit.apartment', {'id': apartment.id}) }}"
+                                       data-title="{{ 'button.details'|trans }}"></i></a>
                                 <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="editEntry({{ apartment.id }})" class="fas fa-edit"></i></a>
+                                    <i class="fas fa-edit"
+                                       data-action="click->settings#openModalAction"
+                                       data-url="{{ path('apartments.edit.apartment', {'id': apartment.id}) }}"
+                                       data-title="{{ 'button.edit'|trans }}"
+                                       data-enable-edit="true"></i></a>
                                 <a href="#" title="{{ 'calendar.sync.title'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                    <i onclick="getContentForModal('{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id }) }}', '{{ 'calendar.sync.title'|trans }}')" class="fas fa-calendar-check"></i></a>
+                                    <i class="fas fa-calendar-check"
+                                       data-action="click->settings#openModalAction"
+                                       data-url="{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id }) }}"
+                                       data-title="{{ 'calendar.sync.title'|trans }}"></i></a>
+                                {% set id = apartment.id %}
+                                {% set targetUrl = path('appartments.delete.appartment', {'id': apartment.id}) %}
+                                {% use "common/delete_popover.html.twig" %}
                                 <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i onclick="deleteEntry({{ apartment.id }})" class="fas fa-trash-alt"></i></a>
-                            </td>
-                        </tr>
-                        <tr id="entry-{{ apartment.id }}" class="d-none">
-                            <td colspan="6" id="entry-cell-{{ apartment.id }}">
-                                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                                    <i class="fas fa-trash-alt"
+                                        data-popover="delete"
+                                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                             </td>
                         </tr>
                     {% endfor %}
@@ -56,63 +81,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-    $(function() {
-        $.ajaxSetup({
-            cache: false
-        });
-        
-        // the default modal width is used here
-        $("#modalCenter .modal-dialog").removeClass('modal-lg');
-    });        
-
-    function showCreateAppartmentForm() {
-        getContentForModal("{{ path('apartments.new.apartment') }}");
-    }
-    
-    function getEntry(id) {
-        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url);        
-    }
-    
-    function editEntry(id) {
-        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "", function() {
-            enableEditForm(id);
-        });        
-    }
-
-    function saveAppartment(id) {
-        let url = replacePlaceholder("{{ path('apartments.edit.apartment', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
-    }
-
-    function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}", id);
-        _deleteEntry(id, url);        
-    }
-
-    function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('appartments.delete.appartment', {'id': 'placeholder'}) }}", id);
-        return _doDelete('#entry-form-'+id, url);
-    }
-
-    function createNewApartment() {
-        let url = "{{ path('apartments.new.apartment')}}";
-        _doPost('#entry-form-new', url, '{{ path('apartments.overview') }}');
-        return false;
-    }
-    
-    function saveSync(id, url) {
-        return _doPost('#entry-form-'+id, url);
-    }
-    </script>
 {% endblock %}

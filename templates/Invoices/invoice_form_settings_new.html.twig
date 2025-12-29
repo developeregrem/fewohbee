@@ -1,4 +1,4 @@
-<div class="modal-body">
+<div class="modal-body" data-controller="invoices">
     <div class="ps-3 pe-3">
         <div id="flash-message-overlay">
             <div class="col">
@@ -16,8 +16,7 @@
 </div>
 <div class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="
-            return showSettingsForm(this)" data-bs-target="#modalCenter" data-target="{{ path('invoices.settings.get') }}">
+        <li class="page-item" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.settings.get') }}" data-bs-target="#modalCenter">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>

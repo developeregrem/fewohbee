@@ -1,0 +1,18 @@
+profile:
+  personal_data:
+    title: Personal data
+    subtitle: Update your personal details right here.
+    submit: Save changes
+    saving: Saving...
+    updated: Your data has been updated.
+    password_help: Leave empty to keep your current password.
+  passkeys:
+    title: Passwordless sign-in (Passkeys)
+    create: Add passkey
+    device: Device
+    created_at: Created at
+    public_key: Public key
+    actions: Actions
+    unknown: unknown
+    none: No passkeys registered.
+    delete: Passkey was successfully deleted.

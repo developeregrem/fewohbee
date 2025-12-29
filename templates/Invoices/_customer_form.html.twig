@@ -2,7 +2,7 @@
     <label for="recommendation"
            class="col-sm-4 col-form-label text-end">{{ 'invoice.customer.recommendation'|trans }}</label>
     <div class="col-sm">
-        <select id="recommendation" name="recommendation" class="form-select" onchange="return fillCustomerRecommendation(this)">>
+        <select id="recommendation" name="recommendation" class="form-select" data-action="change->invoices#fillCustomerRecommendationAction">>
             <option value="0"></option>
             {% for customer in customers %}
                 {% for address in customer.customerAddresses %}

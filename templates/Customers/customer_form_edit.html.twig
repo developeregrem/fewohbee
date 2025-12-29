@@ -1,8 +1,13 @@
 <form id="customer-form-{{ customer.id }}" class="form-horizontal" role="form"
-      onsubmit="return saveCustomer({{ customer.id }})">
+      data-controller="customer-form"
+      data-customer-form-mode-value="edit"
+      data-customer-form-submit-url-value="{{ path('customers.edit.customer', {'id': customer.id}) }}"
+      data-customer-form-city-lookup-url-value="{{ path('customers.citylookup', {'countryCode': 'placeholder1', 'postalCode': 'placeholder2'}) }}"
+      data-customer-form-address-lookup-url-value="{{ path('customers.search.address', {'address': 'placeholder'}) }}"
+      data-action="submit->customer-form#submitAction">
     <div class="modal-body ps-5 pe-5">
         <div class="container-fluid">
-            <div id="flash-message-overlay">
+            <div id="flash-message-overlay" data-customer-form-target="flashOverlay">
                 <div class="col">
                 </div>
             </div>

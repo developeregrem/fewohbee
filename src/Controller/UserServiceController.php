@@ -13,19 +13,17 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Role;
 use App\Entity\User;
 use App\Form\UserEditType;
 use App\Form\UserType;
-use App\Service\CSRFProtectionService;
 use App\Service\UserService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/users')]
+#[Route('/settings/users')]
 class UserServiceController extends AbstractController
 {
     #[Route('/', name: 'users.overview', methods: ['GET'])]
@@ -36,20 +34,6 @@ class UserServiceController extends AbstractController
 
         return $this->render('Users/index.html.twig', [
             'users' => $users,
-        ]);
-    }
-
-    #[Route('/{id}/get', name: 'users.get.user', defaults: ['id' => '0'], methods: ['GET'])]
-    public function getUserAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
-    {
-        $em = $doctrine->getManager();
-        $user = $em->getRepository(User::class)->find($id);
-        $roles = $em->getRepository(Role::class)->findAll();
-
-        return $this->render('Users/user_form_edit.html.twig', [
-            'user' => $user,
-            'roles' => $roles,
-            'token' => $csrf->getCSRFTokenForForm(),
         ]);
     }
 

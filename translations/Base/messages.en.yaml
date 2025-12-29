@@ -2,6 +2,7 @@ base.action: Action
 button.accept: Accept
 button.add: Add
 button.back: Back
+button.next: Forward
 button.cancel: Cancel
 button.close: Close
 button.continue: Continue
@@ -62,3 +63,4 @@ nav.user.add: Add User
 nav.user.overview: Users Overview
 nav.utilization: Utilization
 nav.welcome: Welcome, %user%
+nav.profile: Profile

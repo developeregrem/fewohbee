@@ -23,24 +23,25 @@
                 </td>
                 <td>{{ customer.bookedReservations|length }}</td>
                 <td>
-                    <a href="#" title="{{ 'button.details'|trans }}"><i onclick="getContentForModal('{{ path('customers.get.customer', {'id': customer.id }) }}', '{{ 'customer.details'|trans }}')" 
+                    <a href="#" title="{{ 'button.details'|trans }}"><i
                            class="fas fa-info-circle"
+                           data-action="click->customers#openModalAction"
+                           data-url="{{ path('customers.get.customer', {'id': customer.id }) }}"
+                           data-title="{{ 'customer.details'|trans }}"
                            data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
-                    <a href="#" title="{{ 'button.edit'|trans }}"><i onclick="getContentForModal('{{ path('customers.edit.customer.show', {'id': customer.id}) }}', '{{ 'customer.details'|trans }}')" 
+                    <a href="#" title="{{ 'button.edit'|trans }}"><i
                            class="fas fa-edit"
+                           data-action="click->customers#openModalAction"
+                           data-url="{{ path('customers.edit.customer.show', {'id': customer.id}) }}"
+                           data-title="{{ 'customer.details'|trans }}"
                            data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                     <a href="{{ path('customers.gdpr.customer', {'id': customer.id}) }}" title="{{ 'button.gdpr'|trans }}">
                         <i class="fas fa-balance-scale-left"></i></a>                                                                          
-                </td>
-            </tr>
-            <tr id="customer-{{ customer.id }}" hidden="true">
-                <td colspan="6" id="customer-cell-{{ customer.id }}">
-                    <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
                 </td>
             </tr>
         {% endif %}
     {% endfor %}
     </tbody>
 </table>
-<input id="page" type="hidden" name="page" value="{{ page }}" />
-{% include 'paginator.html.twig' with { 'url' : path('customers.overview') } %}
+<input id="page" type="hidden" name="page" value="{{ page }}" data-customers-target="page" />
+{% include 'paginator.html.twig' with { 'url' : path('customers.overview'), 'pagination_action': 'click->customers#paginateAction' } %}

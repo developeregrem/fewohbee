@@ -9,22 +9,32 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container"
+         data-controller="registrationbook reservations"
+         data-registrationbook-search-url-value="{{ path('registrationbook.search') }}">
         <div class="row">
             <div class="col-md-6 pe-2">
-                <form class="form" id="registrationbook-search-form" onsubmit="return false;">
+                <form class="form" id="registrationbook-search-form"
+                      data-registrationbook-target="searchForm"
+                      data-action="submit->registrationbook#searchAction">
                     <input type="search" class="form-control" id="search" name="search"
+                           data-registrationbook-target="searchInput"
+                           data-action="input->registrationbook#searchInputAction"
                            placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
                 </form>
             </div>
             <div class="col-md ps-0">
-                <button class="btn btn-secondary" type="button" onclick="doSearch();">
+                <button class="btn btn-secondary" type="button"
+                        data-action="click->registrationbook#searchAction">
                     <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                 </button>
             </div>
             <div class="col-md text-end">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-secondary" onclick="showAddReservationsForm()"
+                    <button type="button" class="btn btn-secondary" id="openAdd"
+                            data-action="click->registrationbook#openAddReservationsAction"
+                            data-url="{{ path('registrationbook.showadd.reservations') }}"
+                            data-title="{{ 'registrationbook.addreservations'|trans }}"
                             data-bs-toggle="modal" data-bs-target="#modalCenter">
                         <i class="fas fa-plus"></i> {{ 'registrationbook.addreservations'|trans }}
                     </button>
@@ -33,373 +43,9 @@
         </div>
 
         <div class="row mt-3">
-            <div id="reservationbook-table" class="col">
+            <div id="reservationbook-table" class="col" data-registrationbook-target="table">
                 {% include 'RegistrationBook/registrationbook_table.html.twig' %}
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script>
-
-    $(document).ready(function () {
-        $("#search").delayKeyup(function () {
-            doSearch();
-        }, 400);
-    });
-
-    $.ajaxSetup({
-        cache: false
-    });
-
-    function collapseEntry(id) {
-        var row = "#entry-" + id;
-        var cell = "#entry-cell-" + id;
-
-        if ($(row).is(':hidden')) {
-            $(row).removeClass("d-none");
-            return true;
-        } else {
-            $(row).addClass("d-none");
-            $(cell).html('<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />');
-            return false;
-        }
-    }
-    
-    function showAddReservationsForm() {
-        var url = "{{ path('registrationbook.showadd.reservations') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $("#modal-content-ajax").html(content);
-        $("#modal-content-ajax").load(url, function (response, status, xhr) {
-
-        });
-
-        return false;
-    }
-    ;
-
-    function doSearch() {
-        var url = "{{ path('registrationbook.search')}}";
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#registrationbook-search-form").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#reservationbook-table").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function addReservationToBook(id) {
-        var url = "{{ path('registrationbook.add.registration') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#_csrf_token").serialize() + "&id=" + id,
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-                doSearch();
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function deleteReservationCustomer(customerId) {
-        var form = "#delete-customer-" + customerId;
-        var url = "{{ path('registrationbook.add.delete.customer') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    // tab = which tab is selected in show modal
-    function addReservationCustomer(id, tab) {
-        var url = "{{ path('registrationbook.add.add.customer', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
-        $("#modal-content-ajax").html(content);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: {id: id },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function getCustomers(page, mode, tab) {
-        if (mode === 'edit')
-            var url = "{{ path('reservations.edit.customers.get') }}";
-        else
-            var url = "{{ path('reservations.get.customers') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        if (tab === null) tab = '';
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#lastname").serialize() + "&tab=" + tab + "&page=" + page,
-            beforeSend: function () {
-                $("#customers").html(content);
-                $("#customer-selection .btn-primary").addClass("hidden");
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#customers").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function getFormForNewCustomer() {
-        var url = "{{ path('reservations.get.customer.new.form') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            beforeSend: function () {
-                $("#customers").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#customers").html(data);
-                $("#customer-selection .btn-primary").removeClass("d-none");
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function editReservationNewCustomer(id) {
-        var url = "{{ path('reservations.edit.reservation.customer.create', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#customer-selection").serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                if (data.length > 0) {
-                    $("#flash-message-overlay").empty();
-                    $("#flash-message-overlay").append(data);
-                } else {
-                    showAddReservationsForm();
-                }
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function toggleMoreInfo(fieldId) {
-        if ($("#" + fieldId).is(":hidden")) {
-            $("#" + fieldId).fadeIn().removeClass('d-none');
-        }
-        else {
-            $("#" + fieldId).addClass('d-none');
-        }
-        return false;
-    }
-
-    function editReservationCustomerChange(id, tab) {
-        var url = "{{ path('reservations.edit.customer.change', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", $("#reservation-id").val());
-
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: {customerId: id, tab: "guest"},
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                showAddReservationsForm();
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    // tab = which tab is selected in show modal
-    function editReservationCustomer(id) {
-        var url = "{{ path('registrationbook.add.edit.customer') }}";
-
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        $('#modalCenter .modal-title').text("{{ 'nav.reservation.edit'|trans }}");
-        $("#modal-content-ajax").html(content);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: {id: id },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    // tab = which tab is selected in show modal
-    function saveCustomer(id, form) {
-        var url = "{{ path('registrationbook.add.edit.customer.save') }}";
-
-        var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-    $("#modal-content-ajax").html(content);
-    $.ajax({
-        url: url,
-        type: "post",
-        data: $(form).serialize(),
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-    }
-    ;
-        function getAvailableBookEntries() {
-        var url = "{{ path('registrationbook.showadd.reservations') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        iniStartOrEndDate('start', 'end', 1);
-        $.ajax({
-            url: url,
-            type: "get",
-            data: ($("#registration-period").serialize()),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-        $("#modal-content-ajax").html(content);
-        return false;
-    }
-    
-    function deleteEntry(id) {
-        if (collapseEntry(id)) {
-            var cell = "#entry-cell-" + id;
-            var url = "{{ path('registrationbook.delete.origin', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-
-            $(cell).load(url, function (response, status, xhr) {
-                //if(status == "success") location.reload();
-            });
-        }
-
-
-        return false;
-    }
-    ;
-
-    function doDeleteEntry(id) {
-        var form = "#entry-form-" + id;
-        var url = "{{ path('registrationbook.delete.origin', {'id': 'placeholder'}) }}";
-        url = url.replace("placeholder", id);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                location.reload();
-            }
-        });
-
-        return false;
-    }
-    </script>
 {% endblock %}

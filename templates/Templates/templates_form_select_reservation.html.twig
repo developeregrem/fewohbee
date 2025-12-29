@@ -1,117 +1,12 @@
+<div data-controller="reservations" data-select-url="{{ path('settings.templates.select.reservation')}}">
 {% include 'Reservations/reservation_form_select_reservation_fields.html.twig' %}
 <div class="modal-footer {% if objectContainsReservations == "false" %} d-none {% endif %}">
     <ul class="pagination ms-auto">
-        <li class="page-item" onclick="return selectReservation()">
-            <a class="page-link" href="#">{{ 'button.continue'|trans }} &rarr;</a>
+        <li class="page-item">
+            <a class="page-link" href="#"
+               data-action="click->reservations#selectReservationAction"
+               data-url="{{ path('settings.templates.select.reservation') }}">{{ 'button.continue'|trans }} &rarr;</a>
         </li>
     </ul>
 </div>
-<script>
-    function getReservationsInPeriod() {
-        var url = "{{ path('settings.templates.get.reservations.in.period') }}";
-        var form = "#invoice-filter-reservations-period";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-        
-        iniStartOrEndDate('from', 'end', 1);
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            beforeSend: function () {
-                $("#container-invoice-filter-reservations-result").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#container-invoice-filter-reservations-result").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function getReservationsByCustomerName() {
-        var url = "{{ path('settings.templates.get.reservations.for.customer') }}";
-        var form = "#invoice-filter-reservations-customer-name";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $(form).serialize(),
-            beforeSend: function () {
-                $("#container-invoice-filter-reservations-result").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#container-invoice-filter-reservations-result").html(data);
-            }
-        });
-
-        return false;
-    }
-    ;
-
-    function selectReservation(id) {
-        var url = "{{ path('settings.templates.select.reservation') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: { reservationid: id },
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-
-    function showTimeFilter() {
-        if ($('#button-filter-time').hasClass('btn-primary')) {
-            return false;
-        } else {
-            $('#button-filter-time').removeClass('btn-secondary');
-            $('#button-filter-time').addClass('btn-primary');
-            $('#container-invoice-filter-reservations-period').removeClass('d-none');
-            $('#container-invoice-filter-reservations-customer').addClass('d-none');
-            $('#button-filter-customer').removeClass('btn-primary');
-            $('#button-filter-customer').addClass('btn-secondary');
-
-            return false;
-        }
-    }
-
-    function showCustomerFilter() {
-        if ($('#button-filter-customer').hasClass('btn-primary')) {
-            return false;
-        } else {
-            $('#button-filter-customer').removeClass('btn-secondary');
-            $('#button-filter-customer').addClass('btn-primary');
-            $('#container-invoice-filter-reservations-customer').removeClass('d-none');
-            $('#container-invoice-filter-reservations-period').addClass('d-none');
-            $('#button-filter-time').removeClass('btn-primary');
-            $('#button-filter-time').addClass('btn-secondary');
-
-            return false;
-        }
-    }
-</script>
+</div>

@@ -1,3 +1,4 @@
+<div data-controller="reservations">
 <div class="modal-body ps-5 pe-5">
     <div class="row" >
         <div class="col" id="flash-message-overlay">
@@ -26,7 +27,9 @@
                     <td style="width:10.0pt"><i class="fas {{ attachment.template.templateType.icon }}" aria-hidden="true" title="{{ attachment.template.templateType.name|trans }}"></i></td>
                     <td>{{ attachment.name }}</td>
                     <td class="text-end">
-                        <a href="#" onclick="return exportPDFCorrespondence({{ attachment.id }})"
+                        <a href="#"
+                           data-action="click->reservations#exportPDFCorrespondenceAction"
+                           data-url="{{ path('settings.templates.correspondence.export.pdf', {'id': attachment.id}) }}"
                                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                     </td>
                 </tr>
@@ -37,7 +40,12 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return getReservation({{ reservationId }}, 'correspondence')">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="page-item ">
+            <a class="page-link" href="#"
+               data-action="click->reservations#openReservationAction"
+               data-url="{{ path('reservations.get.reservation', {'id': reservationId, 'tab': 'correspondence'}) }}"
+               data-reservation-id="{{ reservationId }}"
+               data-tab="correspondence">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>   
+</div>
 </div>

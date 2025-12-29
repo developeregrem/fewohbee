@@ -1,5 +1,11 @@
-{% set submit='return _doPost("#entry-form-'~reservation.id~'","'~ path('reservations.edit.remark', {'id': reservation.id}) ~'");' %}
-{{ form_start(form, {'attr': {'id':'entry-form-'~reservation.id, 'onsubmit':submit} }) }}
+{{ form_start(form, {
+    'attr': {
+        'id':'entry-form-'~reservation.id,
+        'data-controller': 'reservations',
+        'data-url': path('reservations.edit.remark', {'id': reservation.id}),
+        'data-action': 'submit->reservations#submitFormAction'
+    }
+}) }}
 <div class="modal-body">
     <div class="ps-5 pe-5">
         {{ form_widget(form) }}
@@ -7,8 +13,11 @@
 </div>
 <div class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item" onclick="return getReservation({{ reservation.id }})">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a>
+        <li class="page-item">
+            <a class="page-link" href="#"
+               data-action="click->reservations#openReservationAction"
+               data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+               data-reservation-id="{{ reservation.id }}">&larr; {{ 'button.back'|trans }}</a>
         </li>
     </ul>
     <input id="reservation-edit-save" class="btn btn-primary" type="submit" value="{{ 'button.save'|trans }}" />

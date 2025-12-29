@@ -1,4 +1,7 @@
-<form id="entity-form-new" class="form-horizontal" role="form" onsubmit="return editEntry({{ entry.id }})">
+<form id="entity-form-new" class="form-horizontal" role="form" method="POST"
+      data-controller="cashjournal"
+      data-action="submit->cashjournal#submitFormAction"
+      data-url="{{ path('cashjournal.journal.entry.edit', {'id': entry.id}) }}">
     <div class="modal-body ps-5 pe-5">
         <div class="container-fluid">
             <div id="flash-message-overlay">
@@ -10,41 +13,19 @@
     </div>
     <div class="modal-footer">
         {% if is_granted('ROLE_ADMIN') %}
+        {% set id = entry.id %}
+        {% set targetUrl = path('cashjournal.journal.entry.delete', {'id': entry.id}) %}
+        {% use "common/delete_popover.html.twig" %}
         <div class="boxDefault me-auto">            
             <button type="button" class="btn btn-danger"
-                        onclick="return toggleDelete();">{{ 'button.delete'|trans }}</button>
-        </div>
-        <div id="boxDelete" class="d-none me-auto">               
-            <button class="btn btn-default"
-                    onclick="return toggleDelete();">{{ 'button.cancel'|trans }}</button>
-            <button class="btn btn-danger" onclick="return doDeleteEntry({{ entry.id }});">{{ 'button.delete'|trans }}</button>
-            {{ 'journal.entry.delete.ask'|trans }}
+                    title="{{ 'journal.entry.delete.ask'|trans }}"
+                    data-popover="delete"
+                    data-bs-content='{{ block('deletePopoverContent') }}'>{{ 'button.delete'|trans }}</button>
         </div>
         {% endif %}  
-        <div class="boxDefault">
+        <div class="boxDefault" data-cashjournal-target="defaultBox">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
             <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>  
         </div>              
     </div>
 </form>
-{% if is_granted('ROLE_ADMIN') %}
-    <div id="boxDelete" class="hide">
-        <form id="deleteForm" role="form">            
-            <input type="hidden" name="id" value="{{ entry.id }}"/>
-            <input name="_csrf_token" value="{{ token }}" type="hidden">
-        </form>
-    </div>
-{% endif %}
-<script>
-   function toggleDelete() {
-        if ($("#boxDelete").is(":hidden")) {
-            $("#boxDelete").fadeIn().removeClass('d-none');
-            $(".boxDefault").addClass('d-none');
-        }
-        else {
-            $("#boxDelete").addClass('d-none');
-            $(".boxDefault").fadeIn().removeClass('d-none');
-        }
-        return false;
-    } 
-</script>

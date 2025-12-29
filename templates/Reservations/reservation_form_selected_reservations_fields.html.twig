@@ -28,7 +28,7 @@
                             <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                             <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                             <td>
-                                <a href="#" title="{{ 'button.delete'|trans }}" onclick="return deleteReservationFromSelection({{ key }})">
+                                <a href="#" title="{{ 'button.delete'|trans }}" data-action="click->reservations#deleteReservationFromSelectionAction" data-reservation-key="{{ key }}">
                                     <i class="fas fa-trash-alt"></i>
                                 </a>
                             </td>

@@ -43,10 +43,10 @@ class InvoiceService implements ITemplateRenderer
      * @param array $apps            The invoice positions for apartment prices
      * @param array $poss            The invoice positions for miscellaneous prices
      * @param array $vats            Returns array of all vat values
-     * @param float  $brutto          Returns the total price including vat
-     * @param float  $netto           Returns the toal price for all vats
-     * @param float  $appartmentTotal Returns the total sum for all apartment prices
-     * @param float  $miscTotal       Returns the total price for all miscellaneous prices
+     * @param float $brutto          Returns the total price including vat
+     * @param float $netto           Returns the toal price for all vats
+     * @param float $appartmentTotal Returns the total sum for all apartment prices
+     * @param float $miscTotal       Returns the total price for all miscellaneous prices
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
@@ -228,7 +228,7 @@ class InvoiceService implements ITemplateRenderer
             'numbers' => $appartmentNumbers,
             'appartmentTotal' => number_format($appartmantTotal, 2, ',', '.'),
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
-            ];
+        ];
 
         return $params;
     }
@@ -406,6 +406,7 @@ class InvoiceService implements ITemplateRenderer
     public function unsetInvoiceInCreation(RequestStack $requestStack): void
     {
         $requestStack->getSession()->remove('invoiceInCreation');
+        $requestStack->getSession()->remove(ReservationService::SESSION_SELECTED_RESERVATIONS);
         $requestStack->getSession()->remove('invoicePositionsMiscellaneous');
         $requestStack->getSession()->remove('invoicePositionsAppartments');
         $requestStack->getSession()->remove('new-invoice-id');
@@ -420,7 +421,12 @@ class InvoiceService implements ITemplateRenderer
      */
     public function getInvoiceReservationsInCreation(RequestStack $requestStack): array
     {
-        $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
+        $reservationIds = $requestStack->getSession()->get(ReservationService::SESSION_SELECTED_RESERVATIONS, []);
+
+        // legacy support if old session key is still present
+        if (0 === count($reservationIds)) {
+            $reservationIds = $requestStack->getSession()->get('invoiceInCreation', []);
+        }
         $reservations = [];
         foreach ($reservationIds as $reservationId) {
             $reservations[] = $this->em->getRepository(Reservation::class)->find($reservationId);

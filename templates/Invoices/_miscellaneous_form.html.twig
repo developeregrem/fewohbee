@@ -4,7 +4,7 @@
 
     <div class="col-sm">
         <select id="pricecategory" name="pricecategory" class="form-select"
-                onchange="return fillFieldsFromPriceCategory(this)">
+                data-action="change->invoices#fillFieldsFromPriceCategoryAction">
             <option value="0|0" selected></option>
             {% for price in prices %}
                 <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.description }}|{{ price.includesVat }}|{{ price.isFlatPrice }}">{{ price.description }}</option>

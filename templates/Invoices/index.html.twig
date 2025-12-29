@@ -9,28 +9,32 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container">
+    <div class="container" data-controller="invoices">
         <div class="row justify-content-between">
             <div class="col-md-4">
-                <button type="button" class="btn btn-default" onclick="showCreateInvoiceForm('true')"
+                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction"
+                        data-url="{{ path('invoices.new.invoice') }}" data-create-new="true"
+                        data-title="{{ 'invoice.select.open.reservation'|trans }}"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.invoice.add'|trans }}</button>
             </div>
             <div class="col-md-3 text-end">
                 <a href="#" class="fs-5 text-secondary" title="{{ 'invoice.settings.text'|trans }}" 
-                data-target="{{ path('invoices.settings.get') }}" data-bs-toggle="modal" data-bs-target="#modalCenter" onclick="showSettingsForm(this); return false;">
+                data-url="{{ path('invoices.settings.get') }}" data-bs-toggle="modal" data-bs-target="#modalCenter"
+                data-action="click->invoices#openModalAction">
                     <i class="fas fa-cog"></i>
                 </a>             
             </div>
         </div>
-        <form class="form" id="invoices-search-form" onsubmit="return false;">
+        <form class="form" id="invoices-search-form" data-search-url="{{ path('invoices.search') }}" data-action="submit->invoices#doSearchAction" novalidate>
             <div class="row">
                 <div class="col-md-5">
                     <input type="search" class="form-control" id="search" name="search"
-                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"/>
+                           placeholder="{{ 'nav.customer.search'|trans }}" value="{{ search }}"
+                           data-action="keyup->invoices#searchInputAction"/>
                 </div>
                 <div class="col-md ps-0">
-                    <button class="btn btn-default" type="button" onclick="doSearch();">
+                    <button class="btn btn-default" type="button" data-action="click->invoices#doSearchAction">
                         <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                     </button>
                 </div>                
@@ -42,120 +46,4 @@
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script>
-        setLocalStorageItemIfNotExists('invoice-template-id', '{{ templateId }}');
-        $(document).ready(function () {
-            if ($("#search").val() != "") {
-                doSearch();
-            }
-
-            $("#search").delayKeyup(function () {
-                doSearch();
-            }, 400);
-
-            let templateId = getLocalStorageItem('invoice-template-id')
-            if(templateId !== null) {
-                updatePDFExportLinks(templateId);
-            }
-        });
-
-        $.ajaxSetup({
-            cache: false
-        });
-
-        function showCreateInvoiceForm(createNewInvoiceSessionObject) {
-            var url = "{{ path('invoices.new.invoice') }}";
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-
-            $(".modal-header .modal-title").html("{{ 'invoice.select.open.reservation'|trans }}");
-
-            $("#modal-content-ajax").html(content);
-
-            $.ajax({
-                url: url,
-                type: "get",
-                data: { createNewInvoice: createNewInvoiceSessionObject },
-                beforeSend: function () {
-                    $("modal-content-ajax").html(content);
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    $("#modal-content-ajax").html(data);
-                }
-            });
-
-            return false;
-        }
-        ;
-
-        function showInvoice(id, edit) {
-            var url = "{{ path('invoices.get.invoice', {'id': 'placeholder'}) }}";
-            url = url.replace("placeholder", id);
-            var content = '<div class="modal-body">' +
-                    '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                    '</div>';
-            $("#modal-content-ajax").html(content);
-            $("#modal-content-ajax").load(url, function (response, status, xhr) {
-                if(edit === true) {
-                    toggleInvoiceEditFields();
-                }
-            });
-
-            return false;
-        }
-
-        function doSearch() {
-            var url = "{{ path('invoices.search')}}";
-            var content = '<img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />';
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $("#invoices-search-form").serialize()+'&'+$("#page").serialize(),
-                beforeSend: function () {
-                    $("#invoice-table").html(content);
-                },
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    $("#invoice-table").html(data);
-                }
-            });
-
-            return false;
-        }
-        {% if is_granted('ROLE_ADMIN') %}
-        function doDeleteInvoice() {
-            var form = "#invoiceDeleteForm";
-            var url = "{{ path('invoices.dodelete.invoice') }}";
-
-            $.ajax({
-                url: url,
-                type: "post",
-                data: $(form).serialize(),
-                error: function (xhr, ajaxOptions, thrownError) {
-                    alert(xhr.status);
-                },
-                success: function (data) {
-                    location.reload();
-                }
-            });
-            return false;
-        }
-    {% endif %}
-    </script>
-{% endblock %}
-
-{% block bodyjs %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/invoice_1.1.0.js"></script>
 {% endblock %}

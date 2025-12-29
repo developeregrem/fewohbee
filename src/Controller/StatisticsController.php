@@ -25,8 +25,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[IsGranted('ROLE_STATISTICS')]
 #[Route('/statistics')]
 class StatisticsController extends AbstractController
 {
@@ -48,43 +50,47 @@ class StatisticsController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-        $objectId = $request->query->get('objectId');
-        $monthStart = $request->query->get('monthStart');
-        $monthEnd = $request->query->get('monthEnd');
-        $yearStart = $request->query->get('yearStart');
-        $yearEnd = $request->query->get('yearEnd');
+        $objectId = $request->query->get('objectId', 'all');
+        $monthStart = (int) $request->query->get('monthStart');
+        $monthEnd = (int) $request->query->get('monthEnd');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = (0 == $beds ? 1 : $beds);
 
-        $start = new \DateTime($yearStart.'-'.$monthStart.'-1');
-        $end = new \DateTime($yearEnd.'-'.$monthEnd.'-2');
-        $diff = date_diff($start, $end);
+        $start = new \DateTimeImmutable($yearStart.'-'.$monthStart.'-01');
+        // DatePeriod excludes the end date, so we move it to the first day of the month after the end
+        $periodEnd = new \DateTimeImmutable($yearEnd.'-'.$monthEnd.'-01')->modify('first day of next month');
+        $period = new \DatePeriod($start, new \DateInterval('P1M'), $periodEnd);
 
-        $currentDate = $start;
-        $interval = new \DateInterval('P1M');
-        $result = [];
-        for ($j = 0; $j <= $diff->m; ++$j) {
-            $days = $currentDate->format('t');
+        $result = [
+            'labels' => [],
+            'datasets' => [],
+        ];
+        $maxDays = 0;
 
-            $tmpResult = ['label' => $this->getLocalizedDate($currentDate->format('n'), 'MMM', $request->getLocale())];
-            $timeStartStr = $currentDate->format('Y-m-');
+        foreach ($period as $currentDate) {
+            $daysInMonth = (int) $currentDate->format('t');
+            $maxDays = max($maxDays, $daysInMonth);
             $data = [];
-            for ($i = 1; $i <= $days; ++$i) {
-                // var_dump($timeStartStr.$i);
+            $timeStartStr = $currentDate->format('Y-m-');
+            for ($i = 1; $i <= $daysInMonth; ++$i) {
                 $utilization = $em->getRepository(Reservation::class)->loadUtilizationForDay($timeStartStr.$i, $objectId);
-                $date = new \DateTime($timeStartStr.$i);
-                // date in milliseconds, utilization in %
-                $data[] = [$i, $utilization * 100 / $beds]; // x,y values
-                // echo $i.':'.$utilization.'<br>';
+                $data[] = $utilization * 100 / $beds;
             }
-            $tmpResult['data'] = $data;
-            $result[] = $tmpResult;
-            $currentDate->add($interval);
+            $result['datasets'][] = [
+                'label' => sprintf(
+                    '%s %s',
+                    $this->getLocalizedDate($currentDate->format('n'), 'MMM', $request->getLocale()),
+                    $currentDate->format('Y')
+                ),
+                'data' => $data,
+            ];
         }
 
-        return new JsonResponse(
-            $result
-        );
+        $result['labels'] = range(1, $maxDays ?: 1);
+
+        return new JsonResponse($result);
     }
 
     #[Route('/utilization/yearly', name: 'statistics.utilization.yearly', methods: ['GET'])]
@@ -92,22 +98,29 @@ class StatisticsController extends AbstractController
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId', 'all');
-        $yearStart = $request->query->get('yearStart');
-        $yearEnd = $request->query->get('yearEnd');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
 
         $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
         $beds = (0 == $beds ? 1 : $beds);
 
-        $result = [];
-        for ($y = $yearStart; $y <= $yearEnd; ++$y) {
-            $tmpResult = ['label' => $y];
-            $tmpResult['data'] = $ss->loadUtilizationForYear($objectId, $y, $beds);
-            $result[] = $tmpResult;
+        $result = [
+            'labels' => [],
+            'datasets' => [],
+        ];
+
+        for ($i = 1; $i <= 12; ++$i) {
+            $result['labels'][] = $this->getLocalizedDate($i, 'MMM', $request->getLocale());
         }
 
-        return new JsonResponse(
-            $result
-        );
+        for ($y = $yearStart; $y <= $yearEnd; ++$y) {
+            $result['datasets'][] = [
+                'label' => (string) $y,
+                'data' => $ss->loadUtilizationForYear($objectId, $y, $beds),
+            ];
+        }
+
+        return new JsonResponse($result);
     }
 
     /**
@@ -127,11 +140,11 @@ class StatisticsController extends AbstractController
     {
         $em = $doctrine->getManager();
 
-        $objectId = $request->query->get('objectId');
-        $monthStart = $request->query->get('monthStart');
-        $monthEnd = $request->query->get('monthEnd');
-        $yearStart = $request->query->get('yearStart');
-        $yearEnd = $request->query->get('yearEnd');
+        $objectId = $request->query->get('objectId', 'all');
+        $monthStart = (int) $request->query->get('monthStart');
+        $monthEnd = (int) $request->query->get('monthEnd');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
 
         $start = new \DateTime($yearStart.'-'.$monthStart.'-1');
         $tmpEnd = new \DateTime($yearEnd.'-'.$monthEnd.'-1'); // set to first day, we need to figure out the number of days in this month
@@ -141,15 +154,23 @@ class StatisticsController extends AbstractController
         $resultArr = $em->getRepository(Reservation::class)
                 ->loadOriginStatisticForPeriod($start->format('Y-m-d'), $end->format('Y-m-d'), $objectId);
 
-        $result = [];
+        $labels = [];
+        $data = [];
         foreach ($resultArr as $single) {
             $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
-            $result[] = ['label' => $origin->getName(), 'data' => $single['origins']];
+            $labels[] = $origin->getName();
+            $data[] = $single['origins'];
         }
 
-        return new JsonResponse(
-            $result
-        );
+        return new JsonResponse([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Origin',
+                    'data' => $data,
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -159,9 +180,9 @@ class StatisticsController extends AbstractController
     public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
-        $objectId = $request->query->get('objectId');
-        $yearStart = $request->query->get('yearStart');
-        $yearEnd = $request->query->get('yearEnd');
+        $objectId = $request->query->get('objectId', 'all');
+        $yearStart = (int) $request->query->get('yearStart');
+        $yearEnd = (int) $request->query->get('yearEnd');
 
         $start = new \DateTime($yearStart.'-01-1');
         $end = new \DateTime($yearEnd.'-12-31');
@@ -169,15 +190,23 @@ class StatisticsController extends AbstractController
         $resultArr = $em->getRepository(Reservation::class)
                 ->loadOriginStatisticForPeriod($start->format('Y-m-d'), $end->format('Y-m-d'), $objectId);
 
-        $result = [];
+        $labels = [];
+        $data = [];
         foreach ($resultArr as $single) {
             $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
-            $result[] = ['label' => $origin->getName(), 'data' => $single['origins']];
+            $labels[] = $origin->getName();
+            $data[] = $single['origins'];
         }
 
-        return new JsonResponse(
-            $result
-        );
+        return new JsonResponse([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Origin',
+                    'data' => $data,
+                ],
+            ],
+        ]);
     }
 
     #[Route('/turnover', name: 'statistics.turnover', methods: ['GET'])]

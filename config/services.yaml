@@ -8,9 +8,11 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '3.8.2'
+    version: '4.0.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
+    customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
+    passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
 
 services:
     # default configuration for services in *this* file
