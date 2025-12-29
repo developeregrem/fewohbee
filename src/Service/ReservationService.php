@@ -15,11 +15,11 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
-use App\Entity\CustomerAddresses;
 use App\Interfaces\ITemplateRenderer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -29,14 +29,71 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class ReservationService implements ITemplateRenderer
 {
-    private $em;
-    private $requestStack;
+    public const SESSION_SELECTED_RESERVATIONS = 'selectedReservationIds';
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, InvoiceService $is)
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly RequestStack $requestStack,
+        private readonly InvoiceService $is
+    ) {
+    }
+
+    public function resetSelectedReservations(): void
     {
-        $this->em = $em;
-        $this->requestStack = $requestStack;
-        $this->is = $is;
+        $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, []);
+    }
+
+    public function addReservationToSelection(int $reservationId): void
+    {
+        $selectedReservationIds = $this->getSelectedReservationIds();
+
+        if (!in_array($reservationId, $selectedReservationIds, true)) {
+            $selectedReservationIds[] = $reservationId;
+            $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, $selectedReservationIds);
+        }
+    }
+
+    public function removeReservationFromSelection(int|string $reservationKey): void
+    {
+        $selectedReservationIds = $this->getSelectedReservationIds();
+
+        if (array_key_exists($reservationKey, $selectedReservationIds)) {
+            unset($selectedReservationIds[$reservationKey]);
+            $this->requestStack->getSession()->set(self::SESSION_SELECTED_RESERVATIONS, $selectedReservationIds);
+        }
+    }
+
+    public function getSelectedReservationIds(): array
+    {
+        return $this->requestStack->getSession()->get(self::SESSION_SELECTED_RESERVATIONS, []);
+    }
+
+    public function hasSelectedReservations(): bool
+    {
+        return count($this->getSelectedReservationIds()) > 0;
+    }
+
+    /**
+     * Returns the selected Reservation Objects.
+     *
+     * @return Reservation[]
+     */
+    public function getSelectedReservations(): array
+    {
+        $reservations = [];
+        foreach ($this->getSelectedReservationIds() as $reservationId) {
+            $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+            if ($reservation instanceof Reservation) {
+                $reservations[] = $reservation;
+            }
+        }
+
+        return $reservations;
+    }
+
+    public function isReservationAlreadySelected(int $reservationId): bool
+    {
+        return in_array($reservationId, $this->getSelectedReservationIds(), true);
     }
 
     public function isAppartmentAlreadyBookedInCreationProcess($reservations, Appartment $apartment, \DateTimeInterface $start, \DateTimeInterface $end)
@@ -55,11 +112,12 @@ class ReservationService implements ITemplateRenderer
                     (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked >= $endReservation))
                     || (($startDateToBeChecked <= $startReservation) && ($endDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation))
                     || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked < $endReservation) && ($endDateToBeChecked >= $endReservation))
-                    || (($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation)
+                    || (
+                        ($startDateToBeChecked >= $startReservation) && ($startDateToBeChecked <= $endReservation) && ($endDateToBeChecked > $startReservation) && ($endDateToBeChecked <= $endReservation)
                     )
                 ) {
                     // still some space free in room
-                    if($apartment->isMultipleOccupancy() && ($persons < $bedsMax)) {
+                    if ($apartment->isMultipleOccupancy() && ($persons < $bedsMax)) {
                         return false;
                     }
 
@@ -83,7 +141,7 @@ class ReservationService implements ITemplateRenderer
         if ('all' == $propertyId) {
             $appartments = $this->em->getRepository(Appartment::class)->findAll();
         } else {
-            $appartments = $this->em->getRepository(Appartment::class)->findByObject($propertyId);
+            $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId]);
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {
@@ -92,7 +150,7 @@ class ReservationService implements ITemplateRenderer
                 $availableApartments[] = $ap;
             }
         }
-        
+
         $newReservationsInformationArray = $this->requestStack->getSession()->get('reservationInCreation', []);
 
         // during creation process remove reservation that is already in session
@@ -135,7 +193,7 @@ class ReservationService implements ITemplateRenderer
             $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
             $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
             $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
-            $reservation->setPersons((int)$reservationInformation->getPersons());
+            $reservation->setPersons((int) $reservationInformation->getPersons());
 
             if (isset($customer)) {
                 $reservation->setBooker($customer);
@@ -175,10 +233,10 @@ class ReservationService implements ITemplateRenderer
         }
     }
 
-    public function updateReservation(Request $request, Reservation $reservation) : bool
+    public function updateReservation(Request $request, Reservation $reservation): bool
     {
         $apartmentId = $request->request->get('aid');
-        $persons = (int)$request->request->get('persons');
+        $persons = (int) $request->request->get('persons');
         $status = $request->request->get('status');
         $start = new \DateTime($request->request->get('from'));
         $end = new \DateTime($request->request->get('end'));
@@ -214,28 +272,25 @@ class ReservationService implements ITemplateRenderer
     }
 
     /**
-     * Check if an apartment is available for the given time
-     * @param \DateTimeInterface $start
-     * @param \DateTimeInterface $end
-     * @param Appartment $apartment
-     * @param Reservation|null $reservation
-     * @return bool
+     * Check if an apartment is available for the given time.
      */
-    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null) : bool
+    public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null): bool
     {
         $reservationsForApartment = $this->em->getRepository(Reservation::class)
             ->loadReservationsForApartmentWithoutStartEnd($start, $end, $apartment);
-        
+
         // during update process we ignore the reservation that we want to update
-        if(null !== $reservation) {
-            $reservationsForApartment = array_filter($reservationsForApartment,
-                fn($v, $k) => $v->getId() !== $reservation->getId(),
-                ARRAY_FILTER_USE_BOTH);
+        if (null !== $reservation) {
+            $reservationsForApartment = array_filter(
+                $reservationsForApartment,
+                fn ($v, $k) => $v->getId() !== $reservation->getId(),
+                ARRAY_FILTER_USE_BOTH
+            );
         }
 
         // check wheather multiple reservations are allowed and check if there is still place for new geuests in it
         if (count($reservationsForApartment) > 0) {
-            if(!$apartment->isMultipleOccupancy()) {
+            if (!$apartment->isMultipleOccupancy()) {
                 return false;
             }
 
@@ -244,7 +299,7 @@ class ReservationService implements ITemplateRenderer
             }
             // room has still some free beds
             // todo over booking is possible because number of beds for current reservation is not taken into account
-            if($numberOfPersons <= $apartment->getBedsMax()) {
+            if ($numberOfPersons <= $apartment->getBedsMax()) {
                 return true;
             } else {
                 return false;
@@ -360,7 +415,7 @@ class ReservationService implements ITemplateRenderer
      */
     public function getInvoicesForReservationsInProgress()
     {
-        $ids = $this->requestStack->getSession()->get('selectedReservationIds');
+        $ids = $this->getSelectedReservationIds();
         $totalInvoices = [];
         foreach ($ids as $reservationId) {
             $reservation = $this->em->find(Reservation::class, $reservationId);
@@ -420,10 +475,10 @@ class ReservationService implements ITemplateRenderer
     {
         // params need to be an array containing a list of Reservation Objects
         $params = [
-                'reservation1' => $param[0],
-                'address' => (0 == count($param[0]->getBooker()->getCustomerAddresses()) ? new CustomerAddresses() : $param[0]->getBooker()->getCustomerAddresses()[0]),
-                'reservations' => $param,
-            ];
+            'reservation1' => $param[0],
+            'address' => (0 == count($param[0]->getBooker()->getCustomerAddresses()) ? new CustomerAddresses() : $param[0]->getBooker()->getCustomerAddresses()[0]),
+            'reservations' => $param,
+        ];
         $prices = $this->getTotalPricesForTemplate($param);
 
         return array_merge($params, $prices);

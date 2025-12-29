@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -54,6 +55,12 @@ class Reservation
     #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
 
+    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    private ?\DateTime $arrivalTime = null;
+
+    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    private ?\DateTime $departureTime = null;
+
     public function __construct()
     {
         $this->reservationDate = new \DateTime('now');
@@ -79,7 +86,7 @@ class Reservation
         return $this->endDate;
     }
 
-    public function getPersons() : int
+    public function getPersons(): int
     {
         return $this->persons;
     }
@@ -369,6 +376,30 @@ class Reservation
     public function setUuid(Uuid $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getArrivalTime(): ?\DateTime
+    {
+        return $this->arrivalTime;
+    }
+
+    public function setArrivalTime(?\DateTime $arrivalTime): static
+    {
+        $this->arrivalTime = $arrivalTime;
+
+        return $this;
+    }
+
+    public function getDepartureTime(): ?\DateTime
+    {
+        return $this->departureTime;
+    }
+
+    public function setDepartureTime(?\DateTime $departureTime): static
+    {
+        $this->departureTime = $departureTime;
 
         return $this;
     }

@@ -27,7 +27,7 @@ Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den
 
 Um das Tool nutzen zu können, benötigt man einen kleinen Webserver, der die Anforderungen von Symfony [requirements](https://symfony.com/doc/current/setup.html#technical-requirements) erfüllt:
 
- - PHP 8.2 oder höher
+ - PHP 8.4 oder höher
  - php-intl extension
  - einen Webserver z.B. nginx oder apache
  - einen Datenbankserver (empfohlen wird mysql oder mariadb)

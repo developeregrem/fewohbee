@@ -28,6 +28,12 @@
         {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
         {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
         {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}
+        {% if reservation.arrivalTime %}
+            {% set popBody = popBody ~ "<br />" ~ 'reservation.arrivalTime'|trans ~ ": " ~ reservation.arrivalTime|date('H:i') %}
+        {% endif %}
+        {% if reservation.departureTime %}
+            {% set popBody = popBody ~ " " ~ 'reservation.departureTime'|trans ~ ": " ~ reservation.departureTime|date('H:i') %}
+        {% endif %}
         {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
         {{ popBody }}
     {% endif %}

@@ -1,6 +1,7 @@
+<div data-controller="invoices reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
-        <form id="new-invoice-id" class="form" role="form" onsubmit="return showCreateInvoicePositions(null)">
+        <form id="new-invoice-id" class="form" role="form" data-action="submit->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
         <div class="row">            
             <div id="invoice-id" class="col">
                 <input type="text" name="invoiceid" class="form-control"
@@ -20,7 +21,7 @@
             <div class="col">
                 <h4 class="mt-4">{{ 'invoice.guest'|trans }}&nbsp;
                     <small>
-                    <a href="#" onclick="return getContentForModal('{{ path('invoices.show.change.customer') }}')"
+                    <a href="#" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.show.change.customer') }}"
                        title="{{ 'button.edit'|trans }}" class="text-secondary">
                         <i class="fas fa-edit"></i></a>
                     </small>
@@ -44,7 +45,7 @@
             <div class="col">
                 <h4>{{ 'invoice.appartment'|trans }}</h4>
                 {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-default" onclick="return getContentForModal('{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}')">
+                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
             </div>
         </div>
@@ -54,7 +55,7 @@
                 <p>
                 <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
                 {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-default" onclick="return getContentForModal('{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}')">
+                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
                 </p>
             </div>
@@ -63,134 +64,15 @@
 </div>
 <div class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return selectReservation()">
+        <li class="page-item " data-action="click->reservations#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
     {% if appartmentPositionExists %}
     <ul class="pagination">
-        <li class="page-item" onclick="return showNewInvoicePreview()">
+        <li class="page-item" data-action="click->invoices#showNewInvoicePreviewAction" data-url="{{ path('invoices.show.new.invoice.preview') }}">
             <a class="page-link" href="#">{{ 'button.continue'|trans }}&rarr;</a>
         </li>
     </ul>
     {% endif %} 
 </div>
-<script>
-function saveNewInvoiceId() {
-    var url = "{{ path('invoices.create.invoice.positions') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        data: $("#new-invoice-id").serialze(),
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function removeAppartmentPositionFromInvoicePositions(index) {
-    var url = "{{ path('invoices.delete.appartment.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        data: {appartmentInvoicePositionIndex: index},
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function removeMiscellaneousPositionFromInvoicePositions(index) {
-    var url = "{{ path('invoices.delete.miscellaneous.invoice.position') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        data: {miscellaneousInvoicePositionIndex: index},
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function showNewInvoicePreview() {
-    var url = "{{ path('invoices.show.new.invoice.preview') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-function selectReservation() {
-    var url = "{{ path('invoices.select.reservation') }}";
-    var content = '<div class="modal-body">' +
-            '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-            '</div>';
-
-    $.ajax({
-        url: url,
-        type: "post",
-        beforeSend: function () {
-            $("#modal-content-ajax").html(content);
-        },
-        error: function (xhr, ajaxOptions, thrownError) {
-            alert(xhr.status);
-        },
-        success: function (data) {
-            $("#modal-content-ajax").html(data);
-        }
-    });
-
-    return false;
-}
-
-</script>
+</div>

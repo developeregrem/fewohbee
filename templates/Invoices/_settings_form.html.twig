@@ -11,7 +11,7 @@
     </h2>
     <div id="collapse{{ idx }}" class="accordion-collapse collapse{% if (editSettingId is defined and editSettingId == setting.id) or (editSettingId == 0 and (setting.isActive or setting.id == null)) %} show{% endif %}" data-bs-parent="#accordionSettings">
         <div class="accordion-body">
-            {{ form_start(form, {'attr': {'onsubmit': 'return saveSettings(this)', 'id': 'sttings-form-'~idx }}) }}
+            {{ form_start(form, {'attr': {'data-action': 'submit->invoices#submitFormAction', 'id': 'sttings-form-'~idx }}) }}
                 {{ form_widget(form) }}
                 <div class="row text-end">
                     <div class="col-md">

@@ -45,13 +45,13 @@ class UserService
         // check password during create and when it's not empty during edit
         if (null === $user->getId() || !empty($password)) {
             $constraints = [
-                new Length([
-                    'min' => 10,
-                    'minMessage' => 'form.password.min',
+                new Length(
+                    min: 10,
+                    minMessage: 'form.password.min',
                     // max length allowed by Symfony for security reasons
-                    'max' => 4096,
-                ]),
-                new NotCompromisedPassword(['skipOnError' => true]),
+                    max: 4096,
+                ),
+                new NotCompromisedPassword(skipOnError: true),
             ];
 
             $violations = $this->validator->validate($password, $constraints);

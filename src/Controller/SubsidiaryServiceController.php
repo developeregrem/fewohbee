@@ -20,9 +20,9 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/objects')]
+#[Route('/settings/objects')]
 class SubsidiaryServiceController extends AbstractController
 {
     #[Route('/', name: 'objects.overview', methods: ['GET'])]
@@ -132,30 +132,21 @@ class SubsidiaryServiceController extends AbstractController
         );
     }
 
-    #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['GET', 'POST'])]
-    public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
+    #[Route('/{id}/delete', name: 'objects.delete.object', methods: ['DELETE'])]
+    public function deleteObjectAction(SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, Subsidiary $entry)
     {
-        if ('POST' == $request->getMethod()) {
-            if ($csrf->validateCSRFToken($request, true)) {
-                $object = $sub->deleteObject($id);
+        if ($this->isCsrfTokenValid('delete'.$entry->getId(), $request->request->get('_token'))) {
+            $object = $sub->deleteObject($entry);
 
-                if ($object) {
-                    $this->addFlash('success', 'object.flash.delete.success');
-                } else {
-                    $this->addFlash('warning', 'object.flash.delete.error.still.in.use');
-                }
+            if ($object) {
+                $this->addFlash('success', 'object.flash.delete.success');
+            } else {
+                $this->addFlash('warning', 'object.flash.delete.error.still.in.use');
             }
-
-            return new Response('', Response::HTTP_NO_CONTENT);
         } else {
-            // initial get load (ask for deleting)
-            return $this->render(
-                'common/form_delete_entry.html.twig',
-                [
-                    'id' => $id,
-                    'token' => $csrf->getCSRFTokenForForm(),
-                ]
-            );
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

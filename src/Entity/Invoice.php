@@ -92,7 +92,7 @@ class Invoice
         return $this->number;
     }
 
-    public function getDate():  \DateTime
+    public function getDate(): \DateTime
     {
         return $this->date;
     }
@@ -353,12 +353,13 @@ class Invoice
         if (strlen($this->cardNumber) < 10) {
             return $this->cardNumber; // Not enough characters to mask
         }
+
         return substr($this->cardNumber, -10);
     }
 
     public function setCardNumber(?string $cardNumber): static
     {
-        $this->cardNumber = $this->maskCardNumber($cardNumber);;
+        $this->cardNumber = $this->maskCardNumber($cardNumber);
 
         return $this;
     }
@@ -388,11 +389,11 @@ class Invoice
     }
 
     /**
-     * Mask the card number to hide sensitive information (first 2 and last 4 characters are visible)
-     */ 
+     * Mask the card number to hide sensitive information (first 2 and last 4 characters are visible).
+     */
     private function maskCardNumber(?string $cardNumber): ?string
     {
-        if ($cardNumber === null) {
+        if (null === $cardNumber) {
             return null;
         }
         if (strlen($cardNumber) < 6) {
@@ -403,7 +404,7 @@ class Invoice
         $end = substr($cardNumber, -4);
         $masked = str_repeat('X', strlen($cardNumber) - 6);
 
-        return $start . $masked . $end;
+        return $start.$masked.$end;
     }
 
     public function getMandateReference(): ?string

@@ -83,16 +83,31 @@ class CreateUserCommand extends Command
             return $input;
         });
 
+        $availableRoles = $this->em->getRepository(Role::class)->findAll();
+        if (0 === \count($availableRoles)) {
+            throw new \RuntimeException('No roles have been configured yet. Please run the first-run command first.');
+        }
+        $choices = [];
+        foreach ($availableRoles as $roleEntity) {
+            $choices[$roleEntity->getRole()] = $roleEntity;
+        }
+        $choiceKeys = array_keys($choices);
+        $default = '';
+        if (\in_array('ROLE_RESERVATIONS', $choiceKeys, true)) {
+            $default = 'ROLE_RESERVATIONS';
+        } elseif (!empty($choiceKeys)) {
+            $default = $choiceKeys[0];
+        }
         $question = new ChoiceQuestion(
-            'Please select the user role',
-            ['ADMIN', 'USER'],
-            1
+            'Please select the user roles (comma separated)',
+            $choiceKeys,
+            $default
         );
-        $role = $helper->ask($input, $output, $question);
-        if ('ADMIN' === $role) {
-            $role = 1;
-        } else {
-            $role = 2;
+        $question->setMultiselect(true);
+        $question->setErrorMessage('Role %s is invalid.');
+        $selectedRoles = (array) $helper->ask($input, $output, $question);
+        if (0 === \count($selectedRoles)) {
+            throw new \RuntimeException('At least one role must be selected.');
         }
         $user = new User();
         $user->setEmail($email);
@@ -100,7 +115,11 @@ class CreateUserCommand extends Command
         $user->setLastname($lastName);
         $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
-        $user->setRole($this->em->getRepository(Role::class)->find($role));
+        foreach ($selectedRoles as $selectedRole) {
+            if (isset($choices[$selectedRole])) {
+                $user->addRole($choices[$selectedRole]);
+            }
+        }
         $user->setActive(true);
         $this->em->persist($user);
 

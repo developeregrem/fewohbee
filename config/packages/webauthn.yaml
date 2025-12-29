@@ -1,0 +1,21 @@
+# Please see the following page for more information: https://webauthn-doc.spomky-labs.com/the-webauthn-server/the-symfony-way#configuration
+
+webauthn:
+    credential_repository: 'App\Repository\WebauthnCredentialRepository' # CREATE YOUR REPOSITORY AND CHANGE THIS!
+    user_repository: 'App\Repository\WebauthnUserEntityRepository' # CREATE YOUR REPOSITORY AND CHANGE THIS!
+    creation_profiles:
+        default:
+            rp:
+                name: '%env(RELYING_PARTY_NAME)%' # Please adapt the env file with the correct relaying party ID or set null
+                id: '%env(RELYING_PARTY_ID)%' # Please adapt the env file with the correct relaying party ID or set null
+    request_profiles:
+        default:
+            rp_id: '%env(RELYING_PARTY_ID)%' # Please adapt the env file with the correct relaying party ID or set null
+    controllers:
+        enabled: true # We enable the feature
+        creation:
+            from_user_account: # Endpoints accessible by the user itself
+                options_path: '/profile/security/devices/add/options' # Path to the creation options controller
+                result_path: '/profile/security/devices/add' # Path to the response controller
+                user_entity_guesser: Webauthn\Bundle\Security\Guesser\CurrentUserEntityGuesser # See above
+                hide_existing_credentials: false

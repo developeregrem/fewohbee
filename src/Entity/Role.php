@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -18,15 +20,15 @@ class Role
     private $name;
     #[ORM\Column(name: 'role', type: 'string', length: 30, unique: true)]
     private $role;
-    #[ORM\OneToMany(targetEntity: 'User', mappedBy: 'role')]
-    private $users;
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roleEntities')]
+    private Collection $users;
 
     /**
      * Constructor.
      */
     public function __construct()
     {
-        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getRole()
@@ -44,7 +46,10 @@ class Role
         return $this->name;
     }
 
-    public function getUsers()
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
     {
         return $this->users;
     }
@@ -59,11 +64,6 @@ class Role
         $this->name = $name;
     }
 
-    public function setUsers($users): void
-    {
-        $this->users = $users;
-    }
-
     public function setRole($role): void
     {
         $this->role = $role;
@@ -74,9 +74,25 @@ class Role
      *
      * @return Role
      */
-    public function addUser(User $users)
+    /**
+     * @param iterable<User> $users
+     */
+    public function setUsers(iterable $users): void
     {
-        $this->users[] = $users;
+        $this->users = new ArrayCollection();
+        foreach ($users as $user) {
+            if ($user instanceof User) {
+                $this->addUser($user);
+            }
+        }
+    }
+
+    public function addUser(User $user)
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addRole($this);
+        }
 
         return $this;
     }
@@ -84,8 +100,10 @@ class Role
     /**
      * Remove users.
      */
-    public function removeUser(User $users): void
+    public function removeUser(User $user): void
     {
-        $this->users->removeElement($users);
+        if ($this->users->removeElement($user)) {
+            $user->removeRole($this);
+        }
     }
 }

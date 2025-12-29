@@ -34,9 +34,9 @@
                 {% if mode is defined and mode == 'edit' %}
                 <td>
                     <a href="#" title="{{ 'button.edit'|trans }}">
-                        <i onclick="return getContentForModal('{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}')" class="fas fa-edit"></i></a>
+                        <i data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.apartment.position', {'invoiceId': 'new', 'id': key}) }}" class="fas fa-edit"></i></a>
                     <a href="#" title="{{ 'button.delete'|trans }}">
-                        <i onclick="return removeAppartmentPositionFromInvoicePositions({{ key }})" class="fas fa-trash-alt"></i></a>
+                        <i data-action="click->invoices#removeApartmentPositionAction" data-url="{{ path('invoices.delete.appartment.invoice.position') }}" data-index="{{ key }}" class="fas fa-trash-alt"></i></a>
                 </td>
                 {% endif %}
             </tr>

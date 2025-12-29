@@ -19,11 +19,12 @@ class CustomerRepository extends EntityRepository
     {
         $q = $this
             ->createQueryBuilder('c')
-            ->select('c, a')
+            ->select('c')
             ->where('c.id > 1 AND ((c.lastname LIKE :lastname or c.firstname LIKE :lastname) OR a.company LIKE :lastname)')
             ->leftJoin('c.customerAddresses', 'a')
             ->setParameter('lastname', $lastname)
             ->addOrderBy('c.lastname', 'ASC')
+            ->groupBy('c.id')
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery();
@@ -37,7 +38,7 @@ class CustomerRepository extends EntityRepository
     {
         $q = $this
             ->createQueryBuilder('c')
-            ->select('c, a')
+            ->select('c', 'a')
             ->where('c.id > 1 AND ((c.lastname LIKE :search or c.firstname LIKE :search) OR '
                     .'(a.company LIKE :search or a.email LIKE :search or a.mobile_phone LIKE :search '
                     .'or a.address LIKE :search or a.phone LIKE :search))')
@@ -55,7 +56,7 @@ class CustomerRepository extends EntityRepository
     public function findByFilter($search, $page = 1, $limit = 20)
     {
         $q = $this->getQueryForFilter($search, $page, $limit);
-        $paginator = new Paginator($q, $fetchJoinCollection = false);
+        $paginator = new Paginator($q, $fetchJoinCollection = true);
 
         return $paginator;
     }

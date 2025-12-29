@@ -1,0 +1,125 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  Profil
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  Profil
+{% endblock %}
+
+{% block content %}
+{% trans_default_domain 'messages' %}
+<div class="container" data-controller="settings">
+    <div class="row mb-4">
+        <div class="col-lg">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-tittle">{{ 'profile.personal_data.title'|trans }}</h4>
+                    <p class="card-subtitle text-muted">{{ 'profile.personal_data.subtitle'|trans }}</p>
+                    {{ form_start(personalDataForm, {
+                        attr: {
+                            'data-controller': 'profile-form',
+                            'data-action': 'submit->profile-form#submit turbo:submit-end->profile-form#restore',
+                            'data-profile-form-loading-text-value': 'profile.personal_data.saving'|trans,
+                            'data-turbo': 'false'
+                        }
+                    }) }}
+                    {{ form_errors(personalDataForm) }}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {{ form_row(personalDataForm.firstname) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(personalDataForm.lastname) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(personalDataForm.email) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(personalDataForm.password) }}
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button type="submit" class="btn btn-primary" data-profile-form-target="submit">
+                            {{ 'profile.personal_data.submit'|trans }}
+                        </button>
+                    </div>
+                    {{ form_end(personalDataForm) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if passkey_enabled %}
+        <div>
+            <h4 class="text-gray-600">{{ 'profile.passkeys.title'|trans }}</h4>
+        </div>
+        <div class="row mt-3">        
+            <div class="col" {{ stimulus_controller(
+                '@web-auth/webauthn-stimulus',
+                {
+                    creationOptionsUrl: path('webauthn.controller.creation.request.from_user_account'),
+                    creationResultUrl: path('webauthn.controller.creation.response.from_user_account'),
+                    creationSuccessRedirectUri: path('profile')
+                }
+            ) }}>
+                <button type="button" class="btn btn-default" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
+                        <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
+                    </button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{{ 'profile.passkeys.device'|trans }}</th>
+                        <th>{{ 'profile.passkeys.created_at'|trans }}</th>
+                        <th>{{ 'profile.passkeys.public_key'|trans }}</th>
+                        <th>{{ 'profile.passkeys.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for credential in credentials %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                {% if credential.clientLabel %}
+                                    {{ credential.clientLabel }}
+                                {% else %}
+                                    <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if credential.createdAt %}
+                                    {{ credential.createdAt|date('Y-m-d H:i') }}
+                                {% else %}
+                                    <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey|toBase64 }}</td>
+                            <td>
+                                {% set id = credential.id %}
+                                {% set targetUrl = path('profile_delete_credential', {id: credential.id }) %}
+                                {% use "common/delete_popover.html.twig" %}
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i class="fas fa-trash-alt"
+                                        data-popover="delete"
+                                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-gray-400">{{ 'profile.passkeys.none'|trans }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

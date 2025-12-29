@@ -28,7 +28,10 @@
             <td>
                 {% if not journal.isClosed %}
                 <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="getEntry({{ entry.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                    <i class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       data-action="click->cashjournal#openModalAction"
+                       data-url="{{ path('cashjournal.journal.entry', {'id': entry.id}) }}"
+                       data-title="{{ 'journal.entry.edit'|trans }}"></i></a>
                 {% endif %}
             </td>
         </tr>
@@ -44,4 +47,4 @@
     <div class="col-md-1 text-end">{{ journal.cashEnd|number_format(2, ',', '.') }}</div>
 </div>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
-{% include 'paginator.html.twig' with { 'url' : path('cashjournal.journal.entry.index', {'id': journal.id}) } %}
+{% include 'paginator.html.twig' with { 'url' : path('cashjournal.journal.entry.index', {'id': journal.id}), 'pagination_action': 'click->cashjournal#paginateEntriesAction' } %} 

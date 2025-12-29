@@ -16,11 +16,17 @@
             <td>{{ journal.cashEnd|number_format(2, ',', '.') }}</td>
             <td>
                 <a href="#" title="{{ 'journal.cash.closed'|trans }}?">
-                    <i onclick="editJournalStatus({{ journal.id }}, 'closed')" class="fas fa-lock{% if journal.isClosed == 0 %}-open{% endif %}"></i>
+                    <i class="fas fa-lock{% if journal.isClosed == 0 %}-open{% endif %}"
+                       data-action="click->cashjournal#editStatusAction"
+                       data-url="{{ path('cashjournal.journal.edit.status', {'id': journal.id}) }}"
+                       data-status="closed"></i>
                 </a>
                 | 
                 <a href="#" title="{{ 'journal.cash.booked'|trans }}?">
-                    <i onclick="editJournalStatus({{ journal.id }}, 'booked')" class="fas fa-folder{% if journal.isBooked == 0 %}-open{% endif %}"></i>
+                    <i class="fas fa-folder{% if journal.isBooked == 0 %}-open{% endif %}"
+                       data-action="click->cashjournal#editStatusAction"
+                       data-url="{{ path('cashjournal.journal.edit.status', {'id': journal.id}) }}"
+                       data-status="booked"></i>
                 </a>
             </td>
             <td>
@@ -28,10 +34,18 @@
                     <i class="fas fa-info-circle"></i></a>
                 {% if not journal.isClosed %}
                 <a href="#" title="{{ 'button.edit'|trans }}">
-                    <i onclick="getJournal({{ journal.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                    <i class="fas fa-edit"
+                       data-action="click->cashjournal#openModalAction"
+                       data-url="{{ path('cashjournal.journal', {'id': journal.id}) }}"
+                       data-title="{{ 'journal.edit'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 
                 <a href="#" title="{{ 'button.add'|trans }}">
-                    <i onclick="addJournalEntry({{ journal.id }}, true)" class="fas fa-plus" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                    <i class="fas fa-plus"
+                       data-action="click->cashjournal#openModalAction"
+                       data-url="{{ path('cashjournal.journal.entry.new', {'id': journal.id}) }}"
+                       data-title="{{ 'journal.entry.add'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
                 {% endif %}
                 <a class="export-link"
                    href="{{ path('cashjournal.journal.export.pdf', {'id': journal.id, 'templateId': 0 }) }}"
@@ -43,13 +57,4 @@
     </tbody>
 </table>
 <input id="page" type="hidden" name="page" value="{{ page }}" />
-{% include 'paginator.html.twig' with { 'url' : path('cashjournal.overview') } %}
-
-<script>
-    $(document).ready(function() {
-        $("#pagination a").click(function() {
-            getJournalTable($(this).attr("data-page"));
-            return false;
-        });
-    });
-</script>
+{% include 'paginator.html.twig' with { 'url' : path('cashjournal.overview'), 'pagination_action': 'click->cashjournal#paginateAction' } %}

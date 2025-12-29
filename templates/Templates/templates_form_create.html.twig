@@ -1,4 +1,12 @@
-<form id="entry-form-new" class="form-horizontal" role="form" onsubmit="return createNewEntity()">
+<form id="entry-form-new" class="form-horizontal" role="form" method="POST"
+      data-controller="settings templates"
+      data-action="submit->templates#beforeSubmitAction submit->settings#submitFormAction"
+      data-url="{{ path('settings.templates.create') }}"
+      data-success-url="{{ path('settings.templates.overview') }}"
+      data-templates-template-url="{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}"
+      data-templates-upload-url="{{ path('templates.upload') }}"
+      data-templates-locale="{{ app.request.locale }}"
+      data-templates-basepath="{{ app.request.basepath }}">
     <div class="modal-body ps-5 pe-5">
         <div id="flash-message-overlay">
         </div>

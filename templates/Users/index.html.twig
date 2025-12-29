@@ -9,10 +9,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" data-controller="settings">
     <div class="row">
         <div class="col">
-            <button type="button" class="btn btn-default" onclick="showCreateUserForm()" data-bs-toggle="modal"
+            <button type="button" class="btn btn-default"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('users.new.user') }}"
+                    data-title="{{ 'nav.user.add'|trans }}"
+                    data-bs-toggle="modal"
                     data-bs-target="#modalCenter">
                 <i class="fas fa-plus"></i> {{ 'nav.user.add'|trans }}</button>
         </div>
@@ -36,16 +40,24 @@
                         <td>{{ user.lastname }}</td>
                         <td>
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                                <i onclick="getEntry({{ user.id }})" class="fas fa-info-circle"></i></a>
+                                <i class="fas fa-info-circle"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('users.edit.user', {'id': user.id}) }}"
+                                   data-title="{{ 'button.details'|trans }}"></i></a>
                             <a href="#" title="{{ 'button.edit'|trans }}">
-                                <i onclick="editEntry({{ user.id }})" class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"></i></a>
+                                <i class="fas fa-edit" data-bs-toggle="modal" data-bs-target="#modalCenter"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('users.edit.user', {'id': user.id}) }}"
+                                   data-title="{{ 'button.edit'|trans }}"
+                                   data-enable-edit="true"></i></a>
+                            {% set id = user.id %}
+                            {% set targetUrl = path('users.delete.user', {'id': user.id}) %}
+                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
-                                <i onclick="deleteEntry({{ user.id }})" class="fas fa-trash-alt"></i></a>
-                        </td>
-                    </tr>
-                    <tr id="entry-{{ user.id }}" class="d-none">
-                        <td colspan="6" id="entry-cell-{{ user.id }}">
-                            <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                                <i class="fas fa-trash-alt"
+                                   data-popover="delete"
+                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -54,58 +66,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block javascripts %}
-    {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/settings.js"></script>
-{% endblock %}
-{% block bodyjs %}
-    {{ parent() }}
-    <script>
-    $(function() {
-        $.ajaxSetup({
-            cache: false
-        });
-        
-        // the default modal width is used here
-        $("#modalCenter .modal-dialog").removeClass('modal-lg');
-    }); 
-
-    function showCreateUserForm() {
-        getContentForModal("{{ path('users.new.user') }}");
-    }
-    
-    function getEntry(id) {
-        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url);        
-    }
-    
-    function editEntry(id) {
-        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
-        getContentForModal(url, "", function() {
-            enableEditForm(id);
-        });        
-    }
-
-    function saveUser(id) {
-        let url = replacePlaceholder("{{ path('users.edit.user', {'id': 'placeholder'}) }}", id);
-        return _doPost('#entry-form-'+id, url);
-    }
-
-    function deleteEntry(id) {
-        let url = replacePlaceholder("{{ path('users.delete.user', {'id': 'placeholder'}) }}", id);
-        _deleteEntry(id, url);        
-    }
-
-    function doDeleteEntry(id) {
-        let url = replacePlaceholder("{{ path('users.delete.user', {'id': 'placeholder'}) }}", id);
-        return _doDelete('#entry-form-'+id, url);
-    }
-
-    function createNewUser() {
-        let url = "{{ path('users.new.user')}}";
-        return _doPost('#entry-form-new', url, '{{ path('users.overview') }}');
-    }
-    </script>
 {% endblock %}

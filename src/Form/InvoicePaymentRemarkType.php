@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use App\Entity\Invoice;
 use App\Entity\Enum\PaymentMeansCode;
+use App\Entity\Invoice;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -22,7 +22,7 @@ class InvoicePaymentRemarkType extends AbstractType
                 'label' => 'invoice.paymentmeans.label',
                 'required' => false,
             ])
-            ->add('remark', TextAreaType::class, [
+            ->add('remark', TextareaType::class, [
                 'label' => 'invoice.remark',
                 'required' => false,
             ])

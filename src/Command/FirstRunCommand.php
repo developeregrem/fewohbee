@@ -23,6 +23,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -46,6 +47,13 @@ class FirstRunCommand extends Command
 
     protected function configure(): void
     {
+        $this
+            ->addOption('username', null, InputOption::VALUE_REQUIRED, 'Admin username that should be created.')
+            ->addOption('password', null, InputOption::VALUE_REQUIRED, 'Password that must meet the regular password constraints.')
+            ->addOption('first-name', null, InputOption::VALUE_REQUIRED, 'Firstname for the initial admin.')
+            ->addOption('last-name', null, InputOption::VALUE_REQUIRED, 'Lastname for the initial admin.')
+            ->addOption('email', null, InputOption::VALUE_REQUIRED, 'Email address for the admin user.')
+            ->addOption('accommodation-name', null, InputOption::VALUE_REQUIRED, 'Name of the accommodation that should be created.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -62,50 +70,66 @@ class FirstRunCommand extends Command
             return 1;
         }
 
-        $username = $io->ask('Username', null, function ($input) {
-            if (empty($input)) {
-                throw new \RuntimeException('Username must not be empty!');
+        $username = $this->resolveValue(
+            $input,
+            $io,
+            'username',
+            'Username',
+            fn ($value) => $this->assertNotEmpty($value, 'Username must not be empty!')
+        );
+        $password = $this->resolveValue(
+            $input,
+            $io,
+            'password',
+            'Password (min 10 characters)',
+            function ($value) {
+                $this->us->isPasswordValid($value, new User());
+
+                return $value;
             }
+        );
+        $firstName = $this->resolveValue(
+            $input,
+            $io,
+            'first-name',
+            'Firstname',
+            fn ($value) => $this->assertNotEmpty($value, 'Field cannot be empty!')
+        );
+        $lastName = $this->resolveValue(
+            $input,
+            $io,
+            'last-name',
+            'Lastname',
+            fn ($value) => $this->assertNotEmpty($value, 'Field cannot be empty!')
+        );
+        $email = $this->resolveValue(
+            $input,
+            $io,
+            'email',
+            'E-Mail',
+            function ($value) {
+                $emailConstraint = new Assert\Email();
+                $errors = $this->validator->validate($value, $emailConstraint);
+                if (empty($value) || count($errors) > 0) {
+                    throw new \RuntimeException('You must insert a valid mail address!');
+                }
 
-            return $input;
-        });
-        $password = $io->ask('Password (min 10 characters)', null, function ($input) {
-            $this->us->isPasswordValid($input, new User());
-
-            return $input;
-        });
-        $firstName = $io->ask('Firstname', null, function ($input) {
-            if (empty($input)) {
-                throw new \RuntimeException('Field cannot be empty!');
+                return $value;
             }
+        );
 
-            return $input;
-        });
-        $lastName = $io->ask('Lastname', null, function ($input) {
-            if (empty($input)) {
-                throw new \RuntimeException('Field cannot be empty!');
-            }
-
-            return $input;
-        });
-        $email = $io->ask('E-Mail', null, function ($input) {
-            $emailConstraint = new Assert\Email();
-            $errors = $this->validator->validate($input, $emailConstraint);
-            if (empty($input) || count($errors) > 0) {
-                throw new \RuntimeException('You must insert a valid mail address!');
-            }
-
-            return $input;
-        });
-
-        $role1 = new Role();
-        $role1->setName('Admin');
-        $role1->setRole('ROLE_ADMIN');
-        $role2 = new Role();
-        $role2->setName('Nutzer');
-        $role2->setRole('ROLE_USER');
-        $this->em->persist($role1);
-        $this->em->persist($role2);
+        $rolesToCreate = [
+            'ROLE_ADMIN' => 'Admin',
+            // other roles are created via migration
+        ];
+        $createdRoles = [];
+        foreach ($rolesToCreate as $roleCode => $roleName) {
+            $role = new Role();
+            $role->setName($roleName);
+            $role->setRole($roleCode);
+            $this->em->persist($role);
+            $createdRoles[$roleCode] = $role;
+        }
 
         $user = new User();
         $user->setActive(true);
@@ -114,20 +138,22 @@ class FirstRunCommand extends Command
         $user->setLastname($lastName);
         $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
-        $user->setRole($role1);
+        if (isset($createdRoles['ROLE_ADMIN'])) {
+            $user->addRole($createdRoles['ROLE_ADMIN']);
+        }
         $this->em->persist($user);
         $io->note('User and Roles created.');
 
         $this->createTemplateTypes();
         $io->note('Templates prepared.');
 
-        $name = $io->ask('What is the name of your accommodation', null, function ($input) {
-            if (empty($input)) {
-                throw new \RuntimeException('Field must not be empty!');
-            }
-
-            return $input;
-        });
+        $name = $this->resolveValue(
+            $input,
+            $io,
+            'accommodation-name',
+            'What is the name of your accommodation',
+            fn ($value) => $this->assertNotEmpty($value, 'Field must not be empty!')
+        );
 
         $sub = new Subsidiary();
         $sub->setName($name);
@@ -193,5 +219,28 @@ class FirstRunCommand extends Command
         $c->setLastname('Anonym');
         $c->setSalutation('Herr');
         $this->em->persist($c);
+    }
+
+    private function resolveValue(InputInterface $input, SymfonyStyle $io, string $optionName, string $question, callable $validator): string
+    {
+        $value = $input->getOption($optionName);
+        if (null !== $value) {
+            return $validator($value);
+        }
+
+        if (!$input->isInteractive()) {
+            throw new \RuntimeException(sprintf('Option "--%s" is required when running without interaction.', $optionName));
+        }
+
+        return $io->ask($question, null, $validator);
+    }
+
+    private function assertNotEmpty(?string $value, string $message): string
+    {
+        if (null === $value || '' === trim($value)) {
+            throw new \RuntimeException($message);
+        }
+
+        return $value;
     }
 }

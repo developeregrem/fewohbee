@@ -51,14 +51,10 @@ class ReservationOriginService
     /**
      * Delete origin if its not used in reservations.
      *
-     * @param int $id
-     *
      * @return bool
      */
-    public function deleteOrigin($id)
+    public function deleteOrigin(ReservationOrigin $origin)
     {
-        $origin = $this->em->getRepository(ReservationOrigin::class)->find($id);
-
         if (0 == count($origin->getReservations())) {
             $this->em->remove($origin);
             $this->em->flush();

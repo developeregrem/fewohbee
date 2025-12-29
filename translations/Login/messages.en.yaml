@@ -40,3 +40,6 @@ login:
   title: Login
   username:
     placeholder: Username
+  passkey: Login with Passkey
+  webauthn:
+    failure: Login was not successful

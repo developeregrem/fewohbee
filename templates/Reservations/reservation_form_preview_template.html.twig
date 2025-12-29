@@ -1,3 +1,4 @@
+<div data-controller="reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
         <div class="row">
@@ -17,27 +18,10 @@
 </div>
 <div id="createNewCustomerFooter" class="modal-footer">
     <ul class="pagination me-auto">
-        <li class="page-item " onclick="return selectTemplateForReservations()">
-            <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
+        <li class="page-item ">
+            <a class="page-link" href="#"
+               data-action="click->reservations#selectTemplateForReservationsAction"
+               data-url="{{ path('reservations.select.template') }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>  
 </div>
-<script>
-    $(function()
-    {
-        if(tinymce.get("editor1") !== null)
-            tinymce.get("editor1").remove();
-
-        tinymce.init({
-            selector: '#editor1',
-            language: '{{ app.request.locale }}',
-            branding: false,
-            promotion: false,
-            valid_children: '+body[style]',
-            relative_urls: false,
-            protect: [
-                /<\/?.*(html)?pageheader.*?>/g, // allow page header and footer
-                /<\/?.*(html)?pagefooter.*?>/g
-            ]
-        });
-    });
-</script>
+</div>
