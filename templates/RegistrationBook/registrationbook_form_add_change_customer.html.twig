@@ -33,7 +33,8 @@
         <div class="col">
             <form id="customer-selection" class="form-horizontal" role="form"
                   data-action="submit->registrationbook#editReservationNewCustomerAction"
-                  data-url="{{ path('reservations.edit.reservation.customer.create', {'id': reservation.id}) }}">
+                  data-url="{{ path('reservations.edit.reservation.customer.create', {'id': reservation.id}) }}"
+                  data-reservation-id="{{ reservation.id }}">
 
                 <div id="customers"
                      data-customers-url="{{ path('reservations.get.customers') }}"
