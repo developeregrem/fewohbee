@@ -34,7 +34,8 @@
             <div class="col">
                 <form id="customer-selection"
                       data-action="submit->reservations#editReservationNewCustomerAction"
-                      data-url="{{ path('reservations.edit.reservation.customer.create', {'id': reservation.id}) }}">
+                      data-url="{{ path('reservations.edit.reservation.customer.create', {'id': reservation.id}) }}"
+                      data-reservation-id="{{ reservation.id }}">
                     <div id="customers"
                          data-customers-edit-url="{{ path('reservations.edit.customers.get') }}"
                          data-customer-new-form-url="{{ path('reservations.get.customer.new.form') }}"></div>
