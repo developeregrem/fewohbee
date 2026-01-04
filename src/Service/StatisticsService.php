@@ -115,4 +115,15 @@ class StatisticsService
 
         return $result;
     }
+
+    /**
+     * Calculate turnover for a single month using the invoice status filter.
+     */
+    public function loadTurnoverForSingleMonth(InvoiceService $is, int $year, int $month, array $status): float
+    {
+        $start = new \DateTime($year.'-'.$month.'-01');
+        $end = new \DateTime($year.'-'.$month.'-'.$start->format('t'));
+
+        return $this->loadTurnover($is, $start, $end, $status);
+    }
 }

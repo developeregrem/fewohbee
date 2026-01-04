@@ -82,4 +82,25 @@ class AppartmentRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Count apartments (rooms) for a specific subsidiary or across all.
+     */
+    public function loadRoomCountForObject($objectId): int
+    {
+        $qb = $this->createQueryBuilder('a')
+            ->select('COUNT(a.id)');
+
+        if ('all' !== $objectId) {
+            $qb->andWhere('a.object = :id')
+                ->setParameter('id', $objectId);
+        }
+
+        try {
+            return (int) $qb->getQuery()->getSingleScalarResult();
+        } catch (NoResultException $ex) {
+            return 0;
+        }
+    }
+
 }

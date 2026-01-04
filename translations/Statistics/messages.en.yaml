@@ -17,3 +17,24 @@ statistics:
     monthly: Monthly Utilization
     title: Utilization
     yearly: Annual Overview of Utilization
+  tourism:
+    title: Tourism
+    description: Tourism
+    arrivals: Arrivals
+    arrivals_by_country: Arrivals by country
+    beds_total: Beds
+    by_country_table: Arrivals and overnights by country
+    country: Country
+    no_warnings: No warnings
+    overnights: Overnights
+    overnights_by_country: Overnights by country
+    regenerate: Recalculate snapshot
+    rooms_total: Rooms
+    summary: Summary
+    turnover: Turnover
+    utilization: Utilization
+    warnings: Warnings
+    room_label: Room
+  snapshot:
+    warning:
+      persons_mismatch: Persons count differs from guest count; please verify the reservation to avoid calculation inaccuracies.
