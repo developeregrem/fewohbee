@@ -18,6 +18,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
 use App\Service\InvoiceService;
+use App\Service\MonthlyStatsService;
 use App\Service\StatisticsService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -123,6 +125,45 @@ class StatisticsController extends AbstractController
         return new JsonResponse($result);
     }
 
+    #[Route('/snapshot/monthly', name: 'statistics.snapshot.monthly', methods: ['GET'])]
+    /**
+     * Return or create a monthly snapshot for the requested period.
+     */
+    public function getMonthlySnapshotAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
+    {
+        $em = $doctrine->getManager();
+        $month = (int) $request->query->get('month');
+        $year = (int) $request->query->get('year');
+        $objectId = $request->query->get('objectId', 'all');
+        $force = (bool) $request->query->get('force', false);
+
+        if ($month < 1 || $month > 12 || $year < 1) {
+            return new JsonResponse(['error' => 'month/year required'], 400);
+        }
+
+        $subsidiary = null;
+        if ('all' !== $objectId) {
+            $subsidiary = $em->getRepository(Subsidiary::class)->find($objectId);
+            if (null === $subsidiary) {
+                return new JsonResponse(['error' => 'subsidiary not found'], 404);
+            }
+        }
+
+        $payload = $monthlyStatsService->getOrCreateSnapshotWithWarnings($month, $year, $subsidiary, $force);
+        $snapshot = $payload['snapshot'];
+        $warnings = $payload['warnings'];
+
+        return new JsonResponse([
+            'id' => $snapshot->getId(),
+            'month' => $snapshot->getMonth(),
+            'year' => $snapshot->getYear(),
+            'subsidiary' => $subsidiary?->getId(),
+            'metrics' => $snapshot->getMetrics(),
+            'warnings' => $warnings,
+            'countryNames' => Countries::getNames($request->getLocale()),
+        ]);
+    }
+
     /**
      * Index Action reservationorigin page.
      */
@@ -130,6 +171,12 @@ class StatisticsController extends AbstractController
     public function originAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
     {
         return $this->loadIndex('Statistics/reservationorigin.html.twig', $doctrine, $requestStack);
+    }
+
+    #[Route('/tourism', name: 'statistics.tourism', methods: ['GET'])]
+    public function tourismAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
+    {
+        return $this->loadIndex('Statistics/tourism.html.twig', $doctrine, $requestStack);
     }
 
     /**
