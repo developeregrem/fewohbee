@@ -323,6 +323,7 @@ class TemplatesServiceController extends AbstractController
         $em = $doctrine->getManager();
 
         $error = false;
+        $isAttachment = false;
         if ($csrf->validateCSRFToken($request)) {
             $subject = $request->request->get('subject');
             $msg = $request->request->get('msg');
@@ -354,7 +355,6 @@ class TemplatesServiceController extends AbstractController
                     $em->flush();
                 }
 
-                $isAttachment = false;
                 if (null != $attachmentForId) {
                     $ts->addFileAsAttachment($file->getId(), $reservations);
                     $isAttachment = true;
