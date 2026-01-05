@@ -1690,8 +1690,8 @@ export default class extends Controller {
             valid_children: '+body[style]',
             relative_urls: false,
             protect: [
-                /<\/?\.?(html)?pageheader.*?>/g,
-                /<\/?\.?(html)?pagefooter.*?>/g
+                /<\/?\.?(set)?(html)?pageheader.*?>/g,
+                /<\/?\.?(set)?(html)?pagefooter.*?>/g
             ]
         });
     }
