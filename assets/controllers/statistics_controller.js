@@ -81,10 +81,10 @@ export default class extends Controller {
     }
 
     async drawTurnoverChart(type, url) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
 
         const startYear = parseInt(this[`${type}StartYearTarget`].value, 10);
         const endYear = parseInt(this[`${type}EndYearTarget`].value, 10);
@@ -141,10 +141,10 @@ export default class extends Controller {
     }
 
     async drawUtilizationChart(type, url, yearOnly) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
-        if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
+        if (!canvas) return;   
 
         try {
             const params = this.utilizationParams(yearOnly);
@@ -224,10 +224,10 @@ export default class extends Controller {
     }
 
     async drawOriginChart(type, url, yearOnly) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
 
         try {
             const params = this.originParams(yearOnly);
@@ -294,6 +294,7 @@ export default class extends Controller {
         icon.classList.toggle('fa-spin', active);
         icon.classList.toggle('disabled', active);
     }
+
 
     // ----- Tourism snapshot -----
     drawSnapshotAction(event) {

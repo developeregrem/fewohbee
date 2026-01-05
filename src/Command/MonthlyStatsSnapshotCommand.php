@@ -55,14 +55,12 @@ class MonthlyStatsSnapshotCommand extends Command
         $force = (bool) $input->getOption('force');
 
         $targetDate = new \DateTimeImmutable('first day of this month');
-        if (null === $monthOpt || null === $yearOpt) {
-            $targetDate = $targetDate->modify('-1 month');
-        }
+        $currentYear = (int) $targetDate->format('Y');
+        $year = (int) ($yearOpt ?? $currentYear);
+        $yearOnly = null === $monthOpt && null !== $yearOpt;
+        $month = (int) ($monthOpt ?? $targetDate->modify('-1 month')->format('n'));
 
-        $month = (int) ($monthOpt ?? $targetDate->format('n'));
-        $year = (int) ($yearOpt ?? $targetDate->format('Y'));
-
-        if ($month < 1 || $month > 12) {
+        if (!$yearOnly && ($month < 1 || $month > 12)) {
             $io->error('Month must be between 1 and 12.');
 
             return Command::INVALID;
@@ -78,16 +76,31 @@ class MonthlyStatsSnapshotCommand extends Command
             }
         }
 
-        $payload = $this->monthlyStatsService->getOrCreateSnapshotWithWarnings($month, $year, $subsidiary, $force);
-        $snapshot = $payload['snapshot'];
-        $warnings = $payload['warnings'];
+        $snapshots = [];
+        $warnings = [];
+        $months = $yearOnly ? range(1, 12) : [$month];
+        foreach ($months as $singleMonth) {
+            $payload = $this->monthlyStatsService->getOrCreateSnapshotWithWarnings($singleMonth, $year, $subsidiary, $force);
+            $snapshots[] = $payload['snapshot'];
+            $warnings = array_merge($warnings, $payload['warnings']);
+        }
 
-        $io->success(sprintf(
-            'Snapshot saved for %02d/%04d (%s).',
-            $snapshot->getMonth(),
-            $snapshot->getYear(),
-            $subsidiary?->getName() ?? 'all'
-        ));
+        if ($yearOnly) {
+            $io->success(sprintf(
+                'Snapshots saved for %04d (%s).',
+                $year,
+                $subsidiary?->getName() ?? 'all'
+            ));
+        } else {
+            $snapshot = $snapshots[0];
+            $io->success(sprintf(
+                'Snapshot saved for %02d/%04d (%s).',
+                $snapshot->getMonth(),
+                $snapshot->getYear(),
+                $subsidiary?->getName() ?? 'all'
+            ));
+        }
+
         foreach ($warnings as $warning) {
             $io->warning(sprintf(
                 '%s %s -> %s',
