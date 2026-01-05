@@ -11,13 +11,16 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
 use App\Entity\Enum\InvoiceStatus;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class MonthlyStatsService
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
+        private EntityManagerInterface $em,
+        private readonly ManagerRegistry $registry,
         private readonly StatisticsService $statisticsService,
         private readonly InvoiceService $invoiceService,
         private readonly TranslatorInterface $translator
@@ -39,6 +42,7 @@ class MonthlyStatsService
      */
     public function buildMetrics(int $month, int $year, ?Subsidiary $subsidiary): array
     {
+        $this->ensureEntityManager();
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
@@ -125,6 +129,7 @@ class MonthlyStatsService
         if ($bedsTotal > 0 && $daysInMonth > 0) {
             $utilization = $stays * 100.0 / ($bedsTotal * $daysInMonth);
         }
+        $dailyUtilization = $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
 
         /*
         * Calculate reservation origins for the month.
@@ -143,20 +148,6 @@ class MonthlyStatsService
         }
         ksort($originStats);
 
-        /*
-        * Calculate turnover for the month.
-        */
-        $invoiceStatuses = array_map(
-            static fn (InvoiceStatus $status) => $status->value,
-            InvoiceStatus::cases()
-        );
-        $turnover = $this->statisticsService->loadTurnoverForSingleMonth(
-            $this->invoiceService,
-            $year,
-            $month,
-            $invoiceStatuses
-        );
-
         $warnings = array_values($warningsByReservation);
         $metrics = [
             'period' => [
@@ -170,6 +161,7 @@ class MonthlyStatsService
             ],
             'utilization' => [
                 'month_percent' => $utilization,
+                'daily_percent' => $dailyUtilization,
             ],
             'tourism' => [
                 'arrivals_total' => $arrivalsTotal,
@@ -178,11 +170,29 @@ class MonthlyStatsService
                 'overnights_by_country' => $overnightsByCountry,
             ],
             'reservation_origin' => $originStats,
-            'turnover' => [
-                'total' => $turnover,
-            ],
             'warnings' => $warnings,
         ];
+        if (null === $subsidiary) {
+            /*
+            * Calculate turnover only for all subsidiaries.
+            */
+            $turnoverByStatus = [];
+            $turnoverTotal = 0.0;
+            foreach (InvoiceStatus::cases() as $status) {
+                $statusTotal = $this->statisticsService->loadTurnoverForSingleMonth(
+                    $this->invoiceService,
+                    $year,
+                    $month,
+                    [$status->value]
+                );
+                $turnoverByStatus[$status->value] = $statusTotal;
+                $turnoverTotal += $statusTotal;
+            }
+            $metrics['turnover'] = [
+                'total' => $turnoverTotal,
+                'by_status' => $turnoverByStatus,
+            ];
+        }
 
         return [
             'metrics' => $metrics,
@@ -229,10 +239,27 @@ class MonthlyStatsService
     }
 
     /**
+     * Build daily utilization percentages for a month without persisting them.
+     */
+    public function getDailyUtilizationForMonth(int $month, int $year, ?Subsidiary $subsidiary): array
+    {
+        $objectId = $subsidiary?->getId() ?? 'all';
+        $appartmentRepo = $this->em->getRepository(Appartment::class);
+        $reservationRepo = $this->em->getRepository(Reservation::class);
+        $bedsTotal = (int) $appartmentRepo->loadSumBedsMinForObject($objectId);
+
+        $monthStart = new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
+        $daysInMonth = (int) $monthStart->format('t');
+
+        return $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
+    }
+
+    /**
      * Create or update a single snapshot for a specific subsidiary scope.
      */
     private function upsertSnapshot(int $month, int $year, ?Subsidiary $subsidiary, bool $force): array
     {
+        $this->ensureEntityManager();
         $repo = $this->em->getRepository(MonthlyStatsSnapshot::class);
         $snapshot = $repo->findOneByMonthYearSubsidiary($month, $year, $subsidiary);
 
@@ -240,6 +267,7 @@ class MonthlyStatsService
             $snapshot = new MonthlyStatsSnapshot();
             $snapshot->setMonth($month);
             $snapshot->setYear($year);
+            $snapshot->setIsAll(null === $subsidiary);
             $snapshot->setSubsidiary($subsidiary);
             $this->em->persist($snapshot);
         } elseif (!$force) {
@@ -251,10 +279,32 @@ class MonthlyStatsService
             ];
         }
 
+        $snapshot->setIsAll(null === $subsidiary);
         $payload = $this->buildMetrics($month, $year, $subsidiary);
         $snapshot->setMetrics($payload['metrics']);
         $snapshot->touchUpdatedAt();
-        $this->em->flush();
+        try {
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $exception) {
+            $this->registry->resetManager();
+            $this->em = $this->registry->getManager();
+            $repo = $this->em->getRepository(MonthlyStatsSnapshot::class);
+            $existing = $repo->findOneByMonthYearSubsidiary($month, $year, $subsidiary);
+            if (null === $existing) {
+                throw $exception;
+            }
+            if ($force) {
+                $existing->setMetrics($payload['metrics']);
+                $existing->touchUpdatedAt();
+                $this->em->flush();
+            }
+            $metrics = $existing->getMetrics();
+
+            return [
+                'snapshot' => $existing,
+                'warnings' => $metrics['warnings'] ?? $payload['warnings'],
+            ];
+        }
 
         return [
             'snapshot' => $snapshot,
@@ -263,10 +313,32 @@ class MonthlyStatsService
     }
 
     /**
+     * Build daily utilization data using the reservation repository.
+     */
+    private function buildDailyUtilization(
+        \DateTimeImmutable $monthStart,
+        int $daysInMonth,
+        $objectId,
+        int $bedsTotal,
+        $reservationRepo
+    ): array {
+        $beds = 0 === $bedsTotal ? 1 : $bedsTotal;
+        $data = [];
+        $timeStartStr = $monthStart->format('Y-m-');
+        for ($i = 1; $i <= $daysInMonth; ++$i) {
+            $utilization = $reservationRepo->loadUtilizationForDay($timeStartStr.$i, $objectId);
+            $data[] = $utilization * 100 / $beds;
+        }
+
+        return $data;
+    }
+
+    /**
      * Build or update a snapshot and return it with runtime warnings.
      */
     public function getOrCreateSnapshotWithWarnings(int $month, int $year, ?Subsidiary $subsidiary, bool $force = false): array
     {
+        $this->ensureEntityManager();
         if (null === $subsidiary) {
             $allPayload = $this->upsertSnapshot($month, $year, null, $force);
             $subsidiaries = $this->em->getRepository(Subsidiary::class)->findAll();
@@ -281,5 +353,18 @@ class MonthlyStatsService
         }
 
         return $this->upsertSnapshot($month, $year, $subsidiary, $force);
+    }
+
+    /**
+     * Ensure the entity manager is open and reset it if needed.
+     */
+    private function ensureEntityManager(): void
+    {
+        if ($this->em->isOpen()) {
+            return;
+        }
+
+        $this->registry->resetManager();
+        $this->em = $this->registry->getManager();
     }
 }

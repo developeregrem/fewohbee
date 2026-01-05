@@ -23,6 +23,9 @@ class MonthlyStatsSnapshot
     #[ORM\Column(type: 'smallint')]
     private int $year;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $isAll = false;
+
     #[ORM\ManyToOne(targetEntity: Subsidiary::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Subsidiary $subsidiary = null;
@@ -85,6 +88,23 @@ class MonthlyStatsSnapshot
     {
         $this->year = $year;
     }
+
+    /**
+     * Check whether this snapshot represents "all" subsidiaries.
+     */
+    public function isAll(): bool
+    {
+        return $this->isAll;
+    }
+
+    /**
+     * Mark whether this snapshot represents "all" subsidiaries.
+     */
+    public function setIsAll(bool $isAll): void
+    {
+        $this->isAll = $isAll;
+    }
+
 
     /**
      * Get the subsidiary scope of this snapshot or null for "all".

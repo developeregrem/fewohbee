@@ -13,13 +13,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Appartment;
 use App\Entity\Reservation;
-use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
-use App\Service\InvoiceService;
 use App\Service\MonthlyStatsService;
-use App\Service\StatisticsService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -48,7 +44,7 @@ class StatisticsController extends AbstractController
     }
 
     #[Route('/utilization/monthtly', name: 'statistics.utilization.monthtly', methods: ['GET'])]
-    public function getUtilizationForMonthAction(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getUtilizationForMonthAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
 
@@ -57,8 +53,11 @@ class StatisticsController extends AbstractController
         $monthEnd = (int) $request->query->get('monthEnd');
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
-        $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
-        $beds = (0 == $beds ? 1 : $beds);
+
+        $subsidiary = null;
+        if ('all' !== $objectId) {
+            $subsidiary = $em->getRepository(Subsidiary::class)->find($objectId);
+        }
 
         $start = new \DateTimeImmutable($yearStart.'-'.$monthStart.'-01');
         // DatePeriod excludes the end date, so we move it to the first day of the month after the end
@@ -74,11 +73,19 @@ class StatisticsController extends AbstractController
         foreach ($period as $currentDate) {
             $daysInMonth = (int) $currentDate->format('t');
             $maxDays = max($maxDays, $daysInMonth);
-            $data = [];
-            $timeStartStr = $currentDate->format('Y-m-');
-            for ($i = 1; $i <= $daysInMonth; ++$i) {
-                $utilization = $em->getRepository(Reservation::class)->loadUtilizationForDay($timeStartStr.$i, $objectId);
-                $data[] = $utilization * 100 / $beds;
+            $snapshot = $monthlyStatsService->getOrCreateSnapshot(
+                (int) $currentDate->format('n'),
+                (int) $currentDate->format('Y'),
+                $subsidiary
+            );
+            $metrics = $snapshot->getMetrics();
+            $data = $metrics['utilization']['daily_percent'] ?? null;
+            if (!is_array($data)) {
+                $data = $monthlyStatsService->getDailyUtilizationForMonth(
+                    (int) $currentDate->format('n'),
+                    (int) $currentDate->format('Y'),
+                    $subsidiary
+                );
             }
             $result['datasets'][] = [
                 'label' => sprintf(
@@ -96,15 +103,17 @@ class StatisticsController extends AbstractController
     }
 
     #[Route('/utilization/yearly', name: 'statistics.utilization.yearly', methods: ['GET'])]
-    public function getUtilizationForYearAction(ManagerRegistry $doctrine, StatisticsService $ss, Request $request): JsonResponse
+    public function getUtilizationForYearAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId', 'all');
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
 
-        $beds = $em->getRepository(Appartment::class)->loadSumBedsMinForObject($objectId);
-        $beds = (0 == $beds ? 1 : $beds);
+        $subsidiary = null;
+        if ('all' !== $objectId) {
+            $subsidiary = $em->getRepository(Subsidiary::class)->find($objectId);
+        }
 
         $result = [
             'labels' => [],
@@ -116,9 +125,15 @@ class StatisticsController extends AbstractController
         }
 
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
+            $data = [];
+            for ($m = 1; $m <= 12; ++$m) {
+                $snapshot = $monthlyStatsService->getOrCreateSnapshot($m, $y, $subsidiary);
+                $metrics = $snapshot->getMetrics();
+                $data[] = $metrics['utilization']['month_percent'] ?? 0;
+            }
             $result['datasets'][] = [
                 'label' => (string) $y,
-                'data' => $ss->loadUtilizationForYear($objectId, $y, $beds),
+                'data' => $data,
             ];
         }
 
@@ -183,7 +198,7 @@ class StatisticsController extends AbstractController
      * Load Statistics for origins for a given period.
      */
     #[Route('/origin/monthtly', name: 'statistics.origin.monthtly', methods: ['GET'])]
-    public function getOriginForMonthAction(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getOriginForMonthAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
 
@@ -193,67 +208,33 @@ class StatisticsController extends AbstractController
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
 
-        $start = new \DateTime($yearStart.'-'.$monthStart.'-1');
-        $tmpEnd = new \DateTime($yearEnd.'-'.$monthEnd.'-1'); // set to first day, we need to figure out the number of days in this month
-        $days = $tmpEnd->format('t');
-        $end = new \DateTime($yearEnd.'-'.$monthEnd.'-'.$days); // now the correct end date with last day in this month
+        $start = new \DateTimeImmutable(sprintf('%04d-%02d-01', $yearStart, $monthStart));
+        $end = new \DateTimeImmutable(sprintf('%04d-%02d-01', $yearEnd, $monthEnd))->modify('first day of next month');
+        $period = new \DatePeriod($start, new \DateInterval('P1M'), $end);
 
-        $resultArr = $em->getRepository(Reservation::class)
-                ->loadOriginStatisticForPeriod($start->format('Y-m-d'), $end->format('Y-m-d'), $objectId);
+        $originStats = $this->loadOriginSnapshotStats($monthlyStatsService, $em, $period, $objectId);
 
-        $labels = [];
-        $data = [];
-        foreach ($resultArr as $single) {
-            $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
-            $labels[] = $origin->getName();
-            $data[] = $single['origins'];
-        }
-
-        return new JsonResponse([
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'Origin',
-                    'data' => $data,
-                ],
-            ],
-        ]);
+        return $this->formatOriginResponse($originStats);
     }
 
     /**
      * Load Statistics for origins per year.
      */
     #[Route('/origin/yearly', name: 'statistics.origin.yearly', methods: ['GET'])]
-    public function getOriginForYearAction(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getOriginForYearAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId', 'all');
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
 
-        $start = new \DateTime($yearStart.'-01-1');
-        $end = new \DateTime($yearEnd.'-12-31');
+        $start = new \DateTimeImmutable(sprintf('%04d-01-01', $yearStart));
+        $end = new \DateTimeImmutable(sprintf('%04d-01-01', $yearEnd))->modify('+1 year');
+        $period = new \DatePeriod($start, new \DateInterval('P1M'), $end);
 
-        $resultArr = $em->getRepository(Reservation::class)
-                ->loadOriginStatisticForPeriod($start->format('Y-m-d'), $end->format('Y-m-d'), $objectId);
+        $originStats = $this->loadOriginSnapshotStats($monthlyStatsService, $em, $period, $objectId);
 
-        $labels = [];
-        $data = [];
-        foreach ($resultArr as $single) {
-            $origin = $em->getRepository(ReservationOrigin::class)->find($single['id']);
-            $labels[] = $origin->getName();
-            $data[] = $single['origins'];
-        }
-
-        return new JsonResponse([
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'Origin',
-                    'data' => $data,
-                ],
-            ],
-        ]);
+        return $this->formatOriginResponse($originStats);
     }
 
     #[Route('/turnover', name: 'statistics.turnover', methods: ['GET'])]
@@ -266,7 +247,7 @@ class StatisticsController extends AbstractController
      * @return Response
      */
     #[Route('/turnover/yearly', name: 'statistics.turnover.yearly', methods: ['GET'])]
-    public function getTurnoverForYearAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    public function getTurnoverForYearAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
@@ -278,7 +259,11 @@ class StatisticsController extends AbstractController
         ];
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['labels'][] = $y;
-            $result['datasets'][0]['data'][] = $ss->loadTurnoverForYear($is, $y, $invoiceStatus);
+            $result['datasets'][0]['data'][] = $this->loadTurnoverSnapshotForYear(
+                $monthlyStatsService,
+                $y,
+                $invoiceStatus
+            );
         }
 
         return new JsonResponse(
@@ -287,7 +272,7 @@ class StatisticsController extends AbstractController
     }
 
     #[Route('/turnover/monthly', name: 'statistics.turnover.monthly', methods: ['GET'])]
-    public function getTurnoverForMonthAction(ManagerRegistry $doctrine, InvoiceService $is, StatisticsService $ss, Request $request): JsonResponse
+    public function getTurnoverForMonthAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
     {
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
@@ -305,7 +290,11 @@ class StatisticsController extends AbstractController
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $tmpResult = [
                 'label' => $y,
-                'data' => $ss->loadTurnoverForMonth($is, $y, $invoiceStatus),
+                'data' => $this->loadTurnoverSnapshotForMonths(
+                    $monthlyStatsService,
+                    $y,
+                    $invoiceStatus
+                ),
             ];
             $result['datasets'][] = $tmpResult;
         }
@@ -345,5 +334,112 @@ class StatisticsController extends AbstractController
         $formatter->setPattern($pattern);
 
         return $formatter->format(mktime(0, 0, 0, $monthNumber + 1, 0, 0));
+    }
+
+    /**
+     * Aggregate reservation origin stats from monthly snapshots for a given period.
+     */
+    private function loadOriginSnapshotStats(
+        MonthlyStatsService $monthlyStatsService,
+        $em,
+        \DatePeriod $period,
+        $objectId
+    ): array {
+        $subsidiary = null;
+        if ('all' !== $objectId) {
+            $subsidiary = $em->getRepository(Subsidiary::class)->find($objectId);
+        }
+
+        $originStats = [];
+        foreach ($period as $currentDate) {
+            $snapshot = $monthlyStatsService->getOrCreateSnapshot(
+                (int) $currentDate->format('n'),
+                (int) $currentDate->format('Y'),
+                $subsidiary
+            );
+            $metrics = $snapshot->getMetrics();
+            $originData = $metrics['reservation_origin'] ?? [];
+            foreach ($originData as $origin => $count) {
+                $originStats[$origin] = ($originStats[$origin] ?? 0) + (int) $count;
+            }
+        }
+
+        ksort($originStats);
+
+        return $originStats;
+    }
+
+    /**
+     * Format origin stats into a standard chart response structure.
+     */
+    private function formatOriginResponse(array $originStats): JsonResponse
+    {
+        $labels = array_keys($originStats);
+        $data = array_values($originStats);
+
+        return new JsonResponse([
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'label' => 'Origin',
+                    'data' => $data,
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Aggregate yearly turnover from monthly snapshots (all subsidiaries only).
+     */
+    private function loadTurnoverSnapshotForYear(MonthlyStatsService $monthlyStatsService, int $year, array $statusFilter): float
+    {
+        $total = 0.0;
+        for ($m = 1; $m <= 12; ++$m) {
+            $snapshot = $monthlyStatsService->getOrCreateSnapshot($m, $year, null);
+            $metrics = $snapshot->getMetrics();
+            $total += $this->getTurnoverFromSnapshot($metrics, $statusFilter);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Build monthly turnover values from snapshots (all subsidiaries only).
+     */
+    private function loadTurnoverSnapshotForMonths(MonthlyStatsService $monthlyStatsService, int $year, array $statusFilter): array
+    {
+        $data = [];
+        for ($m = 1; $m <= 12; ++$m) {
+            $snapshot = $monthlyStatsService->getOrCreateSnapshot($m, $year, null);
+            $metrics = $snapshot->getMetrics();
+            $data[] = $this->getTurnoverFromSnapshot($metrics, $statusFilter);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Resolve turnover totals from snapshot metrics with an optional status filter.
+     */
+    private function getTurnoverFromSnapshot(array $metrics, array $statusFilter): float
+    {
+        if (empty($statusFilter)) {
+            return 0.0;
+        }
+
+        $turnover = $metrics['turnover'] ?? [];
+        $byStatus = $turnover['by_status'] ?? [];
+        if (empty($byStatus)) {
+            return (float) ($turnover['total'] ?? 0);
+        }
+
+        $total = 0.0;
+        foreach ($statusFilter as $status) {
+            if (isset($byStatus[$status])) {
+                $total += (float) $byStatus[$status];
+            }
+        }
+
+        return $total;
     }
 }
