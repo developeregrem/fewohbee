@@ -15,6 +15,11 @@ use Doctrine\ORM\NoResultException;
  */
 class TemplateRepository extends EntityRepository
 {
+    public function findAll(): array
+    {
+        return $this->findBy([], ['name' => 'ASC']);
+    }
+
     public function loadByTypeName($names)
     {
         $q = $this
