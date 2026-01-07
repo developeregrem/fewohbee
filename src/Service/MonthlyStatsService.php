@@ -356,6 +356,28 @@ class MonthlyStatsService
     }
 
     /**
+     * Ensure the previous month snapshot is current and prefill the current one.
+     */
+    public function runSnapshotMaintenance(): void
+    {
+        $this->ensureEntityManager();
+        $now = new \DateTimeImmutable('now');
+        $prevMonthDate = $now->modify('first day of last month');
+        $prevMonth = (int) $prevMonthDate->format('n');
+        $prevYear = (int) $prevMonthDate->format('Y');
+
+        $repo = $this->em->getRepository(MonthlyStatsSnapshot::class);
+        $existing = $repo->findOneByMonthYearSubsidiary($prevMonth, $prevYear, null);
+        $force = false;
+        if (null !== $existing) {
+            $force = $existing->getUpdatedAt()->format('Y-m') !== $now->format('Y-m');
+        }
+
+        $this->getOrCreateSnapshotWithWarnings($prevMonth, $prevYear, null, $force);
+        $this->getOrCreateSnapshotWithWarnings((int) $now->format('n'), (int) $now->format('Y'), null, false);
+    }
+
+    /**
      * Ensure the entity manager is open and reset it if needed.
      */
     private function ensureEntityManager(): void
