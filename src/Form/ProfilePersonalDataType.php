@@ -15,6 +15,7 @@ namespace App\Form;
 
 use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -44,6 +45,18 @@ class ProfilePersonalDataType extends AbstractType
                 'constraints' => [
                     new Assert\NotBlank(message: 'form.email.notblank'),
                     new Assert\Email(message: 'form.email.invalid'),
+                ],
+            ])
+            ->add('themePreference', ChoiceType::class, [
+                'label' => 'profile.theme.label',
+                'choices' => [
+                    'profile.theme.auto' => 'auto',
+                    'profile.theme.dark' => 'dark',
+                    'profile.theme.light' => 'light',
+                ],
+                'help' => 'profile.theme.help',
+                'constraints' => [
+                    new Assert\Choice(['auto', 'dark', 'light']),
                 ],
             ])
             ->add('password', PasswordType::class, [

@@ -12,7 +12,7 @@
     <div class="container" data-controller="invoices">
         <div class="row justify-content-between">
             <div class="col-md-4">
-                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction"
+                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction"
                         data-url="{{ path('invoices.new.invoice') }}" data-create-new="true"
                         data-title="{{ 'invoice.select.open.reservation'|trans }}"
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
@@ -34,7 +34,7 @@
                            data-action="keyup->invoices#searchInputAction"/>
                 </div>
                 <div class="col-md ps-0">
-                    <button class="btn btn-default" type="button" data-action="click->invoices#doSearchAction">
+                    <button class="btn btn-secondary" type="button" data-action="click->invoices#doSearchAction">
                         <i class="fas fa-search"></i> {{ 'nav.customer.search'|trans }}
                     </button>
                 </div>                

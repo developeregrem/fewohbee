@@ -6,6 +6,12 @@ profile:
     saving: Saving...
     updated: Your data has been updated.
     password_help: Leave empty to keep your current password.
+  theme:
+    label: Color mode
+    help: Choose light, dark, or follow your system setting.
+    auto: Auto (system)
+    dark: Dark
+    light: Light (default)
   passkeys:
     title: Passwordless sign-in (Passkeys)
     create: Add passkey

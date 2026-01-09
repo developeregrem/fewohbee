@@ -45,7 +45,7 @@
             <div class="col">
                 <h4>{{ 'invoice.appartment'|trans }}</h4>
                 {% include 'Invoices/invoice_table_apartment_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
+                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.apartment.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.appartment'|trans }}</button>
             </div>
         </div>
@@ -55,7 +55,7 @@
                 <p>
                 <h4>{{ 'invoice.miscellaneous'|trans }}</h4>
                 {% include 'Invoices/invoice_table_misc_positions.html.twig' with {'mode': 'edit'} %}
-                <button type="button" class="btn btn-default" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
+                <button type="button" class="btn btn-secondary" data-action="click->invoices#openModalAction" data-url="{{ path('invoices.new.miscellaneous.position', {'invoiceId': 'new'}) }}">
                     <i class="fas fa-plus"></i> {{ 'invoice.position.add.miscellaneous'|trans }}</button>
                 </p>
             </div>
