@@ -1,0 +1,169 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -  {{ 'statistics.tourism.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} -  {{ 'statistics.tourism.title'|trans }}
+{% endblock %}
+
+{# create list of localized month #}
+{% set monthList = [] %}
+{% for i in 1..12 %}
+    {% set monthList = monthList|merge([getLocalizedMonth(i, 'MMMM', app.request.locale)]) %}
+{% endfor %}
+
+{% block content %}
+    <div class="container mb-1"
+         data-controller="statistics"
+         data-statistics-snapshot-url-value="{{ path('statistics.snapshot.monthly') }}"
+         data-statistics-snapshot-arrivals-label-value="{{ 'statistics.tourism.arrivals'|trans }}"
+         data-statistics-snapshot-overnights-label-value="{{ 'statistics.tourism.overnights'|trans }}"
+         data-statistics-snapshot-room-label-value="{{ 'statistics.tourism.room_label'|trans }}">
+        <div class="row align-items-end justify-content-between">
+            <div class="col-md-8">
+                <form id="table-filter" role="form">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <select id="objects" name="object" class="form-select"
+                                    data-statistics-target="objects"
+                                    data-action="change->statistics#drawSnapshotAction">
+                                <option value="all">{{ 'reservation.objects.all'|trans }}</option>
+                                {% for object in objects %}
+                                    <option value="{{ object.id }}"{% if object.id == objectId %} selected{% endif %}>{{ object.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="snapshotMonth" name="snapshotMonth" class="form-select"
+                                    data-statistics-target="snapshotMonth"
+                                    data-action="change->statistics#drawSnapshotAction">
+                                {% set currentMonth = 'now'|date('n') %}
+                                {% for month in monthList %}
+                                    <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="snapshotYear" name="snapshotYear" class="form-select"
+                                    data-statistics-target="snapshotYear"
+                                    data-action="change->statistics#drawSnapshotAction">
+                                {% set currentYear = 'now'|date('Y') %}
+                                {% for i in minYear..maxYear %}
+                                    <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-4 text-end mt-3 mt-md-0">
+                <button class="btn btn-outline-primary"
+                        data-action="click->statistics#drawSnapshotForceAction">
+                    <i class="fas fa-sync-alt"></i>
+                    {{ 'statistics.tourism.regenerate'|trans }}
+                </button>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.summary'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <th>{{ 'statistics.tourism.arrivals'|trans }}</th>
+                                    <td data-statistics-target="snapshotArrivalsTotal">0</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'statistics.tourism.overnights'|trans }}</th>
+                                    <td data-statistics-target="snapshotOvernightsTotal">0</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'statistics.tourism.rooms_total'|trans }}</th>
+                                    <td data-statistics-target="snapshotRoomsTotal">0</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'statistics.tourism.beds_total'|trans }}</th>
+                                    <td data-statistics-target="snapshotBedsTotal">0</td>
+                                </tr>
+                                <tr>
+                                    <th>{{ 'statistics.tourism.utilization'|trans }}</th>
+                                    <td data-statistics-target="snapshotUtilization">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.by_country_table'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{ 'statistics.tourism.country'|trans }}</th>
+                                        <th>{{ 'statistics.tourism.arrivals'|trans }}</th>
+                                        <th>{{ 'statistics.tourism.overnights'|trans }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-statistics-target="snapshotByCountryBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.arrivals_by_country'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div style="position: relative; height:30vh;">
+                            <canvas id="snapshotArrivalsChart" data-statistics-target="snapshotArrivalsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.overnights_by_country'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div style="position: relative; height:30vh;">
+                            <canvas id="snapshotOvernightsChart" data-statistics-target="snapshotOvernightsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.warnings'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0"
+                            data-statistics-target="snapshotWarnings"
+                            data-empty-text="{{ 'statistics.tourism.no_warnings'|trans }}">
+                            <li class="text-muted">{{ 'statistics.tourism.no_warnings'|trans }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
+{% endblock %}

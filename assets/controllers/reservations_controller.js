@@ -489,12 +489,13 @@ export default class extends Controller {
     editReservationNewCustomerAction(event) {
         event.preventDefault();
         const form = event.target.closest('form');
+        const isNew = event.currentTarget.dataset.reservationId === 'new';
         if (!form) {
             return;
         }
         const tab = form.querySelector('#tab')?.value;
         const url = form.dataset.url;
-        this.editReservationNewCustomer(url, tab);
+        this.editReservationNewCustomer(url, tab, isNew);
     }
 
     changeReservationCustomerAction(event) {
@@ -1200,7 +1201,7 @@ export default class extends Controller {
             data.tab = tab;
         }
         
-        $('#modalCenter .modal-title').text(this.translate('reservation.details'));
+        setModalTitle(this.translate('reservation.details'));
         $('#modalCenter').modal('show');
         httpRequest({
             url,
@@ -1248,7 +1249,7 @@ export default class extends Controller {
         return false;
     }
 
-    editReservationNewCustomer(url, tab) {
+    editReservationNewCustomer(url, tab, isNew) {
         if (!url) {
             return false;
         }
@@ -1261,7 +1262,7 @@ export default class extends Controller {
                 if (data.length > 0) {
                     $('#flash-message-overlay').empty().append(data);
                 } else {
-                    const resUrl = this.getContextValue('reservationUrl') || null;
+                    const resUrl = isNew ? 'new' : this.getContextValue('reservationUrl') || null;
                     this.getReservation(resUrl, tab);
                     if (url !== 'new' && tab === 'booker') {
                         this.getNewTable();
@@ -1689,8 +1690,8 @@ export default class extends Controller {
             valid_children: '+body[style]',
             relative_urls: false,
             protect: [
-                /<\/?\.?(html)?pageheader.*?>/g,
-                /<\/?\.?(html)?pagefooter.*?>/g
+                /<\/?\.?(set)?(html)?pageheader.*?>/g,
+                /<\/?\.?(set)?(html)?pagefooter.*?>/g
             ]
         });
     }

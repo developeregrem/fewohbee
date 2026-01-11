@@ -37,6 +37,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $lastname;
     #[ORM\Column(type: 'string', length: 100)]
     private $email;
+    #[ORM\Column(type: 'string', length: 10, options: ['default' => 'light'])]
+    private $themePreference = 'light';
     #[ORM\Column(type: 'datetime', nullable: true)]
     private $lastAction;
     #[ORM\Column(type: 'boolean')]
@@ -150,6 +152,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getThemePreference(): string
+    {
+        return $this->themePreference;
+    }
+
+    public function setThemePreference(string $themePreference): self
+    {
+        $this->themePreference = $themePreference;
 
         return $this;
     }

@@ -13,29 +13,28 @@
     <ul id="pagination" class="pagination">
         <li class="page-item{% if page == 1 %} disabled{% endif %}">
             <a class="page-link" data-page="{{ leftpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
-               href="{{ url }}?{{ {'page': leftpage, 'search': search}|url_encode }}">&laquo;</a>
+               href="{{ url }}?{{ {'page': leftpage, 'search': search}|url_encode }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
         </li>
         {# before #}
         {% if page > 1 %}
             {% for i in range(1, extremePagesLimit) %}
                 {% if i < page - nearbyPagesLimit %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }} <span
-                                class="sr-only">(current)</span></a>
+                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
             {% if extremePagesLimit + 1 < page - nearbyPagesLimit %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">...
-                        <span class="sr-only"></span></a>
+                    <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">...</a>
                 </li>
             {% endif %}
             {% for i in range(page-nearbyPagesLimit, page-1) %}
                 {% if i > 0 %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }} <span
-                                class="sr-only">(current)</span></a>
+                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }} </a>
                 </li>
                 {% endif %}
             {% endfor %}
@@ -43,8 +42,7 @@
 
         {# current #}
         <li class="page-item active">
-            <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">{{ page }}
-                <span class="sr-only">(current)</span></a>
+            <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">{{ page }}</a>
         </li>
 
         {# after #}
@@ -52,22 +50,19 @@
             {% for i in range(page+1, page + nearbyPagesLimit) %}
                 {% if i <= pages %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }} <span
-                                class="sr-only">(current)</span></a>
+                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
             {% if (pages - extremePagesLimit) > (page + nearbyPagesLimit) %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">...
-                        <span class="sr-only"></span></a>
+                    <a class="page-link" data-page="{{ page }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': page, 'search': search}|url_encode }}">...</a>
                 </li>
             {% endif %}
             {% for i in range(pages - extremePagesLimit+1, pages) %}
                 {% if i > page + nearbyPagesLimit %}
                 <li class="page-item">
-                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }} <span
-                                class="sr-only">(current)</span></a>
+                    <a class="page-link" data-page="{{ i }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %} href="{{ url }}?{{ {'page': i, 'search': search}|url_encode }}">{{ i }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
@@ -76,7 +71,9 @@
 
         <li class="page-item{% if page == pages %} disabled{% endif %}">
             <a class="page-link" data-page="{{ rightpage }}" {% if dataAction %}data-action="{{ dataAction }}"{% endif %}
-               href="{{ url }}?{{ {'page': rightpage, 'search': search}|url_encode }}">&raquo;</a>
+               href="{{ url }}?{{ {'page': rightpage, 'search': search}|url_encode }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
         </li>
     </ul>
 {% endif %}

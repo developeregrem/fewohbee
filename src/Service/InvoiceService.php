@@ -64,16 +64,15 @@ class InvoiceService implements ITemplateRenderer
 
             if ($apartment->getIncludesVat()) { // price includes vat
                 $vatAmount = (($apartmentPrice * $apartment->getVat()) / (100 + $apartment->getVat()));
-
-                $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $apartmentPrice;
+                $bruttoAmount = $apartmentPrice;
             } else { // price does not include vat
                 $vatAmount = (($apartmentPrice * $apartment->getVat()) / 100);
-
-                $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $apartmentPrice + $vatAmount;
+                $bruttoAmount = $apartmentPrice + $vatAmount;
             }
 
+            $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $bruttoAmount;
             $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + round($apartment->getNetPrice(), 2) * $apartment->getAmount();
+            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
             $appartmentTotal += $apartmentPrice;
         }
 
@@ -82,16 +81,15 @@ class InvoiceService implements ITemplateRenderer
 
             if ($pos->getIncludesVat()) { // price includes vat
                 $vatAmount = (($miscPrice * $pos->getVat()) / (100 + $pos->getVat()));
-
-                $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $miscPrice;
+                $bruttoAmount = $miscPrice;
             } else { // price does not include vat
                 $vatAmount = (($miscPrice * $pos->getVat()) / 100);
-
-                $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $miscPrice + $vatAmount;
+                $bruttoAmount = $miscPrice + $vatAmount;
             }
 
+            $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $bruttoAmount;
             $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + round($pos->getNetPrice(), 2) * $pos->getAmount();
+            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
             $miscTotal += $miscPrice;
         }
 

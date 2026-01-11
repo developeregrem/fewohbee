@@ -33,10 +33,10 @@ class InvoiceAppartment
     #[ORM\Column(name: 'end_date', type: 'date')]
     #[Assert\NotNull]
     private $endDate;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private $price;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private float $vat;
     #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'appartments')]

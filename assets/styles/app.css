@@ -1,3 +1,65 @@
+:root,
+[data-bs-theme="light"] {
+    --feb-surface: #f5f5f5;
+    --feb-surface-border: #d3d3d3;
+    --feb-border-strong: #666;
+    --feb-border-muted: #ddd;
+    --feb-reservation-text: #fff;
+    --feb-reservation-confirmed-bg: #2d9434;
+    --feb-reservation-option-bg: #f6e95c;
+    --feb-reservation-option-text: #666;
+    --feb-reservation-option-border: #999;
+    --feb-weekend-bg: #eee;
+    --feb-selection-bg: #f5f5f5;
+    --feb-ui-selecting-bg: #feca40;
+    --feb-ui-selected-bg: #f39814;
+}
+
+[data-bs-theme="dark"] {
+    --feb-surface: #1f2226;
+    --feb-surface-border: #3a3f45;
+    --feb-border-strong: #9aa0a6;
+    --feb-border-muted: #444a52;
+    --feb-reservation-text: #f8f9fa;
+    --feb-reservation-confirmed-bg: #2e7d32;
+    --feb-reservation-option-bg: #bfa23a;
+    --feb-reservation-option-text: #1b1b1b;
+    --feb-reservation-option-border: #9f8732;
+    --feb-weekend-bg: #3a3f44;
+    --feb-selection-bg: #2a2f33;
+    --feb-ui-selecting-bg: #b77724;
+    --feb-ui-selected-bg: #c06a1b;
+    --bs-primary: #1f4b8f;
+    --bs-primary-rgb: 31, 75, 143;
+}
+
+[data-bs-theme="light"] .navbar.bg-primary {
+    --bs-navbar-color: rgba(255, 255, 255, 0.85);
+    --bs-navbar-hover-color: rgba(255, 255, 255, 1);
+    --bs-navbar-active-color: rgba(255, 255, 255, 1);
+    --bs-navbar-brand-color: rgba(255, 255, 255, 1);
+    --bs-navbar-brand-hover-color: rgba(255, 255, 255, 1);
+}
+
+[data-bs-theme="dark"] .navbar.bg-primary {
+    --bs-navbar-color: rgba(var(--bs-body-color-rgb), 0.85);
+    --bs-navbar-hover-color: rgba(var(--bs-body-color-rgb), 1);
+    --bs-navbar-active-color: rgba(var(--bs-body-color-rgb), 1);
+    --bs-navbar-brand-color: rgba(var(--bs-body-color-rgb), 1);
+    --bs-navbar-brand-hover-color: rgba(var(--bs-body-color-rgb), 1);
+    --bs-navbar-toggler-border-color: rgba(var(--bs-body-color-rgb), 0.2);
+}
+
+[data-bs-theme="dark"] .btn-secondary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--bs-secondary-bg);
+    --bs-btn-border-color: var(--bs-secondary-bg);
+    --bs-btn-hover-bg: #2f3338;
+    --bs-btn-hover-border-color: #2f3338;
+    --bs-btn-active-bg: #3a3f45;
+    --bs-btn-active-border-color: #3a3f45;
+}
+
 body {
     font-size: 0.9rem
 }
@@ -20,12 +82,12 @@ body {
 }
 
 .login {
-    border-color: lightgray;
+    border-color: var(--feb-surface-border);
     border-width: 1px;
     border-style: solid;
     border-radius: 15px;
     padding: 15px;
-    background-color: #F5F5F5;
+    background-color: var(--feb-surface);
 }
 
 .button-hidden {
@@ -47,23 +109,23 @@ body {
 }
 
 .reservation-inner {
-    border: 1px solid #666;
-    color: #fff;
+    border: 1px solid var(--feb-border-strong);
+    color: var(--feb-reservation-text);
     padding: 3px;
 }
 
 .reservation-confirmed {
-    background-color: #2D9434;
+    background-color: var(--feb-reservation-confirmed-bg);
 }
 
 .reservation-option {
-    background-color: #f6e95c;
-    color: #666;
-    border-color: #999;
+    background-color: var(--feb-reservation-option-bg);
+    color: var(--feb-reservation-option-text);
+    border-color: var(--feb-reservation-option-border);
 }
 
 .reservation-table-weekend-single {
-    background-color: #EEE !important;
+    background-color: var(--feb-weekend-bg) !important;
 }
 
 .mouse-pointer {
@@ -71,18 +133,18 @@ body {
 }
 
 .border-left-thick {
-    border-left: 2px solid #ddd;
+    border-left: 2px solid var(--feb-border-muted);
 }
 
 .cell-selected {
-    background-color: #f5f5f5;
+    background-color: var(--feb-selection-bg);
 }
 
 .table-reservation .ui-selecting, .table-reservation-year .ui-selecting { 
-    background: #FECA40 !important;
+    background: var(--feb-ui-selecting-bg) !important;
 }
 .table-reservation .ui-selected, .table-reservation-year .ui-selected { 
-    background: #F39814;
+    background: var(--feb-ui-selected-bg);
 }
 
 .table-reservation .table-days > th {
@@ -139,7 +201,7 @@ body {
 
 
 .reservation-table-weekend {
-    background-color: #EEE !important;
+    background-color: var(--feb-weekend-bg) !important;
 }
 
 

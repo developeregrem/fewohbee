@@ -54,6 +54,78 @@
                 <source>statistics.turnover.help</source>
                 <target>Umsätze basieren auf Rechnungen (brutto) mit Rechnungsdatum im jeweiligen Monat und dem folgenden Status:</target>
             </trans-unit>
+            <trans-unit id="statistics.tourism.title">
+                <source>statistics.tourism.title</source>
+                <target>Tourismus</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.description">
+                <source>statistics.tourism.description</source>
+                <target>Tourismus</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.arrivals">
+                <source>statistics.tourism.arrivals</source>
+                <target>Ankünfte</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.arrivals_by_country">
+                <source>statistics.tourism.arrivals_by_country</source>
+                <target>Ankünfte nach Land</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.beds_total">
+                <source>statistics.tourism.beds_total</source>
+                <target>Betten</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.by_country_table">
+                <source>statistics.tourism.by_country_table</source>
+                <target>Ankünfte und Übernachtungen nach Land</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.country">
+                <source>statistics.tourism.country</source>
+                <target>Land</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.no_warnings">
+                <source>statistics.tourism.no_warnings</source>
+                <target>Keine Warnungen</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.overnights">
+                <source>statistics.tourism.overnights</source>
+                <target>Übernachtungen</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.overnights_by_country">
+                <source>statistics.tourism.overnights_by_country</source>
+                <target>Übernachtungen nach Land</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.regenerate">
+                <source>statistics.tourism.regenerate</source>
+                <target>Statistik neu berechnen</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.rooms_total">
+                <source>statistics.tourism.rooms_total</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.summary">
+                <source>statistics.tourism.summary</source>
+                <target>Zusammenfassung</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.turnover">
+                <source>statistics.tourism.turnover</source>
+                <target>Umsatz</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.utilization">
+                <source>statistics.tourism.utilization</source>
+                <target>Auslastung</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.warnings">
+                <source>statistics.tourism.warnings</source>
+                <target>Warnungen</target>
+            </trans-unit>
+            <trans-unit id="statistics.tourism.room_label">
+                <source>statistics.tourism.room_label</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="statistics.snapshot.warning.persons_mismatch">
+                <source>statistics.snapshot.warning.persons_mismatch</source>
+                <target>Anzahl Personen ungleich Anzahl Gäste; bitte die Reservierung prüfen, sonst sind Ungenauigkeiten möglich.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
