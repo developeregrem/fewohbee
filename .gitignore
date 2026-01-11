@@ -1,6 +1,7 @@
 nbproject/
 .idea/
 .env
+.vscode/
 public/resources/images/export/
 .DS_Store
 node_modules
