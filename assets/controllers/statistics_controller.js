@@ -13,6 +13,17 @@ export default class extends Controller {
         'monthlyChart',
         'yearlyChart',
         'invoiceStatusForm',
+        'snapshotMonth',
+        'snapshotYear',
+        'snapshotArrivalsTotal',
+        'snapshotOvernightsTotal',
+        'snapshotRoomsTotal',
+        'snapshotBedsTotal',
+        'snapshotUtilization',
+        'snapshotWarnings',
+        'snapshotArrivalsChart',
+        'snapshotOvernightsChart',
+        'snapshotByCountryBody',
     ];
 
     static values = {
@@ -22,6 +33,10 @@ export default class extends Controller {
         yearlyUtilizationUrl: String,
         monthlyOriginUrl: String,
         yearlyOriginUrl: String,
+        snapshotUrl: String,
+        snapshotArrivalsLabel: String,
+        snapshotOvernightsLabel: String,
+        snapshotRoomLabel: String,
     };
 
     connect() {
@@ -40,6 +55,9 @@ export default class extends Controller {
         if (this.monthlyOriginUrlValue && this.yearlyOriginUrlValue) {
             this.drawMonthlyOrigin();
             this.drawYearlyOrigin();
+        }
+        if (this.snapshotUrlValue) {
+            this.drawSnapshot();
         }
     }
 
@@ -63,10 +81,10 @@ export default class extends Controller {
     }
 
     async drawTurnoverChart(type, url) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
 
         const startYear = parseInt(this[`${type}StartYearTarget`].value, 10);
         const endYear = parseInt(this[`${type}EndYearTarget`].value, 10);
@@ -123,10 +141,10 @@ export default class extends Controller {
     }
 
     async drawUtilizationChart(type, url, yearOnly) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
-        if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
+        if (!canvas) return;   
 
         try {
             const params = this.utilizationParams(yearOnly);
@@ -206,10 +224,10 @@ export default class extends Controller {
     }
 
     async drawOriginChart(type, url, yearOnly) {
+        this.toggleRefreshSpinner(type, true);
         if (!url || !(await this.waitForChart())) return;
         const canvas = this[`${type}ChartTarget`];
         if (!canvas) return;
-        this.toggleRefreshSpinner(type, true);
 
         try {
             const params = this.originParams(yearOnly);
@@ -275,5 +293,186 @@ export default class extends Controller {
         if (!icon) return;
         icon.classList.toggle('fa-spin', active);
         icon.classList.toggle('disabled', active);
+    }
+
+
+    // ----- Tourism snapshot -----
+    drawSnapshotAction(event) {
+        if (event) event.preventDefault();
+        this.drawSnapshot(false);
+    }
+
+    drawSnapshotForceAction(event) {
+        if (event) event.preventDefault();
+        this.drawSnapshot(true);
+    }
+
+    async drawSnapshot(force = false) {
+        if (!this.snapshotUrlValue) return;
+        const params = this.snapshotParams(force);
+        const response = await fetch(`${this.snapshotUrlValue}?${params.toString()}`);
+        const data = await response.json();
+        const countryNames = data.countryNames || {};
+
+        this.updateSnapshotSummary(data.metrics || {});
+        this.updateSnapshotWarnings(data.warnings || []);
+        this.updateSnapshotByCountryTable(
+            (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {},
+            countryNames
+        );
+        await this.drawSnapshotCharts(
+            (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {},
+            countryNames
+        );
+    }
+
+    snapshotParams(force = false) {
+        const params = new URLSearchParams();
+        if (this.hasObjectsTarget) {
+            params.append('objectId', this.objectsTarget.value);
+        }
+        if (this.hasSnapshotMonthTarget) {
+            params.append('month', this.snapshotMonthTarget.value);
+        }
+        if (this.hasSnapshotYearTarget) {
+            params.append('year', this.snapshotYearTarget.value);
+        }
+        if (force) {
+            params.append('force', '1');
+        }
+        return params;
+    }
+
+    updateSnapshotSummary(metrics) {
+        const inventory = metrics.inventory || {};
+        const tourism = metrics.tourism || {};
+        const utilization = metrics.utilization || {};
+
+        if (this.hasSnapshotArrivalsTotalTarget) {
+            this.snapshotArrivalsTotalTarget.textContent = (tourism.arrivals_total ?? 0).toLocaleString();
+        }
+        if (this.hasSnapshotOvernightsTotalTarget) {
+            this.snapshotOvernightsTotalTarget.textContent = (tourism.overnights_total ?? 0).toLocaleString();
+        }
+        if (this.hasSnapshotRoomsTotalTarget) {
+            this.snapshotRoomsTotalTarget.textContent = (inventory.rooms_total ?? 0).toLocaleString();
+        }
+        if (this.hasSnapshotBedsTotalTarget) {
+            this.snapshotBedsTotalTarget.textContent = (inventory.beds_total ?? 0).toLocaleString();
+        }
+        if (this.hasSnapshotUtilizationTarget) {
+            const util = utilization.month_percent ?? 0;
+            this.snapshotUtilizationTarget.textContent = `${util.toFixed(2)}%`;
+        }
+    }
+
+    updateSnapshotWarnings(warnings) {
+        if (!this.hasSnapshotWarningsTarget) return;
+        this.snapshotWarningsTarget.innerHTML = '';
+        if (!warnings.length) {
+            const li = document.createElement('li');
+            li.className = 'text-muted';
+            li.textContent = this.snapshotWarningsTarget.dataset.emptyText || '';
+            this.snapshotWarningsTarget.appendChild(li);
+            return;
+        }
+        warnings.forEach((warning) => {
+            const li = document.createElement('li');
+            const start = warning.start_date || '';
+            const end = warning.end_date || '';
+            const roomLabel = this.snapshotRoomLabelValue || '';
+            const room = warning.appartment_number ? ` ${roomLabel} ${warning.appartment_number}` : '';
+            li.textContent = `${warning.message || ''}${room} ${start} - ${end}`.trim();
+            this.snapshotWarningsTarget.appendChild(li);
+        });
+    }
+
+    updateSnapshotByCountryTable(tourism, countryNames) {
+        if (!this.hasSnapshotByCountryBodyTarget) return;
+        const arrivals = tourism.arrivals_by_country || {};
+        const overnights = tourism.overnights_by_country || {};
+        const countries = Array.from(new Set([
+            ...Object.keys(arrivals),
+            ...Object.keys(overnights),
+        ])).sort();
+
+        this.snapshotByCountryBodyTarget.innerHTML = '';
+        countries.forEach((country) => {
+            const label = this.mapCountryLabel(country, countryNames);
+            const tr = document.createElement('tr');
+            const tdCountry = document.createElement('td');
+            const tdArrivals = document.createElement('td');
+            const tdOvernights = document.createElement('td');
+            tdCountry.textContent = label;
+            tdArrivals.textContent = (arrivals[country] ?? 0).toLocaleString();
+            tdOvernights.textContent = (overnights[country] ?? 0).toLocaleString();
+            tr.appendChild(tdCountry);
+            tr.appendChild(tdArrivals);
+            tr.appendChild(tdOvernights);
+            this.snapshotByCountryBodyTarget.appendChild(tr);
+        });
+    }
+
+    async drawSnapshotCharts(tourism, countryNames) {
+        if (!(await this.waitForChart())) return;
+        const arrivals = tourism.arrivals_by_country || {};
+        const overnights = tourism.overnights_by_country || {};
+        const codes = Array.from(new Set([
+            ...Object.keys(arrivals),
+            ...Object.keys(overnights),
+        ])).sort();
+        const labels = codes;
+        const arrivalsData = codes.map((code) => arrivals[code] ?? 0);
+        const overnightsData = codes.map((code) => overnights[code] ?? 0);
+
+        if (this.hasSnapshotArrivalsChartTarget) {
+            const canvas = this.snapshotArrivalsChartTarget;
+            const existing = window.Chart.getChart(canvas);
+            if (existing) existing.destroy();
+            new window.Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: this.snapshotArrivalsLabelValue || 'Arrivals',
+                            data: arrivalsData,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                },
+            });
+        }
+
+        if (this.hasSnapshotOvernightsChartTarget) {
+            const canvas = this.snapshotOvernightsChartTarget;
+            const existing = window.Chart.getChart(canvas);
+            if (existing) existing.destroy();
+            new window.Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: this.snapshotOvernightsLabelValue || 'Overnights',
+                            data: overnightsData,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                },
+            });
+        }
+    }
+
+    mapCountryLabel(code, countryNames) {
+        if (!code) return '';
+        const upper = code.toUpperCase();
+        return countryNames[upper] || countryNames[code] || code;
     }
 }

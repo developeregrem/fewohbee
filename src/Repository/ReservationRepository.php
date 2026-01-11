@@ -194,19 +194,15 @@ class ReservationRepository extends EntityRepository
     public function loadReservationsForMonth($month, $year, $objectId)
     {
         $startTs = strtotime($year.'-'.$month.'-01');
-        $endDate = new \DateTime($year.'-'.$month.'-'.date('t', $startTs));
         $start = date('Y-m-d', $startTs);
-        $end = $endDate->format('Y-m-d');
+        $end = date('Y-m-d', strtotime('+1 month', $startTs));
 
         $q = $this
             ->createQueryBuilder('u')
             ->select('u')
             ->join('u.appartment', 'a')
             // ->where('u.status=1')
-            ->where('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
-                .'(u.startDate <= :start AND u.endDate > :start AND u.endDate <= :end) OR'
-                .'(u.startDate >= :start AND u.startDate < :end AND u.endDate > :end) OR'
-                .'(u.startDate <= :start AND u.endDate >= :end))')
+            ->where('u.startDate < :end AND u.endDate > :start')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->addOrderBy('u.endDate', 'ASC');

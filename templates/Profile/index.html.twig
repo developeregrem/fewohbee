@@ -37,6 +37,9 @@
                             {{ form_row(personalDataForm.email) }}
                         </div>
                         <div class="col-md-6">
+                            {{ form_row(personalDataForm.themePreference) }}
+                        </div>
+                        <div class="col-md-6">
                             {{ form_row(personalDataForm.password) }}
                         </div>
                     </div>
@@ -63,7 +66,7 @@
                     creationSuccessRedirectUri: path('profile')
                 }
             ) }}>
-                <button type="button" class="btn btn-default" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
+                <button type="button" class="btn btn-secondary" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
                         <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
                     </button>
             </div>

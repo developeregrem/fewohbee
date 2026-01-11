@@ -53,6 +53,13 @@ export default class extends Controller {
             target,
             onComplete: () => {
                 enableDeletePopover();
+                const templateSelect = target?.querySelector('#template');
+                if (templateSelect) {
+                    const storedTemplateId = getLocalStorageItem('invoice-template-id');
+                    if (storedTemplateId) {
+                        templateSelect.value = storedTemplateId;
+                    }
+                }
             },
         });
     }

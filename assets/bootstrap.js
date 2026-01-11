@@ -12,6 +12,7 @@ import StatisticsController from './controllers/statistics_controller.js';
 import SettingsController from './controllers/settings_controller.js';
 import TemplatesController from './controllers/templates_controller.js';
 import PricesController from './controllers/prices_controller.js';
+import ThemeController from './controllers/theme_controller.js';
 
 const app = startStimulusApp();
 app.register('login', LoginController);
@@ -27,3 +28,4 @@ app.register('statistics', StatisticsController);
 app.register('settings', SettingsController);
 app.register('templates', TemplatesController);
 app.register('prices', PricesController);
+app.register('theme', ThemeController);

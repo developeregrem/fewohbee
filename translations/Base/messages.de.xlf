@@ -186,6 +186,10 @@
                 <source>nav.turnover</source>
                 <target>Umsätze</target>
             </trans-unit>
+            <trans-unit id="nav.tourism">
+                <source>nav.tourism</source>
+                <target>Tourismus</target>
+            </trans-unit>
             <trans-unit id="nav.templates">
                 <source>nav.templates</source>
                 <target>Vorlagen</target>

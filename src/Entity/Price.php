@@ -16,9 +16,9 @@ class Price
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private $id;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private $price;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     private ?float $vat = null;
     #[ORM\Column(type: 'string', length: 100)]
     private $description;

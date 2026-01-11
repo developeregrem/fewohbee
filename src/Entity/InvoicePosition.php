@@ -21,10 +21,10 @@ class InvoicePosition
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     private $description;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private $price;
-    #[ORM\Column(type: 'decimal', scale: 2)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
     private float $vat;
     #[ORM\ManyToOne(targetEntity: 'Invoice', inversedBy: 'positions')]

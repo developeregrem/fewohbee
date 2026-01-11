@@ -6,6 +6,12 @@ profile:
     saving: Speichern...
     updated: Deine Daten wurden aktualisiert.
     password_help: Lasse das Feld leer, um dein aktuelles Passwort zu behalten.
+  theme:
+    label: Farbschema
+    help: Wähle, ob das System hell, dunkel oder automatisch dargestellt wird.
+    auto: Automatisch (System)
+    dark: Dunkel
+    light: Hell (Standard)
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen
