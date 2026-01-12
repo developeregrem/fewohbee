@@ -73,7 +73,8 @@ class MonthlyStatsService
             $customers = $reservation->getCustomers();
             $customerCount = $customers->count();
             $persons = $reservation->getPersons();
-            if ($persons !== $customerCount) {
+            $useBookerFallback = $persons !== $customerCount;
+            if ($useBookerFallback) {
                 $reservationId = $reservation->getId();
                 if (!isset($warningsByReservation[$reservationId])) {
                     $appartment = $reservation->getAppartment();
@@ -87,7 +88,7 @@ class MonthlyStatsService
                     ];
                 }
             }
-            if (0 === $customerCount) {
+            if (0 === $customerCount && (!$useBookerFallback || null === $reservation->getBooker())) {
                 continue;
             }
 
@@ -100,20 +101,33 @@ class MonthlyStatsService
             // Only count overnights that fall within the report month.
             if ($resStart < $resEnd) {
                 $nights = $resStart->diff($resEnd)->days;
-                foreach ($customers as $customer) {
-                    $country = $this->resolveCountryForCustomer($customer);
-                    $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + $nights;
-                    $overnightsTotal += $nights;
-                    $stays += $nights;
+                if ($useBookerFallback) {
+                    $country = $this->resolveCountryForCustomer($reservation->getBooker());
+                    $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + ($nights * $persons);
+                    $overnightsTotal += $nights * $persons;
+                    $stays += $nights * $persons;
+                } else {
+                    foreach ($customers as $customer) {
+                        $country = $this->resolveCountryForCustomer($customer);
+                        $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + $nights;
+                        $overnightsTotal += $nights;
+                        $stays += $nights;
+                    }
                 }
             }
 
             // Arrivals are counted only in the start month of the reservation.
             if ($startDate >= $monthStart && $startDate < $monthEndExclusive) {
-                foreach ($customers as $customer) {
-                    $country = $this->resolveCountryForCustomer($customer);
-                    $arrivalsByCountry[$country] = ($arrivalsByCountry[$country] ?? 0) + 1;
-                    $arrivalsTotal += 1;
+                if ($useBookerFallback) {
+                    $country = $this->resolveCountryForCustomer($reservation->getBooker());
+                    $arrivalsByCountry[$country] = ($arrivalsByCountry[$country] ?? 0) + $persons;
+                    $arrivalsTotal += $persons;
+                } else {
+                    foreach ($customers as $customer) {
+                        $country = $this->resolveCountryForCustomer($customer);
+                        $arrivalsByCountry[$country] = ($arrivalsByCountry[$country] ?? 0) + 1;
+                        $arrivalsTotal += 1;
+                    }
                 }
             }
         }
@@ -203,8 +217,11 @@ class MonthlyStatsService
     /**
      * Resolve the preferred country for a customer using address priority rules.
      */
-    private function resolveCountryForCustomer(Customer $customer): string
+    private function resolveCountryForCustomer(?Customer $customer): string
     {
+        if (null === $customer) {
+            return 'unknown';
+        }
         $country = '';
         $addresses = $customer->getCustomerAddresses();
         $preferred = null;
