@@ -32,6 +32,7 @@ use App\Service\TemplatesService;
 use App\Service\XRechnungService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
+use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -841,6 +842,54 @@ class InvoiceServiceController extends AbstractController
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+
+        return $response;
+    }
+
+    #[Route('/export/pdf-xml/{id}/{templateId}', name: 'invoices.export.pdfxml', methods: ['GET'])]
+    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, XRechnungService $xrechnung, Invoice $invoice, int $templateId): Response
+    {
+        $em = $doctrine->getManager();
+        // save id, after page reload template will be preselected in dropdown
+        $requestStack->getSession()->set('invoice-template-id', $templateId);
+
+        $templateOutput = null;
+        try {
+            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        $template = $em->getRepository(Template::class)->find($templateId);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+
+        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+        if (!($invoiceSettings instanceof InvoiceSettingsData)) {
+            $this->addFlash('danger', 'invoice.settings.active.error');
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        try {
+            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+            $mergedPdf = (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+                ->generateDocument()
+                ->downloadString();
+        } catch (\Throwable $e) {
+            $this->addFlash('warning', $e->getMessage());
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        $response = new Response($mergedPdf);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'Rechnung-'.$invoice->getNumber().'-xrechnung.pdf'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }
