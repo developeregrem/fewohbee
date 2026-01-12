@@ -8,6 +8,20 @@
                    value="{{ origin.name }}" required>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col-sm-4 col-form-label"></div>
+        <div class="col-sm-8">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" name="use-company-name-{{ origin.id }}"
+                       id="use-company-name-{{ origin.id }}"
+                       {% if origin.useCompanyName %}checked{% endif %}>
+                <label class="form-check-label" for="use-company-name-{{ origin.id }}">
+                    {{ 'reservationorigin.use_company_name'|trans }}
+                </label>
+            </div>
+            <span class="text-muted">{{ 'reservationorigin.use_company_name.help'|trans }}</span>
+        </div>
+    </div>
 </fieldset>
 
 <input name="_csrf_token" value="{{ token }}" type="hidden">

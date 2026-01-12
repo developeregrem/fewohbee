@@ -81,12 +81,13 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
     private function createOrigins(ObjectManager $manager): void
     {
         $origins = [
-            $this->translator->trans('reservationorigin.private'),
-            $this->translator->trans('reservationorigin.business'),
+            ['name' => $this->translator->trans('reservationorigin.private'), 'useCompanyName' => false],
+            ['name' => $this->translator->trans('reservationorigin.business'), 'useCompanyName' => true],
         ];
         foreach ($origins as $origin) {
             $o = new ReservationOrigin();
-            $o->setName($origin);
+            $o->setName($origin['name']);
+            $o->setUseCompanyName($origin['useCompanyName']);
             $manager->persist($o);
         }
     }

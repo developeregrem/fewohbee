@@ -7,5 +7,7 @@ reservationorigin.flash.delete.inuse.reservations: Reservation origin cannot be 
 reservationorigin.flash.delete.success: Reservation origin successfully deleted.
 reservationorigin.flash.edit.success: Reservation origin successfully processed.
 reservationorigin.name: Description
+reservationorigin.use_company_name: Company name
+reservationorigin.use_company_name.help: Show company name instead of guest name in reservation overview
 reservationorigin.private: Private
 reservationorigin.title: Reservation origin

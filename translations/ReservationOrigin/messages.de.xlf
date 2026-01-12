@@ -18,6 +18,14 @@
                 <source>reservationorigin.name</source>
                 <target>Bezeichnung</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.use_company_name">
+                <source>reservationorigin.use_company_name</source>
+                <target>Unternehmensname anzeigen</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.use_company_name.help">
+                <source>reservationorigin.use_company_name.help</source>
+                <target>Unternehmensname statt Gastname in der Reservierungsübersicht anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>

@@ -21,6 +21,8 @@ class ReservationOrigin
     private $prices;
     #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
     private $reservations;
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private $useCompanyName = false;
 
     /**
      * Constructor.
@@ -137,5 +139,29 @@ class ReservationOrigin
     public function getReservations()
     {
         return $this->reservations;
+    }
+
+    /**
+     * Set useCompanyName.
+     *
+     * @param bool $useCompanyName
+     *
+     * @return ReservationOrigin
+     */
+    public function setUseCompanyName($useCompanyName)
+    {
+        $this->useCompanyName = (bool) $useCompanyName;
+
+        return $this;
+    }
+
+    /**
+     * Get useCompanyName.
+     *
+     * @return bool
+     */
+    public function getUseCompanyName()
+    {
+        return $this->useCompanyName;
     }
 }

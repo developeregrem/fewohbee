@@ -44,6 +44,7 @@ class ReservationOriginService
         }
 
         $origin->setName(trim($request->request->get('name-'.$id)));
+        $origin->setUseCompanyName(null !== $request->request->get('use-company-name-'.$id));
 
         return $origin;
     }
