@@ -37,11 +37,11 @@ class XRechnungService
     public function createInvoice(Invoice $invoice, InvoiceSettingsData $settings): string
     {
         if (empty($invoice->getCountry())) {
-            throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.buyerCountry'));
+            throw new \InvalidArgumentException('invoice.xrechnung.mandatory.buyerCountry');
         }
 
         if (!($invoice->getPaymentMeans() instanceof PaymentMeansCode)) {
-            throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.paymentMeans'));
+            throw new \InvalidArgumentException('invoice.xrechnung.mandatory.paymentMeans');
         }
 
         $documentBuilder = ZugferdDocumentBuilder::createNew(ZugferdProfiles::PROFILE_XRECHNUNG_3);
@@ -78,21 +78,21 @@ class XRechnungService
         // CREDIT TRANSFER (BG-17) must be supplied with IBAN (mandatory) and BIC (optional)
         if (PaymentMeansCode::SEPA_CREDIT_TRANSFER === $invoice->getPaymentMeans()) {
             if (empty($settings->getAccountIBAN())) {
-                throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBAN'));
+                throw new \InvalidArgumentException('invoice.xrechnung.mandatory.IBAN');
             }
             $documentBuilder->addDocumentPaymentMeanToCreditTransfer($settings->getAccountIBAN(), $settings->getAccountName(), null, $settings->getAccountBIC()); // Payment information
         }
         // CREDIT TRANSFER (BG-17) must be supplied with IBAN (mandatory) and BIC (mandatory)
         if (PaymentMeansCode::CREDIT_TRANSFER === $invoice->getPaymentMeans()) {
             if (empty($settings->getAccountIBAN()) || empty($settings->getAccountBIC())) {
-                throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBAN_BIC'));
+                throw new \InvalidArgumentException('invoice.xrechnung.mandatory.IBAN_BIC');
             }
             $documentBuilder->addDocumentPaymentMeanToCreditTransferNonSepa($settings->getAccountIBAN(), $settings->getAccountName(), null, $settings->getAccountBIC()); // Payment information
         }
         // CARD INFORMATION (BG-18) must be supplied with card number (mandatory) and card holder (optional)
         if (PaymentMeansCode::CARD_PAYMENT === $invoice->getPaymentMeans()) {
             if (empty($invoice->getCardNumber())) {
-                throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.cardNumber'));
+                throw new \InvalidArgumentException('invoice.xrechnung.mandatory.cardNumber');
             }
             $documentBuilder->addDocumentPaymentMeanToPaymentCard('', $invoice->getCardNumberShort(), $invoice->getCardHolder());
         }
@@ -100,10 +100,10 @@ class XRechnungService
         // DIRECT DEBIT (BG-19) must be supplied with buyer IBAN (mandatory) and creditor identifier (mandatory)
         if (PaymentMeansCode::SEPA_DIRECT_DEBIT === $invoice->getPaymentMeans()) {
             if (empty($invoice->getCustomerIBAN()) || empty($invoice->getMandateReference())) {
-                throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.IBANBuyer'));
+                throw new \InvalidArgumentException('invoice.xrechnung.mandatory.IBANBuyer');
             }
             if (empty($settings->getCreditorReference())) {
-                throw new \InvalidArgumentException($this->translator->trans('invoice.xrechnung.mandatory.creditorReference'));
+                throw new \InvalidArgumentException('invoice.xrechnung.mandatory.creditorReference');
             }
             $documentBuilder->addDocumentPaymentMeanToDirectDebit($invoice->getCustomerIBAN(), $settings->getCreditorReference());
             $mandateReference = $invoice->getMandateReference();
