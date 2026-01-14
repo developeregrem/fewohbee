@@ -26,10 +26,10 @@ use App\Form\InvoiceMiscPositionType;
 use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
 use App\Service\CSRFProtectionService;
+use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
-use App\Service\XRechnungService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
@@ -847,7 +847,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/export/pdf-xml/{id}/{templateId}', name: 'invoices.export.pdfxml', methods: ['GET'])]
-    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, XRechnungService $xrechnung, Invoice $invoice, int $templateId): Response
+    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, int $templateId): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
@@ -873,7 +873,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         try {
-            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
             $mergedPdf = (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
                 ->generateDocument()
                 ->downloadString();
@@ -895,7 +895,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, XRechnungService $xrechnung, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, EInvoiceExportService $einvoice, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
@@ -906,7 +906,7 @@ class InvoiceServiceController extends AbstractController
         }
         $xml = '';
         try {
-            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 

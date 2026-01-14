@@ -338,6 +338,18 @@
                 <source>invoice.settings.paymentDueDays</source>
                 <target>Zahlungsfrist (Tage)</target>
             </trans-unit>
+            <trans-unit id="invoice.settings.einvoiceProfile">
+                <source>invoice.settings.einvoiceProfile</source>
+                <target>E-Rechnung Profil</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.einvoiceProfile.xrechnung">
+                <source>invoice.settings.einvoiceProfile.xrechnung</source>
+                <target>XRechnung (CIUS DE)</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.einvoiceProfile.en16931">
+                <source>invoice.settings.einvoiceProfile.en16931</source>
+                <target>ZUGFeRD EN 16931 (COMFORT)</target>
+            </trans-unit>
             <trans-unit id="invoice.settings.active">
                 <source>invoice.settings.active</source>
                 <target>Aktiv</target>
@@ -368,7 +380,7 @@
             </trans-unit>
             <trans-unit id="invoice.settings.title.xrechnung">
                 <source>invoice.settings.title.xrechnung</source>
-                <target>XRechnung</target>
+                <target>E-Rechnung</target>
             </trans-unit>
             <trans-unit id="invoice.settings.title.template">
                 <source>invoice.settings.title.template</source>
@@ -380,7 +392,11 @@
             </trans-unit>
             <trans-unit id="invoice.xrechnung.mandatory.buyerCountry">
                 <source>invoice.xrechnung.mandatory.buyerCountry</source>
-                <target>Der Wert für Land muss zur Erstellung der XRechnung vorhanden sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+                <target>Der Wert für Land muss zur Erstellung der elektronischen Rechnung vorhanden sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.xrechnung.mandatory.buyerPostCodeCity">
+                <source>invoice.xrechnung.mandatory.buyerPostCodeCity</source>
+                <target>Die Werte für Postleitzahl und Ort müssen zur Erstellung der elektronischen Rechnung vorhanden sein. Bitte die Rechnung bearbeiten und die Werte ergänzen.</target>
             </trans-unit>
             <trans-unit id="invoice.xrechnung.mandatory.paymentMeans">
                 <source>invoice.xrechnung.mandatory.paymentMeans</source>
