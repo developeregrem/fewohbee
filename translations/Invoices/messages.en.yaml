@@ -85,6 +85,9 @@ invoice.settings.accountName: Account Holder
 invoice.settings.accountBIC: BIC
 invoice.settings.paymentTerms: Payment Terms
 invoice.settings.paymentDueDays: Payment Due Days
+invoice.settings.einvoiceProfile: E-Invoice Profile
+invoice.settings.einvoiceProfile.xrechnung: XRechnung (CIUS DE)
+invoice.settings.einvoiceProfile.en16931: ZUGFeRD EN 16931 (COMFORT)
 invoice.settings.active: Active
 invoice.settings.inactive: Inactive
 invoice.settings.help.general: The information entered here is required for the digital invoice export (XRechnung).
@@ -92,14 +95,15 @@ invoice.settings.help.invoiceMail: Specifies the email address to which the resp
 invoice.settings.flash.create.success: New settings added successfully.
 invoice.settings.flash.edit.success: Settings edited successfully.
 invoice.settings.flash.delete.success: Settings deleted successfully.
-invoice.settings.title.xrechnung: XRechnung
+invoice.settings.title.xrechnung: E-Invoice
 invoice.settings.title.template: Invoice Template
 invoice.settings.active.error: No settings marked as active for invoice export could be found.
 invoice.settings.creditorReference.label: Creditor ID
 invoice.settings.creditorReference.hint: The unique identifier for SEPA direct debit
 invoice.xrechnung.mandatory.error: >-
   The value for country of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the value.
-invoice.xrechnung.mandatory.buyerCountry: The value for country must be present to create the XRechnung. Please edit the invoice and add the value.
+invoice.xrechnung.mandatory.buyerCountry: The value for country must be present to create the electronic invoice. Please edit the invoice and add the value.
+invoice.xrechnung.mandatory.buyerPostCodeCity: The values for postal code and city must be present to create the electronic invoice. Please edit the invoice and add the values.
 invoice.xrechnung.mandatory.paymentMeans: No payment method provided. Please edit the invoice and add the value.
 invoice.xrechnung.mandatory.IBAN: The IBAN field must be filled. Please edit the settings and add the value.
 invoice.xrechnung.mandatory.IBAN_BIC: The IBAN and BIC fields must be filled. Please edit the settings and add the values.

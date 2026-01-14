@@ -12,8 +12,8 @@ button.details: Details
 button.download: Download
 button.edit: Edit
 button.export.pdf: Export as PDF
-button.export.pdfxml: Export as PDF + XML
-button.export.xrechnung: Export as XRechnung
+button.export.pdfxml: Export as PDF + E-Invoice
+button.export.xrechnung: Export as E-Invoice
 button.gdpr: GDPR overview
 button.hide: Hide
 button.save: Save

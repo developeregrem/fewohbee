@@ -68,6 +68,9 @@ class InvoiceSettingsData
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $paymentDueDays = null;
 
+    #[ORM\Column(length: 50, options: ['default' => 'xrechnung'])]
+    private ?string $einvoiceProfile = 'xrechnung';
+
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $creditorReference = null;
 
@@ -288,6 +291,18 @@ class InvoiceSettingsData
     public function setPaymentDueDays(?int $paymentDueDays): static
     {
         $this->paymentDueDays = $paymentDueDays;
+
+        return $this;
+    }
+
+    public function getEinvoiceProfile(): ?string
+    {
+        return $this->einvoiceProfile;
+    }
+
+    public function setEinvoiceProfile(string $einvoiceProfile): static
+    {
+        $this->einvoiceProfile = $einvoiceProfile;
 
         return $this;
     }
