@@ -150,9 +150,13 @@
                 <source>button.export.pdf</source>
                 <target>als PDF exportieren</target>
             </trans-unit>
+            <trans-unit id="button.export.pdfxrechnung">
+                <source>button.export.pdfxml</source>
+                <target>als PDF + E-Rechnung exportieren</target>
+            </trans-unit>
             <trans-unit id="button.export.xrechnung">
                 <source>button.export.xrechnung</source>
-                <target>als XRechnung exportieren</target>
+                <target>als E-Rechnung exportieren</target>
             </trans-unit>
             <trans-unit id="button.add">
                 <source>button.add</source>
