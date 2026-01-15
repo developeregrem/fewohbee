@@ -26,14 +26,14 @@ use App\Form\InvoiceMiscPositionType;
 use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
 use App\Service\CSRFProtectionService;
+use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
-use App\Service\XRechnungService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
+use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -41,7 +41,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_INVOICES')]
 #[Route('/invoices')]
@@ -845,8 +844,56 @@ class InvoiceServiceController extends AbstractController
         return $response;
     }
 
+    #[Route('/export/pdf-xml/{id}/{templateId}', name: 'invoices.export.pdfxml', methods: ['GET'])]
+    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, int $templateId): Response
+    {
+        $em = $doctrine->getManager();
+        // save id, after page reload template will be preselected in dropdown
+        $requestStack->getSession()->set('invoice-template-id', $templateId);
+
+        $templateOutput = null;
+        try {
+            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+        } catch (\InvalidArgumentException $e) {
+            $this->addFlash('warning', $e->getMessage());
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        $template = $em->getRepository(Template::class)->find($templateId);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+
+        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+        if (!($invoiceSettings instanceof InvoiceSettingsData)) {
+            $this->addFlash('danger', 'invoice.settings.active.error');
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        try {
+            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
+            $mergedPdf = (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+                ->generateDocument()
+                ->downloadString();
+        } catch (\Throwable $e) {
+            $this->addFlash('warning', $e->getMessage());
+
+            return $this->redirect($this->generateUrl('invoices.overview'));
+        }
+
+        $response = new Response($mergedPdf);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'Rechnung-'.$invoice->getNumber().'-xrechnung.pdf'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, XRechnungService $xrechnung, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, EInvoiceExportService $einvoice, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
@@ -857,7 +904,7 @@ class InvoiceServiceController extends AbstractController
         }
         $xml = '';
         try {
-            $xml = $xrechnung->createInvoice($invoice, $invoiceSettings);
+            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 
@@ -913,7 +960,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/settings/new', name: 'invoices.settings.new', methods: ['GET', 'POST'])]
-    public function newSettings(ManagerRegistry $doctrine, Request $request, TranslatorInterface $translator): Response
+    public function newSettings(ManagerRegistry $doctrine, Request $request): Response
     {
         $setting = new InvoiceSettingsData();
         $form = $this->createForm(InvoiceSettingsType::class, $setting, [
@@ -922,22 +969,16 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
-                if ($setting->isActive()) {
-                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
-                }
-                $doctrine->getManager()->persist($setting);
-                $doctrine->getManager()->flush();
-
-                // add success message
-                $this->addFlash('success', 'invoice.settings.flash.create.success');
-
-                return $this->forward('App\Controller\InvoiceServiceController::getSettings');
-            } else {
-                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
-                $form['paymentDueDays']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
-                $form['paymentTerms']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
+            if ($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
             }
+            $doctrine->getManager()->persist($setting);
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.create.success');
+
+            return $this->forward('App\Controller\InvoiceServiceController::getSettings');
         }
 
         return $this->render('Invoices/invoice_form_settings_new.html.twig', [
@@ -956,17 +997,13 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
-                if ($setting->isActive()) {
-                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
-                }
-                $doctrine->getManager()->flush();
-
-                // add success message
-                $this->addFlash('success', 'invoice.settings.flash.edit.success');
-            } else {
-                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
+            if ($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
             }
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.edit.success');
         }
 
         return $this->forward('App\Controller\InvoiceServiceController::getSettings');

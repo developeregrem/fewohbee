@@ -43,9 +43,13 @@
                    href="{{ path('invoices.export.pdf', {'id': invoice.id, 'templateId': templateId }) }}"
                    title="{{ 'button.export.pdf'|trans }}" target="_blank">
                     <i class="fas fa-file-pdf"></i></a>
+                <a class="export-link"
+                   href="{{ path('invoices.export.pdfxml', {'id': invoice.id, 'templateId': templateId }) }}"
+                   title="{{ 'button.export.pdfxml'|trans }}" target="_blank">
+                    <i class="fa-solid fa-file-invoice"></i></a>
                 <a href="{{ path('invoices.export.xrechnung', {'id': invoice.id }) }}"
                     title="{{ 'button.export.xrechnung'|trans }}">
-                     <i class="fas fa-file-invoice"></i></a>
+                     <i class="fa-solid fa-file-code"></i></a>
             </td>
         </tr>
     {% endfor %}

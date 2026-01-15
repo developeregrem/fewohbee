@@ -3,8 +3,10 @@
 namespace App\Form;
 
 use App\Entity\InvoiceSettingsData;
+use App\Service\EInvoice\EInvoiceProfileRegistry;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CountryType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -20,9 +22,17 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class InvoiceSettingsType extends AbstractType
 {
+    public function __construct(private EInvoiceProfileRegistry $profileRegistry)
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('einvoiceProfile', ChoiceType::class, [
+                'label' => 'invoice.settings.einvoiceProfile',
+                'choices' => $this->profileRegistry->getProfileChoices(),
+            ])
             ->add('companyName', TextType::class, [
                 'label' => 'invoice.settings.companyName',
             ])
@@ -124,10 +134,28 @@ class InvoiceSettingsType extends AbstractType
         }
     }
 
+    // Ensures either payment terms or payment due days is set.
+    public function validatePaymentTerms(InvoiceSettingsData $settings, ExecutionContextInterface $context): void
+    {
+        if (empty($settings->getPaymentDueDays()) && empty($settings->getPaymentTerms())) {
+            $context->buildViolation('invoice.settings.paymentterm.error')
+                ->atPath('paymentDueDays')
+                ->setTranslationDomain('messages')
+                ->addViolation();
+            $context->buildViolation('invoice.settings.paymentterm.error')
+                ->atPath('paymentTerms')
+                ->setTranslationDomain('messages')
+                ->addViolation();
+        }
+    }
+
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => InvoiceSettingsData::class,
+            'constraints' => [
+                new Callback([$this, 'validatePaymentTerms']),
+            ],
         ]);
     }
 }
