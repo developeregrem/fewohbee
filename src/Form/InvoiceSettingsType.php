@@ -134,10 +134,28 @@ class InvoiceSettingsType extends AbstractType
         }
     }
 
+    // Ensures either payment terms or payment due days is set.
+    public function validatePaymentTerms(InvoiceSettingsData $settings, ExecutionContextInterface $context): void
+    {
+        if (empty($settings->getPaymentDueDays()) && empty($settings->getPaymentTerms())) {
+            $context->buildViolation('invoice.settings.paymentterm.error')
+                ->atPath('paymentDueDays')
+                ->setTranslationDomain('messages')
+                ->addViolation();
+            $context->buildViolation('invoice.settings.paymentterm.error')
+                ->atPath('paymentTerms')
+                ->setTranslationDomain('messages')
+                ->addViolation();
+        }
+    }
+
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => InvoiceSettingsData::class,
+            'constraints' => [
+                new Callback([$this, 'validatePaymentTerms']),
+            ],
         ]);
     }
 }
