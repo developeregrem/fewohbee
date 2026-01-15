@@ -34,7 +34,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -42,7 +41,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_INVOICES')]
 #[Route('/invoices')]
@@ -962,7 +960,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/settings/new', name: 'invoices.settings.new', methods: ['GET', 'POST'])]
-    public function newSettings(ManagerRegistry $doctrine, Request $request, TranslatorInterface $translator): Response
+    public function newSettings(ManagerRegistry $doctrine, Request $request): Response
     {
         $setting = new InvoiceSettingsData();
         $form = $this->createForm(InvoiceSettingsType::class, $setting, [
@@ -971,22 +969,16 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
-                if ($setting->isActive()) {
-                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
-                }
-                $doctrine->getManager()->persist($setting);
-                $doctrine->getManager()->flush();
-
-                // add success message
-                $this->addFlash('success', 'invoice.settings.flash.create.success');
-
-                return $this->forward('App\Controller\InvoiceServiceController::getSettings');
-            } else {
-                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
-                $form['paymentDueDays']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
-                $form['paymentTerms']->addError(new FormError($translator->trans('invoice.settings.paymentterm.error')));
+            if ($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive();
             }
+            $doctrine->getManager()->persist($setting);
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.create.success');
+
+            return $this->forward('App\Controller\InvoiceServiceController::getSettings');
         }
 
         return $this->render('Invoices/invoice_form_settings_new.html.twig', [
@@ -1005,17 +997,13 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if (!empty($setting->getPaymentDueDays()) || !empty($setting->getPaymentTerms())) {
-                if ($setting->isActive()) {
-                    $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
-                }
-                $doctrine->getManager()->flush();
-
-                // add success message
-                $this->addFlash('success', 'invoice.settings.flash.edit.success');
-            } else {
-                $this->addFlash('warning', 'invoice.settings.paymentterm.error');
+            if ($setting->isActive()) {
+                $doctrine->getRepository(InvoiceSettingsData::class)->setAllInactive($setting->getId());
             }
+            $doctrine->getManager()->flush();
+
+            // add success message
+            $this->addFlash('success', 'invoice.settings.flash.edit.success');
         }
 
         return $this->forward('App\Controller\InvoiceServiceController::getSettings');

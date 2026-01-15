@@ -40,6 +40,10 @@ class ZugferdInvoiceGenerator
             throw new \InvalidArgumentException('invoice.xrechnung.mandatory.paymentMeans');
         }
 
+        if (empty($settings->getPaymentDueDays()) && empty($settings->getPaymentTerms())) {
+            throw new \InvalidArgumentException('invoice.settings.paymentterm.error');
+        }
+
         $documentBuilder = ZugferdDocumentBuilder::createNew($profile);
 
         // General invoice Information
