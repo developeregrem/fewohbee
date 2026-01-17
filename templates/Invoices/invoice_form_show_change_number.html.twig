@@ -1,4 +1,5 @@
-<form id="invoice-number-form" class="form-horizontal" role="form"
+<form id="invoice-number-form" class="form-horizontal" role="form" method="POST"
+      action="{{ path('invoices.edit.invoice.number.save') }}"
       data-action="submit->invoices#submitFormAction" data-controller="invoices">
     <div class="modal-body ps-5 pe-5">
         <div class="row">
@@ -13,7 +14,7 @@
                 <div class="row">
                     <label for="firstname" class="col-sm-4 col-form-label">{{ 'invoice.date2'|trans }} *</label>
                     <div class="col-sm">
-                        <input type="text" class="form-control" id="date" name="date" value="{{ invoice.date|date("d.m.Y") }}" required>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ invoice.date|date("Y-m-d") }}" required>
                     </div>
                 </div>
                 </p>
@@ -38,34 +39,3 @@
     <input type="hidden" name="invoice-id" value="{{ invoiceId }}" />
     <input name="_csrf_token" value="{{ token }}" type="hidden">
 </form>
-<script>
-    $(document).ready(function() {
-        $("#date").datepicker({
-            regional: "{{ app.request.locale }}",
-        });
-    });
-
-    function changeInvoiceNumberSave() {
-        var url = "{{ path('invoices.edit.invoice.number.save') }}";
-        var content = '<div class="modal-body">' +
-                '     <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif" />' +
-                '</div>';
-
-        $.ajax({
-            url: url,
-            type: "post",
-            data: $("#invoice-number-form").serialize(),
-            beforeSend: function () {
-                $("#modal-content-ajax").html(content);
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                alert(xhr.status);
-            },
-            success: function (data) {
-                $("#modal-content-ajax").html(data);
-            }
-        });
-
-        return false;
-    }
-</script>
