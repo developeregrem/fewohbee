@@ -4,23 +4,9 @@
 
 {% block description %}{{ parent() }} -  {{ 'login.pwforgotten.description'|trans }}{% endblock %}
 
-{% block javascripts %}
-    {{ parent() }}
-    <script>
-        if ($("body nav").length > 0) {
-            window.location.href = "{{ path('start') }}";
-        } else {
-            $(document).ready(function () {
-                $("body div").removeClass("d-none");
-                $("body p").removeClass("d-none");
-            });
-        }
-    </script>
-{% endblock %}
-
 {% block body %}
 <div class="container">
-    <div class="row justify-content-md-center d-none" style="padding-top: 90px;">
+    <div class="row justify-content-md-center" style="padding-top: 90px;">
         <div class="col-md-auto card">
             <div class="card-body">
                 <legend>{{ 'login.pwforgotten.title'|trans }}</legend>
