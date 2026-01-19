@@ -24,4 +24,9 @@ final class Version20260116120000 extends AbstractMigration
     {
         $this->addSql('ALTER TABLE invoice_settings_data DROP einvoice_profile');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

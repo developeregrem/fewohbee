@@ -1,8 +1,14 @@
 
 {% block popTitle %}
     {% if reservation is defined and reservation is not null %}
-        {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname ~
-            " (" ~reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
+        {% if reservation.booker is defined and reservation.booker is not null %}
+            {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname ~
+                " (" ~reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
+        {% elseif reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
+            {% set popTitle = reservation.calendarSyncImport.name ~ " (" ~ reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
+        {% else %}
+            {% set popTitle = "-" %}
+        {% endif %}
         {{ popTitle }}
     {% endif %}
 {% endblock %}
@@ -10,20 +16,22 @@
     {% if reservation is defined and reservation is not null %}
         {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
         {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}
-        {% for address in reservation.booker.customerAddresses %} 
-            {% if address.phone|length > 0 %}
-                {% set phones = phones ~ address.phone %}
-                {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
-            {% endif %}
-            {% if address.mobilePhone|length > 0 %}
-                {% set mobiles = mobiles ~ address.mobilePhone %}
-                {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
-            {% endif %}
-            {% if address.email|length > 0 %}
-                {% set mails = mails ~ address.email %}
-                {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
-            {% endif %}                           
-        {% endfor %}
+        {% if reservation.booker is defined and reservation.booker is not null %}
+            {% for address in reservation.booker.customerAddresses %} 
+                {% if address.phone|length > 0 %}
+                    {% set phones = phones ~ address.phone %}
+                    {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
+                {% endif %}
+                {% if address.mobilePhone|length > 0 %}
+                    {% set mobiles = mobiles ~ address.mobilePhone %}
+                    {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
+                {% endif %}
+                {% if address.email|length > 0 %}
+                    {% set mails = mails ~ address.email %}
+                    {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
+                {% endif %}                           
+            {% endfor %}
+        {% endif %}
         {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
         {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
         {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
@@ -35,6 +43,9 @@
             {% set popBody = popBody ~ " " ~ 'reservation.departureTime'|trans ~ ": " ~ reservation.departureTime|date('H:i') %}
         {% endif %}
         {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
+        {% if reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
+            {% set popBody = popBody ~ "<br /><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name %}
+        {% endif %}
         {{ popBody }}
     {% endif %}
 {% endblock %}

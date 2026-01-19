@@ -59,6 +59,8 @@ export function enableDeletePopover() {
                 btn.addEventListener('click', (e) => {
                     const form = e.target.closest('form');
                     const action = form ? form.action : null;
+                    const targetSelector = popoverTriggerEl.getAttribute('data-delete-target');
+                    const target = targetSelector ? document.querySelector(targetSelector) : null;
                     const instance = window.bootstrap.Popover.getInstance(popoverTriggerEl);
                     if (instance) {
                         instance.hide();
@@ -68,6 +70,7 @@ export function enableDeletePopover() {
                             url: action,
                             method: 'DELETE',
                             data: form ? new FormData(form) : null,
+                            target: target || null,
                         });
                     }
                 });

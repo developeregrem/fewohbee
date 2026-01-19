@@ -1,0 +1,104 @@
+<div class="modal-body" data-conflict-count="{{ conflicts|length + reviewTotal }}" data-controller="reservations">
+    <div id="flash-message-overlay"></div>
+    <h6 class="mb-2">{{ 'reservation.conflict.section.title'|trans }}</h6>
+    <p class="text-muted">{{ 'reservation.conflict.hint'|trans }}</p>
+    {% if conflicts|length == 0 %}
+        <div class="text-muted">{{ 'reservation.conflict.empty'|trans }}</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ 'reservation.conflict.table.room'|trans }}</th>
+                        <th>{{ 'reservation.conflict.table.period'|trans }}</th>
+                        <th>{{ 'reservation.conflict.table.source'|trans }}</th>
+                        <th class="text-end">{{ 'reservation.conflict.table.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in conflicts %}
+                        {% set sourceName = reservation.calendarSyncImport ? reservation.calendarSyncImport.name : (reservation.reservationOrigin ? reservation.reservationOrigin.name : '-') %}
+                        {% set id = reservation.id %}
+                        {% set targetUrl = path('reservations.conflicts.ignore', {'id': reservation.id}) %}
+                        {% set deletePopoverHint = 'reservation.conflict.ignore.confirm'|trans %}
+                        {% use "common/delete_popover.html.twig" %}
+                        <tr>
+                            <td>{{ reservation.appartment.number }}</td>
+                            <td>
+                                {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}
+                            </td>
+                            <td>{{ sourceName }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                        data-popover="delete"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'
+                                        data-delete-target="#modal-content-ajax"
+                                        data-title="{{ 'reservation.conflict.action.ignore.title'|trans }}"
+                                        title="{{ 'reservation.conflict.action.ignore.title'|trans }}">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary"
+                                        data-action="click->reservations#resolveConflictAction"
+                                        data-url="{{ path('reservations.conflicts.resolve', {'id': reservation.id}) }}"
+                                        title="{{ 'reservation.conflict.action.resolve.title'|trans }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    <h6 class="mt-4 mb-2">{{ 'reservation.review.section.title'|trans }}</h6>
+    <p class="text-muted">{{ 'reservation.review.hint'|trans }}</p>
+    {% if reviewReservations|length == 0 %}
+        <div class="text-muted">{{ 'reservation.review.empty'|trans }}</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ 'reservation.conflict.table.room'|trans }}</th>
+                        <th>{{ 'reservation.conflict.table.period'|trans }}</th>
+                        <th>{{ 'reservation.conflict.table.source'|trans }}</th>
+                        <th>{{ 'reservation.review.table.todo'|trans }}</th>
+                        <th class="text-end">{{ 'reservation.review.table.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reservation in reviewReservations %}
+                        {% set sourceName = reservation.calendarSyncImport ? reservation.calendarSyncImport.name : (reservation.reservationOrigin ? reservation.reservationOrigin.name : '-') %}
+                        <tr>
+                            <td>{{ reservation.appartment.number }}</td>
+                            <td>
+                                {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}
+                            </td>
+                            <td>{{ sourceName }}</td>
+                            <td>{{ 'reservation.review.todo'|trans }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-action="click->reservations#openReservationAction"
+                                        data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                                        data-reservation-id="{{ reservation.id }}"
+                                        title="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'paginator.html.twig' with {
+            'url': path('reservations.conflicts'),
+            'page': reviewPage,
+            'pages': reviewPages,
+            'search': '',
+            'pagination_action': 'click->reservations#paginateImportReviewAction'
+        } %}
+    {% endif %}
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+</div>

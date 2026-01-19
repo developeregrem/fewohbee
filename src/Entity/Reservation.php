@@ -55,6 +55,19 @@ class Reservation
     #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $refUid = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isConflict = false;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isConflictIgnored = false;
+
+    #[ORM\ManyToOne(targetEntity: CalendarSyncImport::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?CalendarSyncImport $calendarSyncImport = null;
+
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTime $arrivalTime = null;
 
@@ -376,6 +389,62 @@ class Reservation
     public function setUuid(Uuid $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    /** Return the external reference UID for imported reservations. */
+    public function getRefUid(): ?string
+    {
+        return $this->refUid;
+    }
+
+    /** Set the external reference UID for imported reservations. */
+    public function setRefUid(?string $refUid): self
+    {
+        $this->refUid = $refUid;
+
+        return $this;
+    }
+
+    /** Return whether this reservation is marked as a conflict. */
+    public function isConflict(): bool
+    {
+        return $this->isConflict;
+    }
+
+    /** Mark this reservation as a conflict entry. */
+    public function setIsConflict(bool $isConflict): self
+    {
+        $this->isConflict = $isConflict;
+
+        return $this;
+    }
+
+    /** Return whether this conflict was intentionally ignored. */
+    public function isConflictIgnored(): bool
+    {
+        return $this->isConflictIgnored;
+    }
+
+    /** Mark this conflict as ignored for future syncs. */
+    public function setIsConflictIgnored(bool $isConflictIgnored): self
+    {
+        $this->isConflictIgnored = $isConflictIgnored;
+
+        return $this;
+    }
+
+    /** Return the import configuration that created this reservation. */
+    public function getCalendarSyncImport(): ?CalendarSyncImport
+    {
+        return $this->calendarSyncImport;
+    }
+
+    /** Link this reservation to its import configuration. */
+    public function setCalendarSyncImport(?CalendarSyncImport $calendarSyncImport): self
+    {
+        $this->calendarSyncImport = $calendarSyncImport;
 
         return $this;
     }

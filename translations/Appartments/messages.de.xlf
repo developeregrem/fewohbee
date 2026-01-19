@@ -70,6 +70,10 @@
                 <source>calendar.sync.export.option.title</source>
                 <target>Exportoptionen</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.export.tab">
+                <source>calendar.sync.export.tab</source>
+                <target>Export</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.export.option.status.hint">
                 <source>calendar.sync.export.option.status.hint</source>
                 <target>Nur Reservierungen des angegebenen Status werden exportiert.</target>
@@ -105,6 +109,150 @@
             <trans-unit id="calendar.sync.export.access.last">
                 <source>calendar.sync.export.access.last</source>
                 <target>letzter Aufruf</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.tab">
+                <source>calendar.sync.import.tab</source>
+                <target>Import</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.hint">
+                <source>calendar.sync.import.hint</source>
+                <target>Externe iCal-Kalender importieren, die dieses Zimmer belegen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.list.title">
+                <source>calendar.sync.import.list.title</source>
+                <target>Vorhandene Importe</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.list.empty">
+                <source>calendar.sync.import.list.empty</source>
+                <target>Noch keine Importe konfiguriert.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.create.title">
+                <source>calendar.sync.import.create.title</source>
+                <target>Import hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.create.button">
+                <source>calendar.sync.import.create.button</source>
+                <target>Import hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.name.label">
+                <source>calendar.sync.import.name.label</source>
+                <target>Bezeichnung</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.name.hint">
+                <source>calendar.sync.import.name.hint</source>
+                <target>Anzeigename im Belegungsplan.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.url.label">
+                <source>calendar.sync.import.url.label</source>
+                <target>URL des Kalenders</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.url.hint">
+                <source>calendar.sync.import.url.hint</source>
+                <target>Sie können einen Kalender im iCal-Format über dessen Adresse hinzufügen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.active.label">
+                <source>calendar.sync.import.active.label</source>
+                <target>aktiv</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.active.hint">
+                <source>calendar.sync.import.active.hint</source>
+                <target>Aktiviert/Deaktiviert diesen Import.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.conflict.label">
+                <source>calendar.sync.import.conflict.label</source>
+                <target>Konfliktbehandlung</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.conflict.hint">
+                <source>calendar.sync.import.conflict.hint</source>
+                <target>Wie sollen Überschneidungen behandelt werden?</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.conflict.option.skip">
+                <source>calendar.sync.import.conflict.option.skip</source>
+                <target>Konflikt ignorieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.conflict.option.overwrite">
+                <source>calendar.sync.import.conflict.option.overwrite</source>
+                <target>Bestehende Reservierung überschreiben</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.conflict.option.mark">
+                <source>calendar.sync.import.conflict.option.mark</source>
+                <target>Importieren und als Konflikt markieren</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.origin.label">
+                <source>calendar.sync.import.origin.label</source>
+                <target>Herkunft</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.origin.hint">
+                <source>calendar.sync.import.origin.hint</source>
+                <target>Herkunft für importierte Reservierungen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.status.label">
+                <source>calendar.sync.import.status.label</source>
+                <target>Standardstatus</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.status.hint">
+                <source>calendar.sync.import.status.hint</source>
+                <target>Status für importierte Reservierungen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.last_sync.label">
+                <source>calendar.sync.import.last_sync.label</source>
+                <target>letzte Synchronisierung</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.last_error.label">
+                <source>calendar.sync.import.last_error.label</source>
+                <target>letzter Fehler</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.delete.confirm">
+                <source>calendar.sync.import.delete.confirm</source>
+                <target>Diesen Import wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.delete.title">
+                <source>calendar.sync.import.delete.title</source>
+                <target>Import löschen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.delete.hint">
+                <source>calendar.sync.import.delete.hint</source>
+                <target>Diese Import-Konfiguration wird dauerhaft gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.actions.label">
+                <source>calendar.sync.import.actions.label</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.edit.title">
+                <source>calendar.sync.import.edit.title</source>
+                <target>Import bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.flash.create.success">
+                <source>calendar.sync.import.flash.create.success</source>
+                <target>Import wurde angelegt.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.flash.edit.success">
+                <source>calendar.sync.import.flash.edit.success</source>
+                <target>Import wurde aktualisiert.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.flash.delete.success">
+                <source>calendar.sync.import.flash.delete.success</source>
+                <target>Import wurde gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.error.http_status">
+                <source>calendar.sync.import.error.http_status</source>
+                <target>Der Kalender liefert eine ungültige Antwort.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.error.unreachable">
+                <source>calendar.sync.import.error.unreachable</source>
+                <target>Die Kalender-URL ist nicht erreichbar.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.error.invalid_ical">
+                <source>calendar.sync.import.error.invalid_ical</source>
+                <target>Der Kalender ist kein gültiges iCal-Format.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.error.no_events">
+                <source>calendar.sync.import.error.no_events</source>
+                <target>Der Kalender enthält keine Einträge.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.error.skipped.summary">
+                <source>calendar.sync.import.error.skipped.summary</source>
+                <target>Übersprungene Einträge: fehlende Pflichtfelder (%missing%), Konflikte (%conflict%).</target>
             </trans-unit>
         </body>
     </file>
