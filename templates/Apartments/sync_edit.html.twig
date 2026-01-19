@@ -4,28 +4,29 @@
                 {% include 'feedback.html.twig' with {'error': true, 'app': app } %}
             </div>
         </div>
+    {% set isImportTab = activeTab is defined and activeTab == 'import' %}
     <ul class="nav nav-tabs" id="calendar-sync-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="calendar-sync-export-tab" data-bs-toggle="tab"
+            <button class="nav-link{% if not isImportTab %} active{% endif %}" id="calendar-sync-export-tab" data-bs-toggle="tab"
                     data-bs-target="#calendar-sync-export" type="button" role="tab"
-                    aria-controls="calendar-sync-export" aria-selected="true">
+                    aria-controls="calendar-sync-export" aria-selected="{% if not isImportTab %}true{% else %}false{% endif %}">
                 {{ 'calendar.sync.export.tab'|trans }}
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="calendar-sync-import-tab" data-bs-toggle="tab"
+            <button class="nav-link{% if isImportTab %} active{% endif %}" id="calendar-sync-import-tab" data-bs-toggle="tab"
                     data-bs-target="#calendar-sync-import" type="button" role="tab"
-                    aria-controls="calendar-sync-import" aria-selected="false">
+                    aria-controls="calendar-sync-import" aria-selected="{% if isImportTab %}true{% else %}false{% endif %}">
                 {{ 'calendar.sync.import.tab'|trans }}
             </button>
         </li>
     </ul>
     <div class="tab-content pt-4" id="calendar-sync-tabs-content">
-        <div class="tab-pane fade show active" id="calendar-sync-export" role="tabpanel"
+        <div class="tab-pane fade{% if not isImportTab %} show active{% endif %}" id="calendar-sync-export" role="tabpanel"
              aria-labelledby="calendar-sync-export-tab" tabindex="0">
             {{ include('Apartments/_sync_form.html.twig', { exportForm: exportForm, sync: sync }) }}
         </div>
-        <div class="tab-pane fade" id="calendar-sync-import" role="tabpanel"
+        <div class="tab-pane fade{% if isImportTab %} show active{% endif %}" id="calendar-sync-import" role="tabpanel"
              aria-labelledby="calendar-sync-import-tab" tabindex="0">
             {{ include('Apartments/_sync_import_form.html.twig', {
                 sync: sync,

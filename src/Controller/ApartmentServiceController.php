@@ -17,6 +17,7 @@ use App\Entity\Appartment;
 use App\Entity\CalendarSync;
 use App\Entity\CalendarSyncImport;
 use App\Entity\RoomCategory;
+use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Form\ApartmentType;
 use App\Form\CalendarSyncExportType;
@@ -173,10 +174,10 @@ class ApartmentServiceController extends AbstractController
 
             $this->addFlash('success', 'calendar.sync.import.flash.create.success');
 
-            return $this->renderSyncModal($sync, $formFactory);
+            return $this->renderSyncModal($sync, $formFactory, null, null, [], 'import');
         }
 
-        return $this->renderSyncModal($sync, $formFactory, null, $importCreateForm);
+        return $this->renderSyncModal($sync, $formFactory, null, $importCreateForm, [], 'import');
     }
 
     #[Route('/sync/import/{id}/edit', name: 'apartments.sync.import.edit', methods: ['POST'])]
@@ -198,14 +199,14 @@ class ApartmentServiceController extends AbstractController
 
             $sync = $import->getApartment()->getCalendarSync();
 
-            return $this->renderSyncModal($sync, $formFactory);
+            return $this->renderSyncModal($sync, $formFactory, null, null, [], 'import');
         }
 
         $sync = $import->getApartment()->getCalendarSync();
         $importEditForms = $this->buildImportEditForms($sync, $formFactory);
         $importEditForms[$import->getId()] = $importEditForm;
 
-        return $this->renderSyncModal($sync, $formFactory, null, null, $importEditForms);
+        return $this->renderSyncModal($sync, $formFactory, null, null, $importEditForms, 'import');
     }
 
     #[Route('/sync/import/{id}/delete', name: 'apartments.sync.import.delete', methods: ['DELETE'])]
@@ -216,14 +217,19 @@ class ApartmentServiceController extends AbstractController
         FormFactoryInterface $formFactory
     ): Response
     {
-        $doctrine->getManager()->remove($import);
-        $doctrine->getManager()->flush();
+        $em = $doctrine->getManager();
+        $reservations = $em->getRepository(Reservation::class)->findBy(['calendarSyncImport' => $import]);
+        foreach ($reservations as $reservation) {
+            $reservation->setCalendarSyncImport(null);
+        }
+        $em->remove($import);
+        $em->flush();
 
         $this->addFlash('success', 'calendar.sync.import.flash.delete.success');
 
         $sync = $import->getApartment()->getCalendarSync();
 
-        return $this->renderSyncModal($sync, $formFactory);
+        return $this->renderSyncModal($sync, $formFactory, null, null, [], 'import');
     }
 
     /** Create a default import instance for the given sync. */
@@ -246,13 +252,14 @@ class ApartmentServiceController extends AbstractController
         return $forms;
     }
 
-    /** Render the calendar sync modal with export and import forms. */
+    /** Render the calendar sync modal with export and import forms and active tab selection. */
     private function renderSyncModal(
         CalendarSync $sync,
         FormFactoryInterface $formFactory,
         ?FormInterface $exportForm = null,
         ?FormInterface $importCreateForm = null,
-        array $importEditForms = []
+        array $importEditForms = [],
+        string $activeTab = 'export'
     ): Response {
         $exportFormView = ($exportForm ?? $this->createForm(CalendarSyncExportType::class, $sync))->createView();
         $importCreateFormView = ($importCreateForm ?? $formFactory->createNamed('import_new', CalendarSyncImportType::class, $this->createImportModel($sync)))->createView();
@@ -268,6 +275,7 @@ class ApartmentServiceController extends AbstractController
             'exportForm' => $exportFormView,
             'importCreateForm' => $importCreateFormView,
             'importEditForms' => $importEditFormViews,
+            'activeTab' => $activeTab,
         ]);
     }
 }
