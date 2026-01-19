@@ -1,0 +1,213 @@
+<div data-controller="calendar-imports">
+    <div class="row mb-4">
+        <div class="col">{{ 'calendar.sync.import.hint'|trans }}</div>
+    </div>
+
+    <div data-calendar-imports-target="list">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="mb-0">{{ 'calendar.sync.import.list.title'|trans }}</h6>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-action="click->calendar-imports#toggleCreate">
+                <i class="fas fa-plus"></i> {{ 'calendar.sync.import.create.button'|trans }}
+            </button>
+        </div>
+        {% if sync.apartment.calendarSyncImports|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>{{ 'calendar.sync.import.name.label'|trans }}</th>
+                            <th>{{ 'calendar.sync.import.active.label'|trans }}</th>
+                            <th>{{ 'calendar.sync.import.last_sync.label'|trans }}</th>
+                            <th>{{ 'calendar.sync.import.last_error.label'|trans }}</th>
+                            <th class="text-end">{{ 'calendar.sync.import.actions.label'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for import in sync.apartment.calendarSyncImports %}
+                            {% set id = import.id %}
+                            {% set targetUrl = path('apartments.sync.import.delete', {'id': import.id}) %}
+                            {% use "common/delete_popover.html.twig" %}
+                            <tr>
+                                <td>{{ import.name }}</td>
+                                <td>
+                                    {% if import.isActive %}
+                                        <i class="fas fa-check text-success" title="{{ 'calendar.sync.import.active.label'|trans }}"></i>
+                                    {% else %}
+                                        <i class="fas fa-ban text-muted" title="{{ 'calendar.sync.import.active.label'|trans }}"></i>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if import.lastSyncAt is not null %}
+                                        {{ import.lastSyncAt|date('d.m.Y H:i') }}
+                                    {% else %}
+                                        &ndash;
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if import.lastSyncError is not null and import.lastSyncError|length > 0 %}
+                                        <i class="fas fa-triangle-exclamation text-danger"
+                                           title="{{ import.lastSyncError|trans }}"></i>
+                                    {% else %}
+                                        &ndash;
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                            data-action="click->calendar-imports#showEdit"
+                                            data-import-id="{{ import.id }}"
+                                            title="{{ 'button.edit'|trans }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-popover="delete"
+                                            data-delete-target="#modal-content-ajax"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'
+                                            data-title="{{ 'calendar.sync.import.delete.title'|trans }}"
+                                            title="{{ 'calendar.sync.import.delete.title'|trans }}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-muted mb-3">{{ 'calendar.sync.import.list.empty'|trans }}</div>
+        {% endif %}
+    </div>
+
+    <div data-calendar-imports-target="create" class="d-none mt-4">
+        <h6>{{ 'calendar.sync.import.create.title'|trans }}</h6>
+        {{ form_start(importCreateForm, {'attr': {
+            'id': 'entry-form-import-new-'~sync.id,
+            'data-controller': 'settings',
+            'data-action': 'submit->settings#submitFormAction',
+            'data-url': path('apartments.sync.import.new', {'id': sync.id})
+        } }) }}
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.name) }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.url) }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.isActive) }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.conflictStrategy) }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.reservationOrigin) }}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    {{ form_row(importCreateForm.reservationStatus) }}
+                </div>
+            </div>
+
+            {{ form_rest(importCreateForm) }}
+
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-secondary me-2"
+                        data-action="click->calendar-imports#toggleCreate">
+                    {{ 'button.cancel'|trans }}
+                </button>
+                <input type="submit" value="{{ 'calendar.sync.import.create.button'|trans }}" class="btn btn-primary"/>
+            </div>
+        {{ form_end(importCreateForm) }}
+    </div>
+
+    <div data-calendar-imports-target="edit" class="d-none mt-4">
+        {% for import in sync.apartment.calendarSyncImports %}
+            {% set importForm = importEditForms[import.id] ?? null %}
+            {% if importForm %}
+                <div class="d-none" data-calendar-imports-target="editPanel" data-import-id="{{ import.id }}">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="mb-0">{{ 'calendar.sync.import.edit.title'|trans }}</h6>
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                data-action="click->calendar-imports#showList">
+                            X
+                        </button>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <div class="fw-semibold">{{ 'calendar.sync.import.last_sync.label'|trans }}</div>
+                            <div class="text-muted">
+                                {% if import.lastSyncAt is not null %}
+                                    {{ import.lastSyncAt|date('d.m.Y H:i') }}
+                                {% else %}
+                                    &ndash;
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="fw-semibold">{{ 'calendar.sync.import.last_error.label'|trans }}</div>
+                            <div class="text-muted">
+                                {% if import.lastSyncError is not null and import.lastSyncError|length > 0 %}
+                                    {{ import.lastSyncError|trans }}
+                                {% else %}
+                                    &ndash;
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {{ form_start(importForm, {'attr': {
+                        'id': 'entry-form-import-'~import.id,
+                        'data-controller': 'settings',
+                        'data-action': 'submit->settings#submitFormAction',
+                        'data-url': path('apartments.sync.import.edit', {'id': import.id})
+                    } }) }}
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.name) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.url) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.isActive) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.conflictStrategy) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.reservationOrigin) }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            {{ form_row(importForm.reservationStatus) }}
+                        </div>
+                    </div>
+
+                    {{ form_rest(importForm) }}
+
+                    <div class="d-flex justify-content-end">
+                        <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
+                    </div>
+                    {{ form_end(importForm) }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

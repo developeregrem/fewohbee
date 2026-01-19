@@ -64,7 +64,8 @@
                                     <i class="fas fa-calendar-check"
                                        data-action="click->settings#openModalAction"
                                        data-url="{{ path('apartments.sync.edit', {'id': apartment.calendarSync.id }) }}"
-                                       data-title="{{ 'calendar.sync.title'|trans }}"></i></a>
+                                       data-title="{{ 'calendar.sync.title'|trans }}"
+                                       data-modal-size="lg"></i></a>
                                 {% set id = apartment.id %}
                                 {% set targetUrl = path('appartments.delete.appartment', {'id': apartment.id}) %}
                                 {% use "common/delete_popover.html.twig" %}

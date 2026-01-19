@@ -50,15 +50,20 @@
                     {% endif %}
 
                     {% set letterCount = get_letter_count_for_display(period, interval) %}
-                    {% set displayName = reservation.booker.lastname %}
-                    {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
-                        {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                    {% if reservation.booker is defined and reservation.booker is not null %}
+                        {% set displayName = reservation.booker.lastname %}
+                        {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
+                            {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                        {% endif %}
+                    {% elseif reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
+                        {% set displayName = reservation.calendarSyncImport.name %}
+                    {% else %}
+                        {% set displayName = "-" %}
                     {% endif %}
                     {% set shortName = displayName|slice(0, letterCount) %}
                     {% if shortName != displayName %}
                         {% set displayName = shortName ~ "..." %}
                     {% endif %}
-
                     {# popover #}
                     {% use 'Reservations/_resevation_popover.html.twig' %}
 

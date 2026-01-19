@@ -10,10 +10,6 @@ export default class extends Controller {
             return;
         }
         this.modalContent.dataset.settingsBootstrapped = 'true';
-        const modalDialog = document.querySelector('#modalCenter .modal-dialog');
-        if (modalDialog) {
-            modalDialog.classList.remove('modal-lg');
-        }
         this.waitForIconsAndPopover();
     }
 
@@ -32,8 +28,10 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const title = event.currentTarget.dataset.title || '';
         const enableEdit = event.currentTarget.dataset.enableEdit === 'true';
+        const modalSize = event.currentTarget.dataset.modalSize || 'default';
 
         if (!url) return;
+        this.setModalSize(modalSize);
         setModalTitle(title);
         httpRequest({
             url,
@@ -45,6 +43,16 @@ export default class extends Controller {
                 }
             },
         });
+    }
+
+    setModalSize(size) {
+        const modalDialog = document.querySelector('#modalCenter .modal-dialog');
+        if (!modalDialog) return;
+        if (size === 'lg') {
+            modalDialog.classList.add('modal-lg');
+        } else {
+            modalDialog.classList.remove('modal-lg');
+        }
     }
 
     enableEditFromModal() {

@@ -1,51 +1,63 @@
-<div class="row mb-4">
-    <div class="col">{{ 'calendar.sync.export.hint'|trans }}</div>
-</div>
-<h6>{{ 'calendar.sync.export.option.title'|trans }}</h6>
-<div class="row mb-3">
-    <div class="col">        
-        {{ form_widget(form.reservationStatus) }}
-        {{ form_help(form.reservationStatus) }}
+{{ form_start(exportForm, {'attr': {
+    'id': 'entry-form-export-'~sync.id,
+    'data-controller': 'settings',
+    'data-action': 'submit->settings#submitFormAction',
+    'data-url': path('apartments.sync.edit', {'id': sync.id})
+} }) }}
+    <div class="row mb-4">
+        <div class="col">{{ 'calendar.sync.export.hint'|trans }}</div>
     </div>
-</div>
-<div class="row mb-4">
-    <div class="col">        
-        {{ form_widget(form.exportGuestName) }}
-        {{ form_help(form.exportGuestName) }}
+    <h6>{{ 'calendar.sync.export.option.title'|trans }}</h6>
+    <div class="row mb-3">
+        <div class="col">        
+            {{ form_widget(exportForm.reservationStatus) }}
+            {{ form_help(exportForm.reservationStatus) }}
+        </div>
     </div>
-</div>
-<h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
-<div class="row mb-3">
-    <div class="col">
-        {{ form_widget(form.isPublic) }}
-        {{ form_help(form.isPublic) }}
+    <div class="row mb-4">
+        <div class="col">        
+            {{ form_widget(exportForm.exportGuestName) }}
+            {{ form_help(exportForm.exportGuestName) }}
+        </div>
     </div>
-</div>
+    <h6>{{ 'calendar.sync.export.access.title'|trans }}</h6>
+    <div class="row mb-3">
+        <div class="col">
+            {{ form_widget(exportForm.isPublic) }}
+            {{ form_help(exportForm.isPublic) }}
+        </div>
+    </div>
 
-{{ form_widget(form) }}
+    {{ form_rest(exportForm) }}
 
-<div class="mb-3 mt-3 mx-auto">    
-    <div>{{ 'calendar.sync.export.access.url.title'|trans }}</div>
-    <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-        <input type="text" class="form-control border-end-0 pt-0 pb-1" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
-           value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}" data-copy-target="input">
-        <span class="input-group-append">
-            <button class="btn btn-outline-secondary border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-action="click->copy#copy">
-                <i class="fa-solid fa-copy prefix"></i>
-            </button>
-        </span>
+    <div class="mb-3 mt-3 mx-auto">    
+        <div>{{ 'calendar.sync.export.access.url.title'|trans }}</div>
+        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+            <input type="text" class="form-control border-end-0 pt-0 pb-1" id="floatingInput" placeholder="{{ 'calendar.sync.export.access.url.title'|trans }}" autocomplete="off"
+                value="{{ url('apartments.get.calendar', { 'uuid': sync.uuid }) }}" data-copy-target="input">
+            <span class="input-group-append">
+                <button class="btn btn-outline-secondary border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-action="click->copy#copy">
+                    <i class="fa-solid fa-copy prefix"></i>
+                </button>
+            </span>
+        </div>
+        <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
     </div>
-    <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
-</div>
-<div class="row">
-    <div class="col">
-        <div>{{ 'calendar.sync.export.access.last'|trans }}</div>
-        <span class="text-muted">
-            {% if sync.lastExport is not null%}
-                {{ sync.lastExport|date('d.m.Y H:i') }}
-            {% else %}
-                -
-            {% endif %}
-        </span>
+    <div class="row mb-4">
+        <div class="col">
+            <div>{{ 'calendar.sync.export.access.last'|trans }}</div>
+            <span class="text-muted">
+                {% if sync.lastExport is not null%}
+                    {{ sync.lastExport|date('d.m.Y H:i') }}
+                {% else %}
+                    -
+                {% endif %}
+            </span>
+        </div>
     </div>
-</div>
+
+    <div class="d-flex justify-content-end">
+        <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-export-{{ sync.id }}"
+               class="btn btn-primary"/>
+    </div>
+{{ form_end(exportForm) }}

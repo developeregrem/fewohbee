@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Appartment;
+use App\Entity\CalendarSyncImport;
+use App\Entity\Reservation;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NoResultException;
 
@@ -75,6 +77,7 @@ class ReservationRepository extends EntityRepository
             ->createQueryBuilder('u')
             ->select('u')
             ->where('u.appartment = :app ')
+            ->andWhere('u.isConflict = 0')
             ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
                 .'(u.startDate < :start AND u.endDate >= :start) OR'
                 .'(u.startDate <= :end AND u.endDate > :end) OR'
@@ -103,6 +106,7 @@ class ReservationRepository extends EntityRepository
             ->createQueryBuilder('u')
             ->select('u')
             ->where('u.appartment = :app ')
+            ->andWhere('u.isConflict = 0')
             ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
                 .'(u.startDate < :start AND u.endDate > :start) OR'
                 .'(u.startDate < :end AND u.endDate > :end) OR'
@@ -250,5 +254,81 @@ class ReservationRepository extends EntityRepository
         } catch (NoResultException $ex) {
             return 0;
         }
+    }
+
+    /**
+     * Load a reservation by import UID and source.
+     */
+    public function findOneByRefUidAndImport(string $refUid, CalendarSyncImport $import): ?Reservation
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.refUid = :refUid')
+            ->andWhere('u.calendarSyncImport = :import')
+            ->setParameter('refUid', $refUid)
+            ->setParameter('import', $import)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Return active conflict reservations that are not ignored.
+     *
+     * @return Reservation[]
+     */
+    public function findActiveConflicts(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.isConflict = 1')
+            ->andWhere('u.isConflictIgnored = 0')
+            ->orderBy('u.startDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Count active conflict reservations that are not ignored.
+     */
+    public function countActiveConflicts(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.isConflict = 1')
+            ->andWhere('u.isConflictIgnored = 0')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count imported reservations without a booker that are not conflicts.
+     */
+    public function countImportedWithoutBooker(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.calendarSyncImport IS NOT NULL')
+            ->andWhere('u.booker IS NULL')
+            ->andWhere('u.isConflict = 0')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Return imported reservations without a booker that are not conflicts.
+     *
+     * @return Reservation[]
+     */
+    public function findImportedWithoutBookerPaginated(int $page, int $perPage): array
+    {
+        $offset = max(0, ($page - 1) * $perPage);
+
+        return $this->createQueryBuilder('u')
+            ->where('u.calendarSyncImport IS NOT NULL')
+            ->andWhere('u.booker IS NULL')
+            ->andWhere('u.isConflict = 0')
+            ->orderBy('u.startDate', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
     }
 }

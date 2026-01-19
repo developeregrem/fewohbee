@@ -15,16 +15,21 @@ namespace App\Controller;
 
 use App\Entity\Appartment;
 use App\Entity\CalendarSync;
+use App\Entity\CalendarSyncImport;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Form\ApartmentType;
 use App\Form\CalendarSyncExportType;
+use App\Form\CalendarSyncImportType;
 use App\Repository\AppartmentRepository;
 use App\Service\AppartmentService;
+use App\Service\CalendarImportService;
 use App\Service\CalendarSyncService;
 use App\Service\CSRFProtectionService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -125,24 +130,144 @@ class ApartmentServiceController extends AbstractController
     }
 
     #[Route('/sync/{id}/edit', name: 'apartments.sync.edit', methods: ['GET', 'POST'])]
-    public function editSync(ManagerRegistry $doctrine, Request $request, CalendarSync $sync): Response
+    public function editSync(
+        ManagerRegistry $doctrine,
+        Request $request,
+        CalendarSync $sync,
+        FormFactoryInterface $formFactory
+    ): Response
     {
-        $form = $this->createForm(CalendarSyncExportType::class, $sync);
-        $form->handleRequest($request);
+        $exportForm = $this->createForm(CalendarSyncExportType::class, $sync);
+        $exportForm->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($exportForm->isSubmitted() && $exportForm->isValid()) {
             $doctrine->getManager()->flush();
 
             // add success message
-            $this->addFlash('success', 'category.flash.edit.success');
+            $this->addFlash('success', 'appartment.flash.edit.success');
 
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
-        return $this->render('Apartments/sync_edit.html.twig', [
-            'sync' => $sync,
-            'form' => $form->createView(),
-        ]);
+        return $this->renderSyncModal($sync, $formFactory, $exportForm);
     }
 
+    #[Route('/sync/{id}/import/new', name: 'apartments.sync.import.new', methods: ['POST'])]
+    /** Persist a new iCal import configuration for the apartment. */
+    public function createImport(
+        ManagerRegistry $doctrine,
+        Request $request,
+        CalendarSync $sync,
+        CalendarImportService $calendarImportService,
+        FormFactoryInterface $formFactory
+    ): Response
+    {
+        $import = $this->createImportModel($sync);
+        $importCreateForm = $formFactory->createNamed('import_new', CalendarSyncImportType::class, $import);
+        $importCreateForm->handleRequest($request);
+
+        if ($importCreateForm->isSubmitted() && $importCreateForm->isValid()) {
+            $doctrine->getManager()->persist($import);
+            $doctrine->getManager()->flush();
+            $calendarImportService->syncImport($import);
+
+            $this->addFlash('success', 'calendar.sync.import.flash.create.success');
+
+            return $this->renderSyncModal($sync, $formFactory);
+        }
+
+        return $this->renderSyncModal($sync, $formFactory, null, $importCreateForm);
+    }
+
+    #[Route('/sync/import/{id}/edit', name: 'apartments.sync.import.edit', methods: ['POST'])]
+    /** Update an existing iCal import configuration. */
+    public function editImport(
+        ManagerRegistry $doctrine,
+        Request $request,
+        CalendarSyncImport $import,
+        FormFactoryInterface $formFactory
+    ): Response
+    {
+        $importEditForm = $formFactory->createNamed('import_'.$import->getId(), CalendarSyncImportType::class, $import);
+        $importEditForm->handleRequest($request);
+
+        if ($importEditForm->isSubmitted() && $importEditForm->isValid()) {
+            $doctrine->getManager()->flush();
+
+            $this->addFlash('success', 'calendar.sync.import.flash.edit.success');
+
+            $sync = $import->getApartment()->getCalendarSync();
+
+            return $this->renderSyncModal($sync, $formFactory);
+        }
+
+        $sync = $import->getApartment()->getCalendarSync();
+        $importEditForms = $this->buildImportEditForms($sync, $formFactory);
+        $importEditForms[$import->getId()] = $importEditForm;
+
+        return $this->renderSyncModal($sync, $formFactory, null, null, $importEditForms);
+    }
+
+    #[Route('/sync/import/{id}/delete', name: 'apartments.sync.import.delete', methods: ['DELETE'])]
+    /** Remove an iCal import configuration. */
+    public function deleteImport(
+        ManagerRegistry $doctrine,
+        CalendarSyncImport $import,
+        FormFactoryInterface $formFactory
+    ): Response
+    {
+        $doctrine->getManager()->remove($import);
+        $doctrine->getManager()->flush();
+
+        $this->addFlash('success', 'calendar.sync.import.flash.delete.success');
+
+        $sync = $import->getApartment()->getCalendarSync();
+
+        return $this->renderSyncModal($sync, $formFactory);
+    }
+
+    /** Create a default import instance for the given sync. */
+    private function createImportModel(CalendarSync $sync): CalendarSyncImport
+    {
+        $import = new CalendarSyncImport();
+        $import->setApartment($sync->getApartment());
+
+        return $import;
+    }
+
+    /** Build edit forms for all imports of a sync. */
+    private function buildImportEditForms(CalendarSync $sync, FormFactoryInterface $formFactory): array
+    {
+        $forms = [];
+        foreach ($sync->getApartment()->getCalendarSyncImports() as $import) {
+            $forms[$import->getId()] = $formFactory->createNamed('import_'.$import->getId(), CalendarSyncImportType::class, $import);
+        }
+
+        return $forms;
+    }
+
+    /** Render the calendar sync modal with export and import forms. */
+    private function renderSyncModal(
+        CalendarSync $sync,
+        FormFactoryInterface $formFactory,
+        ?FormInterface $exportForm = null,
+        ?FormInterface $importCreateForm = null,
+        array $importEditForms = []
+    ): Response {
+        $exportFormView = ($exportForm ?? $this->createForm(CalendarSyncExportType::class, $sync))->createView();
+        $importCreateFormView = ($importCreateForm ?? $formFactory->createNamed('import_new', CalendarSyncImportType::class, $this->createImportModel($sync)))->createView();
+        $importEditForms = $importEditForms ?: $this->buildImportEditForms($sync, $formFactory);
+
+        $importEditFormViews = [];
+        foreach ($importEditForms as $id => $form) {
+            $importEditFormViews[$id] = $form->createView();
+        }
+
+        return $this->render('Apartments/sync_edit.html.twig', [
+            'sync' => $sync,
+            'exportForm' => $exportFormView,
+            'importCreateForm' => $importCreateFormView,
+            'importEditForms' => $importEditFormViews,
+        ]);
+    }
 }
