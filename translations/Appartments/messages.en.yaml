@@ -100,7 +100,7 @@ calendar:
         edit:
           success: Import configuration updated.
         delete:
-          success: Import configuration deleted.
+          success: Import configuration deleted. Imported reservations were not deleted.
       error:
         http_status: Remote calendar returned an invalid response.
         unreachable: Remote calendar URL is not reachable.

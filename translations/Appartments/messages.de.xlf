@@ -232,7 +232,7 @@
             </trans-unit>
             <trans-unit id="calendar.sync.import.flash.delete.success">
                 <source>calendar.sync.import.flash.delete.success</source>
-                <target>Import wurde gelöscht.</target>
+                <target>Import wurde gelöscht. Importierte Reservierungen wurden nicht gelöscht.</target>
             </trans-unit>
             <trans-unit id="calendar.sync.import.error.http_status">
                 <source>calendar.sync.import.error.http_status</source>
