@@ -12,12 +12,18 @@
         </div>
     </div>
     {% if is_granted('ROLE_RESERVATIONS') %}
+    {% set hasBooker = attribute(reservations, 0).booker is not null %}
     <form id="reservationShowForm" data-url="{{ path('reservations.dodelete.reservation') }}">
         <div class="modal-footer">
             <div class="col p-0" id="boxDefault">
                 {% if is_granted('ROLE_INVOICES') %}
                 <div class="btn-group dropup float-start">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownInvoice" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn btn-secondary dropdown-toggle"
+                            type="button"
+                            id="dropdownInvoice"
+                            {% if hasBooker %}data-bs-toggle="dropdown"{% else %}disabled{% endif %}
+                            aria-haspopup="true"
+                            aria-expanded="false">
                       {{ 'reservation.invoices'|trans }} <span class="caret"></span>
                     </button>
                     <div class="dropdown-menu">
@@ -30,10 +36,14 @@
                         {% if attribute(reservations, 0).invoices|length > 0 %}
                         <div class="dropdown-divider"></div>
                         {% endif %}
-                        <a class="dropdown-item" href="#"
+                        <a class="dropdown-item{% if not hasBooker %} disabled{% endif %}" href="#"
+                           {% if hasBooker %}
                            data-action="click->reservations#selectReservationForInvoiceAction"
                            data-url="{{ path('invoices.select.reservation') }}"
-                           data-reservation-id="{{ attribute(reservations, 0).id }}">{{ 'reservation.button.create.invoice'|trans }}</a>
+                           data-reservation-id="{{ attribute(reservations, 0).id }}"
+                           {% else %}
+                           aria-disabled="true"
+                           {% endif %}>{{ 'reservation.button.create.invoice'|trans }}</a>
                     </div>                
                 </div>
                 {% endif %}

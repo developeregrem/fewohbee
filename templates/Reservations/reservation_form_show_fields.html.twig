@@ -7,7 +7,11 @@
         <a class="nav-link{% if tab is defined and tab == 'guest' %} active{% endif %}" href="#guests" data-bs-toggle="tab">{{ 'reservation.preview.customer.inroom'|trans }}</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-bs-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
+        {% if booker is defined and booker is not null %}
+            <a class="nav-link{% if tab is defined and tab == 'correspondence' %} active{% endif %}" href="#correspondence" data-bs-toggle="tab">{{ 'reservation.correspondences'|trans }}</a>
+        {% else %}
+            <span class="nav-link disabled text-muted" aria-disabled="true">{{ 'reservation.correspondences'|trans }}</span>
+        {% endif %}
     </li>
     <li class="nav-item">
         <a class="nav-link{% if tab is defined and tab == 'prices' %} active{% endif %}" href="#prices" data-bs-toggle="tab">{{ 'reservation.prices.title'|trans }}</a>
@@ -21,33 +25,37 @@
             <div class="col">                    
                 <h4 class="border-bottom pb-2">{{ 'reservation.preview.booker'|trans }}
                     {% if mode is defined and mode == 'edit' %}
-                        <form id="actions-booker-{{ booker.id }}" class="d-none">
-                            <input id="reservation-id" type="hidden" value="{{ reservationId }}"
-                                   name="reservation-id"/>
-                            <input id="customer-id" type="hidden" value="{{ booker.id }}"
-                                   name="customer-id"/>
-                            <input id="tab" type="hidden" value="booker" name="tab"/>
-                            <input name="_csrf_token" value="{{ token }}" type="hidden">
-                        </form>
+                        {% if booker is defined and booker is not null %}
+                            <form id="actions-booker-{{ booker.id }}" class="d-none">
+                                <input id="reservation-id" type="hidden" value="{{ reservationId }}"
+                                       name="reservation-id"/>
+                                <input id="customer-id" type="hidden" value="{{ booker.id }}"
+                                       name="customer-id"/>
+                                <input id="tab" type="hidden" value="booker" name="tab"/>
+                                <input name="_csrf_token" value="{{ token }}" type="hidden">
+                            </form>
+                        {% endif %}
                         {% if is_granted('ROLE_RESERVATIONS') %}
                         <small>
-                        <a href="#"
-                           data-action="click->reservations#editReservationCustomerEditAction"
-                           data-customer-id="{{ booker.id }}"
-                           data-form-selector="#actions-booker-{{ booker.id }}"
-                           data-url="{{ path('reservations.edit.customer.edit') }}"
-                           title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="#"
-                           data-action="click->reservations#changeReservationCustomerAction"
-                           data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
-                           data-reservation-id="{{ reservationId }}"
-                           data-tab="booker"
-                           data-appartment-id="0"
-                           title="{{ 'reservation.button.changeBooker'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
-                        </a>
+                            {% if booker is defined and booker is not null %}
+                                <a href="#"
+                                   data-action="click->reservations#editReservationCustomerEditAction"
+                                   data-customer-id="{{ booker.id }}"
+                                   data-form-selector="#actions-booker-{{ booker.id }}"
+                                   data-url="{{ path('reservations.edit.customer.edit') }}"
+                                   title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            {% endif %}
+                            <a href="#"
+                               data-action="click->reservations#changeReservationCustomerAction"
+                               data-url="{{ path('reservations.edit.reservation.customer', {'id': reservationId}) }}"
+                               data-reservation-id="{{ reservationId }}"
+                               data-tab="booker"
+                               data-appartment-id="0"
+                               title="{{ 'reservation.button.changeBooker'|trans }}" class="float-end text-secondary">
+                                <i class="fas fa-exchange-alt" style="margin-right: 5px;"></i>
+                            </a>
                         </small>
                         {% endif %}
                     {% endif %}
@@ -55,9 +63,17 @@
             </div>          
         </div>
         <div class="row p-2">
-            {% include 'Customers/_show_info.html.twig' with {'customer' : booker} %}
+            {% if booker is defined and booker is not null %}
+                {% include 'Customers/_show_info.html.twig' with {'customer' : booker} %}
+            {% else %}
+                <div class="col-12 text-muted">
+                    {{ 'reservation.import.booker.missing'|trans }}
+                </div>
+            {% endif %}
         </div>                        
-            {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : booker} %}
+            {% if booker is defined and booker is not null %}
+                {% include 'Customers/customer_show_address_fields_short.html.twig' with {'customer' : booker} %}
+            {% endif %}
 
         <h4 class="mt-4 pb-2">{{ 'reservation.preview.appartments.selected'|trans }}
             {% if mode is defined and mode == 'edit' %}
@@ -187,6 +203,9 @@
             <div class="col-sm-9">
                 {% if mode is defined and mode == 'edit' %}
                     <span>{{ attribute(reservations, 0).reservationOrigin.name }}</span>
+                    {% if attribute(reservations, 0).calendarSyncImport is defined and attribute(reservations, 0).calendarSyncImport is not null %}
+                        <span class="ms-1">(<i class="fas fa-cloud-download-alt"></i> {{ attribute(reservations, 0).calendarSyncImport.name }})</span>
+                    {% endif %}
                 {% else %}
                 <select id="reservation-origin" name="reservation-origin" class="form-select">
                     {% for origin in origins %}

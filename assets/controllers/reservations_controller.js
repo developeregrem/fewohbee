@@ -9,6 +9,7 @@ import {
     getLocalStorageItem,
     iniStartOrEndDate,
     setModalTitle,
+    enableDeletePopover,
 } from './utils_controller.js';
 
 export default class extends Controller {
@@ -150,6 +151,8 @@ export default class extends Controller {
         this.initTinyMceEditor();
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
+        this.updateConflictBadgeFromModal();
+        enableDeletePopover();
         window.setTimeout(() => {
             this.isHandlingModalChange = false;
         }, 0);
@@ -162,6 +165,48 @@ export default class extends Controller {
         }
         const url = event?.currentTarget?.dataset.url || event?.currentTarget?.dataset.reservationsTableUrl || this.tableUrl;
         this.getNewTable(url);
+    }
+
+    openConflictsAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        this.conflictsUrl = url;
+        if (this.modalContent) {
+            this.modalContent.dataset.conflictsUrl = url;
+        }
+        setModalTitle(this.translate('reservation.conflict.title'));
+        this.loadConflictsModal();
+    }
+
+    resolveConflictAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        httpRequest({
+            url,
+            method: 'POST',
+            target: this.modalContent,
+            loader: false,
+            onSuccess: (data) => {
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                this.loadConflictsModal();
+                this.getNewTable();
+            }
+        });
+    }
+
+    paginateImportReviewAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.getAttribute('href');
+        if (!url) return;
+        this.conflictsUrl = url;
+        if (this.modalContent) {
+            this.modalContent.dataset.conflictsUrl = url;
+        }
+        this.loadConflictsModal();
     }
 
     selectAppartmentAction(event) {
@@ -966,6 +1011,59 @@ export default class extends Controller {
         return false;
     }
 
+    // ----- conflict helpers -----
+
+    loadConflictsModal() {
+        const targetUrl = this.conflictsUrl || this.modalContent?.dataset?.conflictsUrl;
+        if (!targetUrl) {
+            return;
+        }
+        httpRequest({
+            url: targetUrl,
+            method: 'GET',
+            target: this.modalContent,
+            onSuccess: (data) => {
+                if (this.modalContent) {
+                    this.modalContent.innerHTML = data;
+                }
+                this.updateConflictBadgeFromModal();
+                enableDeletePopover();
+            }
+        });
+    }
+
+    updateConflictBadgeFromModal() {
+        const badge = document.querySelector('[data-conflict-count-badge]');
+        const button = document.querySelector('[data-conflict-button]');
+        const countSource = this.modalContent?.querySelector('[data-conflict-count]');
+        if (!badge || !button) {
+            return;
+        }
+        if (!countSource || !countSource.dataset || typeof countSource.dataset.conflictCount === 'undefined') {
+            return;
+        }
+        const value = parseInt(countSource.dataset.conflictCount || '0', 10);
+        badge.textContent = Number.isNaN(value) ? '0' : String(value);
+        if (value > 0) {
+            button.classList.remove('d-none');
+        } else {
+            button.classList.add('d-none');
+        }
+    }
+
+    showFeedback(data, target = null) {
+        if (!data || typeof data !== 'string' || data.trim().length === 0) {
+            return false;
+        }
+        const base = target || this.modalContent || document;
+        const overlay = base?.querySelector ? base.querySelector('#flash-message-overlay') : null;
+        if (!overlay) {
+            return false;
+        }
+        overlay.innerHTML = data;
+        return true;
+    }
+
     getAvailableAppartmentsForPeriod(mode, url = null) {
         $('#available-appartments').html('');
         iniStartOrEndDate('from', 'end', 1);
@@ -1066,7 +1164,7 @@ export default class extends Controller {
             '</div>';
 
         if ($('#selectedAppartments tr').length === 1) {
-            $('#flash-message-overlay').empty().append(message);
+            this.showFeedback(message);
         } else {
             $('#breadcrumb-appartments').wrap('<a href="#" />');
             $('#breadcrumb-customer').removeClass('d-none');
@@ -1178,11 +1276,10 @@ export default class extends Controller {
             data: httpSerializeSelectors(['#_csrf_token', '#reservation-remark', '#reservation-origin', '#reservation-arrivalTime', '#reservation-departureTime']),
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
-                } else {
-                    window.location.href = this.startUrl || '/';
+                if (this.showFeedback(data)) {
+                    return;
                 }
+                window.location.href = this.startUrl || '/';
             }
         });
         return false;
@@ -1259,14 +1356,13 @@ export default class extends Controller {
             data: httpSerializeForm('#customer-selection'),
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
-                } else {
-                    const resUrl = isNew ? 'new' : this.getContextValue('reservationUrl') || null;
-                    this.getReservation(resUrl, tab);
-                    if (url !== 'new' && tab === 'booker') {
-                        this.getNewTable();
-                    }
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                const resUrl = isNew ? 'new' : this.getContextValue('reservationUrl') || null;
+                this.getReservation(resUrl, tab);
+                if (url !== 'new' && tab === 'booker') {
+                    this.getNewTable();
                 }
             }
         });
@@ -1426,11 +1522,10 @@ export default class extends Controller {
             data: httpSerializeForm(formEl),
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
-                } else {
-                    this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
+                if (this.showFeedback(data)) {
+                    return;
                 }
+                this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
             }
         });
         return false;
@@ -1453,14 +1548,13 @@ export default class extends Controller {
             data: httpSerializeForm(formEl),
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
+                if (this.showFeedback(data)) {
                     if (window.isTemplateAttachment) {
                         this.previewTemplateForReservation(0, 'false');
                     }
-                } else {
-                    this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
+                    return;
                 }
+                this.getReservation(refreshUrl || window.lastClickedReservationUrl, 'correspondence');
             }
         });
         return false;
@@ -1543,11 +1637,10 @@ export default class extends Controller {
             data: { id, _csrf_token: $('#_csrf_token').val() },
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
-                } else {
-                    this.getReservation(window.lastClickedReservationUrl, 'correspondence');
+                if (this.showFeedback(data)) {
+                    return;
                 }
+                this.getReservation(window.lastClickedReservationUrl, 'correspondence');
             }
         });
         return false;
@@ -1623,13 +1716,12 @@ export default class extends Controller {
             loader: false,
             target: this.modalContent,
             onSuccess: (data) => {
-                if (data.length > 0) {
-                    $('#flash-message-overlay').empty().append(data);
-                } else {
-                    const row = document.getElementById('aid-' + id);
-                    if (row) {
-                        row.remove();
-                    }
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                const row = document.getElementById('aid-' + id);
+                if (row) {
+                    row.remove();
                 }
             }
         });

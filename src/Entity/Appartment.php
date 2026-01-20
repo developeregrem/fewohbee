@@ -32,12 +32,16 @@ class Appartment
     #[ORM\OneToOne(mappedBy: 'apartment', targetEntity: CalendarSync::class, cascade: ['persist', 'remove'])]
     private CalendarSync $calendarSync;
 
+    #[ORM\OneToMany(mappedBy: 'apartment', targetEntity: CalendarSyncImport::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $calendarSyncImports;
+
     #[ORM\Column(nullable: true)]
     private ?bool $multipleOccupancy = false;
 
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
+        $this->calendarSyncImports = new ArrayCollection();
     }
 
     public function getId()
@@ -146,6 +150,31 @@ class Appartment
         }
 
         $this->calendarSync = $calendarSync;
+
+        return $this;
+    }
+
+    /** Return all iCal import configurations for this apartment. */
+    public function getCalendarSyncImports(): Collection
+    {
+        return $this->calendarSyncImports;
+    }
+
+    /** Attach an iCal import configuration to this apartment. */
+    public function addCalendarSyncImport(CalendarSyncImport $calendarSyncImport): self
+    {
+        if (!$this->calendarSyncImports->contains($calendarSyncImport)) {
+            $this->calendarSyncImports[] = $calendarSyncImport;
+            $calendarSyncImport->setApartment($this);
+        }
+
+        return $this;
+    }
+
+    /** Detach an iCal import configuration from this apartment. */
+    public function removeCalendarSyncImport(CalendarSyncImport $calendarSyncImport): self
+    {
+        $this->calendarSyncImports->removeElement($calendarSyncImport);
 
         return $this;
     }
