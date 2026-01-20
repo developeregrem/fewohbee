@@ -51,9 +51,19 @@
 
                     {% set letterCount = get_letter_count_for_display(period, interval) %}
                     {% if reservation.booker is defined and reservation.booker is not null %}
-                        {% set displayName = reservation.booker.lastname %}
-                        {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
-                            {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                        {% set displayCompany = null %}
+                        {% for address in reservation.booker.customerAddresses %}
+                            {% if displayCompany is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
+                                {% set displayCompany = address.company %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if displayCompany %}
+                            {% set displayName = displayCompany %}
+                        {% else %}
+                            {% set displayName = reservation.booker.lastname %}
+                            {% if reservation.booker.firstname is defined and reservation.booker.firstname|length > 0 %}
+                                {% set displayName = displayName ~ ", " ~ reservation.booker.firstname %}
+                            {% endif %}
                         {% endif %}
                     {% elseif reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
                         {% set displayName = reservation.calendarSyncImport.name %}

@@ -16,8 +16,12 @@
     {% if reservation is defined and reservation is not null %}
         {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
         {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}
+        {% set businessCompany = null %}
         {% if reservation.booker is defined and reservation.booker is not null %}
             {% for address in reservation.booker.customerAddresses %} 
+                {% if businessCompany is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
+                    {% set businessCompany = address.company %}
+                {% endif %}
                 {% if address.phone|length > 0 %}
                     {% set phones = phones ~ address.phone %}
                     {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
@@ -33,6 +37,9 @@
             {% endfor %}
         {% endif %}
         {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
+        {% if businessCompany %}
+            {% set popBody = businessCompany ~ "<br />" ~ popBody %}
+        {% endif %}
         {% if phones|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.phone'|trans~": " ~ phones %}{% endif %}
         {% if mobiles|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.mobilephone'|trans~": " ~ mobiles %}{% endif %}
         {% if mails|length > 0 %} {% set popBody = popBody ~ "<br />"~ 'customer.email'|trans~": " ~ mails %}{% endif %}

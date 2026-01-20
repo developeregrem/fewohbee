@@ -1,7 +1,18 @@
 <div class="col-sm-6">
     <dl>
         <dt>{{ 'reservation.preview.customer.name'|trans }}</dt>
-        <dd>{{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}</dd>
+        {% set businessCompany = null %}
+        {% for address in customer.customerAddresses %}
+            {% if businessCompany is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
+                {% set businessCompany = address.company %}
+            {% endif %}
+        {% endfor %}
+        <dd>
+            {{ customer.salutation }} {{ customer.firstname }} {{ customer.lastname }}
+            {% if businessCompany %}
+                <div class="text-muted">{{ businessCompany }}</div>
+            {% endif %}
+        </dd>
         <dt>{{ 'customer.remark'|trans }}</dt>
         <dd>{% if customer.remark %}{{ customer.remark|nl2br }}{% else %} -{% endif %}</dd>
     </dl>
