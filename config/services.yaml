@@ -8,7 +8,7 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '4.1.1'
+    version: '4.2.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
     customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
