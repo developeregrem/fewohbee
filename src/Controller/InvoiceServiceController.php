@@ -885,7 +885,7 @@ class InvoiceServiceController extends AbstractController
         $response->headers->set('Content-Type', 'application/pdf');
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'Rechnung-'.$invoice->getNumber().'-xrechnung.pdf'
+            'Rechnung-'.$invoice->getNumber().'-einvoice.pdf'
         );
         $response->headers->set('Content-Disposition', $disposition);
 
