@@ -84,3 +84,25 @@ reservation.table.weekday.friday: Fri
 reservation.table.weekday.saturday: Sat
 reservation.table.weekday.sunday: Sun
 reservation.templates.availableprices: existing invoices
+reservation.conflict.button: Review imports
+reservation.conflict.title: Review imports
+reservation.conflict.section.title: Conflicts
+reservation.conflict.hint: Conflicting reservations need manual resolution before they can be imported. The list shows reservations that overlap existing ones.
+reservation.conflict.empty: No open conflicts.
+reservation.conflict.table.room: Room
+reservation.conflict.table.period: Period
+reservation.conflict.table.source: Source
+reservation.conflict.table.actions: Actions
+reservation.conflict.action.ignore: Ignore
+reservation.conflict.action.ignore.title: Ignore conflict
+reservation.conflict.action.resolve: Take over
+reservation.conflict.action.resolve.title: Take over conflict
+reservation.conflict.ignore.confirm: This conflict will be ignored permanently.
+reservation.conflict.resolve.failed: Conflict still overlaps another reservation.
+reservation.review.section.title: To review
+reservation.review.hint: Imported reservations without a guest need review.
+reservation.review.empty: No reservations to review.
+reservation.review.table.todo: To do
+reservation.review.table.actions: Actions
+reservation.review.todo: Add a guest and confirm the number of persons.
+reservation.import.booker.missing: No guest is assigned yet. Please add a guest and adjust the number of persons if needed.

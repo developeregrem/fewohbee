@@ -314,6 +314,94 @@
                 <source>reservation.table.weekday.sunday</source>
                 <target>So</target>
             </trans-unit>
+            <trans-unit id="reservation.conflict.button">
+                <source>reservation.conflict.button</source>
+                <target>Importe prüfen</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.title">
+                <source>reservation.conflict.title</source>
+                <target>Importe prüfen</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.section.title">
+                <source>reservation.conflict.section.title</source>
+                <target>Konflikte</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.hint">
+                <source>reservation.conflict.hint</source>
+                <target>Konflikte müssen manuell gelöst werden, bevor sie übernommen werden können. In der Tabelle werden Reservierungen angezeigt, die sich mit vorhandenen Reservierungen überschneiden.</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.empty">
+                <source>reservation.conflict.empty</source>
+                <target>Keine offenen Konflikte.</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.table.room">
+                <source>reservation.conflict.table.room</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.table.period">
+                <source>reservation.conflict.table.period</source>
+                <target>Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.table.source">
+                <source>reservation.conflict.table.source</source>
+                <target>Quelle</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.table.actions">
+                <source>reservation.conflict.table.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.action.ignore">
+                <source>reservation.conflict.action.ignore</source>
+                <target>Ignorieren</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.action.ignore.title">
+                <source>reservation.conflict.action.ignore.title</source>
+                <target>Konflikt ignorieren</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.action.resolve">
+                <source>reservation.conflict.action.resolve</source>
+                <target>Übernehmen</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.action.resolve.title">
+                <source>reservation.conflict.action.resolve.title</source>
+                <target>Konflikt übernehmen</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.ignore.confirm">
+                <source>reservation.conflict.ignore.confirm</source>
+                <target>Dieser Konflikt wird dauerhaft ignoriert.</target>
+            </trans-unit>
+            <trans-unit id="reservation.conflict.resolve.failed">
+                <source>reservation.conflict.resolve.failed</source>
+                <target>Konflikt überschneidet sich weiterhin mit einer Reservierung.</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.section.title">
+                <source>reservation.review.section.title</source>
+                <target>Zu prüfen</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.hint">
+                <source>reservation.review.hint</source>
+                <target>Importierte Reservierungen ohne Gast müssen geprüft werden.</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.empty">
+                <source>reservation.review.empty</source>
+                <target>Keine Reservierungen zu prüfen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.table.todo">
+                <source>reservation.review.table.todo</source>
+                <target>Aufgabe</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.table.actions">
+                <source>reservation.review.table.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.review.todo">
+                <source>reservation.review.todo</source>
+                <target>Gast hinzufügen und Personenanzahl prüfen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.import.booker.missing">
+                <source>reservation.import.booker.missing</source>
+                <target>Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

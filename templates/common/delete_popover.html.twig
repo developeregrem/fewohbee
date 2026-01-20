@@ -14,6 +14,9 @@
 
 {% block deletePopoverContent %}
 <form id="entry-form-{{ id }}" action="{{ targetUrl }}">
+    {% if deletePopoverHint is defined and deletePopoverHint|length > 0 %}
+        <p class="mb-2 small text-muted">{{ deletePopoverHint }}</p>
+    {% endif %}
     <div class="text-center">
         <a class="btn btn-danger btn-sm popover-delete">{{ "button.delete" | trans }}</a>
         <a class="btn btn-secondary btn-sm popover-cancel">{{ "button.cancel" | trans }}</a>

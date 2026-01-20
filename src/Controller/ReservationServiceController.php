@@ -25,6 +25,7 @@ use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Form\ReservationMetaType;
 use App\Service\CalendarService;
+use App\Service\CalendarImportService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\InvoiceService;
@@ -38,6 +39,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
@@ -75,6 +77,9 @@ class ReservationServiceController extends AbstractController
         $selectedApartmentId = $requestStack->getSession()->get('reservation-overview-apartment', $firstApartmentId);
 
         $show = $requestStack->getSession()->get('reservation-overview', 'table');
+        $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
+        $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
+        $alertCount = $conflictCount + $reviewCount;
 
         return $this->render('Reservations/index.html.twig', [
             'objects' => $objects,
@@ -89,6 +94,8 @@ class ReservationServiceController extends AbstractController
             'selectedSubdivision' => 'all',
             'show' => $show,
             'showFirstSteps' => (0 == $firstApartmentId),
+            'conflictCount' => $alertCount,
+            'hasConflicts' => $conflictCount > 0,
         ]);
     }
 
@@ -679,13 +686,10 @@ class ReservationServiceController extends AbstractController
      * Gets an already existing reservation and shows it.
      */
     #[Route('/get/{id}', name: 'reservations.get.reservation', methods: ['GET'])]
-    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, $id)
+    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, Reservation $reservation): Response
     {
         $tab = $request->query->get('tab', 'booker');
         $em = $doctrine->getManager();
-
-        /* @var $reservation Reservation */
-        $reservation = $em->getRepository(Reservation::class)->findById($id)[0];
 
         $correspondences = $reservation->getCorrespondences();
 
@@ -1245,6 +1249,71 @@ class ReservationServiceController extends AbstractController
                 'reservations' => $reservations,
             ]
         );
+    }
+
+    #[Route('/conflicts', name: 'reservations.conflicts', methods: ['GET'])]
+    /** Render the conflict list modal. */
+    public function getConflictsAction(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $em = $doctrine->getManager();
+        $conflicts = $em->getRepository(Reservation::class)->findActiveConflicts();
+        $page = (int) ($request->query->get('page') ?? 1);
+        $total = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
+        $pages = (int) max(1, ceil($total / $this->perPage));
+        $page = max(1, min($pages, $page));
+        $reviewReservations = $em->getRepository(Reservation::class)->findImportedWithoutBookerPaginated($page, $this->perPage);
+
+        return $this->render('Reservations/reservation_conflicts.html.twig', [
+            'conflicts' => $conflicts,
+            'reviewReservations' => $reviewReservations,
+            'reviewPage' => $page,
+            'reviewPages' => $pages,
+            'reviewTotal' => $total,
+        ]);
+    }
+
+    #[Route('/conflicts/{id}/ignore', name: 'reservations.conflicts.ignore', methods: ['DELETE'])]
+    /** Mark a conflict reservation as ignored. */
+    public function ignoreConflictAction(ManagerRegistry $doctrine, Request $request, Reservation $reservation): Response
+    {
+        if ($reservation->isConflict()) {
+            $reservation->setIsConflictIgnored(true);
+            $doctrine->getManager()->flush();
+        }
+
+        $em = $doctrine->getManager();
+        $conflicts = $em->getRepository(Reservation::class)->findActiveConflicts();
+        $page = (int) ($request->query->get('page') ?? 1);
+        $total = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
+        $pages = (int) max(1, ceil($total / $this->perPage));
+        $page = max(1, min($pages, $page));
+        $reviewReservations = $em->getRepository(Reservation::class)->findImportedWithoutBookerPaginated($page, $this->perPage);
+
+        return $this->render('Reservations/reservation_conflicts.html.twig', [
+            'conflicts' => $conflicts,
+            'reviewReservations' => $reviewReservations,
+            'reviewPage' => $page,
+            'reviewPages' => $pages,
+            'reviewTotal' => $total,
+        ]);
+    }
+
+    #[Route('/conflicts/{id}/resolve', name: 'reservations.conflicts.resolve', methods: ['POST'])]
+    /** Try to resolve a conflict by rechecking current overlaps. */
+    public function resolveConflictAction(CalendarImportService $calendarImportService, Reservation $reservation): Response 
+    {
+        $success = false;
+        if ($reservation->isConflict()) {
+            $success = $calendarImportService->resolveConflictReservation($reservation);
+        }
+
+        if (!$success) {
+            $this->addFlash('warning', 'reservation.conflict.resolve.failed');
+
+            return $this->render('feedback.html.twig');
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     private function createTimeFromRequestValue(?string $value): ?\DateTime

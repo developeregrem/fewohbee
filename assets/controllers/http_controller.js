@@ -83,8 +83,10 @@ export function request({ url, method = 'GET', data = null, target = null, loade
             const message = err && err.message ? err.message : 'Request fehlgeschlagen';
             if (onError) {
                 onError(message);
+            } else if (targetEl) {
+                targetEl.innerHTML = message;
             } else {
-                alert(message);
+                console.error(message);
             }
         })
         .finally(() => {

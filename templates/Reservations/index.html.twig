@@ -38,7 +38,8 @@
             'nav.reservation.edit': 'nav.reservation.edit'|trans,
             'templates.select.template': 'templates.select.template'|trans,
             'templates.edit': 'templates.edit'|trans,
-            'templates.preview': 'templates.preview'|trans
+            'templates.preview': 'templates.preview'|trans,
+            'reservation.conflict.title': 'reservation.conflict.title'|trans
         }|json_encode|e('html_attr')
      }}">
     <form id="table-filter" role="form"
@@ -54,6 +55,20 @@
             {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
                 <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
+                {% if conflictCount > 0 %}
+                    {% set alertClass = hasConflicts ? 'btn-outline-danger' : 'btn-outline-warning' %}
+                    {% set alertBadge = hasConflicts ? 'bg-danger' : 'bg-warning' %}
+                    {% set alertIcon = hasConflicts ? 'fa-exclamation-triangle' : 'fa-triangle-exclamation' %}
+                    <a href="#" class="btn {{ alertClass }} mb-2 me-sm-2"
+                       data-action="click->reservations#openConflictsAction"
+                       data-url="{{ path('reservations.conflicts') }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       data-conflict-button>
+                        <i class="fas {{ alertIcon }}"></i>
+                        {{ 'reservation.conflict.button'|trans }}
+                        <span class="badge {{ alertBadge }} ms-1" data-conflict-count-badge>{{ conflictCount }}</span>
+                    </a>
+                {% endif %}
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"

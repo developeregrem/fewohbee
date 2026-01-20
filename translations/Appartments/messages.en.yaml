@@ -27,6 +27,7 @@ appartment:
 calendar:
   sync:
     export:
+      tab: Export
       access:
         last: last access
         public:
@@ -50,4 +51,62 @@ calendar:
         status:
           hint: Only reservations of the specified status will be exported.
         title: Export options
+    import:
+      tab: Import
+      hint: Set up remote iCal calendars that should be imported for this room.
+      list:
+        title: Existing imports
+        empty: No imports configured yet.
+      create:
+        title: Add import
+        button: Add import
+      name:
+        label: Name
+        hint: Display name shown in the reservation overview.
+      url:
+        label: URL
+        hint: Remote iCal feed URL.
+      active:
+        label: active
+        hint: Enables/disables this import.
+      conflict:
+        label: Conflict handling
+        hint: Choose how overlapping reservations should be handled.
+        option:
+          skip: Skip conflicting entries
+          overwrite: Overwrite existing reservation
+          mark: Import and mark as conflict
+      origin:
+        label: Reservation origin
+        hint: Origin assigned to imported reservations.
+      status:
+        label: Default status
+        hint: Status assigned to imported reservations.
+      last_sync:
+        label: last synchronization
+      last_error:
+        label: last sync error
+      delete:
+        confirm: Delete this import configuration?
+        title: Delete import
+        hint: This import configuration will be removed permanently.
+      actions:
+        label: Actions
+      edit:
+        title: Edit import
+      flash:
+        create:
+          success: Import configuration created.
+        edit:
+          success: Import configuration updated.
+        delete:
+          success: Import configuration deleted. Imported reservations were not deleted.
+      error:
+        http_status: Remote calendar returned an invalid response.
+        unreachable: Remote calendar URL is not reachable.
+        invalid_ical: Remote calendar is not a valid iCal feed.
+        no_events: Remote calendar has no events.
+        skipped:
+          summary: >-
+            Skipped events: missing required fields (%missing%), conflicts (%conflict%).
     title: Syncing your calendar

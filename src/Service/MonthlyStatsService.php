@@ -101,17 +101,16 @@ class MonthlyStatsService
             // Only count overnights that fall within the report month.
             if ($resStart < $resEnd) {
                 $nights = $resStart->diff($resEnd)->days;
+                $stays += $nights * $persons;
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
                     $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + ($nights * $persons);
                     $overnightsTotal += $nights * $persons;
-                    $stays += $nights * $persons;
                 } else {
                     foreach ($customers as $customer) {
                         $country = $this->resolveCountryForCustomer($customer);
                         $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + $nights;
                         $overnightsTotal += $nights;
-                        $stays += $nights;
                     }
                 }
             }
