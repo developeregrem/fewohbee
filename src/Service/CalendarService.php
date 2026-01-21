@@ -128,6 +128,10 @@ class CalendarService
 
         /* @var $reservation Reservation */
         foreach ($room->getReservations() as $reservation) {
+            // Exclude conflict entries from the export feed.
+            if ($reservation->isConflict() || $reservation->isConflictIgnored()) {
+                continue;
+            }
             // filter reservation status
             if ($sync->getReservationStatus()->contains($reservation->getReservationStatus())) {
                 $content .= $this->getIcalEventBody($reservation, $sync);
