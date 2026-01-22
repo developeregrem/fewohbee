@@ -64,6 +64,10 @@ body {
     font-size: 0.9rem
 }
 
+.hk-row-form {
+    display: contents;
+}
+
 .btn {
     font-size: 0.9rem;
 }

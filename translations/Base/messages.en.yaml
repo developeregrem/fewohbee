@@ -31,6 +31,8 @@ first.txt: >-
 flash.access.denied: Access denied.
 flash.invalidtoken: Invalid Token.
 flash.mandatory: Please fill in all required fields.
+housekeeping.flash.updated: Housekeeping status updated.
+housekeeping.flash.apartment_missing: Room not found.
 login.application.title: FewohBee
 nav.appartment: Room
 nav.appartment.add: Create Room
@@ -41,6 +43,7 @@ nav.category.add: Create Room Categories
 nav.customer.add: Create Guest
 nav.customer.overview: Guest Overview
 nav.customers: Guests
+nav.housekeeping: Housekeeping
 nav.invoice.add: Create Invoice
 nav.invoices: Invoice Overview
 nav.logout: Logout

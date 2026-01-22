@@ -116,6 +116,7 @@ final class RoleAccessTest extends WebTestCase
     private function dashboardCases(): iterable
     {
         yield 'reservations' => [['ROLE_RESERVATIONS'], 'start'];
+        yield 'housekeeping' => [['ROLE_HOUSEKEEPING'], 'operations.housekeeping'];
         yield 'customers' => [['ROLE_CUSTOMERS'], 'customers.overview'];
         yield 'invoices' => [['ROLE_INVOICES'], 'invoices.overview'];
         yield 'registrationbook' => [['ROLE_REGISTRATIONBOOK'], 'registrationbook.overview'];
@@ -132,6 +133,7 @@ final class RoleAccessTest extends WebTestCase
     private function authorizedRoutes(): iterable
     {
         yield 'reservations read only' => ['ROLE_RESERVATIONS_RO', '/reservation/'];
+        yield 'housekeeping' => ['ROLE_HOUSEKEEPING', '/operations/housekeeping'];
         yield 'customers' => ['ROLE_CUSTOMERS', '/customers/'];
         yield 'invoices' => ['ROLE_INVOICES', '/invoices/'];
         yield 'registrationbook' => ['ROLE_REGISTRATIONBOOK', '/registrationbook/'];
