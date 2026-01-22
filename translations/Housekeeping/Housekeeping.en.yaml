@@ -1,0 +1,32 @@
+housekeeping.title: Housekeeping
+housekeeping.view.day: Day
+housekeeping.view.week: Week
+housekeeping.date: Date
+housekeeping.subsidiary: Branch
+housekeeping.subsidiary.all: All branches
+housekeeping.apply: Apply
+housekeeping.export.day: Export CSV (Day)
+housekeeping.export.week: Export CSV (Week)
+housekeeping.room: Room
+housekeeping.occupancy: Occupancy
+housekeeping.guests: Guests
+housekeeping.guests.short: Guests
+housekeeping.guest.short: Guest
+housekeeping.reservation: Reservation
+housekeeping.status: Status
+housekeeping.assigned_to: Assigned to
+housekeeping.note: Note
+housekeeping.save: Save
+housekeeping.unassigned: Unassigned
+housekeeping.no_rooms: No rooms found.
+housekeeping.status.open: Open
+housekeeping.status.in_progress: In progress
+housekeeping.status.cleaned: Cleaned
+housekeeping.status.inspected: Inspected
+housekeeping.occupancy.free: Free
+housekeeping.occupancy.stayover: Stayover
+housekeeping.occupancy.arrival: Arrival
+housekeeping.occupancy.departure: Departure
+housekeeping.occupancy.turnover: Turnover
+housekeeping.summary.arrive: Arrival
+housekeeping.summary.depart: Departure

@@ -50,6 +50,7 @@ security:
             - ROLE_REGISTRATIONBOOK
             - ROLE_STATISTICS
             - ROLE_CASHJOURNAL
+            - ROLE_HOUSEKEEPING
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
@@ -59,6 +60,7 @@ security:
         - { path: ^/register,  roles: PUBLIC_ACCESS}
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }
+        - { path: ^/operations/housekeeping, roles: ROLE_HOUSEKEEPING }
         - { path: ^/customers, roles: ROLE_CUSTOMERS }
         - { path: ^/invoices, roles: ROLE_INVOICES }
         - { path: ^/registrationbook, roles: ROLE_REGISTRATIONBOOK }
