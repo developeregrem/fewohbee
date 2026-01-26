@@ -21,12 +21,14 @@ final class Version20260121120000 extends AbstractMigration
         $this->addSql('ALTER TABLE room_day_statuses ADD CONSTRAINT FK_1C76B193F91F2105 FOREIGN KEY (assigned_to_id) REFERENCES users (id)');
         $this->addSql('ALTER TABLE room_day_statuses ADD CONSTRAINT FK_1C76B193896DBBDE FOREIGN KEY (updated_by_id) REFERENCES users (id)');
         $this->addSql('INSERT INTO roles (id, name, role) VALUES (NULL, "Housekeeping", "ROLE_HOUSEKEEPING")');
+        $this->addSql("INSERT INTO template_types (name, icon, service, editor_template) SELECT 'TEMPLATE_OPERATIONS_PDF', 'fa-file-pdf', 'OperationsReportService', 'editor_template_operations.json.twig' WHERE NOT EXISTS (SELECT 1 FROM template_types WHERE name = 'TEMPLATE_OPERATIONS_PDF')");
     }
 
     public function down(Schema $schema): void
     {
         $this->addSql('DROP TABLE room_day_statuses');
         $this->addSql('DELETE FROM roles WHERE roles.role = "ROLE_HOUSEKEEPING"');
+        $this->addSql("DELETE FROM template_types WHERE name = 'TEMPLATE_OPERATIONS_PDF'");
     }
 
     public function isTransactional(): bool

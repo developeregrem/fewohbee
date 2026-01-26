@@ -40,15 +40,24 @@
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     {% set showHousekeeping = is_granted('ROLE_HOUSEKEEPING') %}
+                    {% set showOperations = showHousekeeping %}
                     {% set showCustomers = is_granted('ROLE_CUSTOMERS') %}
                     {% set showInvoices = is_granted('ROLE_INVOICES') %}
                     {% set showRegistrationbook = is_granted('ROLE_REGISTRATIONBOOK') %}
                     {% set showStatistics = is_granted('ROLE_STATISTICS') %}
                     {% set showCashjournal = is_granted('ROLE_CASHJOURNAL') %}
-                    {% if showHousekeeping or showCustomers or showInvoices or showRegistrationbook or showStatistics or showCashjournal %}
+                    {% if showOperations or showCustomers or showInvoices or showRegistrationbook or showStatistics or showCashjournal %}
                     <ul class="navbar-nav me-auto">
-                        {% if showHousekeeping %}
-                        <li class="nav-item{% if activeRouteName starts with "operations.housekeeping" %} active{% endif %}"><a class="nav-link" href="{{ path('operations.housekeeping') }}">{{ 'nav.housekeeping'|trans }}</a></li>
+                        {% if showOperations %}
+                        <li class="nav-item dropdown{% if activeRouteName starts with "operations." %} active{% endif %}">
+                            <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ 'nav.operations'|trans }}
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="operationsDropdown">
+                                <a class="dropdown-item{% if activeRouteName starts with "operations.housekeeping" %} active{% endif %}" href="{{ path('operations.housekeeping') }}">{{ 'nav.housekeeping'|trans }}</a>
+                                <a class="dropdown-item{% if activeRouteName starts with "operations.reports" %} active{% endif %}" href="{{ path('operations.reports') }}">{{ 'nav.operations.reports'|trans }}</a>
+                            </div>
+                        </li>
                         {% endif %}
                         {% if showCustomers %}
                         <li class="nav-item{% if activeRouteName starts with "customers" %} active{% endif %}"><a class="nav-link" href="{{ path('customers.overview') }}">{{ 'nav.customers'|trans }}</a></li>

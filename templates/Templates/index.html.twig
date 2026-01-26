@@ -23,19 +23,44 @@
     </div>
     <div class="row mt-3">
         <div class="col">
-            <table class="table table-bordered table-hover">
-                <thead>
+            {% set lastTypeId = null %}
+            {% for template in templates %}
+                {% if lastTypeId != template.templateType.id %}
+                    {% if lastTypeId is not null %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="fas {{ template.templateType.icon }}" aria-hidden="true"></i>
+                            {{ template.templateType.name|trans }}
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-bordered table-hover mb-0" style="table-layout: fixed;">
+                                <colgroup>
+                                    <col style="width: 70%;">
+                                    <col style="width: 15%;">
+                                    <col style="width: 15%;">
+                                </colgroup>
+                                <thead>
+                                <tr>
+                                    <th>{{ 'templates.name'|trans }}</th>
+                                    <th>Default</th>
+                                    <th>{{ 'base.action'|trans }}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                    {% set lastTypeId = template.templateType.id %}
+                {% endif %}
                 <tr>
-                    <th></th>
-                    <th>{{ 'templates.name'|trans }}</th>
-                    <th>{{ 'base.action'|trans }}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for template in templates %}
-                <tr>
-                    <td style="width:10.0pt"><i class="fas {{ template.templateType.icon }}" aria-hidden="true" title="{{ template.templateType.name|trans }}"></i></td>
                     <td>{{ template.name }}</td>
+                    <td class="text-center">
+                        {% if template.isDefault %}
+                            <i class="fas fa-check text-success" aria-hidden="true"></i>
+                        {% endif %}
+                    </td>
                     <td>
                         {#<a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                             <i class="fas fa-info-circle"
@@ -57,9 +82,13 @@
                                 data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
                     </td>
                 </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+            {% endfor %}
+            {% if lastTypeId is not null %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+            {% endif %}
         </div>
     </div>
 </div>

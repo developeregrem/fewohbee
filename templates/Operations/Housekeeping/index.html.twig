@@ -43,31 +43,44 @@
                     {% endfor %}
                 </select>
             </div>
-            <input type="hidden" name="view" value="{{ view }}">
-            <div class="col-12 col-md-auto">
+            <div class="col-12 col-md-auto ms-md-auto d-flex gap-2 flex-nowrap">
                 <a href="#" class="btn btn-outline-primary shadow-none"
                    data-action="click->housekeeping#submitFilters"
                    title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
                     <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
                 </a>
-            </div>
-            <div class="col-12 col-md-auto ms-md-auto d-flex gap-2">
                 {% if view == 'day' %}
                     <a class="btn btn-outline-primary"
-                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'day' }) }}"
+                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'day', occupancyTypes: selectedOccupancyTypes }) }}"
                        title="{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}">
                         <i class="fas fa-file-csv" aria-hidden="true"></i>
                         <span class="visually-hidden">{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}</span>
                     </a>
                 {% else %}
                     <a class="btn btn-outline-primary"
-                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'week' }) }}"
+                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'week', occupancyTypes: selectedOccupancyTypes }) }}"
                        title="{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}">
                         <i class="fas fa-file-csv" aria-hidden="true"></i>
                         <span class="visually-hidden">{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}</span>
                     </a>
                 {% endif %}
             </div>
+            <div class="col-12">
+                <label class="form-label d-block">{{ 'housekeeping.filter.occupancy'|trans({}, 'Housekeeping') }}</label>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for occType in occupancyTypes %}
+                        <label class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="occupancyTypes[]"
+                                   value="{{ occType }}"{% if occType in selectedOccupancyTypes %} checked{% endif %}>
+                            <span class="form-check-label">
+                                {{ occupancyLabels[occType]|trans({}, 'Housekeeping') }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <input type="hidden" name="view" value="{{ view }}">
+            
         </form>
 
         {% if view == 'week' %}

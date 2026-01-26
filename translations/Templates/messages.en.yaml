@@ -4,6 +4,15 @@ TEMPLATE_GDPR_PDF: PDF for GDPR Export
 TEMPLATE_INVOICE_PDF: PDF invoice
 TEMPLATE_RESERVATION_EMAIL: Email template for reservations
 TEMPLATE_RESERVATION_PDF: PDF template for reservations
+TEMPLATE_OPERATIONS_PDF: PDF template for operations reports
+templates.editor.operations.header_footer: Report header and footer
+templates.editor.operations.header_footer.desc: Standard header/footer with period and filters
+templates.editor.operations.reservations_table: All reservations in range
+templates.editor.operations.reservations_table.desc: Minimal table with room, guest, persons, and period
+templates.editor.operations.housekeeping_day: Housekeeping day table
+templates.editor.operations.housekeeping_day.desc: Day view with occupancy, status, assignment, and notes
+templates.editor.operations.housekeeping_week: Housekeeping week table
+templates.editor.operations.housekeeping_week.desc: Week grid with occupancy, status, and guest counts
 templates.add: Add a template
 templates.attachment: Attachment
 templates.attachment.notfound: The attachment could not be found.

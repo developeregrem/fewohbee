@@ -15,6 +15,7 @@ import PricesController from './controllers/prices_controller.js';
 import ThemeController from './controllers/theme_controller.js';
 import CalendarImportsController from './controllers/calendar_imports_controller.js';
 import HousekeepingController from './controllers/housekeeping_controller.js';
+import OperationsReportsController from './controllers/operations_reports_controller.js';
 
 const app = startStimulusApp();
 app.register('login', LoginController);
@@ -33,3 +34,4 @@ app.register('prices', PricesController);
 app.register('theme', ThemeController);
 app.register('calendar-imports', CalendarImportsController);
 app.register('housekeeping', HousekeepingController);
+app.register('operations-reports', OperationsReportsController);

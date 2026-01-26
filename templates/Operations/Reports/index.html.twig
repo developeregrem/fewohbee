@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'operations.reports.title'|trans }}{% endblock %}
+
+{% block content %}
+    <div class="container mt-4" data-controller="operations-reports">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <div class="me-auto">
+                <h1 class="h3 mb-0">{{ 'operations.reports.title'|trans }}</h1>
+                <div class="text-muted small">
+                    {{ startDate|date('d.m.Y') }} - {{ endDate|date('d.m.Y') }}
+                </div>
+            </div>
+        </div>
+
+        <form method="get" class="row g-3 align-items-end mb-4"
+              data-operations-reports-target="form"
+              data-action="change->operations-reports#updateLinks submit->operations-reports#preventSubmit">
+            <div class="col-12 col-md-2">
+                <label class="form-label">{{ 'operations.reports.date_start'|trans }}</label>
+                <input type="date" name="start" value="{{ startDate|date('Y-m-d') }}" class="form-control">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">{{ 'operations.reports.date_end'|trans }}</label>
+                <input type="date" name="end" value="{{ endDate|date('Y-m-d') }}" class="form-control">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">{{ 'housekeeping.subsidiary'|trans({}, 'Housekeeping') }}</label>
+                <select name="subsidiary" class="form-select">
+                    <option value="all"{% if selectedSubsidiaryId == 'all' %} selected{% endif %}>
+                        {{ 'housekeeping.subsidiary.all'|trans({}, 'Housekeeping') }}
+                    </option>
+                    {% for subsidiary in subsidiaries %}
+                        <option value="{{ subsidiary.id }}"{% if selectedSubsidiaryId == subsidiary.id %} selected{% endif %}>
+                            {{ subsidiary.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">{{ 'operations.reports.template'|trans }}</label>
+                <select name="templateId" class="form-select">
+                    {% for template in templates %}
+                        <option value="{{ template.id }}"{% if templateId == template.id %} selected{% endif %}>
+                            {{ template.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-auto ms-md-auto d-flex gap-2 flex-nowrap">
+                <a href="#" class="btn btn-outline-primary shadow-none"
+                   data-action="click->operations-reports#loadPreview"
+                   title="{{ 'operations.reports.preview'|trans }}">
+                    <i class="fas fa-sync-alt" data-operations-reports-target="spinner" aria-hidden="true"></i>
+                </a>
+                <a class="btn btn-outline-primary"
+                   data-operations-reports-target="download"
+                   data-base-url="{{ path('operations.reports.export.pdf') }}"
+                   href="{{ path('operations.reports.export.pdf', {
+                       start: startDate|date('Y-m-d'),
+                       end: endDate|date('Y-m-d'),
+                       subsidiary: selectedSubsidiaryId,
+                       templateId: templateId,
+                       occupancyTypes: selectedOccupancyTypes
+                   }) }}"
+                   title="{{ 'operations.reports.download'|trans }}">
+                    <i class="fas fa-file-pdf" aria-hidden="true"></i>
+                    <span class="visually-hidden">{{ 'operations.reports.download'|trans }}</span>
+                </a>
+            </div>
+            <div class="col-12">
+                <label class="form-label d-block">{{ 'housekeeping.filter.occupancy'|trans({}, 'Housekeeping') }}</label>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for occType in occupancyTypes %}
+                        <label class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="occupancyTypes[]"
+                                   value="{{ occType }}"{% if occType in selectedOccupancyTypes %} checked{% endif %}>
+                            <span class="form-check-label">
+                                {{ occupancyLabels[occType]|trans({}, 'Housekeeping') }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+
+        <div class="mt-3">
+            <div data-operations-reports-target="preview"
+                 data-base-preview-url="{{ path('operations.reports.preview') }}">
+                <div class="text-muted small">{{ 'operations.reports.preview'|trans }}</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

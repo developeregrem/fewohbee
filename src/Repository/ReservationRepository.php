@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Appartment;
 use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
+use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
@@ -66,6 +67,38 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         return $reservations;
+    }
+
+    /**
+     * Load reservations for housekeeping views with required joins and conflict filters.
+     *
+     * @return Reservation[]
+     */
+    public function findForHousekeepingRange(
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        ?Subsidiary $subsidiary
+    ): array {
+        $qb = $this->createQueryBuilder('r')
+            ->addSelect('a', 'booker', 'customer')
+            ->leftJoin('r.appartment', 'a')
+            ->leftJoin('r.booker', 'booker')
+            ->leftJoin('r.customers', 'customer')
+            ->distinct()
+            ->andWhere('r.startDate < :end')
+            ->andWhere('r.endDate >= :start')
+            ->andWhere('r.isConflict = 0')
+            ->andWhere('r.isConflictIgnored = 0')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->addOrderBy('r.startDate', 'ASC');
+
+        if ($subsidiary instanceof Subsidiary) {
+            $qb->andWhere('a.object = :subsidiary')
+                ->setParameter('subsidiary', $subsidiary->getId());
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     public function supportsClass($class)

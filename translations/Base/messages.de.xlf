@@ -98,6 +98,42 @@
                 <source>nav.housekeeping</source>
                 <target>Housekeeping</target>
             </trans-unit>
+            <trans-unit id="nav.operations">
+                <source>nav.operations</source>
+                <target>Betrieb</target>
+            </trans-unit>
+            <trans-unit id="nav.operations.reports">
+                <source>nav.operations.reports</source>
+                <target>Berichte</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.title">
+                <source>operations.reports.title</source>
+                <target>Betriebsberichte</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.date_start">
+                <source>operations.reports.date_start</source>
+                <target>Datum Start</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.date_end">
+                <source>operations.reports.date_end</source>
+                <target>Datum Ende</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.template">
+                <source>operations.reports.template</source>
+                <target>Template</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.download">
+                <source>operations.reports.download</source>
+                <target>PDF herunterladen</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.template.missing">
+                <source>operations.reports.template.missing</source>
+                <target>Bitte ein Template waehlen.</target>
+            </trans-unit>
+            <trans-unit id="operations.reports.preview">
+                <source>operations.reports.preview</source>
+                <target>Vorschau</target>
+            </trans-unit>
             <trans-unit id="nav.invoices">
                 <source>nav.invoices</source>
                 <target>Rechnungsübersicht</target>

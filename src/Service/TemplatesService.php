@@ -218,7 +218,7 @@ class TemplatesService
         return null;
     }
 
-    public function getPDFOutput($input, $name, $template, $noResponseOutput = false)
+    public function getPDFOutput($input, $name, $template, $noResponseOutput = false, ?string $destOverride = null)
     {
         /*
          * I: send the file inline to the browser. The plug-in is used if available. The name given by filename is used when one selects the "Save as" option on the link generating the PDF.
@@ -226,7 +226,7 @@ class TemplatesService
          * F: save to a local file with the name given by filename (may include a path).
          * S: return the document as a string. filename is ignored.
          */
-        $dest = ($noResponseOutput ? 'S' : 'D');
+        $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
         $mpdf = $this->mpdfs->getMpdf();
 
         $params = json_decode($template->getParams());
@@ -319,8 +319,9 @@ class TemplatesService
         $t5 = str_replace('[#', '{#', $t4);
         $t6 = str_replace('#]', '#}', $t5);
 
-        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on"></sethtmlpagefooter>', $t6);
+        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on" page="ALL"></sethtmlpagefooter>', $t6);
+        $t8 = preg_replace("/<div class=\"header\">(.*)<\/div>/s", '<htmlpageheader name="header">$1</htmlpageheader><sethtmlpageheader name="header" value="on" show-this-page="1"></sethtmlpageheader>', $t7);
 
-        return $t7;
+        return $t8;
     }
 }
