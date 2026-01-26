@@ -42,6 +42,8 @@ class HousekeepingController extends AbstractController
         $selectedSubsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
         $selectedDate = $this->resolveDate($request->query->get('date'));
         $view = $request->query->get('view', 'day');
+        $queryParams = $request->query->all();
+        $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
 
         $dayView = null;
         $weekView = null;
@@ -49,9 +51,11 @@ class HousekeepingController extends AbstractController
             $weekStart = $this->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
             $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $selectedSubsidiary);
+            $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
         } else {
             $view = 'day';
             $dayView = $viewService->buildDayView($selectedDate, $selectedSubsidiary);
+            $dayView = $viewService->filterDayViewByOccupancy($dayView, $selectedOccupancyTypes);
         }
 
         $rowForms = [];
@@ -82,6 +86,8 @@ class HousekeepingController extends AbstractController
             'statusLabels' => $viewService->getStatusLabels(),
             'occupancyLabels' => $viewService->getOccupancyLabels(),
             'occupancyClasses' => $this->getOccupancyClasses(),
+            'occupancyTypes' => $viewService->getAllowedOccupancyTypes(),
+            'selectedOccupancyTypes' => $selectedOccupancyTypes,
         ]);
     }
 
@@ -149,17 +155,21 @@ class HousekeepingController extends AbstractController
         $subsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
         $selectedDate = $this->resolveDate($request->query->get('date'));
         $range = (string) $request->query->get('range', 'day');
+        $queryParams = $request->query->all();
+        $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
         $locale = $request->getLocale();
 
         if ('week' === $range) {
             $weekStart = $this->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
             $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $subsidiary);
+            $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
 
             return $exportService->buildWeekCsvResponse($weekView, $subsidiaryId, $locale);
         }
 
         $dayView = $viewService->buildDayView($selectedDate, $subsidiary);
+        $dayView = $viewService->filterDayViewByOccupancy($dayView, $selectedOccupancyTypes);
 
         return $exportService->buildDayCsvResponse($dayView, $subsidiaryId, $locale);
     }

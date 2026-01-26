@@ -61,6 +61,7 @@ security:
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }
         - { path: ^/operations/housekeeping, roles: ROLE_HOUSEKEEPING }
+        - { path: ^/operations/reports, roles: ROLE_HOUSEKEEPING }
         - { path: ^/customers, roles: ROLE_CUSTOMERS }
         - { path: ^/invoices, roles: ROLE_INVOICES }
         - { path: ^/registrationbook, roles: ROLE_REGISTRATIONBOOK }

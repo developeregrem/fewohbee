@@ -44,7 +44,7 @@ class HousekeepingViewService
     public function buildDayView(\DateTimeImmutable $date, ?Subsidiary $subsidiary): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->loadReservations($date, $date->modify('+1 day'), $subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $date, $date);
         $dateKey = $date->format('Y-m-d');
@@ -70,6 +70,76 @@ class HousekeepingViewService
     }
 
     /**
+     * Build a housekeeping view model for a date range including reservations.
+     *
+     * @return array{
+     *     start: \DateTimeImmutable,
+     *     end: \DateTimeImmutable,
+     *     days: \DateTimeImmutable[],
+     *     apartments: Appartment[],
+     *     reservations: Reservation[],
+     *     dayViews: array<string, array{
+     *         date: \DateTimeImmutable,
+     *         apartments: Appartment[],
+     *         rows: array<int, array{
+     *             apartment: Appartment,
+     *             occupancyType: string,
+     *             guestCount: int|null,
+     *             reservationSummary: string|null,
+     *             status: RoomDayStatus|null,
+     *             apartmentReservations: Reservation[]
+     *         }>
+     *     }>
+     * }
+     */
+    public function buildRangeView(
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        ?Subsidiary $subsidiary,
+        array $occupancyTypes
+    ): array {
+        $apartments = $this->loadApartments($subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary);
+        $reservationsByApartment = $this->groupReservationsByApartment($reservations);
+        $statusMap = $this->loadStatusMap($apartments, $start, $end);
+        $days = $this->buildDaysRange($start, $end);
+
+        $dayViews = [];
+        foreach ($days as $day) {
+            $dateKey = $day->format('Y-m-d');
+            $rows = [];
+            foreach ($apartments as $apartment) {
+                $apartmentReservations = $reservationsByApartment[$apartment->getId()] ?? [];
+                $occupancy = $this->resolveOccupancyForDay($day, $apartmentReservations);
+                $rows[] = [
+                    'apartment' => $apartment,
+                    'occupancyType' => $occupancy['type'],
+                    'guestCount' => $occupancy['guestCount'],
+                    'reservationSummary' => $occupancy['summary'],
+                    'status' => $statusMap[$apartment->getId()][$dateKey] ?? null,
+                    'apartmentReservations' => $this->filterReservationsForDate($day, $apartmentReservations),
+                ];
+            }
+
+            $dayView = [
+                'date' => $day,
+                'apartments' => $apartments,
+                'rows' => $rows,
+            ];
+            $dayViews[$dateKey] = $this->filterDayViewByOccupancy($dayView, $occupancyTypes);
+        }
+
+        return [
+            'start' => $start,
+            'end' => $end,
+            'days' => $days,
+            'apartments' => $apartments,
+            'reservations' => $reservations,
+            'dayViews' => $dayViews,
+        ];
+    }
+
+    /**
      * Build the housekeeping view model for a Monday-Sunday week.
      *
      * @return array{
@@ -91,7 +161,7 @@ class HousekeepingViewService
     public function buildWeekView(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->loadReservations($start, $end->modify('+1 day'), $subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
@@ -229,6 +299,89 @@ class HousekeepingViewService
     }
 
     /**
+     * @return string[]
+     */
+    public function getAllowedOccupancyTypes(): array
+    {
+        return ['FREE', 'STAYOVER', 'ARRIVAL', 'DEPARTURE', 'TURNOVER'];
+    }
+
+    /**
+     * Normalize the occupancy filter selection.
+     *
+     * @return string[]
+     */
+    public function normalizeOccupancyTypes(mixed $param): array
+    {
+        if (is_string($param)) {
+            $values = array_filter(array_map('trim', explode(',', $param)));
+        } elseif (is_array($param)) {
+            $values = array_filter(array_map('trim', $param));
+        } else {
+            $values = [];
+        }
+
+        $allowed = $this->getAllowedOccupancyTypes();
+        $filtered = array_values(array_intersect($allowed, $values));
+
+        return [] === $filtered ? $allowed : $filtered;
+    }
+
+    /**
+     * @param array{
+     *     date: \DateTimeImmutable,
+     *     apartments: Appartment[],
+     *     rows: array<int, array{
+     *         apartment: Appartment,
+     *         occupancyType: string,
+     *         guestCount: int|null,
+     *         reservationSummary: string|null,
+     *         status: RoomDayStatus|null
+     *     }>
+     * } $dayView
+     */
+    public function filterDayViewByOccupancy(array $dayView, array $allowedTypes): array
+    {
+        $dayView['rows'] = array_values(array_filter($dayView['rows'], static function (array $row) use ($allowedTypes): bool {
+            return in_array($row['occupancyType'], $allowedTypes, true);
+        }));
+
+        return $dayView;
+    }
+
+    /**
+     * @param array{
+     *     start: \DateTimeImmutable,
+     *     end: \DateTimeImmutable,
+     *     days: \DateTimeImmutable[],
+     *     apartments: Appartment[],
+     *     rows: array<int, array{
+     *         apartment: Appartment,
+     *         days: array<string, array{
+     *             occupancyType: string,
+     *             guestCount: int|null,
+     *             reservationSummary: string|null,
+     *             status: RoomDayStatus|null
+     *         }>
+     *     }>
+     * } $weekView
+     */
+    public function filterWeekViewByOccupancy(array $weekView, array $allowedTypes): array
+    {
+        $weekView['rows'] = array_values(array_filter($weekView['rows'], static function (array $row) use ($allowedTypes): bool {
+            foreach ($row['days'] as $cell) {
+                if (in_array($cell['occupancyType'], $allowedTypes, true)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+
+        return $weekView;
+    }
+
+    /**
      * Load apartments filtered by subsidiary if provided.
      *
      * @return Appartment[]
@@ -240,37 +393,6 @@ class HousekeepingViewService
         }
 
         return $this->appartmentRepository->findAllByProperty($subsidiary->getId());
-    }
-
-    /**
-     * Load reservations covering the given date range and subsidiary selection.
-     *
-     * @return Reservation[]
-     */
-    private function loadReservations(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary): array
-    {
-        $qb = $this->reservationRepository->createQueryBuilder('r')
-            ->addSelect('a')
-            ->addSelect('booker')
-            ->addSelect('customer')
-            ->leftJoin('r.appartment', 'a')
-            ->leftJoin('r.booker', 'booker')
-            ->leftJoin('r.customers', 'customer')
-            ->distinct()
-            ->andWhere('r.startDate < :end')
-            ->andWhere('r.endDate >= :start')
-            ->andWhere('r.isConflict = 0')
-            ->andWhere('r.isConflictIgnored = 0')
-            ->setParameter('start', $start)
-            ->setParameter('end', $end)
-            ->addOrderBy('r.startDate', 'ASC');
-
-        if ($subsidiary instanceof Subsidiary) {
-            $qb->andWhere('a.object = :subsidiary')
-                ->setParameter('subsidiary', $subsidiary->getId());
-        }
-
-        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -292,6 +414,25 @@ class HousekeepingViewService
         }
 
         return $grouped;
+    }
+
+    /**
+     * Filter reservations matching the given date.
+     *
+     * @param Reservation[] $reservations
+     *
+     * @return Reservation[]
+     */
+    private function filterReservationsForDate(\DateTimeImmutable $date, array $reservations): array
+    {
+        $dateKey = $date->format('Y-m-d');
+
+        return array_values(array_filter($reservations, static function (Reservation $reservation) use ($dateKey): bool {
+            $startKey = $reservation->getStartDate()->format('Y-m-d');
+            $endKey = $reservation->getEndDate()->format('Y-m-d');
+
+            return $startKey <= $dateKey && $endKey >= $dateKey;
+        }));
     }
 
     /**

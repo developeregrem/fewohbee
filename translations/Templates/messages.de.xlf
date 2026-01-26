@@ -134,6 +134,10 @@
                 <source>TEMPLATE_GDPR_PDF</source>
                 <target>PDF für DSGVO Export</target>
             </trans-unit>
+            <trans-unit id="TEMPLATE_OPERATIONS_PDF">
+                <source>TEMPLATE_OPERATIONS_PDF</source>
+                <target>PDF Vorlage für Betriebsberichte</target>
+            </trans-unit>
             <trans-unit id="templates.editor.company">
                 <source>templates.editor.company</source>
                 <target>Firma</target>
@@ -157,6 +161,38 @@
             <trans-unit id="templates.editor.footer">
                 <source>templates.editor.footer</source>
                 <target>Fußzeile</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.header_footer">
+                <source>templates.editor.operations.header_footer</source>
+                <target>Kopf- und Fußzeile für Berichte</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.header_footer.desc">
+                <source>templates.editor.operations.header_footer.desc</source>
+                <target>Standard-Header/-Footer mit Zeitraum und Filtern</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.reservations_table">
+                <source>templates.editor.operations.reservations_table</source>
+                <target>Alle Reservierungen im Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.reservations_table.desc">
+                <source>templates.editor.operations.reservations_table.desc</source>
+                <target>Minimale Tabelle mit Zimmer, Gast, Personen und Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.housekeeping_day">
+                <source>templates.editor.operations.housekeeping_day</source>
+                <target>Tagesbelegung (Tabelle)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.housekeeping_day.desc">
+                <source>templates.editor.operations.housekeeping_day.desc</source>
+                <target>Tagesansicht mit Belegung, Status, Zuweisung und Notiz</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.housekeeping_week">
+                <source>templates.editor.operations.housekeeping_week</source>
+                <target>Wochenbelegung (Tabelle)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.operations.housekeeping_week.desc">
+                <source>templates.editor.operations.housekeeping_week.desc</source>
+                <target>Wochenraster mit Belegung, Status und Gästezahl</target>
             </trans-unit>
             <trans-unit id="templates.editor.footer.desc">
                 <source>templates.editor.footer.desc</source>

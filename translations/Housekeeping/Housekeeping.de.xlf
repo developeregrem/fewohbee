@@ -46,6 +46,10 @@
                 <source>housekeeping.occupancy</source>
                 <target>Belegung</target>
             </trans-unit>
+            <trans-unit id="housekeeping.filter.occupancy">
+                <source>housekeeping.filter.occupancy</source>
+                <target>Belegung filtern</target>
+            </trans-unit>
             <trans-unit id="housekeeping.guests">
                 <source>housekeeping.guests</source>
                 <target>Gäste</target>

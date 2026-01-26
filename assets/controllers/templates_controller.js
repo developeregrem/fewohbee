@@ -101,14 +101,14 @@ export default class extends Controller {
             protect: [
                 /\{\%[\s\S]*?%\}/g,
                 /\{\#[\s\S]*?#\}/g,
-                /<\/?.*(html)?pageheader.*?>/g,
-                /<\/?.*(html)?pagefooter.*?>/g,
             ],
+            custom_elements: 'htmlpageheader,htmlpagefooter,sethtmlpageheader,sethtmlpagefooter',
+            extended_valid_elements: 'htmlpageheader[name|class|style],htmlpagefooter[name|class|style],sethtmlpageheader[name|value|show-this-page],sethtmlpagefooter[name|value|page]',
             templates: templatesUrl,
             entity_encoding: 'raw',
             branding: false,
             promotion: false,
-            valid_children: '+body[style]',
+            valid_children: '+body[style|htmlpageheader|htmlpagefooter|sethtmlpageheader|sethtmlpagefooter],+htmlpageheader[div|span|p|br|#text],+htmlpagefooter[div|span|p|br|#text]',
             content_css: [
                 `${basepath}/resources/css/editor.css`,
             ],

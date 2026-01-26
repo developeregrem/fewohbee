@@ -44,6 +44,15 @@ nav.customer.add: Create Guest
 nav.customer.overview: Guest Overview
 nav.customers: Guests
 nav.housekeeping: Housekeeping
+nav.operations: Operations
+nav.operations.reports: Reports
+operations.reports.title: Operations Reports
+operations.reports.date_start: Start date
+operations.reports.date_end: End date
+operations.reports.template: Template
+operations.reports.download: Download PDF
+operations.reports.template.missing: Please select a template.
+operations.reports.preview: Preview
 nav.invoice.add: Create Invoice
 nav.invoices: Invoice Overview
 nav.logout: Logout

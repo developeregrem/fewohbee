@@ -9,6 +9,7 @@ housekeeping.export.day: Export CSV (Day)
 housekeeping.export.week: Export CSV (Week)
 housekeeping.room: Room
 housekeeping.occupancy: Occupancy
+housekeeping.filter.occupancy: Occupancy filter
 housekeeping.guests: Guests
 housekeeping.guests.short: Guests
 housekeeping.guest.short: Guest
