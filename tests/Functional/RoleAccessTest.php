@@ -134,6 +134,7 @@ final class RoleAccessTest extends WebTestCase
     {
         yield 'reservations read only' => ['ROLE_RESERVATIONS_RO', '/reservation/'];
         yield 'housekeeping' => ['ROLE_HOUSEKEEPING', '/operations/housekeeping'];
+        yield 'operations reports' => ['ROLE_HOUSEKEEPING', '/operations/reports'];
         yield 'customers' => ['ROLE_CUSTOMERS', '/customers/'];
         yield 'invoices' => ['ROLE_INVOICES', '/invoices/'];
         yield 'registrationbook' => ['ROLE_REGISTRATIONBOOK', '/registrationbook/'];
