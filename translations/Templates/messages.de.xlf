@@ -194,6 +194,26 @@
                 <source>templates.editor.operations.housekeeping_week.desc</source>
                 <target>Wochenraster mit Belegung, Status und Gästezahl</target>
             </trans-unit>
+            <trans-unit id="templates.operations.housekeeping_day">
+                <source>templates.operations.housekeeping_day</source>
+                <target>Housekeeping Tagesansicht</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.housekeeping_week">
+                <source>templates.operations.housekeeping_week</source>
+                <target>Housekeeping Wochenansicht</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.frontdesk_checklist">
+                <source>templates.operations.frontdesk_checklist</source>
+                <target>Rezeption Checkliste</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.meals_checklist">
+                <source>templates.operations.meals_checklist</source>
+                <target>Mahlzeiten</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.management_monthly_summary">
+                <source>templates.operations.management_monthly_summary</source>
+                <target>Monatsreport Kennzahlen</target>
+            </trans-unit>
             <trans-unit id="templates.editor.footer.desc">
                 <source>templates.editor.footer.desc</source>
                 <target>Fügt eine Fußzeile hinzu, die auf jeder Seite am unteren Rand der Seite erscheint.</target>

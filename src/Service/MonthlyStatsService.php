@@ -64,12 +64,17 @@ class MonthlyStatsService
         */
         $stays = 0;
         $arrivalsTotal = 0;
+        $departuresTotal = 0;
         $overnightsTotal = 0;
         $arrivalsByCountry = [];
         $overnightsByCountry = [];
         $warningsByReservation = [];
+        $arrivalDatesByApartment = [];
+        $departureDatesByApartment = [];
+        $reservationsTotal = 0;
 
         foreach ($reservations as $reservation) {
+            ++$reservationsTotal;
             $customers = $reservation->getCustomers();
             $customerCount = $customers->count();
             $persons = $reservation->getPersons();
@@ -128,6 +133,25 @@ class MonthlyStatsService
                         $arrivalsTotal += 1;
                     }
                 }
+
+                $appartment = $reservation->getAppartment();
+                if ($appartment instanceof Appartment) {
+                    $arrivalDatesByApartment[$appartment->getId()][$startDate->format('Y-m-d')] = true;
+                }
+            }
+
+            // Departures are counted only in the end month of the reservation.
+            if ($endDate > $monthStart && $endDate <= $monthEndExclusive) {
+                if ($useBookerFallback) {
+                    $departuresTotal += $persons;
+                } else {
+                    $departuresTotal += max(1, $customerCount);
+                }
+
+                $appartment = $reservation->getAppartment();
+                if ($appartment instanceof Appartment) {
+                    $departureDatesByApartment[$appartment->getId()][$endDate->format('Y-m-d')] = true;
+                }
             }
         }
 
@@ -162,12 +186,29 @@ class MonthlyStatsService
         ksort($originStats);
 
         $warnings = array_values($warningsByReservation);
+        $turnoversTotal = 0;
+        foreach ($arrivalDatesByApartment as $apartmentId => $arrivalDates) {
+            $departureDates = $departureDatesByApartment[$apartmentId] ?? [];
+            foreach ($arrivalDates as $dateKey => $present) {
+                if (isset($departureDates[$dateKey])) {
+                    ++$turnoversTotal;
+                }
+            }
+        }
         $metrics = [
             'period' => [
                 'year' => $year,
                 'month' => $month,
             ],
             'subsidiary' => $subsidiary?->getId(),
+            'summary' => [
+                'reservations_total' => $reservationsTotal,
+                'guests_total' => $arrivalsTotal,
+                'nights_total' => $overnightsTotal,
+                'arrivals_total' => $arrivalsTotal,
+                'departures_total' => $departuresTotal,
+                'turnovers_count' => $turnoversTotal,
+            ],
             'inventory' => [
                 'rooms_total' => $roomsTotal,
                 'beds_total' => $bedsTotal,

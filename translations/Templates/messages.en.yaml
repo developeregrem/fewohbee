@@ -13,6 +13,11 @@ templates.editor.operations.housekeeping_day: Housekeeping day table
 templates.editor.operations.housekeeping_day.desc: Day view with occupancy, status, assignment, and notes
 templates.editor.operations.housekeeping_week: Housekeeping week table
 templates.editor.operations.housekeeping_week.desc: Week grid with occupancy, status, and guest counts
+templates.operations.housekeeping_day: Housekeeping day view
+templates.operations.housekeeping_week: Housekeeping week view
+templates.operations.frontdesk_checklist: Frontdesk checklist
+templates.operations.meals_checklist: Meals checklist
+templates.operations.management_monthly_summary: Monthly management summary
 templates.add: Add a template
 templates.attachment: Attachment
 templates.attachment.notfound: The attachment could not be found.

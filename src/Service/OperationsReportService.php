@@ -14,7 +14,8 @@ use App\Interfaces\ITemplateRenderer;
 class OperationsReportService implements ITemplateRenderer
 {
     public function __construct(
-        private readonly HousekeepingViewService $housekeepingViewService
+        private readonly HousekeepingViewService $housekeepingViewService,
+        private readonly MonthlyStatsService $monthlyStatsService
     ) {
     }
 
@@ -58,9 +59,65 @@ class OperationsReportService implements ITemplateRenderer
     public function getRenderParams(Template $template, mixed $param)
     {
         if (is_array($param)) {
+            if ($this->shouldIncludeStatistics($template, $param)) {
+                $filters = $param['filters'] ?? [];
+                $start = $filters['start'] ?? null;
+                $end = $filters['end'] ?? null;
+                $subsidiary = $filters['subsidiary'] ?? null;
+                if ($start instanceof \DateTimeImmutable && $end instanceof \DateTimeImmutable) {
+                    $param['statistics'] = $this->buildStatisticsPayload($start, $end, $subsidiary);
+                }
+            }
+
             return $param;
         }
 
         return [];
+    }
+
+    /**
+     * Quick check if the template references statistics data.
+     */
+    private function shouldIncludeStatistics(Template $template, array $param): bool
+    {
+        if (isset($param['statistics'])) {
+            return false;
+        }
+
+        return str_contains($template->getText(), 'statistics.');
+    }
+
+    /**
+     * Build statistics payload using monthly snapshot metrics for the date range.
+     */
+    private function buildStatisticsPayload(
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        ?Subsidiary $subsidiary
+    ): array {
+        $cursor = $start->modify('first day of this month');
+        $endMonth = $end->modify('first day of this month');
+        $months = [];
+
+        while ($cursor <= $endMonth) {
+            $month = (int) $cursor->format('n');
+            $year = (int) $cursor->format('Y');
+            $payload = $this->monthlyStatsService->buildMetrics($month, $year, $subsidiary);
+            $months[] = [
+                'year' => $year,
+                'month' => $month,
+                'metrics' => $payload['metrics'],
+                'warnings' => $payload['warnings'],
+            ];
+            $cursor = $cursor->modify('first day of next month');
+        }
+
+        return [
+            'range' => [
+                'start' => $start,
+                'end' => $end,
+            ],
+            'months' => $months,
+        ];
     }
 }
