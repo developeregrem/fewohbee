@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
+        <body>
+            <trans-unit id="housekeeping.title">
+                <source>housekeeping.title</source>
+                <target>Housekeeping</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.view.day">
+                <source>housekeeping.view.day</source>
+                <target>Tag</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.view.week">
+                <source>housekeeping.view.week</source>
+                <target>Woche</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.date">
+                <source>housekeeping.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.subsidiary">
+                <source>housekeeping.subsidiary</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.subsidiary.all">
+                <source>housekeeping.subsidiary.all</source>
+                <target>Alle Niederlassungen</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.apply">
+                <source>housekeeping.apply</source>
+                <target>Anwenden</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.export.day">
+                <source>housekeeping.export.day</source>
+                <target>CSV exportieren (Tag)</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.export.week">
+                <source>housekeeping.export.week</source>
+                <target>CSV exportieren (Woche)</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.room">
+                <source>housekeeping.room</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy">
+                <source>housekeeping.occupancy</source>
+                <target>Belegung</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.filter.occupancy">
+                <source>housekeeping.filter.occupancy</source>
+                <target>Belegung filtern</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.guests">
+                <source>housekeeping.guests</source>
+                <target>Gäste</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.guests.short">
+                <source>housekeeping.guests.short</source>
+                <target>Gäste</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.guest.short">
+                <source>housekeeping.guest.short</source>
+                <target>Gast</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.reservation">
+                <source>housekeeping.reservation</source>
+                <target>Reservierung</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.status">
+                <source>housekeeping.status</source>
+                <target>Status</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.assigned_to">
+                <source>housekeeping.assigned_to</source>
+                <target>Zugewiesen</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.note">
+                <source>housekeeping.note</source>
+                <target>Notiz</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.save">
+                <source>housekeeping.save</source>
+                <target>Speichern</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.unassigned">
+                <source>housekeeping.unassigned</source>
+                <target>Nicht zugewiesen</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.no_rooms">
+                <source>housekeeping.no_rooms</source>
+                <target>Keine Zimmer gefunden.</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.status.open">
+                <source>housekeeping.status.open</source>
+                <target>Offen</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.status.in_progress">
+                <source>housekeeping.status.in_progress</source>
+                <target>In Arbeit</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.status.cleaned">
+                <source>housekeeping.status.cleaned</source>
+                <target>Gereinigt</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.status.inspected">
+                <source>housekeeping.status.inspected</source>
+                <target>Kontrolliert</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy.free">
+                <source>housekeeping.occupancy.free</source>
+                <target>Frei</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy.stayover">
+                <source>housekeeping.occupancy.stayover</source>
+                <target>Bleibt</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy.arrival">
+                <source>housekeeping.occupancy.arrival</source>
+                <target>Anreise</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy.departure">
+                <source>housekeeping.occupancy.departure</source>
+                <target>Abreise</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.occupancy.turnover">
+                <source>housekeeping.occupancy.turnover</source>
+                <target>Wechsel</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.summary.arrive">
+                <source>housekeeping.summary.arrive</source>
+                <target>Anreise</target>
+            </trans-unit>
+            <trans-unit id="housekeeping.summary.depart">
+                <source>housekeeping.summary.depart</source>
+                <target>Abreise</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

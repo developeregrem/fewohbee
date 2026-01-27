@@ -1,0 +1,9 @@
+{% if previewUrl %}
+    <div class="ratio ratio-4x3 border">
+        <iframe src="{{ previewUrl }}" title="{{ 'operations.reports.preview'|trans }}"></iframe>
+    </div>
+{% else %}
+    <div class="alert alert-warning mb-0">
+        {{ message|trans }}
+    </div>
+{% endif %}

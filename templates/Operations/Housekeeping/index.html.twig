@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'housekeeping.title'|trans({}, 'Housekeeping') }}{% endblock %}
+
+{% block content %}
+    <div class="container mt-4" data-controller="housekeeping">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <div class="me-auto">
+                <h1 class="h3 mb-0">{{ 'housekeeping.title'|trans({}, 'Housekeeping') }}</h1>
+                <div class="text-muted small">
+                    {{ selectedDate|date('d.m.Y') }}
+                </div>
+            </div>
+            <div class="btn-group" role="group">
+                <a class="btn btn-outline-primary{% if view == 'day' %} active{% endif %}"
+                   href="{{ path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'day' }) }}">
+                    {{ 'housekeeping.view.day'|trans({}, 'Housekeeping') }}
+                </a>
+                <a class="btn btn-outline-primary{% if view == 'week' %} active{% endif %}"
+                   href="{{ path('operations.housekeeping', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, view: 'week' }) }}">
+                    {{ 'housekeeping.view.week'|trans({}, 'Housekeeping') }}
+                </a>
+            </div>
+        </div>
+
+        <form method="get" class="row g-3 align-items-end mb-4"
+              data-housekeeping-target="form"
+              data-action="change->housekeeping#submitFilters submit->housekeeping#spin">
+            <div class="col-12 col-md-3">
+                <label class="form-label">{{ 'housekeeping.date'|trans({}, 'Housekeeping') }}</label>
+                <input type="date" name="date" value="{{ selectedDate|date('Y-m-d') }}" class="form-control">
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">{{ 'housekeeping.subsidiary'|trans({}, 'Housekeeping') }}</label>
+                <select name="subsidiary" class="form-select">
+                    <option value="all"{% if selectedSubsidiaryId == 'all' %} selected{% endif %}>
+                        {{ 'housekeeping.subsidiary.all'|trans({}, 'Housekeeping') }}
+                    </option>
+                    {% for subsidiary in subsidiaries %}
+                        <option value="{{ subsidiary.id }}"{% if selectedSubsidiaryId == subsidiary.id %} selected{% endif %}>
+                            {{ subsidiary.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-auto ms-md-auto d-flex gap-2 flex-nowrap">
+                <a href="#" class="btn btn-outline-primary shadow-none"
+                   data-action="click->housekeeping#submitFilters"
+                   title="{{ 'housekeeping.apply'|trans({}, 'Housekeeping') }}">
+                    <i class="fas fa-sync-alt" data-housekeeping-target="spinner" aria-hidden="true"></i>
+                </a>
+                {% if view == 'day' %}
+                    <a class="btn btn-outline-primary"
+                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'day', occupancyTypes: selectedOccupancyTypes }) }}"
+                       title="{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}">
+                        <i class="fas fa-file-csv" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'housekeeping.export.day'|trans({}, 'Housekeeping') }}</span>
+                    </a>
+                {% else %}
+                    <a class="btn btn-outline-primary"
+                       href="{{ path('operations.housekeeping.export', { date: selectedDate|date('Y-m-d'), subsidiary: selectedSubsidiaryId, range: 'week', occupancyTypes: selectedOccupancyTypes }) }}"
+                       title="{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}">
+                        <i class="fas fa-file-csv" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'housekeeping.export.week'|trans({}, 'Housekeeping') }}</span>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <label class="form-label d-block">{{ 'housekeeping.filter.occupancy'|trans({}, 'Housekeeping') }}</label>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for occType in occupancyTypes %}
+                        <label class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="occupancyTypes[]"
+                                   value="{{ occType }}"{% if occType in selectedOccupancyTypes %} checked{% endif %}>
+                            <span class="form-check-label">
+                                {{ occupancyLabels[occType]|trans({}, 'Housekeeping') }}
+                            </span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <input type="hidden" name="view" value="{{ view }}">
+            
+        </form>
+
+        {% if view == 'week' %}
+            {% include 'Operations/Housekeeping/_week_view.html.twig' with {
+                weekView: weekView,
+                occupancyLabels: occupancyLabels,
+                statusLabels: statusLabels
+            } %}
+        {% else %}
+            {% include 'Operations/Housekeeping/_day_view.html.twig' with {
+                dayView: dayView,
+                rowForms: rowForms,
+                rowFormsMobile: rowFormsMobile,
+                occupancyLabels: occupancyLabels,
+                occupancyClasses: occupancyClasses,
+                statusLabels: statusLabels,
+                selectedDate: selectedDate,
+                selectedSubsidiaryId: selectedSubsidiaryId,
+                view: view
+            } %}
+        {% endif %}
+    </div>
+{% endblock %}
