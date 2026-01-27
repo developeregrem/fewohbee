@@ -57,7 +57,7 @@ class HousekeepingExportService
                 $this->translator->trans('housekeeping.status', [], 'Housekeeping', $locale),
                 $this->translator->trans('housekeeping.assigned_to', [], 'Housekeeping', $locale),
                 $this->translator->trans('housekeeping.note', [], 'Housekeeping', $locale),
-            ], ';');
+            ], ';', '"', "\\");
 
             foreach ($dayView['rows'] as $row) {
                 $status = $row['status'];
@@ -86,7 +86,7 @@ class HousekeepingExportService
                     $statusLabel,
                     $assigned instanceof User ? $this->formatUserName($assigned) : '',
                     $status instanceof RoomDayStatus ? ($status->getNote() ?? '') : '',
-                ], ';');
+                ], ';', '"', "\\");
             }
 
             fclose($handle);
@@ -128,7 +128,7 @@ class HousekeepingExportService
             foreach ($weekView['days'] as $day) {
                 $header[] = sprintf('%s %s', $this->formatWeekdayLabel($day, $locale), $day->format('Y-m-d'));
             }
-            fputcsv($handle, $header, ';');
+            fputcsv($handle, $header, ';', '"', "\\");
 
             $occupancyLabels = $this->viewService->getOccupancyLabels();
             $statusLabels = $this->viewService->getStatusLabels();
@@ -159,7 +159,7 @@ class HousekeepingExportService
                     $guestCount = $cell['guestCount'] ?? '';
                     $line[] = trim(sprintf('%s / %s / %s', $occupancyLabel, $statusLabel, $guestCount));
                 }
-                fputcsv($handle, $line, ';');
+                fputcsv($handle, $line, ';', '"', "\\");
             }
 
             fclose($handle);
