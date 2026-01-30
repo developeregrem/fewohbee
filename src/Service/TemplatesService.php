@@ -124,6 +124,106 @@ class TemplatesService
         return $templateStr->render($params);
     }
 
+    /**
+     * Default definitions for operations report templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOperationsTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_housekeeping_day.html.twig',
+                'name' => 'templates.operations.housekeeping_day',
+                'isDefault' => true,
+                'params' => ['orientation' => 'L'],
+            ],
+            [
+                'file' => 'report_housekeeping_week.html.twig',
+                'name' => 'templates.operations.housekeeping_week',
+                'params' => ['orientation' => 'L'],
+            ],
+            ['file' => 'report_housekeeping_summary.html.twig'],
+            [
+                'file' => 'report_frontdesk_checklist.html.twig',
+                'name' => 'templates.operations.frontdesk_checklist',
+            ],
+            [
+                'file' => 'report_meals_checklist.html.twig',
+                'name' => 'templates.operations.meals_checklist',
+            ],
+            [
+                'file' => 'report_management_monthly_summary.html.twig',
+                'name' => 'templates.operations.management_monthly_summary',
+            ],
+        ];
+    }
+
+    /**
+     * Import templates from a remote base URL.
+     *
+     * @param array<int, array<string, mixed>> $entries
+     */
+    public function importTemplates(TemplateType $type, array $entries, string $baseUrl): int
+    {
+        $client = \Symfony\Component\HttpClient\HttpClient::create();
+        $imported = 0;
+
+        foreach ($entries as $entry) {
+            $templateFile = $entry['file'];
+            $response = $client->request('GET', $baseUrl.$templateFile);
+            if (200 !== $response->getStatusCode()) {
+                continue;
+            }
+
+            $content = $response->getContent();
+            $template = new Template();
+            $template->setParams($this->buildTemplateParams($entry['params'] ?? []));
+            $template->setIsDefault(isset($entry['isDefault']) ? (bool) $entry['isDefault'] : false);
+            $template->setName($this->resolveTemplateName(
+                $type->getName(),
+                $entry['name'] ?? null
+            ));
+            $template->setTemplateType($type);
+            $template->setText($content);
+
+            $this->em->persist($template);
+            ++$imported;
+        }
+
+        return $imported;
+    }
+
+    /**
+     * Build template params by merging custom settings with defaults.
+     */
+    public function buildTemplateParams(array $custom): string
+    {
+        $params = array_merge([
+            'orientation' => 'P',
+            'marginLeft' => 25,
+            'marginRight' => 20,
+            'marginTop' => 20,
+            'marginBottom' => 20,
+            'marginHeader' => 9,
+            'marginFooter' => 9,
+        ], $custom);
+
+        return json_encode($params, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Resolve display name for a template.
+     */
+    public function resolveTemplateName(string $typeName, ?string $translationKey): string
+    {
+        if (null !== $translationKey) {
+            return $this->translator->trans($translationKey);
+        }
+
+        return $this->translator->trans($typeName);
+    }
+
     public function getReferencedReservationsInSession()
     {
         $reservations = [];

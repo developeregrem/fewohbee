@@ -12,17 +12,15 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Service\TemplatesService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class TemplatesFixtures extends Fixture implements FixtureGroupInterface
 {
-    public function __construct(private readonly TranslatorInterface $translator)
+    public function __construct(private readonly TemplatesService $templatesService)
     {
     }
 
@@ -50,34 +48,9 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
             'TEMPLATE_INVOICE_PDF' => [
                 ['file' => 'rechnung-default.txt', 'isDefault' => true,],
             ],
-            'TEMPLATE_OPERATIONS_PDF' => [
-                [
-                    'file' => 'report_housekeeping_day.html.twig',
-                    'name' => 'templates.operations.housekeeping_day',
-                    'isDefault' => true,
-                    'params' => ['orientation' => 'L'],
-                ],
-                [
-                    'file' => 'report_housekeeping_week.html.twig',
-                    'name' => 'templates.operations.housekeeping_week',
-                    'params' => ['orientation' => 'L'],
-                ],
-                [
-                    'file' => 'report_frontdesk_checklist.html.twig',
-                    'name' => 'templates.operations.frontdesk_checklist',
-                ],
-                [
-                    'file' => 'report_meals_checklist.html.twig',
-                    'name' => 'templates.operations.meals_checklist',
-                ],
-                [
-                    'file' => 'report_management_monthly_summary.html.twig',
-                    'name' => 'templates.operations.management_monthly_summary',
-                ],
-            ],
+            'TEMPLATE_OPERATIONS_PDF' => $this->templatesService->getOperationsTemplateDefinitions(),
         ];
         $types = $manager->getRepository(TemplateType::class)->findAll();
-        $client = HttpClient::create();
         /* @var $type TemplateType */
         foreach ($types as $type) {
             $name = $type->getName();
@@ -86,57 +59,9 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
             }
 
             $templateEntries = $templates[$name];
-            foreach ($templateEntries as $entry) {
-                $templateFile = $entry['file'];
-                $response = $client->request('GET', $baseUrl.$templateFile);
-                if (200 !== $response->getStatusCode()) {
-                    echo "Could not load $templateFile";
-                    continue;
-                }
-
-                $content = $response->getContent();
-                $customParams = $entry['params'] ?? [];
-                $template = new Template();
-                $template->setParams($this->buildTemplateParams($customParams));
-                $template->setIsDefault(isset($entry['isDefault']) ? (bool) $entry['isDefault'] : false);
-                $template->setName($this->resolveTemplateName($name, $entry['name'] ?? null));
-                $template->setTemplateType($type);
-                $template->setText($content);
-
-                $manager->persist($template);
-            }
+            $this->templatesService->importTemplates($type, $templateEntries, $baseUrl);
         }
 
         $manager->flush();
-    }
-
-    /**
-     * Derive a display name for a template fixture.
-     */
-    private function resolveTemplateName(string $typeName, ?string $translationKey): string
-    {
-        if (null !== $translationKey) {
-            return $this->translator->trans($translationKey);
-        }
-
-        return $this->translator->trans($typeName);
-    }
-
-    /**
-     * Build template params by merging custom settings with defaults.
-     */
-    private function buildTemplateParams(array $custom): string
-    {
-        $params = array_merge([
-            'orientation' => 'P',
-            'marginLeft' => 25,
-            'marginRight' => 20,
-            'marginTop' => 20,
-            'marginBottom' => 20,
-            'marginHeader' => 9,
-            'marginFooter' => 9,
-        ], $custom);
-
-        return json_encode($params, JSON_THROW_ON_ERROR);
     }
 }
