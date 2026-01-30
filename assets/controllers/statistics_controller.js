@@ -34,6 +34,7 @@ export default class extends Controller {
         monthlyOriginUrl: String,
         yearlyOriginUrl: String,
         snapshotUrl: String,
+        snapshotIgnoreUrl: String,
         snapshotArrivalsLabel: String,
         snapshotOvernightsLabel: String,
         snapshotRoomLabel: String,
@@ -312,6 +313,7 @@ export default class extends Controller {
         const params = this.snapshotParams(force);
         const response = await fetch(`${this.snapshotUrlValue}?${params.toString()}`);
         const data = await response.json();
+        this.currentSnapshotId = data.id || null;
         const countryNames = data.countryNames || {};
 
         this.updateSnapshotSummary(data.metrics || {});
@@ -369,20 +371,34 @@ export default class extends Controller {
     updateSnapshotWarnings(warnings) {
         if (!this.hasSnapshotWarningsTarget) return;
         this.snapshotWarningsTarget.innerHTML = '';
-        if (!warnings.length) {
+        const activeWarnings = warnings.filter((warning) => !warning.ignored);
+        if (!activeWarnings.length) {
             const li = document.createElement('li');
             li.className = 'text-muted';
             li.textContent = this.snapshotWarningsTarget.dataset.emptyText || '';
             this.snapshotWarningsTarget.appendChild(li);
             return;
         }
-        warnings.forEach((warning) => {
+        activeWarnings.forEach((warning) => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'form-check-input me-2';
+            checkbox.checked = false;
+            checkbox.addEventListener('change', async () => {
+                await this.toggleWarningIgnore(warning, checkbox.checked);
+                this.drawSnapshot(false);
+            });
+
             const li = document.createElement('li');
+            li.className = 'd-flex align-items-start mb-1';
             const start = warning.start_date || '';
             const end = warning.end_date || '';
             const roomLabel = this.snapshotRoomLabelValue || '';
             const room = warning.appartment_number ? ` ${roomLabel} ${warning.appartment_number}` : '';
-            li.textContent = `${warning.message || ''}${room} ${start} - ${end}`.trim();
+            const text = document.createElement('span');
+            text.textContent = `${warning.message || ''}${room} ${start} - ${end}`.trim();
+            li.appendChild(checkbox);
+            li.appendChild(text);
             this.snapshotWarningsTarget.appendChild(li);
         });
     }
@@ -474,5 +490,24 @@ export default class extends Controller {
         if (!code) return '';
         const upper = code.toUpperCase();
         return countryNames[upper] || countryNames[code] || code;
+    }
+
+    async toggleWarningIgnore(warning, ignored) {
+        if (!this.snapshotIgnoreUrlValue) return;
+        if (!this.currentSnapshotId) return;
+        const params = new URLSearchParams();
+        params.append('reservationId', warning.reservation_id);
+        params.append('ignored', ignored ? '1' : '0');
+        const csrfToken = document.getElementById('statistics_csrf_token');
+        if (csrfToken) {
+            params.append('_csrf_token', csrfToken.value);
+        }
+
+        const baseUrl = this.snapshotIgnoreUrlValue.replace(/\/0$/, '');
+        await fetch(`${baseUrl}/${this.currentSnapshotId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString(),
+        });
     }
 }

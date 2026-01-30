@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Appartment;
+use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
@@ -29,6 +30,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 #[IsGranted('ROLE_STATISTICS')]
 #[Route('/statistics')]
@@ -163,6 +166,35 @@ class StatisticsController extends AbstractController
             'warnings' => $warnings,
             'countryNames' => Countries::getNames($request->getLocale()),
         ]);
+    }
+
+    #[Route('/snapshot/warning/ignore/{snapshot}', name: 'statistics.snapshot.warning.ignore', methods: ['POST'])]
+    public function ignoreSnapshotWarning(ManagerRegistry $doctrine, CsrfTokenManagerInterface $csrfTokenManager, MonthlyStatsService $monthlyStatsService, MonthlyStatsSnapshot $snapshot, Request $request): JsonResponse
+    {
+        $em = $doctrine->getManager();
+        $reservationId = (int) $request->request->get('reservationId');
+        $ignored = filter_var($request->request->get('ignored', '1'), FILTER_VALIDATE_BOOL);
+        $token = new CsrfToken('statistics.snapshot.warning.ignore', (string) $request->request->get('_csrf_token'));
+
+        if ($reservationId < 1 || !$csrfTokenManager->isTokenValid($token)) {
+            return new JsonResponse(['error' => 'invalid request'], 400);
+        }
+
+        $metrics = $snapshot->getMetrics();
+        $warnings = $metrics['warnings'] ?? [];
+        foreach ($warnings as &$warning) {
+            if (($warning['reservation_id'] ?? 0) === $reservationId) {
+                $warning['ignored'] = $ignored;
+                break;
+            }
+        }
+        unset($warning);
+        $metrics['warnings'] = $warnings;
+        $snapshot->setMetrics($metrics);
+        $snapshot->touchUpdatedAt();
+        $em->flush();
+
+        return new JsonResponse(['ok' => true]);
     }
 
     /**

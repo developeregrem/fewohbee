@@ -40,7 +40,7 @@ class MonthlyStatsService
     /**
      * Build the metrics payload and warnings for a snapshot without persisting it.
      */
-    public function buildMetrics(int $month, int $year, ?Subsidiary $subsidiary): array
+    public function buildMetrics(int $month, int $year, ?Subsidiary $subsidiary, array $ignoredWarnings = []): array
     {
         $this->ensureEntityManager();
         $objectId = $subsidiary?->getId() ?? 'all';
@@ -185,6 +185,11 @@ class MonthlyStatsService
         }
         ksort($originStats);
 
+        // Attach ignored flags to warnings.
+        foreach ($warningsByReservation as $reservationId => &$warning) {
+            $warning['ignored'] = $ignoredWarnings[$reservationId] ?? false;
+        }
+        unset($warning);
         $warnings = array_values($warningsByReservation);
         $turnoversTotal = 0;
         foreach ($arrivalDatesByApartment as $apartmentId => $arrivalDates) {
@@ -337,7 +342,16 @@ class MonthlyStatsService
         }
 
         $snapshot->setIsAll(null === $subsidiary);
-        $payload = $this->buildMetrics($month, $year, $subsidiary);
+        $ignoredWarnings = [];
+        if (null !== $snapshot) {
+            $existingMetrics = $snapshot->getMetrics();
+            foreach (($existingMetrics['warnings'] ?? []) as $warning) {
+                if (!empty($warning['ignored']) && isset($warning['reservation_id'])) {
+                    $ignoredWarnings[(int) $warning['reservation_id']] = true;
+                }
+            }
+        }
+        $payload = $this->buildMetrics($month, $year, $subsidiary, $ignoredWarnings);
         $snapshot->setMetrics($payload['metrics']);
         $snapshot->touchUpdatedAt();
         try {
