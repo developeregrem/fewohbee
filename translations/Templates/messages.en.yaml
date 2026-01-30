@@ -5,6 +5,7 @@ TEMPLATE_INVOICE_PDF: PDF invoice
 TEMPLATE_RESERVATION_EMAIL: Email template for reservations
 TEMPLATE_RESERVATION_PDF: PDF template for reservations
 TEMPLATE_OPERATIONS_PDF: PDF template for operations reports
+TEMPLATE_REGISTRATION_PDF: PDF registration form
 templates.editor.operations.header_footer: Report header and footer
 templates.editor.operations.header_footer.desc: Standard header/footer with period and filters
 templates.editor.operations.reservations_table: All reservations in range

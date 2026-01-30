@@ -1051,6 +1051,25 @@ export default class extends Controller {
         }
     }
 
+    updateReservationStatusAction(event) {
+        const select = event.currentTarget;
+        const url = select.dataset.url;
+        const token = select.dataset.token;
+        if (!url || !token) {
+            return;
+        }
+        select.disabled = true;
+        httpRequest({
+            url,
+            method: 'POST',
+            loader: false,
+            data: { status: select.value, _token: token },
+            onComplete: () => {
+                select.disabled = false;
+            }
+        });
+    }
+
     showFeedback(data, target = null) {
         if (!data || typeof data !== 'string' || data.trim().length === 0) {
             return false;

@@ -30,6 +30,7 @@ use Twig\Environment;
 
 class TemplatesService
 {
+    public const EXAMPLES_BASE_URL = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
     private $webHost;
 
     public function __construct(
@@ -155,6 +156,21 @@ class TemplatesService
             [
                 'file' => 'report_management_monthly_summary.html.twig',
                 'name' => 'templates.operations.management_monthly_summary',
+            ],
+        ];
+    }
+
+    /**
+     * Default definitions for registration templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRegistrationTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_registration_form.html.twig',
+                'isDefault' => true,
             ],
         ];
     }

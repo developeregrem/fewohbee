@@ -69,6 +69,7 @@ reservation.table.settings.displayWeek: Display calendar week
 reservation.table.settings.displayWeekday: Display weekday names
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
+reservation.table.settings.showCanceledOnly: Show only canceled/no-show reservations
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View

@@ -89,8 +89,10 @@ class AppTwigExtensions extends AbstractExtension
     {
         $start = new \DateTime(date('Y-m-d', $today));
         $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
+        $showCanceledOnly = (bool) $this->requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $statusMode = $showCanceledOnly ? 'non_blocking' : 'blocking';
 
-        return $this->em->getRepository(Reservation::class)->loadReservationsForApartment($start, $end, $apartment);
+        return $this->em->getRepository(Reservation::class)->loadReservationsForApartment($start, $end, $apartment, $statusMode);
     }
 
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start'): bool

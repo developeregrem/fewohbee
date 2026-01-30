@@ -41,10 +41,10 @@ class HousekeepingViewService
      *     }>
      * }
      */
-    public function buildDayView(\DateTimeImmutable $date, ?Subsidiary $subsidiary): array
+    public function buildDayView(\DateTimeImmutable $date, ?Subsidiary $subsidiary, string $statusMode = 'blocking'): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary, $statusMode);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $date, $date);
         $dateKey = $date->format('Y-m-d');
@@ -96,10 +96,11 @@ class HousekeepingViewService
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
-        array $occupancyTypes
+        array $occupancyTypes,
+        string $statusMode = 'blocking'
     ): array {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
@@ -158,10 +159,10 @@ class HousekeepingViewService
      *     }>
      * }
      */
-    public function buildWeekView(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary): array
+    public function buildWeekView(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary, string $statusMode = 'blocking'): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);

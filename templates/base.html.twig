@@ -54,6 +54,7 @@
                                 {{ 'nav.operations'|trans }}
                             </a>
                             <div class="dropdown-menu" aria-labelledby="operationsDropdown">
+                                <a class="dropdown-item{% if activeRouteName starts with "operations.frontdesk" %} active{% endif %}" href="{{ path('operations.frontdesk') }}">{{ 'nav.operations.frontdesk'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "operations.housekeeping" %} active{% endif %}" href="{{ path('operations.housekeeping') }}">{{ 'nav.housekeeping'|trans }}</a>
                                 <a class="dropdown-item{% if activeRouteName starts with "operations.reports" %} active{% endif %}" href="{{ path('operations.reports') }}">{{ 'nav.operations.reports'|trans }}</a>
                             </div>

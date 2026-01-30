@@ -19,6 +19,7 @@ use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
 use App\Service\InvoiceService;
 use App\Service\MailService;
@@ -46,7 +47,8 @@ class TemplatesServiceController extends AbstractController
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
         $operationsTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
-        $operationsTemplatesMissing = empty($operationsTemplates);
+        $registrationTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $operationsTemplatesMissing = empty($operationsTemplates) || empty($registrationTemplates);
 
         return $this->render('Templates/index.html.twig', [
             'templates' => $templates,
@@ -218,16 +220,29 @@ class TemplatesServiceController extends AbstractController
             return $this->redirectToRoute('settings.templates.overview');
         }
 
-        $existingTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
-        if (!empty($existingTemplates)) {
+        $existingOperations = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $existingRegistration = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $needsOperationsImport = empty($existingOperations);
+        $needsRegistrationImport = empty($existingRegistration);
+        if (!$needsOperationsImport && !$needsRegistrationImport) {
             $this->addFlash('info', 'templates.operations.import.already_present');
 
             return $this->redirectToRoute('settings.templates.overview');
         }
 
-        $baseUrl = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
-        $entries = $templatesService->getOperationsTemplateDefinitions();
-        $imported = $templatesService->importTemplates($type, $entries, $baseUrl);
+        $baseUrl = TemplatesService::EXAMPLES_BASE_URL;
+        $imported = 0;
+        if ($needsOperationsImport) {
+            $entries = $templatesService->getOperationsTemplateDefinitions();
+            $imported += $templatesService->importTemplates($type, $entries, $baseUrl);
+        }
+        if ($needsRegistrationImport) {
+            $registrationType = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_REGISTRATION_PDF']);
+            if ($registrationType instanceof TemplateType) {
+                $registrationEntries = $templatesService->getRegistrationTemplateDefinitions();
+                $imported += $templatesService->importTemplates($registrationType, $registrationEntries, $baseUrl);
+            }
+        }
 
         if ($imported > 0) {
             $em->flush();
@@ -238,6 +253,8 @@ class TemplatesServiceController extends AbstractController
 
         return $this->redirectToRoute('settings.templates.overview');
     }
+
+
 
     /**
      * Called when clicking add conversation in the reservation overview.

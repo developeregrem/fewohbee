@@ -274,6 +274,10 @@
                 <source>reservation.table.settings.displayWeekday</source>
                 <target>Wochentage anzeigen</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.showCanceledOnly">
+                <source>reservation.table.settings.showCanceledOnly</source>
+                <target>Nur stornierte/No-Show anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>

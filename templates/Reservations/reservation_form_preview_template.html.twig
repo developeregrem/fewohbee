@@ -9,7 +9,9 @@
             <div class="col">
                 {% if template.templateType.name == 'TEMPLATE_RESERVATION_EMAIL' %}
                     {% include 'Reservations/reservation_form_preview_template_email.html.twig' %}
-                {% elseif template.templateType.name == 'TEMPLATE_FILE_PDF' or template.templateType.name == 'TEMPLATE_RESERVATION_PDF'%}
+                {% elseif template.templateType.name == 'TEMPLATE_FILE_PDF'
+                    or template.templateType.name == 'TEMPLATE_RESERVATION_PDF'
+                    or template.templateType.name == 'TEMPLATE_REGISTRATION_PDF' %}
                     {% include 'Reservations/reservation_form_preview_template_file.html.twig' %}
                 {% endif %}                
             </div>

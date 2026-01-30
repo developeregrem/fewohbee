@@ -134,6 +134,10 @@
                 <source>TEMPLATE_GDPR_PDF</source>
                 <target>PDF für DSGVO Export</target>
             </trans-unit>
+            <trans-unit id="TEMPLATE_REGISTRATION_PDF">
+                <source>TEMPLATE_REGISTRATION_PDF</source>
+                <target>PDF Meldeschein</target>
+            </trans-unit>
             <trans-unit id="TEMPLATE_OPERATIONS_PDF">
                 <source>TEMPLATE_OPERATIONS_PDF</source>
                 <target>PDF Vorlage für Betriebsberichte</target>

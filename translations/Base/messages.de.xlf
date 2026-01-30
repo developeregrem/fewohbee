@@ -102,6 +102,10 @@
                 <source>nav.operations</source>
                 <target>Betrieb</target>
             </trans-unit>
+            <trans-unit id="nav.operations.frontdesk">
+                <source>nav.operations.frontdesk</source>
+                <target>Rezeption Checkliste</target>
+            </trans-unit>
             <trans-unit id="nav.operations.reports">
                 <source>nav.operations.reports</source>
                 <target>Berichte</target>
@@ -133,6 +137,94 @@
             <trans-unit id="operations.reports.preview">
                 <source>operations.reports.preview</source>
                 <target>Vorschau</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.title">
+                <source>operations.frontdesk.title</source>
+                <target>Rezeption Checkliste</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.filter.date">
+                <source>operations.frontdesk.filter.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.filter.subsidiary">
+                <source>operations.frontdesk.filter.subsidiary</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.filter.sections">
+                <source>operations.frontdesk.filter.sections</source>
+                <target>Anzeigen</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.filter.reservations">
+                <source>operations.frontdesk.filter.reservations</source>
+                <target>Reservierungen</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.filter.includeCanceled">
+                <source>operations.frontdesk.filter.includeCanceled</source>
+                <target>Stornierte/No-Show</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.arrivals">
+                <source>operations.frontdesk.arrivals</source>
+                <target>Anreisen</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.departures">
+                <source>operations.frontdesk.departures</source>
+                <target>Abreisen</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.inhouse">
+                <source>operations.frontdesk.inhouse</source>
+                <target>Inhouse</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.room">
+                <source>operations.frontdesk.room</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.guest">
+                <source>operations.frontdesk.guest</source>
+                <target>Gast</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.period">
+                <source>operations.frontdesk.period</source>
+                <target>Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.category">
+                <source>operations.frontdesk.category</source>
+                <target>Kategorie</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.actions">
+                <source>operations.frontdesk.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.registration.print">
+                <source>operations.frontdesk.registration.print</source>
+                <target>Meldeschein drucken</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.confirmation.send">
+                <source>operations.frontdesk.confirmation.send</source>
+                <target>Bestätigung/Info-Mail senden</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.note.edit">
+                <source>operations.frontdesk.note.edit</source>
+                <target>Notiz bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.registration.missing">
+                <source>operations.frontdesk.registration.missing</source>
+                <target>Keine Meldeschein-Templates gefunden. Bitte ein Template anlegen oder die Vorlagen importieren.</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.header.registration">
+                <source>operations.frontdesk.header.registration</source>
+                <target>Meldeschein</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.header.invoice">
+                <source>operations.frontdesk.header.invoice</source>
+                <target>Rechnung</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.header.email">
+                <source>operations.frontdesk.header.email</source>
+                <target>E-Mail</target>
+            </trans-unit>
+            <trans-unit id="operations.frontdesk.header.note">
+                <source>operations.frontdesk.header.note</source>
+                <target>Notiz</target>
             </trans-unit>
             <trans-unit id="nav.invoices">
                 <source>nav.invoices</source>
