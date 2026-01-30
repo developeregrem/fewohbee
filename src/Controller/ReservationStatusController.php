@@ -52,8 +52,17 @@ class ReservationStatusController extends AbstractController
     #[Route('/{id}/edit', name: 'reservation_status_edit', methods: ['GET', 'POST'])]
     public function edit(ManagerRegistry $doctrine, Request $request, ReservationStatus $reservationStatus): Response
     {
-        $form = $this->createForm(ReservationStatusType::class, $reservationStatus);
+        $isSystem = $reservationStatus->isSystem();
+        $form = $this->createForm(ReservationStatusType::class, $reservationStatus, [
+            'disabled' => $isSystem,
+        ]);
         $form->handleRequest($request);
+
+        if ($isSystem && $form->isSubmitted()) {
+            $this->addFlash('warning', 'status.flash.edit.error.system');
+
+            return new Response('', Response::HTTP_FORBIDDEN);
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $reservationStatus->setContrastColor($this->calculateColor($reservationStatus->getColor()));
@@ -80,6 +89,11 @@ class ReservationStatusController extends AbstractController
                 'id' => $reservationStatus->getId(),
             ]);
         } elseif ($this->isCsrfTokenValid('delete'.$reservationStatus->getId(), $request->request->get('_token'))) {
+            if ($reservationStatus->isSystem()) {
+                $this->addFlash('warning', 'status.flash.delete.error.system');
+
+                return new Response('', Response::HTTP_NO_CONTENT);
+            }
             if ($reservationStatus->getReservations()->count() > 0) {
                 $this->addFlash('warning', 'status.flash.delete.error.still.in.use');
             } else {

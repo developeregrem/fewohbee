@@ -31,7 +31,7 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
 
     public function load(ObjectManager $manager): void
     {
-        $baseUrl = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+        $baseUrl = TemplatesService::EXAMPLES_BASE_URL;
         $templates = [
             'TEMPLATE_GDPR_PDF' => [
                 ['file' => 'dsgvo-export.txt', 'isDefault' => true],
@@ -48,6 +48,7 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
             'TEMPLATE_INVOICE_PDF' => [
                 ['file' => 'rechnung-default.txt', 'isDefault' => true,],
             ],
+            'TEMPLATE_REGISTRATION_PDF' => $this->templatesService->getRegistrationTemplateDefinitions(),
             'TEMPLATE_OPERATIONS_PDF' => $this->templatesService->getOperationsTemplateDefinitions(),
         ];
         $types = $manager->getRepository(TemplateType::class)->findAll();

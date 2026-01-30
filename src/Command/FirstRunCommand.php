@@ -208,6 +208,11 @@ class FirstRunCommand extends Command
         $t7->setName('TEMPLATE_OPERATIONS_PDF');
         $t7->setService('OperationsReportService');
         $t7->setEditorTemplate('editor_template_operations.json.twig');
+        $t8 = new TemplateType();
+        $t8->setIcon('fa-file-pdf');
+        $t8->setName('TEMPLATE_REGISTRATION_PDF');
+        $t8->setService('ReservationService');
+        $t8->setEditorTemplate('editor_template_reservation.json.twig');
 
         $this->em->persist($t1);
         $this->em->persist($t2);
@@ -216,6 +221,7 @@ class FirstRunCommand extends Command
         $this->em->persist($t5);
         $this->em->persist($t6);
         $this->em->persist($t7);
+        $this->em->persist($t8);
     }
 
     private function createDummyCustomer(): void

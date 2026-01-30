@@ -25,13 +25,27 @@ class ReservationRepository extends ServiceEntityRepository
         parent::__construct($registry, Reservation::class);
     }
 
+    private function applyBlockingStatusFilter($qb, string $reservationAlias = 'u', string $mode = 'blocking', string $statusAlias = 'rs'): void
+    {
+        if ('all' === $mode) {
+            return;
+        }
+
+        $qb->join($reservationAlias.'.reservationStatus', $statusAlias);
+        if ('non_blocking' === $mode) {
+            $qb->andWhere($statusAlias.'.isBlocking = 0');
+        } else {
+            $qb->andWhere($statusAlias.'.isBlocking = 1');
+        }
+    }
+
     public function loadReservationsForPeriod($startDate, $endDate)
     {
         $start = date('Y-m-d', strtotime($startDate));
         $end = date('Y-m-d', strtotime($endDate));
 
         //        if($customer == null) {
-        $q = $this
+        $qb = $this
             ->createQueryBuilder('u')
             ->select('u')
             ->andWhere('((u.startDate >= :start AND u.startDate < :end AND u.endDate > :start AND u.endDate <= :end) OR'
@@ -41,8 +55,9 @@ class ReservationRepository extends ServiceEntityRepository
             // ->andWhere('u.invoice IS NULL')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->addOrderBy('u.endDate', 'ASC')
-            ->getQuery();
+            ->addOrderBy('u.endDate', 'ASC');
+        $this->applyBlockingStatusFilter($qb, 'u');
+        $q = $qb->getQuery();
         //        } else {
         //            $q = $this
         //                ->createQueryBuilder('u')
@@ -77,7 +92,8 @@ class ReservationRepository extends ServiceEntityRepository
     public function findForHousekeepingRange(
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
-        ?Subsidiary $subsidiary
+        ?Subsidiary $subsidiary,
+        string $statusMode = 'blocking'
     ): array {
         $qb = $this->createQueryBuilder('r')
             ->addSelect('a', 'booker', 'customer')
@@ -98,6 +114,8 @@ class ReservationRepository extends ServiceEntityRepository
                 ->setParameter('subsidiary', $subsidiary->getId());
         }
 
+        $this->applyBlockingStatusFilter($qb, 'r', $statusMode);
+
         return $qb->getQuery()->getResult();
     }
 
@@ -110,9 +128,9 @@ class ReservationRepository extends ServiceEntityRepository
     /**
      * Loads reservations that fits into the period and will include reservations that end at the given start date or starts at the given end date.
      */
-    public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
+    public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, string $statusMode = 'blocking'): array
     {
-        $q = $this
+        $qb = $this
             ->createQueryBuilder('u')
             ->select('u')
             ->where('u.appartment = :app ')
@@ -124,8 +142,11 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
-            ->addOrderBy('u.endDate', 'ASC')
-            ->getQuery();
+            ->addOrderBy('u.endDate', 'ASC');
+
+        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
+
+        $q = $qb->getQuery();
 
         $reservations = [];
         try {
@@ -141,7 +162,7 @@ class ReservationRepository extends ServiceEntityRepository
      */
     public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
     {
-        $q = $this
+        $qb = $this
             ->createQueryBuilder('u')
             ->select('u')
             ->where('u.appartment = :app ')
@@ -153,8 +174,11 @@ class ReservationRepository extends ServiceEntityRepository
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
-            ->addOrderBy('u.endDate', 'ASC')
-            ->getQuery();
+            ->addOrderBy('u.endDate', 'ASC');
+
+        $this->applyBlockingStatusFilter($qb, 'u');
+
+        $q = $qb->getQuery();
 
         $reservations = [];
         try {
@@ -188,17 +212,16 @@ class ReservationRepository extends ServiceEntityRepository
     public function loadUtilizationForDay($day, $objectId)
     {
         if ('all' === $objectId) {
-            $query = $this->createQueryBuilder('u')
+            $qb = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')
             ->where(':day >= u.startDate and :day < u.endDate')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.isConflictIgnored = 0')
             // ->andWhere('u.status=1')
             // ->addGroupBy('u.persons')
-            ->setParameter('day', $day)
-            ->getQuery();
+            ->setParameter('day', $day);
         } else {
-            $query = $this->createQueryBuilder('u')
+            $qb = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')
             ->where('a.object = :objId and :day >= u.startDate and :day < u.endDate')
             ->andWhere('u.isConflict = 0')
@@ -207,12 +230,13 @@ class ReservationRepository extends ServiceEntityRepository
             ->join('u.appartment', 'a')
             // ->addGroupBy('u.persons')
             ->setParameter('day', $day)
-            ->setParameter('objId', $objectId)
-            ->getQuery();
+            ->setParameter('objId', $objectId);
         }
 
         try {
-            return $query->getSingleScalarResult();
+            $this->applyBlockingStatusFilter($qb, 'u');
+
+            return $qb->getQuery()->getSingleScalarResult();
         } catch (NoResultException $ex) {
             return 0;
         }
@@ -244,7 +268,7 @@ class ReservationRepository extends ServiceEntityRepository
         $start = date('Y-m-d', $startTs);
         $end = date('Y-m-d', strtotime('+1 month', $startTs));
 
-        $q = $this
+        $qb = $this
             ->createQueryBuilder('u')
             ->select('u')
             ->join('u.appartment', 'a')
@@ -257,12 +281,14 @@ class ReservationRepository extends ServiceEntityRepository
             ->addOrderBy('u.endDate', 'ASC');
 
         if ('all' !== $objectId) {
-            $q->andWhere('a.object = :objId')
+            $qb->andWhere('a.object = :objId')
               ->setParameter('objId', $objectId);
         }
 
         try {
-            return $q->getQuery()->getResult();
+            $this->applyBlockingStatusFilter($qb, 'u');
+
+            return $qb->getQuery()->getResult();
         } catch (NoResultException $e) {
             return [];
         }
@@ -271,7 +297,7 @@ class ReservationRepository extends ServiceEntityRepository
     public function loadOriginStatisticForPeriod($start, $end, $objectId)
     {
         if ('all' === $objectId) {
-            $query = $this->createQueryBuilder('u')
+            $qb = $this->createQueryBuilder('u')
             ->select('ro.id, COUNT(u.id) as origins')
             ->join('u.reservationOrigin', 'ro')
             ->where('u.startDate >= :start and u.endDate <= :end')
@@ -280,10 +306,9 @@ class ReservationRepository extends ServiceEntityRepository
             // ->andWhere('u.status=1')
             ->addGroupBy('u.reservationOrigin')
             ->setParameter('start', $start)
-            ->setParameter('end', $end)
-            ->getQuery();
+            ->setParameter('end', $end);
         } else {
-            $query = $this->createQueryBuilder('u')
+            $qb = $this->createQueryBuilder('u')
             ->select('ro.id, COUNT(u.id) as origins')
             ->join('u.reservationOrigin', 'ro')
             ->where('a.object = :objId and u.startDate >= :start and u.endDate <= :end')
@@ -294,12 +319,13 @@ class ReservationRepository extends ServiceEntityRepository
             ->addGroupBy('u.reservationOrigin')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
-            ->setParameter('objId', $objectId)
-            ->getQuery();
+            ->setParameter('objId', $objectId);
         }
 
         try {
-            return $query->getArrayResult();
+            $this->applyBlockingStatusFilter($qb, 'u');
+
+            return $qb->getQuery()->getArrayResult();
         } catch (NoResultException $ex) {
             return 0;
         }

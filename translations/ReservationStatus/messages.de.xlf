@@ -46,6 +46,14 @@
                 <source>status.flash.delete.error.still.in.use</source>
                 <target>Reservierungsstatus kann nicht gelöscht werden, da ihm noch Reservierungen zugeordnet sind.</target>
             </trans-unit>
+            <trans-unit id="status.flash.delete.error.system">
+                <source>status.flash.delete.error.system</source>
+                <target>Systemstatus kann nicht gelöscht werden.</target>
+            </trans-unit>
+            <trans-unit id="status.flash.edit.error.system">
+                <source>status.flash.edit.error.system</source>
+                <target>Systemstatus kann nicht bearbeitet werden.</target>
+            </trans-unit>
             <trans-unit id="status.confirmed">
                 <source>status.confirmed</source>
                 <target>Bestätigt</target>
@@ -53,6 +61,14 @@
             <trans-unit id="status.option">
                 <source>status.option</source>
                 <target>Option</target>
+            </trans-unit>
+            <trans-unit id="status.canceled_noshow">
+                <source>status.canceled_noshow</source>
+                <target>Storniert / No-Show</target>
+            </trans-unit>
+            <trans-unit id="status.system.locked">
+                <source>status.system.locked</source>
+                <target>Systemstatus</target>
             </trans-unit>
         </body>
     </file>
