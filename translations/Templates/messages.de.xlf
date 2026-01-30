@@ -214,6 +214,34 @@
                 <source>templates.operations.management_monthly_summary</source>
                 <target>Monatsreport Kennzahlen</target>
             </trans-unit>
+            <trans-unit id="templates.operations.import.title">
+                <source>templates.operations.import.title</source>
+                <target>Keine Vorlagen für Betriebsberichte vorhanden.</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.text">
+                <source>templates.operations.import.text</source>
+                <target>Möchten Sie die Standardvorlagen jetzt importieren?</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.button">
+                <source>templates.operations.import.button</source>
+                <target>Vorlagen importieren</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.success">
+                <source>templates.operations.import.success</source>
+                <target>Vorlagen für Betriebsberichte wurden importiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.failed">
+                <source>templates.operations.import.failed</source>
+                <target>Vorlagen konnten nicht importiert werden.</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.already_present">
+                <source>templates.operations.import.already_present</source>
+                <target>Vorlagen für Betriebsberichte sind bereits vorhanden.</target>
+            </trans-unit>
+            <trans-unit id="templates.operations.import.missing_type">
+                <source>templates.operations.import.missing_type</source>
+                <target>Template-Typ für Betriebsberichte wurde nicht gefunden.</target>
+            </trans-unit>
             <trans-unit id="templates.editor.footer.desc">
                 <source>templates.editor.footer.desc</source>
                 <target>Fügt eine Fußzeile hinzu, die auf jeder Seite am unteren Rand der Seite erscheint.</target>

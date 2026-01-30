@@ -19,7 +19,6 @@ use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
-use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
 use App\Service\InvoiceService;
 use App\Service\MailService;
@@ -32,6 +31,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 #[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
@@ -40,13 +41,17 @@ class TemplatesServiceController extends AbstractController
      * Index-View.
      */
     #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine): Response
+    public function indexAction(ManagerRegistry $doctrine, CsrfTokenManagerInterface $csrfTokenManager): Response
     {
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
+        $operationsTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $operationsTemplatesMissing = empty($operationsTemplates);
 
         return $this->render('Templates/index.html.twig', [
             'templates' => $templates,
+            'operationsTemplatesMissing' => $operationsTemplatesMissing,
+            'importToken' => $csrfTokenManager->getToken('templates.import.operations')->getValue(),
         ]);
     }
 
@@ -186,6 +191,52 @@ class TemplatesServiceController extends AbstractController
         return $this->render('Templates/templates_preview.html.twig', [
             'template' => $template,
         ]);
+    }
+
+    /**
+     * Import default operations report templates from the examples repository.
+     */
+    #[Route('/import/operations', name: 'settings.templates.import.operations', methods: ['POST'])]
+    public function importOperationsTemplatesAction(
+        ManagerRegistry $doctrine,
+        CsrfTokenManagerInterface $csrfTokenManager,
+        TemplatesService $templatesService,
+        Request $request
+    ): Response {
+        $token = new CsrfToken('templates.import.operations', (string) $request->request->get('_csrf_token'));
+        if (!$csrfTokenManager->isTokenValid($token)) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $em = $doctrine->getManager();
+        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_OPERATIONS_PDF']);
+        if (!$type instanceof TemplateType) {
+            $this->addFlash('warning', 'templates.operations.import.missing_type');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $existingTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        if (!empty($existingTemplates)) {
+            $this->addFlash('info', 'templates.operations.import.already_present');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $baseUrl = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+        $entries = $templatesService->getOperationsTemplateDefinitions();
+        $imported = $templatesService->importTemplates($type, $entries, $baseUrl);
+
+        if ($imported > 0) {
+            $em->flush();
+            $this->addFlash('success', 'templates.operations.import.success');
+        } else {
+            $this->addFlash('warning', 'templates.operations.import.failed');
+        }
+
+        return $this->redirectToRoute('settings.templates.overview');
     }
 
     /**
