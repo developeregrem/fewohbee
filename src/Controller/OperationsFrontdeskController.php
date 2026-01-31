@@ -8,11 +8,11 @@ use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Enum\InvoiceStatus;
+use App\Service\FrontdeskViewService;
 use App\Service\HousekeepingViewService;
+use App\Service\OperationsFilterService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,27 +36,29 @@ class OperationsFrontdeskController extends AbstractController
     public function indexAction(
         ManagerRegistry $doctrine,
         Request $request,
-        HousekeepingViewService $viewService
+        HousekeepingViewService $viewService,
+        OperationsFilterService $filterService,
+        FrontdeskViewService $frontdeskViewService
     ): Response {
         $session = $request->getSession();
         $em = $doctrine->getManager();
         $subsidiaries = $em->getRepository(Subsidiary::class)->findAll();
         $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
-        $subsidiaryId = $this->resolveFilterValue(
+        $subsidiaryId = $filterService->resolveFilterValue(
             $request,
             $session,
             'frontdesk.subsidiary',
             'subsidiary',
             'all'
         );
-        $selectedSubsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
-        $selectedDate = $this->resolveDate(
-            $this->resolveFilterValue($request, $session, 'frontdesk.date', 'date')
+        $selectedSubsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
+        $selectedDate = $filterService->resolveDate(
+            $filterService->resolveFilterValue($request, $session, 'frontdesk.date', 'date')
         );
-        $selectedCategories = $this->normalizeCategories(
-            $this->resolveFilterArray($request, $session, 'frontdesk.categories', 'categories')
+        $selectedCategories = $filterService->normalizeCategories(
+            $filterService->resolveFilterArray($request, $session, 'frontdesk.categories', 'categories')
         );
-        $includeCanceled = $this->resolveFilterBool(
+        $includeCanceled = $filterService->resolveFilterBool(
             $request,
             $session,
             'frontdesk.includeCanceled',
@@ -79,7 +81,7 @@ class OperationsFrontdeskController extends AbstractController
             'apartments' => $rangeView['apartments'] ?? [],
         ];
 
-        $items = $this->buildFrontdeskItems($dayView['rows'] ?? [], $selectedDate, $selectedCategories);
+        $items = $frontdeskViewService->buildItems($dayView['rows'] ?? [], $selectedDate, $selectedCategories);
 
         return $this->render('Operations/Frontdesk/index.html.twig', [
             'subsidiaries' => $subsidiaries,
@@ -185,142 +187,4 @@ class OperationsFrontdeskController extends AbstractController
         return $this->forward('App\\Controller\\ReservationServiceController::selectTemplateAction', [], $request->request->all());
     }
 
-    /**
-     * Resolve the selected date from query input, defaulting to today (UTC).
-     */
-    private function resolveDate(?string $dateParam): \DateTimeImmutable
-    {
-        $timezone = new \DateTimeZone('UTC');
-        if ($dateParam) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam, $timezone);
-            if ($parsed instanceof \DateTimeImmutable) {
-                return $parsed->setTime(0, 0, 0);
-            }
-        }
-
-        return (new \DateTimeImmutable('today', $timezone))->setTime(0, 0, 0);
-    }
-
-    /**
-     * Resolve the requested subsidiary entity, if any.
-     */
-    private function resolveSubsidiary(EntityManagerInterface $em, string $subsidiaryId): ?Subsidiary
-    {
-        if ('all' === $subsidiaryId || '' === $subsidiaryId) {
-            return null;
-        }
-
-        return $em->getRepository(Subsidiary::class)->find($subsidiaryId);
-    }
-
-    /**
-     * Normalize selected categories (arrival, departure, inhouse).
-     *
-     * @return string[]
-     */
-    private function normalizeCategories(array $selected): array
-    {
-        $allowed = ['arrival', 'departure', 'inhouse'];
-        $values = array_values(array_intersect($allowed, array_map('strval', $selected)));
-
-        return [] === $values ? $allowed : $values;
-    }
-
-    private function resolveFilterValue(Request $request, $session, string $sessionKey, string $queryKey, string $default = ''): string
-    {
-        if ($request->query->has($queryKey)) {
-            $value = (string) $request->query->get($queryKey, $default);
-            $session->set($sessionKey, $value);
-
-            return $value;
-        }
-
-        return (string) $session->get($sessionKey, $default);
-    }
-
-    private function resolveFilterArray(Request $request, $session, string $sessionKey, string $queryKey): array
-    {
-        if ($request->query->has($queryKey)) {
-            $value = $request->query->all($queryKey);
-            $session->set($sessionKey, $value);
-
-            return is_array($value) ? $value : [];
-        }
-
-        $stored = $session->get($sessionKey, []);
-
-        return is_array($stored) ? $stored : [];
-    }
-
-    private function resolveFilterBool(Request $request, $session, string $sessionKey, string $queryKey, bool $default): bool
-    {
-        if ($request->query->has($queryKey)) {
-            $value = $request->query->getBoolean($queryKey, $default);
-            $session->set($sessionKey, $value);
-
-            return $value;
-        }
-
-        return (bool) $session->get($sessionKey, $default);
-    }
-
-    /**
-     * Build list items for the selected day and filters.
-     *
-     * @param array<int, array<string, mixed>> $rows
-     */
-    private function buildFrontdeskItems(array $rows, \DateTimeImmutable $date, array $selectedCategories): array
-    {
-        $dateKey = $date->format('Y-m-d');
-        $items = [];
-        $seen = [];
-
-        foreach ($rows as $row) {
-            $reservations = $row['apartmentReservations'] ?? [];
-            foreach ($reservations as $reservation) {
-                $reservationId = $reservation->getId();
-                if (isset($seen[$reservationId])) {
-                    continue;
-                }
-
-                $startKey = $reservation->getStartDate()->format('Y-m-d');
-                $endKey = $reservation->getEndDate()->format('Y-m-d');
-                $categories = [];
-                if ($startKey === $dateKey) {
-                    $categories[] = 'arrival';
-                }
-                if ($endKey === $dateKey) {
-                    $categories[] = 'departure';
-                }
-                if ($startKey < $dateKey && $endKey > $dateKey) {
-                    $categories[] = 'inhouse';
-                }
-
-                if (empty($categories)) {
-                    continue;
-                }
-
-                if (count(array_intersect($categories, $selectedCategories)) === 0) {
-                    continue;
-                }
-
-                $invoiceStatusLabel = null;
-                $firstInvoice = $reservation->getInvoices()->first();
-                if ($firstInvoice) {
-                    $statusEnum = InvoiceStatus::fromStatus($firstInvoice->getStatus());
-                    $invoiceStatusLabel = $statusEnum?->labelKey();
-                }
-
-                $items[] = [
-                    'reservation' => $reservation,
-                    'apartment' => $row['apartment'],
-                    'categories' => $categories,
-                    'invoiceStatusLabel' => $invoiceStatusLabel,
-                ];
-                $seen[$reservationId] = true;
-            }
-        }
-
-        return $items;
-    }
 }

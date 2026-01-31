@@ -11,7 +11,7 @@ use App\Entity\User;
 use App\Form\HousekeepingRowType;
 use App\Service\HousekeepingExportService;
 use App\Service\HousekeepingViewService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\OperationsFilterService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,13 +34,14 @@ class HousekeepingController extends AbstractController
     public function indexAction(
         ManagerRegistry $doctrine,
         Request $request,
-        HousekeepingViewService $viewService
+        HousekeepingViewService $viewService,
+        OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaries = $em->getRepository(Subsidiary::class)->findAll();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
-        $selectedSubsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
-        $selectedDate = $this->resolveDate($request->query->get('date'));
+        $selectedSubsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
+        $selectedDate = $filterService->resolveDate($request->query->get('date'));
         $view = $request->query->get('view', 'day');
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
@@ -48,7 +49,7 @@ class HousekeepingController extends AbstractController
         $dayView = null;
         $weekView = null;
         if ('week' === $view) {
-            $weekStart = $this->resolveWeekStart($selectedDate);
+            $weekStart = $filterService->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
             $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $selectedSubsidiary);
             $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
@@ -98,12 +99,13 @@ class HousekeepingController extends AbstractController
     public function updateAction(
         ManagerRegistry $doctrine,
         Request $request,
-        Appartment $apartment
+        Appartment $apartment,
+        OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
         $formPayload = $request->request->all('housekeeping_row');
         $dateValue = is_array($formPayload) ? (string) ($formPayload['date'] ?? '') : '';
-        $date = $this->resolveDate($dateValue);
+        $date = $filterService->resolveDate($dateValue);
 
         $status = $em->getRepository(RoomDayStatus::class)->findOneBy([
             'appartment' => $apartment,
@@ -148,19 +150,20 @@ class HousekeepingController extends AbstractController
         ManagerRegistry $doctrine,
         Request $request,
         HousekeepingViewService $viewService,
-        HousekeepingExportService $exportService
+        HousekeepingExportService $exportService,
+        OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
-        $subsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
-        $selectedDate = $this->resolveDate($request->query->get('date'));
+        $subsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
+        $selectedDate = $filterService->resolveDate($request->query->get('date'));
         $range = (string) $request->query->get('range', 'day');
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
         $locale = $request->getLocale();
 
         if ('week' === $range) {
-            $weekStart = $this->resolveWeekStart($selectedDate);
+            $weekStart = $filterService->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
             $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $subsidiary);
             $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
@@ -173,46 +176,6 @@ class HousekeepingController extends AbstractController
 
         return $exportService->buildDayCsvResponse($dayView, $subsidiaryId, $locale);
     }
-
-    /**
-     * Resolve the selected date from query input, defaulting to today (UTC).
-     */
-    private function resolveDate(?string $dateParam): \DateTimeImmutable
-    {
-        $timezone = new \DateTimeZone('UTC');
-        if ($dateParam) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam, $timezone);
-            if ($parsed instanceof \DateTimeImmutable) {
-                return $parsed->setTime(0, 0, 0);
-            }
-        }
-
-        return (new \DateTimeImmutable('today', $timezone))->setTime(0, 0, 0);
-    }
-
-    /**
-     * Resolve the requested subsidiary entity, if any.
-     */
-    private function resolveSubsidiary(EntityManagerInterface $em, string $subsidiaryId): ?Subsidiary
-    {
-        if ('all' === $subsidiaryId || '' === $subsidiaryId) {
-            return null;
-        }
-
-        $subsidiary = $em->getRepository(Subsidiary::class)->find($subsidiaryId);
-
-        return $subsidiary instanceof Subsidiary ? $subsidiary : null;
-    }
-
-    /**
-     * Normalize a date into its Monday week start.
-     */
-    private function resolveWeekStart(\DateTimeImmutable $date): \DateTimeImmutable
-    {
-        return $date->modify('monday this week')->setTime(0, 0, 0);
-    }
-
-
 
     /**
      * Define CSS classes for occupancy badges.
