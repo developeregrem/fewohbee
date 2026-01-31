@@ -68,6 +68,21 @@
                 </button>
             </div>
         </div>
+        <div class="row mt-3">
+            <div class="col">
+                <label class="form-label mb-1">{{ 'status.title'|trans }}</label>
+                <form id="reservation-status" role="form" data-statistics-target="reservationStatusForm">
+                    {% for status in reservationStatuses %}
+                        <div class="form-check form-switch form-check-inline">
+                            <input type="checkbox" class="form-check-input" id="reservation-status-{{ status.id }}" name="reservation-status[]" value="{{ status.id }}"
+                                   {% if not status.isSystem %}checked="checked"{% endif %}
+                                   data-action="change->statistics#drawSnapshotAction">
+                            <label class="form-check-label" for="reservation-status-{{ status.id }}">{{ status.name }}</label>
+                        </div>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
 
         <div class="row mt-4">
             <div class="col-md-6">

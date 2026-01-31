@@ -13,6 +13,7 @@ export default class extends Controller {
         'monthlyChart',
         'yearlyChart',
         'invoiceStatusForm',
+        'reservationStatusForm',
         'snapshotMonth',
         'snapshotYear',
         'snapshotArrivalsTotal',
@@ -196,6 +197,9 @@ export default class extends Controller {
         if (this.hasObjectsTarget) {
             params.append('objectId', this.objectsTarget.value);
         }
+        if (this.hasReservationStatusFormTarget) {
+            new FormData(this.reservationStatusFormTarget).forEach((v, k) => params.append(k, v));
+        }
         if (!yearOnly) {
             params.append('monthStart', this.monthlyStartTarget.value);
             params.append('monthEnd', this.monthlyEndTarget.value);
@@ -332,6 +336,9 @@ export default class extends Controller {
         const params = new URLSearchParams();
         if (this.hasObjectsTarget) {
             params.append('objectId', this.objectsTarget.value);
+        }
+        if (this.hasReservationStatusFormTarget) {
+            new FormData(this.reservationStatusFormTarget).forEach((v, k) => params.append(k, v));
         }
         if (this.hasSnapshotMonthTarget) {
             params.append('month', this.snapshotMonthTarget.value);
