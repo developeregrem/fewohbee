@@ -9,6 +9,7 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -37,6 +38,19 @@ class ReservationRepository extends ServiceEntityRepository
         } else {
             $qb->andWhere($statusAlias.'.isBlocking = 1');
         }
+    }
+
+    private function applyReservationStatusFilter($qb, array $statusIds, string $reservationAlias = 'u', string $statusAlias = 'rs'): void
+    {
+        if (!$statusIds) {
+            $this->applyBlockingStatusFilter($qb, $reservationAlias, 'blocking', $statusAlias);
+
+            return;
+        }
+
+        $qb->join($reservationAlias.'.reservationStatus', $statusAlias)
+            ->andWhere($statusAlias.'.id IN (:reservationStatus)')
+            ->setParameter('reservationStatus', $statusIds, ArrayParameterType::INTEGER);
     }
 
     public function loadReservationsForPeriod($startDate, $endDate)
@@ -209,7 +223,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $reservations;
     }
 
-    public function loadUtilizationForDay($day, $objectId)
+    public function loadUtilizationForDay($day, $objectId, array $reservationStatus = [])
     {
         if ('all' === $objectId) {
             $qb = $this->createQueryBuilder('u')
@@ -234,7 +248,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         try {
-            $this->applyBlockingStatusFilter($qb, 'u');
+            $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
 
             return $qb->getQuery()->getSingleScalarResult();
         } catch (NoResultException $ex) {
@@ -262,7 +276,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $q->getSingleScalarResult();
     }
 
-    public function loadReservationsForMonth($month, $year, $objectId)
+    public function loadReservationsForMonth($month, $year, $objectId, array $reservationStatus = [])
     {
         $startTs = strtotime($year.'-'.$month.'-01');
         $start = date('Y-m-d', $startTs);
@@ -286,7 +300,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         try {
-            $this->applyBlockingStatusFilter($qb, 'u');
+            $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
 
             return $qb->getQuery()->getResult();
         } catch (NoResultException $e) {
@@ -294,7 +308,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
-    public function loadOriginStatisticForPeriod($start, $end, $objectId)
+    public function loadOriginStatisticForPeriod($start, $end, $objectId, array $reservationStatus = [])
     {
         if ('all' === $objectId) {
             $qb = $this->createQueryBuilder('u')
@@ -323,7 +337,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         try {
-            $this->applyBlockingStatusFilter($qb, 'u');
+            $this->applyReservationStatusFilter($qb, $reservationStatus, 'u');
 
             return $qb->getQuery()->getArrayResult();
         } catch (NoResultException $ex) {

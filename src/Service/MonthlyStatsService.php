@@ -11,6 +11,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\ReservationStatus;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,9 +41,18 @@ class MonthlyStatsService
     /**
      * Build the metrics payload and warnings for a snapshot without persisting it.
      */
-    public function buildMetrics(int $month, int $year, ?Subsidiary $subsidiary, array $ignoredWarnings = []): array
+    public function buildMetrics(
+        int $month,
+        int $year,
+        ?Subsidiary $subsidiary,
+        array $ignoredWarnings = [],
+        array $reservationStatus = []
+    ): array
     {
         $this->ensureEntityManager();
+        if (!$reservationStatus) {
+            $reservationStatus = $this->getDefaultReservationStatusIds();
+        }
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
@@ -57,7 +67,7 @@ class MonthlyStatsService
         $monthEndExclusive = $monthStart->modify('first day of next month');
         $monthEndInclusive = $monthEndExclusive->modify('-1 day');
 
-        $reservations = $reservationRepo->loadReservationsForMonth($month, $year, $objectId);
+        $reservations = $reservationRepo->loadReservationsForMonth($month, $year, $objectId, $reservationStatus);
 
         /*
         * Calculate utilization and tourism stats (arrivals, overnights) for the month.
@@ -166,7 +176,14 @@ class MonthlyStatsService
         if ($bedsTotal > 0 && $daysInMonth > 0) {
             $utilization = $stays * 100.0 / ($bedsTotal * $daysInMonth);
         }
-        $dailyUtilization = $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
+        $dailyUtilization = $this->buildDailyUtilization(
+            $monthStart,
+            $daysInMonth,
+            $objectId,
+            $bedsTotal,
+            $reservationRepo,
+            $reservationStatus
+        );
 
         /*
         * Calculate reservation origins for the month.
@@ -174,7 +191,8 @@ class MonthlyStatsService
         $originRows = $reservationRepo->loadOriginStatisticForPeriod(
             $monthStart->format('Y-m-d'),
             $monthEndInclusive->format('Y-m-d'),
-            $objectId
+            $objectId,
+            $reservationStatus
         );
         $originStats = [];
         foreach ($originRows as $row) {
@@ -303,17 +321,32 @@ class MonthlyStatsService
     /**
      * Build daily utilization percentages for a month without persisting them.
      */
-    public function getDailyUtilizationForMonth(int $month, int $year, ?Subsidiary $subsidiary): array
+    public function getDailyUtilizationForMonth(
+        int $month,
+        int $year,
+        ?Subsidiary $subsidiary,
+        array $reservationStatus = []
+    ): array
     {
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
         $bedsTotal = (int) $appartmentRepo->loadSumBedsMinForObject($objectId);
+        if (!$reservationStatus) {
+            $reservationStatus = $this->getDefaultReservationStatusIds();
+        }
 
         $monthStart = new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
         $daysInMonth = (int) $monthStart->format('t');
 
-        return $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
+        return $this->buildDailyUtilization(
+            $monthStart,
+            $daysInMonth,
+            $objectId,
+            $bedsTotal,
+            $reservationRepo,
+            $reservationStatus
+        );
     }
 
     /**
@@ -391,17 +424,23 @@ class MonthlyStatsService
         int $daysInMonth,
         $objectId,
         int $bedsTotal,
-        $reservationRepo
+        $reservationRepo,
+        array $reservationStatus = []
     ): array {
         $beds = 0 === $bedsTotal ? 1 : $bedsTotal;
         $data = [];
         $timeStartStr = $monthStart->format('Y-m-');
         for ($i = 1; $i <= $daysInMonth; ++$i) {
-            $utilization = $reservationRepo->loadUtilizationForDay($timeStartStr.$i, $objectId);
+            $utilization = $reservationRepo->loadUtilizationForDay($timeStartStr.$i, $objectId, $reservationStatus);
             $data[] = $utilization * 100 / $beds;
         }
 
         return $data;
+    }
+
+    private function getDefaultReservationStatusIds(): array
+    {
+        return $this->em->getRepository(ReservationStatus::class)->findDefaultIds();
     }
 
     /**

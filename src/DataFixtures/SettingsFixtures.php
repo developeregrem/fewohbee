@@ -184,6 +184,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
 
     private function createReservationStatus(ObjectManager $manager): void
     {
+        $repository = $manager->getRepository(ReservationStatus::class);
         $reservationStatus = [
             [
                 'name' => $this->translator->trans('status.confirmed'),
@@ -206,6 +207,13 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
             ],
         ];
         foreach ($reservationStatus as $status) {
+            if (null !== $status['code']) {
+                if ($repository->findOneBy(['code' => $status['code']]) instanceof ReservationStatus) {
+                    continue;
+                }
+            } elseif ($repository->findOneBy(['name' => $status['name']]) instanceof ReservationStatus) {
+                continue;
+            }
             $rs = new ReservationStatus();
             $rs->setName($status['name']);
             $rs->setColor($status['color']);

@@ -17,6 +17,7 @@ use App\Entity\Appartment;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
+use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Service\InvoiceService;
 use App\Service\MonthlyStatsService;
@@ -47,7 +48,17 @@ class StatisticsController extends AbstractController
     #[Route('/utilization', name: 'statistics.utilization', methods: ['GET'])]
     public function utilizationAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
     {
-        return $this->loadIndex('Statistics/utilization.html.twig', $doctrine, $requestStack);
+        $em = $doctrine->getManager();
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
+
+        return $this->loadIndex(
+            'Statistics/utilization.html.twig',
+            $doctrine,
+            $requestStack,
+            [
+                'reservationStatuses' => $reservationStatuses,
+            ]
+        );
     }
 
     #[Route('/utilization/monthtly', name: 'statistics.utilization.monthtly', methods: ['GET'])]
@@ -56,6 +67,7 @@ class StatisticsController extends AbstractController
         $em = $doctrine->getManager();
 
         $objectId = $request->query->get('objectId', 'all');
+        $reservationStatus = $request->query->all('reservation-status');
         $monthStart = (int) $request->query->get('monthStart');
         $monthEnd = (int) $request->query->get('monthEnd');
         $yearStart = (int) $request->query->get('yearStart');
@@ -81,7 +93,11 @@ class StatisticsController extends AbstractController
             $data = [];
             $timeStartStr = $currentDate->format('Y-m-');
             for ($i = 1; $i <= $daysInMonth; ++$i) {
-                $utilization = $em->getRepository(Reservation::class)->loadUtilizationForDay($timeStartStr.$i, $objectId);
+                $utilization = $em->getRepository(Reservation::class)->loadUtilizationForDay(
+                    $timeStartStr.$i,
+                    $objectId,
+                    $reservationStatus
+                );
                 $data[] = $utilization * 100 / $beds;
             }
             $result['datasets'][] = [
@@ -104,6 +120,7 @@ class StatisticsController extends AbstractController
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('objectId', 'all');
+        $reservationStatus = $request->query->all('reservation-status');
         $yearStart = (int) $request->query->get('yearStart');
         $yearEnd = (int) $request->query->get('yearEnd');
 
@@ -122,7 +139,7 @@ class StatisticsController extends AbstractController
         for ($y = $yearStart; $y <= $yearEnd; ++$y) {
             $result['datasets'][] = [
                 'label' => (string) $y,
-                'data' => $ss->loadUtilizationForYear($objectId, $y, $beds),
+                'data' => $ss->loadUtilizationForYear($objectId, $y, $beds, $reservationStatus),
             ];
         }
 
@@ -139,6 +156,7 @@ class StatisticsController extends AbstractController
         $month = (int) $request->query->get('month');
         $year = (int) $request->query->get('year');
         $objectId = $request->query->get('objectId', 'all');
+        $reservationStatus = $request->query->all('reservation-status');
         $force = (bool) $request->query->get('force', false);
 
         if ($month < 1 || $month > 12 || $year < 1) {
@@ -155,14 +173,33 @@ class StatisticsController extends AbstractController
 
         $payload = $monthlyStatsService->getOrCreateSnapshotWithWarnings($month, $year, $subsidiary, $force);
         $snapshot = $payload['snapshot'];
+        $metrics = $snapshot->getMetrics();
         $warnings = $payload['warnings'];
+
+        if ($reservationStatus) {
+            $ignoredWarnings = [];
+            foreach (($metrics['warnings'] ?? []) as $warning) {
+                if (!empty($warning['ignored']) && isset($warning['reservation_id'])) {
+                    $ignoredWarnings[(int) $warning['reservation_id']] = true;
+                }
+            }
+            $filteredPayload = $monthlyStatsService->buildMetrics(
+                $month,
+                $year,
+                $subsidiary,
+                $ignoredWarnings,
+                $reservationStatus
+            );
+            $metrics = $filteredPayload['metrics'];
+            $warnings = $filteredPayload['warnings'];
+        }
 
         return new JsonResponse([
             'id' => $snapshot->getId(),
             'month' => $snapshot->getMonth(),
             'year' => $snapshot->getYear(),
             'subsidiary' => $subsidiary?->getId(),
-            'metrics' => $snapshot->getMetrics(),
+            'metrics' => $metrics,
             'warnings' => $warnings,
             'countryNames' => Countries::getNames($request->getLocale()),
         ]);
@@ -209,7 +246,17 @@ class StatisticsController extends AbstractController
     #[Route('/tourism', name: 'statistics.tourism', methods: ['GET'])]
     public function tourismAction(ManagerRegistry $doctrine, RequestStack $requestStack): Response
     {
-        return $this->loadIndex('Statistics/tourism.html.twig', $doctrine, $requestStack);
+        $em = $doctrine->getManager();
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
+
+        return $this->loadIndex(
+            'Statistics/tourism.html.twig',
+            $doctrine,
+            $requestStack,
+            [
+                'reservationStatuses' => $reservationStatuses,
+            ]
+        );
     }
 
     /**
@@ -353,7 +400,7 @@ class StatisticsController extends AbstractController
      *
      * @throws \Exception
      */
-    private function loadIndex(string $template, ManagerRegistry $doctrine, RequestStack $requestStack): Response
+    private function loadIndex(string $template, ManagerRegistry $doctrine, RequestStack $requestStack, array $extra = []): Response
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -364,12 +411,12 @@ class StatisticsController extends AbstractController
         $minDate = new \DateTime($minStr);
         $maxDate = new \DateTime($maxStr);
 
-        return $this->render($template, [
+        return $this->render($template, array_merge([
             'objects' => $objects,
             'objectId' => $objectId,
             'minYear' => $minDate->format('Y'),
             'maxYear' => $maxDate->format('Y'),
-        ]);
+        ], $extra));
     }
 
     private function getLocalizedDate($monthNumber, $pattern, $locale)
