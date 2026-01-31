@@ -7,9 +7,9 @@ namespace App\Controller;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Service\HousekeepingViewService;
+use App\Service\OperationsFilterService;
 use App\Service\OperationsReportService;
 use App\Service\TemplatesService;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,15 +34,16 @@ class OperationsReportController extends AbstractController
         Request $request,
         RequestStack $requestStack,
         TemplatesService $templatesService,
-        HousekeepingViewService $housekeepingViewService
+        HousekeepingViewService $housekeepingViewService,
+        OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaries = $em->getRepository(Subsidiary::class)->findAll();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
-        $selectedSubsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
+        $selectedSubsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
 
-        $startDate = $this->resolveStartDate($request->query->get('start'));
-        $endDate = $this->resolveEndDate($request->query->get('end'), $startDate);
+        $startDate = $filterService->resolveStartDate($request->query->get('start'));
+        $endDate = $filterService->resolveEndDate($request->query->get('end'), $startDate);
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $housekeepingViewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
 
@@ -74,14 +75,15 @@ class OperationsReportController extends AbstractController
         RequestStack $requestStack,
         TemplatesService $templatesService,
         OperationsReportService $reportService,
-        HousekeepingViewService $housekeepingViewService
+        HousekeepingViewService $housekeepingViewService,
+        OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
-        $subsidiary = $this->resolveSubsidiary($em, $subsidiaryId);
+        $subsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
 
-        $startDate = $this->resolveStartDate($request->query->get('start'));
-        $endDate = $this->resolveEndDate($request->query->get('end'), $startDate);
+        $startDate = $filterService->resolveStartDate($request->query->get('start'));
+        $endDate = $filterService->resolveEndDate($request->query->get('end'), $startDate);
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $housekeepingViewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
 
@@ -149,51 +151,4 @@ class OperationsReportController extends AbstractController
         ]);
     }
 
-    /**
-     * Resolve the requested subsidiary entity, if any.
-     */
-    private function resolveSubsidiary(EntityManagerInterface $em, string $subsidiaryId): ?Subsidiary
-    {
-        if ('all' === $subsidiaryId || '' === $subsidiaryId) {
-            return null;
-        }
-
-        $subsidiary = $em->getRepository(Subsidiary::class)->find($subsidiaryId);
-
-        return $subsidiary instanceof Subsidiary ? $subsidiary : null;
-    }
-
-    /**
-     * Resolve the start date, defaulting to Monday of the current week.
-     */
-    private function resolveStartDate(?string $dateParam): \DateTimeImmutable
-    {
-        $timezone = new \DateTimeZone('UTC');
-        if ($dateParam) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam, $timezone);
-            if ($parsed instanceof \DateTimeImmutable) {
-                return $parsed->setTime(0, 0, 0);
-            }
-        }
-
-        return (new \DateTimeImmutable('today', $timezone))->modify('monday this week')->setTime(0, 0, 0);
-    }
-
-    /**
-     * Resolve the end date, defaulting to Sunday of the start week.
-     */
-    private function resolveEndDate(?string $dateParam, \DateTimeImmutable $start): \DateTimeImmutable
-    {
-        $timezone = new \DateTimeZone('UTC');
-        if ($dateParam) {
-            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam, $timezone);
-            if ($parsed instanceof \DateTimeImmutable) {
-                $end = $parsed->setTime(0, 0, 0);
-
-                return $end < $start ? $start : $end;
-            }
-        }
-
-        return $start->modify('+6 days')->setTime(0, 0, 0);
-    }
 }
