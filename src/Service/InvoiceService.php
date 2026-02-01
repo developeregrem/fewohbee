@@ -17,13 +17,16 @@ use App\Entity\Customer;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
+use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Interfaces\ITemplateRenderer;
+use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
+use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class InvoiceService implements ITemplateRenderer
@@ -229,6 +232,17 @@ class InvoiceService implements ITemplateRenderer
         ];
 
         return $params;
+    }
+
+    public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
+    {
+        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $this);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+        $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
+
+        return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+            ->generateDocument()
+            ->downloadString();
     }
 
     /**

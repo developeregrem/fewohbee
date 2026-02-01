@@ -507,11 +507,17 @@ export default class extends Controller {
         event.preventDefault();
         const id = event.currentTarget.dataset.attachmentId;
         const isInvoice = event.currentTarget.dataset.isInvoice === 'true';
+        const einvoiceCheckbox = event.currentTarget.querySelector('[data-einvoice-checkbox]');
+        const isEInvoice = !!(einvoiceCheckbox && einvoiceCheckbox.checked);
         const url = event.currentTarget.dataset.url;
         if (url && this.modalContent) {
             this.modalContent.dataset.addAttachmentUrl = url;
         }
-        this.addAsAttachment(id, isInvoice);
+        this.addAsAttachment(id, isInvoice, isEInvoice);
+    }
+
+    stopAttachmentRowClickAction(event) {
+        event.stopPropagation();
     }
 
     previewTemplateForReservationAction(event) {
@@ -1707,7 +1713,7 @@ export default class extends Controller {
 
     
 
-    addAsAttachment(id, isInvoice) {
+    addAsAttachment(id, isInvoice, isEInvoice = false) {
         const url = this.getContextValue('addAttachmentUrl');
         if (!url) {
             return false;
@@ -1715,9 +1721,15 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
-            data: { id, isInvoice },
+            data: { id, isInvoice, isEInvoice },
+            loader: false,
             target: this.modalContent,
-            onSuccess: () => this.previewTemplateForReservation(0, 'false')
+            onSuccess: (data) => {
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                this.previewTemplateForReservation(0, 'false');
+            }
         });
         return false;
     }

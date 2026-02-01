@@ -15,12 +15,15 @@ namespace App\Controller;
 
 use App\Entity\Correspondence;
 use App\Entity\FileCorrespondence;
+use App\Entity\Invoice;
+use App\Entity\InvoiceSettingsData;
 use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
+use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
@@ -518,17 +521,54 @@ class TemplatesServiceController extends AbstractController
      * Adds an already added file (correspondence) as attachment of the current mail.
      */
     #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
-    public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is): Response
+    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice): Response
     {
+        $em = $doctrine->getManager();
         $error = false;
         $isInvoice = $request->request->get('isInvoice', 'false');
+        $isEInvoice = $request->request->get('isEInvoice', 'false');
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
-            $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
+            $binaryPayload = null;
+            if ('false' != $isEInvoice) {
+                $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
+                if (!($invoice instanceof Invoice)) {
+                    $this->addFlash('warning', 'templates.attachment.notfound');
+                    $error = true;
+                } else {
+                    $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+                    if (!($invoiceSettings instanceof InvoiceSettingsData)) {
+                        $this->addFlash('danger', 'invoice.settings.active.error');
+                        $error = true;
+                    } else {
+                        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+                        $defaultTemplate = $ts->getDefaultTemplate($templates);
+                        if (null === $defaultTemplate) {
+                            $this->addFlash('warning', 'templates.notfound');
+                            $error = true;
+                        } else {
+                            try {
+                                $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $invoiceSettings);
+                            } catch (\InvalidArgumentException $e) {
+                                $this->addFlash('warning', $e->getMessage());
+                                $error = true;
+                            } catch (\Throwable $e) {
+                                $this->addFlash('warning', $e->getMessage());
+                                $error = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!$error) {
+                $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, 'false' != $isEInvoice);
+            }
         }
 
-        $reservations = $ts->getReferencedReservationsInSession();
-        $ts->addFileAsAttachment($cId, $reservations);
+        if (!$error) {
+            $reservations = $ts->getReferencedReservationsInSession();
+            $ts->addFileAsAttachment($cId, $reservations);
+        }
 
         return $this->render('feedback.html.twig', [
             'error' => $error,
@@ -541,7 +581,8 @@ class TemplatesServiceController extends AbstractController
         $em = $doctrine->getManager();
         $correspondence = $em->getRepository(Correspondence::class)->find($id);
         if ($correspondence instanceof FileCorrespondence) {
-            $output = $ts->getPDFOutput(
+            $binaryPayload = $correspondence->getBinaryPayload();
+            $output = $binaryPayload ?: $ts->getPDFOutput(
                 $correspondence->getText(),
                 $correspondence->getName(),
                 $correspondence->getTemplate()

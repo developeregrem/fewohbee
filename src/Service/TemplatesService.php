@@ -21,6 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Interfaces\ITemplateRenderer;
+use App\Service\InvoiceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -268,7 +269,7 @@ class TemplatesService
         return $correspondences;
     }
 
-    public function makeCorespondenceOfInvoice($id, InvoiceService $is): ?int
+    public function makeCorespondenceOfInvoice($id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
     {
         $invoice = $this->em->find(Invoice::class, $id);
         if (!$invoice instanceof Invoice) {
@@ -286,11 +287,18 @@ class TemplatesService
         $fileId = 0;
         foreach ($reservations as $reservation) {
             $file = new FileCorrespondence();
-            $file->setFileName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
-                 ->setName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
+            $fileName = $this->translator->trans('invoice.number.short').'-'.$invoice->getNumber();
+            if ($isEInvoice) {
+                $fileName .= '-einvoice';
+            }
+            $file->setFileName($fileName)
+                 ->setName($fileName)
                  ->setText($templateOutput)
                  ->setTemplate($defaultTemlate)
                  ->setReservation($reservation);
+            if (null !== $binaryPayload) {
+                $file->setBinaryPayload($binaryPayload);
+            }
             $this->em->persist($file);
             $this->em->flush();
             $fileId = $file->getId();
@@ -326,7 +334,8 @@ class TemplatesService
         /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
-            $data = $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
+            $binaryPayload = $attachment->getBinaryPayload();
+            $data = $binaryPayload ?: $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
 
             return new MailAttachment($data, $attachment->getName().'.pdf', 'application/pdf');
         }

@@ -28,6 +28,8 @@ final class Version20260121120000 extends AbstractMigration
         $this->addSql('CREATE UNIQUE INDEX UNIQ_RESERVATION_STATUS_CODE ON reservation_status (code)');
         $this->addSql("UPDATE reservation_status SET is_blocking = 1 WHERE is_blocking IS NULL");
         $this->addSql("INSERT INTO reservation_status (name, color, contrast_color, code, is_blocking) SELECT 'Storniert / No-Show', '#6c757d', '#ffffff', 'canceled_noshow', 0 WHERE NOT EXISTS (SELECT 1 FROM reservation_status WHERE code = 'canceled_noshow')");
+    
+         $this->addSql('ALTER TABLE correspondence ADD binary_payload LONGBLOB DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
@@ -40,6 +42,8 @@ final class Version20260121120000 extends AbstractMigration
         $this->addSql("DELETE FROM reservation_status WHERE code = 'canceled_noshow'");
         $this->addSql('DROP INDEX UNIQ_RESERVATION_STATUS_CODE ON reservation_status');
         $this->addSql('ALTER TABLE reservation_status DROP code, DROP is_blocking');
+
+        $this->addSql('ALTER TABLE correspondence DROP binary_payload');
     
     }
 
