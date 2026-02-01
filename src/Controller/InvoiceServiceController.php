@@ -32,7 +32,6 @@ use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
-use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
@@ -819,23 +818,21 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]
-    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, int $templateId): Response
+    #[Route('/export/pdf/{id}/{template}', name: 'invoices.export.pdf', methods: ['GET'])]
+    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, Template $template): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
-        $requestStack->getSession()->set('invoice-template-id', $templateId);
+        $requestStack->getSession()->set('invoice-template-id', $template->getId());
 
         $templateOutput = null;
         try {
-            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+            $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $is);
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
-
-        $template = $em->getRepository(Template::class)->find($templateId);
 
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
         $response = new Response($pdfOutput);
@@ -844,24 +841,12 @@ class InvoiceServiceController extends AbstractController
         return $response;
     }
 
-    #[Route('/export/pdf-xml/{id}/{templateId}', name: 'invoices.export.pdfxml', methods: ['GET'])]
-    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, int $templateId): Response
+    #[Route('/export/pdf-xml/{id}/{template}', name: 'invoices.export.pdfxml', methods: ['GET'])]
+    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, Template $template): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
-        $requestStack->getSession()->set('invoice-template-id', $templateId);
-
-        $templateOutput = null;
-        try {
-            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
-        } catch (\InvalidArgumentException $e) {
-            $this->addFlash('warning', $e->getMessage());
-
-            return $this->redirect($this->generateUrl('invoices.overview'));
-        }
-
-        $template = $em->getRepository(Template::class)->find($templateId);
-        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+        $requestStack->getSession()->set('invoice-template-id', $template->getId());
 
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
         if (!($invoiceSettings instanceof InvoiceSettingsData)) {
@@ -871,10 +856,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         try {
-            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
-            $mergedPdf = (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
-                ->generateDocument()
-                ->downloadString();
+            $mergedPdf = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $invoiceSettings);
         } catch (\Throwable $e) {
             $this->addFlash('warning', $e->getMessage());
 

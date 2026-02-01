@@ -37,6 +37,7 @@ invoice.miscellaneous.position.amount: Number
 invoice.netto: Net
 invoice.number: Invoice number
 invoice.number.short: Inv. no.
+invoice.einvoice: E-Invoice
 invoice.open.reservations.filter.customer: Browse reservations for customers
 invoice.open.reservations.filter.time: Search reservations in period
 invoice.position.add.appartment: Add room position
