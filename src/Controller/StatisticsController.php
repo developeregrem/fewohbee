@@ -176,22 +176,13 @@ class StatisticsController extends AbstractController
         $metrics = $snapshot->getMetrics();
         $warnings = $payload['warnings'];
 
-        if ($reservationStatus) {
-            $ignoredWarnings = [];
-            foreach (($metrics['warnings'] ?? []) as $warning) {
-                if (!empty($warning['ignored']) && isset($warning['reservation_id'])) {
-                    $ignoredWarnings[(int) $warning['reservation_id']] = true;
-                }
-            }
-            $filteredPayload = $monthlyStatsService->buildMetrics(
-                $month,
-                $year,
-                $subsidiary,
-                $ignoredWarnings,
-                $reservationStatus
-            );
-            $metrics = $filteredPayload['metrics'];
-            $warnings = $filteredPayload['warnings'];
+        $statusFilter = $reservationStatus;
+        if (!$statusFilter) {
+            $statusFilter = $em->getRepository(ReservationStatus::class)->findDefaultIds();
+        }
+        if ($statusFilter) {
+            $metrics = $monthlyStatsService->filterMetricsByStatus($metrics, $statusFilter);
+            $warnings = $metrics['warnings'] ?? [];
         }
 
         return new JsonResponse([

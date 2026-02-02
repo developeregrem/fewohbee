@@ -40,8 +40,12 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
-    private function applyReservationStatusFilter($qb, array $statusIds, string $reservationAlias = 'u', string $statusAlias = 'rs'): void
+    private function applyReservationStatusFilter($qb, ?array $statusIds, string $reservationAlias = 'u', string $statusAlias = 'rs'): void
     {
+        if (null === $statusIds) {
+            return;
+        }
+
         if (!$statusIds) {
             $this->applyBlockingStatusFilter($qb, $reservationAlias, 'blocking', $statusAlias);
 
@@ -276,7 +280,7 @@ class ReservationRepository extends ServiceEntityRepository
         return $q->getSingleScalarResult();
     }
 
-    public function loadReservationsForMonth($month, $year, $objectId, array $reservationStatus = [])
+    public function loadReservationsForMonth($month, $year, $objectId, ?array $reservationStatus = [])
     {
         $startTs = strtotime($year.'-'.$month.'-01');
         $start = date('Y-m-d', $startTs);
@@ -308,7 +312,7 @@ class ReservationRepository extends ServiceEntityRepository
         }
     }
 
-    public function loadOriginStatisticForPeriod($start, $end, $objectId, array $reservationStatus = [])
+    public function loadOriginStatisticForPeriod($start, $end, $objectId, ?array $reservationStatus = [])
     {
         if ('all' === $objectId) {
             $qb = $this->createQueryBuilder('u')

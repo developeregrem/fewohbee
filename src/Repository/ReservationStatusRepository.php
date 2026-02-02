@@ -20,7 +20,10 @@ class ReservationStatusRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, ReservationStatus::class);
     }
-
+    /**
+     * every non-system status is default
+     * @return int[]
+     */
     public function findDefaultIds(): array
     {
         $rows = $this->createQueryBuilder('rs')
