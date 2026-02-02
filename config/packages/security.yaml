@@ -1,4 +1,5 @@
 security:
+    erase_credentials: false
     password_hashers:
         App\Entity\User:
             algorithm: auto
