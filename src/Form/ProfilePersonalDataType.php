@@ -56,7 +56,7 @@ class ProfilePersonalDataType extends AbstractType
                 ],
                 'help' => 'profile.theme.help',
                 'constraints' => [
-                    new Assert\Choice(['auto', 'dark', 'light']),
+                    new Assert\Choice(choices: ['auto', 'dark', 'light']),
                 ],
             ])
             ->add('password', PasswordType::class, [
