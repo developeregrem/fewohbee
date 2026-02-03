@@ -20,20 +20,13 @@ doctrine:
                     charset: utf8mb4
                     collate: utf8mb4_unicode_ci
                 url: '%env(resolve:DATABASE_URL)%'
-                use_savepoints: true
                 profiling_collect_backtrace: '%kernel.debug%'
     orm:
-        auto_generate_proxy_classes: '%kernel.debug%'
-        enable_lazy_ghost_objects: true
-        enable_native_lazy_objects: true
         default_entity_manager: default
-        controller_resolver:
-            auto_mapping: false
         entity_managers:
             default:
                 connection: default
                 naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-                report_fields_where_declared: true
                 validate_xml_mapping: true
                 auto_mapping: true
                 mappings:
@@ -47,7 +40,6 @@ doctrine:
             background:
                 connection: default
                 naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-                report_fields_where_declared: true
                 validate_xml_mapping: true
                 auto_mapping: false
                 mappings:
