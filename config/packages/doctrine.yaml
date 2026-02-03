@@ -5,7 +5,7 @@ parameters:
     # You should not need to change this value.
     env(DATABASE_URL): ''
     # define default server version when env variable is not defined
-    env(DB_SERVER_VERSION): '5.6'
+    env(DB_SERVER_VERSION): '8.0'
 
 doctrine:
     dbal:
@@ -21,6 +21,7 @@ doctrine:
                     collate: utf8mb4_unicode_ci
                 url: '%env(resolve:DATABASE_URL)%'
                 use_savepoints: true
+                profiling_collect_backtrace: '%kernel.debug%'
     orm:
         auto_generate_proxy_classes: '%kernel.debug%'
         enable_lazy_ghost_objects: true
@@ -56,3 +57,48 @@ doctrine:
                         dir: '%kernel.project_dir%/src/Entity'
                         prefix: 'App\Entity'
                         alias: App
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system
+
+                
+when@redis:
+    doctrine:
+        orm:
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.adapter.redis
+                doctrine.system_cache_pool:
+                    adapter: cache.adapter.redis
