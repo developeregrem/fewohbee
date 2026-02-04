@@ -21,6 +21,7 @@ use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
+use App\Enum\InvoiceStatus;
 use App\Interfaces\ITemplateRenderer;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -28,16 +29,21 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class InvoiceService implements ITemplateRenderer
 {
     private $em;
     private $ps;
+    private TranslatorInterface $translator;
+    private string $invoiceFilenamePattern;
 
-    public function __construct(EntityManagerInterface $em, PriceService $ps)
+    public function __construct(EntityManagerInterface $em, PriceService $ps, TranslatorInterface $translator, string $invoiceFilenamePattern)
     {
         $this->em = $em;
         $this->ps = $ps;
+        $this->translator = $translator;
+        $this->invoiceFilenamePattern = $invoiceFilenamePattern;
     }
 
     /**
@@ -237,12 +243,96 @@ class InvoiceService implements ITemplateRenderer
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
     {
         $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $this);
-        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template, true);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 
         return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
             ->generateDocument()
             ->downloadString();
+    }
+
+    /**
+     * Builds a sanitized invoice export filename (without extension) from the configured pattern.
+     */
+    public function buildInvoiceExportFilename(Invoice $invoice, bool $appendEinvoiceSuffix = false): string
+    {
+        $pattern = trim($this->invoiceFilenamePattern);
+        if ('' === $pattern) {
+            $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
+        }
+
+        $statusLabel = '';
+        $statusEnum = InvoiceStatus::fromStatus($invoice->getStatus());
+        if (null !== $statusEnum) {
+            $statusLabel = $this->translator->trans($statusEnum->labelKey());
+        }
+
+        $paymentLabel = '';
+        $paymentMeans = $invoice->getPaymentMeans();
+        if (null !== $paymentMeans) {
+            $paymentLabel = $this->translator->trans($paymentMeans->name);
+        }
+
+        $replacements = [
+            'company' => (string) $invoice->getCompany(),
+            'lastname' => (string) $invoice->getLastname(),
+            'firstname' => (string) $invoice->getFirstname(),
+            'status' => $statusLabel,
+            'payment' => $paymentLabel,
+            'paymentmeans' => $paymentLabel,
+            'payment_means' => $paymentLabel,
+            'number' => (string) $invoice->getNumber(),
+            'date' => $invoice->getDate()->format('Y-m-d'),
+        ];
+
+        $filename = preg_replace_callback('/<([a-zA-Z_|]+)>/', static function (array $matches) use ($replacements): string {
+            $keys = array_filter(array_map('trim', explode('|', strtolower($matches[1]))));
+            foreach ($keys as $key) {
+                $value = $replacements[$key] ?? '';
+                if ('' !== trim((string) $value)) {
+                    return (string) $value;
+                }
+            }
+
+            return '';
+        }, $pattern);
+
+        if ($appendEinvoiceSuffix) {
+            $filename .= '-einvoice';
+        }
+
+        return $this->sanitizeFilename($filename);
+    }
+
+    /**
+     * Converts a raw filename to a safe ASCII-only filename.
+     */
+    public function sanitizeFilename(string $value): string
+    {
+        $value = $this->replaceGermanUmlauts($value);
+        $value = preg_replace('/\s+/', '_', $value);
+        $value = preg_replace('/[^A-Za-z0-9._-]/', '', $value);
+        $value = preg_replace('/_+/', '_', $value);
+        $value = preg_replace('/-+/', '-', $value);
+        $value = trim($value, "._-");
+
+        return '' !== $value ? $value : 'invoice';
+    }
+
+    /**
+     * Replaces German umlauts and Eszett with ASCII equivalents.
+     */
+    private function replaceGermanUmlauts(string $value): string
+    {
+        return strtr($value, [
+            'ä' => 'ae',
+            'ö' => 'oe',
+            'ü' => 'ue',
+            'Ä' => 'Ae',
+            'Ö' => 'Oe',
+            'Ü' => 'Ue',
+            'ß' => 'ss',
+        ]);
     }
 
     /**

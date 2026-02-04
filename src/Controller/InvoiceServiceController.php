@@ -834,7 +834,8 @@ class InvoiceServiceController extends AbstractController
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
-        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
+        $filenameBase = $is->buildInvoiceExportFilename($invoice);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, $filenameBase, $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
 
@@ -863,11 +864,12 @@ class InvoiceServiceController extends AbstractController
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
+        $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
         $response = new Response($mergedPdf);
         $response->headers->set('Content-Type', 'application/pdf');
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'Rechnung-'.$invoice->getNumber().'-einvoice.pdf'
+            $filenameBase.'.pdf'
         );
         $response->headers->set('Content-Disposition', $disposition);
 
@@ -875,7 +877,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, EInvoiceExportService $einvoice, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is,  EInvoiceExportService $einvoice, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
@@ -893,12 +895,13 @@ class InvoiceServiceController extends AbstractController
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
+        $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
         $response = new Response($xml);
         $response->headers->set('Content-Type', 'text/xml');
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'XRechnung-'.$invoice->getNumber().'.xml'
+            $filenameBase.'.xml'
         );
         $response->headers->set('Content-Disposition', $disposition);
 
