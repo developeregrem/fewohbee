@@ -287,10 +287,7 @@ class TemplatesService
         $fileId = 0;
         foreach ($reservations as $reservation) {
             $file = new FileCorrespondence();
-            $fileName = $this->translator->trans('invoice.number.short').'-'.$invoice->getNumber();
-            if ($isEInvoice) {
-                $fileName .= '-einvoice';
-            }
+            $fileName = $is->buildInvoiceExportFilename($invoice, $isEInvoice);
             $file->setFileName($fileName)
                  ->setName($fileName)
                  ->setText($templateOutput)

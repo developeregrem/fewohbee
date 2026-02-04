@@ -31,6 +31,7 @@ use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -576,19 +577,25 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/correspondence/export/pdf/{id}/', name: 'settings.templates.correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
-    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, $id)
+    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, InvoiceService $is, $id)
     {
         $em = $doctrine->getManager();
         $correspondence = $em->getRepository(Correspondence::class)->find($id);
         if ($correspondence instanceof FileCorrespondence) {
+            $safeName = $is->sanitizeFilename($correspondence->getName());
             $binaryPayload = $correspondence->getBinaryPayload();
             $output = $binaryPayload ?: $ts->getPDFOutput(
                 $correspondence->getText(),
-                $correspondence->getName(),
+                $safeName,
                 $correspondence->getTemplate()
             );
             $response = new Response($output);
             $response->headers->set('Content-Type', 'application/pdf');
+            $disposition = HeaderUtils::makeDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                $safeName.'.pdf'
+            );
+            $response->headers->set('Content-Disposition', $disposition);
 
             return $response;
         }
