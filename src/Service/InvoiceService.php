@@ -310,6 +310,7 @@ class InvoiceService implements ITemplateRenderer
     public function sanitizeFilename(string $value): string
     {
         $value = $this->replaceGermanUmlauts($value);
+        $value = transliterator_transliterate('Any-Latin; Latin-ASCII', $value);
         $value = preg_replace('/\s+/', '_', $value);
         $value = preg_replace('/[^A-Za-z0-9._-]/', '', $value);
         $value = preg_replace('/_+/', '_', $value);
