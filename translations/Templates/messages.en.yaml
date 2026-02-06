@@ -81,6 +81,39 @@ templates.name: Name
 templates.notfound: No template could be found. Please ensure a template exists for the selected action.
 templates.params: Additional parameters (JSON string)
 templates.preview: Preview
+templates.preview.context: Preview context
+templates.preview.render: Render preview
+templates.preview.result: Preview result
+templates.preview.empty: Select a context and render the preview.
+templates.preview.noprovider: No preview provider available for this template type.
+templates.preview.noprovider.help: Preview is not yet available for this template type.
+templates.preview.invoice.number: Invoice number
+templates.preview.invoice.number.placeholder: e.g. 2026-0001
+templates.preview.invoice.number.help: Enter an existing invoice number or leave empty for sample data.
+templates.preview.invoice.notfound: "Invoice \"%value%\" not found. Showing sample data."
+templates.preview.reservation: Reservation IDs
+templates.preview.reservation.placeholder: e.g. 101, 102
+templates.preview.reservation.help: Enter one or more reservation IDs (comma separated), or leave empty for sample data.
+templates.preview.reservation.notfound: "Reservations \"%value%\" not found. Showing sample data."
+templates.preview.date_start: Start date
+templates.preview.date_end: End date
+templates.preview.subsidiary: Subsidiary
+templates.preview.subsidiary.all: All subsidiaries
+templates.preview.occupancy: Occupancy types
+templates.preview.download_pdf: Download PDF
+templates.preview.snippet.booker_firstname: Booker first name
+templates.preview.snippet.booker_lastname: Booker last name
+templates.preview.snippet.reservation_dates: Reservation dates
+templates.preview.snippet.reservation_total: Reservation total
+templates.preview.snippet.reservation_loop: Reservation loop
+templates.preview.snippet.invoice_number: Invoice number
+templates.preview.snippet.invoice_date: Invoice date
+templates.preview.snippet.invoice_totals: Invoice totals
+templates.preview.snippet.invoice_positions: Invoice positions loop
+templates.preview.snippet.operations_period: Report period
+templates.preview.snippet.operations_dayviews: Day overview loop
+templates.preview.snippet.pdf_header: PDF header block
+templates.preview.snippet.pdf_footer: PDF footer block
 templates.recipient: Recipient
 templates.savefile.success: File was successfully saved .
 templates.select.reservations: Select reservation

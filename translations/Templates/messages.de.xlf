@@ -42,6 +42,138 @@
                 <source>templates.preview</source>
                 <target>Vorschau</target>
             </trans-unit>
+            <trans-unit id="templates.preview.context">
+                <source>templates.preview.context</source>
+                <target>Vorschau-Kontext</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render">
+                <source>templates.preview.render</source>
+                <target>Vorschau erzeugen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.result">
+                <source>templates.preview.result</source>
+                <target>Vorschau-Ergebnis</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.empty">
+                <source>templates.preview.empty</source>
+                <target>Bitte Kontext auswählen und Vorschau erzeugen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.noprovider">
+                <source>templates.preview.noprovider</source>
+                <target>Für diesen Vorlagentyp ist keine Vorschau verfügbar.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.noprovider.help">
+                <source>templates.preview.noprovider.help</source>
+                <target>Für diesen Vorlagentyp ist die Vorschau noch nicht implementiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number">
+                <source>templates.preview.invoice.number</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number.placeholder">
+                <source>templates.preview.invoice.number.placeholder</source>
+                <target>z. B. 2026-0001</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number.help">
+                <source>templates.preview.invoice.number.help</source>
+                <target>Eine vorhandene Rechnungsnummer eingeben oder leer lassen für Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.notfound">
+                <source>templates.preview.invoice.notfound</source>
+                <target>Rechnung "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation">
+                <source>templates.preview.reservation</source>
+                <target>Reservierungs-IDs</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.placeholder">
+                <source>templates.preview.reservation.placeholder</source>
+                <target>z. B. 101, 102</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.help">
+                <source>templates.preview.reservation.help</source>
+                <target>Eine oder mehrere Reservierungs-IDs (kommagetrennt) eingeben oder leer lassen für Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.notfound">
+                <source>templates.preview.reservation.notfound</source>
+                <target>Reservierungen "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.date_start">
+                <source>templates.preview.date_start</source>
+                <target>Startdatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.date_end">
+                <source>templates.preview.date_end</source>
+                <target>Enddatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.subsidiary">
+                <source>templates.preview.subsidiary</source>
+                <target>Betrieb</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.subsidiary.all">
+                <source>templates.preview.subsidiary.all</source>
+                <target>Alle Betriebe</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.occupancy">
+                <source>templates.preview.occupancy</source>
+                <target>Belegungstypen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.download_pdf">
+                <source>templates.preview.download_pdf</source>
+                <target>PDF herunterladen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.booker_firstname">
+                <source>templates.preview.snippet.booker_firstname</source>
+                <target>Bucher Vorname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.booker_lastname">
+                <source>templates.preview.snippet.booker_lastname</source>
+                <target>Bucher Nachname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_dates">
+                <source>templates.preview.snippet.reservation_dates</source>
+                <target>Reservierungszeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_total">
+                <source>templates.preview.snippet.reservation_total</source>
+                <target>Reservierung Gesamtbetrag</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_loop">
+                <source>templates.preview.snippet.reservation_loop</source>
+                <target>Reservierungs-Schleife</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_number">
+                <source>templates.preview.snippet.invoice_number</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_date">
+                <source>templates.preview.snippet.invoice_date</source>
+                <target>Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_totals">
+                <source>templates.preview.snippet.invoice_totals</source>
+                <target>Rechnungssummen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_positions">
+                <source>templates.preview.snippet.invoice_positions</source>
+                <target>Rechnungspositionen Schleife</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.operations_period">
+                <source>templates.preview.snippet.operations_period</source>
+                <target>Berichtszeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.operations_dayviews">
+                <source>templates.preview.snippet.operations_dayviews</source>
+                <target>Tagesübersicht Schleife</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.pdf_header">
+                <source>templates.preview.snippet.pdf_header</source>
+                <target>PDF Kopfzeile</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.pdf_footer">
+                <source>templates.preview.snippet.pdf_footer</source>
+                <target>PDF Fußzeile</target>
+            </trans-unit>
             <trans-unit id="templates.edit">
                 <source>templates.edit</source>
                 <target>Vorlage bearbeiten</target>

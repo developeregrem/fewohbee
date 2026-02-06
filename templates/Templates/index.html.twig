@@ -84,11 +84,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {#<a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                            <i class="fas fa-info-circle"
-                               data-action="click->settings#openModalAction"
-                               data-url="{{ path('settings.templates.preview', {'id': template.id}) }}"
-                               data-title="{{ 'templates.preview'|trans }}"></i></a>#}
+                        <a href="{{ path('settings.templates.preview', {'id': template.id}) }}" title="{{ 'templates.preview'|trans }}">
+                            <i class="fas fa-eye" aria-hidden="true"></i></a>
                         <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                             <i class="fas fa-edit"
                                data-action="click->settings#openModalAction"

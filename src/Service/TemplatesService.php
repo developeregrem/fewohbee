@@ -127,6 +127,19 @@ class TemplatesService
     }
 
     /**
+     * Render raw template content using the pseudo-twig syntax replacements.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function renderTemplateString(string $templateText, array $params): string
+    {
+        $str = $this->replaceTwigSyntax($templateText);
+        $templateStr = $this->twig->createTemplate($str);
+
+        return $templateStr->render($params);
+    }
+
+    /**
      * Default definitions for operations report templates.
      *
      * @return array<int, array<string, mixed>>

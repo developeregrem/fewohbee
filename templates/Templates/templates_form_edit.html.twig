@@ -14,6 +14,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <a class="btn btn-outline-secondary" target="_blank"
+           href="{{ path('settings.templates.preview', {'id': template.id}) }}">
+            {{ 'templates.preview'|trans }}
+        </a>
         <input type="submit" value="{{ 'button.save'|trans }}" class="btn btn-primary"/>
     </div>
 </form>

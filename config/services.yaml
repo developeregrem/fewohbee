@@ -26,6 +26,8 @@ services:
     _instanceof:
         App\Service\EInvoice\EInvoiceProfileGeneratorInterface:
             tags: ['app.einvoice.profile']
+        App\Interfaces\ITemplatePreviewProvider:
+            tags: ['app.template_preview_provider']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -64,3 +66,7 @@ services:
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:
             $profiles: !tagged_iterator app.einvoice.profile
+
+    App\Service\TemplatePreview\TemplatePreviewProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator app.template_preview_provider
