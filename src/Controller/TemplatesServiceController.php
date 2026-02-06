@@ -28,6 +28,7 @@ use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -184,19 +185,84 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
-     * Preview single entity.
+     * Render the template preview form and output.
      */
-    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
-    public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id): Response
-    {
-        $em = $doctrine->getManager();
-        $reservation = $em->getRepository(Reservation::class)->find(172);
+    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET', 'POST'])]
+    public function previewAction(
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Request $request,
+        Template $template
+    ): Response {
 
-        $template = $ts->renderTemplateForReservations($id, [$reservation]);
+        $provider = $previewRegistry->getProvider($template);
+        $contextDefinition = $provider ? $provider->getPreviewContextDefinition() : [];
+        $context = $provider ? $provider->buildSampleContext() : [];
 
-        return $this->render('Templates/templates_preview.html.twig', [
+        if ($provider) {
+            $submitted = $request->isMethod('POST')
+                ? $request->request->all()
+                : $request->query->all();
+            if (!empty($submitted)) {
+                $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
+                $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
+                $filtered = array_intersect_key($submitted, array_flip($allowedKeys));
+                $context = array_merge($context, $filtered);
+            }
+            if ($request->isMethod('POST') && empty(array_filter($submitted, static fn ($value) => $value !== null && $value !== ''))) {
+                $context = $provider->buildSampleContext();
+            }
+        }
+
+        $previewHtml = null;
+        $params = [];
+        if ($provider) {
+            $params = $provider->buildPreviewRenderParams($template, $context);
+            $previewHtml = $templatesService->renderTemplateString($template->getText(), $params);
+        }
+
+        return $this->render('Templates/templates_preview_form.html.twig', [
             'template' => $template,
+            'provider' => $provider,
+            'contextDefinition' => $contextDefinition,
+            'context' => $context,
+            'previewHtml' => $previewHtml,
+            'previewWarning' => $params['_previewWarning'] ?? null,
+            'previewWarningVars' => $params['_previewWarningVars'] ?? [],
         ]);
+    }
+
+    /**
+     * Generate and download a PDF preview for PDF-based templates.
+     */
+    #[Route('/{id}/preview/pdf', name: 'settings.templates.preview.pdf', methods: ['POST'])]
+    public function previewPdfAction(
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Request $request,
+        Template $template
+    ): Response {
+        $provider = $previewRegistry->getProvider($template);
+        if (!$provider) {
+            $this->addFlash('warning', 'templates.preview.noprovider');
+
+            return $this->redirectToRoute('settings.templates.preview', ['id' => $template->getId()]);
+        }
+
+        $context = $request->request->all();
+        if (empty(array_filter($context, static fn ($value) => $value !== null && $value !== ''))) {
+            $context = $provider->buildSampleContext();
+        }
+
+        $params = $provider->buildPreviewRenderParams($template, $context);
+        $html = $templatesService->renderTemplateString($template->getText(), $params);
+        $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template, true, 'I');
+
+        $response = new Response($pdfOutput);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename=\"Template-Preview-'.$template->getId().'.pdf\"');
+
+        return $response;
     }
 
     /**
