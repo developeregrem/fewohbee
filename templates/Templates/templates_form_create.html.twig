@@ -1,10 +1,11 @@
 <form id="entry-form-new" class="form-horizontal" role="form" method="POST"
-      data-controller="settings templates"
-      data-action="submit->templates#beforeSubmitAction submit->settings#submitFormAction"
+      data-controller="settings templates template-editor"
+      data-action="submit->template-editor#beforeSubmitAction submit->settings#submitFormAction"
       data-url="{{ path('settings.templates.create') }}"
       data-success-url="{{ path('settings.templates.overview') }}"
       data-templates-template-url="{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}"
       data-templates-upload-url="{{ path('templates.upload') }}"
+      data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'templateTypeId': 'placeholder'}) }}"
       data-templates-locale="{{ app.request.locale }}"
       data-templates-basepath="{{ app.request.basepath }}">
     <div class="modal-body ps-5 pe-5">

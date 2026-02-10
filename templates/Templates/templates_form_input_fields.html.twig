@@ -13,7 +13,7 @@
             *</label>
         <div class="col-sm-8">
             <select name="type-{{ template.id }}" class="form-select" id="template-type"
-                    data-action="change->templates#changeTemplateTypeAction"
+                    data-action="change->template-editor#onTemplateTypeChange"
                     data-template-url="{{ path('settings.templates.editor.template', {'templateTypeId': 'placeholder'}) }}">
                 {% for type in types %}
                     <option value="{{ type.id }}"{% if template.templateType != null and template.templateType.id == type.id %} selected="selected"{% endif %}>{{ type.name|trans }}</option>
@@ -23,7 +23,63 @@
     </div>
     <div class="row">
         <div class="col">
-            <textarea name="text-{{ template.id }}" id="editor1" rows="15">{{ template.text|raw }}</textarea>
+            <div class="template-editor">
+                <div class="template-editor-toolbar d-flex flex-wrap gap-2 mb-2">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleBold" title="{{ 'templates.editor.toolbar.bold'|trans }}">
+                            <i class="fas fa-bold" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleItalic" title="{{ 'templates.editor.toolbar.italic'|trans }}">
+                            <i class="fas fa-italic" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleUnderline" title="{{ 'templates.editor.toolbar.underline'|trans }}">
+                            <i class="fas fa-underline" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleBulletList" title="{{ 'templates.editor.toolbar.bullets'|trans }}">
+                            <i class="fas fa-list-ul" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleOrderedList" title="{{ 'templates.editor.toolbar.ordered'|trans }}">
+                            <i class="fas fa-list-ol" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#addLink" title="{{ 'templates.editor.toolbar.link'|trans }}">
+                            <i class="fas fa-link" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#addTable" title="{{ 'templates.editor.toolbar.table'|trans }}">
+                            <i class="fas fa-table" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#triggerImageUpload" title="{{ 'templates.editor.toolbar.image'|trans }}">
+                            <i class="fas fa-image" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#toggleCodeMode" data-template-editor-target="modeToggle" data-code-label="{{ 'templates.editor.toolbar.code'|trans }}" data-visual-label="{{ 'templates.editor.toolbar.visual'|trans }}">
+                            {{ 'templates.editor.toolbar.code'|trans }}
+                        </button>
+                    </div>
+                    <div class="input-group input-group-sm template-editor-snippets">
+                        <select class="form-select" data-template-editor-target="snippetSelect" data-placeholder="{{ 'templates.editor.snippets.placeholder'|trans }}">
+                            <option value="">{{ 'templates.editor.snippets.placeholder'|trans }}</option>
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary" data-action="template-editor#insertSnippet">
+                            {{ 'templates.editor.snippets.insert'|trans }}
+                        </button>
+                    </div>
+                </div>
+
+                <div data-template-editor-target="visualWrapper">
+                    <div data-template-editor-target="editor"></div>
+                </div>
+                <div data-template-editor-target="codeWrapper" class="d-none">
+                    <textarea data-template-editor-target="code" class="form-control template-editor-code" rows="15"></textarea>
+                </div>
+
+                <input type="file" class="d-none" data-template-editor-target="fileInput" accept="image/*" data-action="change->template-editor#handleFileChange">
+                <textarea name="text-{{ template.id }}" id="editor1" class="d-none" data-template-editor-target="source">{{ template.text|raw }}</textarea>
+            </div>
         </div>
     </div>
     <div class="row">

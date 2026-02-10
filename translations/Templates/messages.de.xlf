@@ -140,7 +140,15 @@
             </trans-unit>
             <trans-unit id="templates.preview.snippet.reservation_loop">
                 <source>templates.preview.snippet.reservation_loop</source>
-                <target>Reservierungs-Schleife</target>
+                <target>Reservierungs-Wiederholungsblock</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_apartment_positions_row">
+                <source>templates.preview.snippet.reservation_apartment_positions_row</source>
+                <target>Tabelle Reservierungspositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_misc_positions_line">
+                <source>templates.preview.snippet.reservation_misc_positions_line</source>
+                <target>Zeile Zusatzpositionen</target>
             </trans-unit>
             <trans-unit id="templates.preview.snippet.invoice_number">
                 <source>templates.preview.snippet.invoice_number</source>
@@ -156,7 +164,11 @@
             </trans-unit>
             <trans-unit id="templates.preview.snippet.invoice_positions">
                 <source>templates.preview.snippet.invoice_positions</source>
-                <target>Rechnungspositionen Schleife</target>
+                <target>Tabelle Rechnungspositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_appartments">
+                <source>templates.preview.snippet.invoice_appartments</source>
+                <target>Tabelle Apartmentpositionen</target>
             </trans-unit>
             <trans-unit id="templates.preview.snippet.operations_period">
                 <source>templates.preview.snippet.operations_period</source>
@@ -164,7 +176,7 @@
             </trans-unit>
             <trans-unit id="templates.preview.snippet.operations_dayviews">
                 <source>templates.preview.snippet.operations_dayviews</source>
-                <target>Tagesübersicht Schleife</target>
+                <target>Tagesübersicht Wiederholungsblock</target>
             </trans-unit>
             <trans-unit id="templates.preview.snippet.pdf_header">
                 <source>templates.preview.snippet.pdf_header</source>
@@ -173,6 +185,150 @@
             <trans-unit id="templates.preview.snippet.pdf_footer">
                 <source>templates.preview.snippet.pdf_footer</source>
                 <target>PDF Fußzeile</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.bold">
+                <source>templates.editor.toolbar.bold</source>
+                <target>Fett</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.italic">
+                <source>templates.editor.toolbar.italic</source>
+                <target>Kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.underline">
+                <source>templates.editor.toolbar.underline</source>
+                <target>Unterstreichen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.bullets">
+                <source>templates.editor.toolbar.bullets</source>
+                <target>Aufzählung</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.ordered">
+                <source>templates.editor.toolbar.ordered</source>
+                <target>Nummerierte Liste</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.link">
+                <source>templates.editor.toolbar.link</source>
+                <target>Link einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table">
+                <source>templates.editor.toolbar.table</source>
+                <target>Tabelle einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.image">
+                <source>templates.editor.toolbar.image</source>
+                <target>Bild einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_row_add">
+                <source>templates.editor.toolbar.table_row_add</source>
+                <target>Zeile hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_row_delete">
+                <source>templates.editor.toolbar.table_row_delete</source>
+                <target>Zeile löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_col_add">
+                <source>templates.editor.toolbar.table_col_add</source>
+                <target>Spalte hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_col_delete">
+                <source>templates.editor.toolbar.table_col_delete</source>
+                <target>Spalte löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_delete">
+                <source>templates.editor.toolbar.table_delete</source>
+                <target>Tabelle löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.font_family">
+                <source>templates.editor.toolbar.font_family</source>
+                <target>Schriftart</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.font_size">
+                <source>templates.editor.toolbar.font_size</source>
+                <target>Schriftgröße</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_left">
+                <source>templates.editor.toolbar.align_left</source>
+                <target>Linksbündig</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_center">
+                <source>templates.editor.toolbar.align_center</source>
+                <target>Zentriert</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_right">
+                <source>templates.editor.toolbar.align_right</source>
+                <target>Rechtsbündig</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.beautify">
+                <source>templates.editor.toolbar.beautify</source>
+                <target>Code formatieren</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.code">
+                <source>templates.editor.toolbar.code</source>
+                <target>Code</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.visual">
+                <source>templates.editor.toolbar.visual</source>
+                <target>Visual</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.alert.protected_comments">
+                <source>templates.editor.alert.protected_comments</source>
+                <target>Dieses Template enthält Pseudo-Twig in HTML-Kommentaren und kann nur im Code-Modus bearbeitet werden.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_toggle">
+                <source>templates.editor.row.repeat_toggle</source>
+                <target>Zeile wiederholen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_collection">
+                <source>templates.editor.row.repeat_collection</source>
+                <target>Collection (z. B. apartmentPositions)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_as">
+                <source>templates.editor.row.repeat_as</source>
+                <target>Item-Variable (z. B. position)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_key">
+                <source>templates.editor.row.repeat_key</source>
+                <target>Key-Variable (optional)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_clear">
+                <source>templates.editor.row.repeat_clear</source>
+                <target>Wiederholung entfernen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_hint">
+                <source>templates.editor.row.repeat_hint</source>
+                <target>Wiederholung für die ausgewählte Tabellenzeile konfigurieren.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_toggle">
+                <source>templates.editor.row.if_toggle</source>
+                <target>Bedingte Zeile</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_condition">
+                <source>templates.editor.row.if_condition</source>
+                <target>Bedingung (z. B. reservation.persons &gt; 1)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_clear">
+                <source>templates.editor.row.if_clear</source>
+                <target>Bedingung entfernen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.placeholder">
+                <source>templates.editor.snippets.placeholder</source>
+                <target>Baustein einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.insert">
+                <source>templates.editor.snippets.insert</source>
+                <target>Einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.sidebar">
+                <source>templates.editor.snippets.sidebar</source>
+                <target>Bausteine</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tab.edit">
+                <source>templates.editor.tab.edit</source>
+                <target>Bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tab.preview">
+                <source>templates.editor.tab.preview</source>
+                <target>Vorschau</target>
             </trans-unit>
             <trans-unit id="templates.edit">
                 <source>templates.edit</source>

@@ -53,6 +53,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
 
     public function buildSampleContext(): array
     {
+        $invoice = $this->em->getRepository(Invoice::class)->findOneBy([], ['id' => 'DESC']);
+        if ($invoice instanceof Invoice) {
+            return ['invoiceNumber' => (string) $invoice->getNumber()];
+        }
+
         return [];
     }
 
@@ -80,45 +85,129 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         return [
             [
                 'id' => 'invoice.number',
-                'label' => 'templates.preview.snippet.invoice_number',
+                'label' => 'templates.editor.invoice.number',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '[[ invoice.number ]]',
             ],
             [
                 'id' => 'invoice.date',
-                'label' => 'templates.preview.snippet.invoice_date',
+                'label' => 'templates.editor.invoice.date',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => "[[ invoice.date|date('d.m.Y') ]]",
             ],
             [
-                'id' => 'invoice.totals',
-                'label' => 'templates.preview.snippet.invoice_totals',
+                'id' => 'invoice.firstname',
+                'label' => 'templates.editor.firstname',
                 'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.firstname ]]',
+            ],
+            [
+                'id' => 'invoice.lastname',
+                'label' => 'templates.editor.lastname',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.lastname ]]',
+            ],
+            [
+                'id' => 'invoice.company',
+                'label' => 'templates.editor.company',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.company ]]',
+            ],
+            [
+                'id' => 'invoice.address',
+                'label' => 'templates.editor.address',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.address ]]',
+            ],
+            [
+                'id' => 'invoice.zip',
+                'label' => 'templates.editor.zip',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.zip ]]',
+            ],
+            [
+                'id' => 'invoice.city',
+                'label' => 'templates.editor.city',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.city ]]',
+            ],
+            [
+                'id' => 'invoice.remarks',
+                'label' => 'templates.editor.remarks',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ invoice.remarkF ]]',
+            ],
+            [
+                'id' => 'invoice.total.appartment',
+                'label' => 'templates.editor.price.total',
+                'group' => 'Totals',
+                'complexity' => 'simple',
+                'content' => '[[ appartmentTotal ]]',
+            ],
+            [
+                'id' => 'invoice.total.misc',
+                'label' => 'templates.editor.misc.total',
+                'group' => 'Totals',
+                'complexity' => 'simple',
+                'content' => '[[ miscTotal ]]',
+            ],
+            [
+                'id' => 'invoice.total.netto',
+                'label' => 'templates.editor.netto',
+                'group' => 'Totals',
+                'complexity' => 'simple',
+                'content' => '[[ nettoFormated ]]',
+            ],
+            [
+                'id' => 'invoice.total.brutto',
+                'label' => 'templates.editor.brutto',
+                'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ bruttoFormated ]]',
             ],
             [
-                'id' => 'invoice.positions',
-                'label' => 'templates.preview.snippet.invoice_positions',
+                'id' => 'invoice.vat',
+                'label' => 'templates.editor.vat',
                 'group' => 'Invoice',
-                'complexity' => 'advanced',
-                'content' => "[% for position in invoice.positions %]\n<p>[[ position.description ]]</p>\n[% endfor %]",
+                'complexity' => 'easy',
+                'content' => "<table border=\"0\">\n  <tbody>\n    <tr data-repeat=\"vats\" data-repeat-key=\"key\" data-repeat-as=\"value\">\n      <td style=\"text-align: right;\">[[ key ]] %</td>\n      <td style=\"text-align: right;\">[[ value.nettoFormated ]] €</td>\n    </tr>\n  </tbody>\n</table>",
+            ],
+            [
+                'id' => 'invoice.appartment.positions',
+                'label' => 'templates.editor.appartment.positions',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.appartment'|trans }}</th>\n      <th>{{ 'invoice.position.stays'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.appartments\" data-repeat-as=\"appartment\">\n      <td>[[ appartment.description ]] (Personen: [[ appartment.persons ]])<br />[[ appartment.startDate|date('d.m.Y') ]] - [[ appartment.endDate|date('d.m.Y') ]]</td>\n      <td>[[ appartment.amount ]]</td>\n      <td>[[ appartment.priceFormated ]] €</td>\n      <td>[[ appartment.vat ]]</td>\n      <td style=\"text-align: right;\">[[ appartment.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ appartmentTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
+            ],
+            [
+                'id' => 'invoice.misc.positions',
+                'label' => 'templates.editor.misc.positions',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.additional'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ miscTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
             ],
             [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
                 'group' => 'PDF',
                 'complexity' => 'simple',
-                'content' => '<div class="header">\n  <p>Header</p>\n</div>',
+                'content' => '<div class="header"><p>Header</p></div>',
             ],
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
                 'group' => 'PDF',
                 'complexity' => 'simple',
-                'content' => '<div class="footer">\n  <p>Footer</p>\n</div>',
+                'content' => '<div class="footer"><p>Footer</p></div>',
             ],
         ];
     }

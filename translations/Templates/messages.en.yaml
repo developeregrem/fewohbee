@@ -105,15 +105,54 @@ templates.preview.snippet.booker_firstname: Booker first name
 templates.preview.snippet.booker_lastname: Booker last name
 templates.preview.snippet.reservation_dates: Reservation dates
 templates.preview.snippet.reservation_total: Reservation total
-templates.preview.snippet.reservation_loop: Reservation loop
+templates.preview.snippet.reservation_loop: Reservation repeat block
+templates.preview.snippet.reservation_apartment_positions_row: Reservation apartment positions table
+templates.preview.snippet.reservation_misc_positions_line: Reservation misc positions line
 templates.preview.snippet.invoice_number: Invoice number
 templates.preview.snippet.invoice_date: Invoice date
 templates.preview.snippet.invoice_totals: Invoice totals
-templates.preview.snippet.invoice_positions: Invoice positions loop
+templates.preview.snippet.invoice_positions: Invoice positions table
+templates.preview.snippet.invoice_appartments: Invoice apartment table
 templates.preview.snippet.operations_period: Report period
-templates.preview.snippet.operations_dayviews: Day overview loop
+templates.preview.snippet.operations_dayviews: Day overview repeat block
 templates.preview.snippet.pdf_header: PDF header block
 templates.preview.snippet.pdf_footer: PDF footer block
+templates.editor.toolbar.bold: Bold
+templates.editor.toolbar.italic: Italic
+templates.editor.toolbar.underline: Underline
+templates.editor.toolbar.bullets: Bullet list
+templates.editor.toolbar.ordered: Numbered list
+templates.editor.toolbar.link: Insert link
+templates.editor.toolbar.table: Insert table
+templates.editor.toolbar.image: Insert image
+templates.editor.toolbar.table_row_add: Add row
+templates.editor.toolbar.table_row_delete: Delete row
+templates.editor.toolbar.table_col_add: Add column
+templates.editor.toolbar.table_col_delete: Delete column
+templates.editor.toolbar.table_delete: Delete table
+templates.editor.toolbar.font_family: Font family
+templates.editor.toolbar.font_size: Font size
+templates.editor.toolbar.align_left: Align left
+templates.editor.toolbar.align_center: Align center
+templates.editor.toolbar.align_right: Align right
+templates.editor.toolbar.beautify: Beautify code
+templates.editor.toolbar.code: Code
+templates.editor.toolbar.visual: Visual
+templates.editor.alert.protected_comments: This template contains pseudo-Twig in HTML comments and can only be edited in code mode.
+templates.editor.row.repeat_toggle: Repeat row
+templates.editor.row.repeat_collection: Collection (e.g. apartmentPositions)
+templates.editor.row.repeat_as: Item variable (e.g. position)
+templates.editor.row.repeat_key: Key variable (optional)
+templates.editor.row.repeat_clear: Clear repeat
+templates.editor.row.repeat_hint: Configure repeat behavior for the selected table row.
+templates.editor.row.if_toggle: Conditional row
+templates.editor.row.if_condition: Condition (e.g. reservation.persons > 1)
+templates.editor.row.if_clear: Clear condition
+templates.editor.snippets.placeholder: Insert snippet
+templates.editor.snippets.insert: Insert
+templates.editor.snippets.sidebar: Building blocks
+templates.editor.tab.edit: Edit
+templates.editor.tab.preview: Preview
 templates.recipient: Recipient
 templates.savefile.success: File was successfully saved .
 templates.select.reservations: Select reservation

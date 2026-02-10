@@ -39,6 +39,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 #[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
@@ -81,6 +83,30 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
+     * Full-page template workspace with edit + preview tabs.
+     */
+    #[Route('/{id}/edit-page', name: 'settings.templates.edit.page', methods: ['GET'])]
+    public function editPageAction(
+        ManagerRegistry $doctrine,
+        CSRFProtectionService $csrf,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Template $template
+    ): Response {
+        $em = $doctrine->getManager();
+        $types = $em->getRepository(TemplateType::class)->findAll();
+        $provider = $previewRegistry->getProvider($template);
+
+        return $this->render('Templates/templates_workspace.html.twig', [
+            'template' => $template,
+            'types' => $types,
+            'token' => $csrf->getCSRFTokenForForm(),
+            'provider' => $provider,
+            'contextDefinition' => $provider ? $provider->getPreviewContextDefinition() : [],
+            'context' => $provider ? $provider->buildSampleContext() : [],
+        ]);
+    }
+
+    /**
      * Show form for new entity.
      */
     #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
@@ -97,6 +123,28 @@ class TemplatesServiceController extends AbstractController
             'template' => $template,
             'token' => $csrf->getCSRFTokenForForm(),
             'types' => $types,
+        ]);
+    }
+
+    /**
+     * Full-page workspace for creating a new template.
+     */
+    #[Route('/new-page', name: 'settings.templates.new.page', methods: ['GET'])]
+    public function newPageAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf): Response
+    {
+        $em = $doctrine->getManager();
+        $template = new Template();
+        $template->setId('new');
+        $types = $em->getRepository(TemplateType::class)->findAll();
+
+        return $this->render('Templates/templates_workspace.html.twig', [
+            'template' => $template,
+            'types' => $types,
+            'token' => $csrf->getCSRFTokenForForm(),
+            'provider' => null,
+            'contextDefinition' => [],
+            'context' => [],
+            'isNew' => true,
         ]);
     }
 
@@ -233,6 +281,58 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
+     * Render preview HTML from live editor content without page reload.
+     */
+    #[Route('/{id}/preview/render', name: 'settings.templates.preview.render', methods: ['POST'])]
+    public function previewRenderAction(
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Request $request,
+        Template $template
+    ): Response {
+        $provider = $previewRegistry->getProvider($template);
+        if (!$provider) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.noprovider',
+                'warningText' => (string) $this->container->get('translator')->trans('templates.preview.noprovider'),
+                'warningVars' => [],
+            ]);
+        }
+
+        $contextDefinition = $provider->getPreviewContextDefinition();
+        $sampleContext = $provider->buildSampleContext();
+        $submittedContext = $request->request->all('previewContext');
+        $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
+        $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
+        $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
+        $context = array_merge($sampleContext, $filteredContext);
+
+        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
+            $context = $sampleContext;
+        }
+
+        $params = $provider->buildPreviewRenderParams($template, $context);
+        $templateText = trim((string) $request->request->get('previewText', ''));
+        if ('' === $templateText) {
+            $templateText = (string) $template->getText();
+        }
+        $html = $templatesService->renderTemplateString($templateText, $params);
+
+        return $this->json([
+            'html' => $html,
+            'warning' => $params['_previewWarning'] ?? null,
+            'warningText' => !empty($params['_previewWarning'])
+                ? (string) $this->container->get('translator')->trans(
+                    (string) $params['_previewWarning'],
+                    is_array($params['_previewWarningVars'] ?? null) ? $params['_previewWarningVars'] : []
+                )
+                : null,
+            'warningVars' => $params['_previewWarningVars'] ?? [],
+        ]);
+    }
+
+    /**
      * Generate and download a PDF preview for PDF-based templates.
      */
     #[Route('/{id}/preview/pdf', name: 'settings.templates.preview.pdf', methods: ['POST'])]
@@ -249,13 +349,19 @@ class TemplatesServiceController extends AbstractController
             return $this->redirectToRoute('settings.templates.preview', ['id' => $template->getId()]);
         }
 
-        $context = $request->request->all();
+        $context = $request->request->all('previewContext');
         if (empty(array_filter($context, static fn ($value) => $value !== null && $value !== ''))) {
             $context = $provider->buildSampleContext();
+        } else {
+            $context = array_merge($provider->buildSampleContext(), $context);
         }
 
         $params = $provider->buildPreviewRenderParams($template, $context);
-        $html = $templatesService->renderTemplateString($template->getText(), $params);
+        $templateText = trim((string) $request->request->get('previewText', ''));
+        if ('' === $templateText) {
+            $templateText = (string) $template->getText();
+        }
+        $html = $templatesService->renderTemplateString($templateText, $params);
         $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template, true, 'I');
 
         $response = new Response($pdfOutput);
@@ -701,6 +807,54 @@ class TemplatesServiceController extends AbstractController
         }
 
         return $response;
+    }
+
+    /**
+     * Return available snippets for the given template type.
+     */
+    #[Route('/snippets/{templateTypeId}', name: 'settings.templates.preview.snippets', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
+    public function getSnippetsForEditor(
+        ManagerRegistry $doctrine,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        TranslatorInterface $translator,
+        Environment $twig,
+        $templateTypeId
+    ): Response
+    {
+        /** @var \Symfony\Contracts\Translation\TranslatorInterface $translator */
+        //$translator = $this->container->get('translator');
+        $em = $doctrine->getManager();
+        $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
+        if (!$type instanceof TemplateType) {
+            return $this->json([]);
+        }
+
+        $template = new Template();
+        $template->setTemplateType($type);
+        $provider = $previewRegistry->getProvider($template);
+
+        if (!$provider) {
+            return $this->json([]);
+        }
+
+        $snippets = $provider->getAvailableSnippets();
+        foreach ($snippets as &$snippet) {
+            if (!empty($snippet['label'])) {
+                $snippet['label'] = $translator->trans($snippet['label']);
+            }
+            if (!empty($snippet['content']) && is_string($snippet['content'])) {
+                try {
+                    // Render snippet labels/text (e.g. {{ '...'|trans }}) while
+                    // keeping pseudo-twig placeholders ([[ ... ]]) untouched.
+                    $snippet['content'] = $twig->createTemplate($snippet['content'])->render();
+                } catch (\Throwable) {
+                    // Keep original content if rendering fails for any snippet.
+                }
+            }
+        }
+        unset($snippet);
+
+        return $this->json($snippets);
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
