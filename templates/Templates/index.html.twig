@@ -34,13 +34,9 @@
                     </button>
                 </div>
             {% endif %}
-            <button type="button" class="btn btn-secondary"
-                    data-action="click->settings#openModalAction"
-                    data-url="{{ path('settings.templates.new') }}"
-                    data-title="{{ 'templates.add'|trans }}"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalCenter">
-                    <i class="fas fa-plus"></i> {{ 'templates.add'|trans }}</button>
+            <a class="btn btn-secondary" href="{{ path('settings.templates.new.page') }}">
+                <i class="fas fa-plus" aria-hidden="true"></i> {{ 'templates.add'|trans }}
+            </a>
         </div>
     </div>
     <div class="row mt-3">
@@ -86,11 +82,9 @@
                     <td>
                         <a href="{{ path('settings.templates.preview', {'id': template.id}) }}" title="{{ 'templates.preview'|trans }}">
                             <i class="fas fa-eye" aria-hidden="true"></i></a>
-                        <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
-                            <i class="fas fa-edit"
-                               data-action="click->settings#openModalAction"
-                               data-url="{{ path('settings.templates.get', {'id': template.id}) }}"
-                               data-title="{{ 'templates.edit'|trans }}"></i></a>
+                        <a href="{{ path('settings.templates.edit.page', {'id': template.id}) }}" title="{{ 'button.edit'|trans }}">
+                            <i class="fas fa-edit" aria-hidden="true"></i>
+                        </a>
                         {% set id = template.id %}
                         {% set targetUrl = path('settings.templates.delete', {'id': template.id}) %}
                         {% use "common/delete_popover.html.twig" %}
@@ -115,5 +109,4 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js" defer></script>
 {% endblock %}

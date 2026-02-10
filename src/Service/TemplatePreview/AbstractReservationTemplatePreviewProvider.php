@@ -61,6 +61,11 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
 
     public function buildSampleContext(): array
     {
+        $reservation = $this->em->getRepository(Reservation::class)->findOneBy([], ['id' => 'DESC']);
+        if ($reservation instanceof Reservation) {
+            return ['reservationIds' => (string) $reservation->getId()];
+        }
+
         return [];
     }
 
@@ -83,39 +88,102 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
     {
         return [
             [
-                'id' => 'reservation.booker.firstname',
-                'label' => 'templates.preview.snippet.booker_firstname',
+                'id' => 'reservation.booker.salutation',
+                'label' => 'customer.salutation',
                 'group' => 'Reservation',
                 'complexity' => 'simple',
-                'content' => '[[ reservation.booker.firstname ]]',
+                'content' => '[[ reservation1.booker.salutation ]]',
             ],
             [
                 'id' => 'reservation.booker.lastname',
-                'label' => 'templates.preview.snippet.booker_lastname',
+                'label' => 'customer.lastname',
                 'group' => 'Reservation',
                 'complexity' => 'simple',
-                'content' => '[[ reservation.booker.lastname ]]',
+                'content' => '[[ reservation1.booker.lastname ]]',
             ],
             [
-                'id' => 'reservation.dates',
-                'label' => 'templates.preview.snippet.reservation_dates',
+                'id' => 'reservation.booker.firstname',
+                'label' => 'customer.firstname',
                 'group' => 'Reservation',
                 'complexity' => 'simple',
-                'content' => '[[ reservation.startDate|date(\'d.m.Y\') ]] - [[ reservation.endDate|date(\'d.m.Y\') ]]',
+                'content' => '[[ reservation1.booker.firstname ]]',
+            ],
+            [
+                'id' => 'reservation.booker.birthday',
+                'label' => 'customer.birthday',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => "[[ reservation1.booker.birthday|date('d.m.Y') ]]",
+            ],
+            [
+                'id' => 'reservation.address.company',
+                'label' => 'templates.editor.company',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => '[[ address.company ]]',
+            ],
+            [
+                'id' => 'reservation.address.address',
+                'label' => 'templates.editor.address',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => '[[ address.address ]]',
+            ],
+            [
+                'id' => 'reservation.address.zip',
+                'label' => 'templates.editor.zip',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => '[[ address.zip ]]',
+            ],
+            [
+                'id' => 'reservation.address.city',
+                'label' => 'templates.editor.city',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => '[[ address.city ]]',
+            ],
+            [
+                'id' => 'reservation.address.phone',
+                'label' => 'templates.editor.phone',
+                'group' => 'Reservation',
+                'complexity' => 'simple',
+                'content' => '[[ address.phone ]]',
             ],
             [
                 'id' => 'reservation.price.total',
-                'label' => 'templates.preview.snippet.reservation_total',
-                'group' => 'Reservation',
+                'label' => 'templates.editor.price.total',
+                'group' => 'Totals',
                 'complexity' => 'simple',
-                'content' => '[[ totalPrice ]]',
+                'content' => '[[ sumApartment ]] €',
             ],
             [
-                'id' => 'reservation.loop',
-                'label' => 'templates.preview.snippet.reservation_loop',
+                'id' => 'reservation.price.misc',
+                'label' => 'templates.editor.misc.total',
+                'group' => 'Totals',
+                'complexity' => 'simple',
+                'content' => '[[ sumMisc ]] €',
+            ],
+            [
+                'id' => 'reservation.price.sum',
+                'label' => 'templates.editor.price.sum',
+                'group' => 'Totals',
+                'complexity' => 'simple',
+                'content' => '[[ totalPrice ]] €',
+            ],
+            [
+                'id' => 'reservation.apartment_positions.row',
+                'label' => 'templates.editor.appartment.positions',
                 'group' => 'Reservation',
-                'complexity' => 'advanced',
-                'content' => "[% for reservation in reservations %]\n<p>[[ reservation.booker.lastname ]]</p>\n[% endfor %]",
+                'complexity' => 'easy',
+                'content' => "<table style=\"width:100%; border-collapse: collapse;\"><tr><th>{{ 'reservation.startdate'|trans }}</th><th>{{ 'reservation.enddate'|trans }}</th><th>{{ 'reservation.appartment.name'|trans }}</th><th>{{ 'reservation.persons'|trans }}</th><th>{{ 'reservation.price'|trans }}</th></tr><tr data-repeat=\"apartmentPositions\" data-repeat-as=\"position\"><td>[[ position.startDate|date('d.m.Y') ]]</td><td>[[ position.endDate|date('d.m.Y') ]]</td><td>[[ position.description ]]</td><td>[[ position.persons ]]</td><td>[[ position.totalPrice ]] €</td></tr></table>",
+            ],
+            [
+                'id' => 'reservation.misc_positions.line',
+                'label' => 'templates.editor.misc.positions',
+                'group' => 'Reservation',
+                'complexity' => 'easy',
+                'content' => "<span data-repeat=\"miscPositions\" data-repeat-as=\"position\">[[ position.description ]]: [[ position.totalPrice ]] €<br /></span>",
             ],
         ];
     }
