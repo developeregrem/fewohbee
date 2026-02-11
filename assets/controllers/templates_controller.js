@@ -4,19 +4,7 @@ export default class extends Controller {
     static targets = ['importNotice'];
 
     connect() {
-        this.modalContent = document.getElementById('modal-content-ajax');
-        const modalDialog = document.querySelector('#modalCenter .modal-dialog');
-
-        if (modalDialog && !modalDialog.classList.contains('modal-lg')) {
-            modalDialog.classList.add('modal-lg');
-        }
         this.hideDismissedImportNotice();
-    }
-
-    disconnect() {
-        if (this.modalObserver) {
-            this.modalObserver.disconnect();
-        }
     }
 
     dismissImportNotice() {

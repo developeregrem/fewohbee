@@ -32,6 +32,18 @@ use Twig\Environment;
 class TemplatesService
 {
     public const EXAMPLES_BASE_URL = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+    /**
+     * Default mPDF layout parameters for templates.
+     */
+    public const DEFAULT_TEMPLATE_PARAMS = [
+        'orientation' => 'P',
+        'marginLeft' => 25.0,
+        'marginRight' => 20.0,
+        'marginTop' => 20.0,
+        'marginBottom' => 20.0,
+        'marginHeader' => 9.0,
+        'marginFooter' => 9.0,
+    ];
     private $webHost;
 
     public function __construct(
@@ -66,7 +78,7 @@ class TemplatesService
         $template->setTemplateType($type);
         $template->setName(trim($request->request->get('name-'.$id)));
         $template->setText($request->request->get('text-'.$id));
-        $template->setParams($request->request->get('params-'.$id));
+        $template->setParams($this->buildTemplateParamsFromRequest($request, (string) $id));
         if ($request->request->has('default-'.$id)) {
             $template->setIsDefault(true);
         } else {
@@ -229,17 +241,70 @@ class TemplatesService
      */
     public function buildTemplateParams(array $custom): string
     {
-        $params = array_merge([
-            'orientation' => 'P',
-            'marginLeft' => 25,
-            'marginRight' => 20,
-            'marginTop' => 20,
-            'marginBottom' => 20,
-            'marginHeader' => 9,
-            'marginFooter' => 9,
-        ], $custom);
+        $params = array_merge(self::DEFAULT_TEMPLATE_PARAMS, $custom);
 
         return json_encode($params, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Parse template params from persisted JSON and merge with defaults.
+     *
+     * @return array<string, float|string>
+     */
+    public function parseTemplateParams(?string $rawParams): array
+    {
+        $params = self::DEFAULT_TEMPLATE_PARAMS;
+        if (!is_string($rawParams) || '' === trim($rawParams)) {
+            return $params;
+        }
+
+        $decoded = json_decode($rawParams, true);
+        if (!is_array($decoded)) {
+            return $params;
+        }
+
+        $orientation = strtoupper((string) ($decoded['orientation'] ?? $params['orientation']));
+        $params['orientation'] = 'L' === $orientation ? 'L' : 'P';
+
+        foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
+            if (!array_key_exists($key, $decoded)) {
+                continue;
+            }
+            if (is_numeric($decoded[$key])) {
+                $params[$key] = (float) $decoded[$key];
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Build template params JSON from request fields (new structured inputs + legacy JSON fallback).
+     */
+    public function buildTemplateParamsFromRequest(Request $request, string $id): string
+    {
+        $orientationField = 'params-orientation-'.$id;
+        $hasStructuredInput = $request->request->has($orientationField);
+        if ($hasStructuredInput) {
+            $structured = [
+                'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
+            ];
+            foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
+                $value = $request->request->get('params-'.$key.'-'.$id);
+                if (is_numeric($value)) {
+                    $structured[$key] = (float) $value;
+                }
+            }
+
+            return $this->buildTemplateParams($structured);
+        }
+
+        $legacyRaw = $request->request->get('params-'.$id);
+        if (is_string($legacyRaw) && '' !== trim($legacyRaw)) {
+            return $this->buildTemplateParams($this->parseTemplateParams($legacyRaw));
+        }
+
+        return $this->buildTemplateParams([]);
     }
 
     /**

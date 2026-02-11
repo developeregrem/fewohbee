@@ -65,30 +65,13 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
-     * Show single entity.
-     */
-    #[Route('/{id}/get', name: 'settings.templates.get', defaults: ['id' => '0'], methods: ['GET'])]
-    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
-    {
-        $em = $doctrine->getManager();
-        $template = $em->getRepository(Template::class)->find($id);
-
-        $types = $em->getRepository(TemplateType::class)->findAll();
-
-        return $this->render('Templates/templates_form_edit.html.twig', [
-            'template' => $template,
-            'token' => $csrf->getCSRFTokenForForm(),
-            'types' => $types,
-        ]);
-    }
-
-    /**
      * Full-page template workspace with edit + preview tabs.
      */
     #[Route('/{id}/edit-page', name: 'settings.templates.edit.page', methods: ['GET'])]
     public function editPageAction(
         ManagerRegistry $doctrine,
         CSRFProtectionService $csrf,
+        TemplatesService $templatesService,
         TemplatePreviewProviderRegistry $previewRegistry,
         Template $template
     ): Response {
@@ -103,26 +86,7 @@ class TemplatesServiceController extends AbstractController
             'provider' => $provider,
             'contextDefinition' => $provider ? $provider->getPreviewContextDefinition() : [],
             'context' => $provider ? $provider->buildSampleContext() : [],
-        ]);
-    }
-
-    /**
-     * Show form for new entity.
-     */
-    #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
-    public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf): Response
-    {
-        $em = $doctrine->getManager();
-
-        $template = new Template();
-        $template->setId('new');
-
-        $types = $em->getRepository(TemplateType::class)->findAll();
-
-        return $this->render('Templates/templates_form_create.html.twig', [
-            'template' => $template,
-            'token' => $csrf->getCSRFTokenForForm(),
-            'types' => $types,
+            'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
         ]);
     }
 
@@ -130,7 +94,7 @@ class TemplatesServiceController extends AbstractController
      * Full-page workspace for creating a new template.
      */
     #[Route('/new-page', name: 'settings.templates.new.page', methods: ['GET'])]
-    public function newPageAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf): Response
+    public function newPageAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $templatesService): Response
     {
         $em = $doctrine->getManager();
         $template = new Template();
@@ -144,6 +108,7 @@ class TemplatesServiceController extends AbstractController
             'provider' => null,
             'contextDefinition' => [],
             'context' => [],
+            'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
             'isNew' => true,
         ]);
     }
@@ -288,6 +253,7 @@ class TemplatesServiceController extends AbstractController
         TemplatesService $templatesService,
         TemplatePreviewProviderRegistry $previewRegistry,
         Request $request,
+        TranslatorInterface $translator,
         Template $template
     ): Response {
         $provider = $previewRegistry->getProvider($template);
@@ -323,7 +289,7 @@ class TemplatesServiceController extends AbstractController
             'html' => $html,
             'warning' => $params['_previewWarning'] ?? null,
             'warningText' => !empty($params['_previewWarning'])
-                ? (string) $this->container->get('translator')->trans(
+                ? (string) $translator->trans(
                     (string) $params['_previewWarning'],
                     is_array($params['_previewWarningVars'] ?? null) ? $params['_previewWarningVars'] : []
                 )
@@ -333,7 +299,7 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
-     * Generate and download a PDF preview for PDF-based templates.
+     * Generate a PDF preview stream for PDF-based templates.
      */
     #[Route('/{id}/preview/pdf', name: 'settings.templates.preview.pdf', methods: ['POST'])]
     public function previewPdfAction(
@@ -344,16 +310,25 @@ class TemplatesServiceController extends AbstractController
     ): Response {
         $provider = $previewRegistry->getProvider($template);
         if (!$provider) {
-            $this->addFlash('warning', 'templates.preview.noprovider');
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'error' => 'templates.preview.noprovider',
+                ], Response::HTTP_BAD_REQUEST);
+            }
 
+            $this->addFlash('warning', 'templates.preview.noprovider');
             return $this->redirectToRoute('settings.templates.preview', ['id' => $template->getId()]);
         }
 
-        $context = $request->request->all('previewContext');
-        if (empty(array_filter($context, static fn ($value) => $value !== null && $value !== ''))) {
+        $contextDefinition = $provider->getPreviewContextDefinition();
+        $submittedContext = $request->request->all('previewContext');
+        $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
+        $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
+        $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
+        $context = array_merge($provider->buildSampleContext(), $filteredContext);
+
+        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
             $context = $provider->buildSampleContext();
-        } else {
-            $context = array_merge($provider->buildSampleContext(), $context);
         }
 
         $params = $provider->buildPreviewRenderParams($template, $context);
@@ -366,7 +341,7 @@ class TemplatesServiceController extends AbstractController
 
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
-        $response->headers->set('Content-Disposition', 'attachment; filename=\"Template-Preview-'.$template->getId().'.pdf\"');
+        $response->headers->set('Content-Disposition', 'inline; filename=\"Template-Preview-'.$template->getId().'.pdf\"');
 
         return $response;
     }

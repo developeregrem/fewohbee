@@ -388,7 +388,47 @@
             </trans-unit>
             <trans-unit id="templates.params">
                 <source>templates.params</source>
-                <target>zusätzliche Paramater (JSON-String)</target>
+                <target>PDF-Layout</target>
+            </trans-unit>
+            <trans-unit id="templates.params.help">
+                <source>templates.params.help</source>
+                <target>Ausrichtung und Ränder für erzeugte PDFs (alle Ränder in mm).</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation">
+                <source>templates.params.orientation</source>
+                <target>Ausrichtung</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation.portrait">
+                <source>templates.params.orientation.portrait</source>
+                <target>Hochformat (P)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation.landscape">
+                <source>templates.params.orientation.landscape</source>
+                <target>Querformat (L)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_top">
+                <source>templates.params.margin_top</source>
+                <target>Oberer Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_bottom">
+                <source>templates.params.margin_bottom</source>
+                <target>Unterer Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_left">
+                <source>templates.params.margin_left</source>
+                <target>Linker Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_right">
+                <source>templates.params.margin_right</source>
+                <target>Rechter Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_header">
+                <source>templates.params.margin_header</source>
+                <target>Header-Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_footer">
+                <source>templates.params.margin_footer</source>
+                <target>Footer-Rand (mm)</target>
             </trans-unit>
             <trans-unit id="templates.default">
                 <source>templates.default</source>
