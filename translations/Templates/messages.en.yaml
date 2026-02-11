@@ -79,7 +79,17 @@ templates.flash.delete.success: Template successfully deleted.
 templates.flash.edit.success: Template successfully updated.
 templates.name: Name
 templates.notfound: No template could be found. Please ensure a template exists for the selected action.
-templates.params: Additional parameters (JSON string)
+templates.params: PDF layout
+templates.params.help: Orientation and margins for generated PDFs (all margins in mm).
+templates.params.orientation: Orientation
+templates.params.orientation.portrait: Portrait (P)
+templates.params.orientation.landscape: Landscape (L)
+templates.params.margin_top: Top margin (mm)
+templates.params.margin_bottom: Bottom margin (mm)
+templates.params.margin_left: Left margin (mm)
+templates.params.margin_right: Right margin (mm)
+templates.params.margin_header: Header margin (mm)
+templates.params.margin_footer: Footer margin (mm)
 templates.preview: Preview
 templates.preview.context: Preview context
 templates.preview.render: Render preview

@@ -187,6 +187,7 @@ export default class extends Controller {
         'rowRepeatAs',
         'rowRepeatKey',
         'rowMetaBadge',
+        'pdfParamsPanel',
     ];
 
     connect() {
@@ -218,8 +219,10 @@ export default class extends Controller {
         }
 
         this.refreshSnippets();
+        this.updatePdfParamsVisibility();
         this.showEditTab();
         this.refreshToolbarState();
+        this.previewPdfObjectUrl = null;
     }
 
     disconnect() {
@@ -231,6 +234,7 @@ export default class extends Controller {
             this.codeWrapperTarget.removeEventListener('drop', this.onCodeWrapperDrop);
             this.codeDropListenersAttached = false;
         }
+        this.revokePreviewPdfUrl();
     }
 
     beforeSubmitAction() {
@@ -285,10 +289,16 @@ export default class extends Controller {
         }
 
         this.beforeSubmitAction();
-        const formData = new FormData();
-        formData.append('previewText', this.sourceTarget.value || '');
-        this.appendPreviewContextToFormData(formData);
+        if (this.isCurrentTemplateTypePdf()) {
+            await this.renderPdfPreview();
+            return;
+        }
 
+        await this.renderHtmlPreview();
+    }
+
+    async renderHtmlPreview() {
+        const formData = this.buildPreviewFormData();
         try {
             const response = await fetch(this.previewRenderUrl, {
                 method: 'POST',
@@ -300,54 +310,86 @@ export default class extends Controller {
             }
             const payload = await response.json();
             if (this.hasPreviewResultTarget) {
+                this.revokePreviewPdfUrl();
                 this.previewResultTarget.innerHTML = payload.html || '';
             }
-            if (this.hasPreviewWarningTarget) {
-                if (payload.warningText) {
-                    this.previewWarningTarget.textContent = payload.warningText;
-                    this.previewWarningTarget.classList.remove('d-none');
-                } else {
-                    this.previewWarningTarget.textContent = '';
-                    this.previewWarningTarget.classList.add('d-none');
-                }
+            this.applyPreviewWarning(payload.warningText);
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    async renderPdfPreview() {
+        if (!this.previewPdfUrl) {
+            return;
+        }
+
+        try {
+            const warningResponse = await fetch(this.previewRenderUrl, {
+                method: 'POST',
+                body: this.buildPreviewFormData(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (warningResponse.ok) {
+                const warningPayload = await warningResponse.json();
+                this.applyPreviewWarning(warningPayload.warningText);
+            }
+
+            const response = await fetch(this.previewPdfUrl, {
+                method: 'POST',
+                body: this.buildPreviewFormData(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                return;
+            }
+            const blob = await response.blob();
+            this.revokePreviewPdfUrl();
+            this.previewPdfObjectUrl = URL.createObjectURL(blob);
+            if (this.hasPreviewResultTarget) {
+                this.previewResultTarget.innerHTML = `<iframe src="${this.previewPdfObjectUrl}" class="template-preview-pdf-frame" style="width:100%;height:75vh;border:0;" title="PDF Preview"></iframe>`;
             }
         } catch (error) {
             // ignore
         }
     }
 
-    downloadPreviewPdf() {
-        if (!this.previewPdfUrl) {
+    buildPreviewFormData() {
+        const formData = new FormData();
+        formData.append('previewText', this.sourceTarget.value || '');
+        this.appendPreviewContextToFormData(formData);
+
+        return formData;
+    }
+
+    applyPreviewWarning(warningText) {
+        if (!this.hasPreviewWarningTarget) {
             return;
         }
+        if (warningText) {
+            this.previewWarningTarget.textContent = warningText;
+            this.previewWarningTarget.classList.remove('d-none');
+        } else {
+            this.previewWarningTarget.textContent = '';
+            this.previewWarningTarget.classList.add('d-none');
+        }
+    }
 
-        this.beforeSubmitAction();
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = this.previewPdfUrl;
-        form.target = '_blank';
-        form.dataset.turbo = 'false';
+    revokePreviewPdfUrl() {
+        if (this.previewPdfObjectUrl) {
+            URL.revokeObjectURL(this.previewPdfObjectUrl);
+            this.previewPdfObjectUrl = null;
+        }
+    }
 
-        const textInput = document.createElement('input');
-        textInput.type = 'hidden';
-        textInput.name = 'previewText';
-        textInput.value = this.sourceTarget.value || '';
-        form.appendChild(textInput);
+    isCurrentTemplateTypePdf() {
+        if (!this.templateTypeSelect) {
+            return false;
+        }
+        const selectedOption = this.templateTypeSelect.options[this.templateTypeSelect.selectedIndex];
+        const typeName = selectedOption?.dataset?.templateTypeName || '';
 
-        this.getPreviewContextInputs().forEach((input) => {
-            if ((input.type === 'checkbox' || input.type === 'radio') && !input.checked) {
-                return;
-            }
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = input.name;
-            hidden.value = input.value;
-            form.appendChild(hidden);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-        form.remove();
+        return typeName.includes('_PDF');
     }
 
     toggleCodeMode() {
@@ -615,6 +657,15 @@ export default class extends Controller {
 
     onTemplateTypeChange() {
         this.refreshSnippets();
+        this.updatePdfParamsVisibility();
+    }
+
+    updatePdfParamsVisibility() {
+        if (!this.hasPdfParamsPanelTarget) {
+            return;
+        }
+        const isPdf = this.isCurrentTemplateTypePdf();
+        this.pdfParamsPanelTarget.classList.toggle('d-none', !isPdf);
     }
 
     async refreshSnippets() {

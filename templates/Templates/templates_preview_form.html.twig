@@ -84,17 +84,6 @@
 
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">{{ 'templates.preview.render'|trans }}</button>
-                                {% if template.templateType is not null and '_PDF' in template.templateType.name %}
-                                    <button type="submit"
-                                            class="btn btn-outline-primary shadow-none"
-                                            formtarget="_blank"
-                                            data-turbo="false"
-                                            title="{{ 'templates.preview.download_pdf'|trans }}"
-                                            aria-label="{{ 'templates.preview.download_pdf'|trans }}"
-                                            formaction="{{ path('settings.templates.preview.pdf', {'id': template.id}) }}">
-                                        <i class="fas fa-file-pdf" aria-hidden="true"></i>
-                                    </button>
-                                {% endif %}
                             </div>
                         </form>
                     {% endif %}
