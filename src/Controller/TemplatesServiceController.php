@@ -198,54 +198,6 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
-     * Render the template preview form and output.
-     */
-    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET', 'POST'])]
-    public function previewAction(
-        TemplatesService $templatesService,
-        TemplatePreviewProviderRegistry $previewRegistry,
-        Request $request,
-        Template $template
-    ): Response {
-
-        $provider = $previewRegistry->getProvider($template);
-        $contextDefinition = $provider ? $provider->getPreviewContextDefinition() : [];
-        $context = $provider ? $provider->buildSampleContext() : [];
-
-        if ($provider) {
-            $submitted = $request->isMethod('POST')
-                ? $request->request->all()
-                : $request->query->all();
-            if (!empty($submitted)) {
-                $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
-                $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
-                $filtered = array_intersect_key($submitted, array_flip($allowedKeys));
-                $context = array_merge($context, $filtered);
-            }
-            if ($request->isMethod('POST') && empty(array_filter($submitted, static fn ($value) => $value !== null && $value !== ''))) {
-                $context = $provider->buildSampleContext();
-            }
-        }
-
-        $previewHtml = null;
-        $params = [];
-        if ($provider) {
-            $params = $provider->buildPreviewRenderParams($template, $context);
-            $previewHtml = $templatesService->renderTemplateString($template->getText(), $params);
-        }
-
-        return $this->render('Templates/templates_preview_form.html.twig', [
-            'template' => $template,
-            'provider' => $provider,
-            'contextDefinition' => $contextDefinition,
-            'context' => $context,
-            'previewHtml' => $previewHtml,
-            'previewWarning' => $params['_previewWarning'] ?? null,
-            'previewWarningVars' => $params['_previewWarningVars'] ?? [],
-        ]);
-    }
-
-    /**
      * Render preview HTML from live editor content without page reload.
      */
     #[Route('/{id}/preview/render', name: 'settings.templates.preview.render', methods: ['POST'])]
@@ -283,7 +235,16 @@ class TemplatesServiceController extends AbstractController
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
         }
-        $html = $templatesService->renderTemplateString($templateText, $params);
+        try {
+            $html = $templatesService->renderTemplateString($templateText, $params);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.render.error.generic',
+                'warningText' => $e->getMessage(),
+                'warningVars' => [],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         return $this->json([
             'html' => $html,
@@ -317,7 +278,7 @@ class TemplatesServiceController extends AbstractController
             }
 
             $this->addFlash('warning', 'templates.preview.noprovider');
-            return $this->redirectToRoute('settings.templates.preview', ['id' => $template->getId()]);
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
         }
 
         $contextDefinition = $provider->getPreviewContextDefinition();
@@ -336,7 +297,18 @@ class TemplatesServiceController extends AbstractController
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
         }
-        $html = $templatesService->renderTemplateString($templateText, $params);
+        try {
+            $html = $templatesService->renderTemplateString($templateText, $params);
+        } catch (\Throwable $e) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'error' => $e->getMessage(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
+        }
         $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template, true, 'I');
 
         $response = new Response($pdfOutput);
@@ -768,22 +740,6 @@ class TemplatesServiceController extends AbstractController
         return new Response('no mail');
     }
 
-    #[Route('/editortemplate/{templateTypeId}', name: 'settings.templates.editor.template', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
-    public function getTemplatesForEditor(ManagerRegistry $doctrine, $templateTypeId)
-    {
-        $em = $doctrine->getManager();
-        /* @var $type TemplateType */
-        $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
-        if ($type instanceof TemplateType && !empty($type->getEditorTemplate())) {
-            $response = $this->render('Templates/'.$type->getEditorTemplate());
-            $response->headers->set('Content-Type', 'application/json');
-        } else {
-            $response = $this->json([]);
-        }
-
-        return $response;
-    }
-
     /**
      * Return available snippets for the given template type.
      */
@@ -792,11 +748,11 @@ class TemplatesServiceController extends AbstractController
         TemplatePreviewProviderRegistry $previewRegistry,
         TranslatorInterface $translator,
         Environment $twig,
-        TemplateType $templateType
+        TemplateType $id
     ): Response
     {
         $template = new Template();
-        $template->setTemplateType($templateType);
+        $template->setTemplateType($id);
         $provider = $previewRegistry->getProvider($template);
 
         if (!$provider) {

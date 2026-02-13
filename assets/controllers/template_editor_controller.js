@@ -182,6 +182,8 @@ export default class extends Controller {
         'toolbarHost',
         'beautifyButton',
         'modeToggle',
+        'modeIconCode',
+        'modeIconVisual',
         'tabEdit',
         'tabPreview',
         'panelEdit',
@@ -315,6 +317,7 @@ export default class extends Controller {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (!response.ok) {
+                await this.applyPreviewErrorFromResponse(response);
                 return;
             }
             const payload = await response.json();
@@ -342,6 +345,9 @@ export default class extends Controller {
             if (warningResponse.ok) {
                 const warningPayload = await warningResponse.json();
                 this.applyPreviewWarning(warningPayload.warningText);
+            } else {
+                await this.applyPreviewErrorFromResponse(warningResponse);
+                return;
             }
 
             const response = await fetch(this.previewPdfUrl, {
@@ -350,6 +356,7 @@ export default class extends Controller {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (!response.ok) {
+                await this.applyPreviewErrorFromResponse(response);
                 return;
             }
             const blob = await response.blob();
@@ -382,6 +389,20 @@ export default class extends Controller {
             this.previewWarningTarget.textContent = '';
             this.previewWarningTarget.classList.add('d-none');
         }
+    }
+
+    async applyPreviewErrorFromResponse(response) {
+        try {
+            const payload = await response.json();
+            const message = payload.warningText || payload.error || '';
+            if (message) {
+                this.applyPreviewWarning(message);
+                return;
+            }
+        } catch (error) {
+            // ignore json parse errors
+        }
+        this.applyPreviewWarning(this.i18n.i18nPreviewRenderError || 'Template konnte nicht gerendert werden.');
     }
 
     revokePreviewPdfUrl() {
@@ -429,11 +450,7 @@ export default class extends Controller {
             const visualLabel = this.modeToggleTarget.dataset.visualLabel || 'Visual';
             this.modeToggleTarget.title = visualLabel;
             this.modeToggleTarget.setAttribute('aria-label', visualLabel);
-            const icon = this.modeToggleTarget.querySelector('i');
-            if (icon) {
-                icon.classList.remove('fa-code');
-                icon.classList.add('fa-eye');
-            }
+            this.setModeToggleIcon('fa-eye');
         }
         if (this.hasBeautifyButtonTarget) {
             this.beautifyButtonTarget.classList.remove('d-none');
@@ -461,11 +478,7 @@ export default class extends Controller {
             const codeLabel = this.modeToggleTarget.dataset.codeLabel || 'Code';
             this.modeToggleTarget.title = codeLabel;
             this.modeToggleTarget.setAttribute('aria-label', codeLabel);
-            const icon = this.modeToggleTarget.querySelector('i');
-            if (icon) {
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-code');
-            }
+            this.setModeToggleIcon('fa-code');
         }
         if (this.hasBeautifyButtonTarget) {
             this.beautifyButtonTarget.classList.add('d-none');
@@ -475,6 +488,26 @@ export default class extends Controller {
 
     isCodeMode() {
         return this.mode === 'code';
+    }
+
+    setModeToggleIcon(iconClass) {
+        if (this.hasModeIconCodeTarget && this.hasModeIconVisualTarget) {
+            const showCodeIcon = iconClass === 'fa-code';
+            this.modeIconCodeTarget.classList.toggle('d-none', !showCodeIcon);
+            this.modeIconVisualTarget.classList.toggle('d-none', showCodeIcon);
+            return;
+        }
+
+        if (!this.hasModeToggleTarget) {
+            return;
+        }
+
+        const icon = this.modeToggleTarget.querySelector('i, svg');
+        if (!icon) {
+            return;
+        }
+        icon.classList.remove('fa-code', 'fa-eye');
+        icon.classList.add(iconClass);
     }
 
     initToolbar() {

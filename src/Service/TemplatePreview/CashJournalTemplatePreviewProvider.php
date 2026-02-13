@@ -139,11 +139,18 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
                 'content' => "<table style=\"border-collapse: collapse; width: 100%;\" border=\"0\" cellspacing=\"0px\"><tr><th>#</th><th>{{ 'journal.entry.incomes'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.expenses'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.inventory'|trans({}, 'CashJournal') }} €</th><th>{{ 'journal.entry.counteraccount'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.invoicenumber'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.documentnumber'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.date'|trans({}, 'CashJournal') }}</th><th>{{ 'journal.entry.remark'|trans({}, 'CashJournal') }}</th></tr><tr data-repeat=\"journal.cashJournalEntries\" data-repeat-as=\"entry\"><td>[[ loop.index ]]</td><td>[[ entry.incomesF ]]</td><td>[[ entry.expensesF ]]</td><td>[[ entry.inventoryF ]]</td><td>[[ entry.counterAccount ]]</td><td>[[ entry.invoiceNumber ]]</td><td>[[ entry.documentNumberF ]]</td><td>[[ entry.date|date('d.m.Y') ]]</td><td>[[ entry.remark ]]</td></tr></table>",
             ],
             [
-                'id' => 'pdf.footer',
-                'label' => 'templates.editor.footer',
+                'id' => 'pdf.header',
+                'label' => 'templates.preview.snippet.pdf_header',
                 'group' => 'PDF',
                 'complexity' => 'simple',
-                'content' => '<div class="footer"><p>replace me</p></div>',
+                'content' => '<div class="header"><p>Header</p></div>',
+            ],
+            [
+                'id' => 'pdf.footer',
+                'label' => 'templates.preview.snippet.pdf_footer',
+                'group' => 'PDF',
+                'complexity' => 'simple',
+                'content' => '<div class="footer"><p>Footer</p></div>',
             ],
         ];
     }

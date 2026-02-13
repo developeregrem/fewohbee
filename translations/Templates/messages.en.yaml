@@ -93,6 +93,11 @@ templates.params.margin_footer: Footer margin (mm)
 templates.preview: Preview
 templates.preview.context: Preview context
 templates.preview.render: Render preview
+templates.preview.render.error.generic: Template could not be rendered. Please check placeholders and template logic.
+templates.preview.render.error.syntax: Template syntax error. Please check loops, conditions, and placeholders.
+templates.preview.render.error.variable: "Variable \"%variable%\" not found."
+templates.preview.render.error.filter: "Filter \"%filter%\" is not available."
+templates.preview.render.error.property: "Attribute \"%property%\" was not found on \"%class%\"."
 templates.preview.result: Preview result
 templates.preview.empty: Select a context and render the preview.
 templates.preview.noprovider: No preview provider available for this template type.

@@ -50,6 +50,26 @@
                 <source>templates.preview.render</source>
                 <target>Vorschau erzeugen</target>
             </trans-unit>
+            <trans-unit id="templates.preview.render.error.generic">
+                <source>templates.preview.render.error.generic</source>
+                <target>Template konnte nicht gerendert werden. Bitte Platzhalter und Template-Logik prüfen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.syntax">
+                <source>templates.preview.render.error.syntax</source>
+                <target>Template-Syntaxfehler. Bitte Schleifen, Bedingungen und Platzhalter prüfen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.variable">
+                <source>templates.preview.render.error.variable</source>
+                <target>Variable "%variable%" nicht gefunden.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.filter">
+                <source>templates.preview.render.error.filter</source>
+                <target>Filter "%filter%" ist nicht verfügbar.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.property">
+                <source>templates.preview.render.error.property</source>
+                <target>Attribut "%property%" wurde auf "%class%" nicht gefunden.</target>
+            </trans-unit>
             <trans-unit id="templates.preview.result">
                 <source>templates.preview.result</source>
                 <target>Vorschau-Ergebnis</target>
