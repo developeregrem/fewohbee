@@ -27,6 +27,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Error\Error as TwigError;
 use Twig\Environment;
 
 class TemplatesService
@@ -145,10 +146,55 @@ class TemplatesService
      */
     public function renderTemplateString(string $templateText, array $params): string
     {
-        $str = $this->replaceTwigSyntax($templateText);
-        $templateStr = $this->twig->createTemplate($str);
+        try {
+            $str = $this->replaceTwigSyntax($templateText);
+            $templateStr = $this->twig->createTemplate($str);
 
-        return $templateStr->render($params);
+            return $templateStr->render($params);
+        } catch (TwigError|\Throwable $e) {
+            throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
+        }
+    }
+
+    /**
+     * Build a short, user-friendly template error message without stack traces.
+     */
+    private function buildFriendlyTemplateErrorMessage(\Throwable $e): string
+    {
+        $message = trim($e->getMessage());
+
+        if (preg_match('/Neither the property "([^"]+)".*?class "([^"]+)"/i', $message, $matches)) {
+            $property = $matches[1];
+            $class = $matches[2];
+
+            return $this->translator->trans('templates.preview.render.error.property', [
+                '%property%' => $property,
+                '%class%' => $class,
+            ]);
+        }
+
+        if (preg_match('/Variable "([^"]+)" does not exist/i', $message, $matches)) {
+            return $this->translator->trans('templates.preview.render.error.variable', [
+                '%variable%' => $matches[1],
+            ]);
+        }
+
+        if (preg_match('/Unknown "([^"]+)" filter/i', $message, $matches)) {
+            return $this->translator->trans('templates.preview.render.error.filter', [
+                '%filter%' => $matches[1],
+            ]);
+        }
+
+        if (preg_match('/Unexpected token|SyntaxError|Unable to parse/i', $message)) {
+            return $this->translator->trans('templates.preview.render.error.syntax');
+        }
+
+        $generic = $this->translator->trans('templates.preview.render.error.generic');
+        if ('' !== $message) {
+            return $generic.' Details: '.$message;
+        }
+
+        return $generic;
     }
 
     /**
