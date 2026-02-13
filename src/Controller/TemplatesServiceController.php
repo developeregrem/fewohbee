@@ -787,25 +787,16 @@ class TemplatesServiceController extends AbstractController
     /**
      * Return available snippets for the given template type.
      */
-    #[Route('/snippets/{templateTypeId}', name: 'settings.templates.preview.snippets', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
+    #[Route('/snippets/{id}', name: 'settings.templates.preview.snippets', methods: ['GET'], defaults: ['id' => '1'])]
     public function getSnippetsForEditor(
-        ManagerRegistry $doctrine,
         TemplatePreviewProviderRegistry $previewRegistry,
         TranslatorInterface $translator,
         Environment $twig,
-        $templateTypeId
+        TemplateType $templateType
     ): Response
     {
-        /** @var \Symfony\Contracts\Translation\TranslatorInterface $translator */
-        //$translator = $this->container->get('translator');
-        $em = $doctrine->getManager();
-        $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
-        if (!$type instanceof TemplateType) {
-            return $this->json([]);
-        }
-
         $template = new Template();
-        $template->setTemplateType($type);
+        $template->setTemplateType($templateType);
         $provider = $previewRegistry->getProvider($template);
 
         if (!$provider) {

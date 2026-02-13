@@ -97,7 +97,16 @@ const TemplateControlAttributes = Extension.create({
     addGlobalAttributes() {
         return [
             {
-                types: ['paragraph', 'heading', 'blockquote', 'listItem', 'textStyle'],
+                types: ['paragraph', 'heading', 'blockquote', 'listItem'],
+                attributes: {
+                    ...repeatAndConditionAttributes(),
+                    styleToken: styleTokenAttribute(),
+                    style: styleAttribute(),
+                    cssClass: classAttribute(),
+                },
+            },
+            {
+                types: ['textStyle'],
                 attributes: {
                     ...repeatAndConditionAttributes(),
                     styleToken: styleTokenAttribute(),

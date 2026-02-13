@@ -20,7 +20,7 @@
           data-url="{{ isNew|default(false) ? path('settings.templates.create') : path('settings.templates.edit', {'id': template.id}) }}"
           data-success-url="{{ isNew|default(false) ? path('settings.templates.overview') : path('settings.templates.edit.page', {'id': template.id}) }}"
           data-templates-upload-url="{{ path('templates.upload') }}"
-          data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'templateTypeId': 'placeholder'}) }}"
+          data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'id': 'placeholder'}) }}"
           data-templates-preview-render-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.render', {'id': template.id}) }}"
           data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}">
 
