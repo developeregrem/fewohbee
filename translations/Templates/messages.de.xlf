@@ -118,6 +118,50 @@
                 <source>templates.preview.occupancy</source>
                 <target>Belegungstypen</target>
             </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year">
+                <source>templates.preview.cashjournal.year</source>
+                <target>Kassenjahr</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year.placeholder">
+                <source>templates.preview.cashjournal.year.placeholder</source>
+                <target>z. B. 2026</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year.help">
+                <source>templates.preview.cashjournal.year.help</source>
+                <target>Kassenjahr numerisch eingeben.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month">
+                <source>templates.preview.cashjournal.month</source>
+                <target>Kassenmonat</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month.placeholder">
+                <source>templates.preview.cashjournal.month.placeholder</source>
+                <target>1-12</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month.help">
+                <source>templates.preview.cashjournal.month.help</source>
+                <target>Kassenmonat numerisch von 1 bis 12 eingeben.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.notfound">
+                <source>templates.preview.cashjournal.notfound</source>
+                <target>Kassenblatt "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id">
+                <source>templates.preview.gdpr.customer_id</source>
+                <target>Kunden-ID</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id.placeholder">
+                <source>templates.preview.gdpr.customer_id.placeholder</source>
+                <target>z. B. 42</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id.help">
+                <source>templates.preview.gdpr.customer_id.help</source>
+                <target>Eine vorhandene Kunden-ID eingeben oder leer lassen für neueste/Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_notfound">
+                <source>templates.preview.gdpr.customer_notfound</source>
+                <target>Kunde "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
             <trans-unit id="templates.preview.download_pdf">
                 <source>templates.preview.download_pdf</source>
                 <target>PDF herunterladen</target>
@@ -177,6 +221,46 @@
             <trans-unit id="templates.preview.snippet.operations_dayviews">
                 <source>templates.preview.snippet.operations_dayviews</source>
                 <target>Tagesübersicht Wiederholungsblock</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.month">
+                <source>templates.preview.snippet.cashjournal.month</source>
+                <target>Monat des Kassenblatts</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.year">
+                <source>templates.preview.snippet.cashjournal.year</source>
+                <target>Jahr des Kassenblatts</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.cash_start">
+                <source>templates.preview.snippet.cashjournal.cash_start</source>
+                <target>Anfangsbestand</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.cash_end">
+                <source>templates.preview.snippet.cashjournal.cash_end</source>
+                <target>Endbestand</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.positions">
+                <source>templates.preview.snippet.cashjournal.positions</source>
+                <target>Tabelle Kassenblattpositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_name">
+                <source>templates.preview.snippet.gdpr.general_name</source>
+                <target>Kundenname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_birthday">
+                <source>templates.preview.snippet.gdpr.general_birthday</source>
+                <target>Geburtsdatum Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_remark">
+                <source>templates.preview.snippet.gdpr.general_remark</source>
+                <target>Bemerkung Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.addresses">
+                <source>templates.preview.snippet.gdpr.addresses</source>
+                <target>Adressblock (Wiederholung)</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.reservations">
+                <source>templates.preview.snippet.gdpr.reservations</source>
+                <target>Uebernachtungsblock (Wiederholung)</target>
             </trans-unit>
             <trans-unit id="templates.preview.snippet.pdf_header">
                 <source>templates.preview.snippet.pdf_header</source>
