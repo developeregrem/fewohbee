@@ -54,4 +54,16 @@ interface ITemplatePreviewProvider
      * @return array<int, array<string, mixed>>
      */
     public function getAvailableSnippets(): array;
+
+    /**
+     * Describe the top-level render parameter types for the schema/autocomplete API.
+     *
+     * Each entry maps a variable name to its type definition:
+     *   - ['class' => FQCN]                        → single entity
+     *   - ['class' => FQCN, 'collection' => true]  → collection of entities
+     *   - ['type' => 'scalar']                      → plain value (string, number, …)
+     *
+     * @return array<string, array{class?: class-string, collection?: bool, type?: string}>
+     */
+    public function getRenderParamsSchema(): array;
 }

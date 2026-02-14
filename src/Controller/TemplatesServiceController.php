@@ -27,6 +27,7 @@ use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
+use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
 use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
@@ -777,6 +778,32 @@ class TemplatesServiceController extends AbstractController
         unset($snippet);
 
         return $this->json($snippets);
+    }
+
+    /**
+     * Return the autocomplete schema for the given template type.
+     *
+     * The schema is a recursive property tree built via PHP Reflection
+     * so the code-mode editor can offer context-aware suggestions.
+     */
+    #[Route('/schema/{id}', name: 'settings.templates.schema', methods: ['GET'], defaults: ['id' => '1'])]
+    public function getSchemaForEditor(
+        TemplatePreviewProviderRegistry $previewRegistry,
+        TemplateSchemaService $schemaService,
+        TemplateType $id
+    ): Response {
+        $template = new Template();
+        $template->setTemplateType($id);
+        $provider = $previewRegistry->getProvider($template);
+
+        if (!$provider) {
+            return $this->json([]);
+        }
+
+        $variableMap = $provider->getRenderParamsSchema();
+        $schema = $schemaService->buildSchema($variableMap);
+
+        return $this->json($schema);
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]

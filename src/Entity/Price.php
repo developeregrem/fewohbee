@@ -112,12 +112,12 @@ class Price
         return $this->active;
     }
 
-    public function getSeasonStart()
+    public function getSeasonStart(): ?\DateTime
     {
         return $this->seasonStart;
     }
 
-    public function getSeasonEnd()
+    public function getSeasonEnd(): ?\DateTime
     {
         return $this->seasonEnd;
     }

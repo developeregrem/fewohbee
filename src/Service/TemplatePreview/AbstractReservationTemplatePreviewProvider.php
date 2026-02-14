@@ -16,12 +16,17 @@ namespace App\Service\TemplatePreview;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\InvoiceAppartment;
+use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
+
+// apartmentPositions/miscPositions are plain arrays of stdClass-like objects built by
+// ReservationService::getTotalPricesForTemplate() – not Doctrine entities.
 
 /**
  * Base implementation for reservation-based template previews.
@@ -185,6 +190,23 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
                 'complexity' => 'easy',
                 'content' => "<span data-repeat=\"miscPositions\" data-repeat-as=\"position\">[[ position.description ]]: [[ position.totalPrice ]] €<br /></span>",
             ],
+        ];
+    }
+
+    public function getRenderParamsSchema(): array
+    {
+        return [
+            'reservation1' => ['class' => Reservation::class],
+            'address' => ['class' => CustomerAddresses::class],
+            'reservations' => ['class' => Reservation::class, 'collection' => true],
+            'sumApartment' => ['type' => 'scalar'],
+            'sumMisc' => ['type' => 'scalar'],
+            'totalPrice' => ['type' => 'scalar'],
+            'sumApartmentRaw' => ['type' => 'scalar'],
+            'sumMiscRaw' => ['type' => 'scalar'],
+            'totalPriceRaw' => ['type' => 'scalar'],
+            'apartmentPositions' => ['class' => InvoiceAppartment::class, 'collection' => true],
+            'miscPositions' => ['class' => InvoicePosition::class, 'collection' => true],
         ];
     }
 

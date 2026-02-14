@@ -205,4 +205,64 @@ return [
     '@tiptap/extension-table-header' => [
         'version' => '3.19.0',
     ],
+    'codemirror' => [
+        'version' => '6.0.2',
+    ],
+    '@codemirror/lang-html' => [
+        'version' => '6.4.11',
+    ],
+    '@codemirror/autocomplete' => [
+        'version' => '6.20.0',
+    ],
+    '@codemirror/view' => [
+        'version' => '6.39.14',
+    ],
+    '@codemirror/state' => [
+        'version' => '6.5.4',
+    ],
+    '@codemirror/language' => [
+        'version' => '6.12.1',
+    ],
+    '@codemirror/commands' => [
+        'version' => '6.10.2',
+    ],
+    '@codemirror/search' => [
+        'version' => '6.5.11',
+    ],
+    '@codemirror/lint' => [
+        'version' => '6.8.5',
+    ],
+    '@lezer/html' => [
+        'version' => '1.3.12',
+    ],
+    '@codemirror/lang-css' => [
+        'version' => '6.3.1',
+    ],
+    '@codemirror/lang-javascript' => [
+        'version' => '6.2.4',
+    ],
+    'style-mod' => [
+        'version' => '4.1.3',
+    ],
+    'crelt' => [
+        'version' => '1.0.6',
+    ],
+    '@marijn/find-cluster-break' => [
+        'version' => '1.0.2',
+    ],
+    '@lezer/common' => [
+        'version' => '1.5.1',
+    ],
+    '@lezer/highlight' => [
+        'version' => '1.2.3',
+    ],
+    '@lezer/lr' => [
+        'version' => '1.4.2',
+    ],
+    '@lezer/css' => [
+        'version' => '1.1.9',
+    ],
+    '@lezer/javascript' => [
+        'version' => '1.5.1',
+    ],
 ];

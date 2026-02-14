@@ -80,6 +80,22 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         return $this->buildSampleParams($ctx);
     }
 
+    public function getRenderParamsSchema(): array
+    {
+        return [
+            'invoice' => ['class' => Invoice::class],
+            'vats' => ['type' => 'array'],
+            'brutto' => ['type' => 'scalar'],
+            'netto' => ['type' => 'scalar'],
+            'bruttoFormated' => ['type' => 'scalar'],
+            'nettoFormated' => ['type' => 'scalar'],
+            'periods' => ['type' => 'array'],
+            'numbers' => ['type' => 'array'],
+            'appartmentTotal' => ['type' => 'scalar'],
+            'miscTotal' => ['type' => 'scalar'],
+        ];
+    }
+
     public function getAvailableSnippets(): array
     {
         return [

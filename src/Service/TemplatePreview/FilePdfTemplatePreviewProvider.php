@@ -41,6 +41,11 @@ class FilePdfTemplatePreviewProvider implements ITemplatePreviewProvider
         return [];
     }
 
+    public function getRenderParamsSchema(): array
+    {
+        return [];
+    }
+
     public function getAvailableSnippets(): array
     {
         return [
