@@ -82,6 +82,13 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
         return $this->buildSampleParams($ctx);
     }
 
+    public function getRenderParamsSchema(): array
+    {
+        return [
+            'customer' => ['class' => Customer::class],
+        ];
+    }
+
     public function getAvailableSnippets(): array
     {
         return [

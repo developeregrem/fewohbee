@@ -100,6 +100,13 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
         return $this->buildSampleParams($ctx);
     }
 
+    public function getRenderParamsSchema(): array
+    {
+        return [
+            'journal' => ['class' => CashJournal::class],
+        ];
+    }
+
     public function getAvailableSnippets(): array
     {
         return [

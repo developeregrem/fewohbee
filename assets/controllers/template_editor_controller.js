@@ -11,6 +11,16 @@ import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table
 import Dropcursor from '@tiptap/extension-dropcursor';
 import Gapcursor from '@tiptap/extension-gapcursor';
 
+// CodeMirror imports for the code editor mode
+import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, dropCursor } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { html } from '@codemirror/lang-html';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+import { templateAutocomplete } from '../js/template-autocomplete.js';
+
 const optionalAttribute = (attributeName, htmlAttribute = attributeName) => ({
     default: null,
     parseHTML: (element) => element.getAttribute(htmlAttribute),
@@ -205,11 +215,13 @@ export default class extends Controller {
         this.form = this.element.closest('form') || this.element;
         this.uploadUrl = this.form?.dataset.templatesUploadUrl || '';
         this.snippetsUrlTemplate = this.form?.dataset.templatesSnippetsUrl || '';
+        this.schemaUrlTemplate = this.form?.dataset.templatesSchemaUrl || '';
         this.previewRenderUrl = this.form?.dataset.templatesPreviewRenderUrl || '';
         this.previewPdfUrl = this.form?.dataset.templatesPreviewPdfUrl || '';
         this.templateTypeSelect = this.form?.querySelector('#template-type');
         this.snippets = [];
         this.codeDropListenersAttached = false;
+        this.cmEditor = null; // CodeMirror instance (created on first code-mode entry)
         this.i18n = this.hasToolbarHostTarget ? this.toolbarHostTarget.dataset : {};
 
         const initialContent = this.sourceTarget?.value || '';
@@ -240,6 +252,10 @@ export default class extends Controller {
         if (this.editorInstance) {
             this.editorInstance.destroy();
         }
+        if (this.cmEditor) {
+            this.cmEditor.destroy();
+            this.cmEditor = null;
+        }
         if (this.hasCodeWrapperTarget && this.codeDropListenersAttached) {
             this.codeWrapperTarget.removeEventListener('dragover', this.onCodeWrapperDragOver);
             this.codeWrapperTarget.removeEventListener('drop', this.onCodeWrapperDrop);
@@ -250,6 +266,7 @@ export default class extends Controller {
 
     beforeSubmitAction() {
         if (this.isCodeMode()) {
+            this.syncCodeMirrorToTextarea();
             this.sourceTarget.value = this.codeTarget.value;
         } else if (this.editorInstance) {
             this.sourceTarget.value = this.restoreContentFromVisual(this.editorInstance.getHTML());
@@ -446,6 +463,16 @@ export default class extends Controller {
                 this.codeDropListenersAttached = true;
             }
         }
+
+        // Initialize or update CodeMirror
+        this.initCodeMirror();
+        if (this.cmEditor) {
+            const content = this.codeTarget.value || '';
+            this.cmEditor.dispatch({
+                changes: { from: 0, to: this.cmEditor.state.doc.length, insert: content },
+            });
+        }
+
         if (this.hasModeToggleTarget) {
             const visualLabel = this.modeToggleTarget.dataset.visualLabel || 'Visual';
             this.modeToggleTarget.title = visualLabel;
@@ -465,6 +492,8 @@ export default class extends Controller {
             window.alert(this.i18n.i18nProtectedComments || 'Dieses Template enthaelt Pseudo-Twig in HTML-Kommentaren und kann nur im Code-Modus bearbeitet werden.');
             return;
         }
+        // Sync CodeMirror content back to textarea before switching
+        this.syncCodeMirrorToTextarea();
         if (this.editorInstance && this.hasCodeTarget) {
             this.editorInstance.commands.setContent(this.prepareContentForVisual(this.codeTarget.value || ''), false);
         }
@@ -700,6 +729,8 @@ export default class extends Controller {
     onTemplateTypeChange() {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
+        // Rebuild CodeMirror with the new template type's schema
+        this.rebuildCodeMirror();
     }
 
     updatePdfParamsVisibility() {
@@ -785,7 +816,7 @@ export default class extends Controller {
             return;
         }
         event.preventDefault();
-        this.insertIntoTextarea(this.codeTarget, content);
+        this.insertIntoCodeEditor(content);
     }
 
     insertSnippetContent(content, complexity) {
@@ -794,7 +825,7 @@ export default class extends Controller {
         }
 
         if (this.isCodeMode()) {
-            this.insertIntoTextarea(this.codeTarget, content);
+            this.insertIntoCodeEditor(content);
         } else if (this.editorInstance) {
             if (this.isTableRowSnippet(content)) {
                 this.applyRowSnippetToCurrentRow(content);
@@ -1049,15 +1080,23 @@ export default class extends Controller {
         }
 
         try {
-            this.codeTarget.value = formatter(this.codeTarget.value || '', {
+            this.syncCodeMirrorToTextarea();
+            const formatted = formatter(this.codeTarget.value || '', {
                 indent_size: 2,
                 indent_char: ' ',
                 preserve_newlines: true,
                 max_preserve_newlines: 2,
-                wrap_line_length: 120,
+                wrap_line_length: 80,
                 end_with_newline: false,
                 extra_liners: [],
             });
+            this.codeTarget.value = formatted;
+            // Push formatted content back into CodeMirror
+            if (this.cmEditor) {
+                this.cmEditor.dispatch({
+                    changes: { from: 0, to: this.cmEditor.state.doc.length, insert: formatted },
+                });
+            }
         } catch (error) {
             // ignore
         }
@@ -1408,6 +1447,118 @@ export default class extends Controller {
         } catch (error) {
             return '';
         }
+    }
+
+    // ─── CodeMirror helpers ───────────────────────────────────────────────────
+
+    /**
+     * Create the CodeMirror 6 editor inside the codeWrapper (once).
+     * Subsequent calls are no-ops if the instance already exists.
+     */
+    initCodeMirror() {
+        if (this.cmEditor || !this.hasCodeWrapperTarget) return;
+
+        // Hide the original textarea (kept for form submission)
+        if (this.hasCodeTarget) {
+            this.codeTarget.style.display = 'none';
+        }
+
+        // Build the schema URL from the current template type
+        const schemaUrl = this.buildSchemaUrl();
+
+        // CodeMirror extensions
+        const extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            highlightActiveLine(),
+            history(),
+            bracketMatching(),
+            closeBrackets(),
+            dropCursor(),
+            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+            html(),
+            keymap.of([
+                ...closeBracketsKeymap,
+                ...defaultKeymap,
+                ...searchKeymap,
+                ...historyKeymap,
+                indentWithTab,
+            ]),
+            highlightSelectionMatches(),
+            EditorView.lineWrapping,
+            // Base theme for comfortable sizing
+            EditorView.theme({
+                '&': { height: '450px', border: '1px solid #ced4da', borderRadius: '0.375rem', fontSize: '13px' },
+                '.cm-scroller': { overflow: 'auto', fontFamily: 'SFMono-Regular, Menlo, Monaco, Consolas, monospace' },
+                '.cm-content': { minHeight: '400px' },
+            }),
+        ];
+
+        // Add autocomplete extension if a schema URL is available
+        if (schemaUrl) {
+            extensions.push(templateAutocomplete({ schemaUrl }));
+        }
+
+        this.cmEditor = new EditorView({
+            state: EditorState.create({
+                doc: this.hasCodeTarget ? this.codeTarget.value : '',
+                extensions,
+            }),
+            parent: this.codeWrapperTarget,
+        });
+    }
+
+    /**
+     * Copy the current CodeMirror document back into the hidden textarea.
+     */
+    syncCodeMirrorToTextarea() {
+        if (this.cmEditor && this.hasCodeTarget) {
+            this.codeTarget.value = this.cmEditor.state.doc.toString();
+        }
+    }
+
+    /**
+     * Insert text at the current cursor position in CodeMirror (or textarea fallback).
+     */
+    insertIntoCodeEditor(text) {
+        if (this.cmEditor) {
+            const { from, to } = this.cmEditor.state.selection.main;
+            this.cmEditor.dispatch({
+                changes: { from, to, insert: text },
+                selection: { anchor: from + text.length },
+            });
+            this.cmEditor.focus();
+        } else if (this.hasCodeTarget) {
+            this.insertIntoTextarea(this.codeTarget, text);
+        }
+    }
+
+    /**
+     * Destroy and re-create CodeMirror when the template type changes,
+     * so that the autocomplete extension uses the correct schema.
+     */
+    rebuildCodeMirror() {
+        if (!this.cmEditor) return;
+        const content = this.cmEditor.state.doc.toString();
+        this.cmEditor.destroy();
+        this.cmEditor = null;
+        this.initCodeMirror();
+        if (this.cmEditor) {
+            this.cmEditor.dispatch({
+                changes: { from: 0, to: this.cmEditor.state.doc.length, insert: content },
+            });
+        }
+    }
+
+    /**
+     * Build the schema API URL for the currently selected template type.
+     * Returns null when no type is selected or URL template is missing.
+     */
+    buildSchemaUrl() {
+        if (!this.schemaUrlTemplate) return null;
+        const typeId = this.templateTypeSelect?.value;
+        if (!typeId) return null;
+        return this.schemaUrlTemplate.replace('placeholder', typeId);
     }
 
 }

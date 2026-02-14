@@ -80,6 +80,20 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
         return $this->operationsReportService->getRenderParams($template, $reportData);
     }
 
+    public function getRenderParamsSchema(): array
+    {
+        // Operations templates use dynamically built arrays rather than Doctrine entities.
+        // 'scalar' = flat value, 'array' = iterable list (data-repeat capable, no sub-introspection).
+        return [
+            'simple' => ['type' => 'scalar'],
+            'occupancyLabels' => ['type' => 'array'],
+            'statusLabels' => ['type' => 'array'],
+            'invoiceStatusLabels' => ['type' => 'array'],
+            'reservations' => ['type' => 'array'],
+            'dayViews' => ['type' => 'array'],
+        ];
+    }
+
     public function getAvailableSnippets(): array
     {
         return [

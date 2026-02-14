@@ -89,12 +89,12 @@ class Reservation
         return $this->id;
     }
 
-    public function getStartDate()
+    public function getStartDate(): \DateTime
     {
         return $this->startDate;
     }
 
-    public function getEndDate()
+    public function getEndDate(): \DateTime
     {
         return $this->endDate;
     }
@@ -104,7 +104,7 @@ class Reservation
         return $this->persons;
     }
 
-    public function getOptionDate()
+    public function getOptionDate(): ?\DateTime
     {
         return $this->optionDate;
     }
@@ -119,7 +119,7 @@ class Reservation
         return nl2br($this->remark ?? '');
     }
 
-    public function getReservationDate()
+    public function getReservationDate(): \DateTime
     {
         return $this->reservationDate;
     }
