@@ -374,9 +374,21 @@
                 <source>templates.editor.toolbar.visual</source>
                 <target>Visual</target>
             </trans-unit>
-            <trans-unit id="templates.editor.alert.protected_comments">
-                <source>templates.editor.alert.protected_comments</source>
-                <target>Dieses Template enthält Pseudo-Twig in HTML-Kommentaren und kann nur im Code-Modus bearbeitet werden.</target>
+            <trans-unit id="templates.editor.toolbar.variable">
+                <source>templates.editor.toolbar.variable</source>
+                <target>Variable einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.variable_picker.title">
+                <source>templates.editor.variable_picker.title</source>
+                <target>Variable einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.variable_picker.insert_loop">
+                <source>templates.editor.variable_picker.insert_loop</source>
+                <target>Schleife einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.alert.protected_content">
+                <source>templates.editor.alert.protected_content</source>
+                <target>Dieses Template enthält Twig-Syntax oder erweiterte Direktiven und kann nur im Code-Modus bearbeitet werden.</target>
             </trans-unit>
             <trans-unit id="templates.editor.row.repeat_toggle">
                 <source>templates.editor.row.repeat_toggle</source>

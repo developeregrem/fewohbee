@@ -47,54 +47,139 @@ const repeatAndConditionAttributes = () => ({
     condition: conditionAttribute(),
 });
 
-const TemplateTable = Table.extend({
-    /**
-     * Preserve inline style on table nodes.
-     */
+/**
+ * Extend a tiptap Node/Mark to preserve extra HTML attributes in visual mode.
+ */
+function extendWithTemplateAttrs(Base, ...attrGroups) {
+    return Base.extend({
+        addAttributes() {
+            return Object.assign({}, this.parent?.(), ...attrGroups);
+        },
+    });
+}
+
+const TemplateTable = extendWithTemplateAttrs(Table, styleAndClassAttributes());
+const TemplateTableRow = extendWithTemplateAttrs(TableRow, repeatAndConditionAttributes(), styleAndClassAttributes());
+const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndConditionAttributes(), styleAndClassAttributes());
+const TemplateTableCell = extendWithTemplateAttrs(TableCell, repeatAndConditionAttributes(), styleAndClassAttributes());
+
+/**
+ * Resizable image extension with drag handles and alignment support.
+ * Stores width as an HTML attribute so it survives code ↔ visual round-trips.
+ */
+const ResizableImage = Image.extend({
+    inline: true,
+    group: 'inline',
+
     addAttributes() {
         return {
             ...this.parent?.(),
+            width: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('width') || el.style.width || null,
+                renderHTML: (attrs) => attrs.width ? { width: attrs.width } : {},
+            },
+            height: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('height') || null,
+                renderHTML: (attrs) => attrs.height ? { height: attrs.height } : {},
+            },
             ...styleAndClassAttributes(),
         };
     },
-});
 
-const TemplateTableRow = TableRow.extend({
-    /**
-     * Preserve custom loop/condition metadata on table rows so visual mode keeps
-     * template control attributes untouched.
-     */
-    addAttributes() {
-        return {
-            ...this.parent?.(),
-            ...repeatAndConditionAttributes(),
-            ...styleAndClassAttributes(),
-        };
-    },
-});
+    addNodeView() {
+        return ({ node, editor, getPos }) => {
+            const wrapper = document.createElement('span');
+            wrapper.classList.add('template-editor-image-wrapper');
+            wrapper.contentEditable = 'false';
 
-const TemplateTableHeader = TableHeader.extend({
-    /**
-     * Preserve inline style on th nodes.
-     */
-    addAttributes() {
-        return {
-            ...this.parent?.(),
-            ...repeatAndConditionAttributes(),
-            ...styleAndClassAttributes(),
-        };
-    },
-});
+            const img = document.createElement('img');
+            img.src = node.attrs.src || '';
+            if (node.attrs.alt) img.alt = node.attrs.alt;
+            if (node.attrs.title) img.title = node.attrs.title;
+            if (node.attrs.width) img.style.width = node.attrs.width;
 
-const TemplateTableCell = TableCell.extend({
-    /**
-     * Preserve inline style on td nodes.
-     */
-    addAttributes() {
-        return {
-            ...this.parent?.(),
-            ...repeatAndConditionAttributes(),
-            ...styleAndClassAttributes(),
+            // Alignment toolbar — sets text-align on the parent <p> so mPDF can use it
+            const toolbar = document.createElement('div');
+            toolbar.className = 'template-editor-image-toolbar';
+            toolbar.innerHTML = [
+                { align: 'left', icon: 'fa-align-left', title: 'Links' },
+                { align: 'center', icon: 'fa-align-center', title: 'Zentriert' },
+                { align: 'right', icon: 'fa-align-right', title: 'Rechts' },
+            ].map(({ align, icon, title }) =>
+                `<button type="button" class="btn btn-sm btn-outline-secondary" data-align="${align}" title="${title}"><i class="fas ${icon}"></i></button>`
+            ).join('');
+            toolbar.style.display = 'none';
+
+            toolbar.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-align]');
+                if (!btn) return;
+                editor.chain().focus().setTextAlign(btn.dataset.align).run();
+            });
+
+            // Resize handle
+            const handle = document.createElement('div');
+            handle.className = 'template-editor-image-resize-handle';
+
+            let startX = 0;
+            let startWidth = 0;
+
+            const onMouseMove = (e) => {
+                const newWidth = Math.max(30, startWidth + (e.clientX - startX));
+                img.style.width = newWidth + 'px';
+            };
+
+            const onMouseUp = (e) => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                if (typeof getPos !== 'function') return;
+                const pos = getPos();
+                if (pos == null) return;
+                const newWidth = Math.max(30, startWidth + (e.clientX - startX));
+                editor.chain().focus()
+                    .updateAttributes('image', { width: newWidth + 'px' })
+                    .run();
+            };
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startX = e.clientX;
+                startWidth = img.offsetWidth;
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            // Show/hide toolbar on selection
+            wrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toolbar.style.display = 'flex';
+                wrapper.classList.add('is-selected');
+            });
+
+            const hideToolbar = () => {
+                toolbar.style.display = 'none';
+                wrapper.classList.remove('is-selected');
+            };
+            document.addEventListener('click', hideToolbar);
+
+            wrapper.appendChild(toolbar);
+            wrapper.appendChild(img);
+            wrapper.appendChild(handle);
+
+            return {
+                dom: wrapper,
+                update: (updatedNode) => {
+                    if (updatedNode.type.name !== 'image') return false;
+                    img.src = updatedNode.attrs.src || '';
+                    if (updatedNode.attrs.alt) img.alt = updatedNode.attrs.alt;
+                    img.style.width = updatedNode.attrs.width || '';
+                    return true;
+                },
+                destroy: () => {
+                    document.removeEventListener('click', hideToolbar);
+                },
+            };
         };
     },
 });
@@ -189,6 +274,8 @@ export default class extends Controller {
         'visualWrapper',
         'fileInput',
         'snippetSidebar',
+        'snippetPanel',
+        'snippetToggle',
         'toolbarHost',
         'beautifyButton',
         'modeToggle',
@@ -225,17 +312,15 @@ export default class extends Controller {
         this.i18n = this.hasToolbarHostTarget ? this.toolbarHostTarget.dataset : {};
 
         const initialContent = this.sourceTarget?.value || '';
-        this.hasProtectedTemplateComments = this.hasPseudoTwigComments(initialContent);
+        this.hasProtectedContent = this.isAdvancedContent(initialContent) || this.hasPseudoTwigComments(initialContent);
         const visualContent = this.prepareContentForVisual(initialContent);
         if (this.hasCodeTarget) {
             this.codeTarget.value = initialContent;
         }
-
-        const advanced = this.isAdvancedContent(initialContent);
         this.initEditor(visualContent);
         this.initToolbar();
 
-        if (advanced || this.hasProtectedTemplateComments) {
+        if (this.hasProtectedContent) {
             this.enterCodeMode();
         } else {
             this.enterVisualMode();
@@ -261,6 +346,7 @@ export default class extends Controller {
             this.codeWrapperTarget.removeEventListener('drop', this.onCodeWrapperDrop);
             this.codeDropListenersAttached = false;
         }
+        this.closeVariablePicker();
         this.revokePreviewPdfUrl();
     }
 
@@ -270,6 +356,17 @@ export default class extends Controller {
             this.sourceTarget.value = this.codeTarget.value;
         } else if (this.editorInstance) {
             this.sourceTarget.value = this.restoreContentFromVisual(this.editorInstance.getHTML());
+        }
+    }
+
+    toggleSnippetSidebar() {
+        if (!this.hasSnippetPanelTarget) {
+            return;
+        }
+        const isOpen = !this.snippetPanelTarget.classList.contains('d-none');
+        this.snippetPanelTarget.classList.toggle('d-none', isOpen);
+        if (this.hasSnippetToggleTarget) {
+            this.snippetToggleTarget.classList.toggle('is-active', !isOpen);
         }
     }
 
@@ -448,8 +545,11 @@ export default class extends Controller {
     }
 
     enterCodeMode() {
-        const shouldSyncFromVisual = !this.hasProtectedTemplateComments || this.mode === 'visual';
-        if (this.editorInstance && this.hasCodeTarget && shouldSyncFromVisual) {
+        // Only sync from visual editor if we were actually in visual mode.
+        // On initial load (mode not yet set) the code textarea already has the
+        // original content — syncing from tiptap would strip HTML comments and
+        // raw Twig syntax that tiptap cannot represent.
+        if (this.mode === 'visual' && this.editorInstance && this.hasCodeTarget) {
             this.codeTarget.value = this.restoreContentFromVisual(this.editorInstance.getHTML());
         }
         if (this.hasVisualWrapperTarget) {
@@ -486,10 +586,10 @@ export default class extends Controller {
     }
 
     enterVisualMode() {
-        // Tiptap drops comment nodes in complex structures (e.g. table bodies).
-        // Keep templates with pseudo-twig comments in code mode to avoid data loss.
-        if (this.hasProtectedTemplateComments) {
-            window.alert(this.i18n.i18nProtectedComments || 'Dieses Template enthaelt Pseudo-Twig in HTML-Kommentaren und kann nur im Code-Modus bearbeitet werden.');
+        // Tiptap cannot safely represent raw Twig syntax, HTML comments with
+        // template code, or mPDF directives. Force code mode to avoid data loss.
+        if (this.hasProtectedContent) {
+            window.alert(this.i18n.i18nProtectedContent || 'Dieses Template enthält Twig-Syntax oder erweiterte Direktiven und kann nur im Code-Modus bearbeitet werden.');
             return;
         }
         // Sync CodeMirror content back to textarea before switching
@@ -607,6 +707,7 @@ export default class extends Controller {
                     { type: 'button', command: 'link', icon: 'fas fa-link', title: t('link', 'Insert link') },
                     { type: 'button', command: 'table', icon: 'fas fa-table', title: t('table', 'Insert table') },
                     { type: 'button', command: 'image', icon: 'fas fa-image', title: t('image', 'Insert image') },
+                    { type: 'button', command: 'variable', icon: 'fas fa-code-branch', title: t('variable', 'Insert variable') },
                 ],
             },
         ];
@@ -630,6 +731,7 @@ export default class extends Controller {
             alignLeft: 'i18nAlignLeft',
             alignCenter: 'i18nAlignCenter',
             alignRight: 'i18nAlignRight',
+            variable: 'i18nVariable',
         };
         const dataKey = map[key];
         if (!dataKey) {
@@ -639,18 +741,21 @@ export default class extends Controller {
     }
 
     buildToolbarCommandRegistry() {
+        const ed = () => this.editorInstance;
+        const chain = () => ed()?.chain().focus();
         return {
-            bold: { run: () => this.toggleBold(), isActive: () => this.editorInstance?.isActive('bold') },
-            italic: { run: () => this.toggleItalic(), isActive: () => this.editorInstance?.isActive('italic') },
-            underline: { run: () => this.toggleUnderline(), isActive: () => this.editorInstance?.isActive('underline') },
-            bulletList: { run: () => this.toggleBulletList(), isActive: () => this.editorInstance?.isActive('bulletList') },
-            orderedList: { run: () => this.toggleOrderedList(), isActive: () => this.editorInstance?.isActive('orderedList') },
-            link: { run: () => this.addLink(), isActive: () => this.editorInstance?.isActive('link') },
+            bold: { run: () => chain()?.toggleBold().run(), isActive: () => ed()?.isActive('bold') },
+            italic: { run: () => chain()?.toggleItalic().run(), isActive: () => ed()?.isActive('italic') },
+            underline: { run: () => chain()?.toggleUnderline().run(), isActive: () => ed()?.isActive('underline') },
+            bulletList: { run: () => chain()?.toggleBulletList().run(), isActive: () => ed()?.isActive('bulletList') },
+            orderedList: { run: () => chain()?.toggleOrderedList().run(), isActive: () => ed()?.isActive('orderedList') },
+            link: { run: () => this.addLink(), isActive: () => ed()?.isActive('link') },
             table: { run: () => this.addTable(), isActive: () => false },
             image: { run: () => this.triggerImageUpload(), isActive: () => false },
-            alignLeft: { run: () => this.setTextAlignment('left'), isActive: () => this.editorInstance?.isActive({ textAlign: 'left' }) },
-            alignCenter: { run: () => this.setTextAlignment('center'), isActive: () => this.editorInstance?.isActive({ textAlign: 'center' }) },
-            alignRight: { run: () => this.setTextAlignment('right'), isActive: () => this.editorInstance?.isActive({ textAlign: 'right' }) },
+            variable: { run: () => this.openVariablePicker(), isActive: () => false },
+            alignLeft: { run: () => chain()?.setTextAlign('left').run(), isActive: () => ed()?.isActive({ textAlign: 'left' }) },
+            alignCenter: { run: () => chain()?.setTextAlign('center').run(), isActive: () => ed()?.isActive({ textAlign: 'center' }) },
+            alignRight: { run: () => chain()?.setTextAlign('right').run(), isActive: () => ed()?.isActive({ textAlign: 'right' }) },
         };
     }
 
@@ -715,20 +820,25 @@ export default class extends Controller {
     }
 
     handleToolbarSelect(commandName, value) {
-        if (this.isCodeMode()) {
+        if (this.isCodeMode() || !this.editorInstance) {
             return;
         }
-        if (commandName === 'fontFamily') {
-            this.applyFontFamilyValue(value);
-        } else if (commandName === 'fontSize') {
-            this.applyFontSizeValue(value);
-        }
+        const handlers = {
+            fontFamily: (v) => v
+                ? this.editorInstance.chain().focus().setFontFamily(v).run()
+                : this.editorInstance.chain().focus().unsetFontFamily().run(),
+            fontSize: (v) => v
+                ? this.editorInstance.chain().focus().setFontSize(v).run()
+                : this.editorInstance.chain().focus().unsetFontSize().run(),
+        };
+        handlers[commandName]?.(value);
         this.refreshToolbarState();
     }
 
     onTemplateTypeChange() {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
+        this.schemaCache = null;
         // Rebuild CodeMirror with the new template type's schema
         this.rebuildCodeMirror();
     }
@@ -904,8 +1014,7 @@ export default class extends Controller {
             return;
         }
         if (this.isCodeMode()) {
-            this.insertIntoTextarea(
-                this.codeTarget,
+            this.insertIntoCodeEditor(
                 '<table><tbody><tr><th>Header 1</th><th>Header 2</th></tr><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></tbody></table>\n'
             );
             return;
@@ -1002,70 +1111,6 @@ export default class extends Controller {
         this.refreshToolbarState();
     }
 
-    toggleBold() {
-        if (this.editorInstance && !this.isCodeMode()) {
-            this.editorInstance.chain().focus().toggleBold().run();
-            this.refreshToolbarState();
-        }
-    }
-
-    toggleItalic() {
-        if (this.editorInstance && !this.isCodeMode()) {
-            this.editorInstance.chain().focus().toggleItalic().run();
-            this.refreshToolbarState();
-        }
-    }
-
-    toggleUnderline() {
-        if (this.editorInstance && !this.isCodeMode()) {
-            this.editorInstance.chain().focus().toggleUnderline().run();
-            this.refreshToolbarState();
-        }
-    }
-
-    toggleBulletList() {
-        if (this.editorInstance && !this.isCodeMode()) {
-            this.editorInstance.chain().focus().toggleBulletList().run();
-            this.refreshToolbarState();
-        }
-    }
-
-    toggleOrderedList() {
-        if (this.editorInstance && !this.isCodeMode()) {
-            this.editorInstance.chain().focus().toggleOrderedList().run();
-            this.refreshToolbarState();
-        }
-    }
-
-    applyFontFamilyValue(value) {
-        if (!this.editorInstance || this.isCodeMode()) {
-            return;
-        }
-        if (value) {
-            this.editorInstance.chain().focus().setFontFamily(value).run();
-        } else {
-            this.editorInstance.chain().focus().unsetFontFamily().run();
-        }
-    }
-
-    applyFontSizeValue(value) {
-        if (!this.editorInstance || this.isCodeMode()) {
-            return;
-        }
-        if (value) {
-            this.editorInstance.chain().focus().setFontSize(value).run();
-        } else {
-            this.editorInstance.chain().focus().unsetFontSize().run();
-        }
-    }
-
-    setTextAlignment(alignment) {
-        if (!this.editorInstance || this.isCodeMode()) {
-            return;
-        }
-        this.editorInstance.chain().focus().setTextAlign(alignment).run();
-    }
-
     beautifyCodeMode() {
         if (!this.hasCodeTarget || !this.isCodeMode()) {
             return;
@@ -1108,6 +1153,222 @@ export default class extends Controller {
         }
     }
 
+    // ─── Variable picker ─────────────────────────────────────────────────────
+
+    async openVariablePicker() {
+        if (this.isCodeMode() || !this.editorInstance) {
+            return;
+        }
+
+        // Close existing picker
+        if (this.variablePickerEl) {
+            this.closeVariablePicker();
+            return;
+        }
+
+        const schema = await this.fetchSchema();
+        if (!schema || Object.keys(schema).length === 0) {
+            return;
+        }
+
+        this.renderVariablePicker(schema);
+    }
+
+    async fetchSchema() {
+        const url = this.buildSchemaUrl();
+        if (!url) {
+            return null;
+        }
+
+        // Return cached schema if available for this template type
+        const typeId = this.templateTypeSelect?.value;
+        if (this.schemaCache && this.schemaCacheTypeId === typeId) {
+            return this.schemaCache;
+        }
+
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                return null;
+            }
+            const schema = await response.json();
+            this.schemaCache = schema;
+            this.schemaCacheTypeId = typeId;
+            return schema;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    renderVariablePicker(schema) {
+        const picker = document.createElement('div');
+        picker.className = 'template-editor-variable-picker';
+
+        const header = document.createElement('div');
+        header.className = 'template-editor-variable-picker-header';
+        header.innerHTML = `<span>${this.i18n.i18nVariablePickerTitle || 'Variable einfügen'}</span><button type="button" class="btn-close btn-close-sm" aria-label="Close"></button>`;
+        header.querySelector('.btn-close').addEventListener('click', () => this.closeVariablePicker());
+        picker.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'template-editor-variable-picker-list';
+        this.renderSchemaLevel(list, schema, '');
+        picker.appendChild(list);
+
+        // Position picker relative to the toolbar container (not the group, which has overflow:hidden)
+        const toolbar = this.toolbarHostTarget?.closest('.template-editor-toolbar');
+        if (toolbar) {
+            toolbar.style.position = 'relative';
+            toolbar.appendChild(picker);
+        } else {
+            this.toolbarHostTarget?.appendChild(picker);
+        }
+
+        this.variablePickerEl = picker;
+
+        // Close on outside click
+        this.variablePickerOutsideClick = (e) => {
+            if (!picker.contains(e.target) && e.target.dataset?.templateCommand !== 'variable') {
+                this.closeVariablePicker();
+            }
+        };
+        setTimeout(() => document.addEventListener('click', this.variablePickerOutsideClick), 0);
+    }
+
+    renderSchemaLevel(container, properties, pathPrefix) {
+        const typeLabels = {
+            scalar: '',
+            date: '📅',
+            entity: '▸',
+            collection: '↻',
+            array: '↻',
+        };
+
+        for (const [name, def] of Object.entries(properties)) {
+            const type = def.type || 'scalar';
+            const fullPath = pathPrefix ? `${pathPrefix}.${name}` : name;
+
+            const item = document.createElement('div');
+            item.className = `template-editor-variable-item template-editor-variable-type-${type}`;
+
+            const label = document.createElement('button');
+            label.type = 'button';
+            label.className = 'template-editor-variable-label';
+
+            const typeIcon = typeLabels[type] || '';
+            const typeHint = type === 'date' ? 'Datum'
+                : type === 'collection' ? 'Liste'
+                : type === 'array' ? 'Liste'
+                : type === 'entity' ? 'Objekt'
+                : '';
+
+            label.innerHTML = `<span class="template-editor-variable-name">${name}</span>`
+                + (typeHint ? `<span class="template-editor-variable-type-hint">${typeIcon} ${typeHint}</span>` : '');
+
+            if (type === 'scalar' || type === 'date') {
+                label.addEventListener('click', () => {
+                    this.insertVariable(fullPath, type);
+                    this.closeVariablePicker();
+                });
+            } else if (type === 'entity' && def.properties) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'template-editor-variable-children d-none';
+                this.renderSchemaLevel(childContainer, def.properties, fullPath);
+
+                label.addEventListener('click', () => {
+                    childContainer.classList.toggle('d-none');
+                    item.classList.toggle('is-expanded');
+                });
+
+                item.appendChild(label);
+                item.appendChild(childContainer);
+                container.appendChild(item);
+                continue;
+            } else if ((type === 'collection' || type === 'array') && def.properties) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'template-editor-variable-children d-none';
+
+                // Add "insert loop" action at the top of child list
+                const loopAction = document.createElement('button');
+                loopAction.type = 'button';
+                loopAction.className = 'template-editor-variable-label template-editor-variable-loop-action';
+                loopAction.innerHTML = `<span class="template-editor-variable-name">↻ ${this.i18n.i18nVariableInsertLoop || 'Schleife einfügen'}</span>`;
+                loopAction.addEventListener('click', () => {
+                    this.insertCollectionLoop(fullPath, def.singularName || name.replace(/s$/, ''));
+                    this.closeVariablePicker();
+                });
+                childContainer.appendChild(loopAction);
+
+                // Render child properties with singular prefix
+                const singularName = def.singularName || name.replace(/s$/, '');
+                this.renderSchemaLevel(childContainer, def.properties, singularName);
+
+                label.addEventListener('click', () => {
+                    childContainer.classList.toggle('d-none');
+                    item.classList.toggle('is-expanded');
+                });
+
+                item.appendChild(label);
+                item.appendChild(childContainer);
+                container.appendChild(item);
+                continue;
+            } else if (type === 'array') {
+                label.addEventListener('click', () => {
+                    this.insertCollectionLoop(fullPath, def.singularName || name.replace(/s$/, ''));
+                    this.closeVariablePicker();
+                });
+            }
+
+            item.appendChild(label);
+            container.appendChild(item);
+        }
+    }
+
+    insertVariable(path, type) {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        const variable = type === 'date'
+            ? `[[ ${path}|date('d.m.Y') ]]`
+            : `[[ ${path} ]]`;
+        this.editorInstance.chain().focus().insertContent(variable).run();
+    }
+
+    insertCollectionLoop(collectionPath, singularName) {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+
+        // If cursor is in a table row, apply data-repeat to the row
+        if (this.editorInstance.isActive('tableRow')) {
+            const attrs = this.editorInstance.getAttributes('tableRow');
+            this.editorInstance.chain().focus().updateAttributes('tableRow', {
+                ...attrs,
+                loop: collectionPath,
+                loopAttr: singularName,
+            }).run();
+            this.refreshToolbarState();
+            return;
+        }
+
+        // Otherwise insert as inline span with data-repeat
+        const html = `<span data-repeat="${collectionPath}" data-repeat-as="${singularName}">[[ ${singularName}. ]]</span>`;
+        this.editorInstance.chain().focus().insertContent(html).run();
+    }
+
+    closeVariablePicker() {
+        if (this.variablePickerEl) {
+            this.variablePickerEl.remove();
+            this.variablePickerEl = null;
+        }
+        if (this.variablePickerOutsideClick) {
+            document.removeEventListener('click', this.variablePickerOutsideClick);
+            this.variablePickerOutsideClick = null;
+        }
+    }
+
     async handleFileChange(event) {
         const file = event.target.files && event.target.files[0];
         if (!file) {
@@ -1137,7 +1398,7 @@ export default class extends Controller {
                 }),
                 Underline,
                 Link.configure({ openOnClick: false }),
-                Image,
+                ResizableImage,
                 TextStyle,
                 TemplateControlAttributes,
                 TextAlign.configure({ types: ['heading', 'paragraph', 'div'] }),
@@ -1260,9 +1521,10 @@ export default class extends Controller {
         }
 
         const hasPseudoTwigBlocks = /\[\%[\s\S]*?\%\]|\[\#[\s\S]*?\#\]/i.test(content);
+        const hasRealTwigSyntax = /\{[%{#][\s\S]*?[%}#]\}/i.test(content);
         const hasMpdfDirectives = /<\/?(htmlpageheader|htmlpagefooter|sethtmlpageheader|sethtmlpagefooter)\b/i.test(content);
 
-        return hasPseudoTwigBlocks || hasMpdfDirectives;
+        return hasPseudoTwigBlocks || hasRealTwigSyntax || hasMpdfDirectives;
     }
 
     refreshToolbarState() {

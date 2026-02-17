@@ -11,6 +11,7 @@ import {
     setModalTitle,
     enableDeletePopover,
 } from './utils_controller.js';
+import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
 export default class extends Controller {
     static values = {
@@ -73,8 +74,9 @@ export default class extends Controller {
             window.removeEventListener('orientationchange', this.boundResize);
         }
 
-        if (typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            tinymce.get('editor1').destroy();
+        if (this.simpleEditor) {
+            this.simpleEditor.destroy();
+            this.simpleEditor = null;
         }
     }
 
@@ -148,7 +150,7 @@ export default class extends Controller {
         }
         this.isHandlingModalChange = true;
         this.enablePriceOptionsMisc();
-        this.initTinyMceEditor();
+        this.initHtmlEditor();
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
         this.updateConflictBadgeFromModal();
@@ -1538,8 +1540,8 @@ export default class extends Controller {
         if (!formEl || !url) {
             return false;
         }
-        if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            editor.value = tinymce.get('editor1').getContent();
+        if (editor && this.simpleEditor) {
+            editor.value = this.simpleEditor.getHTML();
         }
         httpRequest({
             url,
@@ -1564,8 +1566,8 @@ export default class extends Controller {
         if (!formEl || !url) {
             return false;
         }
-        if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            editor.value = tinymce.get('editor1').getContent();
+        if (editor && this.simpleEditor) {
+            editor.value = this.simpleEditor.getHTML();
         }
         httpRequest({
             url,
@@ -1791,31 +1793,32 @@ export default class extends Controller {
         return false;
     }
 
-    initTinyMceEditor() {
-        if (typeof tinymce === 'undefined') {
-            return;
-        }
-        const editorNode = document.getElementById('editor1');
-        if (!editorNode) {
-            return;
-        }
-    
-        if (editorNode.dataset.tinymceInitialized === 'true' || tinymce.get('editor1') !== null) {
+    initHtmlEditor() {
+        const textarea = document.getElementById('editor1');
+        if (!textarea || textarea.dataset.editorInitialized === 'true') {
             return;
         }
 
-        editorNode.dataset.tinymceInitialized = 'true';
-        tinymce.init({
-            selector: '#editor1',
-            language: document.documentElement.lang || 'de',
-            branding: false,
-            promotion: false,
-            valid_children: '+body[style]',
-            relative_urls: false,
-            protect: [
-                /<\/?\.?(set)?(html)?pageheader.*?>/g,
-                /<\/?\.?(set)?(html)?pagefooter.*?>/g
-            ]
+        // Destroy previous instance if modal content was replaced
+        if (this.simpleEditor) {
+            this.simpleEditor.destroy();
+            this.simpleEditor = null;
+        }
+
+        textarea.dataset.editorInitialized = 'true';
+        textarea.style.display = 'none';
+
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'simple-html-editor-content border rounded p-2';
+        editorContainer.style.minHeight = '200px';
+        textarea.parentNode.insertBefore(editorContainer, textarea.nextSibling);
+
+        this.simpleEditor = createSimpleHtmlEditor(editorContainer, textarea.value, {
+            onUpdate: (html) => { textarea.value = html; },
+            labels: {
+                fontFamily: this.translate('templates.editor.toolbar.font_family'),
+                fontSize: this.translate('templates.editor.toolbar.font_size'),
+            },
         });
     }
 
