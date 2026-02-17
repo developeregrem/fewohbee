@@ -76,8 +76,8 @@ final class HousekeepingViewServiceTest extends TestCase
     private static function makeReservation(string $start, string $end): Reservation
     {
         $reservation = new Reservation();
-        $reservation->setStartDate(new \DateTimeImmutable($start));
-        $reservation->setEndDate(new \DateTimeImmutable($end));
+        $reservation->setStartDate(new \DateTime($start));
+        $reservation->setEndDate(new \DateTime($end));
         $reservation->setPersons(2);
 
         return $reservation;

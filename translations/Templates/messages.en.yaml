@@ -174,7 +174,10 @@ templates.editor.toolbar.align_right: Align right
 templates.editor.toolbar.beautify: Beautify code
 templates.editor.toolbar.code: Code
 templates.editor.toolbar.visual: Visual
-templates.editor.alert.protected_comments: This template contains pseudo-Twig in HTML comments and can only be edited in code mode.
+templates.editor.toolbar.variable: Insert variable
+templates.editor.variable_picker.title: Insert variable
+templates.editor.variable_picker.insert_loop: Insert loop
+templates.editor.alert.protected_content: This template contains Twig syntax or advanced directives and can only be edited in code mode.
 templates.editor.row.repeat_toggle: Repeat row
 templates.editor.row.repeat_collection: Collection (e.g. apartmentPositions)
 templates.editor.row.repeat_as: Item variable (e.g. position)

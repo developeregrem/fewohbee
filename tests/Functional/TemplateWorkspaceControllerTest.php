@@ -10,28 +10,28 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-final class TemplatePreviewControllerTest extends WebTestCase
+final class TemplateWorkspaceControllerTest extends WebTestCase
 {
-    public function testInvoicePreviewPageLoads(): void
+    public function testInvoiceTemplateWorkspacePageLoads(): void
     {
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
         $template = $this->createTemplate('TEMPLATE_INVOICE_PDF', 'App\\Service\\InvoiceService', '[[ invoice.number ]]');
 
-        $client->request('GET', '/settings/templates/'.$template->getId().'/preview');
+        $client->request('GET', '/settings/templates/'.$template->getId().'/edit-page');
 
         self::assertResponseStatusCodeSame(200);
     }
 
-    public function testReservationEmailPreviewPageLoads(): void
+    public function testReservationEmailTemplateWorkspacePageLoads(): void
     {
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
         $template = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'App\\Service\\ReservationService', '[[ reservation1.booker.lastname ]]');
 
-        $client->request('GET', '/settings/templates/'.$template->getId().'/preview');
+        $client->request('GET', '/settings/templates/'.$template->getId().'/edit-page');
 
         self::assertResponseStatusCodeSame(200);
     }

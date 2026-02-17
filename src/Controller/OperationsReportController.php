@@ -108,7 +108,7 @@ class OperationsReportController extends AbstractController
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
 
         $templateOutput = $templatesService->renderTemplate($templateId, $reportData, $reportService);
-        dump($reportData);
+
         $isPreview = $request->query->getBoolean('preview');
         $pdfOutput = $templatesService->getPDFOutput(
             $templateOutput,
