@@ -81,8 +81,7 @@
                     </td>
                     <td>
                         <a href="{{ path('settings.templates.edit.page', {'id': template.id}) }}" title="{{ 'button.edit'|trans }}">
-                            <i class="fas fa-edit" aria-hidden="true"></i>
-                        </a>
+                            <i class="fas fa-edit" aria-hidden="true"></i></a>
                         {% set id = template.id %}
                         {% set targetUrl = path('settings.templates.delete', {'id': template.id}) %}
                         {% use "common/delete_popover.html.twig" %}

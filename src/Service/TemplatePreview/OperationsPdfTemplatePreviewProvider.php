@@ -74,10 +74,22 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
         $occupancyTypes = $this->housekeepingViewService->getAllowedOccupancyTypes();
 
         $reportData = $this->operationsReportService->buildReportData($start, $end, $subsidiary, $occupancyTypes);
-        $reportData['filters']['template'] = $template;
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
 
-        return $this->operationsReportService->getRenderParams($template, $reportData);
+        return $this->buildRenderParams($template, $reportData);
+    }
+
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $reportData = $input;
+        $reportData['filters']['template'] = $template;
+        $reportData['filters']['subsidiaryId'] ??= 'all';
+
+        return $this->operationsReportService->buildTemplateRenderParams($template, $reportData);
     }
 
     public function getRenderParamsSchema(): array
@@ -102,7 +114,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
                 'label' => 'templates.editor.operations.header_footer',
                 'group' => 'Operations',
                 'complexity' => 'easy',
-                'content' => "<div class=\"header\"><div style=\"text-align: center; color: #666; font-size: 11px;\">[[ simple.meta.periodLabel ]]<span data-repeat=\"simple.meta.occupancyTypeLabelKeys\" data-repeat-as=\"type\"> | [[ occupancyLabels[type]|trans({}, 'Housekeeping') ]]</span> | [[ simple.meta.subsidiaryLabel|trans({}, 'Housekeeping') ]] | Erzeugt [[ simple.meta.generatedAt ]]</div></div><div class=\"footer\"><div style=\"text-align: right; font-size: 11px; color: #666;\">Seite {PAGENO} von {nbpg}</div></div>",
+                'content' => "<div class=\"header\"><div style=\"text-align: center; color: #666; font-size: 11px;\">[[ simple.meta.periodLabel ]]<span data-repeat=\"simple.meta.occupancyTypeLabelKeys\" data-repeat-as=\"type\"> | [[ occupancyLabels[type]|trans({}, 'Housekeeping') ]]</span> | [[ simple.meta.subsidiaryName ?: (simple.meta.subsidiaryAllLabelKey|trans({}, 'Housekeeping')) ]] | Erzeugt [[ simple.meta.generatedAt ]]</div></div><div class=\"footer\"><div style=\"text-align: right; font-size: 11px; color: #666;\">Seite {PAGENO} von {nbpg}</div></div>",
             ],
             [
                 'id' => 'operations.reservations.table',

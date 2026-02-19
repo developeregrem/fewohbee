@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Service\MpdfService;
+use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -69,6 +70,32 @@ final class TemplatesServiceTest extends TestCase
         self::assertStringNotContainsString('data-if=', $output);
     }
 
+    public function testRenderTemplateStringKeepsStyleAndClassOnDataRepeatElement(): void
+    {
+        $service = $this->createService();
+
+        $output = $service->renderTemplateString(
+            '<span class="badge important" style="color:#111;background:#eee" data-repeat="items" data-repeat-as="item">[[ item ]]</span>',
+            ['items' => ['A']]
+        );
+
+        self::assertStringContainsString('<span class="badge important" style="color:#111;background:#eee">A</span>', $output);
+        self::assertStringNotContainsString('data-repeat=', $output);
+    }
+
+    public function testRenderTemplateStringKeepsStyleAndClassOnDataIfElement(): void
+    {
+        $service = $this->createService();
+
+        $output = $service->renderTemplateString(
+            '<div class="notice" style="border:1px solid #333" data-if="show">OK</div>',
+            ['show' => true]
+        );
+
+        self::assertStringContainsString('<div class="notice" style="border:1px solid #333">OK</div>', $output);
+        self::assertStringNotContainsString('data-if=', $output);
+    }
+
     public function testRenderTemplateStringKeepsNestedRepeatStructure(): void
     {
         $service = $this->createService();
@@ -127,8 +154,8 @@ final class TemplatesServiceTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             new RequestStack(),
             $this->createStub(MpdfService::class),
-            $translator
+            $translator,
+            $this->createStub(TemplateRenderParamsResolver::class)
         );
     }
 }
-

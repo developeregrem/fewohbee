@@ -17,7 +17,7 @@ final class TemplateWorkspaceControllerTest extends WebTestCase
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $template = $this->createTemplate('TEMPLATE_INVOICE_PDF', 'App\\Service\\InvoiceService', '[[ invoice.number ]]');
+        $template = $this->createTemplate('TEMPLATE_INVOICE_PDF', '[[ invoice.number ]]');
 
         $client->request('GET', '/settings/templates/'.$template->getId().'/edit-page');
 
@@ -29,23 +29,22 @@ final class TemplateWorkspaceControllerTest extends WebTestCase
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $template = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'App\\Service\\ReservationService', '[[ reservation1.booker.lastname ]]');
+        $template = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', '[[ reservation1.booker.lastname ]]');
 
         $client->request('GET', '/settings/templates/'.$template->getId().'/edit-page');
 
         self::assertResponseStatusCodeSame(200);
     }
 
-    private function createTemplate(string $typeName, string $service, string $text): Template
+    private function createTemplate(string $typeName, string $text): Template
     {
         /** @var EntityManagerInterface $em */
         $em = self::getContainer()->get('doctrine')->getManager();
 
-        $type = new TemplateType();
-        $type->setName($typeName);
-        $type->setIcon('fa-file');
-        $type->setService($service);
-        $em->persist($type);
+        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => $typeName]);
+        if (!$type instanceof TemplateType) {
+            self::fail(sprintf('TemplateType "%s" not found in test database.', $typeName));
+        }
 
         $template = new Template();
         $template->setName('Preview '.$typeName);

@@ -17,7 +17,7 @@ final class TemplatesEditorApiTest extends WebTestCase
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $type = $this->createTemplateType('TEMPLATE_INVOICE_PDF', 'App\\Service\\InvoiceService');
+        $type = $this->requireTemplateType('TEMPLATE_INVOICE_PDF');
 
         $client->request('GET', '/settings/templates/schema/'.$type->getId());
 
@@ -34,7 +34,7 @@ final class TemplatesEditorApiTest extends WebTestCase
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $type = $this->createTemplateType('TEMPLATE_INVOICE_PDF', 'App\\Service\\InvoiceService');
+        $type = $this->requireTemplateType('TEMPLATE_INVOICE_PDF');
         $template = $this->createTemplate(
             $type,
             'Invoice Error Template',
@@ -55,22 +55,15 @@ final class TemplatesEditorApiTest extends WebTestCase
         self::assertNotSame('', trim((string) ($payload['warningText'] ?? '')));
     }
 
-    private function createTemplateType(string $name, string $service): TemplateType
+    private function requireTemplateType(string $name): TemplateType
     {
         /** @var EntityManagerInterface $em */
         $em = self::getContainer()->get('doctrine')->getManager();
 
-        $existing = $em->getRepository(TemplateType::class)->findOneBy(['name' => $name]);
-        if ($existing instanceof TemplateType) {
-            return $existing;
+        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => $name]);
+        if (!$type instanceof TemplateType) {
+            self::fail(sprintf('TemplateType "%s" not found in test database.', $name));
         }
-
-        $type = new TemplateType();
-        $type->setName($name);
-        $type->setIcon('fa-file');
-        $type->setService($service);
-        $em->persist($type);
-        $em->flush();
 
         return $type;
     }
@@ -104,4 +97,3 @@ final class TemplatesEditorApiTest extends WebTestCase
         return $user;
     }
 }
-

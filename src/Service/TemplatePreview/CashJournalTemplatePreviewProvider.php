@@ -75,6 +75,38 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
         $cashMonthRaw = is_scalar($ctx['cashMonth'] ?? null) ? trim((string) $ctx['cashMonth']) : '';
         $hasInput = ($cashYearRaw !== '' || $cashMonthRaw !== '');
         if ($hasInput) {
+            $params = $this->buildRenderParams($template, [
+                'cashYear' => $cashYearRaw,
+                'cashMonth' => $cashMonthRaw,
+            ]);
+            if (!empty($params)) {
+                return $params;
+            }
+
+            $ctx['_previewWarning'] = 'templates.preview.cashjournal.notfound';
+            $ctx['_previewWarningVars'] = ['%value%' => trim($cashYearRaw.'-'.$cashMonthRaw, '-')];
+
+            return $this->buildSampleParams($ctx);
+        }
+
+        $latest = $this->em->getRepository(CashJournal::class)->findOneBy([], ['id' => 'DESC']);
+        if ($latest instanceof CashJournal) {
+            return $this->cashJournalService->buildTemplateRenderParams($template, $latest->getId());
+        }
+
+        return $this->buildSampleParams($ctx);
+    }
+
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        $journal = null;
+        if ($input instanceof CashJournal) {
+            $journal = $input;
+        } elseif (is_numeric($input)) {
+            $journal = $this->em->getRepository(CashJournal::class)->find((int) $input);
+        } elseif (is_array($input)) {
+            $cashYearRaw = is_scalar($input['cashYear'] ?? null) ? trim((string) $input['cashYear']) : '';
+            $cashMonthRaw = is_scalar($input['cashMonth'] ?? null) ? trim((string) $input['cashMonth']) : '';
             $year = is_numeric($cashYearRaw) ? (int) $cashYearRaw : null;
             $month = is_numeric($cashMonthRaw) ? (int) $cashMonthRaw : null;
             $isMonthValid = null !== $month && $month >= 1 && $month <= 12;
@@ -83,21 +115,14 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
                     'cashYear' => $year,
                     'cashMonth' => $month,
                 ], ['id' => 'DESC']);
-                if ($journal instanceof CashJournal) {
-                    return $this->cashJournalService->getRenderParams($template, $journal->getId());
-                }
             }
-
-            $ctx['_previewWarning'] = 'templates.preview.cashjournal.notfound';
-            $ctx['_previewWarningVars'] = ['%value%' => trim($cashYearRaw.'-'.$cashMonthRaw, '-')];
         }
 
-        $latest = $this->em->getRepository(CashJournal::class)->findOneBy([], ['id' => 'DESC']);
-        if ($latest instanceof CashJournal) {
-            return $this->cashJournalService->getRenderParams($template, $latest->getId());
+        if (!$journal instanceof CashJournal) {
+            return [];
         }
 
-        return $this->buildSampleParams($ctx);
+        return $this->cashJournalService->buildTemplateRenderParams($template, $journal->getId());
     }
 
     public function getRenderParamsSchema(): array

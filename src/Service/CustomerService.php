@@ -18,12 +18,11 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Enum\IDCardType;
 use App\Entity\PostalCodeData;
 use App\Entity\Template;
-use App\Interfaces\ITemplateRenderer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
-class CustomerService implements ITemplateRenderer
+class CustomerService
 {
     public function __construct(private readonly EntityManagerInterface $em)
     {
@@ -187,7 +186,10 @@ class CustomerService implements ITemplateRenderer
         return $result;
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all customer variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
         $params = [
             'customer' => $param,

@@ -66,18 +66,37 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         $invoiceNumber = $ctx['invoiceNumber'] ?? null;
         if (is_string($invoiceNumber) && '' !== trim($invoiceNumber)) {
             $invoiceNumber = trim($invoiceNumber);
-            $invoice = $this->em->getRepository(Invoice::class)->findOneBy(['number' => $invoiceNumber]);
-            if (!$invoice instanceof Invoice && is_numeric($invoiceNumber)) {
-                $invoice = $this->em->getRepository(Invoice::class)->find((int) $invoiceNumber);
-            }
-            if ($invoice instanceof Invoice) {
-                return $this->invoiceService->getRenderParams($template, $invoice->getId());
+            $params = $this->buildRenderParams($template, $invoiceNumber);
+            if (!empty($params)) {
+                return $params;
             }
             $ctx['_previewWarning'] = 'templates.preview.invoice.notfound';
             $ctx['_previewWarningVars'] = ['%value%' => $invoiceNumber];
         }
 
         return $this->buildSampleParams($ctx);
+    }
+
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        $invoice = null;
+        if ($input instanceof Invoice) {
+            $invoice = $input;
+        } elseif (is_string($input) && '' !== trim($input)) {
+            $value = trim($input);
+            $invoice = $this->em->getRepository(Invoice::class)->findOneBy(['number' => $value]);
+            if (!$invoice instanceof Invoice && is_numeric($value)) {
+                $invoice = $this->em->getRepository(Invoice::class)->find((int) $value);
+            }
+        } elseif (is_numeric($input)) {
+            $invoice = $this->em->getRepository(Invoice::class)->find((int) $input);
+        }
+
+        if (!$invoice instanceof Invoice) {
+            return [];
+        }
+
+        return $this->invoiceService->buildTemplateRenderParams($template, $invoice);
     }
 
     public function getRenderParamsSchema(): array

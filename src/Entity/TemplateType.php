@@ -18,12 +18,8 @@ class TemplateType
     private $name;
     #[ORM\Column(type: 'string', length: 50)]
     private $icon;
-    #[ORM\Column(type: 'string', length: 150)]
-    private $service;
     #[ORM\OneToMany(mappedBy: 'templateType', targetEntity: 'Template')]
     private $templates;
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private $editorTemplate;
 
     /**
      * Constructor.
@@ -92,30 +88,6 @@ class TemplateType
     }
 
     /**
-     * Set service.
-     *
-     * @param string $service
-     *
-     * @return TemplateType
-     */
-    public function setService($service)
-    {
-        $this->service = $service;
-
-        return $this;
-    }
-
-    /**
-     * Get service.
-     *
-     * @return string
-     */
-    public function getService()
-    {
-        return $this->service;
-    }
-
-    /**
      * Add template.
      *
      * @return TemplateType
@@ -145,15 +117,4 @@ class TemplateType
         return $this->templates;
     }
 
-    public function getEditorTemplate(): ?string
-    {
-        return $this->editorTemplate;
-    }
-
-    public function setEditorTemplate(?string $editorTemplate): self
-    {
-        $this->editorTemplate = $editorTemplate;
-
-        return $this;
-    }
 }

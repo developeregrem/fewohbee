@@ -22,7 +22,6 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Enum\InvoiceStatus;
-use App\Interfaces\ITemplateRenderer;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -31,7 +30,7 @@ use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class InvoiceService implements ITemplateRenderer
+class InvoiceService
 {
     private $em;
     private $ps;
@@ -201,10 +200,11 @@ class InvoiceService implements ITemplateRenderer
         }
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all invoice variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, Invoice $invoice): array
     {
-        $invoice = $this->em->getRepository(Invoice::class)->find($param);
-
         $vatSums = [];
         $brutto = 0;
         $netto = 0;
@@ -242,7 +242,7 @@ class InvoiceService implements ITemplateRenderer
 
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
     {
-        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $this);
+        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
         $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template, true);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 

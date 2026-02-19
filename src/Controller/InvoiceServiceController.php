@@ -827,7 +827,7 @@ class InvoiceServiceController extends AbstractController
 
         $templateOutput = null;
         try {
-            $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $is);
+            $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 
