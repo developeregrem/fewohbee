@@ -26,6 +26,13 @@ interface ITemplatePreviewProvider
     public function supportsPreview(Template $template): bool;
 
     /**
+     * Build render parameters for production rendering (not preview-only flows).
+     *
+     * @return array<string, mixed>
+     */
+    public function buildRenderParams(Template $template, mixed $input): array;
+
+    /**
      * Describe preview input fields for the UI.
      *
      * @return array<int, array<string, mixed>>

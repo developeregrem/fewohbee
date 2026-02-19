@@ -101,7 +101,6 @@ class OperationsFrontdeskController extends AbstractController
     public function downloadRegistrationTemplateAction(
         ManagerRegistry $doctrine,
         TemplatesService $templatesService,
-        ReservationService $reservationService,
         Request $request
     ): Response {
         $em = $doctrine->getManager();
@@ -125,8 +124,7 @@ class OperationsFrontdeskController extends AbstractController
 
         $templateOutput = $templatesService->renderTemplate(
             $template->getId(),
-            [$reservation],
-            $reservationService
+            [$reservation]
         );
         $pdfOutput = $templatesService->getPDFOutput(
             $templateOutput,

@@ -30,6 +30,8 @@ final class Version20260121120000 extends AbstractMigration
         $this->addSql("INSERT INTO reservation_status (name, color, contrast_color, code, is_blocking) SELECT 'Storniert / No-Show', '#6c757d', '#ffffff', 'canceled_noshow', 0 WHERE NOT EXISTS (SELECT 1 FROM reservation_status WHERE code = 'canceled_noshow')");
     
          $this->addSql('ALTER TABLE correspondence ADD binary_payload LONGBLOB DEFAULT NULL');
+
+         $this->addSql('ALTER TABLE template_types DROP service, DROP editor_template');
     }
 
     public function down(Schema $schema): void
@@ -44,6 +46,9 @@ final class Version20260121120000 extends AbstractMigration
         $this->addSql('ALTER TABLE reservation_status DROP code, DROP is_blocking');
 
         $this->addSql('ALTER TABLE correspondence DROP binary_payload');
+
+        $this->addSql("ALTER TABLE template_types ADD service VARCHAR(150) NOT NULL DEFAULT ''");
+        $this->addSql('ALTER TABLE template_types ADD editor_template VARCHAR(50) DEFAULT NULL');
     
     }
 

@@ -10,12 +10,11 @@ use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Enum\InvoiceStatus;
-use App\Interfaces\ITemplateRenderer;
 
 /**
  * Renders operations report templates.
  */
-class OperationsReportService implements ITemplateRenderer
+class OperationsReportService
 {
     public function __construct(
         private readonly HousekeepingViewService $housekeepingViewService,
@@ -54,9 +53,9 @@ class OperationsReportService implements ITemplateRenderer
     }
 
     /**
-     * Provide parameters for template rendering.
+     * Build all operations report variables required by template rendering.
      */
-    public function getRenderParams(Template $template, mixed $param)
+    public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
         if (is_array($param)) {
             if ($this->shouldIncludeStatistics($template, $param)) {
@@ -153,7 +152,8 @@ class OperationsReportService implements ITemplateRenderer
             'meta' => [
                 'periodLabel' => $this->buildPeriodLabel($start, $end),
                 'generatedAt' => (new \DateTimeImmutable('now'))->format('d.m.Y H:i'),
-                'subsidiaryLabel' => $subsidiary?->getName() ?: 'housekeeping.subsidiary.all',
+                'subsidiaryName' => $subsidiary?->getName(),
+                'subsidiaryAllLabelKey' => 'housekeeping.subsidiary.all',
                 'occupancyTypeLabelKeys' => $occupancyTypes,
                 'dayKey' => $dayKey,
             ],

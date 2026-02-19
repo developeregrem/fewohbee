@@ -20,8 +20,7 @@ use App\Entity\MailAttachment;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
-use App\Interfaces\ITemplateRenderer;
-use App\Service\InvoiceService;
+use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,7 +52,8 @@ class TemplatesService
         private EntityManagerInterface $em,
         private RequestStack $requestStack,
         private MpdfService $mpdfs,
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
+        private TemplateRenderParamsResolver $renderParamsResolver
     ) {
         $this->webHost = $webHost;
     }
@@ -118,7 +118,7 @@ class TemplatesService
         ]);
     }
 
-    public function renderTemplate(int $templateId, mixed $param, ITemplateRenderer $serviceObj): string
+    public function renderTemplate(int $templateId, mixed $param): string
     {
         /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
@@ -126,12 +126,7 @@ class TemplatesService
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
         }
 
-        $params = [];
-        $service = $template->getTemplateType()->getService();
-        if (!empty($service)) {
-            // each service must implement the ITemplateRenderer interface
-            $params = $serviceObj->getRenderParams($template, $param);
-        }
+        $params = $this->renderParamsResolver->resolve($template, $param);
 
         $str = $this->replaceTwigSyntax($template->getText());
         $templateStr = $this->twig->createTemplate($str);
@@ -403,7 +398,7 @@ class TemplatesService
         $defaultTemlate = $this->getDefaultTemplate($templates);
         $templateOutput = '';
         if (null !== $defaultTemlate) {
-            $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id, $is);
+            $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id);
         }
 
         $reservations = $this->getReferencedReservationsInSession();

@@ -31,7 +31,7 @@
                         <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
                     {% endfor %}
                 </select>
-                <div class="form-check form-check-inline m-0">
+                <div class="form-check form-switch form-check-inline m-0">
                     <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
                     <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
                 </div>
@@ -132,13 +132,22 @@
                              data-i18n-variable="{{ 'templates.editor.toolbar.variable'|trans }}"
                              data-i18n-variable-picker-title="{{ 'templates.editor.variable_picker.title'|trans }}"
                              data-i18n-variable-insert-loop="{{ 'templates.editor.variable_picker.insert_loop'|trans }}"></div>
-                        <button type="button"
-                            class="btn btn-outline-secondary btn-sm template-editor-btn"
-                            data-action="template-editor#toggleSnippetSidebar"
-                            data-template-editor-target="snippetToggle"
-                            title="{{ 'templates.editor.snippets.sidebar'|trans }}">
-                            <i class="fas fa-puzzle-piece" aria-hidden="true"></i>
-                        </button>
+                        <div class="template-editor-toolbar-group ms-auto" role="group">
+                            <button type="button"
+                                class="btn btn-secondary btn-sm template-editor-btn"
+                                data-action="template-editor#toggleSnippetSidebar"
+                                data-template-editor-target="snippetToggle"
+                                title="{{ 'templates.editor.snippets.sidebar'|trans }}">
+                                <i class="fas fa-puzzle-piece" aria-hidden="true"></i>
+                            </button>
+                            <button type="button"
+                                class="btn btn-secondary btn-sm template-editor-btn"
+                                data-action="click->template-editor#openVariablePicker"
+                                data-template-command="variable"
+                                title="{{ 'templates.editor.toolbar.variable'|trans }}">
+                                <i class="fas fa-code-branch" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <button type="button"
                             class="btn btn-outline-secondary btn-sm template-editor-btn template-editor-mode-btn"
                             data-action="template-editor#toggleCodeMode"
@@ -213,7 +222,7 @@
 
             <div class="card-body d-none" data-template-editor-target="panelPreview">
                 <div class="row g-3">
-                    <div class="col-lg-4">
+                    <div class="col-lg-3">
                         <div class="card">
                             <div class="card-header">{{ 'templates.preview.context'|trans }}</div>
                             <div class="card-body" data-template-editor-target="previewContextPanel">
@@ -255,7 +264,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-8">
+                    <div class="col-lg-9">
                         <div class="card">
                             <div class="card-header">{{ 'templates.preview.result'|trans }}</div>
                             <div class="card-body">

@@ -707,7 +707,6 @@ export default class extends Controller {
                     { type: 'button', command: 'link', icon: 'fas fa-link', title: t('link', 'Insert link') },
                     { type: 'button', command: 'table', icon: 'fas fa-table', title: t('table', 'Insert table') },
                     { type: 'button', command: 'image', icon: 'fas fa-image', title: t('image', 'Insert image') },
-                    { type: 'button', command: 'variable', icon: 'fas fa-code-branch', title: t('variable', 'Insert variable') },
                 ],
             },
         ];
@@ -1427,6 +1426,13 @@ export default class extends Controller {
         if (snippetContent) {
             const complexity = event.dataTransfer?.getData('application/x-template-snippet-complexity') || 'simple';
             event.preventDefault();
+
+            // Move cursor to drop position so content is inserted there
+            const dropPos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (dropPos) {
+                this.editorInstance.chain().focus().setTextSelection(dropPos.pos).run();
+            }
+
             this.insertSnippetContent(snippetContent, complexity);
             return true;
         }

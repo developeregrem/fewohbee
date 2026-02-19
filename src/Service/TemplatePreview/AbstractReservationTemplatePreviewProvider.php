@@ -78,15 +78,25 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
     {
         $ids = $this->normalizeIds($ctx['reservationIds'] ?? null);
         if (!empty($ids)) {
-            $reservations = $this->em->getRepository(Reservation::class)->findBy(['id' => $ids]);
-            if (!empty($reservations)) {
-                return $this->reservationService->getRenderParams($template, $reservations);
+            $params = $this->buildRenderParams($template, $ids);
+            if (!empty($params)) {
+                return $params;
             }
             $ctx['_previewWarning'] = 'templates.preview.reservation.notfound';
             $ctx['_previewWarningVars'] = ['%value%' => implode(', ', $ids)];
         }
 
         return $this->buildSampleParams($ctx);
+    }
+
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        $reservations = $this->resolveReservations($input);
+        if (empty($reservations)) {
+            return [];
+        }
+
+        return $this->reservationService->buildTemplateRenderParams($template, $reservations);
     }
 
     public function getAvailableSnippets(): array
@@ -233,6 +243,33 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Resolve reservation entities from mixed render input.
+     *
+     * @return array<int, Reservation>
+     */
+    protected function resolveReservations(mixed $input): array
+    {
+        if ($input instanceof Reservation) {
+            return [$input];
+        }
+
+        if (is_array($input)) {
+            $allReservations = !empty($input)
+                && array_reduce($input, static fn (bool $carry, mixed $item) => $carry && $item instanceof Reservation, true);
+            if ($allReservations) {
+                return $input;
+            }
+        }
+
+        $ids = $this->normalizeIds($input);
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $this->em->getRepository(Reservation::class)->findBy(['id' => $ids]);
     }
 
     /**

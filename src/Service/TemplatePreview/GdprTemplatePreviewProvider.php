@@ -16,7 +16,6 @@ namespace App\Service\TemplatePreview;
 use App\Entity\Customer;
 use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
-use App\Service\CustomerService;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -25,8 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly CustomerService $customerService
+        private readonly EntityManagerInterface $em
     ) {
     }
 
@@ -63,11 +61,9 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
         $customerId = $ctx['customerId'] ?? null;
         if (is_string($customerId) && '' !== trim($customerId)) {
             $customerId = trim($customerId);
-            if (is_numeric($customerId)) {
-                $customer = $this->em->getRepository(Customer::class)->find((int) $customerId);
-                if ($customer instanceof Customer) {
-                    return $this->customerService->getRenderParams($template, $customer);
-                }
+            $params = $this->buildRenderParams($template, $customerId);
+            if (!empty($params)) {
+                return $params;
             }
 
             $ctx['_previewWarning'] = 'templates.preview.gdpr.customer_notfound';
@@ -76,10 +72,32 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
 
         $latest = $this->em->getRepository(Customer::class)->findOneBy([], ['id' => 'DESC']);
         if ($latest instanceof Customer) {
-            return $this->customerService->getRenderParams($template, $latest);
+            return $this->buildRenderParams($template, $latest);
         }
 
         return $this->buildSampleParams($ctx);
+    }
+
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        $customer = null;
+        if ($input instanceof Customer) {
+            $customer = $input;
+        } elseif (is_numeric($input)) {
+            $customer = $this->em->getRepository(Customer::class)->find((int) $input);
+        } elseif (is_array($input) && is_numeric($input['customerId'] ?? null)) {
+            $customer = $this->em->getRepository(Customer::class)->find((int) $input['customerId']);
+        }
+
+        if (!$customer instanceof Customer) {
+            return [];
+        }
+
+        $params = [
+            'customer' => $customer,
+        ];
+
+        return $params;
     }
 
     public function getRenderParamsSchema(): array
@@ -195,4 +213,3 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
         ], $ctx);
     }
 }
-

@@ -227,13 +227,13 @@ return [
         'version' => '6.10.2',
     ],
     '@codemirror/search' => [
-        'version' => '6.5.11',
+        'version' => '6.6.0',
     ],
     '@codemirror/lint' => [
-        'version' => '6.8.5',
+        'version' => '6.9.4',
     ],
     '@lezer/html' => [
-        'version' => '1.3.12',
+        'version' => '1.3.13',
     ],
     '@codemirror/lang-css' => [
         'version' => '6.3.1',
@@ -257,12 +257,12 @@ return [
         'version' => '1.2.3',
     ],
     '@lezer/lr' => [
-        'version' => '1.4.2',
+        'version' => '1.4.8',
     ],
     '@lezer/css' => [
-        'version' => '1.1.9',
+        'version' => '1.3.1',
     ],
     '@lezer/javascript' => [
-        'version' => '1.5.1',
+        'version' => '1.5.4',
     ],
 ];

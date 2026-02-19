@@ -36,6 +36,11 @@ class FilePdfTemplatePreviewProvider implements ITemplatePreviewProvider
         return [];
     }
 
+    public function buildRenderParams(Template $template, mixed $input): array
+    {
+        return [];
+    }
+
     public function buildSampleContext(): array
     {
         return [];
@@ -66,4 +71,3 @@ class FilePdfTemplatePreviewProvider implements ITemplatePreviewProvider
         ];
     }
 }
-

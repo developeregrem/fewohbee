@@ -20,14 +20,13 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
-use App\Interfaces\ITemplateRenderer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class ReservationService implements ITemplateRenderer
+class ReservationService
 {
     public const SESSION_SELECTED_RESERVATIONS = 'selectedReservationIds';
 
@@ -471,7 +470,10 @@ class ReservationService implements ITemplateRenderer
         ];
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all reservation variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
         // params need to be an array containing a list of Reservation Objects
         $params = [
