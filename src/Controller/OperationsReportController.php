@@ -51,7 +51,7 @@ class OperationsReportController extends AbstractController
         $templateId = $templatesService->getTemplateId($doctrine, $requestStack, 'TEMPLATE_OPERATIONS_PDF', 'operations-template-id');
         $selectedTemplateId = (int) $request->query->get('templateId', $templateId);
 
-        return $this->render('Operations/Reports/index.html.twig', [
+        $viewData = [
             'subsidiaries' => $subsidiaries,
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedSubsidiary' => $selectedSubsidiary,
@@ -62,7 +62,14 @@ class OperationsReportController extends AbstractController
             'occupancyLabels' => $housekeepingViewService->getOccupancyLabels(),
             'templates' => $templates,
             'templateId' => $selectedTemplateId,
-        ]);
+        ];
+
+        // AJAX request: return only preview partial
+        if ($request->isXmlHttpRequest()) {
+            return $this->previewAction($request);
+        }
+
+        return $this->render('Operations/Reports/index.html.twig', $viewData);
     }
 
     /**

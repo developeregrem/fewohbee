@@ -1,0 +1,272 @@
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle">
+        <thead>
+        <tr>
+            <th></th>
+            <th>{{ 'operations.frontdesk.room'|trans }}</th>
+            <th>{{ 'operations.frontdesk.guest'|trans }}</th>
+            <th>{{ 'operations.frontdesk.period'|trans }}</th>
+            <th class="text-center">{{ 'operations.frontdesk.category'|trans }}</th>
+            <th class="text-center">{{ 'reservation.status'|trans }}</th>
+            <th class="text-center">{{ 'operations.frontdesk.header.registration'|trans }}</th>
+            <th class="text-center">{{ 'operations.frontdesk.header.invoice'|trans }}</th>
+            <th class="text-center">{{ 'operations.frontdesk.header.email'|trans }}</th>
+            <th class="text-center">{{ 'operations.frontdesk.header.note'|trans }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in frontdeskItems %}
+            {% set reservation = item.reservation %}
+            {% set guestNames = [] %}
+            {% for customer in reservation.customers %}
+                {% set name = (customer.lastname ~ ' ' ~ customer.firstname)|trim %}
+                {% if name != '' %}
+                    {% set guestNames = guestNames|merge([name]) %}
+                {% endif %}
+            {% endfor %}
+            {% if guestNames is empty and reservation.booker %}
+                {% set name = (reservation.booker.lastname ~ ' ' ~ reservation.booker.firstname)|trim %}
+                {% if name != '' %}
+                    {% set guestNames = [name] %}
+                {% endif %}
+            {% endif %}
+            <tr{% if reservation.reservationStatus and reservation.reservationStatus.code == 'canceled_noshow' %} class="table-danger"{% endif %}>
+                <td class="text-center">
+                    <a href="#"
+                       data-action="click->reservations#openReservationAction"
+                       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                       data-reservation-id="{{ reservation.id }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'reservation.details'|trans }}">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'reservation.details'|trans }}</span>
+                    </a>
+                </td>
+                <td>{{ item.apartment.number }} {{ item.apartment.description }}</td>
+                <td>{{ guestNames|join(', ') ?: '-' }}</td>
+                <td>{{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}</td>
+                <td class="text-center">
+                    {% if 'arrival' in item.categories %}
+                        <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
+                    {% endif %}
+                    {% if 'departure' in item.categories %}
+                        <span class="badge text-bg-danger">{{ 'operations.frontdesk.departures'|trans }}</span>
+                    {% endif %}
+                    {% if 'inhouse' in item.categories %}
+                        <span class="badge text-bg-primary">{{ 'operations.frontdesk.inhouse'|trans }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <select class="form-select form-select-sm"
+                            data-action="change->reservations#updateReservationStatusAction"
+                            data-url="{{ path('operations.frontdesk.reservation.status', { id: reservation.id }) }}"
+                            data-token="{{ csrf_token('reservation-status-update') }}">
+                        {% for status in reservationStatuses %}
+                            <option value="{{ status.id }}"{% if reservation.reservationStatus and reservation.reservationStatus.id == status.id %} selected{% endif %}>
+                                {{ status.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="text-center">
+                    <a class="btn btn-outline-primary btn-sm" title="{{ 'operations.frontdesk.registration.print'|trans }}"
+                       href="{{ path('operations.frontdesk.registration.download', { reservationId: reservation.id }) }}"
+                       target="_blank" rel="noopener">
+                        <i class="fas fa-print"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
+                    </a>
+                </td>
+                <td class="text-center">
+                    {% if reservation.invoices|length > 0 %}
+                        {% set invoice = reservation.invoices|first %}
+                        {% set invoiceBadgeClass = 'text-bg-light' %}
+                        {% if item.invoiceStatusLabel == 'invoice.status.notpayed' %}
+                            {% set invoiceBadgeClass = 'text-bg-warning' %}
+                        {% elseif item.invoiceStatusLabel == 'invoice.status.payed' %}
+                            {% set invoiceBadgeClass = 'text-bg-success' %}
+                        {% endif %}
+                        <a href="#"
+                           class="badge {{ invoiceBadgeClass }}"
+                           data-action="click->reservations#openModalContentAction"
+                           data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                           data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter">
+                            {{ item.invoiceStatusLabel ? (item.invoiceStatusLabel|trans) : ('reservation.invoice'|trans) }}
+                        </a>
+                    {% else %}
+                        <a href="#" title="{{ 'reservation.button.create.invoice'|trans }}"
+                           class="btn btn-outline-primary btn-sm{% if reservation.booker is null %} disabled{% endif %}"
+                           {% if reservation.booker %}
+                           data-action="click->reservations#selectReservationForInvoiceAction"
+                           data-url="{{ path('invoices.select.reservation') }}"
+                           data-reservation-id="{{ reservation.id }}"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"
+                           {% else %}
+                           aria-disabled="true"
+                           {% endif %}>
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span class="visually-hidden">{{ 'reservation.button.create.invoice'|trans }}</span>
+                        </a>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="#" title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
+                       class="btn btn-outline-primary btn-sm"
+                       data-action="click->reservations#selectTemplateForReservationsAction"
+                       data-url="{{ path('operations.frontdesk.template.quick', { reservationId: reservation.id }) }}"
+                       data-title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                        <i class="fas fa-envelope"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.confirmation.send'|trans }}</span>
+                    </a>
+                </td>
+                <td class="text-center">
+                    <a href="#" title="{{ 'operations.frontdesk.note.edit'|trans }}"
+                       class="btn btn-outline-primary btn-sm"
+                       data-action="click->reservations#openModalContentAction"
+                       data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
+                       data-title="{{ 'nav.reservation.edit'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                        <i class="fas fa-pen"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.note.edit'|trans }}</span>
+                    </a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="10" class="text-muted">-</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="d-md-none">
+    {% for item in frontdeskItems %}
+        {% set reservation = item.reservation %}
+        {% set guestNames = [] %}
+        {% for customer in reservation.customers %}
+            {% set name = (customer.lastname ~ ' ' ~ customer.firstname)|trim %}
+            {% if name != '' %}
+                {% set guestNames = guestNames|merge([name]) %}
+            {% endif %}
+        {% endfor %}
+        {% if guestNames is empty and reservation.booker %}
+            {% set name = (reservation.booker.lastname ~ ' ' ~ reservation.booker.firstname)|trim %}
+            {% if name != '' %}
+                {% set guestNames = [name] %}
+            {% endif %}
+        {% endif %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-end mb-2">
+                    <a href="#"
+                       class="btn btn-outline-secondary btn-sm"
+                       data-action="click->reservations#openReservationAction"
+                       data-url="{{ path('reservations.get.reservation', {'id': reservation.id}) }}"
+                       data-reservation-id="{{ reservation.id }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter"
+                       title="{{ 'reservation.details'|trans }}">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'reservation.details'|trans }}</span>
+                    </a>
+                </div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="fw-semibold">{{ item.apartment.number }}</div>
+                        <div class="small text-muted">{{ item.apartment.description }}</div>
+                    </div>
+                    <div class="text-end">
+                        {% if 'arrival' in item.categories %}
+                            <span class="badge text-bg-success">{{ 'operations.frontdesk.arrivals'|trans }}</span>
+                        {% endif %}
+                        {% if 'departure' in item.categories %}
+                            <span class="badge text-bg-danger">{{ 'operations.frontdesk.departures'|trans }}</span>
+                        {% endif %}
+                        {% if 'inhouse' in item.categories %}
+                            <span class="badge text-bg-primary">{{ 'operations.frontdesk.inhouse'|trans }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="small text-muted mb-1">
+                    {{ 'operations.frontdesk.guest'|trans }}: {{ guestNames|join(', ') ?: '-' }}
+                </div>
+                <div class="small text-muted mb-3">
+                    {{ 'operations.frontdesk.period'|trans }}: {{ reservation.startDate|date('d.m.Y') }} - {{ reservation.endDate|date('d.m.Y') }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">{{ 'reservation.status'|trans }}</label>
+                    <select class="form-select form-select-sm"
+                            data-action="change->reservations#updateReservationStatusAction"
+                            data-url="{{ path('operations.frontdesk.reservation.status', { id: reservation.id }) }}"
+                            data-token="{{ csrf_token('reservation-status-update') }}">
+                        {% for status in reservationStatuses %}
+                            <option value="{{ status.id }}"{% if reservation.reservationStatus and reservation.reservationStatus.id == status.id %} selected{% endif %}>
+                                {{ status.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-outline-secondary btn-sm"
+                       href="{{ path('operations.frontdesk.registration.download', { reservationId: reservation.id }) }}"
+                       target="_blank" rel="noopener">
+                        <i class="fas fa-print"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
+                    </a>
+                    {% if reservation.invoices|length > 0 %}
+                        {% set invoice = reservation.invoices|first %}
+                        {% set invoiceBadgeClass = 'text-bg-light' %}
+                        {% if item.invoiceStatusLabel == 'invoice.status.notpayed' %}
+                            {% set invoiceBadgeClass = 'text-bg-warning' %}
+                        {% elseif item.invoiceStatusLabel == 'invoice.status.payed' %}
+                            {% set invoiceBadgeClass = 'text-bg-success' %}
+                        {% endif %}
+                        <a href="#"
+                           class="badge {{ invoiceBadgeClass }}"
+                           data-action="click->reservations#openModalContentAction"
+                           data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
+                           data-title="{{ 'reservation.invoice'|trans }} {{ invoice.number }}"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter">
+                            {{ item.invoiceStatusLabel ? (item.invoiceStatusLabel|trans) : ('reservation.invoice'|trans) }}
+                        </a>
+                    {% else %}
+                        <a href="#"
+                           class="btn btn-outline-secondary btn-sm{% if reservation.booker is null %} disabled{% endif %}"
+                           {% if reservation.booker %}
+                           data-action="click->reservations#selectReservationForInvoiceAction"
+                           data-url="{{ path('invoices.select.reservation') }}"
+                           data-reservation-id="{{ reservation.id }}"
+                           data-bs-toggle="modal" data-bs-target="#modalCenter"
+                           {% else %}
+                           aria-disabled="true"
+                           {% endif %}>
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span class="visually-hidden">{{ 'reservation.button.create.invoice'|trans }}</span>
+                        </a>
+                    {% endif %}
+                    <a href="#"
+                       class="btn btn-outline-secondary btn-sm"
+                       data-action="click->reservations#selectTemplateForReservationsAction"
+                       data-url="{{ path('operations.frontdesk.template.quick', { reservationId: reservation.id }) }}"
+                       data-title="{{ 'operations.frontdesk.confirmation.send'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                        <i class="fas fa-envelope"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.confirmation.send'|trans }}</span>
+                    </a>
+                    <a href="#"
+                       class="btn btn-outline-secondary btn-sm"
+                       data-action="click->reservations#openModalContentAction"
+                       data-url="{{ path('reservations.edit.remark', {'id': reservation.id}) }}"
+                       data-title="{{ 'nav.reservation.edit'|trans }}"
+                       data-bs-toggle="modal" data-bs-target="#modalCenter">
+                        <i class="fas fa-pen"></i>
+                        <span class="visually-hidden">{{ 'operations.frontdesk.note.edit'|trans }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center text-muted py-4">-</div>
+    {% endfor %}
+</div>

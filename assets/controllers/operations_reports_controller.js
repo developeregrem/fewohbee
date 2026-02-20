@@ -5,8 +5,11 @@ export default class extends Controller {
     static targets = ['form', 'download', 'preview', 'spinner'];
 
     connect() {
-        this.updateLinks();
-        this.loadPreview();
+        const isPreview = document.documentElement.hasAttribute('data-turbo-preview');
+        if (!isPreview) {
+            this.updateLinks();
+            this.loadPreview();
+        }
     }
 
     preventSubmit(event) {
