@@ -83,7 +83,7 @@ class OperationsFrontdeskController extends AbstractController
 
         $items = $frontdeskViewService->buildItems($dayView['rows'] ?? [], $selectedDate, $selectedCategories);
 
-        return $this->render('Operations/Frontdesk/index.html.twig', [
+        $viewData = [
             'subsidiaries' => $subsidiaries,
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedDate' => $selectedDate,
@@ -91,7 +91,14 @@ class OperationsFrontdeskController extends AbstractController
             'includeCanceled' => $includeCanceled,
             'frontdeskItems' => $items,
             'reservationStatuses' => $reservationStatuses,
-        ]);
+        ];
+
+        // AJAX request: return only content partial
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('Operations/Frontdesk/_content.html.twig', $viewData);
+        }
+
+        return $this->render('Operations/Frontdesk/index.html.twig', $viewData);
     }
 
     /**
