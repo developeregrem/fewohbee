@@ -70,7 +70,7 @@
                 </td>
                 <td class="text-center">
                     <a class="btn btn-outline-primary btn-sm" title="{{ 'operations.frontdesk.registration.print'|trans }}"
-                       href="{{ path('operations.frontdesk.registration.download', { reservationId: reservation.id }) }}"
+                       href="{{ path('correspondence.registration.download', { id: reservation.id }) }}"
                        target="_blank" rel="noopener">
                         <i class="fas fa-print"></i>
                         <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>
@@ -209,7 +209,7 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <a class="btn btn-outline-secondary btn-sm"
-                       href="{{ path('operations.frontdesk.registration.download', { reservationId: reservation.id }) }}"
+                       href="{{ path('correspondence.registration.download', { id: reservation.id }) }}"
                        target="_blank" rel="noopener">
                         <i class="fas fa-print"></i>
                         <span class="visually-hidden">{{ 'operations.frontdesk.registration.print'|trans }}</span>

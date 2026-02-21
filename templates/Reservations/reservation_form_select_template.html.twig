@@ -23,7 +23,7 @@
                 {% if 'FILE' in correspondence.template.templateType.name or 'PDF' in correspondence.template.templateType.name %}
                     <tr class="mouse-pointer"
                         data-action="click->reservations#addAttachmentAction"
-                        data-url="{{ path('settings.templates.attachment.add') }}"
+                        data-url="{{ path('correspondence.attachment.add') }}"
                         data-attachment-id="{{ correspondence.id }}"
                         data-is-invoice="false">
                         <td style="width:10.0pt"><i class="fas {{ correspondence.template.templateType.icon }}" aria-hidden="true" title="{{ correspondence.template.templateType.name|trans }}"></i></td>
@@ -52,7 +52,7 @@
             {% for invoice in invoices %}
                     <tr class="mouse-pointer"
                         data-action="click->reservations#addAttachmentAction"
-                        data-url="{{ path('settings.templates.attachment.add') }}"
+                        data-url="{{ path('correspondence.attachment.add') }}"
                         data-attachment-id="{{ invoice.id }}"
                         data-is-invoice="true">
                         <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
@@ -100,7 +100,7 @@
         <li class="page-item ">
             <a class="page-link" href="#"
                data-action="click->reservations#selectReservationForTemplateAction"
-               data-url="{{ path('settings.templates.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a></li>
+               data-url="{{ path('correspondence.select.reservation') }}">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
 </div>
 </div>

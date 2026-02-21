@@ -126,7 +126,11 @@ export function createSimpleHtmlEditor(editorContainer, initialContent, options 
     const editor = new Editor({
         element: editorContainer,
         extensions: [
-            StarterKit.configure({ heading: false }),
+            StarterKit.configure({
+                heading: false,
+                link: false,
+                underline: false,
+            }),
             Underline,
             Link.configure({ openOnClick: false }),
             Image,

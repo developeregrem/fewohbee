@@ -1573,10 +1573,12 @@ export default class extends Controller {
             url,
             method: 'POST',
             data: httpSerializeForm(formEl),
-            target: this.modalContent,
+            loader: false,
             onSuccess: (data) => {
+                const doc = new DOMParser().parseFromString(data, 'text/html');
+                const isAttachment = !!doc.querySelector('[data-is-attachment]');
                 if (this.showFeedback(data)) {
-                    if (window.isTemplateAttachment) {
+                    if (isAttachment) {
                         this.previewTemplateForReservation(0, 'false');
                     }
                     return;
