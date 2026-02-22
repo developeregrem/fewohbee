@@ -21,6 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Interfaces\ITemplateRenderer;
+use App\Service\InvoiceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +31,7 @@ use Twig\Environment;
 
 class TemplatesService
 {
+    public const EXAMPLES_BASE_URL = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
     private $webHost;
 
     public function __construct(
@@ -124,6 +126,121 @@ class TemplatesService
         return $templateStr->render($params);
     }
 
+    /**
+     * Default definitions for operations report templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOperationsTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_housekeeping_day.html.twig',
+                'name' => 'templates.operations.housekeeping_day',
+                'isDefault' => true,
+                'params' => ['orientation' => 'L'],
+            ],
+            [
+                'file' => 'report_housekeeping_week.html.twig',
+                'name' => 'templates.operations.housekeeping_week',
+                'params' => ['orientation' => 'L'],
+            ],
+            ['file' => 'report_housekeeping_summary.html.twig'],
+            [
+                'file' => 'report_frontdesk_checklist.html.twig',
+                'name' => 'templates.operations.frontdesk_checklist',
+            ],
+            [
+                'file' => 'report_meals_checklist.html.twig',
+                'name' => 'templates.operations.meals_checklist',
+            ],
+            [
+                'file' => 'report_management_monthly_summary.html.twig',
+                'name' => 'templates.operations.management_monthly_summary',
+            ],
+        ];
+    }
+
+    /**
+     * Default definitions for registration templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRegistrationTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_registration_form.html.twig',
+                'isDefault' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Import templates from a remote base URL.
+     *
+     * @param array<int, array<string, mixed>> $entries
+     */
+    public function importTemplates(TemplateType $type, array $entries, string $baseUrl): int
+    {
+        $client = \Symfony\Component\HttpClient\HttpClient::create();
+        $imported = 0;
+
+        foreach ($entries as $entry) {
+            $templateFile = $entry['file'];
+            $response = $client->request('GET', $baseUrl.$templateFile);
+            if (200 !== $response->getStatusCode()) {
+                continue;
+            }
+
+            $content = $response->getContent();
+            $template = new Template();
+            $template->setParams($this->buildTemplateParams($entry['params'] ?? []));
+            $template->setIsDefault(isset($entry['isDefault']) ? (bool) $entry['isDefault'] : false);
+            $template->setName($this->resolveTemplateName(
+                $type->getName(),
+                $entry['name'] ?? null
+            ));
+            $template->setTemplateType($type);
+            $template->setText($content);
+
+            $this->em->persist($template);
+            ++$imported;
+        }
+
+        return $imported;
+    }
+
+    /**
+     * Build template params by merging custom settings with defaults.
+     */
+    public function buildTemplateParams(array $custom): string
+    {
+        $params = array_merge([
+            'orientation' => 'P',
+            'marginLeft' => 25,
+            'marginRight' => 20,
+            'marginTop' => 20,
+            'marginBottom' => 20,
+            'marginHeader' => 9,
+            'marginFooter' => 9,
+        ], $custom);
+
+        return json_encode($params, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Resolve display name for a template.
+     */
+    public function resolveTemplateName(string $typeName, ?string $translationKey): string
+    {
+        if (null !== $translationKey) {
+            return $this->translator->trans($translationKey);
+        }
+
+        return $this->translator->trans($typeName);
+    }
+
     public function getReferencedReservationsInSession()
     {
         $reservations = [];
@@ -152,7 +269,7 @@ class TemplatesService
         return $correspondences;
     }
 
-    public function makeCorespondenceOfInvoice($id, InvoiceService $is): ?int
+    public function makeCorespondenceOfInvoice($id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
     {
         $invoice = $this->em->find(Invoice::class, $id);
         if (!$invoice instanceof Invoice) {
@@ -170,11 +287,15 @@ class TemplatesService
         $fileId = 0;
         foreach ($reservations as $reservation) {
             $file = new FileCorrespondence();
-            $file->setFileName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
-                 ->setName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
+            $fileName = $is->buildInvoiceExportFilename($invoice, $isEInvoice);
+            $file->setFileName($fileName)
+                 ->setName($fileName)
                  ->setText($templateOutput)
                  ->setTemplate($defaultTemlate)
                  ->setReservation($reservation);
+            if (null !== $binaryPayload) {
+                $file->setBinaryPayload($binaryPayload);
+            }
             $this->em->persist($file);
             $this->em->flush();
             $fileId = $file->getId();
@@ -210,7 +331,8 @@ class TemplatesService
         /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
-            $data = $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
+            $binaryPayload = $attachment->getBinaryPayload();
+            $data = $binaryPayload ?: $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
 
             return new MailAttachment($data, $attachment->getName().'.pdf', 'application/pdf');
         }
@@ -218,7 +340,7 @@ class TemplatesService
         return null;
     }
 
-    public function getPDFOutput($input, $name, $template, $noResponseOutput = false)
+    public function getPDFOutput($input, $name, $template, $noResponseOutput = false, ?string $destOverride = null)
     {
         /*
          * I: send the file inline to the browser. The plug-in is used if available. The name given by filename is used when one selects the "Save as" option on the link generating the PDF.
@@ -226,7 +348,7 @@ class TemplatesService
          * F: save to a local file with the name given by filename (may include a path).
          * S: return the document as a string. filename is ignored.
          */
-        $dest = ($noResponseOutput ? 'S' : 'D');
+        $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
         $mpdf = $this->mpdfs->getMpdf();
 
         $params = json_decode($template->getParams());
@@ -319,8 +441,9 @@ class TemplatesService
         $t5 = str_replace('[#', '{#', $t4);
         $t6 = str_replace('#]', '#}', $t5);
 
-        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on"></sethtmlpagefooter>', $t6);
+        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on" page="ALL"></sethtmlpagefooter>', $t6);
+        $t8 = preg_replace("/<div class=\"header\">(.*)<\/div>/s", '<htmlpageheader name="header">$1</htmlpageheader><sethtmlpageheader name="header" value="on" show-this-page="1"></sethtmlpageheader>', $t7);
 
-        return $t7;
+        return $t8;
     }
 }

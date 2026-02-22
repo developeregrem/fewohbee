@@ -17,7 +17,10 @@ class TemplateRepository extends EntityRepository
 {
     public function findAll(): array
     {
-        return $this->findBy([], ['name' => 'ASC']);
+        return $this->findBy([], [
+            'templateType' => 'ASC',
+            'name' => 'ASC'
+        ]);
     }
 
     public function loadByTypeName($names)

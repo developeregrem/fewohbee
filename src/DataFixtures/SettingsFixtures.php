@@ -184,22 +184,42 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
 
     private function createReservationStatus(ObjectManager $manager): void
     {
+        $repository = $manager->getRepository(ReservationStatus::class);
         $reservationStatus = [
             [
                 'name' => $this->translator->trans('status.confirmed'),
                 'color' => '#2D9434',
                 'contrast' => '#ffffff',
+                'code' => null,
+                'isBlocking' => true,
             ], [
                 'name' => $this->translator->trans('status.option'),
                 'color' => '#f6e95c',
                 'contrast' => '#000000',
+                'code' => null,
+                'isBlocking' => true,
+            ], [
+                'name' => $this->translator->trans('status.canceled_noshow'),
+                'color' => '#6c757d',
+                'contrast' => '#ffffff',
+                'code' => ReservationStatus::CODE_CANCELED_NOSHOW,
+                'isBlocking' => false,
             ],
         ];
         foreach ($reservationStatus as $status) {
+            if (null !== $status['code']) {
+                if ($repository->findOneBy(['code' => $status['code']]) instanceof ReservationStatus) {
+                    continue;
+                }
+            } elseif ($repository->findOneBy(['name' => $status['name']]) instanceof ReservationStatus) {
+                continue;
+            }
             $rs = new ReservationStatus();
             $rs->setName($status['name']);
             $rs->setColor($status['color']);
             $rs->setContrastColor($status['contrast']);
+            $rs->setCode($status['code']);
+            $rs->setIsBlocking($status['isBlocking']);
             $manager->persist($rs);
         }
     }

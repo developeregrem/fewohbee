@@ -14,6 +14,10 @@
                 <source>invoice.number</source>
                 <target>Rechnungsnr.</target>
             </trans-unit>
+            <trans-unit id="invoice.einvoice">
+                <source>invoice.einvoice</source>
+                <target>E-Rechnung</target>
+            </trans-unit>
             <trans-unit id="invoice.date">
                 <source>invoice.date</source>
                 <target>Rechnungsdatum</target>
