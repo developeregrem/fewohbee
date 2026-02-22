@@ -55,7 +55,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
         $apps = $manager->getRepository(Appartment::class)->findAll();
         $origins = $manager->getRepository(ReservationOrigin::class)->findAll();
         $customer = $manager->getRepository(Customer::class)->findOneBy(['lastname' => 'Mustermann']);
-        $status = $manager->getRepository(ReservationStatus::class)->find(1);
+        $status = $manager->getRepository(ReservationStatus::class)->find(2); // first is canceled
 
         if (!($customer instanceof Customer)) {
             return;
