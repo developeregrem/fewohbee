@@ -137,6 +137,32 @@ final class CalendarImportServiceTest extends KernelTestCase
         self::assertFalse($reservation->isConflict());
     }
 
+    /** Ensure canceled reservations do not trigger conflicts during import. */
+    public function testCanceledReservationDoesNotTriggerConflict(): void
+    {
+        $import = $this->createImport('https://example.test/ical/canceled', CalendarSyncImport::CONFLICT_MARK);
+        $canceledStatus = $this->getCanceledStatus();
+        $this->createReservationWithStatus(
+            $import,
+            'uid-canceled-1',
+            new \DateTime('+2 days'),
+            new \DateTime('+4 days'),
+            $canceledStatus
+        );
+        $uid = 'uid-canceled-2';
+        $start = new \DateTimeImmutable('+3 days');
+        $end = new \DateTimeImmutable('+5 days');
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => $this->buildIcal($uid, $start, $end),
+        ]);
+
+        $service->syncImport($import);
+
+        $reservation = $this->getReservationRepository()->findOneByRefUidAndImport($uid, $import);
+        self::assertNotNull($reservation);
+        self::assertFalse($reservation->isConflict());
+    }
+
     /** Build a CalendarImportService with mocked HTTP responses keyed by URL. */
     private function createServiceWithResponses(array $responses): CalendarImportService
     {
@@ -173,13 +199,24 @@ final class CalendarImportServiceTest extends KernelTestCase
         \DateTime $start,
         \DateTime $end
     ): Reservation {
+        return $this->createReservationWithStatus($import, $uid, $start, $end, $import->getReservationStatus());
+    }
+
+    /** Persist a reservation with a specific status. */
+    private function createReservationWithStatus(
+        CalendarSyncImport $import,
+        string $uid,
+        \DateTime $start,
+        \DateTime $end,
+        ReservationStatus $status
+    ): Reservation {
         $reservation = new Reservation();
         $reservation->setAppartment($import->getApartment());
         $reservation->setStartDate($start);
         $reservation->setEndDate($end);
         $reservation->setPersons(1);
         $reservation->setReservationOrigin($import->getReservationOrigin());
-        $reservation->setReservationStatus($import->getReservationStatus());
+        $reservation->setReservationStatus($status);
         $reservation->setRefUid($uid);
         $reservation->setCalendarSyncImport($import);
         $reservation->setIsConflict(false);
@@ -256,10 +293,24 @@ final class CalendarImportServiceTest extends KernelTestCase
         return $origin;
     }
 
+    /** Fetch the canceled/no-show status from fixtures. */
+    private function getCanceledStatus(): ReservationStatus
+    {
+        $status = $this->em->getRepository(ReservationStatus::class)->findOneBy([
+            'code' => ReservationStatus::CODE_CANCELED_NOSHOW,
+        ]);
+        self::assertNotNull($status, 'Canceled/no-show status must exist in fixtures.');
+
+        return $status;
+    }
+
     /** Fetch any existing reservation status from fixtures. */
     private function getAnyStatus(): ReservationStatus
     {
-        $status = $this->em->getRepository(ReservationStatus::class)->findOneBy([]);
+        $status = $this->em->getRepository(ReservationStatus::class)->findOneBy(['isBlocking' => true]);
+        if (!$status instanceof ReservationStatus) {
+            $status = $this->em->getRepository(ReservationStatus::class)->findOneBy([]);
+        }
         self::assertNotNull($status, 'A reservation status must exist in fixtures.');
 
         return $status;

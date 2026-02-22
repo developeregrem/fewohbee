@@ -13,25 +13,23 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Correspondence;
-use App\Entity\FileCorrespondence;
-use App\Entity\MailCorrespondence;
-use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
-use App\Service\InvoiceService;
-use App\Service\MailService;
-use App\Service\ReservationService;
+use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
+use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Environment;
 
 #[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
@@ -40,51 +38,67 @@ class TemplatesServiceController extends AbstractController
      * Index-View.
      */
     #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine): Response
+    public function indexAction(ManagerRegistry $doctrine, CsrfTokenManagerInterface $csrfTokenManager): Response
     {
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
+        $operationsTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $registrationTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $operationsTemplatesMissing = empty($operationsTemplates) || empty($registrationTemplates);
 
         return $this->render('Templates/index.html.twig', [
             'templates' => $templates,
+            'operationsTemplatesMissing' => $operationsTemplatesMissing,
+            'importToken' => $csrfTokenManager->getToken('templates.import.operations')->getValue(),
         ]);
     }
 
     /**
-     * Show single entity.
+     * Full-page template workspace with edit + preview tabs.
      */
-    #[Route('/{id}/get', name: 'settings.templates.get', defaults: ['id' => '0'], methods: ['GET'])]
-    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id): Response
-    {
+    #[Route('/{id}/edit-page', name: 'settings.templates.edit.page', methods: ['GET'])]
+    public function editPageAction(
+        ManagerRegistry $doctrine,
+        CSRFProtectionService $csrf,
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Template $template
+    ): Response {
         $em = $doctrine->getManager();
-        $template = $em->getRepository(Template::class)->find($id);
-
         $types = $em->getRepository(TemplateType::class)->findAll();
+        $provider = $previewRegistry->getProvider($template);
 
-        return $this->render('Templates/templates_form_edit.html.twig', [
+        return $this->render('Templates/templates_workspace.html.twig', [
             'template' => $template,
-            'token' => $csrf->getCSRFTokenForForm(),
             'types' => $types,
+            'token' => $csrf->getCSRFTokenForForm(),
+            'provider' => $provider,
+            'contextDefinition' => $provider ? $provider->getPreviewContextDefinition() : [],
+            'context' => $provider ? $provider->buildSampleContext() : [],
+            'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
         ]);
     }
 
     /**
-     * Show form for new entity.
+     * Full-page workspace for creating a new template.
      */
-    #[Route('/new', name: 'settings.templates.new', methods: ['GET'])]
-    public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf): Response
+    #[Route('/new-page', name: 'settings.templates.new.page', methods: ['GET'])]
+    public function newPageAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $templatesService): Response
     {
         $em = $doctrine->getManager();
-
         $template = new Template();
         $template->setId('new');
-
         $types = $em->getRepository(TemplateType::class)->findAll();
 
-        return $this->render('Templates/templates_form_create.html.twig', [
+        return $this->render('Templates/templates_workspace.html.twig', [
             'template' => $template,
-            'token' => $csrf->getCSRFTokenForForm(),
             'types' => $types,
+            'token' => $csrf->getCSRFTokenForForm(),
+            'provider' => null,
+            'contextDefinition' => [],
+            'context' => [],
+            'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
+            'isNew' => true,
         ]);
     }
 
@@ -173,352 +187,250 @@ class TemplatesServiceController extends AbstractController
     }
 
     /**
-     * Preview single entity.
+     * Render preview HTML from live editor content without page reload.
      */
-    #[Route('/{id}/preview', name: 'settings.templates.preview', methods: ['GET'])]
-    public function previewAction(ManagerRegistry $doctrine, TemplatesService $ts, $id): Response
-    {
-        $em = $doctrine->getManager();
-        $reservation = $em->getRepository(Reservation::class)->find(172);
+    #[Route('/{id}/preview/render', name: 'settings.templates.preview.render', methods: ['POST'])]
+    public function previewRenderAction(
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Request $request,
+        TranslatorInterface $translator,
+        Template $template
+    ): Response {
+        $provider = $previewRegistry->getProvider($template);
+        if (!$provider) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.noprovider',
+                'warningText' => (string) $this->container->get('translator')->trans('templates.preview.noprovider'),
+                'warningVars' => [],
+            ]);
+        }
 
-        $template = $ts->renderTemplateForReservations($id, [$reservation]);
+        $contextDefinition = $provider->getPreviewContextDefinition();
+        $sampleContext = $provider->buildSampleContext();
+        $submittedContext = $request->request->all('previewContext');
+        $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
+        $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
+        $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
+        $context = array_merge($sampleContext, $filteredContext);
 
-        return $this->render('Templates/templates_preview.html.twig', [
-            'template' => $template,
+        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
+            $context = $sampleContext;
+        }
+
+        $params = $provider->buildPreviewRenderParams($template, $context);
+        $templateText = trim((string) $request->request->get('previewText', ''));
+        if ('' === $templateText) {
+            $templateText = (string) $template->getText();
+        }
+        try {
+            $html = $templatesService->renderTemplateString($templateText, $params);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.render.error.generic',
+                'warningText' => $e->getMessage(),
+                'warningVars' => [],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return $this->json([
+            'html' => $html,
+            'warning' => $params['_previewWarning'] ?? null,
+            'warningText' => !empty($params['_previewWarning'])
+                ? (string) $translator->trans(
+                    (string) $params['_previewWarning'],
+                    is_array($params['_previewWarningVars'] ?? null) ? $params['_previewWarningVars'] : []
+                )
+                : null,
+            'warningVars' => $params['_previewWarningVars'] ?? [],
         ]);
     }
 
     /**
-     * Called when clicking add conversation in the reservation overview.
+     * Generate a PDF preview stream for PDF-based templates.
      */
-    #[Route('/select/reservation', name: 'settings.templates.select.reservation', methods: ['POST'])]
-    public function selectReservationAction(ReservationService $reservationService, Request $request): Response
-    {
-        if ('true' == $request->request->get('createNew')) {
-            $reservationService->resetSelectedReservations();
-        }
-
-        if (null != $request->request->get('reservationid')) {
-            $reservationService->addReservationToSelection((int) $request->request->get('reservationid'));
-        }
-
-        $reservations = $reservationService->getSelectedReservations();
-
-        return $this->render(
-            'Templates/templates_form_show_selected_reservations.html.twig',
-            [
-                'reservations' => $reservations,
-            ]
-        );
-    }
-
-    #[Route('/get/reservations', name: 'settings.templates.get.reservations', methods: ['GET'])]
-    public function getReservationsAction(ReservationService $reservationService, Request $request)
-    {
-        if ('true' == $request->query->get('createNew')) {
-            $reservationService->resetSelectedReservations();
-            // reset session variables
-            // $requestStack->getSession()->remove("invoicePositionsMiscellaneous");
-        }
-
-        if (!$reservationService->hasSelectedReservations()) {
-            $objectContainsReservations = 'false';
-        } else {
-            $objectContainsReservations = 'true';
-        }
-
-        return $this->render(
-            'Templates/templates_form_select_reservation.html.twig',
-            [
-                'objectContainsReservations' => $objectContainsReservations,
-            ]
-        );
-    }
-
-    #[Route('/remove/reservation/from/selection', name: 'settings.templates.remove.reservation.from.selection', methods: ['POST'])]
-    public function removeReservationFromSelectionAction(ReservationService $reservationService, Request $request)
-    {
-        if (null != $request->request->get('reservationkey')) {
-            $reservationService->removeReservationFromSelection((int) $request->request->get('reservationkey'));
-        }
-
-        return $this->render(
-            'Templates/templates_form_show_selected_reservations.html.twig',
-            [
-                'reservations' => $reservationService->getSelectedReservations(),
-            ]
-        );
-    }
-
-    #[Route('/email/send', name: 'settings.templates.email.send', methods: ['POST'])]
-    public function sendEmailAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, MailService $mailer, Request $request)
-    {
-        $em = $doctrine->getManager();
-
-        $error = false;
-        if ($csrf->validateCSRFToken($request)) {
-            $to = $request->request->get('to');
-            $subject = $request->request->get('subject');
-            $msg = $request->request->get('msg');
-            $templateId = $request->request->get('templateId');
-            $attachmentIds = $requestStack->getSession()->get('templateAttachmentIds', []);
-
-            // todo add email validation http://silex.sensiolabs.org/doc/providers/validator.html
-            if (0 == strlen($to) || 0 == strlen($subject) || 0 == strlen($msg)) {
-                $error = true;
-                $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                $attachments = [];
-                // add attachments
-                foreach ($attachmentIds as $attId) {
-                    $id = reset($attId); // first element of array
-                    $mailAttachment = $ts->getMailAttachment($id);
-                    if (null !== $mailAttachment) {
-                        $attachments[] = $mailAttachment;
-                    }
-                }
-
-                $mailer->sendHTMLMail($to, $subject, $msg, $attachments);
-
-                // now save correspondence to db
-                $template = $em->getReference(Template::class, $templateId);
-
-                // associate with reservations
-                $reservations = $ts->getReferencedReservationsInSession();
-
-                // save correspondence for each reservation
-                foreach ($reservations as $reservation) {
-                    $mail = new MailCorrespondence();
-                    $mail->setRecipient($to)
-                         ->setName($subject)
-                         ->setSubject($subject)
-                         ->setText($msg)
-                         ->setTemplate($template)
-                        ->setReservation($reservation);
-
-                    // add connection to attachments
-                    foreach ($attachmentIds as $attId) {
-                        $child = $em->getReference(Correspondence::class, $attId[$reservation->getId()]);
-                        $mail->addChild($child);
-                    }
-                    $em->persist($mail);
-                    $em->flush();
-                }
-
-                $this->addFlash('success', 'templates.sendemail.success');
-            }
-        } else {
-            $this->addFlash('warning', 'flash.invalidtoken');
-            $error = true;
-        }
-
-        return $this->render('feedback.html.twig', [
-            'error' => $error,
-        ]);
-    }
-
-    #[Route('/file/save', name: 'settings.templates.file.save', methods: ['POST'])]
-    public function saveFileAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $ts, RequestStack $requestStack, Request $request)
-    {
-        $em = $doctrine->getManager();
-
-        $error = false;
-        $isAttachment = false;
-        if ($csrf->validateCSRFToken($request)) {
-            $subject = $request->request->get('subject');
-            $msg = $request->request->get('msg');
-            $templateId = $request->request->get('templateId');
-
-            if (0 == strlen($subject) || 0 == strlen($msg)) {
-                $error = true;
-                $this->addFlash('warning', 'flash.mandatory');
-            } else {
-                // todo
-                // if this file is an attachment for email,
-                $attachmentForId = $requestStack->getSession()->get('selectedTemplateId', null);
-
-                // now save correspondence to db
-                $template = $em->getReference(Template::class, $templateId);
-
-                // associate with reservations
-                $reservations = $ts->getReferencedReservationsInSession();
-
-                // save correspondence for each reservation
-                foreach ($reservations as $reservation) {
-                    $file = new FileCorrespondence();
-                    $file->setFileName($subject)
-                         ->setName($subject)
-                         ->setText($msg)
-                         ->setTemplate($template)
-                         ->setReservation($reservation);
-                    $em->persist($file);
-                    $em->flush();
-                }
-
-                if (null != $attachmentForId) {
-                    $ts->addFileAsAttachment($file->getId(), $reservations);
-                    $isAttachment = true;
-                    $error = true;  // just to enable flash message in modal
-                }
-
-                $this->addFlash('success', 'templates.savefile.success');
-            }
-        } else {
-            $this->addFlash('warning', 'flash.invalidtoken');
-            $error = true;
-        }
-
-        return $this->render('feedback.html.twig', [
-            'error' => $error,
-            'attachment' => $isAttachment,
-        ]);
-    }
-
-    /**
-     * Softly delete attachment, doesn't delete file from db.
-     */
-    #[Route('/attachment/remove', name: 'settings.templates.attachment.remove', methods: ['POST'])]
-    public function deleteAttachmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, Request $request): Response
-    {
-        $em = $doctrine->getManager();
-
-        $error = false;
-        if ($csrf->validateCSRFToken($request)) {
-            $aId = $request->request->get('id');
-            $attachments = $requestStack->getSession()->get('templateAttachmentIds');
-            $isAttachment = false;
-            // loop through all reservations
-            foreach ($attachments as $key => $attachment) {
-                // search for attachment id and delte entry if it exists
-                $rId = array_search($aId, $attachment);
-                if (false !== $key) {
-                    unset($attachments[$key][$rId]);
-                    $isAttachment = true;
-                }
-                // just remove empty arrays
-                if (0 == count($attachments[$key])) {
-                    unset($attachments[$key]);
-                }
+    #[Route('/{id}/preview/pdf', name: 'settings.templates.preview.pdf', methods: ['POST'])]
+    public function previewPdfAction(
+        TemplatesService $templatesService,
+        TemplatePreviewProviderRegistry $previewRegistry,
+        Request $request,
+        Template $template
+    ): Response {
+        $provider = $previewRegistry->getProvider($template);
+        if (!$provider) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'error' => 'templates.preview.noprovider',
+                ], Response::HTTP_BAD_REQUEST);
             }
 
-            if ($isAttachment) {
-                $requestStack->getSession()->set('templateAttachmentIds', $attachments);
-            // $correspondence = $em->getReference(Correspondence::class, $aId);
-            } else {
-                $this->addFlash('warning', 'templates.attachment.notfound');
-                $error = true;
+            $this->addFlash('warning', 'templates.preview.noprovider');
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
+        }
+
+        $contextDefinition = $provider->getPreviewContextDefinition();
+        $submittedContext = $request->request->all('previewContext');
+        $allowedKeys = array_map(static fn (array $field) => $field['name'] ?? '', $contextDefinition);
+        $allowedKeys = array_filter($allowedKeys, static fn (string $key) => '' !== $key);
+        $filteredContext = array_intersect_key($submittedContext, array_flip($allowedKeys));
+        $context = array_merge($provider->buildSampleContext(), $filteredContext);
+
+        if (empty(array_filter($submittedContext, static fn ($value) => $value !== null && $value !== ''))) {
+            $context = $provider->buildSampleContext();
+        }
+
+        $params = $provider->buildPreviewRenderParams($template, $context);
+        $templateText = trim((string) $request->request->get('previewText', ''));
+        if ('' === $templateText) {
+            $templateText = (string) $template->getText();
+        }
+        try {
+            $html = $templatesService->renderTemplateString($templateText, $params);
+        } catch (\Throwable $e) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->json([
+                    'error' => $e->getMessage(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
-        } else {
-            $this->addFlash('warning', 'flash.invalidtoken');
-            $error = true;
+
+            $this->addFlash('warning', $e->getMessage());
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
         }
+        $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template, true, 'I');
 
-        return $this->render('feedback.html.twig', [
-            'error' => $error,
-        ]);
-    }
-
-    #[Route('/correspondence/remove', name: 'settings.templates.correspondence.remove', methods: ['POST'])]
-    public function deleteCorrespondenceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
-    {
-        $em = $doctrine->getManager();
-
-        $error = false;
-        if ($csrf->validateCSRFToken($request, true)) {
-            $cId = $request->request->get('id');
-            $correspondence = $em->getRepository(Correspondence::class)->find($cId);
-
-            if ($correspondence instanceof Correspondence) {
-                $em->remove($correspondence);
-                $em->flush();
-                $this->addFlash('success', 'templates.correspondence.delete.ok');
-            } else {
-                $this->addFlash('warning', 'templates.correspondence.notfound');
-                $error = true;
-            }
-        } else {
-            $this->addFlash('warning', 'flash.invalidtoken');
-            $error = true;
-        }
-
-        return $this->render('feedback.html.twig', [
-            'error' => $error,
-        ]);
-    }
-
-    /**
-     * Adds an already added file (correspondence) as attachment of the current mail.
-     */
-    #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
-    public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is): Response
-    {
-        $error = false;
-        $isInvoice = $request->request->get('isInvoice', 'false');
-        $cId = $request->request->get('id');
-        if ('false' != $isInvoice) {
-            $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
-        }
-
-        $reservations = $ts->getReferencedReservationsInSession();
-        $ts->addFileAsAttachment($cId, $reservations);
-
-        return $this->render('feedback.html.twig', [
-            'error' => $error,
-        ]);
-    }
-
-    #[Route('/correspondence/export/pdf/{id}/', name: 'settings.templates.correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
-    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, $id)
-    {
-        $em = $doctrine->getManager();
-        $correspondence = $em->getRepository(Correspondence::class)->find($id);
-        if ($correspondence instanceof FileCorrespondence) {
-            $output = $ts->getPDFOutput(
-                $correspondence->getText(),
-                $correspondence->getName(),
-                $correspondence->getTemplate()
-            );
-            $response = new Response($output);
-            $response->headers->set('Content-Type', 'application/pdf');
-
-            return $response;
-        }
-
-        return new Response('no file');
-    }
-
-    #[Route('/correspondence/show/{id}', name: 'settings.templates.correspondence.show', methods: ['POST'], defaults: ['id' => '0'])]
-    public function showMailCorrespondenceAction(ManagerRegistry $doctrine, Request $request, $id)
-    {
-        $em = $doctrine->getManager();
-        $correspondence = $em->getRepository(Correspondence::class)->find($id);
-        if ($correspondence instanceof MailCorrespondence) {
-            return $this->render(
-                'Templates/templates_show_mail.html.twig',
-                [
-                    'correspondence' => $correspondence,
-                    'reservationId' => $request->request->get('reservationId'),
-                ]
-            );
-        }
-
-        return new Response('no mail');
-    }
-
-    #[Route('/editortemplate/{templateTypeId}', name: 'settings.templates.editor.template', methods: ['GET'], defaults: ['templateTypeId' => '1'])]
-    public function getTemplatesForEditor(ManagerRegistry $doctrine, $templateTypeId)
-    {
-        $em = $doctrine->getManager();
-        /* @var $type TemplateType */
-        $type = $em->getRepository(TemplateType::class)->find($templateTypeId);
-        if ($type instanceof TemplateType && !empty($type->getEditorTemplate())) {
-            $response = $this->render('Templates/'.$type->getEditorTemplate());
-            $response->headers->set('Content-Type', 'application/json');
-        } else {
-            $response = $this->json([]);
-        }
+        $response = new Response($pdfOutput);
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'inline; filename=\"Template-Preview-'.$template->getId().'.pdf\"');
 
         return $response;
+    }
+
+    /**
+     * Import default operations report templates from the examples repository.
+     */
+    #[Route('/import/operations', name: 'settings.templates.import.operations', methods: ['POST'])]
+    public function importOperationsTemplatesAction(
+        ManagerRegistry $doctrine,
+        CsrfTokenManagerInterface $csrfTokenManager,
+        TemplatesService $templatesService,
+        Request $request
+    ): Response {
+        $token = new CsrfToken('templates.import.operations', (string) $request->request->get('_csrf_token'));
+        if (!$csrfTokenManager->isTokenValid($token)) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $em = $doctrine->getManager();
+        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_OPERATIONS_PDF']);
+        if (!$type instanceof TemplateType) {
+            $this->addFlash('warning', 'templates.operations.import.missing_type');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $existingOperations = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $existingRegistration = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $needsOperationsImport = empty($existingOperations);
+        $needsRegistrationImport = empty($existingRegistration);
+        if (!$needsOperationsImport && !$needsRegistrationImport) {
+            $this->addFlash('info', 'templates.operations.import.already_present');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $baseUrl = TemplatesService::EXAMPLES_BASE_URL;
+        $imported = 0;
+        if ($needsOperationsImport) {
+            $entries = $templatesService->getOperationsTemplateDefinitions();
+            $imported += $templatesService->importTemplates($type, $entries, $baseUrl);
+        }
+        if ($needsRegistrationImport) {
+            $registrationType = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_REGISTRATION_PDF']);
+            if ($registrationType instanceof TemplateType) {
+                $registrationEntries = $templatesService->getRegistrationTemplateDefinitions();
+                $imported += $templatesService->importTemplates($registrationType, $registrationEntries, $baseUrl);
+            }
+        }
+
+        if ($imported > 0) {
+            $em->flush();
+            $this->addFlash('success', 'templates.operations.import.success');
+        } else {
+            $this->addFlash('warning', 'templates.operations.import.failed');
+        }
+
+        return $this->redirectToRoute('settings.templates.overview');
+    }
+
+
+
+    /**
+     * Return available snippets for the given template type.
+     */
+    #[Route('/snippets/{id}', name: 'settings.templates.preview.snippets', methods: ['GET'], defaults: ['id' => '1'])]
+    public function getSnippetsForEditor(
+        TemplatePreviewProviderRegistry $previewRegistry,
+        TranslatorInterface $translator,
+        Environment $twig,
+        TemplateType $id
+    ): Response
+    {
+        $template = new Template();
+        $template->setTemplateType($id);
+        $provider = $previewRegistry->getProvider($template);
+
+        if (!$provider) {
+            return $this->json([]);
+        }
+
+        $snippets = $provider->getAvailableSnippets();
+        foreach ($snippets as &$snippet) {
+            if (!empty($snippet['label'])) {
+                $snippet['label'] = $translator->trans($snippet['label']);
+            }
+            if (!empty($snippet['content']) && is_string($snippet['content'])) {
+                try {
+                    // Render snippet labels/text (e.g. {{ '...'|trans }}) while
+                    // keeping pseudo-twig placeholders ([[ ... ]]) untouched.
+                    $snippet['content'] = $twig->createTemplate($snippet['content'])->render();
+                } catch (\Throwable) {
+                    // Keep original content if rendering fails for any snippet.
+                }
+            }
+        }
+        unset($snippet);
+
+        return $this->json($snippets);
+    }
+
+    /**
+     * Return the autocomplete schema for the given template type.
+     *
+     * The schema is a recursive property tree built via PHP Reflection
+     * so the code-mode editor can offer context-aware suggestions.
+     */
+    #[Route('/schema/{id}', name: 'settings.templates.schema', methods: ['GET'], defaults: ['id' => '1'])]
+    public function getSchemaForEditor(
+        TemplatePreviewProviderRegistry $previewRegistry,
+        TemplateSchemaService $schemaService,
+        TemplateType $id
+    ): Response {
+        $template = new Template();
+        $template->setTemplateType($id);
+        $provider = $previewRegistry->getProvider($template);
+
+        if (!$provider) {
+            return $this->json([]);
+        }
+
+        $variableMap = $provider->getRenderParamsSchema();
+        $schema = $schemaService->buildSchema($variableMap);
+
+        return $this->json($schema);
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]

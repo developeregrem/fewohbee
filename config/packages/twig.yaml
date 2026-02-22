@@ -3,6 +3,7 @@ parameters:
     env(CUSTOMER_SALUTATIONS): 'Ms,Mr,Family'
 
 twig:
+    file_name_pattern: '*.twig'
     default_path: '%kernel.project_dir%/templates'
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
@@ -10,3 +11,7 @@ twig:
     globals:
         customer_salutations: '%customer_salutations%'
         passkey_enabled: '%passkey_enabled%'
+
+when@test:
+    twig:
+        strict_variables: true

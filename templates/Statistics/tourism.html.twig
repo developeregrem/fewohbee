@@ -18,9 +18,11 @@
     <div class="container mb-1"
          data-controller="statistics"
          data-statistics-snapshot-url-value="{{ path('statistics.snapshot.monthly') }}"
+         data-statistics-snapshot-ignore-url-value="{{ path('statistics.snapshot.warning.ignore', { snapshot: 0 }) }}"
          data-statistics-snapshot-arrivals-label-value="{{ 'statistics.tourism.arrivals'|trans }}"
          data-statistics-snapshot-overnights-label-value="{{ 'statistics.tourism.overnights'|trans }}"
          data-statistics-snapshot-room-label-value="{{ 'statistics.tourism.room_label'|trans }}">
+        <input type="hidden" id="statistics_csrf_token" name="_csrf_token" value="{{ csrf_token('statistics.snapshot.warning.ignore') }}">
         <div class="row align-items-end justify-content-between">
             <div class="col-md-8">
                 <form id="table-filter" role="form">
@@ -64,6 +66,21 @@
                     <i class="fas fa-sync-alt"></i>
                     {{ 'statistics.tourism.regenerate'|trans }}
                 </button>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col">
+                <label class="form-label mb-1">{{ 'status.title'|trans }}</label>
+                <form id="reservation-status" role="form" data-statistics-target="reservationStatusForm">
+                    {% for status in reservationStatuses %}
+                        <div class="form-check form-switch form-check-inline">
+                            <input type="checkbox" class="form-check-input" id="reservation-status-{{ status.id }}" name="reservation-status[]" value="{{ status.id }}"
+                                   {% if not status.isSystem %}checked="checked"{% endif %}
+                                   data-action="change->statistics#drawSnapshotAction">
+                            <label class="form-check-label" for="reservation-status-{{ status.id }}">{{ status.name }}</label>
+                        </div>
+                    {% endfor %}
+                </form>
             </div>
         </div>
 

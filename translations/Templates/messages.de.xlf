@@ -42,6 +42,410 @@
                 <source>templates.preview</source>
                 <target>Vorschau</target>
             </trans-unit>
+            <trans-unit id="templates.preview.context">
+                <source>templates.preview.context</source>
+                <target>Vorschau-Kontext</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render">
+                <source>templates.preview.render</source>
+                <target>Vorschau erzeugen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.generic">
+                <source>templates.preview.render.error.generic</source>
+                <target>Template konnte nicht gerendert werden. Bitte Platzhalter und Template-Logik prüfen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.syntax">
+                <source>templates.preview.render.error.syntax</source>
+                <target>Template-Syntaxfehler. Bitte Schleifen, Bedingungen und Platzhalter prüfen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.variable">
+                <source>templates.preview.render.error.variable</source>
+                <target>Variable "%variable%" nicht gefunden.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.filter">
+                <source>templates.preview.render.error.filter</source>
+                <target>Filter "%filter%" ist nicht verfügbar.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.render.error.property">
+                <source>templates.preview.render.error.property</source>
+                <target>Attribut "%property%" wurde auf "%class%" nicht gefunden.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.result">
+                <source>templates.preview.result</source>
+                <target>Vorschau-Ergebnis</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.empty">
+                <source>templates.preview.empty</source>
+                <target>Bitte Kontext auswählen und Vorschau erzeugen.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.noprovider">
+                <source>templates.preview.noprovider</source>
+                <target>Für diesen Vorlagentyp ist keine Vorschau verfügbar.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.noprovider.help">
+                <source>templates.preview.noprovider.help</source>
+                <target>Für diesen Vorlagentyp ist die Vorschau noch nicht implementiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number">
+                <source>templates.preview.invoice.number</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number.placeholder">
+                <source>templates.preview.invoice.number.placeholder</source>
+                <target>z. B. 2026-0001</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.number.help">
+                <source>templates.preview.invoice.number.help</source>
+                <target>Eine vorhandene Rechnungsnummer eingeben oder leer lassen für Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.invoice.notfound">
+                <source>templates.preview.invoice.notfound</source>
+                <target>Rechnung "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation">
+                <source>templates.preview.reservation</source>
+                <target>Reservierungs-IDs</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.placeholder">
+                <source>templates.preview.reservation.placeholder</source>
+                <target>z. B. 101, 102</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.help">
+                <source>templates.preview.reservation.help</source>
+                <target>Eine oder mehrere Reservierungs-IDs (kommagetrennt) eingeben oder leer lassen für Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.reservation.notfound">
+                <source>templates.preview.reservation.notfound</source>
+                <target>Reservierungen "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.date_start">
+                <source>templates.preview.date_start</source>
+                <target>Startdatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.date_end">
+                <source>templates.preview.date_end</source>
+                <target>Enddatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.subsidiary">
+                <source>templates.preview.subsidiary</source>
+                <target>Betrieb</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.subsidiary.all">
+                <source>templates.preview.subsidiary.all</source>
+                <target>Alle Betriebe</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.occupancy">
+                <source>templates.preview.occupancy</source>
+                <target>Belegungstypen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year">
+                <source>templates.preview.cashjournal.year</source>
+                <target>Kassenjahr</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year.placeholder">
+                <source>templates.preview.cashjournal.year.placeholder</source>
+                <target>z. B. 2026</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.year.help">
+                <source>templates.preview.cashjournal.year.help</source>
+                <target>Kassenjahr numerisch eingeben.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month">
+                <source>templates.preview.cashjournal.month</source>
+                <target>Kassenmonat</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month.placeholder">
+                <source>templates.preview.cashjournal.month.placeholder</source>
+                <target>1-12</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.month.help">
+                <source>templates.preview.cashjournal.month.help</source>
+                <target>Kassenmonat numerisch von 1 bis 12 eingeben.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.cashjournal.notfound">
+                <source>templates.preview.cashjournal.notfound</source>
+                <target>Kassenblatt "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id">
+                <source>templates.preview.gdpr.customer_id</source>
+                <target>Kunden-ID</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id.placeholder">
+                <source>templates.preview.gdpr.customer_id.placeholder</source>
+                <target>z. B. 42</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_id.help">
+                <source>templates.preview.gdpr.customer_id.help</source>
+                <target>Eine vorhandene Kunden-ID eingeben oder leer lassen für neueste/Beispieldaten.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.gdpr.customer_notfound">
+                <source>templates.preview.gdpr.customer_notfound</source>
+                <target>Kunde "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.download_pdf">
+                <source>templates.preview.download_pdf</source>
+                <target>PDF herunterladen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.booker_firstname">
+                <source>templates.preview.snippet.booker_firstname</source>
+                <target>Bucher Vorname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.booker_lastname">
+                <source>templates.preview.snippet.booker_lastname</source>
+                <target>Bucher Nachname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_dates">
+                <source>templates.preview.snippet.reservation_dates</source>
+                <target>Reservierungszeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_total">
+                <source>templates.preview.snippet.reservation_total</source>
+                <target>Reservierung Gesamtbetrag</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_loop">
+                <source>templates.preview.snippet.reservation_loop</source>
+                <target>Reservierungs-Wiederholungsblock</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_apartment_positions_row">
+                <source>templates.preview.snippet.reservation_apartment_positions_row</source>
+                <target>Tabelle Reservierungspositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.reservation_misc_positions_line">
+                <source>templates.preview.snippet.reservation_misc_positions_line</source>
+                <target>Zeile Zusatzpositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_number">
+                <source>templates.preview.snippet.invoice_number</source>
+                <target>Rechnungsnummer</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_date">
+                <source>templates.preview.snippet.invoice_date</source>
+                <target>Rechnungsdatum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_totals">
+                <source>templates.preview.snippet.invoice_totals</source>
+                <target>Rechnungssummen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_positions">
+                <source>templates.preview.snippet.invoice_positions</source>
+                <target>Tabelle Rechnungspositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.invoice_appartments">
+                <source>templates.preview.snippet.invoice_appartments</source>
+                <target>Tabelle Apartmentpositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.operations_period">
+                <source>templates.preview.snippet.operations_period</source>
+                <target>Berichtszeitraum</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.operations_dayviews">
+                <source>templates.preview.snippet.operations_dayviews</source>
+                <target>Tagesübersicht Wiederholungsblock</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.month">
+                <source>templates.preview.snippet.cashjournal.month</source>
+                <target>Monat des Kassenblatts</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.year">
+                <source>templates.preview.snippet.cashjournal.year</source>
+                <target>Jahr des Kassenblatts</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.cash_start">
+                <source>templates.preview.snippet.cashjournal.cash_start</source>
+                <target>Anfangsbestand</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.cash_end">
+                <source>templates.preview.snippet.cashjournal.cash_end</source>
+                <target>Endbestand</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.cashjournal.positions">
+                <source>templates.preview.snippet.cashjournal.positions</source>
+                <target>Tabelle Kassenblattpositionen</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_name">
+                <source>templates.preview.snippet.gdpr.general_name</source>
+                <target>Kundenname</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_birthday">
+                <source>templates.preview.snippet.gdpr.general_birthday</source>
+                <target>Geburtsdatum Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.general_remark">
+                <source>templates.preview.snippet.gdpr.general_remark</source>
+                <target>Bemerkung Kunde</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.addresses">
+                <source>templates.preview.snippet.gdpr.addresses</source>
+                <target>Adressblock (Wiederholung)</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.gdpr.reservations">
+                <source>templates.preview.snippet.gdpr.reservations</source>
+                <target>Uebernachtungsblock (Wiederholung)</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.pdf_header">
+                <source>templates.preview.snippet.pdf_header</source>
+                <target>PDF Kopfzeile</target>
+            </trans-unit>
+            <trans-unit id="templates.preview.snippet.pdf_footer">
+                <source>templates.preview.snippet.pdf_footer</source>
+                <target>PDF Fußzeile</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.bold">
+                <source>templates.editor.toolbar.bold</source>
+                <target>Fett</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.italic">
+                <source>templates.editor.toolbar.italic</source>
+                <target>Kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.underline">
+                <source>templates.editor.toolbar.underline</source>
+                <target>Unterstreichen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.bullets">
+                <source>templates.editor.toolbar.bullets</source>
+                <target>Aufzählung</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.ordered">
+                <source>templates.editor.toolbar.ordered</source>
+                <target>Nummerierte Liste</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.link">
+                <source>templates.editor.toolbar.link</source>
+                <target>Link einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table">
+                <source>templates.editor.toolbar.table</source>
+                <target>Tabelle einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.image">
+                <source>templates.editor.toolbar.image</source>
+                <target>Bild einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_row_add">
+                <source>templates.editor.toolbar.table_row_add</source>
+                <target>Zeile hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_row_delete">
+                <source>templates.editor.toolbar.table_row_delete</source>
+                <target>Zeile löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_col_add">
+                <source>templates.editor.toolbar.table_col_add</source>
+                <target>Spalte hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_col_delete">
+                <source>templates.editor.toolbar.table_col_delete</source>
+                <target>Spalte löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.table_delete">
+                <source>templates.editor.toolbar.table_delete</source>
+                <target>Tabelle löschen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.font_family">
+                <source>templates.editor.toolbar.font_family</source>
+                <target>Schriftart</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.font_size">
+                <source>templates.editor.toolbar.font_size</source>
+                <target>Schriftgröße</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_left">
+                <source>templates.editor.toolbar.align_left</source>
+                <target>Linksbündig</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_center">
+                <source>templates.editor.toolbar.align_center</source>
+                <target>Zentriert</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.align_right">
+                <source>templates.editor.toolbar.align_right</source>
+                <target>Rechtsbündig</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.beautify">
+                <source>templates.editor.toolbar.beautify</source>
+                <target>Code formatieren</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.code">
+                <source>templates.editor.toolbar.code</source>
+                <target>Code</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.visual">
+                <source>templates.editor.toolbar.visual</source>
+                <target>Visual</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.toolbar.variable">
+                <source>templates.editor.toolbar.variable</source>
+                <target>Variable einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.variable_picker.title">
+                <source>templates.editor.variable_picker.title</source>
+                <target>Variable einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.variable_picker.insert_loop">
+                <source>templates.editor.variable_picker.insert_loop</source>
+                <target>Schleife einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.alert.protected_content">
+                <source>templates.editor.alert.protected_content</source>
+                <target>Dieses Template enthält Twig-Syntax oder erweiterte Direktiven und kann nur im Code-Modus bearbeitet werden.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_toggle">
+                <source>templates.editor.row.repeat_toggle</source>
+                <target>Zeile wiederholen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_collection">
+                <source>templates.editor.row.repeat_collection</source>
+                <target>Collection (z. B. apartmentPositions)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_as">
+                <source>templates.editor.row.repeat_as</source>
+                <target>Item-Variable (z. B. position)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_key">
+                <source>templates.editor.row.repeat_key</source>
+                <target>Key-Variable (optional)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_clear">
+                <source>templates.editor.row.repeat_clear</source>
+                <target>Wiederholung entfernen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.repeat_hint">
+                <source>templates.editor.row.repeat_hint</source>
+                <target>Wiederholung für die ausgewählte Tabellenzeile konfigurieren.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_toggle">
+                <source>templates.editor.row.if_toggle</source>
+                <target>Bedingte Zeile</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_condition">
+                <source>templates.editor.row.if_condition</source>
+                <target>Bedingung (z. B. reservation.persons &gt; 1)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.row.if_clear">
+                <source>templates.editor.row.if_clear</source>
+                <target>Bedingung entfernen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.placeholder">
+                <source>templates.editor.snippets.placeholder</source>
+                <target>Baustein einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.insert">
+                <source>templates.editor.snippets.insert</source>
+                <target>Einfügen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.snippets.sidebar">
+                <source>templates.editor.snippets.sidebar</source>
+                <target>Bausteine</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tab.edit">
+                <source>templates.editor.tab.edit</source>
+                <target>Bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tab.preview">
+                <source>templates.editor.tab.preview</source>
+                <target>Vorschau</target>
+            </trans-unit>
             <trans-unit id="templates.edit">
                 <source>templates.edit</source>
                 <target>Vorlage bearbeiten</target>
@@ -100,7 +504,47 @@
             </trans-unit>
             <trans-unit id="templates.params">
                 <source>templates.params</source>
-                <target>zusätzliche Paramater (JSON-String)</target>
+                <target>PDF-Layout</target>
+            </trans-unit>
+            <trans-unit id="templates.params.help">
+                <source>templates.params.help</source>
+                <target>Ausrichtung und Ränder für erzeugte PDFs (alle Ränder in mm).</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation">
+                <source>templates.params.orientation</source>
+                <target>Ausrichtung</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation.portrait">
+                <source>templates.params.orientation.portrait</source>
+                <target>Hochformat (P)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.orientation.landscape">
+                <source>templates.params.orientation.landscape</source>
+                <target>Querformat (L)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_top">
+                <source>templates.params.margin_top</source>
+                <target>Oberer Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_bottom">
+                <source>templates.params.margin_bottom</source>
+                <target>Unterer Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_left">
+                <source>templates.params.margin_left</source>
+                <target>Linker Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_right">
+                <source>templates.params.margin_right</source>
+                <target>Rechter Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_header">
+                <source>templates.params.margin_header</source>
+                <target>Header-Rand (mm)</target>
+            </trans-unit>
+            <trans-unit id="templates.params.margin_footer">
+                <source>templates.params.margin_footer</source>
+                <target>Footer-Rand (mm)</target>
             </trans-unit>
             <trans-unit id="templates.default">
                 <source>templates.default</source>
@@ -133,6 +577,14 @@
             <trans-unit id="TEMPLATE_GDPR_PDF">
                 <source>TEMPLATE_GDPR_PDF</source>
                 <target>PDF für DSGVO Export</target>
+            </trans-unit>
+            <trans-unit id="TEMPLATE_REGISTRATION_PDF">
+                <source>TEMPLATE_REGISTRATION_PDF</source>
+                <target>PDF Meldeschein</target>
+            </trans-unit>
+            <trans-unit id="TEMPLATE_OPERATIONS_PDF">
+                <source>TEMPLATE_OPERATIONS_PDF</source>
+                <target>PDF Vorlage für Betriebsberichte</target>
             </trans-unit>
             <trans-unit id="templates.editor.company">
                 <source>templates.editor.company</source>

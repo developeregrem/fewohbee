@@ -262,7 +262,7 @@ class CustomerServiceController extends AbstractController
     }
 
     #[Route('/{id}/gdpr', name: 'customers.gdpr.customer', methods: ['GET'])]
-    public function exportGDPRToPdfAction(ManagerRegistry $doctrine, TemplatesService $ts, CustomerService $cs, $id)
+    public function exportGDPRToPdfAction(ManagerRegistry $doctrine, TemplatesService $ts, $id)
     {
         $em = $doctrine->getManager();
 
@@ -279,7 +279,7 @@ class CustomerServiceController extends AbstractController
         }
         $templateId = $defaultTemplate->getId();
 
-        $templateOutput = $ts->renderTemplate($templateId, $customer, $cs);
+        $templateOutput = $ts->renderTemplate($templateId, $customer);
 
         $template = $em->getRepository(Template::class)->find($templateId);
 

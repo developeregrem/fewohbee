@@ -16,10 +16,9 @@ namespace App\Service;
 use App\Entity\CashJournal;
 use App\Entity\CashJournalEntry;
 use App\Entity\Template;
-use App\Interfaces\ITemplateRenderer;
 use Doctrine\ORM\EntityManagerInterface;
 
-class CashJournalService implements ITemplateRenderer
+class CashJournalService
 {
     private $em;
 
@@ -123,7 +122,10 @@ class CashJournalService implements ITemplateRenderer
         return $journal;
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all cash journal variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
         $journal = $this->em->getRepository(CashJournal::class)->find($param);
 

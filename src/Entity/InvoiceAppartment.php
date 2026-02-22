@@ -45,11 +45,14 @@ class InvoiceAppartment
     private $includesVat;
     #[ORM\Column(type: 'boolean', nullable: true)]
     private $isFlatPrice;
+    #[ORM\Column(type: 'boolean')]
+    private bool $isPerRoom;
 
     public function __construct()
     {
         $this->isFlatPrice = false;
         $this->includesVat = false;
+        $this->isPerRoom = true;
     }
 
     public function getId()
@@ -109,8 +112,9 @@ class InvoiceAppartment
         }
         // else
         $interval = $this->startDate->diff($this->endDate);
+        $days = (int) $interval->format('%a');
 
-        return (int) $interval->format('%a');
+        return $days * ($this->isPerRoom ? 1 : $this->persons);
     }
 
     public function getTotalPriceRaw(): float
@@ -200,6 +204,9 @@ class InvoiceAppartment
     public function setIsFlatPrice(bool $isFlatPrice): self
     {
         $this->isFlatPrice = $isFlatPrice;
+        if ($isFlatPrice) {
+            $this->isPerRoom = false;
+        }
 
         return $this;
     }
@@ -207,5 +214,17 @@ class InvoiceAppartment
     public function getNetPrice(): float
     {
         return $this->includesVat ? $this->price / (1 + $this->vat / 100) : (float) $this->price;
+    }
+
+    public function getIsPerRoom(): bool
+    {
+        return $this->isPerRoom;
+    }
+
+    public function setIsPerRoom(bool $isPerRoom): self
+    {
+        $this->isPerRoom = $isPerRoom;
+
+        return $this;
     }
 }

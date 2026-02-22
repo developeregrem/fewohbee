@@ -41,8 +41,13 @@ export default class extends Controller {
     // Actions
     openModalAction(event) {
         event.preventDefault();
-        const url = event.currentTarget.dataset.url;
+        let url = event.currentTarget.dataset.url;
         if (!url) return;
+        const createNew = event.currentTarget.dataset.createNew;
+        if (typeof createNew !== 'undefined') {
+            const separator = url.includes('?') ? '&' : '?';
+            url = `${url}${separator}createNew=${encodeURIComponent(createNew)}`;
+        }
         const title = event.currentTarget.dataset.title || '';
         setModalTitle(title);
         const target = this.modalContent || document.getElementById('modal-content-ajax');
@@ -53,6 +58,7 @@ export default class extends Controller {
             target,
             onComplete: () => {
                 enableDeletePopover();
+                this.syncFlatPricePerRoomStates();
                 const templateSelect = target?.querySelector('#template');
                 if (templateSelect) {
                     const storedTemplateId = getLocalStorageItem('invoice-template-id');
@@ -76,6 +82,7 @@ export default class extends Controller {
             method: 'GET',
             target,
             onComplete: () => {
+                this.syncFlatPricePerRoomStates();
                 if (edit) {
                     this.toggleInvoiceEditFields();
                 }
@@ -197,8 +204,13 @@ export default class extends Controller {
         });
         const includesVat = document.getElementById('invoice_misc_position_includesVat');
         const isFlatPrice = document.getElementById('invoice_misc_position_isFlatPrice');
+        const isPerRoom = document.getElementById('invoice_misc_position_isPerRoom');
         if (includesVat) includesVat.checked = values[3] === '1';
         if (isFlatPrice) isFlatPrice.checked = values[4] === '1';
+        if (isPerRoom) isPerRoom.checked = values[5] === '1';
+        if (isFlatPrice) {
+            this.applyFlatPriceState(isFlatPrice, isPerRoom);
+        }
         const amount = document.getElementById('invoice_misc_position_amount');
         if (amount) amount.value = values[4] || '';
         return false;
@@ -213,9 +225,22 @@ export default class extends Controller {
         if (price) price.value = values[1] || '';
         const includesVat = document.getElementById('invoice_apartment_position_includesVat');
         const isFlat = document.getElementById('invoice_apartment_position_isFlatPrice');
+        const isPerRoom = document.getElementById('invoice_apartment_position_isPerRoom');
         if (includesVat) includesVat.checked = values[2] === '1';
         if (isFlat) isFlat.checked = values[3] === '1';
+        if (isPerRoom) isPerRoom.checked = values[4] === '1';
+        if (isFlat) {
+            this.applyFlatPriceState(isFlat, isPerRoom);
+        }
         return false;
+    }
+
+    flatPriceTogglePerRoomAction(event) {
+        const flatPriceCheckbox = event.currentTarget;
+        const perRoomSelector = flatPriceCheckbox.dataset.perRoomSelector;
+        if (!perRoomSelector) return;
+        const perRoomCheckbox = document.querySelector(perRoomSelector);
+        this.applyFlatPriceState(flatPriceCheckbox, perRoomCheckbox);
     }
 
     fillApartmentDescriptionAction(event) {
@@ -237,6 +262,29 @@ export default class extends Controller {
     }
 
     // helpers
+    applyFlatPriceState(flatPriceCheckbox, perRoomCheckbox) {
+        if (!flatPriceCheckbox || !perRoomCheckbox) return;
+
+        if (flatPriceCheckbox.checked) {
+            perRoomCheckbox.checked = false;
+            perRoomCheckbox.disabled = true;
+        } else {
+            perRoomCheckbox.disabled = false;
+        }
+    }
+
+    syncFlatPricePerRoomStates() {
+        const pairs = [
+            ['#invoice_apartment_position_isFlatPrice', '#invoice_apartment_position_isPerRoom'],
+            ['#invoice_misc_position_isFlatPrice', '#invoice_misc_position_isPerRoom'],
+        ];
+        pairs.forEach(([flatSelector, perRoomSelector]) => {
+            const flat = document.querySelector(flatSelector);
+            const perRoom = document.querySelector(perRoomSelector);
+            this.applyFlatPriceState(flat, perRoom);
+        });
+    }
+
     invoiceStatusChangeAction(event) {
         const saveBtn = document.getElementById('save-status');
         if (saveBtn) {

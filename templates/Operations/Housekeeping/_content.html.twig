@@ -1,0 +1,19 @@
+{% if view == 'week' %}
+    {% include 'Operations/Housekeeping/_week_view.html.twig' with {
+        weekView: weekView,
+        occupancyLabels: occupancyLabels,
+        statusLabels: statusLabels
+    } %}
+{% else %}
+    {% include 'Operations/Housekeeping/_day_view.html.twig' with {
+        dayView: dayView,
+        rowForms: rowForms,
+        rowFormsMobile: rowFormsMobile,
+        occupancyLabels: occupancyLabels,
+        occupancyClasses: occupancyClasses,
+        statusLabels: statusLabels,
+        selectedDate: selectedDate,
+        selectedSubsidiaryId: selectedSubsidiaryId,
+        view: view
+    } %}
+{% endif %}

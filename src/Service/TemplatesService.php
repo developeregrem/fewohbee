@@ -20,16 +20,30 @@ use App\Entity\MailAttachment;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
-use App\Interfaces\ITemplateRenderer;
+use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Twig\Error\Error as TwigError;
 use Twig\Environment;
 
 class TemplatesService
 {
+    public const EXAMPLES_BASE_URL = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+    /**
+     * Default mPDF layout parameters for templates.
+     */
+    public const DEFAULT_TEMPLATE_PARAMS = [
+        'orientation' => 'P',
+        'marginLeft' => 25.0,
+        'marginRight' => 20.0,
+        'marginTop' => 20.0,
+        'marginBottom' => 20.0,
+        'marginHeader' => 9.0,
+        'marginFooter' => 9.0,
+    ];
     private $webHost;
 
     public function __construct(
@@ -38,7 +52,8 @@ class TemplatesService
         private EntityManagerInterface $em,
         private RequestStack $requestStack,
         private MpdfService $mpdfs,
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
+        private TemplateRenderParamsResolver $renderParamsResolver
     ) {
         $this->webHost = $webHost;
     }
@@ -64,7 +79,7 @@ class TemplatesService
         $template->setTemplateType($type);
         $template->setName(trim($request->request->get('name-'.$id)));
         $template->setText($request->request->get('text-'.$id));
-        $template->setParams($request->request->get('params-'.$id));
+        $template->setParams($this->buildTemplateParamsFromRequest($request, (string) $id));
         if ($request->request->has('default-'.$id)) {
             $template->setIsDefault(true);
         } else {
@@ -103,7 +118,7 @@ class TemplatesService
         ]);
     }
 
-    public function renderTemplate(int $templateId, mixed $param, ITemplateRenderer $serviceObj): string
+    public function renderTemplate(int $templateId, mixed $param): string
     {
         /* @var $template Template */
         $template = $this->em->getRepository(Template::class)->find($templateId);
@@ -111,17 +126,238 @@ class TemplatesService
             throw new \InvalidArgumentException($this->translator->trans('templates.notfound'));
         }
 
-        $params = [];
-        $service = $template->getTemplateType()->getService();
-        if (!empty($service)) {
-            // each service must implement the ITemplateRenderer interface
-            $params = $serviceObj->getRenderParams($template, $param);
-        }
+        $params = $this->renderParamsResolver->resolve($template, $param);
 
         $str = $this->replaceTwigSyntax($template->getText());
         $templateStr = $this->twig->createTemplate($str);
 
         return $templateStr->render($params);
+    }
+
+    /**
+     * Render raw template content using the pseudo-twig syntax replacements.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function renderTemplateString(string $templateText, array $params): string
+    {
+        try {
+            $str = $this->replaceTwigSyntax($templateText);
+            $templateStr = $this->twig->createTemplate($str);
+
+            return $templateStr->render($params);
+        } catch (TwigError|\Throwable $e) {
+            throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
+        }
+    }
+
+    /**
+     * Build a short, user-friendly template error message without stack traces.
+     */
+    private function buildFriendlyTemplateErrorMessage(\Throwable $e): string
+    {
+        $message = trim($e->getMessage());
+
+        if (preg_match('/Neither the property "([^"]+)".*?class "([^"]+)"/i', $message, $matches)) {
+            $property = $matches[1];
+            $class = $matches[2];
+
+            return $this->translator->trans('templates.preview.render.error.property', [
+                '%property%' => $property,
+                '%class%' => $class,
+            ]);
+        }
+
+        if (preg_match('/Variable "([^"]+)" does not exist/i', $message, $matches)) {
+            return $this->translator->trans('templates.preview.render.error.variable', [
+                '%variable%' => $matches[1],
+            ]);
+        }
+
+        if (preg_match('/Unknown "([^"]+)" filter/i', $message, $matches)) {
+            return $this->translator->trans('templates.preview.render.error.filter', [
+                '%filter%' => $matches[1],
+            ]);
+        }
+
+        if (preg_match('/Unexpected token|SyntaxError|Unable to parse/i', $message)) {
+            return $this->translator->trans('templates.preview.render.error.syntax');
+        }
+
+        $generic = $this->translator->trans('templates.preview.render.error.generic');
+        if ('' !== $message) {
+            return $generic.' Details: '.$message;
+        }
+
+        return $generic;
+    }
+
+    /**
+     * Default definitions for operations report templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOperationsTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_housekeeping_day.html.twig',
+                'name' => 'templates.operations.housekeeping_day',
+                'isDefault' => true,
+                'params' => ['orientation' => 'L'],
+            ],
+            [
+                'file' => 'report_housekeeping_week.html.twig',
+                'name' => 'templates.operations.housekeeping_week',
+                'params' => ['orientation' => 'L'],
+            ],
+            ['file' => 'report_housekeeping_summary.html.twig'],
+            [
+                'file' => 'report_frontdesk_checklist.html.twig',
+                'name' => 'templates.operations.frontdesk_checklist',
+            ],
+            [
+                'file' => 'report_meals_checklist.html.twig',
+                'name' => 'templates.operations.meals_checklist',
+            ],
+            [
+                'file' => 'report_management_monthly_summary.html.twig',
+                'name' => 'templates.operations.management_monthly_summary',
+            ],
+        ];
+    }
+
+    /**
+     * Default definitions for registration templates.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRegistrationTemplateDefinitions(): array
+    {
+        return [
+            [
+                'file' => 'report_registration_form.html.twig',
+                'isDefault' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Import templates from a remote base URL.
+     *
+     * @param array<int, array<string, mixed>> $entries
+     */
+    public function importTemplates(TemplateType $type, array $entries, string $baseUrl): int
+    {
+        $client = \Symfony\Component\HttpClient\HttpClient::create();
+        $imported = 0;
+
+        foreach ($entries as $entry) {
+            $templateFile = $entry['file'];
+            $response = $client->request('GET', $baseUrl.$templateFile);
+            if (200 !== $response->getStatusCode()) {
+                continue;
+            }
+
+            $content = $response->getContent();
+            $template = new Template();
+            $template->setParams($this->buildTemplateParams($entry['params'] ?? []));
+            $template->setIsDefault(isset($entry['isDefault']) ? (bool) $entry['isDefault'] : false);
+            $template->setName($this->resolveTemplateName(
+                $type->getName(),
+                $entry['name'] ?? null
+            ));
+            $template->setTemplateType($type);
+            $template->setText($content);
+
+            $this->em->persist($template);
+            ++$imported;
+        }
+
+        return $imported;
+    }
+
+    /**
+     * Build template params by merging custom settings with defaults.
+     */
+    public function buildTemplateParams(array $custom): string
+    {
+        $params = array_merge(self::DEFAULT_TEMPLATE_PARAMS, $custom);
+
+        return json_encode($params, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Parse template params from persisted JSON and merge with defaults.
+     *
+     * @return array<string, float|string>
+     */
+    public function parseTemplateParams(?string $rawParams): array
+    {
+        $params = self::DEFAULT_TEMPLATE_PARAMS;
+        if (!is_string($rawParams) || '' === trim($rawParams)) {
+            return $params;
+        }
+
+        $decoded = json_decode($rawParams, true);
+        if (!is_array($decoded)) {
+            return $params;
+        }
+
+        $orientation = strtoupper((string) ($decoded['orientation'] ?? $params['orientation']));
+        $params['orientation'] = 'L' === $orientation ? 'L' : 'P';
+
+        foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
+            if (!array_key_exists($key, $decoded)) {
+                continue;
+            }
+            if (is_numeric($decoded[$key])) {
+                $params[$key] = (float) $decoded[$key];
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Build template params JSON from request fields (new structured inputs + legacy JSON fallback).
+     */
+    public function buildTemplateParamsFromRequest(Request $request, string $id): string
+    {
+        $orientationField = 'params-orientation-'.$id;
+        $hasStructuredInput = $request->request->has($orientationField);
+        if ($hasStructuredInput) {
+            $structured = [
+                'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
+            ];
+            foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
+                $value = $request->request->get('params-'.$key.'-'.$id);
+                if (is_numeric($value)) {
+                    $structured[$key] = (float) $value;
+                }
+            }
+
+            return $this->buildTemplateParams($structured);
+        }
+
+        $legacyRaw = $request->request->get('params-'.$id);
+        if (is_string($legacyRaw) && '' !== trim($legacyRaw)) {
+            return $this->buildTemplateParams($this->parseTemplateParams($legacyRaw));
+        }
+
+        return $this->buildTemplateParams([]);
+    }
+
+    /**
+     * Resolve display name for a template.
+     */
+    public function resolveTemplateName(string $typeName, ?string $translationKey): string
+    {
+        if (null !== $translationKey) {
+            return $this->translator->trans($translationKey);
+        }
+
+        return $this->translator->trans($typeName);
     }
 
     public function getReferencedReservationsInSession()
@@ -152,7 +388,7 @@ class TemplatesService
         return $correspondences;
     }
 
-    public function makeCorespondenceOfInvoice($id, InvoiceService $is): ?int
+    public function makeCorespondenceOfInvoice($id, InvoiceService $is, ?string $binaryPayload = null, bool $isEInvoice = false): ?int
     {
         $invoice = $this->em->find(Invoice::class, $id);
         if (!$invoice instanceof Invoice) {
@@ -162,7 +398,7 @@ class TemplatesService
         $defaultTemlate = $this->getDefaultTemplate($templates);
         $templateOutput = '';
         if (null !== $defaultTemlate) {
-            $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id, $is);
+            $templateOutput = $this->renderTemplate($defaultTemlate->getId(), $id);
         }
 
         $reservations = $this->getReferencedReservationsInSession();
@@ -170,11 +406,15 @@ class TemplatesService
         $fileId = 0;
         foreach ($reservations as $reservation) {
             $file = new FileCorrespondence();
-            $file->setFileName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
-                 ->setName($this->translator->trans('invoice.number.short').'-'.$invoice->getNumber())
+            $fileName = $is->buildInvoiceExportFilename($invoice, $isEInvoice);
+            $file->setFileName($fileName)
+                 ->setName($fileName)
                  ->setText($templateOutput)
                  ->setTemplate($defaultTemlate)
                  ->setReservation($reservation);
+            if (null !== $binaryPayload) {
+                $file->setBinaryPayload($binaryPayload);
+            }
             $this->em->persist($file);
             $this->em->flush();
             $fileId = $file->getId();
@@ -210,7 +450,8 @@ class TemplatesService
         /* @var $attachment \App\Entity\Correspondence */
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
-            $data = $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
+            $binaryPayload = $attachment->getBinaryPayload();
+            $data = $binaryPayload ?: $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
 
             return new MailAttachment($data, $attachment->getName().'.pdf', 'application/pdf');
         }
@@ -218,7 +459,7 @@ class TemplatesService
         return null;
     }
 
-    public function getPDFOutput($input, $name, $template, $noResponseOutput = false)
+    public function getPDFOutput($input, $name, $template, $noResponseOutput = false, ?string $destOverride = null)
     {
         /*
          * I: send the file inline to the browser. The plug-in is used if available. The name given by filename is used when one selects the "Save as" option on the link generating the PDF.
@@ -226,7 +467,7 @@ class TemplatesService
          * F: save to a local file with the name given by filename (may include a path).
          * S: return the document as a string. filename is ignored.
          */
-        $dest = ($noResponseOutput ? 'S' : 'D');
+        $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
         $mpdf = $this->mpdfs->getMpdf();
 
         $params = json_decode($template->getParams());
@@ -310,7 +551,13 @@ class TemplatesService
 
     private function replaceTwigSyntax(string $string): string
     {
-        $t1 = str_replace('[[', '{{', $string);
+        // Safety net: decode persisted visual style tokens, if any exist.
+        $tStyle = $this->decodeTemplateStyleTokens($string);
+
+        // First, convert editor-friendly loop/if data attributes to real Twig tags.
+        $t0 = $this->replaceDataControlSyntax($tStyle);
+
+        $t1 = str_replace('[[', '{{', $t0);
         $t2 = str_replace(']]', '}}', $t1);
 
         $t3 = str_replace('[%', '{%', $t2);
@@ -319,8 +566,201 @@ class TemplatesService
         $t5 = str_replace('[#', '{#', $t4);
         $t6 = str_replace('#]', '#}', $t5);
 
-        $t7 = preg_replace("/<div class=\"footer\">(.*)<\/div>/s", '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on"></sethtmlpagefooter>', $t6);
+        $t7 = preg_replace('/<div class="footer">([\s\S]*?)<\/div>/i', '<htmlpagefooter name="footer">$1</htmlpagefooter><sethtmlpagefooter name="footer" value="on" page="ALL"></sethtmlpagefooter>', $t6);
+        $t8 = preg_replace('/<div class="header">([\s\S]*?)<\/div>/i', '<htmlpageheader name="header">$1</htmlpageheader><sethtmlpageheader name="header" value="on" show-this-page="1"></sethtmlpageheader>', $t7);
 
-        return $t7;
+        return $t8;
+    }
+
+    /**
+     * Decode visual editor style tokens back to raw <style> blocks.
+     */
+    private function decodeTemplateStyleTokens(string $html): string
+    {
+        return preg_replace_callback(
+            '/<([a-zA-Z][\w:-]*)[^>]*\bdata-template-style=(["\'])(.*?)\2[^>]*>[\s\S]*?<\/\1>/i',
+            static function (array $matches): string {
+                $decoded = base64_decode($matches[3], true);
+                if (false === $decoded || '' === trim($decoded)) {
+                    return $matches[0];
+                }
+
+                return $decoded;
+            },
+            $html
+        ) ?? $html;
+    }
+
+    /**
+     * Converts data-attribute based control syntax to Twig blocks.
+     *
+     * Supported:
+     * - data-repeat="collection" + data-repeat-as="item"
+     * - optional: data-repeat-key="keyVar" for key/value loops
+     * - data-if="condition"
+     *
+     * Example:
+     * <tr data-repeat="reservations" data-repeat-as="reservation">...</tr>
+     * =>
+     * {% for reservation in reservations %}<tr>...</tr>{% endfor %}
+     */
+    private function replaceDataControlSyntax(string $string): string
+    {
+        $result = $string;
+        $result = $this->replaceDataLoopBlocks($result);
+        $result = $this->replaceDataIfBlocks($result);
+
+        return $result;
+    }
+
+    /**
+     * Converts elements with data-repeat attributes to Twig for-blocks.
+     */
+    private function replaceDataLoopBlocks(string $string): string
+    {
+        return $this->replaceControlBlocksByAttribute($string, 'data-repeat', function (string $tag, string $attributes, string $content): string {
+            $collection = $this->extractAttributeValue($attributes, 'data-repeat');
+            $item = $this->extractAttributeValue($attributes, 'data-repeat-as');
+            $key = $this->extractAttributeValue($attributes, 'data-repeat-key');
+            if (null === $collection || null === $item) {
+                return '<'.$tag.$attributes.'>'.$content.'</'.$tag.'>';
+            }
+
+            $cleanAttributes = $this->stripControlAttributes($attributes, false);
+            $openTag = '<'.$tag.($cleanAttributes !== '' ? ' '.$cleanAttributes : '').'>';
+            $element = $openTag.$content.'</'.$tag.'>';
+
+            $loopExpression = null !== $key
+                ? $key.', '.$item.' in '.$collection
+                : $item.' in '.$collection;
+
+            return '{% for '.$loopExpression.' %}'."\n".$element."\n".'{% endfor %}';
+        });
+    }
+
+    /**
+     * Converts elements with data-if attributes to Twig if-blocks.
+     */
+    private function replaceDataIfBlocks(string $string): string
+    {
+        return $this->replaceControlBlocksByAttribute($string, 'data-if', function (string $tag, string $attributes, string $content): string {
+            $condition = $this->extractAttributeValue($attributes, 'data-if');
+            if (null === $condition) {
+                return '<'.$tag.$attributes.'>'.$content.'</'.$tag.'>';
+            }
+
+            $cleanAttributes = $this->stripControlAttributes($attributes);
+            $openTag = '<'.$tag.($cleanAttributes !== '' ? ' '.$cleanAttributes : '').'>';
+            $element = $openTag.$content.'</'.$tag.'>';
+
+            return '{% if '.$condition.' %}'."\n".$element."\n".'{% endif %}';
+        });
+    }
+
+    /**
+     * Replaces blocks containing the given attribute while keeping balanced tag structure.
+     *
+     * This avoids broken replacements for nested elements of the same tag
+     * (e.g. <span data-repeat>...<span>...</span>...</span>).
+     *
+     * @param callable(string, string, string): string $builder
+     */
+    private function replaceControlBlocksByAttribute(string $html, string $attributeName, callable $builder): string
+    {
+        $openPattern = '/<([a-zA-Z][\w:-]*)([^>]*\s'.preg_quote($attributeName, '/').'=(["\']).*?\3[^>]*)>/i';
+        $offset = 0;
+        $result = '';
+        $length = strlen($html);
+
+        while ($offset < $length && preg_match($openPattern, $html, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+            $fullMatch = $matches[0][0];
+            $openStart = $matches[0][1];
+            $openEnd = $openStart + strlen($fullMatch);
+            $tag = $matches[1][0];
+            $attributes = $matches[2][0];
+
+            $closing = $this->findMatchingClosingTag($html, $tag, $openEnd);
+            if (null === $closing) {
+                break;
+            }
+
+            $closeStart = $closing['closeStart'];
+            $closeEnd = $closing['closeEnd'];
+            $innerHtml = substr($html, $openEnd, $closeStart - $openEnd);
+            $innerHtml = $this->replaceControlBlocksByAttribute($innerHtml, $attributeName, $builder);
+
+            $result .= substr($html, $offset, $openStart - $offset);
+            $result .= $builder($tag, $attributes, $innerHtml);
+
+            $offset = $closeEnd;
+        }
+
+        if ($offset < $length) {
+            $result .= substr($html, $offset);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Find matching closing tag position for a specific opening tag.
+     *
+     * @return array{closeStart:int, closeEnd:int}|null
+     */
+    private function findMatchingClosingTag(string $html, string $tag, int $offset): ?array
+    {
+        $pattern = '/<\/?'.preg_quote($tag, '/').'\b[^>]*>/i';
+        $depth = 1;
+
+        while (preg_match($pattern, $html, $matches, PREG_OFFSET_CAPTURE, $offset)) {
+            $token = $matches[0][0];
+            $start = $matches[0][1];
+            $end = $start + strlen($token);
+
+            if (str_starts_with($token, '</') || str_starts_with($token, '</'.strtoupper($tag))) {
+                --$depth;
+                if (0 === $depth) {
+                    return ['closeStart' => $start, 'closeEnd' => $end];
+                }
+            } else {
+                ++$depth;
+            }
+
+            $offset = $end;
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts an attribute value from a raw HTML attribute string.
+     */
+    private function extractAttributeValue(string $attributes, string $attributeName): ?string
+    {
+        $pattern = '/\b'.preg_quote($attributeName, '/').'=(["\'])(.*?)\1/i';
+        if (1 !== preg_match($pattern, $attributes, $matches)) {
+            return null;
+        }
+
+        $value = trim($matches[2]);
+
+        return '' === $value ? null : $value;
+    }
+
+    /**
+     * Removes internal control attributes from an element attribute string.
+     */
+    private function stripControlAttributes(string $attributes, bool $removeIf = true): string
+    {
+        $cleaned = $attributes;
+        $cleaned = preg_replace('/\s*\bdata-repeat=(["\']).*?\1/i', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/\s*\bdata-repeat-as=(["\']).*?\1/i', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/\s*\bdata-repeat-key=(["\']).*?\1/i', '', $cleaned) ?? $cleaned;
+        if ($removeIf) {
+            $cleaned = preg_replace('/\s*\bdata-if=(["\']).*?\1/i', '', $cleaned) ?? $cleaned;
+        }
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned) ?? $cleaned;
+
+        return trim($cleaned);
     }
 }

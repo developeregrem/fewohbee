@@ -25,6 +25,7 @@ class DashboardRedirectController extends AbstractController
     {
         $roleRouteMap = [
             'ROLE_RESERVATIONS' => 'start',
+            'ROLE_OPERATIONS' => 'operations.frontdesk',
             'ROLE_CUSTOMERS' => 'customers.overview',
             'ROLE_INVOICES' => 'invoices.overview',
             'ROLE_REGISTRATIONBOOK' => 'registrationbook.overview',

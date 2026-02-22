@@ -1,0 +1,1832 @@
+import { Controller } from '@hotwired/stimulus';
+import { Editor, Extension, Node } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
+import beautifyLib from 'js-beautify';
+import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
+import Dropcursor from '@tiptap/extension-dropcursor';
+import Gapcursor from '@tiptap/extension-gapcursor';
+
+// CodeMirror imports for the code editor mode
+import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, dropCursor } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
+import { html } from '@codemirror/lang-html';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
+import { templateAutocomplete } from '../js/template-autocomplete.js';
+
+const optionalAttribute = (attributeName, htmlAttribute = attributeName) => ({
+    default: null,
+    parseHTML: (element) => element.getAttribute(htmlAttribute),
+    renderHTML: (attributes) => attributes[attributeName] ? { [htmlAttribute]: attributes[attributeName] } : {},
+});
+
+const classAttribute = () => optionalAttribute('cssClass', 'class');
+const styleAttribute = () => optionalAttribute('style', 'style');
+const repeatAttribute = () => optionalAttribute('loop', 'data-repeat');
+const repeatAsAttribute = () => optionalAttribute('loopAttr', 'data-repeat-as');
+const repeatKeyAttribute = () => optionalAttribute('loopKey', 'data-repeat-key');
+const conditionAttribute = () => optionalAttribute('condition', 'data-if');
+const styleTokenAttribute = () => optionalAttribute('styleToken', 'data-template-style');
+
+const styleAndClassAttributes = () => ({
+    style: styleAttribute(),
+    cssClass: classAttribute(),
+});
+
+const repeatAndConditionAttributes = () => ({
+    loop: repeatAttribute(),
+    loopAttr: repeatAsAttribute(),
+    loopKey: repeatKeyAttribute(),
+    condition: conditionAttribute(),
+});
+
+/**
+ * Extend a tiptap Node/Mark to preserve extra HTML attributes in visual mode.
+ */
+function extendWithTemplateAttrs(Base, ...attrGroups) {
+    return Base.extend({
+        addAttributes() {
+            return Object.assign({}, this.parent?.(), ...attrGroups);
+        },
+    });
+}
+
+const TemplateTable = extendWithTemplateAttrs(Table, styleAndClassAttributes());
+const TemplateTableRow = extendWithTemplateAttrs(TableRow, repeatAndConditionAttributes(), styleAndClassAttributes());
+const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndConditionAttributes(), styleAndClassAttributes());
+const TemplateTableCell = extendWithTemplateAttrs(TableCell, repeatAndConditionAttributes(), styleAndClassAttributes());
+
+/**
+ * Resizable image extension with drag handles and alignment support.
+ * Stores width as an HTML attribute so it survives code ↔ visual round-trips.
+ */
+const ResizableImage = Image.extend({
+    inline: true,
+    group: 'inline',
+
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            width: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('width') || el.style.width || null,
+                renderHTML: (attrs) => attrs.width ? { width: attrs.width } : {},
+            },
+            height: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('height') || null,
+                renderHTML: (attrs) => attrs.height ? { height: attrs.height } : {},
+            },
+            ...styleAndClassAttributes(),
+        };
+    },
+
+    addNodeView() {
+        return ({ node, editor, getPos }) => {
+            const wrapper = document.createElement('span');
+            wrapper.classList.add('template-editor-image-wrapper');
+            wrapper.contentEditable = 'false';
+
+            const img = document.createElement('img');
+            img.src = node.attrs.src || '';
+            if (node.attrs.alt) img.alt = node.attrs.alt;
+            if (node.attrs.title) img.title = node.attrs.title;
+            if (node.attrs.width) img.style.width = node.attrs.width;
+
+            // Alignment toolbar — sets text-align on the parent <p> so mPDF can use it
+            const toolbar = document.createElement('div');
+            toolbar.className = 'template-editor-image-toolbar';
+            toolbar.innerHTML = [
+                { align: 'left', icon: 'fa-align-left', title: 'Links' },
+                { align: 'center', icon: 'fa-align-center', title: 'Zentriert' },
+                { align: 'right', icon: 'fa-align-right', title: 'Rechts' },
+            ].map(({ align, icon, title }) =>
+                `<button type="button" class="btn btn-sm btn-outline-secondary" data-align="${align}" title="${title}"><i class="fas ${icon}"></i></button>`
+            ).join('');
+            toolbar.style.display = 'none';
+
+            toolbar.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-align]');
+                if (!btn) return;
+                editor.chain().focus().setTextAlign(btn.dataset.align).run();
+            });
+
+            // Resize handle
+            const handle = document.createElement('div');
+            handle.className = 'template-editor-image-resize-handle';
+
+            let startX = 0;
+            let startWidth = 0;
+
+            const onMouseMove = (e) => {
+                const newWidth = Math.max(30, startWidth + (e.clientX - startX));
+                img.style.width = newWidth + 'px';
+            };
+
+            const onMouseUp = (e) => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                if (typeof getPos !== 'function') return;
+                const pos = getPos();
+                if (pos == null) return;
+                const newWidth = Math.max(30, startWidth + (e.clientX - startX));
+                editor.chain().focus()
+                    .updateAttributes('image', { width: newWidth + 'px' })
+                    .run();
+            };
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startX = e.clientX;
+                startWidth = img.offsetWidth;
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            // Show/hide toolbar on selection
+            wrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toolbar.style.display = 'flex';
+                wrapper.classList.add('is-selected');
+            });
+
+            const hideToolbar = () => {
+                toolbar.style.display = 'none';
+                wrapper.classList.remove('is-selected');
+            };
+            document.addEventListener('click', hideToolbar);
+
+            wrapper.appendChild(toolbar);
+            wrapper.appendChild(img);
+            wrapper.appendChild(handle);
+
+            return {
+                dom: wrapper,
+                update: (updatedNode) => {
+                    if (updatedNode.type.name !== 'image') return false;
+                    img.src = updatedNode.attrs.src || '';
+                    if (updatedNode.attrs.alt) img.alt = updatedNode.attrs.alt;
+                    img.style.width = updatedNode.attrs.width || '';
+                    return true;
+                },
+                destroy: () => {
+                    document.removeEventListener('click', hideToolbar);
+                },
+            };
+        };
+    },
+});
+
+const TemplateControlAttributes = Extension.create({
+    /**
+     * Keep loop/if control attributes on common block nodes and textStyle marks
+     * so visual mode does not silently drop template metadata.
+     */
+    addGlobalAttributes() {
+        return [
+            {
+                types: ['paragraph', 'heading', 'blockquote', 'listItem'],
+                attributes: {
+                    ...repeatAndConditionAttributes(),
+                    styleToken: styleTokenAttribute(),
+                    style: styleAttribute(),
+                    cssClass: classAttribute(),
+                },
+            },
+            {
+                types: ['textStyle'],
+                attributes: {
+                    ...repeatAndConditionAttributes(),
+                    styleToken: styleTokenAttribute(),
+                    cssClass: classAttribute(),
+                },
+            },
+        ];
+    },
+});
+
+const TemplateDiv = Node.create({
+    name: 'div',
+    group: 'block',
+    content: 'block*',
+    defining: true,
+
+    /**
+     * Preserve div blocks and their relevant template/CSS attributes.
+     */
+    parseHTML() {
+        return [{ tag: 'div' }];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['div', HTMLAttributes, 0];
+    },
+
+    addAttributes() {
+        return {
+            ...styleAndClassAttributes(),
+            ...repeatAndConditionAttributes(),
+        };
+    },
+});
+
+const TemplateInlineControlSpan = Node.create({
+    name: 'templateInlineControlSpan',
+    inline: true,
+    group: 'inline',
+    content: 'inline*',
+
+    /**
+     * Preserve span wrappers that carry template control attributes.
+     */
+    parseHTML() {
+        return [
+            { tag: 'span[data-repeat]' },
+            { tag: 'span[data-if]' },
+        ];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['span', HTMLAttributes, 0];
+    },
+
+    addAttributes() {
+        return {
+            ...repeatAndConditionAttributes(),
+            ...styleAndClassAttributes(),
+        };
+    },
+});
+
+export default class extends Controller {
+    static targets = [
+        'editor',
+        'source',
+        'code',
+        'codeWrapper',
+        'visualWrapper',
+        'fileInput',
+        'snippetSidebar',
+        'snippetPanel',
+        'snippetToggle',
+        'toolbarHost',
+        'beautifyButton',
+        'modeToggle',
+        'modeIconCode',
+        'modeIconVisual',
+        'tabEdit',
+        'tabPreview',
+        'panelEdit',
+        'panelPreview',
+        'previewResult',
+        'previewWarning',
+        'tableActionButton',
+        'tableToolsRow',
+        'rowControlPanel',
+        'rowRepeatEnabled',
+        'rowRepeatCollection',
+        'rowRepeatAs',
+        'rowRepeatKey',
+        'rowMetaBadge',
+        'pdfParamsPanel',
+    ];
+
+    connect() {
+        this.form = this.element.closest('form') || this.element;
+        this.uploadUrl = this.form?.dataset.templatesUploadUrl || '';
+        this.snippetsUrlTemplate = this.form?.dataset.templatesSnippetsUrl || '';
+        this.schemaUrlTemplate = this.form?.dataset.templatesSchemaUrl || '';
+        this.previewRenderUrl = this.form?.dataset.templatesPreviewRenderUrl || '';
+        this.previewPdfUrl = this.form?.dataset.templatesPreviewPdfUrl || '';
+        this.templateTypeSelect = this.form?.querySelector('#template-type');
+        this.snippets = [];
+        this.codeDropListenersAttached = false;
+        this.cmEditor = null; // CodeMirror instance (created on first code-mode entry)
+        this.i18n = this.hasToolbarHostTarget ? this.toolbarHostTarget.dataset : {};
+
+        const initialContent = this.sourceTarget?.value || '';
+        this.hasProtectedContent = this.isAdvancedContent(initialContent) || this.hasPseudoTwigComments(initialContent);
+        const visualContent = this.prepareContentForVisual(initialContent);
+        if (this.hasCodeTarget) {
+            this.codeTarget.value = initialContent;
+        }
+        this.initEditor(visualContent);
+        this.initToolbar();
+
+        if (this.hasProtectedContent) {
+            this.enterCodeMode();
+        } else {
+            this.enterVisualMode();
+        }
+
+        this.refreshSnippets();
+        this.updatePdfParamsVisibility();
+        this.showEditTab();
+        this.refreshToolbarState();
+        this.previewPdfObjectUrl = null;
+    }
+
+    disconnect() {
+        if (this.editorInstance) {
+            this.editorInstance.destroy();
+        }
+        if (this.cmEditor) {
+            this.cmEditor.destroy();
+            this.cmEditor = null;
+        }
+        if (this.hasCodeWrapperTarget && this.codeDropListenersAttached) {
+            this.codeWrapperTarget.removeEventListener('dragover', this.onCodeWrapperDragOver);
+            this.codeWrapperTarget.removeEventListener('drop', this.onCodeWrapperDrop);
+            this.codeDropListenersAttached = false;
+        }
+        this.closeVariablePicker();
+        this.revokePreviewPdfUrl();
+    }
+
+    beforeSubmitAction() {
+        if (this.isCodeMode()) {
+            this.syncCodeMirrorToTextarea();
+            this.sourceTarget.value = this.codeTarget.value;
+        } else if (this.editorInstance) {
+            this.sourceTarget.value = this.restoreContentFromVisual(this.editorInstance.getHTML());
+        }
+    }
+
+    toggleSnippetSidebar() {
+        if (!this.hasSnippetPanelTarget) {
+            return;
+        }
+        const isOpen = !this.snippetPanelTarget.classList.contains('d-none');
+        this.snippetPanelTarget.classList.toggle('d-none', isOpen);
+        if (this.hasSnippetToggleTarget) {
+            this.snippetToggleTarget.classList.toggle('is-active', !isOpen);
+        }
+    }
+
+    showEditTab(event = null) {
+        if (event) {
+            event.preventDefault();
+        }
+        if (this.hasPanelEditTarget) {
+            this.panelEditTarget.classList.remove('d-none');
+        }
+        if (this.hasPanelPreviewTarget) {
+            this.panelPreviewTarget.classList.add('d-none');
+        }
+        if (this.hasTabEditTarget) {
+            this.tabEditTarget.classList.add('active');
+        }
+        if (this.hasTabPreviewTarget) {
+            this.tabPreviewTarget.classList.remove('active');
+        }
+    }
+
+    async showPreviewTab(event = null) {
+        if (event) {
+            event.preventDefault();
+        }
+        if (this.hasPanelEditTarget) {
+            this.panelEditTarget.classList.add('d-none');
+        }
+        if (this.hasPanelPreviewTarget) {
+            this.panelPreviewTarget.classList.remove('d-none');
+        }
+        if (this.hasTabEditTarget) {
+            this.tabEditTarget.classList.remove('active');
+        }
+        if (this.hasTabPreviewTarget) {
+            this.tabPreviewTarget.classList.add('active');
+        }
+
+        await this.renderPreview();
+    }
+
+    async renderPreview() {
+        if (!this.previewRenderUrl) {
+            return;
+        }
+
+        this.beforeSubmitAction();
+        if (this.isCurrentTemplateTypePdf()) {
+            await this.renderPdfPreview();
+            return;
+        }
+
+        await this.renderHtmlPreview();
+    }
+
+    async renderHtmlPreview() {
+        const formData = this.buildPreviewFormData();
+        try {
+            const response = await fetch(this.previewRenderUrl, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                await this.applyPreviewErrorFromResponse(response);
+                return;
+            }
+            const payload = await response.json();
+            if (this.hasPreviewResultTarget) {
+                this.revokePreviewPdfUrl();
+                this.previewResultTarget.innerHTML = payload.html || '';
+            }
+            this.applyPreviewWarning(payload.warningText);
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    async renderPdfPreview() {
+        if (!this.previewPdfUrl) {
+            return;
+        }
+
+        try {
+            const warningResponse = await fetch(this.previewRenderUrl, {
+                method: 'POST',
+                body: this.buildPreviewFormData(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (warningResponse.ok) {
+                const warningPayload = await warningResponse.json();
+                this.applyPreviewWarning(warningPayload.warningText);
+            } else {
+                await this.applyPreviewErrorFromResponse(warningResponse);
+                return;
+            }
+
+            const response = await fetch(this.previewPdfUrl, {
+                method: 'POST',
+                body: this.buildPreviewFormData(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                await this.applyPreviewErrorFromResponse(response);
+                return;
+            }
+            const blob = await response.blob();
+            this.revokePreviewPdfUrl();
+            this.previewPdfObjectUrl = URL.createObjectURL(blob);
+            if (this.hasPreviewResultTarget) {
+                this.previewResultTarget.innerHTML = `<iframe src="${this.previewPdfObjectUrl}" class="template-preview-pdf-frame" style="width:100%;height:75vh;border:0;" title="PDF Preview"></iframe>`;
+            }
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    buildPreviewFormData() {
+        const formData = new FormData();
+        formData.append('previewText', this.sourceTarget.value || '');
+        this.appendPreviewContextToFormData(formData);
+
+        return formData;
+    }
+
+    applyPreviewWarning(warningText) {
+        if (!this.hasPreviewWarningTarget) {
+            return;
+        }
+        if (warningText) {
+            this.previewWarningTarget.textContent = warningText;
+            this.previewWarningTarget.classList.remove('d-none');
+        } else {
+            this.previewWarningTarget.textContent = '';
+            this.previewWarningTarget.classList.add('d-none');
+        }
+    }
+
+    async applyPreviewErrorFromResponse(response) {
+        try {
+            const payload = await response.json();
+            const message = payload.warningText || payload.error || '';
+            if (message) {
+                this.applyPreviewWarning(message);
+                return;
+            }
+        } catch (error) {
+            // ignore json parse errors
+        }
+        this.applyPreviewWarning(this.i18n.i18nPreviewRenderError || 'Template konnte nicht gerendert werden.');
+    }
+
+    revokePreviewPdfUrl() {
+        if (this.previewPdfObjectUrl) {
+            URL.revokeObjectURL(this.previewPdfObjectUrl);
+            this.previewPdfObjectUrl = null;
+        }
+    }
+
+    isCurrentTemplateTypePdf() {
+        if (!this.templateTypeSelect) {
+            return false;
+        }
+        const selectedOption = this.templateTypeSelect.options[this.templateTypeSelect.selectedIndex];
+        const typeName = selectedOption?.dataset?.templateTypeName || '';
+
+        return typeName.includes('_PDF');
+    }
+
+    toggleCodeMode() {
+        if (this.isCodeMode()) {
+            this.enterVisualMode();
+        } else {
+            this.enterCodeMode();
+        }
+    }
+
+    enterCodeMode() {
+        // Only sync from visual editor if we were actually in visual mode.
+        // On initial load (mode not yet set) the code textarea already has the
+        // original content — syncing from tiptap would strip HTML comments and
+        // raw Twig syntax that tiptap cannot represent.
+        if (this.mode === 'visual' && this.editorInstance && this.hasCodeTarget) {
+            this.codeTarget.value = this.restoreContentFromVisual(this.editorInstance.getHTML());
+        }
+        if (this.hasVisualWrapperTarget) {
+            this.visualWrapperTarget.classList.add('d-none');
+        }
+        if (this.hasCodeWrapperTarget) {
+            this.codeWrapperTarget.classList.remove('d-none');
+            if (!this.codeDropListenersAttached) {
+                this.codeWrapperTarget.addEventListener('dragover', this.onCodeWrapperDragOver);
+                this.codeWrapperTarget.addEventListener('drop', this.onCodeWrapperDrop);
+                this.codeDropListenersAttached = true;
+            }
+        }
+
+        // Initialize or update CodeMirror
+        this.initCodeMirror();
+        if (this.cmEditor) {
+            const content = this.codeTarget.value || '';
+            this.cmEditor.dispatch({
+                changes: { from: 0, to: this.cmEditor.state.doc.length, insert: content },
+            });
+        }
+
+        if (this.hasModeToggleTarget) {
+            const visualLabel = this.modeToggleTarget.dataset.visualLabel || 'Visual';
+            this.modeToggleTarget.title = visualLabel;
+            this.modeToggleTarget.setAttribute('aria-label', visualLabel);
+            this.setModeToggleIcon('fa-eye');
+        }
+        if (this.hasBeautifyButtonTarget) {
+            this.beautifyButtonTarget.classList.remove('d-none');
+        }
+        this.mode = 'code';
+    }
+
+    enterVisualMode() {
+        // Tiptap cannot safely represent raw Twig syntax, HTML comments with
+        // template code, or mPDF directives. Force code mode to avoid data loss.
+        if (this.hasProtectedContent) {
+            window.alert(this.i18n.i18nProtectedContent || 'Dieses Template enthält Twig-Syntax oder erweiterte Direktiven und kann nur im Code-Modus bearbeitet werden.');
+            return;
+        }
+        // Sync CodeMirror content back to textarea before switching
+        this.syncCodeMirrorToTextarea();
+        if (this.editorInstance && this.hasCodeTarget) {
+            this.editorInstance.commands.setContent(this.prepareContentForVisual(this.codeTarget.value || ''), false);
+        }
+        if (this.hasCodeWrapperTarget) {
+            this.codeWrapperTarget.classList.add('d-none');
+        }
+        if (this.hasVisualWrapperTarget) {
+            this.visualWrapperTarget.classList.remove('d-none');
+        }
+        if (this.hasModeToggleTarget) {
+            const codeLabel = this.modeToggleTarget.dataset.codeLabel || 'Code';
+            this.modeToggleTarget.title = codeLabel;
+            this.modeToggleTarget.setAttribute('aria-label', codeLabel);
+            this.setModeToggleIcon('fa-code');
+        }
+        if (this.hasBeautifyButtonTarget) {
+            this.beautifyButtonTarget.classList.add('d-none');
+        }
+        this.mode = 'visual';
+    }
+
+    isCodeMode() {
+        return this.mode === 'code';
+    }
+
+    setModeToggleIcon(iconClass) {
+        if (this.hasModeIconCodeTarget && this.hasModeIconVisualTarget) {
+            const showCodeIcon = iconClass === 'fa-code';
+            this.modeIconCodeTarget.classList.toggle('d-none', !showCodeIcon);
+            this.modeIconVisualTarget.classList.toggle('d-none', showCodeIcon);
+            return;
+        }
+
+        if (!this.hasModeToggleTarget) {
+            return;
+        }
+
+        const icon = this.modeToggleTarget.querySelector('i, svg');
+        if (!icon) {
+            return;
+        }
+        icon.classList.remove('fa-code', 'fa-eye');
+        icon.classList.add(iconClass);
+    }
+
+    initToolbar() {
+        if (!this.hasToolbarHostTarget) {
+            return;
+        }
+        this.toolbarCommandRegistry = this.buildToolbarCommandRegistry();
+        this.toolbarConfig = this.buildToolbarConfig();
+        this.renderToolbar();
+    }
+
+    buildToolbarConfig() {
+        const t = (key, fallback) => this.getToolbarI18n(key, fallback);
+        return [
+            {
+                type: 'group',
+                items: [
+                    { type: 'button', command: 'bold', icon: 'fas fa-bold', title: t('bold', 'Bold') },
+                    { type: 'button', command: 'italic', icon: 'fas fa-italic', title: t('italic', 'Italic') },
+                    { type: 'button', command: 'underline', icon: 'fas fa-underline', title: t('underline', 'Underline') },
+                ],
+            },
+            {
+                type: 'group',
+                items: [
+                    {
+                        type: 'select',
+                        command: 'fontFamily',
+                        title: t('fontFamily', 'Font family'),
+                        options: [
+                            { value: '', label: t('fontFamily', 'Font family') },
+                            { value: 'Arial, sans-serif', label: 'Arial' },
+                            { value: "'Times New Roman', serif", label: 'Times New Roman' },
+                            { value: "'Courier New', monospace", label: 'Courier New' },
+                            { value: 'Georgia, serif', label: 'Georgia' },
+                            { value: 'Verdana, sans-serif', label: 'Verdana' },
+                        ],
+                    },
+                    {
+                        type: 'select',
+                        command: 'fontSize',
+                        title: t('fontSize', 'Font size'),
+                        options: [
+                            { value: '', label: t('fontSize', 'Font size') },
+                            { value: '10px', label: '10' },
+                            { value: '12px', label: '12' },
+                            { value: '14px', label: '14' },
+                            { value: '16px', label: '16' },
+                            { value: '18px', label: '18' },
+                            { value: '22px', label: '22' },
+                        ],
+                    },
+                ],
+            },
+            {
+                type: 'group',
+                items: [
+                    { type: 'button', command: 'alignLeft', icon: 'fas fa-align-left', title: t('alignLeft', 'Align left') },
+                    { type: 'button', command: 'alignCenter', icon: 'fas fa-align-center', title: t('alignCenter', 'Align center') },
+                    { type: 'button', command: 'alignRight', icon: 'fas fa-align-right', title: t('alignRight', 'Align right') },
+                ],
+            },
+            {
+                type: 'group',
+                items: [
+                    { type: 'button', command: 'bulletList', icon: 'fas fa-list-ul', title: t('bullets', 'Bullet list') },
+                    { type: 'button', command: 'orderedList', icon: 'fas fa-list-ol', title: t('ordered', 'Numbered list') },
+                    { type: 'button', command: 'link', icon: 'fas fa-link', title: t('link', 'Insert link') },
+                    { type: 'button', command: 'table', icon: 'fas fa-table', title: t('table', 'Insert table') },
+                    { type: 'button', command: 'image', icon: 'fas fa-image', title: t('image', 'Insert image') },
+                ],
+            },
+        ];
+    }
+
+    getToolbarI18n(key, fallback) {
+        if (!this.hasToolbarHostTarget) {
+            return fallback;
+        }
+        const map = {
+            bold: 'i18nBold',
+            italic: 'i18nItalic',
+            underline: 'i18nUnderline',
+            bullets: 'i18nBullets',
+            ordered: 'i18nOrdered',
+            link: 'i18nLink',
+            table: 'i18nTable',
+            image: 'i18nImage',
+            fontFamily: 'i18nFontFamily',
+            fontSize: 'i18nFontSize',
+            alignLeft: 'i18nAlignLeft',
+            alignCenter: 'i18nAlignCenter',
+            alignRight: 'i18nAlignRight',
+            variable: 'i18nVariable',
+        };
+        const dataKey = map[key];
+        if (!dataKey) {
+            return fallback;
+        }
+        return this.toolbarHostTarget.dataset[dataKey] || fallback;
+    }
+
+    buildToolbarCommandRegistry() {
+        const ed = () => this.editorInstance;
+        const chain = () => ed()?.chain().focus();
+        return {
+            bold: { run: () => chain()?.toggleBold().run(), isActive: () => ed()?.isActive('bold') },
+            italic: { run: () => chain()?.toggleItalic().run(), isActive: () => ed()?.isActive('italic') },
+            underline: { run: () => chain()?.toggleUnderline().run(), isActive: () => ed()?.isActive('underline') },
+            bulletList: { run: () => chain()?.toggleBulletList().run(), isActive: () => ed()?.isActive('bulletList') },
+            orderedList: { run: () => chain()?.toggleOrderedList().run(), isActive: () => ed()?.isActive('orderedList') },
+            link: { run: () => this.addLink(), isActive: () => ed()?.isActive('link') },
+            table: { run: () => this.addTable(), isActive: () => false },
+            image: { run: () => this.triggerImageUpload(), isActive: () => false },
+            variable: { run: () => this.openVariablePicker(), isActive: () => false },
+            alignLeft: { run: () => chain()?.setTextAlign('left').run(), isActive: () => ed()?.isActive({ textAlign: 'left' }) },
+            alignCenter: { run: () => chain()?.setTextAlign('center').run(), isActive: () => ed()?.isActive({ textAlign: 'center' }) },
+            alignRight: { run: () => chain()?.setTextAlign('right').run(), isActive: () => ed()?.isActive({ textAlign: 'right' }) },
+        };
+    }
+
+    renderToolbar() {
+        const host = this.toolbarHostTarget;
+        host.innerHTML = '';
+
+        this.toolbarConfig.forEach((group) => {
+            if (group.type !== 'group') {
+                return;
+            }
+            const groupEl = document.createElement('div');
+            groupEl.className = 'template-editor-toolbar-group';
+            groupEl.setAttribute('role', 'group');
+
+            group.items.forEach((item) => {
+                if (item.type === 'button') {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-secondary btn-sm template-editor-btn';
+                    button.dataset.templateCommand = item.command;
+                    button.title = item.title;
+                    button.innerHTML = `<i class="${item.icon}" aria-hidden="true"></i>`;
+                    button.addEventListener('click', () => this.executeToolbarCommand(item.command));
+                    groupEl.appendChild(button);
+                    return;
+                }
+
+                if (item.type === 'select') {
+                    const select = document.createElement('select');
+                    select.className = 'form-select form-select-sm template-editor-select';
+                    select.dataset.templateCommandSelect = item.command;
+                    select.title = item.title;
+                    item.options.forEach((optionDef) => {
+                        const option = document.createElement('option');
+                        option.value = optionDef.value;
+                        option.textContent = optionDef.label;
+                        select.appendChild(option);
+                    });
+                    select.addEventListener('change', (event) => {
+                        const value = event.currentTarget.value || '';
+                        this.handleToolbarSelect(item.command, value);
+                    });
+                    groupEl.appendChild(select);
+                }
+            });
+
+            host.appendChild(groupEl);
+        });
+    }
+
+    executeToolbarCommand(commandName) {
+        if (!this.toolbarCommandRegistry || this.isCodeMode()) {
+            return;
+        }
+        const command = this.toolbarCommandRegistry[commandName];
+        if (!command || typeof command.run !== 'function') {
+            return;
+        }
+        command.run();
+        this.refreshToolbarState();
+    }
+
+    handleToolbarSelect(commandName, value) {
+        if (this.isCodeMode() || !this.editorInstance) {
+            return;
+        }
+        const handlers = {
+            fontFamily: (v) => v
+                ? this.editorInstance.chain().focus().setFontFamily(v).run()
+                : this.editorInstance.chain().focus().unsetFontFamily().run(),
+            fontSize: (v) => v
+                ? this.editorInstance.chain().focus().setFontSize(v).run()
+                : this.editorInstance.chain().focus().unsetFontSize().run(),
+        };
+        handlers[commandName]?.(value);
+        this.refreshToolbarState();
+    }
+
+    onTemplateTypeChange() {
+        this.refreshSnippets();
+        this.updatePdfParamsVisibility();
+        this.schemaCache = null;
+        // Rebuild CodeMirror with the new template type's schema
+        this.rebuildCodeMirror();
+    }
+
+    updatePdfParamsVisibility() {
+        if (!this.hasPdfParamsPanelTarget) {
+            return;
+        }
+        const isPdf = this.isCurrentTemplateTypePdf();
+        this.pdfParamsPanelTarget.classList.toggle('d-none', !isPdf);
+    }
+
+    async refreshSnippets() {
+        if (!this.snippetsUrlTemplate || !this.templateTypeSelect) {
+            return;
+        }
+        const typeId = this.templateTypeSelect.value;
+        if (!typeId) {
+            return;
+        }
+        const url = this.snippetsUrlTemplate.replace('placeholder', typeId);
+        try {
+            const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!response.ok) {
+                return;
+            }
+            this.snippets = await response.json();
+            this.renderSnippetSidebar();
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    renderSnippetSidebar() {
+        if (!this.hasSnippetSidebarTarget) {
+            return;
+        }
+
+        const container = this.snippetSidebarTarget;
+        container.innerHTML = '';
+        const groups = this.groupSnippets();
+
+        for (const [group, items] of groups.entries()) {
+            const title = document.createElement('h6');
+            title.className = 'mt-2 mb-2';
+            title.textContent = group;
+            container.appendChild(title);
+
+            items.forEach((snippet) => {
+                const item = document.createElement('div');
+                item.className = 'snippet-item border rounded p-2 mb-2';
+                item.draggable = true;
+                item.dataset.content = snippet.content;
+                item.dataset.complexity = snippet.complexity || 'simple';
+                item.textContent = snippet.label;
+                item.addEventListener('dragstart', (event) => this.handleSnippetDragStart(event));
+                item.addEventListener('click', () => this.insertSnippetContent(snippet.content, snippet.complexity || 'simple'));
+                container.appendChild(item);
+            });
+        }
+    }
+
+    groupSnippets() {
+        const groups = new Map();
+        this.snippets.forEach((snippet) => {
+            const group = snippet.group || 'General';
+            if (!groups.has(group)) {
+                groups.set(group, []);
+            }
+            groups.get(group).push(snippet);
+        });
+        return groups;
+    }
+
+    handleSnippetDragStart(event) {
+        const { content, complexity } = event.currentTarget.dataset;
+        event.dataTransfer.setData('application/x-template-snippet', content || '');
+        event.dataTransfer.setData('application/x-template-snippet-complexity', complexity || 'simple');
+        event.dataTransfer.effectAllowed = 'copy';
+    }
+
+    handleSnippetDropOnCode(event) {
+        const content = event.dataTransfer?.getData('application/x-template-snippet');
+        if (!content || !this.hasCodeTarget) {
+            return;
+        }
+        event.preventDefault();
+        this.insertIntoCodeEditor(content);
+    }
+
+    insertSnippetContent(content, complexity) {
+        if (complexity === 'advanced' && !this.isCodeMode()) {
+            this.enterCodeMode();
+        }
+
+        if (this.isCodeMode()) {
+            this.insertIntoCodeEditor(content);
+        } else if (this.editorInstance) {
+            if (this.isTableRowSnippet(content)) {
+                this.applyRowSnippetToCurrentRow(content);
+                return;
+            }
+            const normalizedContent = this.normalizeSnippetContentForInsert(content);
+            this.editorInstance.chain().focus().insertContent(normalizedContent).run();
+            this.refreshToolbarState();
+        }
+    }
+
+    isTableRowSnippet(content) {
+        return /^\s*<tr\b/i.test(content || '');
+    }
+
+    applyRowSnippetToCurrentRow(content) {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        if (!this.editorInstance.isActive('tableRow')) {
+            window.alert('Bitte zuerst den Cursor in die gewünschte Tabellenzeile setzen.');
+            return;
+        }
+
+        const repeat = this.extractAttributeFromSnippet(content, 'data-repeat');
+        const repeatAs = this.extractAttributeFromSnippet(content, 'data-repeat-as');
+        const repeatKey = this.extractAttributeFromSnippet(content, 'data-repeat-key');
+        const condition = this.extractAttributeFromSnippet(content, 'data-if');
+
+        const attrs = this.editorInstance.getAttributes('tableRow');
+        this.editorInstance.chain().focus().updateAttributes('tableRow', {
+            ...attrs,
+            loop: repeat || attrs.loop || null,
+            loopAttr: repeatAs || attrs.loopAttr || null,
+            loopKey: repeatKey || attrs.loopKey || null,
+            condition: condition || attrs.condition || null,
+        }).run();
+
+        this.refreshToolbarState();
+    }
+
+    extractAttributeFromSnippet(content, attributeName) {
+        if (!content || !attributeName) {
+            return '';
+        }
+        const pattern = new RegExp(`${attributeName}=(["'])(.*?)\\1`, 'i');
+        const match = content.match(pattern);
+        return match && match[2] ? match[2].trim() : '';
+    }
+
+    normalizeSnippetContentForInsert(content) {
+        if (!content) {
+            return '';
+        }
+        // Prevent table parsing artifacts: whitespace between table tags can be
+        // interpreted as extra text nodes/cells by the ProseMirror table parser.
+        if (/^\s*<table\b/i.test(content)) {
+            return content.replace(/>\s+</g, '><').trim();
+        }
+        return content;
+    }
+
+    addLink() {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        const url = window.prompt('URL');
+        if (!url) {
+            return;
+        }
+        this.editorInstance.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    }
+
+    addTable() {
+        if (!this.editorInstance) {
+            return;
+        }
+        if (this.isCodeMode()) {
+            this.insertIntoCodeEditor(
+                '<table><tbody><tr><th>Header 1</th><th>Header 2</th></tr><tr><td>Cell 1</td><td>Cell 2</td></tr><tr><td>Cell 3</td><td>Cell 4</td></tr></tbody></table>\n'
+            );
+            return;
+        }
+        this.editorInstance.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+        this.refreshToolbarState();
+    }
+
+    addTableRow() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('table')) {
+            return;
+        }
+        this.editorInstance.chain().focus().addRowAfter().run();
+        this.refreshToolbarState();
+    }
+
+    deleteTableRow() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('table')) {
+            return;
+        }
+        this.editorInstance.chain().focus().deleteRow().run();
+        this.refreshToolbarState();
+    }
+
+    addTableColumn() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('table')) {
+            return;
+        }
+        this.editorInstance.chain().focus().addColumnAfter().run();
+        this.refreshToolbarState();
+    }
+
+    deleteTableColumn() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('table')) {
+            return;
+        }
+        this.editorInstance.chain().focus().deleteColumn().run();
+        this.refreshToolbarState();
+    }
+
+    deleteTable() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('table')) {
+            return;
+        }
+        this.editorInstance.chain().focus().deleteTable().run();
+        this.refreshToolbarState();
+    }
+
+    applyRowControls() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('tableRow')) {
+            return;
+        }
+
+        const attrs = this.editorInstance.getAttributes('tableRow');
+        const repeatEnabled = this.hasRowRepeatEnabledTarget && this.rowRepeatEnabledTarget.checked;
+
+        const collection = this.hasRowRepeatCollectionTarget
+            ? this.rowRepeatCollectionTarget.value.trim()
+            : '';
+        const repeatAs = this.hasRowRepeatAsTarget
+            ? this.rowRepeatAsTarget.value.trim()
+            : '';
+        const repeatKey = this.hasRowRepeatKeyTarget
+            ? this.rowRepeatKeyTarget.value.trim()
+            : '';
+        const hasRepeatInput = collection !== '' || repeatAs !== '' || repeatKey !== '';
+        const repeatActive = repeatEnabled || hasRepeatInput;
+
+        const nextAttrs = {
+            ...attrs,
+            // Keep partial input on the row so user can fill fields step by step.
+            loop: repeatActive ? (collection || null) : null,
+            loopAttr: repeatActive ? (repeatAs || null) : null,
+            loopKey: repeatActive ? (repeatKey || null) : null,
+            // Do not touch condition via table UI; keep backend support intact.
+            condition: attrs.condition || null,
+        };
+
+        this.editorInstance.chain().focus().updateAttributes('tableRow', nextAttrs).run();
+        this.refreshToolbarState();
+    }
+
+    clearRowRepeat() {
+        if (!this.editorInstance || this.isCodeMode() || !this.editorInstance.isActive('tableRow')) {
+            return;
+        }
+        const attrs = this.editorInstance.getAttributes('tableRow');
+        this.editorInstance.chain().focus().updateAttributes('tableRow', {
+            ...attrs,
+            loop: null,
+            loopAttr: null,
+            loopKey: null,
+        }).run();
+        this.refreshToolbarState();
+    }
+
+    beautifyCodeMode() {
+        if (!this.hasCodeTarget || !this.isCodeMode()) {
+            return;
+        }
+
+        const formatter = beautifyLib?.html
+            || beautifyLib?.html_beautify
+            || beautifyLib;
+
+        if (typeof formatter !== 'function') {
+            return;
+        }
+
+        try {
+            this.syncCodeMirrorToTextarea();
+            const formatted = formatter(this.codeTarget.value || '', {
+                indent_size: 2,
+                indent_char: ' ',
+                preserve_newlines: true,
+                max_preserve_newlines: 2,
+                wrap_line_length: 80,
+                end_with_newline: false,
+                extra_liners: [],
+            });
+            this.codeTarget.value = formatted;
+            // Push formatted content back into CodeMirror
+            if (this.cmEditor) {
+                this.cmEditor.dispatch({
+                    changes: { from: 0, to: this.cmEditor.state.doc.length, insert: formatted },
+                });
+            }
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    triggerImageUpload() {
+        if (this.hasFileInputTarget) {
+            this.fileInputTarget.click();
+        }
+    }
+
+    // ─── Variable picker ─────────────────────────────────────────────────────
+
+    async openVariablePicker() {
+        if (this.isCodeMode() || !this.editorInstance) {
+            return;
+        }
+
+        // Close existing picker
+        if (this.variablePickerEl) {
+            this.closeVariablePicker();
+            return;
+        }
+
+        const schema = await this.fetchSchema();
+        if (!schema || Object.keys(schema).length === 0) {
+            return;
+        }
+
+        this.renderVariablePicker(schema);
+    }
+
+    async fetchSchema() {
+        const url = this.buildSchemaUrl();
+        if (!url) {
+            return null;
+        }
+
+        // Return cached schema if available for this template type
+        const typeId = this.templateTypeSelect?.value;
+        if (this.schemaCache && this.schemaCacheTypeId === typeId) {
+            return this.schemaCache;
+        }
+
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                return null;
+            }
+            const schema = await response.json();
+            this.schemaCache = schema;
+            this.schemaCacheTypeId = typeId;
+            return schema;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    renderVariablePicker(schema) {
+        const picker = document.createElement('div');
+        picker.className = 'template-editor-variable-picker';
+
+        const header = document.createElement('div');
+        header.className = 'template-editor-variable-picker-header';
+        header.innerHTML = `<span>${this.i18n.i18nVariablePickerTitle || 'Variable einfügen'}</span><button type="button" class="btn-close btn-close-sm" aria-label="Close"></button>`;
+        header.querySelector('.btn-close').addEventListener('click', () => this.closeVariablePicker());
+        picker.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'template-editor-variable-picker-list';
+        this.renderSchemaLevel(list, schema, '');
+        picker.appendChild(list);
+
+        // Position picker relative to the toolbar container (not the group, which has overflow:hidden)
+        const toolbar = this.toolbarHostTarget?.closest('.template-editor-toolbar');
+        if (toolbar) {
+            toolbar.style.position = 'relative';
+            toolbar.appendChild(picker);
+        } else {
+            this.toolbarHostTarget?.appendChild(picker);
+        }
+
+        this.variablePickerEl = picker;
+
+        // Close on outside click
+        this.variablePickerOutsideClick = (e) => {
+            if (!picker.contains(e.target) && e.target.dataset?.templateCommand !== 'variable') {
+                this.closeVariablePicker();
+            }
+        };
+        setTimeout(() => document.addEventListener('click', this.variablePickerOutsideClick), 0);
+    }
+
+    renderSchemaLevel(container, properties, pathPrefix) {
+        const typeLabels = {
+            scalar: '',
+            date: '📅',
+            entity: '▸',
+            collection: '↻',
+            array: '↻',
+        };
+
+        for (const [name, def] of Object.entries(properties)) {
+            const type = def.type || 'scalar';
+            const fullPath = pathPrefix ? `${pathPrefix}.${name}` : name;
+
+            const item = document.createElement('div');
+            item.className = `template-editor-variable-item template-editor-variable-type-${type}`;
+
+            const label = document.createElement('button');
+            label.type = 'button';
+            label.className = 'template-editor-variable-label';
+
+            const typeIcon = typeLabels[type] || '';
+            const typeHint = type === 'date' ? 'Datum'
+                : type === 'collection' ? 'Liste'
+                : type === 'array' ? 'Liste'
+                : type === 'entity' ? 'Objekt'
+                : '';
+
+            label.innerHTML = `<span class="template-editor-variable-name">${name}</span>`
+                + (typeHint ? `<span class="template-editor-variable-type-hint">${typeIcon} ${typeHint}</span>` : '');
+
+            if (type === 'scalar' || type === 'date') {
+                label.addEventListener('click', () => {
+                    this.insertVariable(fullPath, type);
+                    this.closeVariablePicker();
+                });
+            } else if (type === 'entity' && def.properties) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'template-editor-variable-children d-none';
+                this.renderSchemaLevel(childContainer, def.properties, fullPath);
+
+                label.addEventListener('click', () => {
+                    childContainer.classList.toggle('d-none');
+                    item.classList.toggle('is-expanded');
+                });
+
+                item.appendChild(label);
+                item.appendChild(childContainer);
+                container.appendChild(item);
+                continue;
+            } else if ((type === 'collection' || type === 'array') && def.properties) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'template-editor-variable-children d-none';
+
+                // Add "insert loop" action at the top of child list
+                const loopAction = document.createElement('button');
+                loopAction.type = 'button';
+                loopAction.className = 'template-editor-variable-label template-editor-variable-loop-action';
+                loopAction.innerHTML = `<span class="template-editor-variable-name">↻ ${this.i18n.i18nVariableInsertLoop || 'Schleife einfügen'}</span>`;
+                loopAction.addEventListener('click', () => {
+                    this.insertCollectionLoop(fullPath, def.singularName || name.replace(/s$/, ''));
+                    this.closeVariablePicker();
+                });
+                childContainer.appendChild(loopAction);
+
+                // Render child properties with singular prefix
+                const singularName = def.singularName || name.replace(/s$/, '');
+                this.renderSchemaLevel(childContainer, def.properties, singularName);
+
+                label.addEventListener('click', () => {
+                    childContainer.classList.toggle('d-none');
+                    item.classList.toggle('is-expanded');
+                });
+
+                item.appendChild(label);
+                item.appendChild(childContainer);
+                container.appendChild(item);
+                continue;
+            } else if (type === 'array') {
+                label.addEventListener('click', () => {
+                    this.insertCollectionLoop(fullPath, def.singularName || name.replace(/s$/, ''));
+                    this.closeVariablePicker();
+                });
+            }
+
+            item.appendChild(label);
+            container.appendChild(item);
+        }
+    }
+
+    insertVariable(path, type) {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        const variable = type === 'date'
+            ? `[[ ${path}|date('d.m.Y') ]]`
+            : `[[ ${path} ]]`;
+        this.editorInstance.chain().focus().insertContent(variable).run();
+    }
+
+    insertCollectionLoop(collectionPath, singularName) {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+
+        // If cursor is in a table row, apply data-repeat to the row
+        if (this.editorInstance.isActive('tableRow')) {
+            const attrs = this.editorInstance.getAttributes('tableRow');
+            this.editorInstance.chain().focus().updateAttributes('tableRow', {
+                ...attrs,
+                loop: collectionPath,
+                loopAttr: singularName,
+            }).run();
+            this.refreshToolbarState();
+            return;
+        }
+
+        // Otherwise insert as inline span with data-repeat
+        const html = `<span data-repeat="${collectionPath}" data-repeat-as="${singularName}">[[ ${singularName}. ]]</span>`;
+        this.editorInstance.chain().focus().insertContent(html).run();
+    }
+
+    closeVariablePicker() {
+        if (this.variablePickerEl) {
+            this.variablePickerEl.remove();
+            this.variablePickerEl = null;
+        }
+        if (this.variablePickerOutsideClick) {
+            document.removeEventListener('click', this.variablePickerOutsideClick);
+            this.variablePickerOutsideClick = null;
+        }
+    }
+
+    async handleFileChange(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) {
+            return;
+        }
+        await this.uploadAndInsertImage(file);
+        event.target.value = '';
+    }
+
+    initEditor(content) {
+        if (!this.hasEditorTarget) {
+            return;
+        }
+
+        this.editorInstance = new Editor({
+            element: this.editorTarget,
+            content,
+            extensions: [
+                TemplateDiv,
+                TemplateInlineControlSpan,
+                StarterKit.configure({
+                    heading: { levels: [1, 2, 3, 4] },
+                    link: false,
+                    underline: false,
+                    dropcursor: false,
+                    gapcursor: false,
+                }),
+                Underline,
+                Link.configure({ openOnClick: false }),
+                ResizableImage,
+                TextStyle,
+                TemplateControlAttributes,
+                TextAlign.configure({ types: ['heading', 'paragraph', 'div'] }),
+                FontFamily.configure({ types: ['textStyle'] }),
+                FontSize.configure({ types: ['textStyle'] }),
+                TemplateTable.configure({ resizable: true }),
+                TemplateTableRow,
+                TemplateTableHeader,
+                TemplateTableCell,
+                Dropcursor,
+                Gapcursor,
+            ],
+            editorProps: {
+                attributes: { class: 'template-editor-content' },
+                handleDrop: (view, event) => this.handleDrop(view, event),
+                handlePaste: (view, event) => this.handlePaste(view, event),
+            },
+        });
+
+        this.editorInstance.on('selectionUpdate', () => this.refreshToolbarState());
+        this.editorInstance.on('transaction', () => this.refreshToolbarState());
+    }
+
+    async handleDrop(view, event) {
+        const snippetContent = event.dataTransfer?.getData('application/x-template-snippet');
+        if (snippetContent) {
+            const complexity = event.dataTransfer?.getData('application/x-template-snippet-complexity') || 'simple';
+            event.preventDefault();
+
+            // Move cursor to drop position so content is inserted there
+            const dropPos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+            if (dropPos) {
+                this.editorInstance.chain().focus().setTextSelection(dropPos.pos).run();
+            }
+
+            this.insertSnippetContent(snippetContent, complexity);
+            return true;
+        }
+
+        const files = event.dataTransfer?.files;
+        if (!files || files.length === 0) {
+            return false;
+        }
+        const file = files[0];
+        if (!file.type.startsWith('image/')) {
+            return false;
+        }
+        event.preventDefault();
+        await this.uploadAndInsertImage(file);
+        return true;
+    }
+
+    async handlePaste(view, event) {
+        const items = event.clipboardData?.items || [];
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    event.preventDefault();
+                    await this.uploadAndInsertImage(file);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    onCodeWrapperDragOver = (event) => {
+        event.preventDefault();
+    };
+
+    onCodeWrapperDrop = (event) => {
+        this.handleSnippetDropOnCode(event);
+    };
+
+    async uploadAndInsertImage(file) {
+        if (!this.uploadUrl || !this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch(this.uploadUrl, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) {
+                return;
+            }
+            const payload = await response.json();
+            if (payload?.location) {
+                this.editorInstance.chain().focus().setImage({ src: payload.location }).run();
+            }
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    appendPreviewContextToFormData(formData) {
+        this.getPreviewContextInputs().forEach((input) => {
+            if ((input.type === 'checkbox' || input.type === 'radio') && !input.checked) {
+                return;
+            }
+            formData.append(input.name, input.value);
+        });
+    }
+
+    getPreviewContextInputs() {
+        return Array.from(this.form.querySelectorAll('[name^="previewContext["]'));
+    }
+
+    insertIntoTextarea(textarea, text) {
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || 0;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end);
+        textarea.value = `${before}${text}${after}`;
+        const cursor = start + text.length;
+        textarea.setSelectionRange(cursor, cursor);
+        textarea.focus();
+    }
+
+    isAdvancedContent(content) {
+        if (!content) {
+            return false;
+        }
+
+        const hasPseudoTwigBlocks = /\[\%[\s\S]*?\%\]|\[\#[\s\S]*?\#\]/i.test(content);
+        const hasRealTwigSyntax = /\{[%{#][\s\S]*?[%}#]\}/i.test(content);
+        const hasMpdfDirectives = /<\/?(htmlpageheader|htmlpagefooter|sethtmlpageheader|sethtmlpagefooter)\b/i.test(content);
+
+        return hasPseudoTwigBlocks || hasRealTwigSyntax || hasMpdfDirectives;
+    }
+
+    refreshToolbarState() {
+        if (!this.editorInstance) {
+            return;
+        }
+        const inTable = !this.isCodeMode() && this.editorInstance.isActive('table');
+        if (this.hasTableToolsRowTarget) {
+            this.tableToolsRowTarget.classList.toggle('d-none', !inTable);
+        }
+        if (this.hasRowControlPanelTarget) {
+            this.rowControlPanelTarget.classList.toggle('d-none', !inTable);
+        }
+        this.updateToolbarActiveState();
+
+        this.refreshTableRowControls();
+    }
+
+    updateToolbarActiveState() {
+        if (!this.hasToolbarHostTarget || !this.toolbarCommandRegistry) {
+            return;
+        }
+        this.toolbarHostTarget.querySelectorAll('[data-template-command]').forEach((button) => {
+            const commandName = button.dataset.templateCommand;
+            const config = this.toolbarCommandRegistry[commandName];
+            const active = !this.isCodeMode() && config && typeof config.isActive === 'function'
+                ? !!config.isActive()
+                : false;
+            button.classList.toggle('is-active', active);
+        });
+
+        const attrs = this.editorInstance.getAttributes('textStyle');
+        const familySelect = this.toolbarHostTarget.querySelector('[data-template-command-select="fontFamily"]');
+        const sizeSelect = this.toolbarHostTarget.querySelector('[data-template-command-select="fontSize"]');
+        if (familySelect) {
+            familySelect.value = attrs.fontFamily || '';
+        }
+        if (sizeSelect) {
+            sizeSelect.value = attrs.fontSize || '';
+        }
+    }
+
+    refreshTableRowControls() {
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
+        const rowActive = this.editorInstance.isActive('tableRow');
+        const rowAttrs = rowActive ? this.editorInstance.getAttributes('tableRow') : {};
+
+        if (this.hasRowControlPanelTarget) {
+            this.rowControlPanelTarget.classList.toggle('opacity-50', !rowActive);
+            this.rowControlPanelTarget.classList.toggle('pe-none', !rowActive);
+        }
+
+        if (this.hasRowRepeatEnabledTarget) {
+            this.rowRepeatEnabledTarget.checked = !!(rowAttrs.loop || rowAttrs.loopAttr || rowAttrs.loopKey);
+        }
+        if (this.hasRowRepeatCollectionTarget) {
+            this.rowRepeatCollectionTarget.value = rowAttrs.loop || '';
+        }
+        if (this.hasRowRepeatAsTarget) {
+            this.rowRepeatAsTarget.value = rowAttrs.loopAttr || '';
+        }
+        if (this.hasRowRepeatKeyTarget) {
+            this.rowRepeatKeyTarget.value = rowAttrs.loopKey || '';
+        }
+        if (this.hasRowMetaBadgeTarget) {
+            if (!rowActive) {
+                this.rowMetaBadgeTarget.textContent = '';
+                this.rowMetaBadgeTarget.classList.add('d-none');
+                return;
+            }
+            const parts = [];
+            if (rowAttrs.loop && rowAttrs.loopAttr) {
+                const keyPart = rowAttrs.loopKey ? `${rowAttrs.loopKey}, ` : '';
+                parts.push(`Repeat: ${rowAttrs.loop} as ${keyPart}${rowAttrs.loopAttr}`);
+            }
+            if (parts.length > 0) {
+                this.rowMetaBadgeTarget.textContent = parts.join(' | ');
+                this.rowMetaBadgeTarget.classList.remove('d-none');
+            } else {
+                this.rowMetaBadgeTarget.textContent = '';
+                this.rowMetaBadgeTarget.classList.add('d-none');
+            }
+        }
+    }
+
+    hasPseudoTwigComments(content) {
+        if (!content) {
+            return false;
+        }
+
+        return /<!--[\s\S]*?(\[\%[\s\S]*?\%\]|\[\[[\s\S]*?\]\]|\[\#[\s\S]*?\#\])[\s\S]*?-->/i.test(content);
+    }
+
+    encodeTemplateCommentsForVisual(content) {
+        if (!content) {
+            return '';
+        }
+        return content.replace(/<!--([\s\S]*?)-->/g, (match, inner) => {
+            if (!/\[\%|\%\]|\[\[|\]\]|\[\#|\#\]/.test(inner)) {
+                return match;
+            }
+            const encoded = this.base64Encode(inner.trim());
+            return `<span data-template-comment="${encoded}" class="template-editor-comment-token" contenteditable="false"></span>`;
+        });
+    }
+
+    decodeTemplateCommentsFromVisual(content) {
+        if (!content) {
+            return '';
+        }
+        return content
+            .replace(/<span[^>]*data-template-comment="([^"]+)"[^>]*><\/span>/g, (match, encoded) => `<!-- ${this.base64Decode(encoded)} -->`)
+            .replace(/<span[^>]*data-template-comment='([^']+)'[^>]*><\/span>/g, (match, encoded) => `<!-- ${this.base64Decode(encoded)} -->`);
+    }
+
+    prepareContentForVisual(content) {
+        const normalized = this.normalizeLegacyDocumentHtml(content);
+        return this.encodeStyleBlocksForVisual(this.encodeTemplateCommentsForVisual(normalized));
+    }
+
+    restoreContentFromVisual(content) {
+        return this.decodeStyleBlocksFromVisual(this.decodeTemplateCommentsFromVisual(content));
+    }
+
+    normalizeLegacyDocumentHtml(content) {
+        if (!content) {
+            return '';
+        }
+
+        const styles = [];
+        let normalized = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, (match) => {
+            styles.push(match.trim());
+            return '';
+        });
+
+        const bodyMatch = normalized.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyMatch) {
+            normalized = bodyMatch[1];
+        }
+
+        normalized = normalized.replace(/<\/?(html|head|body)\b[^>]*>/gi, '').trim();
+
+        if (styles.length > 0) {
+            normalized = `${styles.join('\n')}\n${normalized}`.trim();
+        }
+
+        return normalized;
+    }
+
+    encodeStyleBlocksForVisual(content) {
+        if (!content) {
+            return '';
+        }
+        return content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, (match) => {
+            const encoded = this.base64Encode(match);
+            return `<p data-template-style="${encoded}" class="template-editor-style-token">CSS</p>`;
+        });
+    }
+
+    decodeStyleBlocksFromVisual(content) {
+        if (!content) {
+            return '';
+        }
+        return content
+            .replace(/<([a-zA-Z][\w:-]*)[^>]*data-template-style="([^"]+)"[^>]*>[\s\S]*?<\/\1>/gi, (match, tagName, encoded) => this.base64Decode(encoded))
+            .replace(/<([a-zA-Z][\w:-]*)[^>]*data-template-style='([^']+)'[^>]*>[\s\S]*?<\/\1>/gi, (match, tagName, encoded) => this.base64Decode(encoded));
+    }
+
+    base64Encode(input) {
+        try {
+            return btoa(unescape(encodeURIComponent(input)));
+        } catch (error) {
+            return '';
+        }
+    }
+
+    base64Decode(input) {
+        try {
+            return decodeURIComponent(escape(atob(input)));
+        } catch (error) {
+            return '';
+        }
+    }
+
+    // ─── CodeMirror helpers ───────────────────────────────────────────────────
+
+    /**
+     * Create the CodeMirror 6 editor inside the codeWrapper (once).
+     * Subsequent calls are no-ops if the instance already exists.
+     */
+    initCodeMirror() {
+        if (this.cmEditor || !this.hasCodeWrapperTarget) return;
+
+        // Hide the original textarea (kept for form submission)
+        if (this.hasCodeTarget) {
+            this.codeTarget.style.display = 'none';
+        }
+
+        // Build the schema URL from the current template type
+        const schemaUrl = this.buildSchemaUrl();
+
+        // CodeMirror extensions
+        const extensions = [
+            lineNumbers(),
+            highlightActiveLineGutter(),
+            highlightActiveLine(),
+            history(),
+            bracketMatching(),
+            closeBrackets(),
+            dropCursor(),
+            syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+            html(),
+            keymap.of([
+                ...closeBracketsKeymap,
+                ...defaultKeymap,
+                ...searchKeymap,
+                ...historyKeymap,
+                indentWithTab,
+            ]),
+            highlightSelectionMatches(),
+            EditorView.lineWrapping,
+            // Base theme for comfortable sizing
+            EditorView.theme({
+                '&': { height: '450px', border: '1px solid #ced4da', borderRadius: '0.375rem', fontSize: '13px' },
+                '.cm-scroller': { overflow: 'auto', fontFamily: 'SFMono-Regular, Menlo, Monaco, Consolas, monospace' },
+                '.cm-content': { minHeight: '400px' },
+            }),
+        ];
+
+        // Add autocomplete extension if a schema URL is available
+        if (schemaUrl) {
+            extensions.push(templateAutocomplete({ schemaUrl }));
+        }
+
+        this.cmEditor = new EditorView({
+            state: EditorState.create({
+                doc: this.hasCodeTarget ? this.codeTarget.value : '',
+                extensions,
+            }),
+            parent: this.codeWrapperTarget,
+        });
+    }
+
+    /**
+     * Copy the current CodeMirror document back into the hidden textarea.
+     */
+    syncCodeMirrorToTextarea() {
+        if (this.cmEditor && this.hasCodeTarget) {
+            this.codeTarget.value = this.cmEditor.state.doc.toString();
+        }
+    }
+
+    /**
+     * Insert text at the current cursor position in CodeMirror (or textarea fallback).
+     */
+    insertIntoCodeEditor(text) {
+        if (this.cmEditor) {
+            const { from, to } = this.cmEditor.state.selection.main;
+            this.cmEditor.dispatch({
+                changes: { from, to, insert: text },
+                selection: { anchor: from + text.length },
+            });
+            this.cmEditor.focus();
+        } else if (this.hasCodeTarget) {
+            this.insertIntoTextarea(this.codeTarget, text);
+        }
+    }
+
+    /**
+     * Destroy and re-create CodeMirror when the template type changes,
+     * so that the autocomplete extension uses the correct schema.
+     */
+    rebuildCodeMirror() {
+        if (!this.cmEditor) return;
+        const content = this.cmEditor.state.doc.toString();
+        this.cmEditor.destroy();
+        this.cmEditor = null;
+        this.initCodeMirror();
+        if (this.cmEditor) {
+            this.cmEditor.dispatch({
+                changes: { from: 0, to: this.cmEditor.state.doc.length, insert: content },
+            });
+        }
+    }
+
+    /**
+     * Build the schema API URL for the currently selected template type.
+     * Returns null when no type is selected or URL template is missing.
+     */
+    buildSchemaUrl() {
+        if (!this.schemaUrlTemplate) return null;
+        const typeId = this.templateTypeSelect?.value;
+        if (!typeId) return null;
+        return this.schemaUrlTemplate.replace('placeholder', typeId);
+    }
+
+}

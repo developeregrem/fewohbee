@@ -1,7 +1,7 @@
 <form id="template-form" class="form-horizontal" role="form"
       data-controller="reservations"
       data-action="submit->reservations#sendEmailAction"
-      data-url="{{ path('settings.templates.email.send') }}"
+      data-url="{{ path('correspondence.email.send') }}"
       data-refresh-url="{{ path('reservations.get.reservation', {'id': attribute(reservations, 0).id, 'tab': 'correspondence'}) }}">
     <fieldset id="template-form-fieldset-primary-">
         <div class="row">
@@ -52,11 +52,11 @@
                     <td class="text-end">
                         <a href="#"
                            data-action="click->reservations#exportPDFCorrespondenceAction"
-                           data-url="{{ path('settings.templates.correspondence.export.pdf', {'id': attachment.id}) }}"
+                           data-url="{{ path('correspondence.export.pdf', {'id': attachment.id}) }}"
                            title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                         <a href="#"
                            data-action="click->reservations#deleteAttachmentAction"
-                           data-url="{{ path('settings.templates.attachment.remove') }}"
+                           data-url="{{ path('correspondence.attachment.remove') }}"
                            data-attachment-id="{{ attachment.id }}"
                             title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>
                     </td>

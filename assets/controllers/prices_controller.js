@@ -52,6 +52,12 @@ export default class extends Controller {
         }
     }
 
+    flatPriceChangeAction(event) {
+        const checkbox = event.currentTarget;
+        const priceId = checkbox.dataset.priceId || this.getPriceId();
+        this.applyFlatPriceState(checkbox.checked, priceId);
+    }
+
     dayCheckboxChangeAction(event) {
         const checkbox = event.currentTarget;
         const priceId = checkbox.dataset.priceId || this.getPriceId();
@@ -108,6 +114,11 @@ export default class extends Controller {
         if (allPeriods) {
             this.applyStartEndState(allPeriods.checked, priceId);
         }
+
+        const isFlatPrice = this.element.querySelector(`#isFlatPrice-${priceId}`);
+        if (isFlatPrice) {
+            this.applyFlatPriceState(isFlatPrice.checked, priceId);
+        }
     }
 
     applyTypeState(value, priceId) {
@@ -118,6 +129,10 @@ export default class extends Controller {
         const numberOfBeds = this.element.querySelector(`#price-form-fieldset-type-appartment-${priceId} #number-of-beds`);
         const minStay = this.element.querySelector(`#price-form-fieldset-type-appartment-${priceId} #min-stay`);
         const isAppartment = parseInt(value, 10) === 2;
+        const defaultActiveWrapper = this.element.querySelector(`#default-active-in-reservation-creation-wrap-${priceId}`);
+        const defaultActiveCheckbox = this.element.querySelector(`#isDefaultActiveInReservationCreation-${priceId}`);
+        const isPerRoomCheckbox = this.element.querySelector(`#isPerRoom-${priceId}`);
+        const isMisc = !isAppartment;
 
         if (fieldset) {
             fieldset.disabled = !isAppartment;
@@ -140,6 +155,15 @@ export default class extends Controller {
         if (minStay) {
             minStay.required = isAppartment;
         }
+        if (defaultActiveWrapper) {
+            defaultActiveWrapper.classList.toggle('d-none', !isMisc);
+        }
+        if (defaultActiveCheckbox) {
+            defaultActiveCheckbox.disabled = !isMisc;
+        }
+        if (isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
+            isPerRoomCheckbox.checked = true;
+        }
     }
 
     applyStartEndState(allPeriodsChecked, priceId) {
@@ -147,6 +171,18 @@ export default class extends Controller {
         const end = this.element.querySelector(`#periodend-${priceId}`);
         if (start) start.disabled = allPeriodsChecked;
         if (end) end.disabled = allPeriodsChecked;
+    }
+
+    applyFlatPriceState(isFlatPriceChecked, priceId) {
+        const isPerRoom = this.element.querySelector(`#isPerRoom-${priceId}`);
+        if (!isPerRoom) return;
+
+        if (isFlatPriceChecked) {
+            isPerRoom.checked = false;
+            isPerRoom.disabled = true;
+        } else {
+            isPerRoom.disabled = false;
+        }
     }
 
     setAllDaysState(checked, priceId) {
