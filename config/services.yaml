@@ -14,6 +14,8 @@ parameters:
     customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
     invoice_filename_pattern: '%env(INVOICE_FILENAME_PATTERN)%'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
+    # define default when env variable is not defined
+    env(INVOICE_FILENAME_PATTERN): 'Invoice-<number>'
 
 services:
     # default configuration for services in *this* file
