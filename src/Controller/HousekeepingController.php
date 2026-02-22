@@ -23,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Handles the housekeeping operations view and updates.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/housekeeping')]
 class HousekeepingController extends AbstractController
 {
@@ -75,7 +75,7 @@ class HousekeepingController extends AbstractController
             }
         }
 
-        return $this->render('Operations/Housekeeping/index.html.twig', [
+        $viewData = [
             'subsidiaries' => $subsidiaries,
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedDate' => $selectedDate,
@@ -89,7 +89,14 @@ class HousekeepingController extends AbstractController
             'occupancyClasses' => $this->getOccupancyClasses(),
             'occupancyTypes' => $viewService->getAllowedOccupancyTypes(),
             'selectedOccupancyTypes' => $selectedOccupancyTypes,
-        ]);
+        ];
+
+        // AJAX request: return only content partial
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('Operations/Housekeeping/_content.html.twig', $viewData);
+        }
+
+        return $this->render('Operations/Housekeeping/index.html.twig', $viewData);
     }
 
     /**

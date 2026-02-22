@@ -21,7 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Handles operations reports based on templates.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/reports')]
 class OperationsReportController extends AbstractController
 {
@@ -51,7 +51,7 @@ class OperationsReportController extends AbstractController
         $templateId = $templatesService->getTemplateId($doctrine, $requestStack, 'TEMPLATE_OPERATIONS_PDF', 'operations-template-id');
         $selectedTemplateId = (int) $request->query->get('templateId', $templateId);
 
-        return $this->render('Operations/Reports/index.html.twig', [
+        $viewData = [
             'subsidiaries' => $subsidiaries,
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedSubsidiary' => $selectedSubsidiary,
@@ -62,7 +62,14 @@ class OperationsReportController extends AbstractController
             'occupancyLabels' => $housekeepingViewService->getOccupancyLabels(),
             'templates' => $templates,
             'templateId' => $selectedTemplateId,
-        ]);
+        ];
+
+        // AJAX request: return only preview partial
+        if ($request->isXmlHttpRequest()) {
+            return $this->previewAction($request);
+        }
+
+        return $this->render('Operations/Reports/index.html.twig', $viewData);
     }
 
     /**
@@ -107,8 +114,8 @@ class OperationsReportController extends AbstractController
         $reportData['filters']['template'] = $template;
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
 
-        $templateOutput = $templatesService->renderTemplate($templateId, $reportData, $reportService);
-        dump($reportData);
+        $templateOutput = $templatesService->renderTemplate($templateId, $reportData);
+
         $isPreview = $request->query->getBoolean('preview');
         $pdfOutput = $templatesService->getPDFOutput(
             $templateOutput,

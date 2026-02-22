@@ -1,3 +1,7 @@
+parameters:
+    # fallback DEFAULT_URI if the env var is not set.
+    env(DEFAULT_URI): 'http://localhost'
+
 framework:
     router:
         # Configure how to generate URLs in non-HTTP contexts, such as CLI commands.

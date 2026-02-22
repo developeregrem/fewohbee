@@ -390,14 +390,14 @@ class CashJournalServiceController extends AbstractController
     }
 
     #[Route('/journal/{id}/export/pdf/{templateId}', name: 'cashjournal.journal.export.pdf', methods: ['GET'])]
-    public function exportJournalToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, CashJournal $journal, TemplatesService $ts, CashJournalService $cjs, int $templateId)
+    public function exportJournalToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, CashJournal $journal, TemplatesService $ts, int $templateId)
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('cashjournal-template-id', $templateId);
         $templateOutput = null;
         try {
-            $templateOutput = $ts->renderTemplate($templateId, $journal->getId(), $cjs);
+            $templateOutput = $ts->renderTemplate($templateId, $journal->getId());
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 

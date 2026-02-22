@@ -12,9 +12,7 @@
         {% endfor %}
     {% endfor %}    
     {% if attachment is defined %}
-    {#  required when creating a new file as mail attachment in reservation conversations  #}
-    <script>
-        var isTemplateAttachment = true;
-    </script>
+    {# marker for JS to detect that this saved file is a mail attachment #}
+    <span class="d-none" data-is-attachment="true"></span>
     {% endif %}
 {% endif %}

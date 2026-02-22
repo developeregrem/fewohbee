@@ -40,6 +40,11 @@ class InvoiceMiscPositionType extends AbstractType
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
             ])
+            ->add('isPerRoom', CheckboxType::class, [
+                'label' => 'price.perroom',
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
+                'required' => false,
+            ])
         ;
     }
 

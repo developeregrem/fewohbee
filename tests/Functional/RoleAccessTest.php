@@ -116,7 +116,7 @@ final class RoleAccessTest extends WebTestCase
     private function dashboardCases(): iterable
     {
         yield 'reservations' => [['ROLE_RESERVATIONS'], 'start'];
-        yield 'housekeeping' => [['ROLE_HOUSEKEEPING'], 'operations.housekeeping'];
+        yield 'operations' => [['ROLE_OPERATIONS'], 'operations.frontdesk'];
         yield 'customers' => [['ROLE_CUSTOMERS'], 'customers.overview'];
         yield 'invoices' => [['ROLE_INVOICES'], 'invoices.overview'];
         yield 'registrationbook' => [['ROLE_REGISTRATIONBOOK'], 'registrationbook.overview'];
@@ -133,9 +133,9 @@ final class RoleAccessTest extends WebTestCase
     private function authorizedRoutes(): iterable
     {
         yield 'reservations read only' => ['ROLE_RESERVATIONS_RO', '/reservation/'];
-        yield 'housekeeping' => ['ROLE_HOUSEKEEPING', '/operations/housekeeping'];
-        yield 'frontdesk' => ['ROLE_HOUSEKEEPING', '/operations/frontdesk'];
-        yield 'operations reports' => ['ROLE_HOUSEKEEPING', '/operations/reports'];
+        yield 'housekeeping' => ['ROLE_OPERATIONS', '/operations/housekeeping'];
+        yield 'frontdesk' => ['ROLE_OPERATIONS', '/operations/frontdesk'];
+        yield 'operations reports' => ['ROLE_OPERATIONS', '/operations/reports'];
         yield 'customers' => ['ROLE_CUSTOMERS', '/customers/'];
         yield 'invoices' => ['ROLE_INVOICES', '/invoices/'];
         yield 'registrationbook' => ['ROLE_REGISTRATIONBOOK', '/registrationbook/'];

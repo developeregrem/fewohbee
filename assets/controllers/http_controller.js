@@ -50,6 +50,9 @@ export function request({ url, method = 'GET', data = null, target = null, loade
     let finalUrl = url;
     const fetchOptions = { method: method.toUpperCase(), headers: {} };
 
+    // Mark as AJAX request for Symfony's isXmlHttpRequest()
+    fetchOptions.headers['X-Requested-With'] = 'XMLHttpRequest';
+
     if (fetchOptions.method === 'GET') {
         if (serialized) {
             finalUrl += (finalUrl.includes('?') ? '&' : '?') + serialized;

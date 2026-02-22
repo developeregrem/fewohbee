@@ -112,8 +112,9 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
 
             $miscPos->setVat($bPrice->getVat());
             $miscPos->setPrice($bPrice->getPrice());
-            $miscPos->setAmount($days * $re->getPersons());
+            $miscPos->setAmount($bPrice->getIsPerRoom() ? (int) $days : (int) $days * $re->getPersons());
             $miscPos->setDescription($bPrice->getDescription());
+            $miscPos->setIsPerRoom($bPrice->getIsPerRoom());
 
             $manager->persist($miscPos);
 
@@ -125,6 +126,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
             $appPos->setPrice($aPrice->getPrice());
             $appPos->setPersons($re->getPersons());
             $appPos->setNumber($re->getAppartment()->getNumber());
+            $appPos->setIsPerRoom($aPrice->getIsPerRoom());
 
             $manager->persist($appPos);
 

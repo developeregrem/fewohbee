@@ -22,4 +22,4 @@ ROLE_REGISTRATIONBOOK: Registration book
 ROLE_STATISTICS: Statistics
 ROLE_CASHJOURNAL: Cash journal
 ROLE_RESERVATIONS_RO: Reservations read-only
-ROLE_HOUSEKEEPING: Operations
+ROLE_OPERATIONS: Operations

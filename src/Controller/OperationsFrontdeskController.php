@@ -7,12 +7,10 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
-use App\Entity\Template;
 use App\Service\FrontdeskViewService;
 use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
 use App\Service\ReservationService;
-use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +23,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 /**
  * Frontdesk checklist view for arrivals, departures and inhouse guests.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/frontdesk')]
 class OperationsFrontdeskController extends AbstractController
 {
@@ -83,7 +81,7 @@ class OperationsFrontdeskController extends AbstractController
 
         $items = $frontdeskViewService->buildItems($dayView['rows'] ?? [], $selectedDate, $selectedCategories);
 
-        return $this->render('Operations/Frontdesk/index.html.twig', [
+        $viewData = [
             'subsidiaries' => $subsidiaries,
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedDate' => $selectedDate,
@@ -91,56 +89,14 @@ class OperationsFrontdeskController extends AbstractController
             'includeCanceled' => $includeCanceled,
             'frontdeskItems' => $items,
             'reservationStatuses' => $reservationStatuses,
-        ]);
-    }
+        ];
 
-    /**
-     * Download the default registration template for a reservation.
-     */
-    #[Route('/registration/download', name: 'operations.frontdesk.registration.download', methods: ['GET'])]
-    public function downloadRegistrationTemplateAction(
-        ManagerRegistry $doctrine,
-        TemplatesService $templatesService,
-        ReservationService $reservationService,
-        Request $request
-    ): Response {
-        $em = $doctrine->getManager();
-        $reservationId = $request->query->getInt('reservationId', 0);
-        $reservation = $reservationId > 0 ? $em->getRepository(Reservation::class)->find($reservationId) : null;
-
-        if (!$reservation instanceof Reservation) {
-            $this->addFlash('warning', 'templates.notfound');
-
-            return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('operations.frontdesk'));
+        // AJAX request: return only content partial
+        if ($request->isXmlHttpRequest()) {
+            return $this->render('Operations/Frontdesk/_content.html.twig', $viewData);
         }
 
-        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
-        $template = $templatesService->getDefaultTemplate($templates);
-
-        if (!$template instanceof Template) {
-            $this->addFlash('warning', 'operations.frontdesk.registration.missing');
-
-            return $this->redirect($this->generateUrl('operations.frontdesk'));
-        }
-
-        $templateOutput = $templatesService->renderTemplate(
-            $template->getId(),
-            [$reservation],
-            $reservationService
-        );
-        $pdfOutput = $templatesService->getPDFOutput(
-            $templateOutput,
-            'Registration-'.$reservation->getId(),
-            $template,
-            false,
-            'I'
-        );
-
-        $response = new Response($pdfOutput);
-        $response->headers->set('Content-Type', 'application/pdf');
-        //$response->headers->set('Content-Disposition', 'attachment; filename="Registration-'.$reservation->getId().'.pdf"');
-
-        return $response;
+        return $this->render('Operations/Frontdesk/index.html.twig', $viewData);
     }
 
     /**
