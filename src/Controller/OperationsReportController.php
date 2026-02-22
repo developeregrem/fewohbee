@@ -21,7 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Handles operations reports based on templates.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/reports')]
 class OperationsReportController extends AbstractController
 {

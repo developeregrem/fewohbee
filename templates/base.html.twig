@@ -39,7 +39,7 @@
             
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    {% set showHousekeeping = is_granted('ROLE_HOUSEKEEPING') %}
+                    {% set showHousekeeping = is_granted('ROLE_OPERATIONS') %}
                     {% set showOperations = showHousekeeping %}
                     {% set showCustomers = is_granted('ROLE_CUSTOMERS') %}
                     {% set showInvoices = is_granted('ROLE_INVOICES') %}

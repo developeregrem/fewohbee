@@ -23,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * Handles the housekeeping operations view and updates.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/housekeeping')]
 class HousekeepingController extends AbstractController
 {

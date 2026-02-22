@@ -6,7 +6,6 @@
     <th>{{ 'price.daysinweek'|trans }}</th>
     <th>{{ 'price.price'|trans }}</th>
     <th>{{ 'price.vat'|trans }}</th>
-    <th>{{ 'price.type'|trans }}</th>
     <th>{{ 'price.active'|trans }}</th>
     <th>{{ 'base.action'|trans }}</th>
 </tr>
@@ -46,13 +45,13 @@
                 {{ price.vat|number_format(2, ',', '.') }}
             {% endif %}
         </td>
-        <td>{% if price.type == 1 %}
-                {{ 'price.miscellaneous'|trans }}
-            {% elseif price.type == 2 %}
-                {{ 'price.appartment'|trans }}
+        <td class="text-center">
+            {% if price.active == true %}
+                <i class="fas fa-check text-success" title="{{ 'price.active'|trans }}" aria-label="{{ 'price.active'|trans }}"></i>
+            {% else %}
+                <i class="fas fa-times text-secondary" title="{{ 'price.inactive'|trans }}" aria-label="{{ 'price.inactive'|trans }}"></i>
             {% endif %}
         </td>
-        <td>{% if price.active == true %}{{ 'price.active'|trans }} {% else %} {{ 'price.inactive'|trans }}{% endif %}</td>
         <td>
             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                 <i class="fas fa-info-circle"

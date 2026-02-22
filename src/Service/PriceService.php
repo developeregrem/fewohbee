@@ -154,6 +154,22 @@ class PriceService
             $price->setIsFlatPrice(false);
         }
 
+        if (null != $request->request->get('isPerRoom-'.$id)) {
+            $price->setIsPerRoom(true);
+        } else {
+            $price->setIsPerRoom(false);
+        }
+
+        if ($price->getIsFlatPrice()) {
+            $price->setIsPerRoom(false);
+        }
+
+        if (1 == $price->getType() && null != $request->request->get('isDefaultActiveInReservationCreation-'.$id)) {
+            $price->setIsDefaultActiveInReservationCreation(true);
+        } else {
+            $price->setIsDefaultActiveInReservationCreation(false);
+        }
+
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
             $price->setMinStay($request->request->get('min-stay-'.$id));

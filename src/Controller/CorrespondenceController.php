@@ -410,7 +410,7 @@ class CorrespondenceController extends AbstractController
     /**
      * Download a registration form PDF for a given reservation.
      */
-    #[IsGranted(new Expression("is_granted('ROLE_RESERVATIONS') or is_granted('ROLE_HOUSEKEEPING')"))]
+    #[IsGranted(new Expression("is_granted('ROLE_RESERVATIONS') or is_granted('ROLE_OPERATIONS')"))]
     #[Route('/registration/download/{id}', name: 'correspondence.registration.download', methods: ['GET'])]
     public function downloadRegistrationTemplateAction(
         ManagerRegistry $doctrine,
