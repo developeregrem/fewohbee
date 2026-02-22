@@ -45,6 +45,7 @@
             <tr>
                 <th></th>
                 <th>{{ 'invoice.number'|trans }}</th>
+                <th class="text-center">{{ 'invoice.einvoice'|trans }}</th>
             </tr>
             </thead>
             <tbody>
@@ -56,6 +57,12 @@
                         data-is-invoice="true">
                         <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
                         <td>{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</td>
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   data-einvoice-checkbox
+                                   data-action="click->reservations#stopAttachmentRowClickAction"
+                                   title="{{ 'invoice.einvoice'|trans }}">
+                        </td>
                     </tr>
             {% endfor %}
             </tbody>

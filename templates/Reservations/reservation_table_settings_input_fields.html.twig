@@ -9,9 +9,9 @@
 		</nav>
 		<div class="tab-content p-4" id="nav-tabContent">
 			<div class="tab-pane fade show active" id="nav-general" role="tabpanel" aria-labelledby="nav-general-tab" tabindex="0">
-				<div class="row">
-                    <label for="object" class="col-sm-4 col-form-label text-end">{{ 'object.name'|trans }}</label>
-                    <div class="col-sm">
+				<div class="row">                    
+                    <div class="col-12 col-sm text-start">
+                        <label for="objects" class="form-label">{{ 'object.name'|trans }}</label>
                         <select id="objects" name="object" class="form-select">
                             <option value="all">{{ 'reservation.objects.all'|trans }}</option>
                             {% for object in objects %}
@@ -21,7 +21,6 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-sm-4"></div>
                     <div class="col-sm text-start">
                         <div class="form-check form-check-inline form-switch">
                             <input type="checkbox" name="show-month" id="show-month" class="form-check-input" value="1">
@@ -30,7 +29,6 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-sm-4"></div>
                     <div class="col-sm text-start">
                         <div class="form-check form-check-inline form-switch">
                             <input type="checkbox" name="show-week" id="show-week" class="form-check-input" value="1">
@@ -39,11 +37,21 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-sm-4"></div>
                     <div class="col-sm text-start">
                         <div class="form-check form-check-inline form-switch">
                             <input type="checkbox" name="show-weekday" id="show-weekday" class="form-check-input" value="1">
                             <label class="checkbox-inline checkbox-switch form-check-label" for="show-weekday">{{ 'reservation.table.settings.displayWeekday'|trans }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-sm text-start">
+                        <div class="form-check form-check-inline form-switch">
+                            <input type="hidden" name="showCanceled" value="0">
+                            <input type="checkbox" name="showCanceled" id="show-canceled" class="form-check-input" value="1"
+                                   {% if showCanceled %}checked{% endif %}
+                                   data-action="change->reservations#getNewTableAction">
+                            <label class="checkbox-inline checkbox-switch form-check-label" for="show-canceled">{{ 'reservation.table.settings.showCanceledOnly'|trans }}</label>
                         </div>
                     </div>
                 </div>

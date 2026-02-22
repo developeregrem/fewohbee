@@ -13,6 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ReservationStatusRepository::class)]
 class ReservationStatus
 {
+    public const CODE_CANCELED_NOSHOW = 'canceled_noshow';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -27,6 +29,10 @@ class ReservationStatus
     private $reservations;
     #[ORM\Column(type: 'string', length: 7)]
     private $contrastColor;
+    #[ORM\Column(type: 'string', length: 50, unique: true, nullable: true)]
+    private $code;
+    #[ORM\Column(type: 'boolean')]
+    private $isBlocking = true;
     #[ORM\ManyToMany(targetEntity: CalendarSync::class, mappedBy: 'reservationStatus')]
     private $calendarSyncs;
 
@@ -105,6 +111,35 @@ class ReservationStatus
         $this->contrastColor = $contrastColor;
 
         return $this;
+    }
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setCode(?string $code): self
+    {
+        $this->code = $code;
+
+        return $this;
+    }
+
+    public function isBlocking(): bool
+    {
+        return (bool) $this->isBlocking;
+    }
+
+    public function setIsBlocking(bool $isBlocking): self
+    {
+        $this->isBlocking = $isBlocking;
+
+        return $this;
+    }
+
+    public function isSystem(): bool
+    {
+        return null !== $this->code && '' !== $this->code;
     }
 
     /**

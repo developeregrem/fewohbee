@@ -8,9 +8,9 @@ use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\Reservation;
-use App\Entity\ReservationOrigin;
 use App\Entity\Subsidiary;
 use App\Entity\Enum\InvoiceStatus;
+use App\Entity\ReservationStatus;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,9 +40,16 @@ class MonthlyStatsService
     /**
      * Build the metrics payload and warnings for a snapshot without persisting it.
      */
-    public function buildMetrics(int $month, int $year, ?Subsidiary $subsidiary): array
+    public function buildMetrics(
+        int $month,
+        int $year,
+        ?Subsidiary $subsidiary,
+        array $ignoredWarnings = [],
+        array $reservationStatus = []
+    ): array
     {
         $this->ensureEntityManager();
+        $defaultStatusIds = $reservationStatus ?: $this->getDefaultReservationStatusIds();
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
@@ -55,21 +62,55 @@ class MonthlyStatsService
 
         $monthStart = new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
         $monthEndExclusive = $monthStart->modify('first day of next month');
-        $monthEndInclusive = $monthEndExclusive->modify('-1 day');
 
-        $reservations = $reservationRepo->loadReservationsForMonth($month, $year, $objectId);
+        $reservations = $reservationRepo->loadReservationsForMonth($month, $year, $objectId, null);
 
         /*
         * Calculate utilization and tourism stats (arrivals, overnights) for the month.
         */
+        $defaultStatusLookup = array_flip(array_map('intval', $defaultStatusIds));
+        $summary = [
+            'reservations_total' => 0,
+            'guests_total' => 0,
+            'nights_total' => 0,
+            'arrivals_total' => 0,
+            'departures_total' => 0,
+            'turnovers_count' => 0,
+        ];
+        $tourism = [
+            'arrivals_total' => 0,
+            'overnights_total' => 0,
+            'arrivals_by_country' => [],
+            'overnights_by_country' => [],
+        ];
+        $originStats = [];
         $stays = 0;
-        $arrivalsTotal = 0;
-        $overnightsTotal = 0;
-        $arrivalsByCountry = [];
-        $overnightsByCountry = [];
         $warningsByReservation = [];
+        $arrivalDatesByApartment = [];
+        $departureDatesByApartment = [];
+        $byStatus = [];
 
         foreach ($reservations as $reservation) {
+            $statusId = $reservation->getReservationStatus()?->getId();
+            if (null === $statusId) {
+                continue;
+            }
+            $statusKey = (string) $statusId;
+            $isDefaultStatus = isset($defaultStatusLookup[$statusId]);
+            if (!isset($byStatus[$statusKey])) {
+                $byStatus[$statusKey] = [
+                    'tourism' => [
+                        'arrivals_total' => 0,
+                        'overnights_total' => 0,
+                        'arrivals_by_country' => [],
+                        'overnights_by_country' => [],
+                    ],
+                    'utilization' => [
+                        'stays' => 0,
+                    ],
+                ];
+            }
+
             $customers = $reservation->getCustomers();
             $customerCount = $customers->count();
             $persons = $reservation->getPersons();
@@ -81,6 +122,7 @@ class MonthlyStatsService
                     $appartmentNumber = $appartment ? $appartment->getNumber() : null;
                     $warningsByReservation[$reservationId] = [
                         'reservation_id' => $reservationId,
+                        'status_id' => $statusId,
                         'start_date' => $reservation->getStartDate()->format('Y-m-d'),
                         'end_date' => $reservation->getEndDate()->format('Y-m-d'),
                         'appartment_number' => $appartmentNumber,
@@ -92,6 +134,10 @@ class MonthlyStatsService
                 continue;
             }
 
+            if ($isDefaultStatus) {
+                $summary['reservations_total'] += 1;
+            }
+
             $startDate = $this->toImmutable($reservation->getStartDate());
             $endDate = $this->toImmutable($reservation->getEndDate());
 
@@ -101,16 +147,33 @@ class MonthlyStatsService
             // Only count overnights that fall within the report month.
             if ($resStart < $resEnd) {
                 $nights = $resStart->diff($resEnd)->days;
-                $stays += $nights * $persons;
+                $byStatus[$statusKey]['utilization']['stays'] += $nights * $persons;
+                if ($isDefaultStatus) {
+                    $stays += $nights * $persons;
+                }
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
-                    $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + ($nights * $persons);
-                    $overnightsTotal += $nights * $persons;
+                    $byStatus[$statusKey]['tourism']['overnights_by_country'][$country] =
+                        ($byStatus[$statusKey]['tourism']['overnights_by_country'][$country] ?? 0) + ($nights * $persons);
+                    $byStatus[$statusKey]['tourism']['overnights_total'] += $nights * $persons;
+                    if ($isDefaultStatus) {
+                        $tourism['overnights_by_country'][$country] =
+                            ($tourism['overnights_by_country'][$country] ?? 0) + ($nights * $persons);
+                        $tourism['overnights_total'] += $nights * $persons;
+                        $summary['nights_total'] += $nights * $persons;
+                    }
                 } else {
                     foreach ($customers as $customer) {
                         $country = $this->resolveCountryForCustomer($customer);
-                        $overnightsByCountry[$country] = ($overnightsByCountry[$country] ?? 0) + $nights;
-                        $overnightsTotal += $nights;
+                        $byStatus[$statusKey]['tourism']['overnights_by_country'][$country] =
+                            ($byStatus[$statusKey]['tourism']['overnights_by_country'][$country] ?? 0) + $nights;
+                        $byStatus[$statusKey]['tourism']['overnights_total'] += $nights;
+                        if ($isDefaultStatus) {
+                            $tourism['overnights_by_country'][$country] =
+                                ($tourism['overnights_by_country'][$country] ?? 0) + $nights;
+                            $tourism['overnights_total'] += $nights;
+                            $summary['nights_total'] += $nights;
+                        }
                     }
                 }
             }
@@ -119,48 +182,96 @@ class MonthlyStatsService
             if ($startDate >= $monthStart && $startDate < $monthEndExclusive) {
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
-                    $arrivalsByCountry[$country] = ($arrivalsByCountry[$country] ?? 0) + $persons;
-                    $arrivalsTotal += $persons;
+                    $byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] =
+                        ($byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] ?? 0) + $persons;
+                    $byStatus[$statusKey]['tourism']['arrivals_total'] += $persons;
+                    if ($isDefaultStatus) {
+                        $tourism['arrivals_by_country'][$country] =
+                            ($tourism['arrivals_by_country'][$country] ?? 0) + $persons;
+                        $tourism['arrivals_total'] += $persons;
+                        $summary['arrivals_total'] += $persons;
+                        $summary['guests_total'] += $persons;
+                    }
                 } else {
                     foreach ($customers as $customer) {
                         $country = $this->resolveCountryForCustomer($customer);
-                        $arrivalsByCountry[$country] = ($arrivalsByCountry[$country] ?? 0) + 1;
-                        $arrivalsTotal += 1;
+                        $byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] =
+                            ($byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] ?? 0) + 1;
+                        $byStatus[$statusKey]['tourism']['arrivals_total'] += 1;
+                        if ($isDefaultStatus) {
+                            $tourism['arrivals_by_country'][$country] =
+                                ($tourism['arrivals_by_country'][$country] ?? 0) + 1;
+                            $tourism['arrivals_total'] += 1;
+                            $summary['arrivals_total'] += 1;
+                            $summary['guests_total'] += 1;
+                        }
                     }
+                }
+
+                $appartment = $reservation->getAppartment();
+                if ($isDefaultStatus && $appartment instanceof Appartment) {
+                    $arrivalDatesByApartment[$appartment->getId()][$startDate->format('Y-m-d')] = true;
+                }
+            }
+
+            // Departures are counted only in the end month of the reservation.
+            if ($endDate > $monthStart && $endDate <= $monthEndExclusive) {
+                if ($isDefaultStatus) {
+                    if ($useBookerFallback) {
+                        $summary['departures_total'] += $persons;
+                    } else {
+                        $summary['departures_total'] += max(1, $customerCount);
+                    }
+                }
+
+                $appartment = $reservation->getAppartment();
+                if ($isDefaultStatus && $appartment instanceof Appartment) {
+                    $departureDatesByApartment[$appartment->getId()][$endDate->format('Y-m-d')] = true;
+                }
+            }
+
+            $origin = $reservation->getReservationOrigin();
+            if ($isDefaultStatus && null !== $origin) {
+                $originName = $origin->getName();
+                $originStats[$originName] = ($originStats[$originName] ?? 0) + 1;
+            }
+        }
+
+        $daysInMonth = (int) $monthStart->format('t');
+        foreach ($byStatus as $statusKey => &$bucket) {
+            ksort($bucket['tourism']['arrivals_by_country']);
+            ksort($bucket['tourism']['overnights_by_country']);
+        }
+        unset($bucket);
+
+        $turnoversTotal = 0;
+        foreach ($arrivalDatesByApartment as $apartmentId => $arrivalDatesForApartment) {
+            $departureDatesForApartment = $departureDatesByApartment[$apartmentId] ?? [];
+            foreach ($arrivalDatesForApartment as $dateKey => $present) {
+                if (isset($departureDatesForApartment[$dateKey])) {
+                    ++$turnoversTotal;
                 }
             }
         }
-
-        ksort($arrivalsByCountry);
-        ksort($overnightsByCountry);
-
-        /*
-        * Calculate overall utilization percentage for the month.
-        */
-        $daysInMonth = (int) $monthStart->format('t');
-        $utilization = 0.0;
-        if ($bedsTotal > 0 && $daysInMonth > 0) {
-            $utilization = $stays * 100.0 / ($bedsTotal * $daysInMonth);
-        }
-        $dailyUtilization = $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
-
-        /*
-        * Calculate reservation origins for the month.
-        */
-        $originRows = $reservationRepo->loadOriginStatisticForPeriod(
-            $monthStart->format('Y-m-d'),
-            $monthEndInclusive->format('Y-m-d'),
-            $objectId
-        );
-        $originStats = [];
-        foreach ($originRows as $row) {
-            $origin = $this->em->getRepository(ReservationOrigin::class)->find($row['id']);
-            if (null !== $origin) {
-                $originStats[$origin->getName()] = (int) $row['origins'];
-            }
-        }
+        $summary['turnovers_count'] = $turnoversTotal;
+        ksort($tourism['arrivals_by_country']);
+        ksort($tourism['overnights_by_country']);
         ksort($originStats);
 
+        $dailyUtilization = $this->buildDailyUtilization(
+            $monthStart,
+            $daysInMonth,
+            $objectId,
+            $bedsTotal,
+            $reservationRepo,
+            $defaultStatusIds
+        );
+
+        // Attach ignored flags to warnings.
+        foreach ($warningsByReservation as $reservationId => &$warning) {
+            $warning['ignored'] = $ignoredWarnings[$reservationId] ?? false;
+        }
+        unset($warning);
         $warnings = array_values($warningsByReservation);
         $metrics = [
             'period' => [
@@ -168,22 +279,21 @@ class MonthlyStatsService
                 'month' => $month,
             ],
             'subsidiary' => $subsidiary?->getId(),
+            'summary' => $summary,
             'inventory' => [
                 'rooms_total' => $roomsTotal,
                 'beds_total' => $bedsTotal,
             ],
             'utilization' => [
-                'month_percent' => $utilization,
+                'month_percent' => ($bedsTotal > 0 && $daysInMonth > 0)
+                    ? ($stays * 100.0 / ($bedsTotal * $daysInMonth))
+                    : 0.0,
                 'daily_percent' => $dailyUtilization,
             ],
-            'tourism' => [
-                'arrivals_total' => $arrivalsTotal,
-                'overnights_total' => $overnightsTotal,
-                'arrivals_by_country' => $arrivalsByCountry,
-                'overnights_by_country' => $overnightsByCountry,
-            ],
+            'tourism' => $tourism,
             'reservation_origin' => $originStats,
             'warnings' => $warnings,
+            'by_status' => $byStatus,
         ];
         if (null === $subsidiary) {
             /*
@@ -257,17 +367,63 @@ class MonthlyStatsService
     /**
      * Build daily utilization percentages for a month without persisting them.
      */
-    public function getDailyUtilizationForMonth(int $month, int $year, ?Subsidiary $subsidiary): array
+    public function getDailyUtilizationForMonth(
+        int $month,
+        int $year,
+        ?Subsidiary $subsidiary,
+        array $reservationStatus = []
+    ): array
     {
         $objectId = $subsidiary?->getId() ?? 'all';
         $appartmentRepo = $this->em->getRepository(Appartment::class);
         $reservationRepo = $this->em->getRepository(Reservation::class);
         $bedsTotal = (int) $appartmentRepo->loadSumBedsMinForObject($objectId);
+        if (!$reservationStatus) {
+            $reservationStatus = $this->getDefaultReservationStatusIds();
+        }
 
         $monthStart = new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month));
         $daysInMonth = (int) $monthStart->format('t');
 
-        return $this->buildDailyUtilization($monthStart, $daysInMonth, $objectId, $bedsTotal, $reservationRepo);
+        return $this->buildDailyUtilization(
+            $monthStart,
+            $daysInMonth,
+            $objectId,
+            $bedsTotal,
+            $reservationRepo,
+            $reservationStatus
+        );
+    }
+
+    /**
+     * Filter existing metrics to only include data for the given reservation status IDs.
+     */
+    public function filterMetricsByStatus(array $metrics, array $statusIds): array
+    {
+        $statusIds = array_values(array_filter(array_map('intval', $statusIds), static fn (int $id): bool => $id > 0));
+        if (!$statusIds || empty($metrics['by_status']) || !is_array($metrics['by_status'])) {
+            return $metrics;
+        }
+
+        $period = $metrics['period'] ?? [];
+        $year = (int) ($period['year'] ?? 0);
+        $month = (int) ($period['month'] ?? 0);
+        $daysInMonth = 0;
+        if ($year > 0 && $month > 0) {
+            $daysInMonth = (int) (new \DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('t');
+        }
+
+        $bedsTotal = (int) ($metrics['inventory']['beds_total'] ?? 0);
+        $aggregate = $this->aggregateByStatus($metrics['by_status'], $statusIds, $bedsTotal, $daysInMonth);
+        $metrics['tourism'] = $aggregate['tourism'];
+        $metrics['utilization']['month_percent'] = $aggregate['utilization']['month_percent'];
+        $metrics['utilization']['daily_percent'] = [];
+        $metrics['warnings'] = array_values(array_filter(
+            $metrics['warnings'] ?? [],
+            static fn (array $warning): bool => in_array((int) ($warning['status_id'] ?? 0), $statusIds, true)
+        ));
+
+        return $metrics;
     }
 
     /**
@@ -296,7 +452,16 @@ class MonthlyStatsService
         }
 
         $snapshot->setIsAll(null === $subsidiary);
-        $payload = $this->buildMetrics($month, $year, $subsidiary);
+        $ignoredWarnings = [];
+        if (null !== $snapshot) {
+            $existingMetrics = $snapshot->getMetrics();
+            foreach (($existingMetrics['warnings'] ?? []) as $warning) {
+                if (!empty($warning['ignored']) && isset($warning['reservation_id'])) {
+                    $ignoredWarnings[(int) $warning['reservation_id']] = true;
+                }
+            }
+        }
+        $payload = $this->buildMetrics($month, $year, $subsidiary, $ignoredWarnings);
         $snapshot->setMetrics($payload['metrics']);
         $snapshot->touchUpdatedAt();
         try {
@@ -336,17 +501,69 @@ class MonthlyStatsService
         int $daysInMonth,
         $objectId,
         int $bedsTotal,
-        $reservationRepo
+        $reservationRepo,
+        array $reservationStatus = []
     ): array {
         $beds = 0 === $bedsTotal ? 1 : $bedsTotal;
         $data = [];
         $timeStartStr = $monthStart->format('Y-m-');
         for ($i = 1; $i <= $daysInMonth; ++$i) {
-            $utilization = $reservationRepo->loadUtilizationForDay($timeStartStr.$i, $objectId);
+            $utilization = $reservationRepo->loadUtilizationForDay($timeStartStr.$i, $objectId, $reservationStatus);
             $data[] = $utilization * 100 / $beds;
         }
 
         return $data;
+    }
+
+    private function getDefaultReservationStatusIds(): array
+    {
+        return $this->em->getRepository(ReservationStatus::class)->findDefaultIds();
+    }
+
+     /**
+      * Loop over reservation status IDs in the 'by_status' field and calculate the summed metrics.
+      */
+    private function aggregateByStatus(array $byStatus, array $statusIds, int $bedsTotal, int $daysInMonth): array
+    {
+        $tourism = [
+            'arrivals_total' => 0,
+            'overnights_total' => 0,
+            'arrivals_by_country' => [],
+            'overnights_by_country' => [],
+        ];
+        $stays = 0;
+
+        foreach ($statusIds as $statusId) {
+            $key = (string) $statusId;
+            if (!isset($byStatus[$key]) || !is_array($byStatus[$key])) {
+                continue;
+            }
+            $bucket = $byStatus[$key];
+            $tourism['arrivals_total'] += (int) ($bucket['tourism']['arrivals_total'] ?? 0);
+            $tourism['overnights_total'] += (int) ($bucket['tourism']['overnights_total'] ?? 0);
+            foreach (($bucket['tourism']['arrivals_by_country'] ?? []) as $country => $count) {
+                $tourism['arrivals_by_country'][$country] = ($tourism['arrivals_by_country'][$country] ?? 0) + (int) $count;
+            }
+            foreach (($bucket['tourism']['overnights_by_country'] ?? []) as $country => $count) {
+                $tourism['overnights_by_country'][$country] = ($tourism['overnights_by_country'][$country] ?? 0) + (int) $count;
+            }
+            $stays += (int) ($bucket['utilization']['stays'] ?? 0);
+        }
+
+        ksort($tourism['arrivals_by_country']);
+        ksort($tourism['overnights_by_country']);
+
+        $utilization = [
+            'stays' => $stays,
+            'month_percent' => ($bedsTotal > 0 && $daysInMonth > 0)
+                ? ($stays * 100.0 / ($bedsTotal * $daysInMonth))
+                : 0.0,
+        ];
+
+        return [
+            'tourism' => $tourism,
+            'utilization' => $utilization,
+        ];
     }
 
     /**

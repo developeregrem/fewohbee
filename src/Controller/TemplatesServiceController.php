@@ -15,12 +15,15 @@ namespace App\Controller;
 
 use App\Entity\Correspondence;
 use App\Entity\FileCorrespondence;
+use App\Entity\Invoice;
+use App\Entity\InvoiceSettingsData;
 use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Service\CSRFProtectionService;
 use App\Service\FileUploader;
+use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
@@ -28,10 +31,13 @@ use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 #[Route(path: '/settings/templates')]
 class TemplatesServiceController extends AbstractController
@@ -40,13 +46,18 @@ class TemplatesServiceController extends AbstractController
      * Index-View.
      */
     #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine): Response
+    public function indexAction(ManagerRegistry $doctrine, CsrfTokenManagerInterface $csrfTokenManager): Response
     {
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
+        $operationsTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $registrationTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $operationsTemplatesMissing = empty($operationsTemplates) || empty($registrationTemplates);
 
         return $this->render('Templates/index.html.twig', [
             'templates' => $templates,
+            'operationsTemplatesMissing' => $operationsTemplatesMissing,
+            'importToken' => $csrfTokenManager->getToken('templates.import.operations')->getValue(),
         ]);
     }
 
@@ -187,6 +198,67 @@ class TemplatesServiceController extends AbstractController
             'template' => $template,
         ]);
     }
+
+    /**
+     * Import default operations report templates from the examples repository.
+     */
+    #[Route('/import/operations', name: 'settings.templates.import.operations', methods: ['POST'])]
+    public function importOperationsTemplatesAction(
+        ManagerRegistry $doctrine,
+        CsrfTokenManagerInterface $csrfTokenManager,
+        TemplatesService $templatesService,
+        Request $request
+    ): Response {
+        $token = new CsrfToken('templates.import.operations', (string) $request->request->get('_csrf_token'));
+        if (!$csrfTokenManager->isTokenValid($token)) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $em = $doctrine->getManager();
+        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_OPERATIONS_PDF']);
+        if (!$type instanceof TemplateType) {
+            $this->addFlash('warning', 'templates.operations.import.missing_type');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $existingOperations = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
+        $existingRegistration = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_REGISTRATION_PDF']);
+        $needsOperationsImport = empty($existingOperations);
+        $needsRegistrationImport = empty($existingRegistration);
+        if (!$needsOperationsImport && !$needsRegistrationImport) {
+            $this->addFlash('info', 'templates.operations.import.already_present');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $baseUrl = TemplatesService::EXAMPLES_BASE_URL;
+        $imported = 0;
+        if ($needsOperationsImport) {
+            $entries = $templatesService->getOperationsTemplateDefinitions();
+            $imported += $templatesService->importTemplates($type, $entries, $baseUrl);
+        }
+        if ($needsRegistrationImport) {
+            $registrationType = $em->getRepository(TemplateType::class)->findOneBy(['name' => 'TEMPLATE_REGISTRATION_PDF']);
+            if ($registrationType instanceof TemplateType) {
+                $registrationEntries = $templatesService->getRegistrationTemplateDefinitions();
+                $imported += $templatesService->importTemplates($registrationType, $registrationEntries, $baseUrl);
+            }
+        }
+
+        if ($imported > 0) {
+            $em->flush();
+            $this->addFlash('success', 'templates.operations.import.success');
+        } else {
+            $this->addFlash('warning', 'templates.operations.import.failed');
+        }
+
+        return $this->redirectToRoute('settings.templates.overview');
+    }
+
+
 
     /**
      * Called when clicking add conversation in the reservation overview.
@@ -450,17 +522,54 @@ class TemplatesServiceController extends AbstractController
      * Adds an already added file (correspondence) as attachment of the current mail.
      */
     #[Route('/attachment/add', name: 'settings.templates.attachment.add', methods: ['POST'])]
-    public function addAttachmentAction(TemplatesService $ts, Request $request, InvoiceService $is): Response
+    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice): Response
     {
+        $em = $doctrine->getManager();
         $error = false;
         $isInvoice = $request->request->get('isInvoice', 'false');
+        $isEInvoice = $request->request->get('isEInvoice', 'false');
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
-            $cId = $ts->makeCorespondenceOfInvoice($cId, $is);
+            $binaryPayload = null;
+            if ('false' != $isEInvoice) {
+                $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
+                if (!($invoice instanceof Invoice)) {
+                    $this->addFlash('warning', 'templates.attachment.notfound');
+                    $error = true;
+                } else {
+                    $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+                    if (!($invoiceSettings instanceof InvoiceSettingsData)) {
+                        $this->addFlash('danger', 'invoice.settings.active.error');
+                        $error = true;
+                    } else {
+                        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+                        $defaultTemplate = $ts->getDefaultTemplate($templates);
+                        if (null === $defaultTemplate) {
+                            $this->addFlash('warning', 'templates.notfound');
+                            $error = true;
+                        } else {
+                            try {
+                                $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $invoiceSettings);
+                            } catch (\InvalidArgumentException $e) {
+                                $this->addFlash('warning', $e->getMessage());
+                                $error = true;
+                            } catch (\Throwable $e) {
+                                $this->addFlash('warning', $e->getMessage());
+                                $error = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!$error) {
+                $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, 'false' != $isEInvoice);
+            }
         }
 
-        $reservations = $ts->getReferencedReservationsInSession();
-        $ts->addFileAsAttachment($cId, $reservations);
+        if (!$error) {
+            $reservations = $ts->getReferencedReservationsInSession();
+            $ts->addFileAsAttachment($cId, $reservations);
+        }
 
         return $this->render('feedback.html.twig', [
             'error' => $error,
@@ -468,18 +577,25 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/correspondence/export/pdf/{id}/', name: 'settings.templates.correspondence.export.pdf', methods: ['GET'], defaults: ['id' => '0'])]
-    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, $id)
+    public function exportPDFCorrespondenceAction(ManagerRegistry $doctrine, TemplatesService $ts, InvoiceService $is, $id)
     {
         $em = $doctrine->getManager();
         $correspondence = $em->getRepository(Correspondence::class)->find($id);
         if ($correspondence instanceof FileCorrespondence) {
-            $output = $ts->getPDFOutput(
+            $safeName = $is->sanitizeFilename($correspondence->getName());
+            $binaryPayload = $correspondence->getBinaryPayload();
+            $output = $binaryPayload ?: $ts->getPDFOutput(
                 $correspondence->getText(),
-                $correspondence->getName(),
+                $safeName,
                 $correspondence->getTemplate()
             );
             $response = new Response($output);
             $response->headers->set('Content-Type', 'application/pdf');
+            $disposition = HeaderUtils::makeDisposition(
+                HeaderUtils::DISPOSITION_ATTACHMENT,
+                $safeName.'.pdf'
+            );
+            $response->headers->set('Content-Disposition', $disposition);
 
             return $response;
         }

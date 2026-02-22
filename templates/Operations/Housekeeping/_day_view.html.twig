@@ -1,0 +1,127 @@
+{% set roomLabel = 'housekeeping.room'|trans({}, 'Housekeeping') %}
+{% set occupancyLabel = 'housekeeping.occupancy'|trans({}, 'Housekeeping') %}
+{% set guestsLabel = 'housekeeping.guests'|trans({}, 'Housekeeping') %}
+{% set reservationLabel = 'housekeeping.reservation'|trans({}, 'Housekeeping') %}
+{% set statusLabel = 'housekeeping.status'|trans({}, 'Housekeeping') %}
+{% set assignedLabel = 'housekeeping.assigned_to'|trans({}, 'Housekeeping') %}
+{% set noteLabel = 'housekeeping.note'|trans({}, 'Housekeeping') %}
+
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-sm table-striped align-middle">
+        <thead>
+        <tr>
+            <th>{{ roomLabel }}</th>
+            <th>{{ occupancyLabel }}</th>
+            <th>{{ guestsLabel }}</th>
+            <th>{{ reservationLabel }}</th>
+            <th>{{ statusLabel }}</th>
+            <th>{{ assignedLabel }}</th>
+            <th>{{ noteLabel }}</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in dayView.rows %}
+            {% set formView = rowForms[row.apartment.id] %}
+            {{ form_start(formView, {
+                action: path('operations.housekeeping.update', { id: row.apartment.id }),
+                attr: { class: 'hk-row-form', 'data-action': 'submit->housekeeping#saveRow' }
+            }) }}
+                {{ form_widget(formView.date) }}
+                {{ form_widget(formView._token) }}
+            <tr>
+                <td>
+                    <div class="fw-semibold">{{ row.apartment.number }}</div>
+                    <div class="small text-muted">{{ row.apartment.description }}</div>
+                </td>
+                <td>
+                    {% set occClass = occupancyClasses[row.occupancyType]|default('bg-secondary') %}
+                    <span class="badge {{ occClass }}">
+                        {{ occupancyLabels[row.occupancyType]|trans({}, 'Housekeeping') }}
+                    </span>
+                </td>
+                <td>{{ row.guestCount ?? '-' }}</td>
+                <td class="text-muted">{{ row.reservationSummary ?? '-' }}</td>
+                <td>
+                    {{ form_widget(formView.hkStatus, { attr: { class: 'form-select form-select-sm' } }) }}
+                </td>
+                <td>
+                    {{ form_widget(formView.assignedTo, { attr: { class: 'form-select form-select-sm' } }) }}
+                </td>
+                <td>
+                    {{ form_widget(formView.note, { attr: { class: 'form-control form-control-sm' } }) }}
+                </td>
+                <td class="text-end">
+                    <button type="submit" class="btn btn-sm btn-outline-primary" title="{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}</span>
+                    </button>
+                </td>
+            </tr>
+            {{ form_end(formView, { render_rest: false }) }}
+        {% else %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    {{ 'housekeeping.no_rooms'|trans({}, 'Housekeeping') }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="d-md-none">
+    {% for row in dayView.rows %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="fw-semibold">{{ row.apartment.number }}</div>
+                        <div class="small text-muted">{{ row.apartment.description }}</div>
+                    </div>
+                    {% set occClass = occupancyClasses[row.occupancyType]|default('bg-secondary') %}
+                    <span class="badge {{ occClass }}">
+                        {{ occupancyLabels[row.occupancyType]|trans({}, 'Housekeeping') }}
+                    </span>
+                </div>
+
+                <div class="small text-muted mb-2">
+                    {{ reservationLabel }}: {{ row.reservationSummary ?? '-' }}
+                </div>
+                <div class="small text-muted mb-3">
+                    {{ guestsLabel }}: {{ row.guestCount ?? '-' }}
+                </div>
+
+                {% set formView = rowFormsMobile[row.apartment.id] %}
+                {{ form_start(formView, {
+                    action: path('operations.housekeeping.update', { id: row.apartment.id }),
+                    attr: { 'data-action': 'submit->housekeeping#saveRow' }
+                }) }}
+                    {{ form_widget(formView.date) }}
+                    {{ form_widget(formView._token) }}
+
+                    <div class="mb-2">
+                        <label class="form-label small">{{ statusLabel }}</label>
+                        {{ form_widget(formView.hkStatus, { attr: { class: 'form-select form-select-sm' } }) }}
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">{{ assignedLabel }}</label>
+                        {{ form_widget(formView.assignedTo, { attr: { class: 'form-select form-select-sm' } }) }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">{{ noteLabel }}</label>
+                        {{ form_widget(formView.note, { attr: { class: 'form-control form-control-sm' } }) }}
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary" title="{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'housekeeping.save'|trans({}, 'Housekeeping') }}</span>
+                    </button>
+                {{ form_end(formView, { render_rest: false }) }}
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center text-muted py-4">
+            {{ 'housekeeping.no_rooms'|trans({}, 'Housekeeping') }}
+        </div>
+    {% endfor %}
+</div>

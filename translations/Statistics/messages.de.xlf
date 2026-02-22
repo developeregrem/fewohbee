@@ -116,7 +116,7 @@
             </trans-unit>
             <trans-unit id="statistics.tourism.warnings">
                 <source>statistics.tourism.warnings</source>
-                <target>Warnungen</target>
+                <target>Hinweise/Warnungen</target>
             </trans-unit>
             <trans-unit id="statistics.tourism.room_label">
                 <source>statistics.tourism.room_label</source>
@@ -124,7 +124,7 @@
             </trans-unit>
             <trans-unit id="statistics.snapshot.warning.persons_mismatch">
                 <source>statistics.snapshot.warning.persons_mismatch</source>
-                <target>Anzahl Personen ungleich Anzahl Gäste; bitte die Reservierung prüfen, sonst sind Ungenauigkeiten möglich.</target>
+                <target>Anzahl Personen ungleich Anzahl Gäste; bitte die Reservierung auf Vollständigkeit prüfen.</target>
             </trans-unit>
         </body>
     </file>
