@@ -385,6 +385,7 @@ class ReservationServiceController extends AbstractController
             }
             $em = $doctrine->getManager();
             $room = $em->getRepository(Appartment::class)->find($request->request->get('appartmentid'));
+            $defaultStatusId = $rs->getDefaultSelectableReservationStatusId();
 
             $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
             if ($isselactable) {
@@ -392,7 +393,7 @@ class ReservationServiceController extends AbstractController
                     $request->request->get('appartmentid'),
                     $from,
                     $end,
-                    $request->request->get('status', 1),
+                    $request->request->get('status', $defaultStatusId),
                     $request->request->get('persons', $room->getBedsMax())
                 );
                 $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);

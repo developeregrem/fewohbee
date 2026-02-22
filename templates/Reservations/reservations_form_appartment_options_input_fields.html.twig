@@ -10,8 +10,17 @@
     </div>
     <div class="col-sm-3">
         <select id="status" name="status" class="form-select">
+            {# Determine the default status ID for new reservations is no system status #}
+            {% set defaultStatusId = null %}
+            {% if reservation is not defined %}
+                {% for status in reservationStatus %}
+                    {% if defaultStatusId is null and status.code is null %}
+                        {% set defaultStatusId = status.id %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
             {% for status in reservationStatus %}
-            <option value="{{ status.id }}"{% if reservation is defined and reservation.reservationStatus.id == status.id %} selected{% endif %}>{{ status.name }}</option>
+            <option value="{{ status.id }}"{% if reservation is defined and reservation.reservationStatus.id == status.id %} selected{% elseif reservation is not defined and defaultStatusId == status.id %} selected{% endif %}>{{ status.name }}</option>
             {% endfor %}
         </select>
     </div>
