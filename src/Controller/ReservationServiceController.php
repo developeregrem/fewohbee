@@ -1163,7 +1163,7 @@ class ReservationServiceController extends AbstractController
 
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
-        $templateOutput = $ts->renderTemplate($template->getId(), $reservations, $rs);
+        $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
 
         // add attachments
         $attachments = [];

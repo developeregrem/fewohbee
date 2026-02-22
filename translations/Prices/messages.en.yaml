@@ -31,6 +31,8 @@ price.from: From
 price.inactive: Not active
 price.includesvat: incl. VAT
 price.isflatprice: flat rate
+price.perroom: per night (else per person)
+price.defaultactiveinreservationcreation: active by default in reservation creation
 price.minstay: Minimum nights
 price.miscellaneous: Other price
 price.monday: Monday

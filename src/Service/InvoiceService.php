@@ -22,7 +22,6 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Enum\InvoiceStatus;
-use App\Interfaces\ITemplateRenderer;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -31,7 +30,7 @@ use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class InvoiceService implements ITemplateRenderer
+class InvoiceService
 {
     private $em;
     private $ps;
@@ -201,10 +200,11 @@ class InvoiceService implements ITemplateRenderer
         }
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all invoice variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, Invoice $invoice): array
     {
-        $invoice = $this->em->getRepository(Invoice::class)->find($param);
-
         $vatSums = [];
         $brutto = 0;
         $netto = 0;
@@ -242,7 +242,7 @@ class InvoiceService implements ITemplateRenderer
 
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
     {
-        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId(), $this);
+        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
         $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template, true);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 
@@ -392,7 +392,10 @@ class InvoiceService implements ITemplateRenderer
     {
         $reservations = [];
         foreach ($reservationIds as $resId) {
-            $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
+            $reservation = $this->em->getRepository(Reservation::class)->find($resId);
+            if ($reservation instanceof Reservation) {
+                $reservations[] = $reservation;
+            }
         }
         $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
@@ -409,8 +412,12 @@ class InvoiceService implements ITemplateRenderer
         $existingPrices = null;
         // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
         foreach ($reservations as $reservation) {
+            if (!$reservation instanceof Reservation) {
+                continue;
+            }
+
             if ($useExistingPrices) {
-                $existingPrices = $reservation->getPrices();
+                $existingPrices = $reservation->getPrices()->filter(static fn (Price $price) => $price->getActive());
             }
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);
 
@@ -422,7 +429,7 @@ class InvoiceService implements ITemplateRenderer
                     continue;
                 }
                 foreach ($prices[$i] as $price) {
-                    $amount = ($price->getIsFlatPrice() ? 1 : $reservation->getPersons());
+                    $amount = ($price->getIsFlatPrice() || $price->getIsPerRoom() ? 1 : $reservation->getPersons());
 
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list
                     // with the same price id but a total amount if the same price category occurs more than once
@@ -580,6 +587,7 @@ class InvoiceService implements ITemplateRenderer
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
         $positionAppartment->setIncludesVat($price->getIncludesVat());
         $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
+        $positionAppartment->setIsPerRoom($price->getIsPerRoom());
 
         return $positionAppartment;
     }
@@ -598,6 +606,7 @@ class InvoiceService implements ITemplateRenderer
             $position->setVat($tmpPrice['price']->getVat());
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
+            $position->setIsPerRoom($tmpPrice['price']->getIsPerRoom());
 
             $this->saveNewMiscPosition($position, $requestStack);
         }

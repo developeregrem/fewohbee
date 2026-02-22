@@ -71,7 +71,7 @@ class Customer
         return $this->lastname;
     }
 
-    public function getBirthday()
+    public function getBirthday(): ?\DateTime
     {
         return $this->birthday;
     }

@@ -206,6 +206,14 @@
                 <source>price.isflatprice</source>
                 <target>Pauschalpreis</target>
             </trans-unit>
+            <trans-unit id="price.perroom">
+                <source>price.perroom</source>
+                <target>Pro Nacht (sonst pro Person)</target>
+            </trans-unit>
+            <trans-unit id="price.defaultactiveinreservationcreation">
+                <source>price.defaultactiveinreservationcreation</source>
+                <target>Bei Reservierungs-Neuanlage standardmäßig aktiv</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

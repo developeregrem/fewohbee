@@ -1,0 +1,285 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'templates.edit'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="settings templates">
+    <form id="entry-form-{{ template.id }}"
+          class="form-horizontal"
+          role="form"
+          method="POST"
+          data-controller="template-editor"
+          data-action="submit->template-editor#beforeSubmitAction submit->settings#submitFormAction"
+          data-url="{{ isNew|default(false) ? path('settings.templates.create') : path('settings.templates.edit', {'id': template.id}) }}"
+          data-success-url="{{ isNew|default(false) ? path('settings.templates.overview') : path('settings.templates.edit.page', {'id': template.id}) }}"
+          data-templates-upload-url="{{ path('templates.upload') }}"
+          data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'id': 'placeholder'}) }}"
+          data-templates-schema-url="{{ path('settings.templates.schema', {'id': 'placeholder'}) }}"
+          data-templates-preview-render-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.render', {'id': template.id}) }}"
+          data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}">
+
+        <div id="flash-message-overlay"></div>
+
+        {# ── Compact metadata bar ── #}
+        <div class="card mb-2">
+            <div class="card-body py-2 px-3 d-flex align-items-center gap-2 flex-wrap">
+                <input type="text" class="form-control form-control-sm" style="max-width:300px" name="name-{{ template.id }}" id="name-{{ template.id }}" value="{{ template.name }}" required placeholder="{{ 'templates.name'|trans }}">
+                <select name="type-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" id="template-type" data-action="change->template-editor#onTemplateTypeChange">
+                    {% for type in types %}
+                        <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-check form-switch form-check-inline m-0">
+                    <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
+                    <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
+                </div>
+                <div class="ms-auto d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-template-editor-target="pdfParamsPanel" data-bs-toggle="offcanvas" data-bs-target="#pdfParamsOffcanvas-{{ template.id }}" title="{{ 'templates.params'|trans }}">
+                        <i class="fas fa-gear" aria-hidden="true"></i>
+                    </button>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ path('settings.templates.overview') }}" title="{{ 'button.back'|trans }}">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
+                </div>
+            </div>
+        </div>
+
+        {# ── PDF params offcanvas ── #}
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="pdfParamsOffcanvas-{{ template.id }}" aria-labelledby="pdfParamsOffcanvasLabel-{{ template.id }}">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="pdfParamsOffcanvasLabel-{{ template.id }}">{{ 'templates.params'|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <p class="text-muted small">{{ 'templates.params.help'|trans }}</p>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label for="params-marginTop-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_top'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginTop-{{ template.id }}" id="params-marginTop-{{ template.id }}" value="{{ pdfParams.marginTop|default(20) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-marginBottom-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_bottom'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginBottom-{{ template.id }}" id="params-marginBottom-{{ template.id }}" value="{{ pdfParams.marginBottom|default(20) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-marginLeft-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_left'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginLeft-{{ template.id }}" id="params-marginLeft-{{ template.id }}" value="{{ pdfParams.marginLeft|default(25) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-marginRight-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_right'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginRight-{{ template.id }}" id="params-marginRight-{{ template.id }}" value="{{ pdfParams.marginRight|default(20) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-marginHeader-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_header'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginHeader-{{ template.id }}" id="params-marginHeader-{{ template.id }}" value="{{ pdfParams.marginHeader|default(9) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-marginFooter-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.margin_footer'|trans }}</label>
+                        <input type="number" step="0.1" min="0" class="form-control" name="params-marginFooter-{{ template.id }}" id="params-marginFooter-{{ template.id }}" value="{{ pdfParams.marginFooter|default(9) }}">
+                    </div>
+                    <div class="col-6">
+                        <label for="params-orientation-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.orientation'|trans }}</label>
+                        <select class="form-select" name="params-orientation-{{ template.id }}" id="params-orientation-{{ template.id }}">
+                            <option value="P" {% if pdfParams.orientation|default('P') == 'P' %}selected{% endif %}>{{ 'templates.params.orientation.portrait'|trans }}</option>
+                            <option value="L" {% if pdfParams.orientation|default('P') == 'L' %}selected{% endif %}>{{ 'templates.params.orientation.landscape'|trans }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Main editor card ── #}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center py-1">
+                <ul class="nav nav-tabs card-header-tabs" style="margin-bottom: -1px;">
+                    <li class="nav-item">
+                        <button type="button" class="nav-link active py-1" data-template-editor-target="tabEdit" data-action="template-editor#showEditTab">{{ 'templates.editor.tab.edit'|trans }}</button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button"
+                                class="nav-link py-1{% if isNew|default(false) %} disabled{% endif %}"
+                                data-template-editor-target="tabPreview"
+                                data-action="template-editor#showPreviewTab"
+                                {% if isNew|default(false) %}disabled{% endif %}>
+                            {{ 'templates.editor.tab.preview'|trans }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body p-2" data-template-editor-target="panelEdit">
+                <div class="template-editor-toolbar mb-2">
+                    <div class="template-editor-toolbar-row">
+                        <div class="template-editor-toolbar-row-content"
+                             data-template-editor-target="toolbarHost"
+                             data-i18n-bold="{{ 'templates.editor.toolbar.bold'|trans }}"
+                             data-i18n-italic="{{ 'templates.editor.toolbar.italic'|trans }}"
+                             data-i18n-underline="{{ 'templates.editor.toolbar.underline'|trans }}"
+                             data-i18n-bullets="{{ 'templates.editor.toolbar.bullets'|trans }}"
+                             data-i18n-ordered="{{ 'templates.editor.toolbar.ordered'|trans }}"
+                             data-i18n-link="{{ 'templates.editor.toolbar.link'|trans }}"
+                             data-i18n-table="{{ 'templates.editor.toolbar.table'|trans }}"
+                             data-i18n-image="{{ 'templates.editor.toolbar.image'|trans }}"
+                             data-i18n-font-family="{{ 'templates.editor.toolbar.font_family'|trans }}"
+                             data-i18n-font-size="{{ 'templates.editor.toolbar.font_size'|trans }}"
+                             data-i18n-align-left="{{ 'templates.editor.toolbar.align_left'|trans }}"
+                             data-i18n-align-center="{{ 'templates.editor.toolbar.align_center'|trans }}"
+                             data-i18n-align-right="{{ 'templates.editor.toolbar.align_right'|trans }}"
+                             data-i18n-protected-content="{{ 'templates.editor.alert.protected_content'|trans }}"
+                             data-i18n-variable="{{ 'templates.editor.toolbar.variable'|trans }}"
+                             data-i18n-variable-picker-title="{{ 'templates.editor.variable_picker.title'|trans }}"
+                             data-i18n-variable-insert-loop="{{ 'templates.editor.variable_picker.insert_loop'|trans }}"></div>
+                        <div class="template-editor-toolbar-group ms-auto" role="group">
+                            <button type="button"
+                                class="btn btn-secondary btn-sm template-editor-btn"
+                                data-action="template-editor#toggleSnippetSidebar"
+                                data-template-editor-target="snippetToggle"
+                                title="{{ 'templates.editor.snippets.sidebar'|trans }}">
+                                <i class="fas fa-puzzle-piece" aria-hidden="true"></i>
+                            </button>
+                            <button type="button"
+                                class="btn btn-secondary btn-sm template-editor-btn"
+                                data-action="click->template-editor#openVariablePicker"
+                                data-template-command="variable"
+                                title="{{ 'templates.editor.toolbar.variable'|trans }}">
+                                <i class="fas fa-code-branch" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <button type="button"
+                            class="btn btn-outline-secondary btn-sm template-editor-btn template-editor-mode-btn"
+                            data-action="template-editor#toggleCodeMode"
+                            data-template-editor-target="modeToggle"
+                            data-code-label="{{ 'templates.editor.toolbar.code'|trans }}"
+                            data-visual-label="{{ 'templates.editor.toolbar.visual'|trans }}"
+                            title="{{ 'templates.editor.toolbar.code'|trans }}"
+                            aria-label="{{ 'templates.editor.toolbar.code'|trans }}">
+                            <span data-template-editor-target="modeIconCode">
+                                <i class="fas fa-code" aria-hidden="true"></i>
+                            </span>
+                            <span data-template-editor-target="modeIconVisual" class="d-none">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </span>
+                        </button>
+                        <button type="button"
+                            class="btn btn-outline-secondary btn-sm template-editor-btn d-none"
+                            data-action="template-editor#beautifyCodeMode"
+                            data-template-editor-target="beautifyButton"
+                            title="{{ 'templates.editor.toolbar.beautify'|trans }}"
+                            aria-label="{{ 'templates.editor.toolbar.beautify'|trans }}">
+                        <i class="fas fa-wand-magic-sparkles ms-1" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="template-editor-toolbar-row d-none" data-template-editor-target="tableToolsRow">
+                        <div class="template-editor-toolbar-group" role="group">
+                            <button type="button" class="btn btn-secondary btn-sm template-editor-btn" data-template-editor-target="tableActionButton" data-action="template-editor#addTableRow" title="{{ 'templates.editor.toolbar.table_row_add'|trans }}"><i class="fas fa-square-plus" aria-hidden="true"></i></button>
+                            <button type="button" class="btn btn-secondary btn-sm template-editor-btn" data-template-editor-target="tableActionButton" data-action="template-editor#deleteTableRow" title="{{ 'templates.editor.toolbar.table_row_delete'|trans }}"><i class="fas fa-square-minus" aria-hidden="true"></i></button>
+                            <button type="button" class="btn btn-secondary btn-sm template-editor-btn" data-template-editor-target="tableActionButton" data-action="template-editor#addTableColumn" title="{{ 'templates.editor.toolbar.table_col_add'|trans }}"><i class="fas fa-plus" aria-hidden="true"></i><i class="fas fa-columns ms-1" aria-hidden="true"></i></button>
+                            <button type="button" class="btn btn-secondary btn-sm template-editor-btn" data-template-editor-target="tableActionButton" data-action="template-editor#deleteTableColumn" title="{{ 'templates.editor.toolbar.table_col_delete'|trans }}"><i class="fas fa-minus" aria-hidden="true"></i><i class="fas fa-columns ms-1" aria-hidden="true"></i></button>
+                            <button type="button" class="btn btn-secondary btn-sm template-editor-btn" data-template-editor-target="tableActionButton" data-action="template-editor#deleteTable" title="{{ 'templates.editor.toolbar.table_delete'|trans }}"><i class="fas fa-table-cells-large" aria-hidden="true"></i><i class="fas fa-trash ms-1" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="template-editor-row-controls d-none" data-template-editor-target="rowControlPanel">
+                            <div class="template-editor-row-grid">
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" id="row-repeat-enabled" data-template-editor-target="rowRepeatEnabled" data-action="change->template-editor#applyRowControls">
+                                    <label class="form-check-label small" for="row-repeat-enabled">{{ 'templates.editor.row.repeat_toggle'|trans }}</label>
+                                </div>
+                                <input type="text" class="form-control form-control-sm" placeholder="{{ 'templates.editor.row.repeat_collection'|trans }}" data-template-editor-target="rowRepeatCollection" data-action="change->template-editor#applyRowControls blur->template-editor#applyRowControls">
+                                <input type="text" class="form-control form-control-sm" placeholder="{{ 'templates.editor.row.repeat_as'|trans }}" data-template-editor-target="rowRepeatAs" data-action="change->template-editor#applyRowControls blur->template-editor#applyRowControls">
+                                <input type="text" class="form-control form-control-sm" placeholder="{{ 'templates.editor.row.repeat_key'|trans }}" data-template-editor-target="rowRepeatKey" data-action="change->template-editor#applyRowControls blur->template-editor#applyRowControls">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="template-editor#clearRowRepeat" title="{{ 'templates.editor.row.repeat_clear'|trans }}">
+                                    <i class="fas fa-eraser" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="template-editor-row-grid mt-2">
+                                <div class="small text-muted">
+                                    {{ 'templates.editor.row.repeat_hint'|trans }}
+                                </div>
+                            </div>
+                            <div class="badge text-bg-info mt-2 d-none" data-template-editor-target="rowMetaBadge"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex">
+                    {# Collapsible snippets sidebar #}
+                    <div class="template-editor-snippet-panel d-none" data-template-editor-target="snippetPanel">
+                        <div data-template-editor-target="snippetSidebar"></div>
+                    </div>
+                    {# Editor area - always full width when sidebar is hidden #}
+                    <div class="flex-grow-1 min-w-0">
+                        <div data-template-editor-target="visualWrapper">
+                            <div data-template-editor-target="editor"></div>
+                        </div>
+                        <div data-template-editor-target="codeWrapper" class="d-none">
+                            <textarea data-template-editor-target="code" class="form-control template-editor-code" rows="20"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body d-none" data-template-editor-target="panelPreview">
+                <div class="row g-3">
+                    <div class="col-lg-3">
+                        <div class="card">
+                            <div class="card-header">{{ 'templates.preview.context'|trans }}</div>
+                            <div class="card-body" data-template-editor-target="previewContextPanel">
+                                {% if provider is null %}
+                                    <div class="text-muted">{{ 'templates.preview.noprovider.help'|trans }}</div>
+                                {% else %}
+                                    {% for field in contextDefinition %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{{ field.label|trans }}</label>
+                                            {% if field.type == 'date' %}
+                                                <input type="date" class="form-control" name="previewContext[{{ field.name }}]" value="{{ context[field.name]|default('') }}">
+                                            {% elseif field.type == 'select' %}
+                                                <select class="form-select" name="previewContext[{{ field.name }}]">
+                                                    {% for option in field.options|default([]) %}
+                                                        <option value="{{ option.value }}"{% if option.value == context[field.name]|default('') %} selected{% endif %}>{{ option.label|trans }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% elseif field.type == 'checkboxes' %}
+                                                {% set selectedValues = context[field.name]|default([]) %}
+                                                {% for option in field.options|default([]) %}
+                                                    {% set checked = selectedValues is iterable and option.value in selectedValues %}
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input" name="previewContext[{{ field.name }}][]" value="{{ option.value }}" id="preview-{{ field.name }}-{{ loop.index }}" {% if checked %}checked{% endif %}>
+                                                        <label class="form-check-label" for="preview-{{ field.name }}-{{ loop.index }}">{{ option.label|trans }}</label>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <input type="text" class="form-control" name="previewContext[{{ field.name }}]" value="{{ context[field.name]|default('') }}" placeholder="{{ field.placeholder is defined ? field.placeholder|trans : '' }}">
+                                            {% endif %}
+                                            {% if field.help is defined %}
+                                                <div class="form-text">{{ field.help|trans }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-primary" data-action="template-editor#renderPreview">{{ 'templates.preview.render'|trans }}</button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9">
+                        <div class="card">
+                            <div class="card-header">{{ 'templates.preview.result'|trans }}</div>
+                            <div class="card-body">
+                                <div class="alert alert-warning d-none" data-template-editor-target="previewWarning"></div>
+                                <div data-template-editor-target="previewResult" class="template-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" class="d-none" data-template-editor-target="fileInput" accept="image/*" data-action="change->template-editor#handleFileChange">
+        <textarea name="text-{{ template.id }}" id="editor1" class="d-none" data-template-editor-target="source">{{ template.text|raw }}</textarea>
+        <input name="_csrf_token" value="{{ token }}" type="hidden">
+    </form>
+</div>
+{% endblock %}

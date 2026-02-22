@@ -39,7 +39,9 @@
             'templates.select.template': 'templates.select.template'|trans,
             'templates.edit': 'templates.edit'|trans,
             'templates.preview': 'templates.preview'|trans,
-            'reservation.conflict.title': 'reservation.conflict.title'|trans
+            'reservation.conflict.title': 'reservation.conflict.title'|trans,
+            'templates.editor.toolbar.font_family': 'templates.editor.toolbar.font_family'|trans,
+            'templates.editor.toolbar.font_size': 'templates.editor.toolbar.font_size'|trans,
         }|json_encode|e('html_attr')
      }}">
     <form id="table-filter" role="form"
@@ -97,6 +99,5 @@
 
 {% block bodyjs %}
     {{ parent() }}
-    <script type="text/javascript" src="{{ app.request.basepath }}/resources/tinymce/tinymce.min.js" defer></script>
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/selectable-0.22.0.min.js" defer></script>
 {% endblock %}

@@ -14,7 +14,7 @@
                 data-action="change->invoices#fillApartmentFieldsFromPriceCategoryAction">
             <option value="0|0" selected></option>
             {% for price in prices %}
-                <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.includesVat }}|{{ price.isFlatPrice }}">{{ price.description }}</option>
+                <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.includesVat }}|{{ price.isFlatPrice }}|{{ price.isPerRoom }}">{{ price.description }}</option>
             {% endfor %}
         </select>
     </div>
@@ -24,6 +24,7 @@
 <div class="row mt-4 ps-5">
     <div class="col-sm">
         {{ form_widget(form.includesVat) }}
-        {{ form_widget(form.isFlatPrice) }}
+        {{ form_widget(form.isFlatPrice, {'attr': {'data-action': 'change->invoices#flatPriceTogglePerRoomAction', 'data-per-room-selector': '#' ~ form.isPerRoom.vars.id}}) }}
+        {{ form_widget(form.isPerRoom, {'attr': {'disabled': form.isFlatPrice.vars.checked ? 'disabled' : null}}) }}
     </div>
 </div>

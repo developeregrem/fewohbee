@@ -65,7 +65,7 @@ class RegistrationBookEntry
         return $this->number;
     }
 
-    public function getDate()
+    public function getDate(): \DateTime
     {
         return $this->date;
     }
@@ -204,7 +204,7 @@ class RegistrationBookEntry
      *
      * @return \DateTime
      */
-    public function getBirthday()
+    public function getBirthday(): ?\DateTime
     {
         return $this->birthday;
     }
