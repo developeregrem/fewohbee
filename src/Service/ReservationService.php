@@ -204,6 +204,21 @@ class ReservationService
         return $reservations;
     }
 
+    /**
+     * Returns the default reservation status ID that should be preselected in the reservation creation process.
+     */
+    public function getDefaultSelectableReservationStatusId(): int
+    {
+        $repository = $this->em->getRepository(ReservationStatus::class);
+        $status = $repository->findOneBy(['code' => null], ['id' => 'ASC']);
+
+        if (!$status instanceof ReservationStatus) {
+            $status = $repository->findOneBy([], ['id' => 'ASC']);
+        }
+
+        return $status instanceof ReservationStatus ? (int) $status->getId() : 1;
+    }
+
     public function setCustomerInReservationInformationArray(&$newReservationsInformationArray, Customer $customer): void
     {
         foreach ($newReservationsInformationArray as $reservationInformation) {
