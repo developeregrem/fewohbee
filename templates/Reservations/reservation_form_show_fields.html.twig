@@ -38,6 +38,11 @@
                         {% if is_granted('ROLE_RESERVATIONS') %}
                         <small>
                             {% if booker is defined and booker is not null %}
+                                <a href="{{ path('correspondence.registration.download', { id: reservationId }) }}"
+                                   title="{{ 'operations.frontdesk.registration.print'|trans }}" class="float-end text-secondary me-1"
+                                   target="_blank" rel="noopener">
+                                    <i class="fas fa-print"></i>
+                                </a>
                                 <a href="#"
                                    data-action="click->reservations#editReservationCustomerEditAction"
                                    data-customer-id="{{ booker.id }}"
@@ -303,7 +308,7 @@
                     {% if mode is defined and mode == 'edit' and is_granted('ROLE_RESERVATIONS') %}
                         <small>
                             <a href="#" data-action="click->reservations#selectReservationForTemplateAction" 
-                                data-url="{{ path('settings.templates.select.reservation') }}" 
+                                data-url="{{ path('correspondence.select.reservation') }}" 
                                 data-reservation-id="{{ reservationId }}" 
                                 data-create-new="true"
                                 title="{{ 'button.add'|trans }}" class="float-end text-secondary">
@@ -334,13 +339,13 @@
                     {% if 'PDF' in correspondence.template.templateType.name %}
                     <a href="#"
                        data-action="click->reservations#exportPDFCorrespondenceAction"
-                       data-url="{{ path('settings.templates.correspondence.export.pdf', {'id': correspondence.id}) }}"
+                       data-url="{{ path('correspondence.export.pdf', {'id': correspondence.id}) }}"
                        data-attachment-id="{{ correspondence.id }}"
                        title="{{ 'button.download'|trans }}"><i class="fas fa-download"></i></a>
                     {% elseif 'EMAIL' in correspondence.template.templateType.name %}
                     <a href="#"
                        data-action="click->reservations#showMailCorrespondenceAction"
-                       data-url="{{ path('settings.templates.correspondence.show', {'id': correspondence.id}) }}"
+                       data-url="{{ path('correspondence.show', {'id': correspondence.id}) }}"
                        data-reservation-id="{{ reservationId }}"
                        data-correspondence-id="{{ correspondence.id }}"
                        title="{{ 'button.details'|trans }}"><i class="fas fa-eye"></i></a>
@@ -348,7 +353,7 @@
                     {% if is_granted('ROLE_RESERVATIONS') %}
                     <a href="#"
                        data-action="click->reservations#deleteCorrespondenceAction"
-                       data-url="{{ path('settings.templates.correspondence.remove') }}"
+                       data-url="{{ path('correspondence.remove') }}"
                        data-correspondence-id="{{ correspondence.id }}"
                        data-reservation-id="{{ reservationId }}"
                        title="{{ 'button.delete'|trans }}"><i class="fas fa-trash-alt"></i></a>  

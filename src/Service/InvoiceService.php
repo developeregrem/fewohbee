@@ -17,24 +17,32 @@ use App\Entity\Customer;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
+use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
-use App\Interfaces\ITemplateRenderer;
+use App\Enum\InvoiceStatus;
+use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
+use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
-class InvoiceService implements ITemplateRenderer
+class InvoiceService
 {
     private $em;
     private $ps;
+    private TranslatorInterface $translator;
+    private string $invoiceFilenamePattern;
 
-    public function __construct(EntityManagerInterface $em, PriceService $ps)
+    public function __construct(EntityManagerInterface $em, PriceService $ps, TranslatorInterface $translator, string $invoiceFilenamePattern)
     {
         $this->em = $em;
         $this->ps = $ps;
+        $this->translator = $translator;
+        $this->invoiceFilenamePattern = $invoiceFilenamePattern;
     }
 
     /**
@@ -192,10 +200,11 @@ class InvoiceService implements ITemplateRenderer
         }
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all invoice variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, Invoice $invoice): array
     {
-        $invoice = $this->em->getRepository(Invoice::class)->find($param);
-
         $vatSums = [];
         $brutto = 0;
         $netto = 0;
@@ -229,6 +238,102 @@ class InvoiceService implements ITemplateRenderer
         ];
 
         return $params;
+    }
+
+    public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
+    {
+        $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
+        $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template, true);
+        $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
+
+        return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
+            ->generateDocument()
+            ->downloadString();
+    }
+
+    /**
+     * Builds a sanitized invoice export filename (without extension) from the configured pattern.
+     */
+    public function buildInvoiceExportFilename(Invoice $invoice, bool $appendEinvoiceSuffix = false): string
+    {
+        $pattern = trim($this->invoiceFilenamePattern);
+        if ('' === $pattern) {
+            $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
+        }
+
+        $statusLabel = '';
+        $statusEnum = InvoiceStatus::fromStatus($invoice->getStatus());
+        if (null !== $statusEnum) {
+            $statusLabel = $this->translator->trans($statusEnum->labelKey());
+        }
+
+        $paymentLabel = '';
+        $paymentMeans = $invoice->getPaymentMeans();
+        if (null !== $paymentMeans) {
+            $paymentLabel = $this->translator->trans($paymentMeans->name);
+        }
+
+        $replacements = [
+            'company' => (string) $invoice->getCompany(),
+            'lastname' => (string) $invoice->getLastname(),
+            'firstname' => (string) $invoice->getFirstname(),
+            'status' => $statusLabel,
+            'payment' => $paymentLabel,
+            'paymentmeans' => $paymentLabel,
+            'payment_means' => $paymentLabel,
+            'number' => (string) $invoice->getNumber(),
+            'date' => $invoice->getDate()->format('Y-m-d'),
+        ];
+
+        $filename = preg_replace_callback('/<([a-zA-Z_|]+)>/', static function (array $matches) use ($replacements): string {
+            $keys = array_filter(array_map('trim', explode('|', strtolower($matches[1]))));
+            foreach ($keys as $key) {
+                $value = $replacements[$key] ?? '';
+                if ('' !== trim((string) $value)) {
+                    return (string) $value;
+                }
+            }
+
+            return '';
+        }, $pattern);
+
+        if ($appendEinvoiceSuffix) {
+            $filename .= '-einvoice';
+        }
+
+        return $this->sanitizeFilename($filename);
+    }
+
+    /**
+     * Converts a raw filename to a safe ASCII-only filename.
+     */
+    public function sanitizeFilename(string $value): string
+    {
+        $value = $this->replaceGermanUmlauts($value);
+        $value = transliterator_transliterate('Any-Latin; Latin-ASCII', $value);
+        $value = preg_replace('/\s+/', '_', $value);
+        $value = preg_replace('/[^A-Za-z0-9._-]/', '', $value);
+        $value = preg_replace('/_+/', '_', $value);
+        $value = preg_replace('/-+/', '-', $value);
+        $value = trim($value, "._-");
+
+        return '' !== $value ? $value : 'invoice';
+    }
+
+    /**
+     * Replaces German umlauts and Eszett with ASCII equivalents.
+     */
+    private function replaceGermanUmlauts(string $value): string
+    {
+        return strtr($value, [
+            'ä' => 'ae',
+            'ö' => 'oe',
+            'ü' => 'ue',
+            'Ä' => 'Ae',
+            'Ö' => 'Oe',
+            'Ü' => 'Ue',
+            'ß' => 'ss',
+        ]);
     }
 
     /**
@@ -287,7 +392,10 @@ class InvoiceService implements ITemplateRenderer
     {
         $reservations = [];
         foreach ($reservationIds as $resId) {
-            $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
+            $reservation = $this->em->getRepository(Reservation::class)->find($resId);
+            if ($reservation instanceof Reservation) {
+                $reservations[] = $reservation;
+            }
         }
         $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
@@ -304,8 +412,12 @@ class InvoiceService implements ITemplateRenderer
         $existingPrices = null;
         // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
         foreach ($reservations as $reservation) {
+            if (!$reservation instanceof Reservation) {
+                continue;
+            }
+
             if ($useExistingPrices) {
-                $existingPrices = $reservation->getPrices();
+                $existingPrices = $reservation->getPrices()->filter(static fn (Price $price) => $price->getActive());
             }
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);
 
@@ -317,7 +429,7 @@ class InvoiceService implements ITemplateRenderer
                     continue;
                 }
                 foreach ($prices[$i] as $price) {
-                    $amount = ($price->getIsFlatPrice() ? 1 : $reservation->getPersons());
+                    $amount = ($price->getIsFlatPrice() || $price->getIsPerRoom() ? 1 : $reservation->getPersons());
 
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list
                     // with the same price id but a total amount if the same price category occurs more than once
@@ -475,6 +587,7 @@ class InvoiceService implements ITemplateRenderer
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
         $positionAppartment->setIncludesVat($price->getIncludesVat());
         $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
+        $positionAppartment->setIsPerRoom($price->getIsPerRoom());
 
         return $positionAppartment;
     }
@@ -493,6 +606,7 @@ class InvoiceService implements ITemplateRenderer
             $position->setVat($tmpPrice['price']->getVat());
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
+            $position->setIsPerRoom($tmpPrice['price']->getIsPerRoom());
 
             $this->saveNewMiscPosition($position, $requestStack);
         }

@@ -20,33 +20,19 @@ class ReservationStatusRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, ReservationStatus::class);
     }
-
-    // /**
-    //  * @return ReservationStatus[] Returns an array of ReservationStatus objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * every non-system status is default
+     * @return int[]
+     */
+    public function findDefaultIds(): array
     {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('r.id', 'ASC')
-            ->setMaxResults(10)
+        $rows = $this->createQueryBuilder('rs')
+            ->select('rs.id')
+            ->andWhere('rs.code IS NULL OR rs.code = :empty')
+            ->setParameter('empty', '')
             ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+            ->getArrayResult();
 
-    /*
-    public function findOneBySomeField($value): ?ReservationStatus
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return array_map(static fn (array $row): int => (int) $row['id'], $rows);
     }
-    */
 }

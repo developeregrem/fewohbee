@@ -20,14 +20,13 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
-use App\Interfaces\ITemplateRenderer;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class ReservationService implements ITemplateRenderer
+class ReservationService
 {
     public const SESSION_SELECTED_RESERVATIONS = 'selectedReservationIds';
 
@@ -347,6 +346,10 @@ class ReservationService implements ITemplateRenderer
      */
     public function toggleInCreationPrice(Price $price, RequestStack $requestStack): void
     {
+        if (!$price->getActive()) {
+            return;
+        }
+
         $prices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
 
         $exists = $prices->exists(fn ($key, $value) => $value->getId() === $price->getId());
@@ -372,6 +375,8 @@ class ReservationService implements ITemplateRenderer
         // prices will be filles based on already selected prices
         if (null !== $requestStack->getSession()->get('reservatioInCreationPrices', null)) {
             $prices = $requestStack->getSession()->get('reservatioInCreationPrices');
+            $prices = $prices->filter(static fn (Price $price) => $price->getActive());
+            $requestStack->getSession()->set('reservatioInCreationPrices', $prices);
             $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
 
             // assign selected prices to reservations for getting the invoice price positions based on that prices
@@ -383,10 +388,14 @@ class ReservationService implements ITemplateRenderer
             $prices = $ps->getUniquePricesForReservations($reservations, 1);
             // prefill reservatioInCreationPrices session
             foreach ($prices as $price) {
-                $this->toggleInCreationPrice($price, $requestStack);
+                if ($price->getIsDefaultActiveInReservationCreation()) {
+                    $this->toggleInCreationPrice($price, $requestStack);
+                }
             }
+            $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
             $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
-            $is->prefillMiscPositionsWithReservations($reservations, $requestStack);
+            $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
 
             return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         }
@@ -471,7 +480,10 @@ class ReservationService implements ITemplateRenderer
         ];
     }
 
-    public function getRenderParams(Template $template, mixed $param)
+    /**
+     * Build all reservation variables required by template rendering.
+     */
+    public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
         // params need to be an array containing a list of Reservation Objects
         $params = [

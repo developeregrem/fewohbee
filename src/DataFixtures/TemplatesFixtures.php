@@ -12,17 +12,15 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Service\TemplatesService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class TemplatesFixtures extends Fixture implements FixtureGroupInterface
 {
-    public function __construct(private readonly TranslatorInterface $translator)
+    public function __construct(private readonly TemplatesService $templatesService)
     {
     }
 
@@ -33,16 +31,27 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
 
     public function load(ObjectManager $manager): void
     {
-        $baseUrl = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+        $baseUrl = TemplatesService::EXAMPLES_BASE_URL;
         $templates = [
-            'TEMPLATE_GDPR_PDF' => 'dsgvo-export.txt',
-            'TEMPLATE_CASHJOURNAL_PDF' => 'kassenblatt.txt',
-            'TEMPLATE_RESERVATION_EMAIL' => 'email-buchungsbestätigung.txt',
-            'TEMPLATE_RESERVATION_PDF' => 'pdf-reservierungsbestätigung.txt',
-            'TEMPLATE_INVOICE_PDF' => 'rechnung-default.txt',
+            'TEMPLATE_GDPR_PDF' => [
+                ['file' => 'dsgvo-export.txt', 'isDefault' => true],
+            ],
+            'TEMPLATE_CASHJOURNAL_PDF' => [
+                ['file' => 'kassenblatt.txt', 'isDefault' => true],
+            ],
+            'TEMPLATE_RESERVATION_EMAIL' => [
+                ['file' => 'email-buchungsbestätigung.txt', 'isDefault' => true,],
+            ],
+            'TEMPLATE_RESERVATION_PDF' => [
+                ['file' => 'pdf-reservierungsbestätigung.txt', 'isDefault' => true,],
+            ],
+            'TEMPLATE_INVOICE_PDF' => [
+                ['file' => 'rechnung-default.txt', 'isDefault' => true,],
+            ],
+            'TEMPLATE_REGISTRATION_PDF' => $this->templatesService->getRegistrationTemplateDefinitions(),
+            'TEMPLATE_OPERATIONS_PDF' => $this->templatesService->getOperationsTemplateDefinitions(),
         ];
         $types = $manager->getRepository(TemplateType::class)->findAll();
-        $client = HttpClient::create();
         /* @var $type TemplateType */
         foreach ($types as $type) {
             $name = $type->getName();
@@ -50,22 +59,8 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
                 continue;
             }
 
-            $response = $client->request('GET', $baseUrl.$templates[$name]);
-            if (200 !== $response->getStatusCode()) {
-                echo "Could not load $name";
-                continue;
-            }
-
-            $content = $response->getContent();
-
-            $template = new Template();
-            $template->setParams('{"orientation": "P", "marginLeft": 25, "marginRight": 20, "marginTop": 20, "marginBottom": 20, "marginHeader": 9, "marginFooter": 9}');
-            $template->setIsDefault(true);
-            $template->setName($this->translator->trans($name));
-            $template->setTemplateType($type);
-            $template->setText($content);
-
-            $manager->persist($template);
+            $templateEntries = $templates[$name];
+            $this->templatesService->importTemplates($type, $templateEntries, $baseUrl);
         }
 
         $manager->flush();

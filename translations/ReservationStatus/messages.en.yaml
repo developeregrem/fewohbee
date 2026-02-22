@@ -16,9 +16,15 @@ status:
             use: >-
               Status cannot be deleted because it still has reservations
               associated with it.
+        system: System statuses cannot be deleted.
       success: Status deleted successfully.
     edit:
+      error:
+        system: System statuses cannot be edited.
       success: Status was successfully processed.
+  canceled_noshow: Canceled / No-show
   name: Name
   option: Option
+  system:
+    locked: System status
   title: Reservation status

@@ -74,8 +74,30 @@
                         <div class="col-sm-4"></div>
                         <div class="col">
                             <div class="form-check form-switch">
-                                <input type="checkbox" name="isFlatPrice-{{ price.id }}" id="isFlatPrice-{{ price.id }}" class="form-check-input"{% if price.isFlatPrice == 1 %} checked {% endif %} value="1">
+                                <input type="checkbox" name="isFlatPrice-{{ price.id }}" id="isFlatPrice-{{ price.id }}" class="form-check-input"
+                                       data-action="change->prices#flatPriceChangeAction"
+                                       data-price-id="{{ price.id }}"
+                                       {% if price.isFlatPrice == 1 %} checked {% endif %} value="1">
                                 <label class="form-check-label" for="isFlatPrice-{{ price.id }}">{{ 'price.isflatprice'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="isPerRoom-{{ price.id }}" id="isPerRoom-{{ price.id }}" class="form-check-input"{% if price.isPerRoom == 1 %} checked {% endif %}{% if price.isFlatPrice == 1 %} disabled{% endif %} value="1">
+                                <label class="form-check-label" for="isPerRoom-{{ price.id }}">{{ 'price.perroom'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    {% set isMiscPriceType = price.type != 2 %}
+                    <div class="row{% if not isMiscPriceType %} d-none{% endif %}" id="default-active-in-reservation-creation-wrap-{{ price.id }}">
+                        <div class="col-sm-4"></div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="isDefaultActiveInReservationCreation-{{ price.id }}" id="isDefaultActiveInReservationCreation-{{ price.id }}" class="form-check-input"{% if price.isDefaultActiveInReservationCreation == 1 %} checked {% endif %}{% if not isMiscPriceType %} disabled{% endif %} value="1">
+                                <label class="form-check-label" for="isDefaultActiveInReservationCreation-{{ price.id }}">{{ 'price.defaultactiveinreservationcreation'|trans }}</label>
                             </div>
                         </div>
                     </div>

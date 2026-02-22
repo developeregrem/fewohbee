@@ -32,7 +32,6 @@ use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
-use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
@@ -819,49 +818,36 @@ class InvoiceServiceController extends AbstractController
         );
     }
 
-    #[Route('/export/pdf/{id}/{templateId}', name: 'invoices.export.pdf', methods: ['GET'])]
-    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, int $templateId): Response
+    #[Route('/export/pdf/{id}/{template}', name: 'invoices.export.pdf', methods: ['GET'])]
+    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, Template $template): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
-        $requestStack->getSession()->set('invoice-template-id', $templateId);
+        $requestStack->getSession()->set('invoice-template-id', $template->getId());
 
         $templateOutput = null;
         try {
-            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
+            $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
         } catch (\InvalidArgumentException $e) {
             $this->addFlash('warning', $e->getMessage());
 
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
-        $template = $em->getRepository(Template::class)->find($templateId);
-
-        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template);
+        $filenameBase = $is->buildInvoiceExportFilename($invoice);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, $filenameBase, $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
 
         return $response;
     }
 
-    #[Route('/export/pdf-xml/{id}/{templateId}', name: 'invoices.export.pdfxml', methods: ['GET'])]
-    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, int $templateId): Response
+    #[Route('/export/pdf-xml/{id}/{template}', name: 'invoices.export.pdfxml', methods: ['GET'])]
+    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, Template $template): Response
     {
         $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
-        $requestStack->getSession()->set('invoice-template-id', $templateId);
-
-        $templateOutput = null;
-        try {
-            $templateOutput = $ts->renderTemplate($templateId, $invoice->getId(), $is);
-        } catch (\InvalidArgumentException $e) {
-            $this->addFlash('warning', $e->getMessage());
-
-            return $this->redirect($this->generateUrl('invoices.overview'));
-        }
-
-        $template = $em->getRepository(Template::class)->find($templateId);
-        $pdfOutput = $ts->getPDFOutput($templateOutput, 'Rechnung-'.$invoice->getNumber(), $template, true);
+        $requestStack->getSession()->set('invoice-template-id', $template->getId());
 
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
         if (!($invoiceSettings instanceof InvoiceSettingsData)) {
@@ -871,21 +857,19 @@ class InvoiceServiceController extends AbstractController
         }
 
         try {
-            $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
-            $mergedPdf = (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
-                ->generateDocument()
-                ->downloadString();
+            $mergedPdf = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $invoiceSettings);
         } catch (\Throwable $e) {
             $this->addFlash('warning', $e->getMessage());
 
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
+        $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
         $response = new Response($mergedPdf);
         $response->headers->set('Content-Type', 'application/pdf');
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'Rechnung-'.$invoice->getNumber().'-einvoice.pdf'
+            $filenameBase.'.pdf'
         );
         $response->headers->set('Content-Disposition', $disposition);
 
@@ -893,7 +877,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, RequestStack $requestStack, EInvoiceExportService $einvoice, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is,  EInvoiceExportService $einvoice, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
         $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
@@ -911,12 +895,13 @@ class InvoiceServiceController extends AbstractController
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
 
+        $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
         $response = new Response($xml);
         $response->headers->set('Content-Type', 'text/xml');
 
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
-            'XRechnung-'.$invoice->getNumber().'.xml'
+            $filenameBase.'.xml'
         );
         $response->headers->set('Content-Disposition', $disposition);
 

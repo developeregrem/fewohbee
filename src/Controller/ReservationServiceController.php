@@ -77,6 +77,7 @@ class ReservationServiceController extends AbstractController
         $selectedApartmentId = $requestStack->getSession()->get('reservation-overview-apartment', $firstApartmentId);
 
         $show = $requestStack->getSession()->get('reservation-overview', 'table');
+        $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
@@ -93,6 +94,7 @@ class ReservationServiceController extends AbstractController
             'selectedCountry' => 'DE',
             'selectedSubdivision' => 'all',
             'show' => $show,
+            'showCanceled' => $showCanceled,
             'showFirstSteps' => (0 == $firstApartmentId),
             'conflictCount' => $alertCount,
             'hasConflicts' => $conflictCount > 0,
@@ -139,6 +141,7 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $holidayCountry = $request->query->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
+        $showCanceledParam = $request->query->get('showCanceled');
 
         if (null == $date) {
             $dateRef = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
@@ -168,6 +171,9 @@ class ReservationServiceController extends AbstractController
         $requestStack->getSession()->set('reservation-overview-interval', $interval);
         $requestStack->getSession()->set('reservation-overview-objectid', $objectId);
         $requestStack->getSession()->set('reservation-overview', 'table');
+        if (null !== $showCanceledParam) {
+            $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
+        }
 
         return $this->render('Reservations/reservation_table.html.twig', [
             'appartments' => $appartments,
@@ -190,6 +196,7 @@ class ReservationServiceController extends AbstractController
         $objectId = $request->query->get('object');
         $year = $request->query->get('year', date('Y'));
         $apartmentId = $request->query->get('apartment');
+        $showCanceledParam = $request->query->get('showCanceled');
         if (null == $apartmentId) {
             $apartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId);
             $apartmentId = isset($apartments[0]) ? $apartments[0]->getId() : 0;
@@ -208,6 +215,9 @@ class ReservationServiceController extends AbstractController
         $requestStack->getSession()->set('reservation-overview-year', $year);
         $requestStack->getSession()->set('reservation-overview-apartment', $apartment->getId());
         $requestStack->getSession()->set('reservation-overview', 'yearly');
+        if (null !== $showCanceledParam) {
+            $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
+        }
 
         return $this->render('Reservations/reservation_table_year.html.twig', [
             'year' => $year,
@@ -225,9 +235,14 @@ class ReservationServiceController extends AbstractController
         $objects = $em->getRepository(Subsidiary::class)->findAll();
         $selectedCountry = $request->request->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->request->get('holidaySubdivision', 'all');
+        $showCanceledParam = $request->request->get('showCanceled');
         $requestStack->getSession()->set('reservation-overview', 'table');
+        if (null !== $showCanceledParam) {
+            $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
+        }
 
         $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
+        $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
 
         return $this->render('Reservations/reservation_table_settings_input_fields.html.twig', [
             'objects' => $objects,
@@ -235,6 +250,7 @@ class ReservationServiceController extends AbstractController
             'holidayCountries' => $cs->getHolidayCountries($requestStack->getCurrentRequest()->getLocale()),
             'selectedCountry' => $selectedCountry,
             'selectedSubdivision' => $selectedSubdivision,
+            'showCanceled' => $showCanceled,
         ]);
     }
 
@@ -1147,7 +1163,7 @@ class ReservationServiceController extends AbstractController
 
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
-        $templateOutput = $ts->renderTemplate($template->getId(), $reservations, $rs);
+        $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
 
         // add attachments
         $attachments = [];

@@ -11,6 +11,7 @@ import {
     setModalTitle,
     enableDeletePopover,
 } from './utils_controller.js';
+import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
 export default class extends Controller {
     static values = {
@@ -73,8 +74,9 @@ export default class extends Controller {
             window.removeEventListener('orientationchange', this.boundResize);
         }
 
-        if (typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            tinymce.get('editor1').destroy();
+        if (this.simpleEditor) {
+            this.simpleEditor.destroy();
+            this.simpleEditor = null;
         }
     }
 
@@ -148,7 +150,7 @@ export default class extends Controller {
         }
         this.isHandlingModalChange = true;
         this.enablePriceOptionsMisc();
-        this.initTinyMceEditor();
+        this.initHtmlEditor();
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
         this.updateConflictBadgeFromModal();
@@ -507,11 +509,17 @@ export default class extends Controller {
         event.preventDefault();
         const id = event.currentTarget.dataset.attachmentId;
         const isInvoice = event.currentTarget.dataset.isInvoice === 'true';
+        const einvoiceCheckbox = event.currentTarget.querySelector('[data-einvoice-checkbox]');
+        const isEInvoice = !!(einvoiceCheckbox && einvoiceCheckbox.checked);
         const url = event.currentTarget.dataset.url;
         if (url && this.modalContent) {
             this.modalContent.dataset.addAttachmentUrl = url;
         }
-        this.addAsAttachment(id, isInvoice);
+        this.addAsAttachment(id, isInvoice, isEInvoice);
+    }
+
+    stopAttachmentRowClickAction(event) {
+        event.stopPropagation();
     }
 
     previewTemplateForReservationAction(event) {
@@ -1051,6 +1059,25 @@ export default class extends Controller {
         }
     }
 
+    updateReservationStatusAction(event) {
+        const select = event.currentTarget;
+        const url = select.dataset.url;
+        const token = select.dataset.token;
+        if (!url || !token) {
+            return;
+        }
+        select.disabled = true;
+        httpRequest({
+            url,
+            method: 'POST',
+            loader: false,
+            data: { status: select.value, _token: token },
+            onComplete: () => {
+                select.disabled = false;
+            }
+        });
+    }
+
     showFeedback(data, target = null) {
         if (!data || typeof data !== 'string' || data.trim().length === 0) {
             return false;
@@ -1513,8 +1540,8 @@ export default class extends Controller {
         if (!formEl || !url) {
             return false;
         }
-        if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            editor.value = tinymce.get('editor1').getContent();
+        if (editor && this.simpleEditor) {
+            editor.value = this.simpleEditor.getHTML();
         }
         httpRequest({
             url,
@@ -1539,17 +1566,19 @@ export default class extends Controller {
         if (!formEl || !url) {
             return false;
         }
-        if (editor && typeof tinymce !== 'undefined' && tinymce.get('editor1')) {
-            editor.value = tinymce.get('editor1').getContent();
+        if (editor && this.simpleEditor) {
+            editor.value = this.simpleEditor.getHTML();
         }
         httpRequest({
             url,
             method: 'POST',
             data: httpSerializeForm(formEl),
-            target: this.modalContent,
+            loader: false,
             onSuccess: (data) => {
+                const doc = new DOMParser().parseFromString(data, 'text/html');
+                const isAttachment = !!doc.querySelector('[data-is-attachment]');
                 if (this.showFeedback(data)) {
-                    if (window.isTemplateAttachment) {
+                    if (isAttachment) {
                         this.previewTemplateForReservation(0, 'false');
                     }
                     return;
@@ -1688,7 +1717,7 @@ export default class extends Controller {
 
     
 
-    addAsAttachment(id, isInvoice) {
+    addAsAttachment(id, isInvoice, isEInvoice = false) {
         const url = this.getContextValue('addAttachmentUrl');
         if (!url) {
             return false;
@@ -1696,9 +1725,15 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
-            data: { id, isInvoice },
+            data: { id, isInvoice, isEInvoice },
+            loader: false,
             target: this.modalContent,
-            onSuccess: () => this.previewTemplateForReservation(0, 'false')
+            onSuccess: (data) => {
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                this.previewTemplateForReservation(0, 'false');
+            }
         });
         return false;
     }
@@ -1760,31 +1795,32 @@ export default class extends Controller {
         return false;
     }
 
-    initTinyMceEditor() {
-        if (typeof tinymce === 'undefined') {
-            return;
-        }
-        const editorNode = document.getElementById('editor1');
-        if (!editorNode) {
-            return;
-        }
-    
-        if (editorNode.dataset.tinymceInitialized === 'true' || tinymce.get('editor1') !== null) {
+    initHtmlEditor() {
+        const textarea = document.getElementById('editor1');
+        if (!textarea || textarea.dataset.editorInitialized === 'true') {
             return;
         }
 
-        editorNode.dataset.tinymceInitialized = 'true';
-        tinymce.init({
-            selector: '#editor1',
-            language: document.documentElement.lang || 'de',
-            branding: false,
-            promotion: false,
-            valid_children: '+body[style]',
-            relative_urls: false,
-            protect: [
-                /<\/?\.?(set)?(html)?pageheader.*?>/g,
-                /<\/?\.?(set)?(html)?pagefooter.*?>/g
-            ]
+        // Destroy previous instance if modal content was replaced
+        if (this.simpleEditor) {
+            this.simpleEditor.destroy();
+            this.simpleEditor = null;
+        }
+
+        textarea.dataset.editorInitialized = 'true';
+        textarea.style.display = 'none';
+
+        const editorContainer = document.createElement('div');
+        editorContainer.className = 'simple-html-editor-content border rounded p-2';
+        editorContainer.style.minHeight = '200px';
+        textarea.parentNode.insertBefore(editorContainer, textarea.nextSibling);
+
+        this.simpleEditor = createSimpleHtmlEditor(editorContainer, textarea.value, {
+            onUpdate: (html) => { textarea.value = html; },
+            labels: {
+                fontFamily: this.translate('templates.editor.toolbar.font_family'),
+                fontSize: this.translate('templates.editor.toolbar.font_size'),
+            },
         });
     }
 

@@ -26,12 +26,17 @@ class StatisticsService
         $this->em = $em;
     }
 
-    public function loadUtilizationForYear($objectId, $year, $beds)
+    public function loadUtilizationForYear($objectId, $year, $beds, array $reservationStatus = [])
     {
         $data = [];
         // each month of the year
         for ($i = 1; $i <= 12; ++$i) {
-            $reservations = $this->em->getRepository(Reservation::class)->loadReservationsForMonth($i, $year, $objectId);
+            $reservations = $this->em->getRepository(Reservation::class)->loadReservationsForMonth(
+                $i,
+                $year,
+                $objectId,
+                $reservationStatus
+            );
 
             $startDate = new \DateTime($year.'-'.$i.'-01');
             $endDate = new \DateTime($year.'-'.$i.'-'.$startDate->format('t'));
