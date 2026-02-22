@@ -392,7 +392,10 @@ class InvoiceService
     {
         $reservations = [];
         foreach ($reservationIds as $resId) {
-            $reservations[] = $this->em->getRepository(Reservation::class)->find($resId);
+            $reservation = $this->em->getRepository(Reservation::class)->find($resId);
+            if ($reservation instanceof Reservation) {
+                $reservations[] = $reservation;
+            }
         }
         $this->prefillMiscPositions($reservations, $requestStack, $useExistingPrices);
     }
@@ -409,8 +412,12 @@ class InvoiceService
         $existingPrices = null;
         // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
         foreach ($reservations as $reservation) {
+            if (!$reservation instanceof Reservation) {
+                continue;
+            }
+
             if ($useExistingPrices) {
-                $existingPrices = $reservation->getPrices();
+                $existingPrices = $reservation->getPrices()->filter(static fn (Price $price) => $price->getActive());
             }
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);
 
@@ -422,7 +429,7 @@ class InvoiceService
                     continue;
                 }
                 foreach ($prices[$i] as $price) {
-                    $amount = ($price->getIsFlatPrice() ? 1 : $reservation->getPersons());
+                    $amount = ($price->getIsFlatPrice() || $price->getIsPerRoom() ? 1 : $reservation->getPersons());
 
                     // if key exists, add the current amount to the existing one, to have only one entry in the results list
                     // with the same price id but a total amount if the same price category occurs more than once
@@ -580,6 +587,7 @@ class InvoiceService
         $positionAppartment->setBeds($reservation->getAppartment()->getBedsMax());
         $positionAppartment->setIncludesVat($price->getIncludesVat());
         $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
+        $positionAppartment->setIsPerRoom($price->getIsPerRoom());
 
         return $positionAppartment;
     }
@@ -598,6 +606,7 @@ class InvoiceService
             $position->setVat($tmpPrice['price']->getVat());
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
+            $position->setIsPerRoom($tmpPrice['price']->getIsPerRoom());
 
             $this->saveNewMiscPosition($position, $requestStack);
         }

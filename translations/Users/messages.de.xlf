@@ -98,8 +98,8 @@
                 <source>ROLE_RESERVATIONS_RO</source>
                 <target>Reservierungsübersicht lesend</target>
             </trans-unit>
-            <trans-unit id="ROLE_HOUSEKEEPING">
-                <source>ROLE_HOUSEKEEPING</source>
+            <trans-unit id="ROLE_OPERATIONS">
+                <source>ROLE_OPERATIONS</source>
                 <target>Betrieb</target>
             </trans-unit>
         </body>

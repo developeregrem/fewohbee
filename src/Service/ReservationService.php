@@ -346,6 +346,10 @@ class ReservationService
      */
     public function toggleInCreationPrice(Price $price, RequestStack $requestStack): void
     {
+        if (!$price->getActive()) {
+            return;
+        }
+
         $prices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
 
         $exists = $prices->exists(fn ($key, $value) => $value->getId() === $price->getId());
@@ -371,6 +375,8 @@ class ReservationService
         // prices will be filles based on already selected prices
         if (null !== $requestStack->getSession()->get('reservatioInCreationPrices', null)) {
             $prices = $requestStack->getSession()->get('reservatioInCreationPrices');
+            $prices = $prices->filter(static fn (Price $price) => $price->getActive());
+            $requestStack->getSession()->set('reservatioInCreationPrices', $prices);
             $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
 
             // assign selected prices to reservations for getting the invoice price positions based on that prices
@@ -382,10 +388,14 @@ class ReservationService
             $prices = $ps->getUniquePricesForReservations($reservations, 1);
             // prefill reservatioInCreationPrices session
             foreach ($prices as $price) {
-                $this->toggleInCreationPrice($price, $requestStack);
+                if ($price->getIsDefaultActiveInReservationCreation()) {
+                    $this->toggleInCreationPrice($price, $requestStack);
+                }
             }
+            $selectedPrices = $requestStack->getSession()->get('reservatioInCreationPrices', new ArrayCollection());
             $requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
-            $is->prefillMiscPositionsWithReservations($reservations, $requestStack);
+            $reservations = $this->setPricesToReservations($selectedPrices, $reservations);
+            $is->prefillMiscPositionsWithReservations($reservations, $requestStack, true);
 
             return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         }

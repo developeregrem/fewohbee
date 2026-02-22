@@ -23,7 +23,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 /**
  * Frontdesk checklist view for arrivals, departures and inhouse guests.
  */
-#[IsGranted('ROLE_HOUSEKEEPING')]
+#[IsGranted('ROLE_OPERATIONS')]
 #[Route('/operations/frontdesk')]
 class OperationsFrontdeskController extends AbstractController
 {

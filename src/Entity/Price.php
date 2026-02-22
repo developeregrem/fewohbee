@@ -64,6 +64,10 @@ class Price
     private $includesVat;
     #[ORM\Column(type: 'boolean')]
     private $isFlatPrice;
+    #[ORM\Column(type: 'boolean')]
+    private bool $isPerRoom;
+    #[ORM\Column(type: 'boolean')]
+    private bool $isDefaultActiveInReservationCreation;
 
     /**
      * Constructor.
@@ -75,6 +79,8 @@ class Price
         $this->allPeriods = true;
         $this->includesVat = true;
         $this->isFlatPrice = false;
+        $this->isPerRoom = false;
+        $this->isDefaultActiveInReservationCreation = true;
     }
 
     public function getId()
@@ -368,6 +374,33 @@ class Price
     public function setIsFlatPrice(bool $isFlatPrice): self
     {
         $this->isFlatPrice = $isFlatPrice;
+        if ($isFlatPrice) {
+            $this->isPerRoom = false;
+        }
+
+        return $this;
+    }
+
+    public function getIsPerRoom(): bool
+    {
+        return $this->isPerRoom;
+    }
+
+    public function setIsPerRoom(bool $isPerRoom): self
+    {
+        $this->isPerRoom = $isPerRoom;
+
+        return $this;
+    }
+
+    public function getIsDefaultActiveInReservationCreation(): bool
+    {
+        return $this->isDefaultActiveInReservationCreation;
+    }
+
+    public function setIsDefaultActiveInReservationCreation(bool $isDefaultActiveInReservationCreation): self
+    {
+        $this->isDefaultActiveInReservationCreation = $isDefaultActiveInReservationCreation;
 
         return $this;
     }
