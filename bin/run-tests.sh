@@ -30,6 +30,7 @@ run_console app:first-run \
     --last-name="$FIRST_RUN_LASTNAME" \
     --email="$FIRST_RUN_EMAIL" \
     --accommodation-name="$FIRST_RUN_ACCOMMODATION" \
+    --load-sample-data \
     --no-interaction
 
 run_console doctrine:fixtures:load --no-interaction --append
