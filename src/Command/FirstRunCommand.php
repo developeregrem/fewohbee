@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\DataFixtures\TemplatesFixtures;
 use App\Entity\Customer;
 use App\Entity\Role;
 use App\Entity\Subsidiary;
@@ -40,7 +41,8 @@ class FirstRunCommand extends Command
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $hasher,
-        private readonly UserService $us
+        private readonly UserService $us,
+        private readonly TemplatesFixtures $templatesFixtures,
     ) {
         parent::__construct();
     }
@@ -165,6 +167,9 @@ class FirstRunCommand extends Command
         $io->note('Customers prepared.');
 
         $this->em->flush();
+
+        $this->templatesFixtures->load($this->em);
+        $io->note('Base templates loaded.');
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
 
