@@ -58,6 +58,7 @@ function extendWithTemplateAttrs(Base, ...attrGroups) {
     });
 }
 
+const TemplateLink = extendWithTemplateAttrs(Link, styleAndClassAttributes());
 const TemplateTable = extendWithTemplateAttrs(Table, styleAndClassAttributes());
 const TemplateTableRow = extendWithTemplateAttrs(TableRow, repeatAndConditionAttributes(), styleAndClassAttributes());
 const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndConditionAttributes(), styleAndClassAttributes());
@@ -1396,7 +1397,7 @@ export default class extends Controller {
                     gapcursor: false,
                 }),
                 Underline,
-                Link.configure({ openOnClick: false }),
+                TemplateLink.configure({ openOnClick: false }),
                 ResizableImage,
                 TextStyle,
                 TemplateControlAttributes,
