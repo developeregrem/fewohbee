@@ -166,7 +166,6 @@ class PriceRepository extends EntityRepository
                 /* make sure that all room specific fields match */
             ->andWhere('p.roomCategory = :rc AND p.numberOfPersons = :nop AND p.minStay <= :ms')
             ->addOrderBy('p.minStay', 'DESC')
-            ->addOrderBy('p.isPerRoom', 'ASC')
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
             ->setParameter('ms', $stays);
