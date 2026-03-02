@@ -130,8 +130,7 @@ class PriceRepository extends EntityRepository
                 /* select only room type and active prices */
             ->where('p.type = 2 AND p.active = true')
                 /* make sure that all room specific fields match */
-            ->andWhere('p.roomCategory = :rc and p.minStay = :ms')
-            ->andWhere('(:isPerRoom = true AND p.isPerRoom = true) OR (:isPerRoom = false AND p.numberOfPersons = :nop AND p.isPerRoom = false)')
+            ->andWhere('p.roomCategory = :rc and p.minStay = :ms and p.numberOfPersons = :nop')
                 /* select only prices for the given reservation origin */
             ->andWhere(':ros MEMBER OF p.reservationOrigins')
                 /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
@@ -141,7 +140,6 @@ class PriceRepository extends EntityRepository
             ->setParameter('rc', $price->getRoomCategory())
             ->setParameter('nop', $price->getNumberOfPersons())
             ->setParameter('ms', $price->getMinStay())
-            ->setParameter('isPerRoom', $price->getIsPerRoom())
             ->setParameter('ros', $price->getReservationOrigins())
             ->setParameter('ad', $price->getAllDays())
             ->setParameter('mo', $price->getMonday())
@@ -166,8 +164,7 @@ class PriceRepository extends EntityRepository
                 /* select only room type */
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
-            ->andWhere('p.roomCategory = :rc And p.minStay <= :ms')
-            ->andWhere('(p.isPerRoom = true OR p.numberOfPersons = :nop)')
+            ->andWhere('p.roomCategory = :rc AND p.numberOfPersons = :nop AND p.minStay <= :ms')
             ->addOrderBy('p.minStay', 'DESC')
             ->addOrderBy('p.isPerRoom', 'ASC')
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
