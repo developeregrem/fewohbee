@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Customer;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
@@ -89,5 +90,23 @@ class CustomerRepository extends EntityRepository
     {
         return $this->getEntityName() === $class
         || is_subclass_of($class, $this->getEntityName());
+    }
+
+    /**
+     * Find the first customer that has an address with the given email (case-insensitive).
+     */
+    public function findOneByEmailCaseInsensitive(string $email): ?Customer
+    {
+        $result = $this->createQueryBuilder('c')
+            ->select('c', 'a')
+            ->leftJoin('c.customerAddresses', 'a')
+            ->where('LOWER(a.email) = :email')
+            ->setParameter('email', mb_strtolower($email))
+            ->addOrderBy('c.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $result instanceof Customer ? $result : null;
     }
 }

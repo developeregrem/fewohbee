@@ -13,15 +13,28 @@ export default class extends Controller {
         event.preventDefault();
         const button = event.currentTarget;
 
-        const input = this.inputTarget || button.closest('.input-group')?.querySelector('input[type="text"]');
+        const input = this.hasInputTarget
+            ? this.inputTarget
+            : button.closest('.input-group, .ob-codebox')?.querySelector('input[type="text"], textarea');
         if (!input) {
             return;
         }
 
-        input.select();
-        input.setSelectionRange(0, input.value.length);
+        input.focus();
+        if (typeof input.select === 'function') {
+            input.select();
+        }
+        if (typeof input.setSelectionRange === 'function') {
+            input.setSelectionRange(0, input.value.length);
+        }
 
-        navigator.clipboard?.writeText(input.value)
+        if (!navigator.clipboard?.writeText) {
+            console.warn('Clipboard API is not available in this browser context.');
+
+            return;
+        }
+
+        navigator.clipboard.writeText(input.value)
             .then(() => this.showHint(input, button))
             .catch((error) => console.warn('Copy to clipboard failed', error));
     }

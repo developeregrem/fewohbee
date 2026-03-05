@@ -22,6 +22,18 @@ framework:
     php_errors:
         log: true
 
+    rate_limiter:
+        public_booking_availability:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '5 minutes'
+            cache_pool: cache.app
+        public_booking_submit:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.app
+
     cache:
         # Put the unique name of your app here: the prefix seed
         # is used to compute stable namespaces for cache keys.
