@@ -207,6 +207,49 @@ class ReservationRepository extends ServiceEntityRepository
         return $reservations;
     }
 
+    /**
+     * Load aggregated blocking occupancy data for multiple apartments in a single query.
+     *
+     * @param int[] $apartmentIds
+     * @return array<int, array{reservationCount: int, persons: int}>
+     */
+    public function loadOccupancyByApartmentIdsWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, array $apartmentIds): array
+    {
+        if ([] === $apartmentIds) {
+            return [];
+        }
+
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->select('IDENTITY(u.appartment) AS appartmentId')
+            ->addSelect('COUNT(u.id) AS reservationCount')
+            ->addSelect('COALESCE(SUM(u.persons), 0) AS persons')
+            ->where('u.appartment IN (:apps)')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
+                .'(u.startDate < :start AND u.endDate > :start) OR'
+                .'(u.startDate < :end AND u.endDate > :end) OR'
+                .'(u.startDate < :start AND u.endDate > :end))')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
+            ->groupBy('u.appartment');
+
+        $this->applyBlockingStatusFilter($qb, 'u');
+
+        $rows = $qb->getQuery()->getArrayResult();
+        $occupancy = [];
+
+        foreach ($rows as $row) {
+            $occupancy[(int) $row['appartmentId']] = [
+                'reservationCount' => (int) $row['reservationCount'],
+                'persons' => (int) $row['persons'],
+            ];
+        }
+
+        return $occupancy;
+    }
+
     public function loadReservationsWithoutInvoiceForCustomer(\App\Entity\Customer $customer)
     {
         $q = $this

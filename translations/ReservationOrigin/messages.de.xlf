@@ -22,6 +22,10 @@
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.flash.create.check_prices">
+                <source>reservationorigin.flash.create.check_prices</source>
+                <target>Bitte prüfen Sie anschließend die Preiskategorien, damit diese auch für die neue Herkunft gelten.</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.edit.success">
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>

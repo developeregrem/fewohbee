@@ -17,6 +17,7 @@ import ThemeController from './controllers/theme_controller.js';
 import CalendarImportsController from './controllers/calendar_imports_controller.js';
 import HousekeepingController from './controllers/housekeeping_controller.js';
 import OperationsReportsController from './controllers/operations_reports_controller.js';
+import OnlineBookingSettingsController from './controllers/online_booking_settings_controller.js';
 
 const app = startStimulusApp();
 app.register('login', LoginController);
@@ -37,3 +38,4 @@ app.register('theme', ThemeController);
 app.register('calendar-imports', CalendarImportsController);
 app.register('housekeeping', HousekeepingController);
 app.register('operations-reports', OperationsReportsController);
+app.register('online-booking-settings', OnlineBookingSettingsController);

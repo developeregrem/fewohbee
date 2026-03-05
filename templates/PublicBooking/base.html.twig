@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}{{ 'online_booking.public.page_title'|trans }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
+    <style>
+        :root {
+            --fhb-primary: {{ config.themePrimaryColor|default('#1f6feb') }};
+            --fhb-accent: {{ config.themeAccentColor ?: config.themePrimaryColor|default('#1f6feb') }};
+            --fhb-bg: {{ config.themeBackgroundColor ?: '#f6f8fb' }};
+            --fhb-radius: {{ config.themeBorderRadiusPx is not null ? config.themeBorderRadiusPx ~ 'px' : '10px' }};
+        }
+        .fhb-booking-root {
+            background: var(--fhb-bg);
+            min-height: 100vh;
+            padding: {{ embed ? '0.75rem' : '2rem 0' }};
+        }
+        .fhb-booking-card {
+            border-radius: var(--fhb-radius);
+            border: 1px solid rgba(0,0,0,.08);
+            box-shadow: 0 8px 24px rgba(0,0,0,.07);
+        }
+        .fhb-booking-root .btn-primary {
+            background-color: var(--fhb-primary);
+            border-color: var(--fhb-primary);
+        }
+        .fhb-booking-root .text-primary {
+            color: var(--fhb-primary) !important;
+        }
+        .fhb-booking-summary {
+            border-radius: var(--fhb-radius);
+            border: 1px solid rgba(0,0,0,.08);
+            background: #fff;
+            padding: 0.75rem 1rem;
+        }
+    </style>
+</head>
+<body>
+{% block body %}{% endblock %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
+</body>
+</html>

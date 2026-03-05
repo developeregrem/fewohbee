@@ -10,6 +10,10 @@
                 <source>category.description</source>
                 <target>Verwalung der Zimmerkategorien</target>
             </trans-unit>
+            <trans-unit id="category.details">
+                <source>category.details</source>
+                <target>Details / öffentliche Beschreibung</target>
+            </trans-unit>
             <trans-unit id="category.name">
                 <source>category.name</source>
                 <target>Bezeichnung</target>
