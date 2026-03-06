@@ -2,9 +2,12 @@ parameters:
     # fallback parameters
     env(USE_PASSWORD_BLACKLIST): 'true'
     env(PASSKEY_ENABLED): 'false'
+    env(TRUSTED_PROXIES): ''
 
 framework:
     secret: '%env(APP_SECRET)%'
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: [ 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix' ]
     #default_locale: en
     #csrf_protection: true
     http_method_override: false

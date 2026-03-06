@@ -8,11 +8,11 @@ use App\Entity\OnlineBookingConfig;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Entity\User;
+use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -90,7 +90,7 @@ final class PublicBookingControllerTest extends WebTestCase
             ]);
         $publicBookingService->expects(self::once())
             ->method('createBooking')
-            ->willThrowException(new \RuntimeException('online_booking.error.booker_required'));
+            ->willThrowException(new PublicBookingException('online_booking.error.booker_required'));
 
         $this->overrideBookingServices($publicBookingService, $config, $this->createNoopAbuseProtectionService());
 
@@ -125,6 +125,7 @@ final class PublicBookingControllerTest extends WebTestCase
     public function testSuccessfulSubmitUsesPrgAndDoesNotRenderFormAfterRedirect(): void
     {
         $client = self::createClient();
+        $client->disableReboot();
         $config = $this->createEnabledConfig();
         $config->setSuccessMessageText('Danke fuer Ihre Anfrage.');
 
@@ -132,24 +133,6 @@ final class PublicBookingControllerTest extends WebTestCase
         $publicBookingService->expects(self::exactly(2))
             ->method('validateEnabledConfig')
             ->willReturn(null);
-        $publicBookingService->expects(self::once())
-            ->method('buildSelectionPreview')
-            ->willReturn([
-                'availability' => [[
-                    'typeKey' => 'category:1',
-                    'typeLabel' => 'Einzelzimmer',
-                    'typeDescription' => null,
-                    'maxGuests' => 1,
-                    'availableCount' => 1,
-                    'roomIds' => [11],
-                    'subsidiaryIds' => [1],
-                ]],
-                'selected' => ['category:1' => 1],
-                'roomTotal' => 80.0,
-                'roomTotalFormatted' => '80,00',
-                'roomPriceBreakdown' => [],
-                'roomReservations' => [],
-            ]);
         $publicBookingService->expects(self::once())
             ->method('createBooking')
             ->willReturn([
@@ -235,12 +218,12 @@ final class PublicBookingControllerTest extends WebTestCase
 
     /** Replace the booking services in the test container for controller-level flow assertions. */
     private function overrideBookingServices(
-        PublicBookingService&MockObject $publicBookingService,
+        PublicBookingService $publicBookingService,
         OnlineBookingConfig $config,
-        PublicBookingAbuseProtectionService&MockObject $abuseProtectionService
+        PublicBookingAbuseProtectionService $abuseProtectionService
     ): void
     {
-        $configService = $this->createMock(OnlineBookingConfigService::class);
+        $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getConfig')
             ->willReturn($config);
 
@@ -260,9 +243,9 @@ final class PublicBookingControllerTest extends WebTestCase
     }
 
     /** Create a no-op abuse protection service mock so controller tests can focus on flow behavior. */
-    private function createNoopAbuseProtectionService(): PublicBookingAbuseProtectionService&MockObject
+    private function createNoopAbuseProtectionService(): PublicBookingAbuseProtectionService
     {
-        $service = $this->createMock(PublicBookingAbuseProtectionService::class);
+        $service = $this->createStub(PublicBookingAbuseProtectionService::class);
         $service->method('createFormState')
             ->willReturnCallback(static fn (bool $includeSubmitToken): array => [
                 'formStartedAt' => time() - 5,

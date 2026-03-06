@@ -79,10 +79,10 @@ export default class extends Controller {
         const roomsSelected = this.element.querySelector('input[name$="[roomsMode]"]:checked')?.value === 'SELECTED';
 
         if (this.hasSubsidiariesWrapTarget) {
-            this.subsidiariesWrapTarget.classList.toggle('is-hidden', !subsidiariesSelected);
+            this.subsidiariesWrapTarget.classList.toggle('d-none', !subsidiariesSelected);
         }
         if (this.hasRoomsWrapTarget) {
-            this.roomsWrapTarget.classList.toggle('is-hidden', !roomsSelected);
+            this.roomsWrapTarget.classList.toggle('d-none', !roomsSelected);
         }
     }
 

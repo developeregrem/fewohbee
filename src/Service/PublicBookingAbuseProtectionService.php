@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Exception\PublicBookingException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -77,11 +78,11 @@ class PublicBookingAbuseProtectionService
     {
         $startedAt = (int) $request->request->get('form_started_at', 0);
         if ($startedAt < 1) {
-            throw new \RuntimeException('online_booking.error.invalid_request');
+            throw new PublicBookingException('online_booking.error.invalid_request');
         }
 
         if ((time() - $startedAt) < self::MINIMUM_ELAPSED_SECONDS) {
-            throw new \RuntimeException('online_booking.error.request_too_fast');
+            throw new PublicBookingException('online_booking.error.request_too_fast');
         }
     }
 
@@ -89,7 +90,7 @@ class PublicBookingAbuseProtectionService
     private function assertHoneypotIsEmpty(Request $request): void
     {
         if ('' !== trim((string) $request->request->get('website', ''))) {
-            throw new \RuntimeException('online_booking.error.invalid_request');
+            throw new PublicBookingException('online_booking.error.invalid_request');
         }
     }
 
@@ -98,7 +99,7 @@ class PublicBookingAbuseProtectionService
     {
         $limit = $factory->create($key)->consume();
         if (!$limit->isAccepted()) {
-            throw new \RuntimeException($errorKey);
+            throw new PublicBookingException($errorKey);
         }
     }
 
@@ -109,14 +110,14 @@ class PublicBookingAbuseProtectionService
         $submittedToken = trim((string) $request->request->get('submit_token', ''));
 
         if (null === $session || '' === $submittedToken) {
-            throw new \RuntimeException('online_booking.error.invalid_request');
+            throw new PublicBookingException('online_booking.error.invalid_request');
         }
 
         $storedToken = (string) $session->get(self::SESSION_SUBMIT_TOKEN, '');
         $session->remove(self::SESSION_SUBMIT_TOKEN);
 
         if ('' === $storedToken || !hash_equals($storedToken, $submittedToken)) {
-            throw new \RuntimeException('online_booking.error.invalid_submit_token');
+            throw new PublicBookingException('online_booking.error.invalid_submit_token');
         }
     }
 
