@@ -298,7 +298,7 @@ class InvoiceService
         }, $pattern);
 
         if ($appendEinvoiceSuffix) {
-            $filename .= '-einvoice';
+            $filename .= '_einvoice';
         }
 
         return $this->sanitizeFilename($filename);
