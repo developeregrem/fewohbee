@@ -44,6 +44,7 @@ class OnlineBookingConfigType extends AbstractType
             ->add('enabled', CheckboxType::class, [
                 'required' => false,
                 'label' => 'online_booking.settings.enabled',
+                'label_attr' => ['class' => 'checkbox-switch'],
             ])
             ->add('bookingMode', ChoiceType::class, [
                 'label' => 'online_booking.settings.booking_mode',
@@ -88,19 +89,10 @@ class OnlineBookingConfigType extends AbstractType
                 'label' => 'online_booking.settings.theme_primary',
                 'html5' => true,
             ])
-            ->add('themeAccentColor', ColorType::class, [
-                'label' => 'online_booking.settings.theme_accent',
-                'required' => false,
-                'html5' => true,
-            ])
             ->add('themeBackgroundColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_background',
                 'required' => false,
                 'html5' => true,
-            ])
-            ->add('themeBorderRadiusPx', IntegerType::class, [
-                'label' => 'online_booking.settings.theme_radius',
-                'required' => false,
             ])
             ->add('confirmationEmailTemplateId', ChoiceType::class, [
                 'label' => 'online_booking.settings.confirmation_email_template',
@@ -154,6 +146,18 @@ class OnlineBookingConfigType extends AbstractType
                 'attr' => [
                     'rows' => 6,
                     'data-online-booking-settings-editor' => 'success-message',
+                ],
+            ])
+            ->add('customCss', TextareaType::class, [
+                'label' => 'online_booking.settings.custom_css',
+                'help' => 'online_booking.settings.custom_css_help',
+                'help_html' => true,
+                'required' => false,
+                'attr' => [
+                    'rows' => 8,
+                    'class' => 'font-monospace small',
+                    'spellcheck' => 'false',
+                    'placeholder' => ".fhb-booking-root {\n    font-family: 'Georgia', serif;\n}",
                 ],
             ])
         ;

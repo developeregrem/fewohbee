@@ -342,9 +342,22 @@ class InvoiceService
      */
     public function prefillAppartmentPositions(Reservation $reservation, RequestStack $requestStack): void
     {
+        foreach ($this->buildAppartmentPositions($reservation) as $position) {
+            $this->saveNewAppartmentPosition($position, $requestStack);
+        }
+    }
+
+    /**
+     * Build apartment invoice positions for a reservation without session dependency.
+     *
+     * @return InvoiceAppartment[]
+     */
+    public function buildAppartmentPositions(Reservation $reservation): array
+    {
         $prices = $this->ps->getPricesForReservationDays($reservation, 2);
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
 
+        $positions = [];
         $curDate = clone $reservation->getStartDate();
         $lastPrice = (null === $prices[0] ? null : $prices[0][0]);
         $start = clone $reservation->getStartDate();
@@ -360,13 +373,14 @@ class InvoiceService
 
             $curDate = (clone $curDate)->add(new \DateInterval('P'.(0 === $i ? 0 : 1).'D'));
             if (null !== $price && null !== $lastPrice && ($lastPrice->getId() !== $price->getId() || $i == $days)) {
-                $position = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
-                $this->saveNewAppartmentPosition($position, $requestStack);
+                $positions[] = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
 
                 $start = clone $curDate;
             }
             $lastPrice = $price;
         }    // loop must run one more time to add the position for the last day of stay
+
+        return $positions;
     }
 
     /**

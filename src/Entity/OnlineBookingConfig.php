@@ -54,14 +54,7 @@ class OnlineBookingConfig
 
     #[ORM\Column(type: Types::STRING, length: 7, nullable: true)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
-    private ?string $themeAccentColor = null;
-
-    #[ORM\Column(type: Types::STRING, length: 7, nullable: true)]
-    #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private ?string $themeBackgroundColor = null;
-
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $themeBorderRadiusPx = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $confirmationEmailTemplateId = null;
@@ -83,6 +76,9 @@ class OnlineBookingConfig
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $successMessageText = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $customCss = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
@@ -196,18 +192,6 @@ class OnlineBookingConfig
         return $this;
     }
 
-    public function getThemeAccentColor(): ?string
-    {
-        return $this->themeAccentColor;
-    }
-
-    public function setThemeAccentColor(?string $themeAccentColor): self
-    {
-        $this->themeAccentColor = $themeAccentColor ?: null;
-
-        return $this;
-    }
-
     public function getThemeBackgroundColor(): ?string
     {
         return $this->themeBackgroundColor;
@@ -216,18 +200,6 @@ class OnlineBookingConfig
     public function setThemeBackgroundColor(?string $themeBackgroundColor): self
     {
         $this->themeBackgroundColor = $themeBackgroundColor ?: null;
-
-        return $this;
-    }
-
-    public function getThemeBorderRadiusPx(): ?int
-    {
-        return $this->themeBorderRadiusPx;
-    }
-
-    public function setThemeBorderRadiusPx(?int $themeBorderRadiusPx): self
-    {
-        $this->themeBorderRadiusPx = $themeBorderRadiusPx;
 
         return $this;
     }
@@ -312,6 +284,18 @@ class OnlineBookingConfig
     public function setSuccessMessageText(?string $successMessageText): self
     {
         $this->successMessageText = '' === trim((string) $successMessageText) ? null : $successMessageText;
+
+        return $this;
+    }
+
+    public function getCustomCss(): ?string
+    {
+        return $this->customCss;
+    }
+
+    public function setCustomCss(?string $customCss): self
+    {
+        $this->customCss = '' === trim((string) $customCss) ? null : $customCss;
 
         return $this;
     }

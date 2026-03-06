@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
@@ -28,7 +29,7 @@ class PublicBookingController extends AbstractController
         $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
         $error = $publicBookingService->validateEnabledConfig();
         $countries = Countries::getNames($request->getLocale());
-        $defaultCountry = $countries['DE'] ?? 'Deutschland';
+        $defaultCountry = mb_strtoupper($request->getLocale());
         $successMessage = null;
 
         if ('1' === (string) $request->query->get('submitted')) {
@@ -66,7 +67,7 @@ class PublicBookingController extends AbstractController
                 'address' => (string) $request->request->get('address', ''),
                 'zip' => (string) $request->request->get('zip', ''),
                 'city' => (string) $request->request->get('city', ''),
-                'country' => (string) $request->request->get('country', $defaultCountry),
+                'country' => mb_strtoupper((string) $request->request->get('country', $defaultCountry)),
                 'comment' => (string) $request->request->get('comment', ''),
             ],
             'roomTotalFormatted' => null,
@@ -110,15 +111,6 @@ class PublicBookingController extends AbstractController
                 $view['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
                 $view['formState'] = $abuseProtectionService->createFormState(true);
             } elseif ('submit' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $qtyByType, $request);
-                $view['availabilityChecked'] = true;
-                $view['step'] = 3;
-                $view['availability'] = $preview['availability'];
-                $view['selectedQty'] = $preview['selected'];
-                $view['roomTotalFormatted'] = $preview['roomTotalFormatted'];
-                $view['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
-                $view['formState'] = $abuseProtectionService->createFormState(true);
-
                 $result = $publicBookingService->createBooking(
                     $dateFrom,
                     $dateTo,
@@ -140,7 +132,7 @@ class PublicBookingController extends AbstractController
                     'mode' => $config->getBookingMode(),
                 ]);
             }
-        } catch (\Throwable $e) {
+        } catch (PublicBookingException $e) {
             $view['errorMessage'] = $e->getMessage();
 
             if (
@@ -152,9 +144,14 @@ class PublicBookingController extends AbstractController
                 && [] === $view['availability']
             ) {
                 try {
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request);
+                    $selectedQtyForPreview = 'submit' === $intent ? $qtyByType : [];
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedQtyForPreview, $request);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
+                    if ('submit' === $intent && isset($fallbackPreview['roomTotalFormatted'])) {
+                        $view['roomTotalFormatted'] = $fallbackPreview['roomTotalFormatted'];
+                        $view['roomPriceBreakdown'] = $fallbackPreview['roomPriceBreakdown'] ?? [];
+                    }
                 } catch (\Throwable) {
                 }
             }
@@ -162,6 +159,9 @@ class PublicBookingController extends AbstractController
             if ([] !== $view['availability']) {
                 $view['step'] = 'submit' === $intent ? 3 : 2;
                 $view['formState'] = $abuseProtectionService->createFormState('submit' === $intent);
+                if ('submit' === $intent) {
+                    $view['selectedQty'] = array_filter($qtyByType, static fn (int $qty): bool => $qty > 0);
+                }
             } elseif ('' !== (string) $request->request->get('dateFrom') && '' !== (string) $request->request->get('dateTo')) {
                 $view['step'] = 2;
                 $view['formState'] = $abuseProtectionService->createFormState(false);
@@ -181,14 +181,14 @@ class PublicBookingController extends AbstractController
         $dateFromRaw = (string) $request->request->get('dateFrom', '');
         $dateToRaw = (string) $request->request->get('dateTo', '');
         if ('' === $dateFromRaw || '' === $dateToRaw) {
-            throw new \RuntimeException('online_booking.error.dates_required');
+            throw new PublicBookingException('online_booking.error.dates_required');
         }
 
         try {
             $dateFrom = new \DateTimeImmutable($dateFromRaw);
             $dateTo = new \DateTimeImmutable($dateToRaw);
         } catch (\Throwable) {
-            throw new \RuntimeException('online_booking.error.invalid_dates');
+            throw new PublicBookingException('online_booking.error.invalid_dates');
         }
 
         $persons = max(1, (int) $request->request->get('persons', 1));
@@ -196,11 +196,11 @@ class PublicBookingController extends AbstractController
         $minArrivalDate = new \DateTimeImmutable('tomorrow');
 
         if ($dateFrom >= $dateTo) {
-            throw new \RuntimeException('online_booking.error.departure_after_arrival');
+            throw new PublicBookingException('online_booking.error.departure_after_arrival');
         }
 
         if ($dateFrom < $minArrivalDate) {
-            throw new \RuntimeException('online_booking.error.arrival_must_be_future');
+            throw new PublicBookingException('online_booking.error.arrival_must_be_future');
         }
 
         return [$dateFrom, $dateTo, $persons, $roomsCount];
@@ -247,7 +247,7 @@ class PublicBookingController extends AbstractController
             'address' => (string) $request->request->get('address', ''),
             'zip' => (string) $request->request->get('zip', ''),
             'city' => (string) $request->request->get('city', ''),
-            'country' => (string) $request->request->get('country', $defaultCountry),
+            'country' => mb_strtoupper((string) $request->request->get('country', $defaultCountry)),
             'comment' => (string) $request->request->get('comment', ''),
         ];
     }

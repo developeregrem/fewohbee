@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\Appartment;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
-use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Repository\OnlineBookingConfigRepository;
 use App\Repository\AppartmentRepository;
+use App\Repository\OnlineBookingConfigRepository;
+use App\Repository\SubsidiaryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class OnlineBookingConfigService
@@ -19,6 +18,7 @@ class OnlineBookingConfigService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly OnlineBookingConfigRepository $repository,
+        private readonly SubsidiaryRepository $subsidiaryRepository,
         private readonly AppartmentRepository $appartmentRepository
     ) {
     }
@@ -55,21 +55,10 @@ class OnlineBookingConfigService
         $config ??= $this->getConfig();
 
         if (OnlineBookingConfig::SUBSIDIARIES_MODE_ALL === $config->getSubsidiariesMode()) {
-            return array_map(
-                static fn (Subsidiary $subsidiary): int => (int) $subsidiary->getId(),
-                $this->em->getRepository(Subsidiary::class)->findAll()
-            );
+            return $this->subsidiaryRepository->loadAllIds();
         }
 
-        $ids = $config->getSelectedSubsidiaryIds();
-        if ([] === $ids) {
-            return [];
-        }
-
-        return array_values(array_map(
-            static fn (Subsidiary $subsidiary): int => (int) $subsidiary->getId(),
-            $this->em->getRepository(Subsidiary::class)->findBy(['id' => $ids])
-        ));
+        return $this->subsidiaryRepository->loadExistingIds($config->getSelectedSubsidiaryIds());
     }
 
     /**
@@ -82,21 +71,10 @@ class OnlineBookingConfigService
         $config ??= $this->getConfig();
 
         if (OnlineBookingConfig::ROOMS_MODE_ALL === $config->getRoomsMode()) {
-            return array_map(
-                static fn (Appartment $appartment): int => (int) $appartment->getId(),
-                $this->em->getRepository(Appartment::class)->findAll()
-            );
+            return $this->appartmentRepository->loadAllIds();
         }
 
-        $ids = $config->getSelectedRoomIds();
-        if ([] === $ids) {
-            return [];
-        }
-
-        return array_values(array_map(
-            static fn (Appartment $appartment): int => (int) $appartment->getId(),
-            $this->appartmentRepository->findBy(['id' => $ids])
-        ));
+        return $this->appartmentRepository->loadExistingIds($config->getSelectedRoomIds());
     }
 
     /** Return the configured confirmation template only if it is a reservation email template. */

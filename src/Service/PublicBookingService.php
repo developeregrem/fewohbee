@@ -7,7 +7,9 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\MailCorrespondence;
 use App\Entity\OnlineBookingConfig;
+use App\Exception\PublicBookingException;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
@@ -16,7 +18,6 @@ use App\Repository\CustomerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -28,7 +29,6 @@ class PublicBookingService
         private readonly OnlineBookingConfigService $configService,
         private readonly PublicAvailabilityService $availabilityService,
         private readonly InvoiceService $invoiceService,
-        private readonly RequestStack $requestStack,
         private readonly TemplatesService $templatesService,
         private readonly MailService $mailService,
         private readonly TranslatorInterface $translator
@@ -54,7 +54,7 @@ class PublicBookingService
 
         $selection = $this->normalizeSelection($qtyByType);
         if ([] === $selection && [] !== $qtyByType) {
-            throw new \RuntimeException('online_booking.error.select_at_least_one_room');
+            throw new PublicBookingException('online_booking.error.select_at_least_one_room');
         }
 
         if ([] !== $selection) {
@@ -104,18 +104,18 @@ class PublicBookingService
             ? $this->configService->getBookingStatus($config)
             : $this->configService->getInquiryStatus($config);
         if (!$status instanceof ReservationStatus) {
-            throw new \RuntimeException('online_booking.error.invalid_status_config');
+            throw new PublicBookingException('online_booking.error.invalid_status_config');
         }
 
         $origin = $this->configService->getReservationOrigin($config);
         if (null === $origin) {
-            throw new \RuntimeException('online_booking.error.reservation_origin_missing');
+            throw new PublicBookingException('online_booking.error.reservation_origin_missing');
         }
 
         $customer = $this->findOrCreateBookerCustomer(
             $booker
         );
-        $publicComment = trim((string) ($booker['comment'] ?? ''));
+        $publicComment = self::sanitize($booker['comment'] ?? '', 2000);
 
         $bookingGroupUuid = Uuid::v4();
         foreach ($reservations as $reservation) {
@@ -165,20 +165,20 @@ class PublicBookingService
     private function assertConfigReady(OnlineBookingConfig $config): void
     {
         if (!$config->isEnabled()) {
-            throw new \RuntimeException('online_booking.error.disabled');
+            throw new PublicBookingException('online_booking.error.disabled');
         }
 
         if (null === $this->configService->getReservationOrigin($config)) {
-            throw new \RuntimeException('online_booking.error.reservation_origin_missing');
+            throw new PublicBookingException('online_booking.error.reservation_origin_missing');
         }
 
         // Template validity is checked in settings validation. Runtime can fall back to the default template.
 
         if (!$this->configService->getInquiryStatus($config) instanceof ReservationStatus) {
-            throw new \RuntimeException('online_booking.error.invalid_status_config');
+            throw new PublicBookingException('online_booking.error.invalid_status_config');
         }
         if (!$this->configService->getBookingStatus($config) instanceof ReservationStatus) {
-            throw new \RuntimeException('online_booking.error.invalid_status_config');
+            throw new PublicBookingException('online_booking.error.invalid_status_config');
         }
     }
 
@@ -223,7 +223,7 @@ class PublicBookingService
             }
 
             if ($qty > (int) $row['availableCount']) {
-                throw new \RuntimeException('online_booking.error.qty_exceeds_availability');
+                throw new PublicBookingException('online_booking.error.qty_exceeds_availability');
             }
 
             $picked = array_slice($row['roomIds'], 0, $qty);
@@ -264,11 +264,11 @@ class PublicBookingService
     {
         $sumQty = array_sum($selection);
         if ($sumQty !== $roomsCount) {
-            throw new \RuntimeException('online_booking.error.qty_sum_mismatch');
+            throw new PublicBookingException('online_booking.error.qty_sum_mismatch');
         }
 
         if ($sumQty < 1) {
-            throw new \RuntimeException('online_booking.error.select_at_least_one_room');
+            throw new PublicBookingException('online_booking.error.select_at_least_one_room');
         }
 
         $availabilityMap = [];
@@ -279,17 +279,17 @@ class PublicBookingService
 
         foreach ($selection as $typeKey => $qty) {
             if (!isset($availabilityMap[$typeKey])) {
-                throw new \RuntimeException('online_booking.error.room_type_no_longer_available');
+                throw new PublicBookingException('online_booking.error.room_type_no_longer_available');
             }
             $row = $availabilityMap[$typeKey];
             if ($qty > (int) $row['availableCount']) {
-                throw new \RuntimeException('online_booking.error.qty_exceeds_availability');
+                throw new PublicBookingException('online_booking.error.qty_exceeds_availability');
             }
             $capacity += $qty * (int) $row['maxGuests'];
         }
 
         if ($capacity < $persons) {
-            throw new \RuntimeException('online_booking.error.insufficient_capacity');
+            throw new PublicBookingException('online_booking.error.insufficient_capacity');
         }
     }
 
@@ -307,7 +307,7 @@ class PublicBookingService
 
         $totalCapacity = array_sum(array_map(static fn (Appartment $room): int => (int) $room->getBedsMax(), $rooms));
         if ($persons < count($rooms) || $persons > $totalCapacity) {
-            throw new \RuntimeException('online_booking.error.guest_distribution_invalid');
+            throw new PublicBookingException('online_booking.error.guest_distribution_invalid');
         }
 
         $origin = $this->configService->getReservationOrigin();
@@ -336,32 +336,42 @@ class PublicBookingService
         }
 
         if (0 !== $remainingPersons) {
-            throw new \RuntimeException('online_booking.error.guest_distribution_failed');
+            throw new PublicBookingException('online_booking.error.guest_distribution_failed');
         }
 
         return $reservations;
     }
 
     /**
-     * Calculate the room-only total using the existing reservation preview pricing logic.
+     * Calculate the room-only total using session-free apartment position building.
      *
      * @param Reservation[] $reservations
      * @return array{roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
      */
     private function calculateRoomTotal(array $reservations): array
     {
-        $session = $this->requestStack->getSession();
-        if (null === $session) {
-            return ['roomTotal' => 0.0, 'roomTotalFormatted' => number_format(0, 2, ',', '.'), 'roomPriceBreakdown' => []];
-        }
-
         $apartmentTotal = 0.0;
         $breakdown = [];
 
         foreach ($reservations as $reservation) {
-            $singleTotal = $this->calculateSingleReservationRoomTotal($reservation);
-            $label = $this->buildReservationTypeLabel($reservation);
+            $positions = $this->invoiceService->buildAppartmentPositions($reservation);
 
+            $vatSums = [];
+            $brutto = 0.0;
+            $netto = 0.0;
+            $singleTotal = 0.0;
+            $miscTotal = 0.0;
+            $this->invoiceService->calculateSums(
+                new ArrayCollection($positions),
+                new ArrayCollection(),
+                $vatSums,
+                $brutto,
+                $netto,
+                $singleTotal,
+                $miscTotal
+            );
+
+            $label = $this->buildReservationTypeLabel($reservation);
             if (!isset($breakdown[$label])) {
                 $breakdown[$label] = [
                     'label' => $label,
@@ -388,36 +398,6 @@ class PublicBookingService
         ];
     }
 
-    /** Calculate the room-only total for a single transient reservation. */
-    private function calculateSingleReservationRoomTotal(Reservation $reservation): float
-    {
-        $session = $this->requestStack->getSession();
-        if (null === $session) {
-            return 0.0;
-        }
-
-        $session->set('invoicePositionsAppartments', new ArrayCollection());
-        $this->invoiceService->prefillAppartmentPositions($reservation, $this->requestStack);
-
-        $apartmentPositions = $session->get('invoicePositionsAppartments', new ArrayCollection());
-        $vatSums = [];
-        $brutto = 0.0;
-        $netto = 0.0;
-        $apartmentTotal = 0.0;
-        $miscTotal = 0.0;
-        $this->invoiceService->calculateSums(
-            $apartmentPositions instanceof ArrayCollection ? $apartmentPositions : new ArrayCollection((array) $apartmentPositions),
-            new ArrayCollection(),
-            $vatSums,
-            $brutto,
-            $netto,
-            $apartmentTotal,
-            $miscTotal
-        );
-
-        return $apartmentTotal;
-    }
-
     /** Build a readable room type label for price breakdown rows. */
     private function buildReservationTypeLabel(Reservation $reservation): string
     {
@@ -438,23 +418,26 @@ class PublicBookingService
      */
     private function findOrCreateBookerCustomer(array $booker): Customer
     {
-        $salutation = trim((string) ($booker['salutation'] ?? ''));
-        $firstname = trim((string) ($booker['firstname'] ?? ''));
-        $lastname = trim((string) ($booker['lastname'] ?? ''));
-        $email = trim((string) ($booker['email'] ?? ''));
-        $phone = trim((string) ($booker['phone'] ?? ''));
-        $normalizedEmail = mb_strtolower(trim($email));
+        $salutation = self::sanitize($booker['salutation'] ?? '', 100);
+        $firstname = self::sanitize($booker['firstname'] ?? '', 100);
+        $lastname = self::sanitize($booker['lastname'] ?? '', 100);
+        $email = self::sanitize($booker['email'] ?? '', 180);
+        $normalizedEmail = mb_strtolower($email);
         if ('' === $salutation || '' === $firstname || '' === $lastname || '' === $normalizedEmail) {
-            throw new \RuntimeException('online_booking.error.booker_required');
+            throw new PublicBookingException('online_booking.error.booker_required');
+        }
+
+        if (!filter_var($normalizedEmail, \FILTER_VALIDATE_EMAIL)) {
+            throw new PublicBookingException('online_booking.error.invalid_email');
         }
 
         if (
-            '' === trim((string) ($booker['address'] ?? ''))
-            || '' === trim((string) ($booker['zip'] ?? ''))
-            || '' === trim((string) ($booker['city'] ?? ''))
-            || '' === trim((string) ($booker['country'] ?? ''))
+            '' === self::sanitize($booker['address'] ?? '')
+            || '' === self::sanitize($booker['zip'] ?? '')
+            || '' === self::sanitize($booker['city'] ?? '')
+            || '' === self::sanitize($booker['country'] ?? '')
         ) {
-            throw new \RuntimeException('online_booking.error.booker_required');
+            throw new PublicBookingException('online_booking.error.booker_required');
         }
 
         /** @var CustomerRepository $customerRepository */
@@ -493,16 +476,16 @@ class PublicBookingService
         $updated = false;
         $firstAddress = null;
 
-        if ((null === $customer->getSalutation() || '' === trim((string) $customer->getSalutation())) && '' !== trim((string) ($booker['salutation'] ?? ''))) {
-            $customer->setSalutation(trim((string) $booker['salutation']));
+        if ((null === $customer->getSalutation() || '' === trim((string) $customer->getSalutation())) && '' !== self::sanitize($booker['salutation'] ?? '', 100)) {
+            $customer->setSalutation(self::sanitize($booker['salutation'] ?? '', 100));
             $updated = true;
         }
-        if ((null === $customer->getFirstname() || '' === trim((string) $customer->getFirstname())) && '' !== trim((string) ($booker['firstname'] ?? ''))) {
-            $customer->setFirstname(trim((string) $booker['firstname']));
+        if ((null === $customer->getFirstname() || '' === trim((string) $customer->getFirstname())) && '' !== self::sanitize($booker['firstname'] ?? '', 100)) {
+            $customer->setFirstname(self::sanitize($booker['firstname'] ?? '', 100));
             $updated = true;
         }
-        if ('' === trim((string) $customer->getLastname()) && '' !== trim((string) ($booker['lastname'] ?? ''))) {
-            $customer->setLastname(trim((string) $booker['lastname']));
+        if ('' === trim((string) $customer->getLastname()) && '' !== self::sanitize($booker['lastname'] ?? '', 100)) {
+            $customer->setLastname(self::sanitize($booker['lastname'] ?? '', 100));
             $updated = true;
         }
         foreach ($customer->getCustomerAddresses() as $address) {
@@ -550,16 +533,16 @@ class PublicBookingService
      */
     private function applyBookerDataToAddress(CustomerAddresses $address, array $booker, string $email): void
     {
-        $company = trim((string) ($booker['company'] ?? ''));
+        $company = self::sanitize($booker['company'] ?? '', 150);
 
         $address->setType('' !== $company ? 'CUSTOMER_ADDRESS_TYPE_BUSINESS' : 'CUSTOMER_ADDRESS_TYPE_PRIVATE');
         $address->setCompany('' !== $company ? $company : null);
-        $address->setAddress(trim((string) ($booker['address'] ?? '')) ?: null);
-        $address->setZip(trim((string) ($booker['zip'] ?? '')) ?: null);
-        $address->setCity(trim((string) ($booker['city'] ?? '')) ?: null);
-        $address->setCountry(trim((string) ($booker['country'] ?? '')) ?: null);
+        $address->setAddress(self::sanitize($booker['address'] ?? '', 200) ?: null);
+        $address->setZip(self::sanitize($booker['zip'] ?? '', 20) ?: null);
+        $address->setCity(self::sanitize($booker['city'] ?? '', 100) ?: null);
+        $address->setCountry(self::sanitize($booker['country'] ?? '', 5) ?: null);
         $address->setEmail($email);
-        $address->setPhone(trim((string) ($booker['phone'] ?? '')) ?: null);
+        $address->setPhone(self::sanitize($booker['phone'] ?? '', 50) ?: null);
     }
 
     /**
@@ -570,30 +553,30 @@ class PublicBookingService
     private function mergeMissingBookerDataIntoAddress(CustomerAddresses $address, array $booker, string $email): bool
     {
         $updated = false;
-        $company = trim((string) ($booker['company'] ?? ''));
+        $company = self::sanitize($booker['company'] ?? '', 150);
 
         if ((null === $address->getEmail() || '' === trim((string) $address->getEmail())) && '' !== $email) {
             $address->setEmail($email);
             $updated = true;
         }
-        if ((null === $address->getPhone() || '' === trim((string) $address->getPhone())) && '' !== trim((string) ($booker['phone'] ?? ''))) {
-            $address->setPhone(trim((string) $booker['phone']));
+        if ((null === $address->getPhone() || '' === trim((string) $address->getPhone())) && '' !== self::sanitize($booker['phone'] ?? '', 50)) {
+            $address->setPhone(self::sanitize($booker['phone'] ?? '', 50));
             $updated = true;
         }
-        if ((null === $address->getAddress() || '' === trim((string) $address->getAddress())) && '' !== trim((string) ($booker['address'] ?? ''))) {
-            $address->setAddress(trim((string) $booker['address']));
+        if ((null === $address->getAddress() || '' === trim((string) $address->getAddress())) && '' !== self::sanitize($booker['address'] ?? '', 200)) {
+            $address->setAddress(self::sanitize($booker['address'] ?? '', 200));
             $updated = true;
         }
-        if ((null === $address->getZip() || '' === trim((string) $address->getZip())) && '' !== trim((string) ($booker['zip'] ?? ''))) {
-            $address->setZip(trim((string) $booker['zip']));
+        if ((null === $address->getZip() || '' === trim((string) $address->getZip())) && '' !== self::sanitize($booker['zip'] ?? '', 20)) {
+            $address->setZip(self::sanitize($booker['zip'] ?? '', 20));
             $updated = true;
         }
-        if ((null === $address->getCity() || '' === trim((string) $address->getCity())) && '' !== trim((string) ($booker['city'] ?? ''))) {
-            $address->setCity(trim((string) $booker['city']));
+        if ((null === $address->getCity() || '' === trim((string) $address->getCity())) && '' !== self::sanitize($booker['city'] ?? '', 100)) {
+            $address->setCity(self::sanitize($booker['city'] ?? '', 100));
             $updated = true;
         }
-        if ((null === $address->getCountry() || '' === trim((string) $address->getCountry())) && '' !== trim((string) ($booker['country'] ?? ''))) {
-            $address->setCountry(trim((string) $booker['country']));
+        if ((null === $address->getCountry() || '' === trim((string) $address->getCountry())) && '' !== self::sanitize($booker['country'] ?? '', 5)) {
+            $address->setCountry(self::sanitize($booker['country'] ?? '', 5));
             $updated = true;
         }
         if ((null === $address->getCompany() || '' === trim((string) $address->getCompany())) && '' !== $company) {
@@ -640,5 +623,40 @@ class PublicBookingService
 
         $body = $this->templatesService->renderTemplate((int) $template->getId(), $reservations);
         $this->mailService->sendHTMLMail($email, $subject, $body);
+        $this->persistMailCorrespondenceForReservations($reservations, $template, $email, $subject, $body);
+    }
+
+    /**
+     * Persist sent confirmation mail as reservation correspondence entries.
+     *
+     * @param Reservation[] $reservations
+     */
+    private function persistMailCorrespondenceForReservations(array $reservations, Template $template, string $recipient, string $subject, string $body): void
+    {
+        foreach ($reservations as $reservation) {
+            $mail = new MailCorrespondence();
+            $mail->setRecipient($recipient)
+                ->setName($subject)
+                ->setSubject($subject)
+                ->setText($body)
+                ->setTemplate($template)
+                ->setReservation($reservation);
+
+            $this->em->persist($mail);
+        }
+
+        $this->em->flush();
+    }
+
+    /**
+     * Strip control characters, trim, and enforce a maximum byte length for public input.
+     */
+    private static function sanitize(mixed $value, int $maxLength = 500): string
+    {
+        $str = trim((string) $value);
+        // Remove ASCII control characters (0x00-0x1F, 0x7F) except common whitespace (tab, LF, CR)
+        $str = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $str) ?? $str;
+
+        return mb_substr($str, 0, $maxLength);
     }
 }

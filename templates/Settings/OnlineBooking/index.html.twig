@@ -8,479 +8,201 @@
     {{ parent() }} - {{ 'online_booking.settings.page_title'|trans }}
 {% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .ob-settings-page {
-            --ob-primary: var(--bs-primary, #1f4b8f);
-        }
-
-        .ob-settings-page .ob-hero {
-            background: linear-gradient(135deg, rgba(31,75,143,.08), rgba(31,111,235,.08));
-            border: 1px solid rgba(31,75,143,.12);
-            border-radius: 14px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1rem;
-        }
-
-        .ob-settings-page .ob-hero__title {
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-        }
-
-        .ob-settings-page .ob-hero__meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .5rem;
-            margin-top: .75rem;
-        }
-
-        .ob-settings-page .ob-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: .35rem;
-            border-radius: 999px;
-            padding: .3rem .7rem;
-            font-size: .85rem;
-            border: 1px solid rgba(0,0,0,.1);
-            background: #fff;
-        }
-
-        .ob-settings-page .ob-chip.is-good {
-            border-color: rgba(40,167,69,.25);
-            color: #1f7a36;
-            background: rgba(40,167,69,.05);
-        }
-
-        .ob-settings-page .ob-chip.is-warn {
-            border-color: rgba(255,193,7,.35);
-            color: #8a6d00;
-            background: rgba(255,193,7,.1);
-        }
-
-        .ob-settings-page .ob-section {
-            border: 1px solid rgba(0,0,0,.08);
-            border-radius: 14px;
-            background: #fff;
-            box-shadow: 0 8px 24px rgba(0,0,0,.04);
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
-
-        .ob-settings-page .ob-section__header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            gap: 1rem;
-            padding: .95rem 1.1rem;
-            border-bottom: 1px solid rgba(0,0,0,.06);
-            background: rgba(0,0,0,.015);
-        }
-
-        .ob-settings-page .ob-section__title {
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .ob-settings-page .ob-section__desc {
-            margin: .15rem 0 0 0;
-            color: var(--bs-secondary-color, #6c757d);
-            font-size: .9rem;
-        }
-
-        .ob-settings-page .ob-section__body {
-            padding: 1rem 1.1rem;
-        }
-
-        .ob-settings-page .ob-selector {
-            border: 1px solid rgba(0,0,0,.08);
-            border-radius: 12px;
-            background: #fbfcfe;
-            margin-top: .5rem;
-        }
-
-        .ob-settings-page .ob-selector.is-hidden {
-            display: none;
-        }
-
-        .ob-settings-page .ob-selector__head {
-            padding: .75rem .9rem;
-            border-bottom: 1px solid rgba(0,0,0,.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: .75rem;
-        }
-
-        .ob-settings-page .ob-selector__title {
-            margin: 0;
-            font-weight: 600;
-            font-size: .95rem;
-        }
-
-        .ob-settings-page .ob-selector__hint {
-            margin: .2rem 0 0 0;
-            font-size: .84rem;
-            color: var(--bs-secondary-color, #6c757d);
-        }
-
-        .ob-settings-page .ob-count {
-            border-radius: 999px;
-            padding: .2rem .55rem;
-            font-size: .8rem;
-            color: #0f3f7f;
-            background: rgba(31,111,235,.12);
-            border: 1px solid rgba(31,111,235,.18);
-            white-space: nowrap;
-        }
-
-        .ob-settings-page .ob-selector__body {
-            padding: .85rem .9rem;
-            max-height: 18rem;
-            overflow: auto;
-        }
-
-        .ob-settings-page .ob-checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-            gap: .6rem;
-        }
-
-        .ob-settings-page .ob-checkbox-grid .form-check {
-            margin: 0;
-            padding: 0;
-        }
-
-        .ob-settings-page .ob-checkbox-grid .form-check-label {
-            width: 100%;
-            display: block;
-            border: 1px solid rgba(0,0,0,.1);
-            border-radius: 10px;
-            background: #fff;
-            padding: .65rem .8rem .65rem 2.25rem;
-            position: relative;
-            cursor: pointer;
-            transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
-            min-height: 2.8rem;
-        }
-
-        .ob-settings-page .ob-checkbox-grid .form-check-input {
-            margin-left: .8rem;
-            margin-top: .95rem;
-            position: absolute;
-            z-index: 2;
-        }
-
-        .ob-settings-page .ob-checkbox-grid .form-check-input:checked + .form-check-label {
-            border-color: rgba(31,111,235,.4);
-            background: rgba(31,111,235,.04);
-            box-shadow: 0 0 0 3px rgba(31,111,235,.08);
-        }
-
-        .ob-settings-page .ob-mode-panel .form-check {
-            border: 1px solid rgba(0,0,0,.08);
-            border-radius: 10px;
-            background: #fff;
-            padding: .65rem .9rem .65rem 2.2rem;
-            margin-bottom: .5rem;
-            position: relative;
-        }
-
-        .ob-settings-page .ob-mode-panel .form-check-input {
-            position: absolute;
-            left: .9rem;
-            top: .95rem;
-            margin: 0;
-        }
-
-        .ob-settings-page .ob-mode-panel .form-check-label {
-            display: block;
-            font-weight: 500;
-        }
-
-        .ob-settings-page .ob-two-col {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        .ob-settings-page .ob-savebar {
-            position: sticky;
-            bottom: .75rem;
-            z-index: 10;
-            margin-top: .5rem;
-            border: 1px solid rgba(0,0,0,.08);
-            background: rgba(255,255,255,.92);
-            backdrop-filter: blur(4px);
-            border-radius: 12px;
-            padding: .75rem .9rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .75rem;
-        }
-
-        .ob-settings-page .ob-savebar__hint {
-            margin: 0;
-            color: var(--bs-secondary-color, #6c757d);
-            font-size: .9rem;
-        }
-
-        .ob-settings-page .ob-codebox {
-            border: 1px solid rgba(0,0,0,.08);
-            border-radius: 10px;
-            background: #fff;
-            overflow: hidden;
-        }
-
-        .ob-settings-page .ob-codebox__toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .75rem;
-            padding: .55rem .75rem;
-            border-bottom: 1px solid rgba(0,0,0,.06);
-            background: rgba(0,0,0,.02);
-        }
-
-        .ob-settings-page .ob-codebox__label {
-            margin: 0;
-            font-size: .85rem;
-            font-weight: 600;
-            color: var(--bs-secondary-color, #6c757d);
-        }
-
-        .ob-settings-page .ob-codebox__input,
-        .ob-settings-page .ob-codebox__textarea {
-            width: 100%;
-            border: 0;
-            border-radius: 0;
-            box-shadow: none !important;
-            background: #fff;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: .88rem;
-        }
-
-        .ob-settings-page .ob-codebox__input {
-            padding: .7rem .8rem;
-        }
-
-        .ob-settings-page .ob-codebox__textarea {
-            min-height: 130px;
-            padding: .8rem;
-            resize: vertical;
-            white-space: pre;
-        }
-
-        @media (max-width: 991px) {
-            .ob-settings-page .ob-two-col {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-{% endblock %}
-
 {% block content %}
+{% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
-{% set iframeCode = '<iframe src="' ~ embedUrl ~ '" width="100%" height="900" style="border:0;max-width:960px;" loading="lazy" title="Online Booking"></iframe>' %}
-<div class="container ob-settings-page" data-controller="settings online-booking-settings">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="ob-hero">
-                <h2 class="ob-hero__title">
-                    <i class="fas fa-globe text-primary"></i>
-                    {{ 'online_booking.settings.page_title'|trans }}
-                </h2>
-                <div class="ob-hero__meta">
-                    <span class="ob-chip {{ form.vars.value.enabled ? 'is-good' : 'is-warn' }}">
-                        <i class="fas {{ form.vars.value.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
-                        {{ form.vars.value.enabled ? ('online_booking.settings.status_enabled'|trans) : ('online_booking.settings.status_disabled'|trans) }}
-                    </span>
-                    <span class="ob-chip {{ reservationOriginConfigured ? 'is-good' : 'is-warn' }}">
-                        <i class="fas {{ reservationOriginConfigured ? 'fa-check-circle' : 'fa-exclamation-triangle' }}"></i>
-                        {{ reservationOriginConfigured ? ('online_booking.settings.reservation_origin_ready'|trans) : ('online_booking.settings.reservation_origin_missing_short'|trans) }}
-                    </span>
+{% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
+<script>window.addEventListener("message",function(e){if(e.data&&e.data.type==="fhb-resize"){document.getElementById("fhb-booking").style.height=e.data.height+"px"}});</script>{% endset %}
+<div class="container" data-controller="settings online-booking-settings">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            {# ── Header ── #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h2 class="fs-4 mb-1">
+                        <i class="fas fa-globe text-primary me-1"></i>
+                        {{ 'online_booking.settings.page_title'|trans }}
+                    </h2>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge {{ form.vars.value.enabled ? 'bg-success-subtle text-success-emphasis' : 'bg-warning-subtle text-warning-emphasis' }}">
+                            <i class="fas {{ form.vars.value.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }} me-1"></i>
+                            {{ form.vars.value.enabled ? ('online_booking.settings.status_enabled'|trans) : ('online_booking.settings.status_disabled'|trans) }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            {{ form_start(form, {'attr': {'class': 'ob-form'}}) }}
+            {{ form_start(form) }}
 
-                    {% if form.vars.submitted and not form.vars.valid %}
-                        <div class="alert alert-danger mb-3" role="alert">
-                            <div class="fw-semibold mb-1">{{ 'online_booking.settings.form_invalid_title'|trans }}</div>
-                            <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
-                            <div class="small">
-                                {{ form_errors(form.enabled) }}
-                                {{ form_errors(form.confirmationEmailTemplateId) }}
-                                {{ form_errors(form.inquiryReservationStatusId) }}
-                                {{ form_errors(form.bookingReservationStatusId) }}
-                                {{ form_errors(form.reservationOriginId) }}
-                            </div>
-                        </div>
-                    {% endif %}
+            {% if form.vars.submitted and not form.vars.valid %}
+                <div class="alert alert-danger mb-3" role="alert">
+                    <div class="fw-semibold mb-1">{{ 'online_booking.settings.form_invalid_title'|trans }}</div>
+                    <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
+                    <div class="small">
+                        {{ form_errors(form.enabled) }}
+                        {{ form_errors(form.confirmationEmailTemplateId) }}
+                        {{ form_errors(form.inquiryReservationStatusId) }}
+                        {{ form_errors(form.bookingReservationStatusId) }}
+                        {{ form_errors(form.reservationOriginId) }}
+                    </div>
+                </div>
+            {% endif %}
 
-                    <div class="ob-section">
-                        <div class="ob-section__header">
+            {# ── General ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-sliders text-primary me-2"></i>{{ 'online_booking.settings.section_general'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_general_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.enabled) }}</div>
+                        <div class="col-md-6">{{ form_row(form.bookingMode) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Availability Scope ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-bed text-primary me-2"></i>{{ 'online_booking.settings.section_availability_scope'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_availability_scope_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.subsidiariesMode) }}
+
+                    <div class="border rounded mt-2" data-online-booking-settings-target="subsidiariesWrap">
+                        <div class="px-3 py-2 bg-body-secondary border-bottom d-flex justify-content-between align-items-center">
                             <div>
-                                <h5 class="ob-section__title">{{ 'online_booking.settings.section_general'|trans }}</h5>
-                                <p class="ob-section__desc">{{ 'online_booking.settings.section_general_desc'|trans }}</p>
+                                <p class="fw-semibold small mb-0">{{ 'online_booking.settings.selected_subsidiaries'|trans }}</p>
+                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.selected_subsidiaries_hint'|trans }}</p>
                             </div>
-                            <i class="fas fa-sliders text-primary"></i>
+                            <span class="badge text-bg-primary" data-online-booking-settings-target="subsidiariesCount"></span>
                         </div>
-                        <div class="ob-section__body ob-two-col">
-                            <div>
-                            {{ form_row(form.enabled) }}
-                            </div>
-                            <div class="ob-mode-panel">
-                            {{ form_row(form.bookingMode) }}
-                            </div>
+                        <div class="p-3 row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-2" style="max-height:18rem;overflow:auto">
+                            {{ form_widget(form.selectedSubsidiaryIds) }}
+                        </div>
+                        <div class="px-3 pb-2">
+                            {{ form_errors(form.selectedSubsidiaryIds) }}
                         </div>
                     </div>
 
-                    <div class="ob-section">
-                        <div class="ob-section__header">
+                    <hr class="my-3">
+                    {{ form_row(form.roomsMode) }}
+
+                    <div class="border rounded mt-2" data-online-booking-settings-target="roomsWrap">
+                        <div class="px-3 py-2 bg-body-secondary border-bottom d-flex justify-content-between align-items-center">
                             <div>
-                                <h5 class="ob-section__title">{{ 'online_booking.settings.section_availability_scope'|trans }}</h5>
-                                <p class="ob-section__desc">{{ 'online_booking.settings.section_availability_scope_desc'|trans }}</p>
+                                <p class="fw-semibold small mb-0">{{ 'online_booking.settings.selected_rooms'|trans }}</p>
+                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.selected_rooms_hint'|trans }}</p>
                             </div>
-                            <i class="fas fa-bed text-primary"></i>
+                            <span class="badge text-bg-primary" data-online-booking-settings-target="roomsCount"></span>
                         </div>
-                        <div class="ob-section__body">
-                            <div class="ob-mode-panel">
-                                {{ form_row(form.subsidiariesMode) }}
-                            </div>
-                            <div class="ob-selector" data-online-booking-settings-target="subsidiariesWrap">
-                                <div class="ob-selector__head">
-                                    <div>
-                                        <p class="ob-selector__title">{{ 'online_booking.settings.selected_subsidiaries'|trans }}</p>
-                                        <p class="ob-selector__hint">{{ 'online_booking.settings.selected_subsidiaries_hint'|trans }}</p>
-                                    </div>
-                                    <span class="ob-count" data-online-booking-settings-target="subsidiariesCount"></span>
-                                </div>
-                                <div class="ob-selector__body ob-checkbox-grid">
-                                    {{ form_widget(form.selectedSubsidiaryIds) }}
-                                </div>
-                                <div class="px-3 pb-2">
-                                    {{ form_errors(form.selectedSubsidiaryIds) }}
-                                </div>
-                            </div>
+                        <div class="p-3 row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-2" style="max-height:18rem;overflow:auto">
+                            {{ form_widget(form.selectedRoomIds) }}
+                        </div>
+                        <div class="px-3 pb-2">
+                            {{ form_errors(form.selectedRoomIds) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <div class="ob-mode-panel mt-3">
-                                {{ form_row(form.roomsMode) }}
-                            </div>
-                            <div class="ob-selector" data-online-booking-settings-target="roomsWrap">
-                                <div class="ob-selector__head">
-                                    <div>
-                                        <p class="ob-selector__title">{{ 'online_booking.settings.selected_rooms'|trans }}</p>
-                                        <p class="ob-selector__hint">{{ 'online_booking.settings.selected_rooms_hint'|trans }}</p>
-                                    </div>
-                                    <span class="ob-count" data-online-booking-settings-target="roomsCount"></span>
-                                </div>
-                                <div class="ob-selector__body ob-checkbox-grid">
-                                    {{ form_widget(form.selectedRoomIds) }}
-                                </div>
-                                <div class="px-3 pb-2">
-                                    {{ form_errors(form.selectedRoomIds) }}
-                                </div>
+            {# ── Theme ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-palette text-primary me-2"></i>{{ 'online_booking.settings.section_theme'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_theme_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
+                        <div class="col-md-6">{{ form_row(form.themeBackgroundColor) }}</div>
+                    </div>
+                    <div class="mt-2">
+                        <a class="small text-body-secondary text-decoration-none" data-bs-toggle="collapse" href="#customCssCollapse" role="button" aria-expanded="{{ form.vars.value.customCss ? 'true' : 'false' }}" aria-controls="customCssCollapse">
+                            <i class="fas fa-chevron-right me-1"></i>{{ 'online_booking.settings.custom_css'|trans }}
+                        </a>
+                        <div class="collapse{{ form.vars.value.customCss ? ' show' : '' }}" id="customCssCollapse">
+                            <div class="mt-2">
+                                {{ form_row(form.customCss) }}
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="ob-section">
-                        <div class="ob-section__header">
-                            <div>
-                                <h5 class="ob-section__title">{{ 'online_booking.settings.section_theme'|trans }}</h5>
-                                <p class="ob-section__desc">{{ 'online_booking.settings.section_theme_desc'|trans }}</p>
-                            </div>
-                            <i class="fas fa-palette text-primary"></i>
-                        </div>
-                        <div class="ob-section__body">
-                            <div class="row">
-                                <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
-                                <div class="col-md-6">{{ form_row(form.themeAccentColor) }}</div>
-                                <div class="col-md-6">{{ form_row(form.themeBackgroundColor) }}</div>
-                                <div class="col-md-6">{{ form_row(form.themeBorderRadiusPx) }}</div>
-                            </div>
-                        </div>
+            {# ── Templates & Status ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope-open-text text-primary me-2"></i>{{ 'online_booking.settings.section_templates_status'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_templates_status_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.confirmationEmailTemplateId) }}
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.inquiryReservationStatusId) }}</div>
+                        <div class="col-md-6">{{ form_row(form.bookingReservationStatusId) }}</div>
                     </div>
+                    {{ form_row(form.reservationOriginId) }}
+                </div>
+            </div>
 
-                    <div class="ob-section">
-                        <div class="ob-section__header">
-                            <div>
-                                <h5 class="ob-section__title">{{ 'online_booking.settings.section_templates_status'|trans }}</h5>
-                                <p class="ob-section__desc">{{ 'online_booking.settings.section_templates_status_desc'|trans }}</p>
-                            </div>
-                            <i class="fas fa-envelope-open-text text-primary"></i>
-                        </div>
-                        <div class="ob-section__body">
-                            {{ form_row(form.confirmationEmailTemplateId) }}
-                            <div class="row">
-                                <div class="col-md-6">{{ form_row(form.inquiryReservationStatusId) }}</div>
-                                <div class="col-md-6">{{ form_row(form.bookingReservationStatusId) }}</div>
-                            </div>
-                            {{ form_row(form.reservationOriginId) }}
-                        </div>
-                    </div>
+            {# ── Checkout Texts ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-file-contract text-primary me-2"></i>{{ 'online_booking.settings.section_booking_texts'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_booking_texts_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.paymentTerms) }}
+                    {{ form_row(form.cancellationTerms) }}
+                    {{ form_row(form.successMessageText) }}
+                </div>
+            </div>
 
-                    <div class="ob-section">
-                        <div class="ob-section__header">
-                            <div>
-                                <h5 class="ob-section__title">{{ 'online_booking.settings.section_booking_texts'|trans }}</h5>
-                                <p class="ob-section__desc">{{ 'online_booking.settings.section_booking_texts_desc'|trans }}</p>
-                            </div>
-                            <i class="fas fa-file-contract text-primary"></i>
-                        </div>
-                        <div class="ob-section__body">
-                            {{ form_row(form.paymentTerms) }}
-                            {{ form_row(form.cancellationTerms) }}
-                            {{ form_row(form.successMessageText) }}
-                        </div>
-                    </div>
-
-                    <div class="ob-savebar">
-                        <p class="ob-savebar__hint">{{ 'online_booking.settings.save_hint'|trans }}</p>
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-save"></i> {{ 'online_booking.settings.save'|trans }}
-                        </button>
-                    </div>
+            {# ── Save bar ── #}
+            <div class="card sticky-bottom mb-3" style="z-index:10">
+                <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                    <p class="text-body-secondary small mb-0 d-none d-md-block">{{ 'online_booking.settings.save_hint'|trans }}</p>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-save me-1"></i>{{ 'online_booking.settings.save'|trans }}
+                    </button>
+                </div>
+            </div>
 
             {{ form_end(form) }}
 
-            <div class="ob-section mt-3">
-                <div class="ob-section__header">
-                    <div>
-                        <h5 class="ob-section__title">{{ 'online_booking.settings.section_embed'|trans }}</h5>
-                        <p class="ob-section__desc">{{ 'online_booking.settings.section_embed_desc'|trans }}</p>
-                    </div>
-                    <i class="fas fa-code text-primary"></i>
+            {# ── Embed ── #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-code text-primary me-2"></i>{{ 'online_booking.settings.section_embed'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_embed_desc'|trans }}</p>
                 </div>
-                <div class="ob-section__body">
+                <div class="card-body">
                     <div class="mb-3">
-                        <div class="ob-codebox" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                            <div class="ob-codebox__toolbar">
-                                <p class="ob-codebox__label">{{ 'online_booking.settings.embed_url_label'|trans }}</p>
-                                <button class="btn btn-outline-secondary btn-sm" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
-                                    <i class="fas fa-copy"></i> {{ 'copy.text'|trans }}
-                                </button>
-                            </div>
-                            <input type="text" readonly class="ob-codebox__input" value="{{ embedUrl }}" data-copy-target="input">
+                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_url_label'|trans }}</label>
+                        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                            <input type="text" readonly class="form-control font-monospace small" value="{{ standAloneUrl }}" data-copy-target="input">
+                            <button class="btn btn-outline-secondary shadow-none" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="ob-codebox" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                        <div class="ob-codebox__toolbar">
-                            <p class="ob-codebox__label">{{ 'online_booking.settings.embed_iframe_label'|trans }}</p>
-                            <button class="btn btn-outline-secondary btn-sm" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
-                                <i class="fas fa-copy"></i> {{ 'copy.text'|trans }}
+                    <div>
+                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_iframe_label'|trans }}</label>
+                        <div data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                            <textarea readonly class="form-control font-monospace small mb-2" rows="5" style="white-space:pre;resize:vertical" data-copy-target="input">{{ iframeCode }}</textarea>
+                            <button class="btn btn-outline-secondary ms-auto" type="button" data-action="click->copy#copy">
+                                <i class="fas fa-copy me-1"></i>{{ 'copy.text'|trans }}
                             </button>
                         </div>
-                        <textarea readonly class="ob-codebox__textarea" data-copy-target="input">{{ iframeCode }}</textarea>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

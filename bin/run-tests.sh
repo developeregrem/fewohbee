@@ -33,6 +33,4 @@ run_console app:first-run \
     --load-sample-data \
     --no-interaction
 
-run_console doctrine:fixtures:load --no-interaction --append
-
 APP_ENV="$APP_ENV" $PHPUNIT_BIN "$@"
