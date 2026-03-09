@@ -14,24 +14,40 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Entity\Reservation;
+use App\Service\AppSettingsService;
 use App\Service\CalendarService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
+use Twig\Extension\GlobalsInterface;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
-class AppTwigExtensions extends AbstractExtension
+class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
 {
     private $em;
     private $requestStack;
     private $calendarService;
+    private $appSettingsService;
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService)
     {
         $this->em = $em;
         $this->requestStack = $requestStack;
         $this->calendarService = $cs;
+        $this->appSettingsService = $appSettingsService;
+    }
+
+    public function getGlobals(): array
+    {
+        $settings = $this->appSettingsService->getSettings();
+
+        return [
+            'app_settings' => $settings,
+            'customer_salutations' => $settings->getCustomerSalutations(),
+            'currency' => $settings->getCurrency(),
+            'currency_symbol' => $settings->getCurrencySymbol(),
+        ];
     }
 
     public function getFilters(): array

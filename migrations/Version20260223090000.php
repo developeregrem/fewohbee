@@ -22,6 +22,19 @@ final class Version20260223090000 extends AbstractMigration
 
         $this->addSql("ALTER TABLE reservations ADD booking_group_uuid BINARY(16) DEFAULT NULL COMMENT '(DC2Type:uuid)'");
         $this->addSql('CREATE INDEX idx_booking_group_uuid ON reservations (booking_group_uuid)');
+    
+        $this->addSql('CREATE TABLE app_settings (
+            id INT AUTO_INCREMENT NOT NULL,
+            currency VARCHAR(3) DEFAULT \'EUR\' NOT NULL,
+            currency_symbol VARCHAR(5) DEFAULT \'€\' NOT NULL,
+            invoice_filename_pattern VARCHAR(255) DEFAULT \'Invoice-<number>\' NOT NULL,
+            customer_salutations JSON NOT NULL,
+            notification_email VARCHAR(255) DEFAULT NULL,
+            notify_on_online_booking TINYINT(1) DEFAULT 1 NOT NULL,
+            notify_on_calendar_import TINYINT(1) DEFAULT 1 NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY(id)
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
     }
 
     public function down(Schema $schema): void
@@ -30,6 +43,7 @@ final class Version20260223090000 extends AbstractMigration
         $this->addSql('ALTER TABLE room_category DROP details');
         $this->addSql('DROP INDEX idx_booking_group_uuid ON reservations');
         $this->addSql('ALTER TABLE reservations DROP booking_group_uuid');
+        $this->addSql('DROP TABLE app_settings');
     }
 
     public function isTransactional(): bool
