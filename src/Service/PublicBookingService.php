@@ -31,7 +31,8 @@ class PublicBookingService
         private readonly InvoiceService $invoiceService,
         private readonly TemplatesService $templatesService,
         private readonly MailService $mailService,
-        private readonly TranslatorInterface $translator
+        private readonly TranslatorInterface $translator,
+        private readonly BookingNotificationService $notificationService
     ) {
     }
 
@@ -133,6 +134,7 @@ class PublicBookingService
 
         $pricing = $this->calculateRoomTotal($reservations);
         $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
+        $this->notificationService->notifyOnlineBooking($reservations);
 
         return [
             'reservations' => $reservations,

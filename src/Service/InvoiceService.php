@@ -29,20 +29,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use App\Service\AppSettingsService;
 
 class InvoiceService
 {
-    private $em;
-    private $ps;
-    private TranslatorInterface $translator;
-    private string $invoiceFilenamePattern;
-
-    public function __construct(EntityManagerInterface $em, PriceService $ps, TranslatorInterface $translator, string $invoiceFilenamePattern)
+    public function __construct(private readonly EntityManagerInterface $em, private readonly PriceService $ps, private readonly TranslatorInterface $translator, private readonly AppSettingsService $appSettingsService)
     {
-        $this->em = $em;
-        $this->ps = $ps;
-        $this->translator = $translator;
-        $this->invoiceFilenamePattern = $invoiceFilenamePattern;
     }
 
     /**
@@ -256,7 +248,8 @@ class InvoiceService
      */
     public function buildInvoiceExportFilename(Invoice $invoice, bool $appendEinvoiceSuffix = false): string
     {
-        $pattern = trim($this->invoiceFilenamePattern);
+        $fileNamePattern = $this->appSettingsService->getSettings()->getInvoiceFilenamePattern();
+        $pattern = trim($fileNamePattern);
         if ('' === $pattern) {
             $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
         }
