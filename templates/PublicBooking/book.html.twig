@@ -225,14 +225,14 @@
                                                 {% for priceRow in roomPriceBreakdown %}
                                                     <div class="d-flex justify-content-between align-items-center small{% if not loop.last %} mb-1{% endif %}">
                                                         <span>{{ priceRow.label }}{% if priceRow.quantity > 1 %} ({{ priceRow.quantity }}x){% endif %}</span>
-                                                        <span>{{ priceRow.totalFormatted }} &euro;</span>
+                                                        <span>{{ priceRow.totalFormatted }} {{ currency_symbol }}</span>
                                                     </div>
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
                                         <div class="d-flex justify-content-between align-items-center">
                                             <span>{{ 'online_booking.public.room_total'|trans }}</span>
-                                            <strong class="text-primary">{{ roomTotalFormatted }} &euro;</strong>
+                                            <strong class="text-primary">{{ roomTotalFormatted }} {{ currency_symbol }}</strong>
                                         </div>
                                         <div class="small text-body-secondary">{{ 'online_booking.public.room_total_hint'|trans }}</div>
                                     </div>
