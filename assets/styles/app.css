@@ -144,11 +144,8 @@ body {
     background-color: var(--feb-selection-bg);
 }
 
-.table-reservation .ui-selecting, .table-reservation-year .ui-selecting { 
+.table-reservation .ui-selecting, .table-reservation-year .ui-selecting {
     background: var(--feb-ui-selecting-bg) !important;
-}
-.table-reservation .ui-selected, .table-reservation-year .ui-selected { 
-    background: var(--feb-ui-selected-bg);
 }
 
 .table-reservation .table-days > th {

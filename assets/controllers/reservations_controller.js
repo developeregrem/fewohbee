@@ -786,8 +786,7 @@ export default class extends Controller {
 
     initTableInteractions() {
         this.initPopovers();
-        this.initSelectable();
-        this.initYearlySelectable();
+        this.initCellSelection();
     }
 
     initPopovers() {
@@ -800,170 +799,198 @@ export default class extends Controller {
         $('.reservation-popover').popover({ placement: 'top', html: true, trigger: 'hover' });
     }
 
-    initSelectable() {
+    initCellSelection() {
         if (!this.canSelectValue) {
             return;
         }
-        const enableSelectable = window.matchMedia('(pointer: fine)').matches;
-        if (!enableSelectable || !window.jQuery || !$.fn.selectable) {
-            return;
-        }
-        const table = $('.table-reservation');
-        if (!table.length) {
-            return;
-        }
-        let tdStartDate = '';
-        let tdEndDate = '';
-        let tdStartAppartment = '';
-        let lastTdNumber = '';
 
-        table.selectable({
-            filter: '.td-empty',
-            cancel: '.reservation',
-            selecting: (event, ui) => {
-                if (tdStartDate === '') {
-                    tdStartDate = $(ui.selecting).attr('data-day');
-                    tdStartAppartment = $(ui.selecting).attr('data-appartment');
-                    lastTdNumber = $(ui.selecting).attr('data-tdnumber');
-                } else {
-                    const curAppartment = $(ui.selecting).attr('data-appartment');
-                    if (curAppartment !== tdStartAppartment) {
-                        $(ui.selecting).removeClass('ui-selectee ui-selecting');
-                    } else if ($(ui.selecting).attr('data-tdnumber') !== lastTdNumber) {
-                        $(ui.selecting).removeClass('ui-selectee ui-selecting');
-                    } else if ($(ui.selecting).attr('data-day') !== tdStartDate) {
-                        tdEndDate = $(ui.selecting).attr('data-day');
-                    }
-                }
-            },
-            unselecting: (event, ui) => {
-                if ($(ui.unselecting).attr('data-tdnumber') === lastTdNumber) {
-                    const curDay = $(ui.unselecting).attr('data-day');
-                    if (curDay > tdStartDate) {
-                        tdEndDate = $(ui.unselecting).prev().attr('data-day');
-                    } else if (curDay < tdStartDate) {
-                        tdEndDate = $(ui.unselecting).next().attr('data-day');
-                    }
-                }
-            },
-            start: () => table.removeClass('table-hover'),
-            stop: () => {
-                if (tdStartDate !== '' && tdEndDate !== '' && tdStartAppartment !== '' && tdStartDate !== tdEndDate) {
-                    this.selectableAddAppartmentToSelection(tdStartAppartment, tdStartDate, tdEndDate);
-                    $('#modalCenter').modal('toggle');
-                }
-                tdStartDate = '';
-                tdEndDate = '';
-                tdStartAppartment = '';
-                lastTdNumber = '';
-                table.addClass('table-hover');
-                $('.td-empty').removeClass('ui-selectee ui-selected');
-            }
-        });
-    }
-
-    initYearlySelectable() {
-        const calendar = document.querySelector('[data-reservations-yearly=\"true\"]');
-        if (!calendar || typeof Selectable === 'undefined') {
+        const table = document.querySelector('.table-reservation');
+        const calendar = document.querySelector('[data-reservations-yearly="true"]');
+        if (!table && !calendar) {
             return;
         }
 
-        if (this.yearlySelectable) {
-            this.yearlySelectable.destroy();
-        }
+        const container = table || calendar;
+        const isYearly = !!calendar;
+        const cellSelector = isYearly ? '.reservation-yearly-parent' : '.td-empty';
+        const isFinePointer = window.matchMedia('(pointer: fine)').matches;
 
-        let startSlectedDay = null;
-        let endSelectedDay = null;
-        const apartmentId = calendar.dataset.reservationsApartmentId;
+        let startCell = null;
+        let endCell = null;
+        let dragging = false;
+        let selectableCells = [];
 
-        this.yearlySelectable = new Selectable({
-            filter: '.reservation-yearly-parent',
-            ignore: '.reservation-yearly',
-            lasso: {
-                border: '2px dashed rgba(255, 255, 255, 0)',
-                backgroundColor: 'rgba(255, 255, 255, 0)'
+        const isBlocked = (cell) => {
+            if (isYearly) {
+                const res = cell.querySelector('.reservation-yearly');
+                return res && !res.classList.contains('month-reservationstartend');
             }
-        });
+            return false;
+        };
 
-        this.yearlySelectable.on('start', (e, item) => {
-            if (item) {
-                startSlectedDay = item.node;
-                endSelectedDay = null;
-            }
-        });
-
-        this.yearlySelectable.on('drag', (e) => {
-            let elm = document.elementFromPoint(e.pageX, e.pageY - window.pageYOffset);
-            const c = this.yearlySelectable.config.classes;
-            if (!elm) {
-                return;
-            }
-            elm = elm.closest('.' + c.selectable);
-            if (!elm) {
-                return;
-            }
-            const elmIdx = this.yearlySelectable.nodes.indexOf(elm);
-            const startIdx = this.yearlySelectable.nodes.indexOf(startSlectedDay);
-            let start; let end;
-            const cItems = this.yearlySelectable.items.length;
-            if (elmIdx > startIdx) {
-                start = startIdx;
-                end = elmIdx;
+        const buildCellList = (cell) => {
+            if (!isYearly) {
+                const apartment = cell.dataset.appartment;
+                const tdnumber = cell.dataset.tdnumber;
+                selectableCells = Array.from(
+                    container.querySelectorAll(
+                        `${cellSelector}[data-appartment="${apartment}"][data-tdnumber="${tdnumber}"]`
+                    )
+                );
             } else {
-                start = elmIdx;
-                end = startIdx;
+                selectableCells = Array.from(container.querySelectorAll(cellSelector));
             }
-            let canSelected = true;
-            let i = 0; let u = cItems - 1;
-            while (i < cItems) {
-                const idx = (elmIdx > startIdx ? i : u);
-                const item = this.yearlySelectable.items[idx];
-                if (idx >= start && idx <= end) {
-                    if (this.isDayWithReservation(item)) {
-                        canSelected = false;
-                    }
-                    if (canSelected) {
-                        this.selectableSelect(item, c);
-                        endSelectedDay = item.node;
-                    } else {
-                        this.selectableDeselect(item, c);
-                    }
-                } else if (item.selected || item.selecting) {
-                    this.selectableDeselect(item, c);
-                }
-                i++;
-                u--;
-            }
-        });
+        };
 
-        this.yearlySelectable.on('end', () => {
-            if (startSlectedDay && endSelectedDay) {
-                this.selectableAddAppartmentToSelection(apartmentId, startSlectedDay.dataset.day, endSelectedDay.dataset.day);
+        const getValidRange = (from, to) => {
+            const fromIdx = selectableCells.indexOf(from);
+            const toIdx = selectableCells.indexOf(to);
+            if (fromIdx === -1 || toIdx === -1) return [];
+            const start = Math.min(fromIdx, toIdx);
+            const end = Math.max(fromIdx, toIdx);
+            const cells = selectableCells.slice(start, end + 1);
+            const forward = toIdx >= fromIdx;
+            const valid = [];
+            for (let i = 0; i < cells.length; i++) {
+                const cell = forward ? cells[i] : cells[cells.length - 1 - i];
+                if (isBlocked(cell)) break;
+                valid.push(cell);
+            }
+            return forward ? valid : valid.reverse();
+        };
+
+        const clearHighlights = () => {
+            container.querySelectorAll('.ui-selecting').forEach(
+                (el) => el.classList.remove('ui-selecting')
+            );
+        };
+
+        const highlightRange = (from, to) => {
+            clearHighlights();
+            const valid = getValidRange(from, to);
+            valid.forEach((cell) => cell.classList.add('ui-selecting'));
+            return valid;
+        };
+
+        const getCellFromPoint = (x, y) => {
+            const el = document.elementFromPoint(x, y);
+            return el ? el.closest(cellSelector) : null;
+        };
+
+        const resetSelection = () => {
+            startCell = null;
+            endCell = null;
+            dragging = false;
+            clearHighlights();
+            if (table) {
+                table.classList.add('table-hover');
+            }
+        };
+
+        const finishSelection = () => {
+            const valid = getValidRange(startCell, endCell || startCell);
+            resetSelection();
+
+            if (valid.length === 0) return;
+
+            const firstDay = valid[0].dataset.day;
+            const lastDay = valid[valid.length - 1].dataset.day;
+
+            let apartmentId;
+            if (isYearly) {
+                apartmentId = calendar.dataset.reservationsApartmentId;
+            } else {
+                apartmentId = valid[0].dataset.appartment;
+            }
+
+            if (apartmentId && firstDay) {
+                this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
                 $('#modalCenter').modal('toggle');
-                startSlectedDay = null;
-                endSelectedDay = null;
             }
-        });
-    }
+        };
 
-    isDayWithReservation(item) {
-        const reservationItem = item.node.querySelector('.reservation-yearly');
-        if (reservationItem && !reservationItem.classList.contains('month-reservationstartend')) {
-            return true;
+        // --- Touch: two-tap mode (tap start, tap end) ---
+        if (!isFinePointer) {
+            container.addEventListener('click', (e) => {
+                const cell = getCellFromPoint(e.clientX, e.clientY);
+                if (!cell || isBlocked(cell)) return;
+
+                if (!startCell) {
+                    // First tap: set start
+                    buildCellList(cell);
+                    startCell = cell;
+                    cell.classList.add('ui-selecting');
+                    if (table) {
+                        table.classList.remove('table-hover');
+                    }
+                } else {
+                    // Second tap: set end and finish
+                    if (selectableCells.includes(cell)) {
+                        endCell = cell;
+                        highlightRange(startCell, endCell);
+                        finishSelection();
+                    } else {
+                        // Tapped outside valid range → restart with this cell
+                        resetSelection();
+                        buildCellList(cell);
+                        startCell = cell;
+                        cell.classList.add('ui-selecting');
+                        if (table) {
+                            table.classList.remove('table-hover');
+                        }
+                    }
+                }
+            });
+            return;
         }
-        return false;
+
+        // --- Desktop: click-and-drag mode ---
+        const onPointerDown = (e) => {
+            const cell = getCellFromPoint(e.clientX, e.clientY);
+            if (!cell || isBlocked(cell)) return;
+
+            buildCellList(cell);
+            dragging = true;
+            startCell = cell;
+            endCell = cell;
+            cell.classList.add('ui-selecting');
+
+            if (table) {
+                table.classList.remove('table-hover');
+            }
+
+            container.setPointerCapture(e.pointerId);
+            e.preventDefault();
+        };
+
+        const onPointerMove = (e) => {
+            if (!dragging) return;
+            const cell = getCellFromPoint(e.clientX, e.clientY);
+            if (!cell || !selectableCells.includes(cell)) return;
+            endCell = cell;
+            highlightRange(startCell, endCell);
+        };
+
+        const onPointerUp = (e) => {
+            if (!dragging) return;
+            try { container.releasePointerCapture(e.pointerId); } catch (_) { /* */ }
+            finishSelection();
+        };
+
+        const onPointerCancel = (e) => {
+            if (!dragging) return;
+            try { container.releasePointerCapture(e.pointerId); } catch (_) { /* */ }
+            resetSelection();
+        };
+
+        container.addEventListener('pointerdown', onPointerDown);
+        container.addEventListener('pointermove', onPointerMove);
+        container.addEventListener('pointerup', onPointerUp);
+        container.addEventListener('pointercancel', onPointerCancel);
+        container.style.touchAction = 'none';
+        container.addEventListener('selectstart', (e) => { if (dragging) e.preventDefault(); });
     }
 
-    selectableSelect(item, c) {
-        item.node.classList.add(c.selecting);
-        item.selecting = true;
-    }
-
-    selectableDeselect(item, c) {
-        item.selecting = false;
-        item.node.classList.remove(c.selecting);
-        item.node.classList.remove(c.selected);
-    }
 
     // ----- modal helpers -----
 
