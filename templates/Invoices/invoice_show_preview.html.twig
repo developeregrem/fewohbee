@@ -47,15 +47,15 @@
                                     {% endif %} %:
                                 </td>
                                 <td>&nbsp;&nbsp;</td>
-                                <td class="text-end">{{ value.netto|number_format(2, ',', '.') }} €</td>
+                                <td class="text-end">{{ value.netto|number_format(2, ',', '.') }} {{ currency_symbol }}</td>
                             </tr>
                         {% endfor %}
                     </table>
                 </div>
                 <div class="col-md-6 text-end">{{ 'invoice.netto'|trans }}
                     <br/><strong>{{ 'invoice.brutto'|trans }}</strong></div>
-                <div class="col-md text-end">{{ (brutto-netto)|number_format(2, ',', '.') }} €<br/>
-                    <strong>{{ brutto|number_format(2, ',', '.') }} €</strong>
+                <div class="col-md text-end">{{ (brutto-netto)|number_format(2, ',', '.') }} {{ currency_symbol }}<br/>
+                    <strong>{{ brutto|number_format(2, ',', '.') }} {{ currency_symbol }}</strong>
                 </div>
             </div>
             {% if vatWarning %}
