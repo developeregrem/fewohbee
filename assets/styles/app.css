@@ -98,24 +98,43 @@ body {
     visibility: hidden;
 }
 
-.two-td-left {
-    border-right: none !important;
-}
-
-.two-td-right {
-    border-left: none !important;
-}
-
 .reservation {
+    padding: 4px 2px !important;
+    max-width: 0; /* force td to respect colspan width, enables text-overflow on inner */
+}
+
+/* Half-day cell model: remove all vertical borders, then re-add at day boundaries */
+#reservation-table tbody td {
     border-left: none !important;
     border-right: none !important;
-    padding: 8px 2px !important;
+}
+
+#reservation-table tbody td.day-start {
+    border-left: 1px solid var(--feb-border-muted) !important;
+}
+
+.td-half {
+    padding: 0 !important;
+}
+
+/* Blocked cell styling */
+.td-blocked {
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        var(--feb-border-muted) 4px,
+        var(--feb-border-muted) 5px
+    );
 }
 
 .reservation-inner {
     border: 1px solid var(--feb-border-strong);
     color: var(--feb-reservation-text);
     padding: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .reservation-confirmed {
@@ -142,6 +161,31 @@ body {
 
 .cell-selected {
     background-color: var(--feb-selection-bg);
+}
+
+/* Fixed apartment-name column width */
+#reservation-table thead th:first-child,
+#reservation-table thead td:first-child,
+#reservation-table tbody td:first-child {
+    min-width: 50px;
+    width: 80px;
+    max-width: 150px;
+}
+
+/* Equal half-day column widths; table stays scrollable */
+#reservation-table th[colspan="2"] {
+    min-width: 46px;
+    width: 46px;
+}
+
+#reservation-table .td-half {
+    min-width: 23px;
+    width: 23px;
+}
+
+/* Right border on the last cell of each row */
+#reservation-table tbody tr > :last-child {
+    border-right: 1px solid var(--feb-border-muted) !important;
 }
 
 .table-reservation .ui-selecting, .table-reservation-year .ui-selecting {
@@ -563,7 +607,10 @@ body {
 #reservation-table .room-info {
     white-space: nowrap;
     vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
 
 /* fix for autocomplete not  shown */
 .ui-front { 
