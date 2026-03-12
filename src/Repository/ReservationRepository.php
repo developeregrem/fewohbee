@@ -250,6 +250,46 @@ class ReservationRepository extends ServiceEntityRepository
         return $occupancy;
     }
 
+    /**
+     * Load all reservations for multiple apartments in a single query.
+     * Replaces N+1 per-apartment queries in the table view.
+     *
+     * @param Appartment[] $apartments
+     *
+     * @return Reservation[]
+     */
+    public function loadReservationsForApartments(\DateTimeInterface $start, \DateTimeInterface $end, array $apartments, string $statusMode = 'blocking'): array
+    {
+        if ([] === $apartments) {
+            return [];
+        }
+
+        $apartmentIds = array_map(fn ($a) => $a->getId(), $apartments);
+
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->select('u')
+            ->addSelect('booker', 'calImport')
+            ->leftJoin('u.booker', 'booker')
+            ->leftJoin('booker.customerAddresses', 'addr')
+            ->leftJoin('u.calendarSyncImport', 'calImport')
+            ->where('u.appartment IN (:apps)')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
+                .'(u.startDate < :start AND u.endDate >= :start) OR'
+                .'(u.startDate <= :end AND u.endDate > :end) OR'
+                .'(u.startDate < :start AND u.endDate > :end))')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
+            ->addOrderBy('u.startDate', 'ASC')
+            ->addOrderBy('u.endDate', 'ASC');
+
+        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function loadReservationsWithoutInvoiceForCustomer(\App\Entity\Customer $customer)
     {
         $q = $this

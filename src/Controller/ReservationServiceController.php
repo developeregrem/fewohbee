@@ -33,6 +33,7 @@ use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -120,11 +121,11 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService);
         } else {
             return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
         }
@@ -133,7 +134,7 @@ class ReservationServiceController extends AbstractController
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -175,7 +176,25 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
+        // Build the grid using the new service (single bulk query instead of N+1)
+        $startDate = new \DateTimeImmutable(date('Y-m-d', $date), new \DateTimeZone('UTC'));
+        $endDate = $startDate->modify('+'.$interval.' days');
+        $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $statusMode = $showCanceled ? 'non_blocking' : 'blocking';
+
+        $allReservations = $em->getRepository(Reservation::class)
+            ->loadReservationsForApartments($startDate, $endDate, $appartments, $statusMode);
+
+        $grid = $tableService->buildGrid(
+            $appartments,
+            $startDate,
+            $interval,
+            $allReservations,
+            'all' === $objectId || null === $objectId,
+        );
+
         return $this->render('Reservations/reservation_table.html.twig', [
+            'grid' => $grid,
             'appartments' => $appartments,
             'today' => $date,
             'interval' => $interval,

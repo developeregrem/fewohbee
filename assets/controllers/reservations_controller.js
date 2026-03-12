@@ -830,13 +830,8 @@ export default class extends Controller {
 
         const buildCellList = (cell) => {
             if (!isYearly) {
-                const apartment = cell.dataset.appartment;
-                const tdnumber = cell.dataset.tdnumber;
-                selectableCells = Array.from(
-                    container.querySelectorAll(
-                        `${cellSelector}[data-appartment="${apartment}"][data-tdnumber="${tdnumber}"]`
-                    )
-                );
+                const tr = cell.closest('tr');
+                selectableCells = Array.from(tr.querySelectorAll(cellSelector));
             } else {
                 selectableCells = Array.from(container.querySelectorAll(cellSelector));
             }
