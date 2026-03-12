@@ -110,7 +110,9 @@ class ZugferdInvoiceGenerator
         }
 
         // payment terms and due date
-        $dueDate = (!is_null($settings->getPaymentDueDays()) ? $invoice->getDate()->modify('+'.$settings->getPaymentDueDays().' days') : null);
+        $dueDate = !is_null($settings->getPaymentDueDays())
+            ? (clone $invoice->getDate())->modify('+'.$settings->getPaymentDueDays().' days')
+            : null;
         $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate, $mandateReference); // Payment term
 
         $documentBuilder->setDocumentBuyerReference(null !== $invoice->getBuyerReference() ? $invoice->getBuyerReference() : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
