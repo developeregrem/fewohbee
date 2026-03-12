@@ -456,7 +456,7 @@ class InvoiceService
                 }
             }
         }
-        $this->makeMiscPositions($reservation, $tmpMiscArr, $requestStack);
+        $this->makeMiscPositions($tmpMiscArr, $requestStack);
     }
 
     /**
@@ -599,12 +599,8 @@ class InvoiceService
         return $positionAppartment;
     }
 
-    /**
-     * @return InvoicePosition[]
-     */
-    private function makeMiscPositions(Reservation $reservation, array $tmpPricesArr, RequestStack $requestStack): array
+    private function makeMiscPositions(array $tmpPricesArr, RequestStack $requestStack): void
     {
-        $positions = [];
         foreach ($tmpPricesArr as $tmpPrice) {
             $position = new InvoicePosition();
             $position->setAmount($tmpPrice['amount']);
@@ -617,8 +613,6 @@ class InvoiceService
 
             $this->saveNewMiscPosition($position, $requestStack);
         }
-
-        return $positions;
     }
 
     /**
