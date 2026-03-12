@@ -21,3 +21,4 @@ framework:
             - '%kernel.project_dir%/translations/RoomCategory'
             - '%kernel.project_dir%/translations/ReservationStatus'
             - '%kernel.project_dir%/translations/Housekeeping'
+            - '%kernel.project_dir%/translations/OnlineBooking'

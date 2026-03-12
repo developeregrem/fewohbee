@@ -30,7 +30,8 @@ class CalendarImportService
         private readonly EntityManagerInterface $em,
         private readonly HttpClientInterface $httpClient,
         private readonly CacheInterface $cache,
-        private readonly TranslatorInterface $translator
+        private readonly TranslatorInterface $translator,
+        private readonly BookingNotificationService $notificationService
     ) {
     }
 
@@ -296,6 +297,8 @@ class CalendarImportService
         $reservation = $this->buildReservation($import, $start, $end, $event, false);
         $this->em->persist($reservation);
         $this->em->flush();
+
+        $this->notificationService->notifyCalendarImport($reservation);
 
         return self::SYNC_OK;
     }

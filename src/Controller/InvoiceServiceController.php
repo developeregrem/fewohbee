@@ -686,6 +686,8 @@ class InvoiceServiceController extends AbstractController
             $em->flush();
 
             $this->addFlash('success', 'invoice.flash.create.success');
+        } else {
+            $this->addFlash('warning', 'flash.invalidtoken');
         }
 
         return $this->render(

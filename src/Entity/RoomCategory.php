@@ -27,6 +27,9 @@ class RoomCategory
     #[Assert\Length(max: 5)]
     private $acronym;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $details = null;
+
     public function __construct()
     {
         $this->apartments = new ArrayCollection();
@@ -120,6 +123,18 @@ class RoomCategory
     public function setAcronym(?string $acronym): self
     {
         $this->acronym = $acronym;
+
+        return $this;
+    }
+
+    public function getDetails(): ?string
+    {
+        return $this->details;
+    }
+
+    public function setDetails(?string $details): self
+    {
+        $this->details = '' === trim((string) $details) ? null : $details;
 
         return $this;
     }

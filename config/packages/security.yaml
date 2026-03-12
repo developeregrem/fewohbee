@@ -52,6 +52,7 @@ security:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/register,  roles: PUBLIC_ACCESS}
+        - { path: ^/book, roles: PUBLIC_ACCESS }
         - { path: ^/apartments/calendar, roles: PUBLIC_ACCESS }
         - { path: ^/reservation/*, roles: [ROLE_RESERVATIONS_RO, ROLE_RESERVATIONS] }
         - { path: ^/correspondence, roles: [ROLE_RESERVATIONS, ROLE_OPERATIONS] }

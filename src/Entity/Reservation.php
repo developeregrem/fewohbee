@@ -13,6 +13,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Entity(repositoryClass: 'App\Repository\ReservationRepository')]
 #[ORM\Table(name: 'reservations')]
 #[ORM\Index(name: 'idx_uuid', columns: ['uuid'])]
+#[ORM\Index(name: 'idx_booking_group_uuid', columns: ['booking_group_uuid'])]
 class Reservation
 {
     #[ORM\Id]
@@ -54,6 +55,9 @@ class Reservation
     private $reservationStatus;
     #[ORM\Column(type: 'uuid', unique: true)]
     private $uuid;
+
+    #[ORM\Column(type: 'uuid', nullable: true)]
+    private ?Uuid $bookingGroupUuid = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $refUid = null;
@@ -389,6 +393,18 @@ class Reservation
     public function setUuid(Uuid $uuid): self
     {
         $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getBookingGroupUuid(): ?Uuid
+    {
+        return $this->bookingGroupUuid;
+    }
+
+    public function setBookingGroupUuid(?Uuid $bookingGroupUuid): self
+    {
+        $this->bookingGroupUuid = $bookingGroupUuid;
 
         return $this;
     }

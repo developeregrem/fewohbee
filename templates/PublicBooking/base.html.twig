@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}{{ 'online_booking.public.page_title'|trans }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
+    <style>
+        :root {
+            --fhb-primary: {{ config.themePrimaryColor|default('#1f6feb') }};
+            --fhb-bg: {{ config.themeBackgroundColor ?: '#f6f8fb' }};
+        }
+        .fhb-booking-root {
+            background: var(--fhb-bg);
+            {{ embed ? '' : 'min-height: 100vh;' }}
+            padding: {{ embed ? '0.75rem' : '2rem 0' }};
+        }
+        .fhb-booking-card {
+            border: 1px solid rgba(0,0,0,.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,.06);
+        }
+        .fhb-booking-root .btn-primary {
+            --bs-btn-bg: var(--fhb-primary);
+            --bs-btn-border-color: var(--fhb-primary);
+            --bs-btn-hover-bg: color-mix(in srgb, var(--fhb-primary) 85%, black);
+            --bs-btn-hover-border-color: color-mix(in srgb, var(--fhb-primary) 85%, black);
+            --bs-btn-active-bg: color-mix(in srgb, var(--fhb-primary) 75%, black);
+            --bs-btn-active-border-color: color-mix(in srgb, var(--fhb-primary) 75%, black);
+        }
+        .fhb-booking-root .btn-outline-primary {
+            --bs-btn-color: var(--fhb-primary);
+            --bs-btn-border-color: var(--fhb-primary);
+            --bs-btn-hover-bg: var(--fhb-primary);
+            --bs-btn-hover-border-color: var(--fhb-primary);
+            --bs-btn-active-bg: var(--fhb-primary);
+            --bs-btn-active-border-color: var(--fhb-primary);
+        }
+        .fhb-booking-root .text-primary {
+            color: var(--fhb-primary) !important;
+        }
+        .fhb-booking-summary {
+            border: 1px solid var(--bs-border-color, rgba(0,0,0,.08));
+            background: var(--bs-body-bg, #fff);
+            padding: 0.75rem 1rem;
+            border-radius: var(--bs-border-radius);
+        }
+    </style>
+{% if config.customCss %}
+    <style>{{ config.customCss|raw }}</style>
+{% endif %}
+</head>
+<body>
+{% block body %}{% endblock %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
+{% if embed %}
+<script>
+(function(){
+    var root = document.querySelector('.fhb-booking-root');
+    if (!root || !window.parent || window.parent === window) return;
+    function notify() {
+        window.parent.postMessage({type:'fhb-resize',height:root.scrollHeight},'*');
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(notify).observe(root);
+    } else {
+        notify();
+        window.addEventListener('load', notify);
+    }
+})();
+</script>
+{% endif %}
+</body>
+</html>

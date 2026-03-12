@@ -26,109 +26,109 @@ return [
         'version' => '8.0.23',
     ],
     '@simplewebauthn/browser' => [
-        'version' => '13.2.2',
+        'version' => '13.3.0',
     ],
     'js-beautify' => [
         'version' => '1.15.4',
     ],
     '@tiptap/core' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/starter-kit' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-image' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-link' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-text-align' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-table' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-underline' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-text-style' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-dropcursor' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-gapcursor' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/transform' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/commands' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/state' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/model' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/schema-list' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/view' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/keymap' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-blockquote' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-bold' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-code' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-code-block' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-document' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-hard-break' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-heading' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-horizontal-rule' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-italic' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-list' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-paragraph' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-strike' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-text' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extensions' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     'linkifyjs' => [
         'version' => '4.3.2',
     ],
     '@tiptap/pm/tables' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     'prosemirror-transform' => [
         'version' => '1.11.0',
@@ -152,16 +152,16 @@ return [
         'version' => '1.2.3',
     ],
     '@tiptap/core/jsx-runtime' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/dropcursor' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/gapcursor' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/pm/history' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     'prosemirror-tables' => [
         'version' => '1.8.5',
@@ -197,13 +197,13 @@ return [
         'type' => 'css',
     ],
     '@tiptap/extension-table-row' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-table-cell' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     '@tiptap/extension-table-header' => [
-        'version' => '3.19.0',
+        'version' => '3.20.1',
     ],
     'codemirror' => [
         'version' => '6.0.2',
@@ -212,16 +212,16 @@ return [
         'version' => '6.4.11',
     ],
     '@codemirror/autocomplete' => [
-        'version' => '6.20.0',
+        'version' => '6.20.1',
     ],
     '@codemirror/view' => [
-        'version' => '6.39.14',
+        'version' => '6.39.16',
     ],
     '@codemirror/state' => [
         'version' => '6.5.4',
     ],
     '@codemirror/language' => [
-        'version' => '6.12.1',
+        'version' => '6.12.2',
     ],
     '@codemirror/commands' => [
         'version' => '6.10.2',
@@ -230,7 +230,7 @@ return [
         'version' => '6.6.0',
     ],
     '@codemirror/lint' => [
-        'version' => '6.9.4',
+        'version' => '6.9.5',
     ],
     '@lezer/html' => [
         'version' => '1.3.13',
@@ -239,7 +239,7 @@ return [
         'version' => '6.3.1',
     ],
     '@codemirror/lang-javascript' => [
-        'version' => '6.2.4',
+        'version' => '6.2.5',
     ],
     'style-mod' => [
         'version' => '4.1.3',

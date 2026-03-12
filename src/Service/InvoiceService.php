@@ -29,20 +29,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use App\Service\AppSettingsService;
 
 class InvoiceService
 {
-    private $em;
-    private $ps;
-    private TranslatorInterface $translator;
-    private string $invoiceFilenamePattern;
-
-    public function __construct(EntityManagerInterface $em, PriceService $ps, TranslatorInterface $translator, string $invoiceFilenamePattern)
+    public function __construct(private readonly EntityManagerInterface $em, private readonly PriceService $ps, private readonly TranslatorInterface $translator, private readonly AppSettingsService $appSettingsService)
     {
-        $this->em = $em;
-        $this->ps = $ps;
-        $this->translator = $translator;
-        $this->invoiceFilenamePattern = $invoiceFilenamePattern;
     }
 
     /**
@@ -256,7 +248,8 @@ class InvoiceService
      */
     public function buildInvoiceExportFilename(Invoice $invoice, bool $appendEinvoiceSuffix = false): string
     {
-        $pattern = trim($this->invoiceFilenamePattern);
+        $fileNamePattern = $this->appSettingsService->getSettings()->getInvoiceFilenamePattern();
+        $pattern = trim($fileNamePattern);
         if ('' === $pattern) {
             $pattern = $this->translator->trans('invoice.number.short') . '-<number>';
         }
@@ -298,7 +291,7 @@ class InvoiceService
         }, $pattern);
 
         if ($appendEinvoiceSuffix) {
-            $filename .= '-einvoice';
+            $filename .= '_einvoice';
         }
 
         return $this->sanitizeFilename($filename);
@@ -342,9 +335,22 @@ class InvoiceService
      */
     public function prefillAppartmentPositions(Reservation $reservation, RequestStack $requestStack): void
     {
+        foreach ($this->buildAppartmentPositions($reservation) as $position) {
+            $this->saveNewAppartmentPosition($position, $requestStack);
+        }
+    }
+
+    /**
+     * Build apartment invoice positions for a reservation without session dependency.
+     *
+     * @return InvoiceAppartment[]
+     */
+    public function buildAppartmentPositions(Reservation $reservation): array
+    {
         $prices = $this->ps->getPricesForReservationDays($reservation, 2);
         $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
 
+        $positions = [];
         $curDate = clone $reservation->getStartDate();
         $lastPrice = (null === $prices[0] ? null : $prices[0][0]);
         $start = clone $reservation->getStartDate();
@@ -360,13 +366,14 @@ class InvoiceService
 
             $curDate = (clone $curDate)->add(new \DateInterval('P'.(0 === $i ? 0 : 1).'D'));
             if (null !== $price && null !== $lastPrice && ($lastPrice->getId() !== $price->getId() || $i == $days)) {
-                $position = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
-                $this->saveNewAppartmentPosition($position, $requestStack);
+                $positions[] = $this->makeAparmtentPosition($start, $curDate, $reservation, $lastPrice);
 
                 $start = clone $curDate;
             }
             $lastPrice = $price;
         }    // loop must run one more time to add the position for the last day of stay
+
+        return $positions;
     }
 
     /**

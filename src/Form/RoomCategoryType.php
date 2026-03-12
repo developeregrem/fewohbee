@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\RoomCategory;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -17,6 +18,10 @@ class RoomCategoryType extends AbstractType
         $builder
             ->add('name', TextType::class, ['empty_data' => ''])
             ->add('acronym', TextType::class, ['label' => 'category.acronym'])
+            ->add('details', TextareaType::class, [
+                'label' => 'category.details',
+                'required' => false,
+            ])
         ;
     }
 

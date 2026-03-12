@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\DataFixtures\ReservationFixtures;
+use App\DataFixtures\SettingsFixtures;
+use App\DataFixtures\TemplatesFixtures;
 use App\Entity\Customer;
 use App\Entity\Role;
 use App\Entity\Subsidiary;
@@ -40,7 +43,10 @@ class FirstRunCommand extends Command
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $hasher,
-        private readonly UserService $us
+        private readonly UserService $us,
+        private readonly TemplatesFixtures $templatesFixtures,
+        private readonly SettingsFixtures $settingsFixtures,
+        private readonly ReservationFixtures $reservationFixtures,
     ) {
         parent::__construct();
     }
@@ -53,7 +59,8 @@ class FirstRunCommand extends Command
             ->addOption('first-name', null, InputOption::VALUE_REQUIRED, 'Firstname for the initial admin.')
             ->addOption('last-name', null, InputOption::VALUE_REQUIRED, 'Lastname for the initial admin.')
             ->addOption('email', null, InputOption::VALUE_REQUIRED, 'Email address for the admin user.')
-            ->addOption('accommodation-name', null, InputOption::VALUE_REQUIRED, 'Name of the accommodation that should be created.');
+            ->addOption('accommodation-name', null, InputOption::VALUE_REQUIRED, 'Name of the accommodation that should be created.')
+            ->addOption('load-sample-data', null, InputOption::VALUE_NONE, 'Load sample data (rooms, prices, reservations, invoices).');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -67,7 +74,7 @@ class FirstRunCommand extends Command
         if (count($users) > 0) {
             $io->error('App already prepared!');
 
-            return 1;
+            return Command::FAILURE;
         }
 
         $username = $this->resolveValue(
@@ -165,6 +172,17 @@ class FirstRunCommand extends Command
         $io->note('Customers prepared.');
 
         $this->em->flush();
+
+        $this->templatesFixtures->load($this->em);
+        $io->note('Base templates loaded.');
+
+        $loadSampleData = $input->getOption('load-sample-data')
+            || ($input->isInteractive() && $io->confirm('Load sample data (rooms, prices, reservations, invoices)?', false));
+        if ($loadSampleData) {
+            $this->settingsFixtures->load($this->em);
+            $this->reservationFixtures->load($this->em);
+            $io->note('Sample data loaded.');
+        }
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
 
