@@ -83,8 +83,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         $end = new \DateTime($endDate);
         $interval = date_diff($start, $end);
 
-        // return number of days
-        return $interval->format('%a');
+        return max(1, (int) $interval->format('%a'));
     }
 
     /**
@@ -166,7 +165,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     {
         $interval = $start->diff($end);
 
-        return $interval->format('%a');
+        return max(1, (int) $interval->format('%a'));
     }
 
     // prüft einen float-Wert, ob die Nachkommastellen 0 sind

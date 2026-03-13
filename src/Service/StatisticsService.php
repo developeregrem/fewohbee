@@ -60,7 +60,7 @@ class StatisticsService
                 }
 
                 $diffInterval = date_diff($resStart, $resEnd);
-                $stays += $diffInterval->days * $reservation->getPersons();
+                $stays += max(1, $diffInterval->days) * $reservation->getPersons();
             }
             $utilization = $stays * 100.0 / $maxStays;
             $data[] = $utilization;

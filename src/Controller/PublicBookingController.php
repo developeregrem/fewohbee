@@ -195,7 +195,7 @@ class PublicBookingController extends AbstractController
         $roomsCount = max(1, (int) $request->request->get('roomsCount', 1));
         $minArrivalDate = new \DateTimeImmutable('tomorrow');
 
-        if ($dateFrom >= $dateTo) {
+        if ($dateFrom > $dateTo) {
             throw new PublicBookingException('online_booking.error.departure_after_arrival');
         }
 
