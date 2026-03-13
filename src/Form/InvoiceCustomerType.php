@@ -62,6 +62,7 @@ class InvoiceCustomerType extends AbstractType
             ])
             ->add('cardNumber', TextType::class, [
                 'label' => 'customer.cardNumber',
+                'help' => 'customer.cardNumber.hint',
                 'required' => false,
             ])
             ->add('customerIBAN', TextType::class, [
