@@ -11,7 +11,7 @@
                 {% if address.email|length > 0 %}{% set mail = address.email %}{% endif %}
             {% endfor %}
             <div class="col-sm-9">
-                <input type="email" class="form-control" name="to" value="{{ mail }}" required>
+                <input type="email" class="form-control" name="to" value="{{ emailDraft.to|default(mail) }}" required>
             </div>
         </div>
         <div class="row">
@@ -20,12 +20,12 @@
 
             <div class="col-sm-9">
                 <input type="text" class="form-control" name="subject"
-                       value="" required>
+                       value="{{ emailDraft.subject|default('') }}" required>
             </div>
         </div>
         <div class="row mt-3">
             <div class="col-sm">
-                <textarea name="msg" id="editor1" rows="10" cols="70">{{ templateOutput|raw }}</textarea>
+                <textarea name="msg" id="editor1" rows="10" cols="70">{{ emailDraft.msg is defined and emailDraft.msg is not empty ? emailDraft.msg : templateOutput|raw }}</textarea>
             </div>
         </div>
     </fieldset>
