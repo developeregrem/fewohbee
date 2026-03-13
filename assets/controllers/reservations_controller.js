@@ -828,8 +828,17 @@ export default class extends Controller {
             return false;
         };
 
-        const buildCellList = (cell) => {
-            if (!isYearly) {
+        // Get all <tr> rows that contain selectable cells
+        const getAllRows = () => Array.from(container.querySelectorAll('tr')).filter(
+            (tr) => tr.querySelector(cellSelector)
+        );
+
+        const buildCellList = (cell, singleRowOnly = false) => {
+            if (!isYearly && !singleRowOnly) {
+                // Multi-row: collect cells from all rows
+                selectableCells = Array.from(container.querySelectorAll('tbody ' + cellSelector));
+            } else if (!isYearly && singleRowOnly) {
+                // Single row only (touch mode)
                 const tr = cell.closest('tr');
                 selectableCells = Array.from(tr.querySelectorAll(cellSelector));
             } else {
@@ -837,21 +846,85 @@ export default class extends Controller {
             }
         };
 
-        const getValidRange = (from, to) => {
-            const fromIdx = selectableCells.indexOf(from);
-            const toIdx = selectableCells.indexOf(to);
-            if (fromIdx === -1 || toIdx === -1) return [];
-            const start = Math.min(fromIdx, toIdx);
-            const end = Math.max(fromIdx, toIdx);
-            const cells = selectableCells.slice(start, end + 1);
-            const forward = toIdx >= fromIdx;
+        // Get valid date range within a single row, respecting blocked/reserved cells
+        const getValidRangeForRow = (tr, fromDate, toDate) => {
+            const cells = Array.from(tr.querySelectorAll(cellSelector));
+            const startDate = fromDate <= toDate ? fromDate : toDate;
+            const endDate = fromDate <= toDate ? toDate : fromDate;
+            const inRange = cells.filter((c) => c.dataset.day >= startDate && c.dataset.day <= endDate);
+
+            if (inRange.length === 0) return [];
+
+            // Check for gaps: if the number of half-day cells doesn't match the expected
+            // continuous range, there's a reservation/blocked cell in between.
+            // Walk from the start cell's position in the full row toward the end,
+            // stopping if any cell in between is not a td-empty cell.
+            const allTds = Array.from(tr.querySelectorAll('td'));
+            const firstEmpty = inRange[0];
+            const lastEmpty = inRange[inRange.length - 1];
+            const firstIdx = allTds.indexOf(firstEmpty);
+            const lastIdx = allTds.indexOf(lastEmpty);
+            if (firstIdx === -1 || lastIdx === -1) return inRange;
+
+            // Check that all <td> elements between first and last are td-empty
+            for (let i = firstIdx; i <= lastIdx; i++) {
+                if (!allTds[i].matches(cellSelector)) {
+                    // There's a non-empty cell (reservation/blocked) in between – not valid
+                    return [];
+                }
+            }
+
+            // Walk from start to end, stop at blocked (for yearly view compatibility)
             const valid = [];
-            for (let i = 0; i < cells.length; i++) {
-                const cell = forward ? cells[i] : cells[cells.length - 1 - i];
+            for (const cell of inRange) {
                 if (isBlocked(cell)) break;
                 valid.push(cell);
             }
-            return forward ? valid : valid.reverse();
+            return valid;
+        };
+
+        // 2D rectangular selection: rows × date range
+        const getValidRect = (from, to) => {
+            if (!from) return [];
+            const target = to || from;
+
+            if (isYearly) {
+                // Yearly view: keep original 1D behavior
+                const fromIdx = selectableCells.indexOf(from);
+                const toIdx = selectableCells.indexOf(target);
+                if (fromIdx === -1 || toIdx === -1) return [];
+                const start = Math.min(fromIdx, toIdx);
+                const end = Math.max(fromIdx, toIdx);
+                const cells = selectableCells.slice(start, end + 1);
+                const forward = toIdx >= fromIdx;
+                const valid = [];
+                for (let i = 0; i < cells.length; i++) {
+                    const cell = forward ? cells[i] : cells[cells.length - 1 - i];
+                    if (isBlocked(cell)) break;
+                    valid.push(cell);
+                }
+                return forward ? valid : valid.reverse();
+            }
+
+            // Multi-row rectangle selection
+            const fromRow = from.closest('tr');
+            const toRow = target.closest('tr');
+            const allRows = getAllRows();
+            const fromRowIdx = allRows.indexOf(fromRow);
+            const toRowIdx = allRows.indexOf(toRow);
+            if (fromRowIdx === -1 || toRowIdx === -1) return [];
+
+            const startRowIdx = Math.min(fromRowIdx, toRowIdx);
+            const endRowIdx = Math.max(fromRowIdx, toRowIdx);
+            const fromDate = from.dataset.day;
+            const toDate = target.dataset.day;
+
+            const allValid = [];
+            for (let i = startRowIdx; i <= endRowIdx; i++) {
+                const rowValid = getValidRangeForRow(allRows[i], fromDate, toDate);
+                allValid.push(...rowValid);
+            }
+            return allValid;
         };
 
         const clearHighlights = () => {
@@ -862,7 +935,7 @@ export default class extends Controller {
 
         const highlightRange = (from, to) => {
             clearHighlights();
-            const valid = getValidRange(from, to);
+            const valid = getValidRect(from, to);
             valid.forEach((cell) => cell.classList.add('ui-selecting'));
             return valid;
         };
@@ -883,28 +956,50 @@ export default class extends Controller {
         };
 
         const finishSelection = () => {
-            const valid = getValidRange(startCell, endCell || startCell);
+            const valid = getValidRect(startCell, endCell || startCell);
             resetSelection();
 
             if (valid.length === 0) return;
 
-            const firstDay = valid[0].dataset.day;
-            const lastDay = valid[valid.length - 1].dataset.day;
-
-            let apartmentId;
             if (isYearly) {
-                apartmentId = calendar.dataset.reservationsApartmentId;
-            } else {
-                apartmentId = valid[0].dataset.appartment;
+                const firstDay = valid[0].dataset.day;
+                const lastDay = valid[valid.length - 1].dataset.day;
+                const apartmentId = calendar.dataset.reservationsApartmentId;
+                if (apartmentId && firstDay) {
+                    this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
+                    $('#modalCenter').modal('toggle');
+                }
+                return;
             }
 
-            if (apartmentId && firstDay) {
-                this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
+            // Multi-row: group valid cells by apartment
+            const byApartment = new Map();
+            for (const cell of valid) {
+                const aptId = cell.dataset.appartment;
+                if (!byApartment.has(aptId)) {
+                    byApartment.set(aptId, []);
+                }
+                byApartment.get(aptId).push(cell);
+            }
+
+            // Collect apartment entries: [{id, from, end}]
+            const apartments = [];
+            for (const [aptId, cells] of byApartment) {
+                const days = cells.map((c) => c.dataset.day).sort();
+                apartments.push({
+                    id: aptId,
+                    from: days[0],
+                    end: days[days.length - 1]
+                });
+            }
+
+            if (apartments.length > 0) {
+                this.selectableAddMultipleAppartmentsToSelection(apartments);
                 $('#modalCenter').modal('toggle');
             }
         };
 
-        // --- Touch: two-tap mode (tap start, tap end) ---
+        // --- Touch: two-tap mode (tap start, tap end) – single row only ---
         if (!isFinePointer) {
             container.addEventListener('click', (e) => {
                 const cell = getCellFromPoint(e.clientX, e.clientY);
@@ -912,7 +1007,7 @@ export default class extends Controller {
 
                 if (!startCell) {
                     // First tap: set start
-                    buildCellList(cell);
+                    buildCellList(cell, true);
                     startCell = cell;
                     cell.classList.add('ui-selecting');
                     if (table) {
@@ -927,7 +1022,7 @@ export default class extends Controller {
                     } else {
                         // Tapped outside valid range → restart with this cell
                         resetSelection();
-                        buildCellList(cell);
+                        buildCellList(cell, true);
                         startCell = cell;
                         cell.classList.add('ui-selecting');
                         if (table) {
@@ -961,7 +1056,7 @@ export default class extends Controller {
         const onPointerMove = (e) => {
             if (!dragging) return;
             const cell = getCellFromPoint(e.clientX, e.clientY);
-            if (!cell || !selectableCells.includes(cell)) return;
+            if (!cell || !cell.matches(cellSelector)) return;
             endCell = cell;
             highlightRange(startCell, endCell);
         };
@@ -1166,6 +1261,27 @@ export default class extends Controller {
             url: targetUrl,
             method: 'POST',
             data,
+            target: this.modalContent
+        });
+        return false;
+    }
+
+    selectableAddMultipleAppartmentsToSelection(apartments, url = null) {
+        const targetUrl = url || this.addAppartmentSelectableUrl || document.getElementById('reservation-period')?.dataset.addAppartmentSelectableUrl;
+        if (!targetUrl) {
+            return false;
+        }
+        const params = new URLSearchParams();
+        params.append('createNewReservation', 'true');
+        apartments.forEach((apt, idx) => {
+            params.append('apartments[' + idx + '][id]', apt.id);
+            params.append('apartments[' + idx + '][from]', apt.from);
+            params.append('apartments[' + idx + '][end]', apt.end);
+        });
+        httpRequest({
+            url: targetUrl,
+            method: 'POST',
+            data: params.toString(),
             target: this.modalContent
         });
         return false;

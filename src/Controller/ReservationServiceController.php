@@ -377,7 +377,8 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
-     * Adds an Appartment to create a reservation if user selects period in reservation table (mouse).
+     * Adds one or more Appartments to create a reservation if user selects period in reservation table (mouse).
+     * Supports single apartment (appartmentid, from, end) or multiple apartments (apartments[]).
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
     public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
@@ -387,38 +388,69 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
             $requestStack->getSession()->remove('customersInReservation');
             $requestStack->getSession()->remove('reservatioInCreationPrices');
+        } else {
+            $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation', []);
         }
 
-        if (null != $request->request->get('appartmentid')) {
-            $from = $request->request->get('from');
+        $em = $doctrine->getManager();
+        $defaultStatusId = $rs->getDefaultSelectableReservationStatusId();
+
+        // Build list of apartments to add: supports both single and multi-apartment requests
+        $apartmentsToAdd = [];
+        $multiApartments = $request->request->all('apartments');
+        if (!empty($multiApartments)) {
+            foreach ($multiApartments as $apt) {
+                $apartmentsToAdd[] = [
+                    'id' => $apt['id'],
+                    'from' => $apt['from'],
+                    'end' => $apt['end'],
+                ];
+            }
+        } elseif (null != $request->request->get('appartmentid')) {
+            $apartmentsToAdd[] = [
+                'id' => $request->request->get('appartmentid'),
+                'from' => $request->request->get('from'),
+                'end' => $request->request->get('end'),
+            ];
+        }
+
+        $hasConflict = false;
+        foreach ($apartmentsToAdd as $aptData) {
+            $from = $aptData['from'];
+            $end = $aptData['end'];
             $fromDate = new \DateTime($from);
-            $end = $request->request->get('end');
             $endDate = new \DateTime($end);
 
-            // if start is grater end -> change start and end
+            // if start is greater end -> swap
             if ($fromDate > $endDate) {
-                $end = $from;
-                $from = $request->request->get('end');
-                $fromDate = $endDate;
+                $tmp = $from;
+                $from = $end;
+                $end = $tmp;
+                $fromDate = new \DateTime($from);
                 $endDate = new \DateTime($end);
             }
-            $em = $doctrine->getManager();
-            $room = $em->getRepository(Appartment::class)->find($request->request->get('appartmentid'));
-            $defaultStatusId = $rs->getDefaultSelectableReservationStatusId();
 
+            $room = $em->getRepository(Appartment::class)->find($aptData['id']);
             $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
-                    $request->request->get('appartmentid'),
+                    $aptData['id'],
                     $from,
                     $end,
                     $request->request->get('status', $defaultStatusId),
-                    $request->request->get('persons', $room->getBedsMax())
+                    $room->getBedsMax()
                 );
-                $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
             } else {
-                $this->addFlash('warning', 'reservation.flash.update.conflict');
+                $hasConflict = true;
             }
+        }
+
+        if ($hasConflict) {
+            $this->addFlash('warning', 'reservation.flash.update.conflict');
+        }
+
+        if (!empty($newReservationsInformationArray)) {
+            $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
         }
 
         $request2 = $request->duplicate([], []);
