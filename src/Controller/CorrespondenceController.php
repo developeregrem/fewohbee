@@ -39,6 +39,8 @@ use Symfony\Component\ExpressionLanguage\Expression;
 #[Route(path: '/correspondence')]
 class CorrespondenceController extends AbstractController
 {
+    private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
+
     /**
      * Called when clicking add conversation in the reservation overview.
      */
@@ -159,6 +161,9 @@ class CorrespondenceController extends AbstractController
                 }
 
                 $this->addFlash('success', 'templates.sendemail.success');
+                $requestStack->getSession()->remove(self::EMAIL_DRAFT_SESSION_KEY);
+                $requestStack->getSession()->remove('selectedTemplateId');
+                $requestStack->getSession()->remove('templateAttachmentIds');
             }
         } else {
             $this->addFlash('warning', 'flash.invalidtoken');

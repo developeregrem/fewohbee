@@ -1637,12 +1637,24 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const templateId = event.currentTarget.dataset.templateId || null;
         const inProcess = event.currentTarget.dataset.inprocess === 'true';
-        const formData = inProcess ? httpSerializeForm('#template-form') : null;
+        let data = { templateId, inProcess };
+        if (inProcess) {
+            const form = document.querySelector('#template-form');
+            const editor = form ? form.querySelector('#editor1') : null;
+            if (editor && this.simpleEditor) {
+                editor.value = this.simpleEditor.getHTML();
+            }
+            if (form) {
+                data = new FormData(form);
+                data.set('templateId', templateId || '');
+                data.set('inProcess', 'true');
+            }
+        }
         setModalTitle(event.currentTarget.dataset.title || '');
         httpRequest({
             url,
             method: 'POST',
-            data: { templateId, inProcess, formData },
+            data,
             target: this.modalContent
         });
         return false;

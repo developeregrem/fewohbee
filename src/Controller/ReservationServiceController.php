@@ -52,6 +52,8 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/reservation')]
 class ReservationServiceController extends AbstractController
 {
+    private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
+
     private $perPage = 15;
 
     /**
@@ -1177,6 +1179,11 @@ class ReservationServiceController extends AbstractController
         if ('true' == $request->request->get('inProcess')) {
             $search = ['TEMPLATE_FILE%', 'TEMPLATE_RESERVATION_PDF'];
             $requestStack->getSession()->set('selectedTemplateId', $request->request->get('templateId'));
+            $requestStack->getSession()->set(self::EMAIL_DRAFT_SESSION_KEY, [
+                'to' => (string) $request->request->get('to', ''),
+                'subject' => (string) $request->request->get('subject', ''),
+                'msg' => (string) $request->request->get('msg', ''),
+            ]);
             $correspondences = $ts->getCorrespondencesForAttachment();
             $invoices = $rs->getInvoicesForReservationsInProgress();
         } else {
@@ -1184,6 +1191,7 @@ class ReservationServiceController extends AbstractController
             // reset do defaults at start of progress
             $requestStack->getSession()->set('selectedTemplateId', null);
             $requestStack->getSession()->set('templateAttachmentIds', []);
+            $requestStack->getSession()->remove(self::EMAIL_DRAFT_SESSION_KEY);
             $correspondences = [];
             $invoices = [];
         }
@@ -1216,6 +1224,7 @@ class ReservationServiceController extends AbstractController
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
         $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
+        $emailDraft = $requestStack->getSession()->get(self::EMAIL_DRAFT_SESSION_KEY, []);
 
         // add attachments
         $attachments = [];
@@ -1234,6 +1243,7 @@ class ReservationServiceController extends AbstractController
             'inProcess' => $inProcess,
             'attachmentIds' => $requestStack->getSession()->get('templateAttachmentIds'),
             'attachments' => $attachments,
+            'emailDraft' => $emailDraft,
         ]);
     }
 
