@@ -39,7 +39,7 @@ class PublicAvailabilityService
         int $roomsCount,
         ?OnlineBookingConfig $config = null
     ): array {
-        if ($dateFrom >= $dateTo || $persons < 1 || $roomsCount < 1 || $persons < $roomsCount) {
+        if ($dateFrom > $dateTo || $persons < 1 || $roomsCount < 1 || $persons < $roomsCount) {
             return [];
         }
 

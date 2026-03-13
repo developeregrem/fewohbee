@@ -264,7 +264,7 @@ class Reservation
     {
         $interval = $this->startDate->diff($this->endDate);
 
-        return $interval->format('%a');
+        return max(1, (int) $interval->format('%a'));
     }
 
     /**

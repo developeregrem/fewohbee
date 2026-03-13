@@ -428,7 +428,7 @@ class InvoiceService
             }
             $prices = $this->ps->getPricesForReservationDays($reservation, 1, $existingPrices);
 
-            $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+            $days = max(1, $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate()));
 
             // loop through each day and create the position based on the retrieved prices for this day
             for ($i = 1; $i <= $days; ++$i) {
