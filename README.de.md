@@ -53,10 +53,8 @@ Wenn noch nicht vorhanden, lade den PHP dependency manager [composer](https://ge
 Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialisieren:
 
     php bin/console doctrine:migration:migrate
+    php bin/console asset-map:compile
     php bin/console app:first-run
-
-    // optional: Testdaten hinzufügen
-    php bin/console doctrine:fixtures:load --append
 
 Anschließend kann mit einem Webbrowser zu dem Installationsordner gewechselt werden  z.B.
 http://localhost/fewohbee/public/index.php
