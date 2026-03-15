@@ -11,6 +11,8 @@ import {
     setModalTitle
 } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 const debounce = (fn, delay = 300) => {
     let t;
     return (...args) => {
