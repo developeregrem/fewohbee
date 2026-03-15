@@ -38,6 +38,6 @@ class OnlineBookingSettingsController extends AbstractController
         return $this->render('Settings/OnlineBooking/index.html.twig', [
             'form' => $form->createView(),
             'reservationOriginConfigured' => null !== $configService->getReservationOrigin($config),
-        ]);
+        ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 }
