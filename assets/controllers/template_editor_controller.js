@@ -21,6 +21,8 @@ import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { templateAutocomplete } from '../js/template-autocomplete.js';
 
+/* stimulusFetch: 'lazy' */
+
 const optionalAttribute = (attributeName, htmlAttribute = attributeName) => ({
     default: null,
     parseHTML: (element) => element.getAttribute(htmlAttribute),

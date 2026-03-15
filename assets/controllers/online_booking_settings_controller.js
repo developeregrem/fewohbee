@@ -1,6 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['subsidiariesWrap', 'roomsWrap', 'subsidiariesCount', 'roomsCount'];
 

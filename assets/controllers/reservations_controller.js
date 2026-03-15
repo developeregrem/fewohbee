@@ -13,6 +13,8 @@ import {
 } from './utils_controller.js';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static values = {
         canSelect: { type: Boolean, default: false },
