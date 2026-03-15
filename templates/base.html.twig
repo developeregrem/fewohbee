@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     {% block stylesheets %}
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
-        <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/smoothness/jquery-ui-1.12.1.min.css">
         <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/autocompletejs/autoComplete.custom.css">
     {% endblock %}
     {% block javascripts %}
@@ -17,7 +16,6 @@
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/popper.min-2.10.2.js" defer></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
-        <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/jquery-ui-1.12.1.min.js" defer></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js" defer></script>
     {% endblock %}
     <!--<link rel="icon" type="image/x-icon" href="" />-->
@@ -94,6 +92,8 @@
                                     <i class="fas fa-tools"></i> {{ 'nav.settings'|trans }}
                                 </a>
                                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.general" %} active{% endif %}" href="{{ path('settings.general.index') }}"><i class="fas fa-cog text-secondary"></i> {{ 'app_settings.nav.label'|trans }}</a>
+                                    <div class="dropdown-divider"></div>
                                     <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users text-secondary"></i> {{ 'nav.user'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "room.category" %} active{% endif %}" href="{{ path('room_category_index') }}"><i class="fas fa-bed text-secondary"></i> {{ 'nav.category'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "apartments" %} active{% endif %}" href="{{ path('apartments.overview') }}"><i class="fas fa-door-open text-secondary"></i> {{ 'nav.appartment'|trans }}</a>
@@ -102,6 +102,7 @@
                                     <a class="dropdown-item{% if activeRouteName starts with "reservationorigin" %} active{% endif %}" href="{{ path('reservationorigin.overview') }}"><i class="fas fa-sign-in-alt text-secondary"></i> {{ 'nav.reservationorigin'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "status" %} active{% endif %}" href="{{ path('reservation_status_index') }}"><i class="fas fa-info text-secondary ms-1 me-1"></i> {{ 'nav.status'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.online_booking" %} active{% endif %}" href="{{ path('settings.online_booking.index') }}"><i class="fas fa-globe text-secondary"></i> {{ 'online_booking.nav.label'|trans }}</a>
                                 </div>
                             </li>
                         {% endif %}
@@ -139,19 +140,19 @@
         </div>
     {% endblock %}
     {% block flashMessage %}
-        <div class="container mt-3">
-            <div class="row" id="flash-message-container">
-                {% for type, flashMessages in app.flashes %}
-                    {% for flashMessage in flashMessages %}
-                        <div class="col">
-                            <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                {{ flashMessage|trans }}
-                            </div>
+        <div class="container mt-3">            
+            {% for type, flashMessages in app.flashes %}
+                {% for flashMessage in flashMessages %}
+                <div class="row" id="flash-message-container">
+                    <div class="col">
+                        <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            {{ flashMessage|trans }}
                         </div>
-                    {% endfor %}
+                    </div>
+                </div>
                 {% endfor %}
-            </div>
+            {% endfor %}            
         </div>
     {% endblock %}
 

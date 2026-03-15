@@ -48,6 +48,8 @@ customer.buyerReference.label: Customer Reference
 customer.buyerReference.hint: >-
   A designation assigned by the guest and used for internal control purposes, also known as Leitweg-ID.
 customer.cardNumber: Card Number
+customer.cardNumber.hint: >-
+  Enter only the last 4-6 digits of the card number, never the full card number.
 customer.cardHolder.label: Cardholder
 customer.cardHolder.hint: >-
   The Cardholder (optional) and Card Number (mandatory) fields are part of the payment method card payment.

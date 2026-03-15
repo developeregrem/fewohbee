@@ -2,6 +2,8 @@ import { Controller } from '@hotwired/stimulus';
 import { request as httpRequest } from './http_controller.js';
 import { setModalTitle } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['searchForm', 'searchInput', 'table', 'page'];
     static values = {

@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest } from './http_controller.js';
+
+/* stimulusFetch: 'lazy' */
 
 export default class extends Controller {
     static targets = [

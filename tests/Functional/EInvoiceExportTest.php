@@ -8,6 +8,7 @@ use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\InvoicePosition;
 use App\Entity\InvoiceSettingsData;
+use App\Service\AppSettingsService;
 use App\Service\EInvoice\EInvoiceExportService;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use horstoeko\zugferd\ZugferdDocumentPdfReader;
@@ -15,6 +16,7 @@ use horstoeko\zugferd\ZugferdDocumentReader;
 use horstoeko\zugferd\ZugferdKositValidator;
 use horstoeko\zugferd\ZugferdXsdValidator;
 use Mpdf\Mpdf;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class EInvoiceExportTest extends KernelTestCase
@@ -188,6 +190,31 @@ final class EInvoiceExportTest extends KernelTestCase
         }
     }
 
+    #[DataProvider('currencySettingsProvider')]
+    public function testCurrencyFromAppSettingsIsMappedForZugferd(string $currency, string $currencySymbol, string $expectedIsoCode): void
+    {
+        $this->updateAppSettingsCurrency($currency, $currencySymbol);
+
+        $settings = $this->createSettingsEntity('xrechnung');
+        $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+        $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+
+        self::assertMatchesRegularExpression(
+            '/<[^>]*InvoiceCurrencyCode[^>]*>'.preg_quote($expectedIsoCode, '/').'<\/[^>]*InvoiceCurrencyCode>/',
+            $xml
+        );
+    }
+
+    public static function currencySettingsProvider(): array
+    {
+        return [
+            'constant-name-via-symbol' => ['BAD', 'EURO', 'EUR'],
+            'iso-code-chf' => ['CHF', 'CHF', 'CHF'],
+            'symbol-fallback-euro' => ['', '€', 'EUR'],
+            'invalid-fallback-euro' => ['BAD', '???', 'EUR'],
+        ];
+    }
+
     // Creates a valid invoice with required base fields populated.
     private function createValidInvoice(?PaymentMeansCode $paymentMeans): Invoice
     {
@@ -271,5 +298,21 @@ final class EInvoiceExportTest extends KernelTestCase
         self::bootKernel();
 
         return self::getContainer()->get('doctrine')->getManager();
+    }
+
+    private function updateAppSettingsCurrency(string $currency, string $currencySymbol): void
+    {
+        $service = $this->getAppSettingsService();
+        $appSettings = $service->getSettings();
+        $appSettings->setCurrency($currency);
+        $appSettings->setCurrencySymbol($currencySymbol);
+        $service->saveSettings($appSettings);
+    }
+
+    private function getAppSettingsService(): AppSettingsService
+    {
+        self::bootKernel();
+
+        return self::getContainer()->get(AppSettingsService::class);
     }
 }

@@ -21,6 +21,8 @@ use Symfony\Component\Uid\Uuid;
 
 final class StatisticsControllerTest extends WebTestCase
 {
+    private static ?int $scenarioYearBase = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,14 +35,15 @@ final class StatisticsControllerTest extends WebTestCase
         $user = $this->createUserWithRoles(['ROLE_STATISTICS']);
         $client->loginUser($user);
 
-        $this->createStatisticsScenario('2099-03-01', '2099-03-03');
+        $year = $this->getScenarioYear(0);
+        $this->createStatisticsScenario(sprintf('%d-03-01', $year), sprintf('%d-03-03', $year));
 
         $client->request('GET', '/statistics/utilization/monthtly', [
             'objectId' => 'all',
             'monthStart' => 3,
             'monthEnd' => 3,
-            'yearStart' => 2099,
-            'yearEnd' => 2099,
+            'yearStart' => $year,
+            'yearEnd' => $year,
         ]);
 
         self::assertResponseIsSuccessful();
@@ -60,14 +63,15 @@ final class StatisticsControllerTest extends WebTestCase
         $user = $this->createUserWithRoles(['ROLE_STATISTICS']);
         $client->loginUser($user);
 
-        $this->createStatisticsScenario('2099-04-01', '2099-04-03');
+        $year = $this->getScenarioYear(1);
+        $this->createStatisticsScenario(sprintf('%d-04-01', $year), sprintf('%d-04-03', $year));
 
         $client->request('GET', '/statistics/origin/monthtly', [
             'objectId' => 'all',
             'monthStart' => 4,
             'monthEnd' => 4,
-            'yearStart' => 2099,
-            'yearEnd' => 2099,
+            'yearStart' => $year,
+            'yearEnd' => $year,
         ]);
 
         self::assertResponseIsSuccessful();
@@ -83,11 +87,12 @@ final class StatisticsControllerTest extends WebTestCase
         $user = $this->createUserWithRoles(['ROLE_STATISTICS']);
         $client->loginUser($user);
 
-        $this->createStatisticsScenario('2099-05-01', '2099-05-03');
+        $year = $this->getScenarioYear(2);
+        $this->createStatisticsScenario(sprintf('%d-05-01', $year), sprintf('%d-05-03', $year));
 
         $client->request('GET', '/statistics/turnover/monthly', [
-            'yearStart' => 2099,
-            'yearEnd' => 2099,
+            'yearStart' => $year,
+            'yearEnd' => $year,
             'invoice-status' => [2],
         ]);
 
@@ -147,7 +152,7 @@ final class StatisticsControllerTest extends WebTestCase
         $reservation->setStartDate(new \DateTime($start));
         $reservation->setEndDate(new \DateTime($end));
         $reservation->setAppartment($appartment);
-        $reservation->setReservationDate(new \DateTime('2099-02-20'));
+        $reservation->setReservationDate(new \DateTime(substr($start, 0, 4).'-02-20'));
         $reservation->setIsConflict(false);
         $reservation->setIsConflictIgnored(false);
         $reservation->setUuid(Uuid::v4());
@@ -176,6 +181,16 @@ final class StatisticsControllerTest extends WebTestCase
         $em->persist($invoiceAppartment);
 
         $em->flush();
+    }
+
+    /** Return a unique future year per test in this class to avoid data collisions between repeated local runs. */
+    private function getScenarioYear(int $offset): int
+    {
+        if (null === self::$scenarioYearBase) {
+            self::$scenarioYearBase = 2300 + random_int(0, 300);
+        }
+
+        return self::$scenarioYearBase + $offset;
     }
 
     /**

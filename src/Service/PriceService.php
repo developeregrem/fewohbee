@@ -305,8 +305,8 @@ class PriceService
     {
         $interval = date_diff($start, $end);
 
-        // return number of days
-        return (int) $interval->format('%a');
+        // return number of days, minimum 1 for same-day bookings
+        return max(1, (int) $interval->format('%a'));
     }
 
     private function isDateBetween(\DateTime $cur, \DateTime $start, \DateTime $end)

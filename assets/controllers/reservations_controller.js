@@ -13,6 +13,8 @@ import {
 } from './utils_controller.js';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static values = {
         canSelect: { type: Boolean, default: false },
@@ -786,8 +788,7 @@ export default class extends Controller {
 
     initTableInteractions() {
         this.initPopovers();
-        this.initSelectable();
-        this.initYearlySelectable();
+        this.initCellSelection();
     }
 
     initPopovers() {
@@ -800,170 +801,288 @@ export default class extends Controller {
         $('.reservation-popover').popover({ placement: 'top', html: true, trigger: 'hover' });
     }
 
-    initSelectable() {
+    initCellSelection() {
         if (!this.canSelectValue) {
             return;
         }
-        const enableSelectable = window.matchMedia('(pointer: fine)').matches;
-        if (!enableSelectable || !window.jQuery || !$.fn.selectable) {
-            return;
-        }
-        const table = $('.table-reservation');
-        if (!table.length) {
-            return;
-        }
-        let tdStartDate = '';
-        let tdEndDate = '';
-        let tdStartAppartment = '';
-        let lastTdNumber = '';
 
-        table.selectable({
-            filter: '.td-empty',
-            cancel: '.reservation',
-            selecting: (event, ui) => {
-                if (tdStartDate === '') {
-                    tdStartDate = $(ui.selecting).attr('data-day');
-                    tdStartAppartment = $(ui.selecting).attr('data-appartment');
-                    lastTdNumber = $(ui.selecting).attr('data-tdnumber');
-                } else {
-                    const curAppartment = $(ui.selecting).attr('data-appartment');
-                    if (curAppartment !== tdStartAppartment) {
-                        $(ui.selecting).removeClass('ui-selectee ui-selecting');
-                    } else if ($(ui.selecting).attr('data-tdnumber') !== lastTdNumber) {
-                        $(ui.selecting).removeClass('ui-selectee ui-selecting');
-                    } else if ($(ui.selecting).attr('data-day') !== tdStartDate) {
-                        tdEndDate = $(ui.selecting).attr('data-day');
-                    }
+        const table = document.querySelector('.table-reservation');
+        const calendar = document.querySelector('[data-reservations-yearly="true"]');
+        if (!table && !calendar) {
+            return;
+        }
+
+        const container = table || calendar;
+        const isYearly = !!calendar;
+        const cellSelector = isYearly ? '.reservation-yearly-parent' : '.td-empty';
+        const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+
+        let startCell = null;
+        let endCell = null;
+        let dragging = false;
+        let selectableCells = [];
+
+        const isBlocked = (cell) => {
+            if (isYearly) {
+                const res = cell.querySelector('.reservation-yearly');
+                return res && !res.classList.contains('month-reservationstartend');
+            }
+            return false;
+        };
+
+        // Get all <tr> rows that contain selectable cells
+        const getAllRows = () => Array.from(container.querySelectorAll('tr')).filter(
+            (tr) => tr.querySelector(cellSelector)
+        );
+
+        const buildCellList = (cell, singleRowOnly = false) => {
+            if (!isYearly && !singleRowOnly) {
+                // Multi-row: collect cells from all rows
+                selectableCells = Array.from(container.querySelectorAll('tbody ' + cellSelector));
+            } else if (!isYearly && singleRowOnly) {
+                // Single row only (touch mode)
+                const tr = cell.closest('tr');
+                selectableCells = Array.from(tr.querySelectorAll(cellSelector));
+            } else {
+                selectableCells = Array.from(container.querySelectorAll(cellSelector));
+            }
+        };
+
+        // Get valid date range within a single row, respecting blocked/reserved cells
+        const getValidRangeForRow = (tr, fromDate, toDate) => {
+            const cells = Array.from(tr.querySelectorAll(cellSelector));
+            const startDate = fromDate <= toDate ? fromDate : toDate;
+            const endDate = fromDate <= toDate ? toDate : fromDate;
+            const inRange = cells.filter((c) => c.dataset.day >= startDate && c.dataset.day <= endDate);
+
+            if (inRange.length === 0) return [];
+
+            // Check for gaps: if the number of half-day cells doesn't match the expected
+            // continuous range, there's a reservation/blocked cell in between.
+            // Walk from the start cell's position in the full row toward the end,
+            // stopping if any cell in between is not a td-empty cell.
+            const allTds = Array.from(tr.querySelectorAll('td'));
+            const firstEmpty = inRange[0];
+            const lastEmpty = inRange[inRange.length - 1];
+            const firstIdx = allTds.indexOf(firstEmpty);
+            const lastIdx = allTds.indexOf(lastEmpty);
+            if (firstIdx === -1 || lastIdx === -1) return inRange;
+
+            // Check that all <td> elements between first and last are td-empty
+            for (let i = firstIdx; i <= lastIdx; i++) {
+                if (!allTds[i].matches(cellSelector)) {
+                    // There's a non-empty cell (reservation/blocked) in between – not valid
+                    return [];
                 }
-            },
-            unselecting: (event, ui) => {
-                if ($(ui.unselecting).attr('data-tdnumber') === lastTdNumber) {
-                    const curDay = $(ui.unselecting).attr('data-day');
-                    if (curDay > tdStartDate) {
-                        tdEndDate = $(ui.unselecting).prev().attr('data-day');
-                    } else if (curDay < tdStartDate) {
-                        tdEndDate = $(ui.unselecting).next().attr('data-day');
-                    }
+            }
+
+            // Walk from start to end, stop at blocked (for yearly view compatibility)
+            const valid = [];
+            for (const cell of inRange) {
+                if (isBlocked(cell)) break;
+                valid.push(cell);
+            }
+            return valid;
+        };
+
+        // 2D rectangular selection: rows × date range
+        const getValidRect = (from, to) => {
+            if (!from) return [];
+            const target = to || from;
+
+            if (isYearly) {
+                // Yearly view: keep original 1D behavior
+                const fromIdx = selectableCells.indexOf(from);
+                const toIdx = selectableCells.indexOf(target);
+                if (fromIdx === -1 || toIdx === -1) return [];
+                const start = Math.min(fromIdx, toIdx);
+                const end = Math.max(fromIdx, toIdx);
+                const cells = selectableCells.slice(start, end + 1);
+                const forward = toIdx >= fromIdx;
+                const valid = [];
+                for (let i = 0; i < cells.length; i++) {
+                    const cell = forward ? cells[i] : cells[cells.length - 1 - i];
+                    if (isBlocked(cell)) break;
+                    valid.push(cell);
                 }
-            },
-            start: () => table.removeClass('table-hover'),
-            stop: () => {
-                if (tdStartDate !== '' && tdEndDate !== '' && tdStartAppartment !== '' && tdStartDate !== tdEndDate) {
-                    this.selectableAddAppartmentToSelection(tdStartAppartment, tdStartDate, tdEndDate);
+                return forward ? valid : valid.reverse();
+            }
+
+            // Multi-row rectangle selection
+            const fromRow = from.closest('tr');
+            const toRow = target.closest('tr');
+            const allRows = getAllRows();
+            const fromRowIdx = allRows.indexOf(fromRow);
+            const toRowIdx = allRows.indexOf(toRow);
+            if (fromRowIdx === -1 || toRowIdx === -1) return [];
+
+            const startRowIdx = Math.min(fromRowIdx, toRowIdx);
+            const endRowIdx = Math.max(fromRowIdx, toRowIdx);
+            const fromDate = from.dataset.day;
+            const toDate = target.dataset.day;
+
+            const allValid = [];
+            for (let i = startRowIdx; i <= endRowIdx; i++) {
+                const rowValid = getValidRangeForRow(allRows[i], fromDate, toDate);
+                allValid.push(...rowValid);
+            }
+            return allValid;
+        };
+
+        const clearHighlights = () => {
+            container.querySelectorAll('.ui-selecting').forEach(
+                (el) => el.classList.remove('ui-selecting')
+            );
+        };
+
+        const highlightRange = (from, to) => {
+            clearHighlights();
+            const valid = getValidRect(from, to);
+            valid.forEach((cell) => cell.classList.add('ui-selecting'));
+            return valid;
+        };
+
+        const getCellFromPoint = (x, y) => {
+            const el = document.elementFromPoint(x, y);
+            return el ? el.closest(cellSelector) : null;
+        };
+
+        const resetSelection = () => {
+            startCell = null;
+            endCell = null;
+            dragging = false;
+            clearHighlights();
+            if (table) {
+                table.classList.add('table-hover');
+            }
+        };
+
+        const finishSelection = () => {
+            const valid = getValidRect(startCell, endCell || startCell);
+            resetSelection();
+
+            if (valid.length === 0) return;
+
+            if (isYearly) {
+                const firstDay = valid[0].dataset.day;
+                const lastDay = valid[valid.length - 1].dataset.day;
+                const apartmentId = calendar.dataset.reservationsApartmentId;
+                if (apartmentId && firstDay) {
+                    this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
                     $('#modalCenter').modal('toggle');
                 }
-                tdStartDate = '';
-                tdEndDate = '';
-                tdStartAppartment = '';
-                lastTdNumber = '';
-                table.addClass('table-hover');
-                $('.td-empty').removeClass('ui-selectee ui-selected');
+                return;
             }
-        });
-    }
 
-    initYearlySelectable() {
-        const calendar = document.querySelector('[data-reservations-yearly=\"true\"]');
-        if (!calendar || typeof Selectable === 'undefined') {
+            // Multi-row: group valid cells by apartment
+            const byApartment = new Map();
+            for (const cell of valid) {
+                const aptId = cell.dataset.appartment;
+                if (!byApartment.has(aptId)) {
+                    byApartment.set(aptId, []);
+                }
+                byApartment.get(aptId).push(cell);
+            }
+
+            // Collect apartment entries: [{id, from, end}]
+            const apartments = [];
+            for (const [aptId, cells] of byApartment) {
+                const days = cells.map((c) => c.dataset.day).sort();
+                apartments.push({
+                    id: aptId,
+                    from: days[0],
+                    end: days[days.length - 1]
+                });
+            }
+
+            if (apartments.length > 0) {
+                this.selectableAddMultipleAppartmentsToSelection(apartments);
+                $('#modalCenter').modal('toggle');
+            }
+        };
+
+        // --- Touch: two-tap mode (tap start, tap end) – single row only ---
+        if (!isFinePointer) {
+            container.addEventListener('click', (e) => {
+                const cell = getCellFromPoint(e.clientX, e.clientY);
+                if (!cell || isBlocked(cell)) return;
+
+                if (!startCell) {
+                    // First tap: set start
+                    buildCellList(cell, true);
+                    startCell = cell;
+                    cell.classList.add('ui-selecting');
+                    if (table) {
+                        table.classList.remove('table-hover');
+                    }
+                } else {
+                    // Second tap: set end and finish
+                    if (selectableCells.includes(cell)) {
+                        endCell = cell;
+                        highlightRange(startCell, endCell);
+                        finishSelection();
+                    } else {
+                        // Tapped outside valid range → restart with this cell
+                        resetSelection();
+                        buildCellList(cell, true);
+                        startCell = cell;
+                        cell.classList.add('ui-selecting');
+                        if (table) {
+                            table.classList.remove('table-hover');
+                        }
+                    }
+                }
+            });
             return;
         }
 
-        if (this.yearlySelectable) {
-            this.yearlySelectable.destroy();
-        }
+        // --- Desktop: click-and-drag mode ---
+        const onPointerDown = (e) => {
+            const cell = getCellFromPoint(e.clientX, e.clientY);
+            if (!cell || isBlocked(cell)) return;
 
-        let startSlectedDay = null;
-        let endSelectedDay = null;
-        const apartmentId = calendar.dataset.reservationsApartmentId;
+            buildCellList(cell);
+            dragging = true;
+            startCell = cell;
+            endCell = cell;
+            cell.classList.add('ui-selecting');
 
-        this.yearlySelectable = new Selectable({
-            filter: '.reservation-yearly-parent',
-            ignore: '.reservation-yearly',
-            lasso: {
-                border: '2px dashed rgba(255, 255, 255, 0)',
-                backgroundColor: 'rgba(255, 255, 255, 0)'
+            if (table) {
+                table.classList.remove('table-hover');
             }
-        });
 
-        this.yearlySelectable.on('start', (e, item) => {
-            if (item) {
-                startSlectedDay = item.node;
-                endSelectedDay = null;
-            }
-        });
+            container.setPointerCapture(e.pointerId);
+            e.preventDefault();
+        };
 
-        this.yearlySelectable.on('drag', (e) => {
-            let elm = document.elementFromPoint(e.pageX, e.pageY - window.pageYOffset);
-            const c = this.yearlySelectable.config.classes;
-            if (!elm) {
-                return;
-            }
-            elm = elm.closest('.' + c.selectable);
-            if (!elm) {
-                return;
-            }
-            const elmIdx = this.yearlySelectable.nodes.indexOf(elm);
-            const startIdx = this.yearlySelectable.nodes.indexOf(startSlectedDay);
-            let start; let end;
-            const cItems = this.yearlySelectable.items.length;
-            if (elmIdx > startIdx) {
-                start = startIdx;
-                end = elmIdx;
-            } else {
-                start = elmIdx;
-                end = startIdx;
-            }
-            let canSelected = true;
-            let i = 0; let u = cItems - 1;
-            while (i < cItems) {
-                const idx = (elmIdx > startIdx ? i : u);
-                const item = this.yearlySelectable.items[idx];
-                if (idx >= start && idx <= end) {
-                    if (this.isDayWithReservation(item)) {
-                        canSelected = false;
-                    }
-                    if (canSelected) {
-                        this.selectableSelect(item, c);
-                        endSelectedDay = item.node;
-                    } else {
-                        this.selectableDeselect(item, c);
-                    }
-                } else if (item.selected || item.selecting) {
-                    this.selectableDeselect(item, c);
-                }
-                i++;
-                u--;
-            }
-        });
+        const onPointerMove = (e) => {
+            if (!dragging) return;
+            const cell = getCellFromPoint(e.clientX, e.clientY);
+            if (!cell || !cell.matches(cellSelector)) return;
+            endCell = cell;
+            highlightRange(startCell, endCell);
+        };
 
-        this.yearlySelectable.on('end', () => {
-            if (startSlectedDay && endSelectedDay) {
-                this.selectableAddAppartmentToSelection(apartmentId, startSlectedDay.dataset.day, endSelectedDay.dataset.day);
-                $('#modalCenter').modal('toggle');
-                startSlectedDay = null;
-                endSelectedDay = null;
-            }
-        });
+        const onPointerUp = (e) => {
+            if (!dragging) return;
+            try { container.releasePointerCapture(e.pointerId); } catch (_) { /* */ }
+            finishSelection();
+        };
+
+        const onPointerCancel = (e) => {
+            if (!dragging) return;
+            try { container.releasePointerCapture(e.pointerId); } catch (_) { /* */ }
+            resetSelection();
+        };
+
+        container.addEventListener('pointerdown', onPointerDown);
+        container.addEventListener('pointermove', onPointerMove);
+        container.addEventListener('pointerup', onPointerUp);
+        container.addEventListener('pointercancel', onPointerCancel);
+        container.style.touchAction = 'none';
+        container.addEventListener('selectstart', (e) => { if (dragging) e.preventDefault(); });
     }
 
-    isDayWithReservation(item) {
-        const reservationItem = item.node.querySelector('.reservation-yearly');
-        if (reservationItem && !reservationItem.classList.contains('month-reservationstartend')) {
-            return true;
-        }
-        return false;
-    }
-
-    selectableSelect(item, c) {
-        item.node.classList.add(c.selecting);
-        item.selecting = true;
-    }
-
-    selectableDeselect(item, c) {
-        item.selecting = false;
-        item.node.classList.remove(c.selecting);
-        item.node.classList.remove(c.selected);
-    }
 
     // ----- modal helpers -----
 
@@ -1144,6 +1263,27 @@ export default class extends Controller {
             url: targetUrl,
             method: 'POST',
             data,
+            target: this.modalContent
+        });
+        return false;
+    }
+
+    selectableAddMultipleAppartmentsToSelection(apartments, url = null) {
+        const targetUrl = url || this.addAppartmentSelectableUrl || document.getElementById('reservation-period')?.dataset.addAppartmentSelectableUrl;
+        if (!targetUrl) {
+            return false;
+        }
+        const params = new URLSearchParams();
+        params.append('createNewReservation', 'true');
+        apartments.forEach((apt, idx) => {
+            params.append('apartments[' + idx + '][id]', apt.id);
+            params.append('apartments[' + idx + '][from]', apt.from);
+            params.append('apartments[' + idx + '][end]', apt.end);
+        });
+        httpRequest({
+            url: targetUrl,
+            method: 'POST',
+            data: params.toString(),
             target: this.modalContent
         });
         return false;
@@ -1499,12 +1639,24 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const templateId = event.currentTarget.dataset.templateId || null;
         const inProcess = event.currentTarget.dataset.inprocess === 'true';
-        const formData = inProcess ? httpSerializeForm('#template-form') : null;
+        let data = { templateId, inProcess };
+        if (inProcess) {
+            const form = document.querySelector('#template-form');
+            const editor = form ? form.querySelector('#editor1') : null;
+            if (editor && this.simpleEditor) {
+                editor.value = this.simpleEditor.getHTML();
+            }
+            if (form) {
+                data = new FormData(form);
+                data.set('templateId', templateId || '');
+                data.set('inProcess', 'true');
+            }
+        }
         setModalTitle(event.currentTarget.dataset.title || '');
         httpRequest({
             url,
             method: 'POST',
-            data: { templateId, inProcess, formData },
+            data,
             target: this.modalContent
         });
         return false;

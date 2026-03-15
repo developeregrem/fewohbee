@@ -1,6 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import { request as httpRequest, serializeForm as httpSerializeForm } from './http_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['form', 'spinner', 'content'];
 

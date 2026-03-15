@@ -127,6 +127,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
             $price->setNumberOfPersons($persons);
             $price->setVat(7);
             $price->setPrice($amount);
+            $price->setIsPerRoom(true);
             $amount += 20;
             if (1 === $persons) {
                 $price->setDescription($this->translator->trans('price.single'));
@@ -150,6 +151,8 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         $price->setVat(19);
         $price->setPrice(10);
         $price->setDescription($this->translator->trans('price.breakfast'));
+        $price->setIsPerRoom(false);
+        $price->setIsDefaultActiveInReservationCreation(true);
         foreach ($origins as $origin) {
             $price->addReservationOrigin($origin);
         }

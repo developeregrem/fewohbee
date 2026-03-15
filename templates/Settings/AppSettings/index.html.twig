@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'app_settings.page_title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'app_settings.page_title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            {# -- Header -- #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="fs-4 mb-0">
+                    <i class="fas fa-cog text-primary me-1"></i>
+                    {{ 'app_settings.page_title'|trans }}
+                </h2>
+            </div>
+
+            {{ form_start(form) }}
+
+            {# -- Currency -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-coins text-primary me-2"></i>{{ 'app_settings.section.currency'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.currency_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.currency) }}</div>
+                        <div class="col-md-6">{{ form_row(form.currencySymbol) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# -- Invoices -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-file-invoice text-primary me-2"></i>{{ 'app_settings.section.invoices'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.invoices_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.invoiceFilenamePattern) }}
+                </div>
+            </div>
+
+            {# -- Guests -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-users text-primary me-2"></i>{{ 'app_settings.section.guests'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.guests_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.customerSalutations) }}
+                </div>
+            </div>
+
+            {# -- Notifications -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-bell text-primary me-2"></i>{{ 'app_settings.section.notifications'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.notifications_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.notificationEmail) }}
+                    {% if not form.vars.value.notificationEmail %}
+                        <div class="alert alert-info small py-2 mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ 'app_settings.notification_fallback_hint'|trans({'%email%': fallbackEmail})|raw }}
+                        </div>
+                    {% endif %}
+                    {{ form_row(form.notifyOnOnlineBooking) }}
+                    {{ form_row(form.notifyOnCalendarImport) }}
+                </div>
+            </div>
+
+            {# -- Save bar -- #}
+            <div class="card sticky-bottom mb-3" style="z-index:10">
+                <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                    <p class="text-body-secondary small mb-0 d-none d-md-block"></p>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-save me-1"></i>{{ 'app_settings.save'|trans }}
+                    </button>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

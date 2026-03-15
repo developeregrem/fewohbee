@@ -6,6 +6,8 @@ namespace App\Tests\Unit;
 
 use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
+use App\Entity\AppSettings;
+use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -123,6 +125,11 @@ final class InvoiceServiceFilenameTest extends TestCase
                 return $id;
             });
 
-        return new InvoiceService($em, $priceService, $translator, $pattern);
+        $appSettings = new AppSettings();
+        $appSettings->setInvoiceFilenamePattern($pattern);
+        $appSettingsService = $this->createStub(AppSettingsService::class);
+        $appSettingsService->method('getSettings')->willReturn($appSettings);
+
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService);
     }
 }

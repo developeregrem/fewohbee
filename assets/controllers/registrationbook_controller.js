@@ -5,6 +5,8 @@ import {
 } from './http_controller.js';
 import { iniStartOrEndDate, setModalTitle } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['searchForm', 'searchInput', 'table', 'page', 'bookEntry'];
     static values = {
