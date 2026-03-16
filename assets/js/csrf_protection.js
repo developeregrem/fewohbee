@@ -76,6 +76,3 @@ export function removeCsrfToken (formElement) {
         document.cookie = window.location.protocol === 'https:' ? '__Host-' + cookie + '; secure' : cookie;
     }
 }
-
-/* stimulusFetch: 'lazy' */
-export default 'csrf-protection-controller';

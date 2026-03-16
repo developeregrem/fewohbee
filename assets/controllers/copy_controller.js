@@ -3,6 +3,8 @@ import { Controller } from '@hotwired/stimulus';
 /**
  * Handles copy-to-clipboard buttons that may be loaded via Turbo/AJAX.
  */
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['input'];
     static values = {

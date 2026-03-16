@@ -2,14 +2,14 @@ import { Controller } from '@hotwired/stimulus';
 import {
     request as httpRequest,
     serializeForm as httpSerializeForm,
-} from './http_controller.js';
+} from '../js/http.js';
 import {
     setLocalStorageItemIfNotExists,
     getLocalStorageItem,
     updatePDFExportLinks,
     enableDeletePopover,
     setModalTitle
-} from './utils_controller.js';
+} from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 

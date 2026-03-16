@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { enableDeletePopover } from './utils_controller.js';
+import { enableDeletePopover } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 

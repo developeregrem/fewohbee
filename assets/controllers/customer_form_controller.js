@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest } from './http_controller.js';
+import { request as httpRequest } from '../js/http.js';
 
 /* stimulusFetch: 'lazy' */
 

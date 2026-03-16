@@ -50,7 +50,7 @@ export function enableDeletePopover() {
             });
         });
         const title = popoverTriggerEl.getAttribute('data-title') || popoverTriggerEl.getAttribute('title') || '';
-        const popover = new window.bootstrap.Popover(popoverTriggerEl, { 
+        const popover = new window.bootstrap.Popover(popoverTriggerEl, {
             html: true,
             title: title
         });
@@ -92,12 +92,12 @@ export function enableDeletePopover() {
 }
 
 export function setModalTitle(title) {
-        if (!title) return;
-        const modalTitle = document.querySelector('#modalCenter .modal-title');
-        if (modalTitle) {
-            modalTitle.textContent = title;
-        }
+    if (!title) return;
+    const modalTitle = document.querySelector('#modalCenter .modal-title');
+    if (modalTitle) {
+        modalTitle.textContent = title;
     }
+}
 
 /**
  * Inits two date input fields if one of the fields is empty. It will add e.g. in the other field + 1 day
@@ -145,12 +145,3 @@ if (!window.UtilsHelper) {
 if (!window.iniStartOrEndDate) {
     window.iniStartOrEndDate = iniStartOrEndDate;
 }
-
-export default {
-    setLocalStorageItemIfNotExists,
-    getLocalStorageItem,
-    updatePDFExportLinks,
-    enableDeletePopover,
-    iniStartOrEndDate,
-    setModalTitle
-};

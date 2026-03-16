@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { iniStartOrEndDate } from './utils_controller.js';
+import { iniStartOrEndDate } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
