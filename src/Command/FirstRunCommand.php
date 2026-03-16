@@ -191,39 +191,27 @@ class FirstRunCommand extends Command
 
     private function createTemplateTypes(): void
     {
-        $t1 = new TemplateType();
-        $t1->setIcon('fa-envelope');
-        $t1->setName('TEMPLATE_RESERVATION_EMAIL');
-        $t2 = new TemplateType();
-        $t2->setIcon('fa-file-pdf');
-        $t2->setName('TEMPLATE_FILE_PDF');
-        $t3 = new TemplateType();
-        $t3->setIcon('fa-file-pdf');
-        $t3->setName('TEMPLATE_INVOICE_PDF');
-        $t4 = new TemplateType();
-        $t4->setIcon('fa-file-pdf');
-        $t4->setName('TEMPLATE_RESERVATION_PDF');
-        $t5 = new TemplateType();
-        $t5->setIcon('fa-file-pdf');
-        $t5->setName('TEMPLATE_CASHJOURNAL_PDF');
-        $t6 = new TemplateType();
-        $t6->setIcon('fa-file-pdf');
-        $t6->setName('TEMPLATE_GDPR_PDF');
-        $t7 = new TemplateType();
-        $t7->setIcon('fa-file-pdf');
-        $t7->setName('TEMPLATE_OPERATIONS_PDF');
-        $t8 = new TemplateType();
-        $t8->setIcon('fa-file-pdf');
-        $t8->setName('TEMPLATE_REGISTRATION_PDF');
+        $definitions = [
+            'TEMPLATE_RESERVATION_EMAIL' => 'fa-envelope',
+            'TEMPLATE_FILE_PDF' => 'fa-file-pdf',
+            'TEMPLATE_INVOICE_PDF' => 'fa-file-pdf',
+            'TEMPLATE_RESERVATION_PDF' => 'fa-file-pdf',
+            'TEMPLATE_CASHJOURNAL_PDF' => 'fa-file-pdf',
+            'TEMPLATE_GDPR_PDF' => 'fa-file-pdf',
+            'TEMPLATE_OPERATIONS_PDF' => 'fa-file-pdf',
+            'TEMPLATE_REGISTRATION_PDF' => 'fa-file-pdf',
+        ];
 
-        $this->em->persist($t1);
-        $this->em->persist($t2);
-        $this->em->persist($t3);
-        $this->em->persist($t4);
-        $this->em->persist($t5);
-        $this->em->persist($t6);
-        $this->em->persist($t7);
-        $this->em->persist($t8);
+        foreach ($definitions as $name => $icon) {
+            $templateType = $this->em->getRepository(TemplateType::class)->findOneBy(['name' => $name]);
+            if (!$templateType instanceof TemplateType) {
+                $templateType = new TemplateType();
+                $templateType->setName($name);
+                $this->em->persist($templateType);
+            }
+
+            $templateType->setIcon($icon);
+        }
     }
 
     private function createDummyCustomer(): void

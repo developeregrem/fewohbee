@@ -260,13 +260,22 @@ class TemplatesService
             }
 
             $content = $response->getContent();
+            $templateName = $this->resolveTemplateName(
+                $type->getName(),
+                $entry['name'] ?? null
+            );
+            $template = $this->em->getRepository(Template::class)->findOneBy([
+                'templateType' => $type,
+                'name' => $templateName,
+            ]);
+            if ($template instanceof Template) {
+                continue;
+            }
+
             $template = new Template();
             $template->setParams($this->buildTemplateParams($entry['params'] ?? []));
             $template->setIsDefault(isset($entry['isDefault']) ? (bool) $entry['isDefault'] : false);
-            $template->setName($this->resolveTemplateName(
-                $type->getName(),
-                $entry['name'] ?? null
-            ));
+            $template->setName($templateName);
             $template->setTemplateType($type);
             $template->setText($content);
 
