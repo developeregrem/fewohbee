@@ -1,6 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import { iniStartOrEndDate } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static values = {
         priceId: String,
@@ -161,7 +163,7 @@ export default class extends Controller {
         if (defaultActiveCheckbox) {
             defaultActiveCheckbox.disabled = !isMisc;
         }
-        if (isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
+        if (priceId === 'new' && isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
             isPerRoomCheckbox.checked = true;
         }
     }

@@ -21,6 +21,8 @@ import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { templateAutocomplete } from '../js/template-autocomplete.js';
 
+/* stimulusFetch: 'lazy' */
+
 const optionalAttribute = (attributeName, htmlAttribute = attributeName) => ({
     default: null,
     parseHTML: (element) => element.getAttribute(htmlAttribute),
@@ -58,6 +60,7 @@ function extendWithTemplateAttrs(Base, ...attrGroups) {
     });
 }
 
+const TemplateLink = extendWithTemplateAttrs(Link, styleAndClassAttributes());
 const TemplateTable = extendWithTemplateAttrs(Table, styleAndClassAttributes());
 const TemplateTableRow = extendWithTemplateAttrs(TableRow, repeatAndConditionAttributes(), styleAndClassAttributes());
 const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndConditionAttributes(), styleAndClassAttributes());
@@ -1396,7 +1399,7 @@ export default class extends Controller {
                     gapcursor: false,
                 }),
                 Underline,
-                Link.configure({ openOnClick: false }),
+                TemplateLink.configure({ openOnClick: false }),
                 ResizableImage,
                 TextStyle,
                 TemplateControlAttributes,

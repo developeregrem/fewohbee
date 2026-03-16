@@ -145,8 +145,8 @@ class MonthlyStatsService
             $resEnd = $endDate > $monthEndExclusive ? $monthEndExclusive : $endDate;
 
             // Only count overnights that fall within the report month.
-            if ($resStart < $resEnd) {
-                $nights = $resStart->diff($resEnd)->days;
+            if ($resStart <= $resEnd) {
+                $nights = max(1, $resStart->diff($resEnd)->days);
                 $byStatus[$statusKey]['utilization']['stays'] += $nights * $persons;
                 if ($isDefaultStatus) {
                     $stays += $nights * $persons;

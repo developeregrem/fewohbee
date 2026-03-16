@@ -144,7 +144,8 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Loads reservations that fits into the period and will include reservations that end at the given start date or starts at the given end date.
+     * Loads reservations that overlap the period, including those that merely touch the boundaries
+     * (e.g. endDate = start or startDate = end).
      */
     public function loadReservationsForApartment(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, string $statusMode = 'blocking'): array
     {
@@ -153,10 +154,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->select('u')
             ->where('u.appartment = :app ')
             ->andWhere('u.isConflict = 0')
-            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
-                .'(u.startDate < :start AND u.endDate >= :start) OR'
-                .'(u.startDate <= :end AND u.endDate > :end) OR'
-                .'(u.startDate < :start AND u.endDate > :end))')
+            ->andWhere('u.startDate <= :end AND u.endDate >= :start')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
@@ -176,7 +174,8 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
-     * Loads only reservations that fits into the given period. A reservation which ends at the start date or starts at the end date will be ignored.
+     * Loads reservations that truly overlap the period. Turnovers are excluded:
+     * a reservation ending exactly at start or starting exactly at end is ignored.
      */
     public function loadReservationsForApartmentWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment): array
     {
@@ -185,10 +184,7 @@ class ReservationRepository extends ServiceEntityRepository
             ->select('u')
             ->where('u.appartment = :app ')
             ->andWhere('u.isConflict = 0')
-            ->andWhere('((u.startDate >= :start AND u.endDate <= :end) OR'
-                .'(u.startDate < :start AND u.endDate > :start) OR'
-                .'(u.startDate < :end AND u.endDate > :end) OR'
-                .'(u.startDate < :start AND u.endDate > :end))')
+            ->andWhere('u.startDate < :end AND u.endDate > :start')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->setParameter('app', $apartment->getId())
@@ -205,6 +201,84 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         return $reservations;
+    }
+
+    /**
+     * Load aggregated blocking occupancy data for multiple apartments in a single query.
+     * Turnovers are excluded (same logic as loadReservationsForApartmentWithoutStartEnd).
+     *
+     * @param int[] $apartmentIds
+     * @return array<int, array{reservationCount: int, persons: int}>
+     */
+    public function loadOccupancyByApartmentIdsWithoutStartEnd(\DateTimeInterface $start, \DateTimeInterface $end, array $apartmentIds): array
+    {
+        if ([] === $apartmentIds) {
+            return [];
+        }
+
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->select('IDENTITY(u.appartment) AS appartmentId')
+            ->addSelect('COUNT(u.id) AS reservationCount')
+            ->addSelect('COALESCE(SUM(u.persons), 0) AS persons')
+            ->where('u.appartment IN (:apps)')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('u.startDate < :end AND u.endDate > :start')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
+            ->groupBy('u.appartment');
+
+        $this->applyBlockingStatusFilter($qb, 'u');
+
+        $rows = $qb->getQuery()->getArrayResult();
+        $occupancy = [];
+
+        foreach ($rows as $row) {
+            $occupancy[(int) $row['appartmentId']] = [
+                'reservationCount' => (int) $row['reservationCount'],
+                'persons' => (int) $row['persons'],
+            ];
+        }
+
+        return $occupancy;
+    }
+
+    /**
+     * Load all reservations for multiple apartments in a single query.
+     * Includes boundary touches (for table display where partial reservations must be shown).
+     *
+     * @param Appartment[] $apartments
+     *
+     * @return Reservation[]
+     */
+    public function loadReservationsForApartments(\DateTimeInterface $start, \DateTimeInterface $end, array $apartments, string $statusMode = 'blocking'): array
+    {
+        if ([] === $apartments) {
+            return [];
+        }
+
+        $apartmentIds = array_map(fn ($a) => $a->getId(), $apartments);
+
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->select('u')
+            ->addSelect('booker', 'calImport')
+            ->leftJoin('u.booker', 'booker')
+            ->leftJoin('booker.customerAddresses', 'addr')
+            ->leftJoin('u.calendarSyncImport', 'calImport')
+            ->where('u.appartment IN (:apps)')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('u.startDate <= :end AND u.endDate >= :start')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('apps', $apartmentIds, ArrayParameterType::INTEGER)
+            ->addOrderBy('u.startDate', 'ASC')
+            ->addOrderBy('u.endDate', 'ASC');
+
+        $this->applyBlockingStatusFilter($qb, 'u', $statusMode);
+
+        return $qb->getQuery()->getResult();
     }
 
     public function loadReservationsWithoutInvoiceForCustomer(\App\Entity\Customer $customer)
@@ -232,7 +306,7 @@ class ReservationRepository extends ServiceEntityRepository
         if ('all' === $objectId) {
             $qb = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')
-            ->where(':day >= u.startDate and :day < u.endDate')
+            ->where(':day >= u.startDate and (:day < u.endDate or (:day = u.startDate and u.startDate = u.endDate))')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.isConflictIgnored = 0')
             // ->andWhere('u.status=1')
@@ -241,7 +315,7 @@ class ReservationRepository extends ServiceEntityRepository
         } else {
             $qb = $this->createQueryBuilder('u')
             ->select('SUM(u.persons)')
-            ->where('a.object = :objId and :day >= u.startDate and :day < u.endDate')
+            ->where('a.object = :objId and :day >= u.startDate and (:day < u.endDate or (:day = u.startDate and u.startDate = u.endDate))')
             ->andWhere('u.isConflict = 0')
             ->andWhere('u.isConflictIgnored = 0')
             // ->andWhere('u.status=1')

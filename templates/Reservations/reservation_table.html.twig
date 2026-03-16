@@ -1,222 +1,157 @@
-{% set periodStartDate = timestamp2UTC(today) %}
-{% set displayEndDate = today|date_modify("+" ~ interval ~ "day")|date('U') %}
-{% set periodEndDate = timestamp2UTC(displayEndDate) %}
 {% set displayMonth = true %}
 {% set displayWeek = true %}
 {% set displayWeekday = true %}
 
-{% use 'Reservations/_reservation_table_day.html.twig' %}
+{% set weekdayLabels = {
+    1: 'reservation.table.weekday.monday'|trans,
+    2: 'reservation.table.weekday.tuesday'|trans,
+    3: 'reservation.table.weekday.wednesday'|trans,
+    4: 'reservation.table.weekday.thursday'|trans,
+    5: 'reservation.table.weekday.friday'|trans,
+    6: 'reservation.table.weekday.saturday'|trans,
+    7: 'reservation.table.weekday.sunday'|trans,
+} %}
+
+{% if selectedSubdivision == 'all' %}
+    {% set showCountry = holidayCountry %}
+{% else %}
+    {% set showCountry = selectedSubdivision %}
+{% endif %}
+
+{% use 'Reservations/_resevation_popover.html.twig' %}
+
 <div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table">
         <thead>
+        {# ── Month headers ── #}
         {% if displayMonth %}
         <tr id="reservation-table-header-month">
             <td class="text-center"></td>
-            {% set firstWasSummer = today|date('I') %}
-            {% set lastMonth = today|date('m') %}
-            {% set colCount = 0 %}
-            {% for i in 0..interval %}
-                {% set addToDate = "+" ~ i ~ "day" %}
-                {% set tmpDate = today|date_modify(addToDate) %}
-                {# if there is a change from summer to winter time #}
-                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-                {% endif %}
-                {% set curMonth = tmpDate|date('m') %}
-                {# add 2 to colcount since we are at the end of the displayed period
-                    but add it only if the last day is not the first of the next month (last month was already printed #}
-                {% if i == interval and tmpDate|date('j') != 1 %}{% set colCount = colCount + 2 %}{% endif %}
-                {# be aware that when the last month is printed while we are on the first day of the next month already #}
-                {% if lastMonth != curMonth or i == interval %}
-                    <td class="text-center p-1" colspan="{{ colCount }}">{{ getLocalizedMonth(lastMonth, 'MMM', app.request.locale) }}</td>
-                    {% set colCount = 2 %}
-                    {% set lastMonth = curMonth %}
-                    {# if we reached the end of the period and last day is the first of the next month we need to print the last td #}
-                    {% if tmpDate|date('j') == 1 and i == interval %}
-                        <td class="text-center p-1" colspan="2">{{ getLocalizedMonth(curMonth, 'MMM', app.request.locale) }}</td>
-                    {% endif %}
-                {% else %}
-                    {% set colCount = colCount + 2 %}
-                {% endif %}
+            {% for header in grid.monthHeaders %}
+                <td class="text-center p-1" colspan="{{ header.colspan * 2 }}">{{ getLocalizedMonth(header.label, 'MMM', app.request.locale) }}</td>
             {% endfor %}
         </tr>
         {% endif %}
+
+        {# ── Week headers ── #}
         {% if displayWeek %}
         <tr id="reservation-table-header-week">
             <td class="text-center"></td>
-            {% set firstWasSummer = today|date('I') %}
-            {% set lastWeek = today|date('W') %}
-            {% set colCount = 0 %}
-            {% for i in 0..interval %}
-                {% set addToDate = "+" ~ i ~ "day" %}
-                {% set tmpDate = today|date_modify(addToDate) %}
-                {# if there is a change from summer to winter time #}
-                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-                {% endif %}
-                {% set curWeek = tmpDate|date('W') %}
-                {# add 2 to colcount since we are at the end of the displayed period
-                but add it only if the last day is not a monday (last cw was already printed #}
-                {% if i == interval and colCount != (2*7) %}{% set colCount = colCount + 2 %}{% endif %}
-                {# be aware that when the last cw is printed while we are on monday already #}
-                {% if lastWeek != curWeek  or i == interval %}
-                    <td class="text-center p-1" colspan="{{ colCount }}">{{ 'reservation.table.calendarweek'|trans }} {{ lastWeek }}</td>
-                    {% set colCount = 2 %}
-                    {% set lastWeek = curWeek %}
-                    {# if we reached the end of the period and last day is a monday we need to print the last td #}
-                    {% if tmpDate|date('N') == 1 and i == interval %}
-                        <td class="text-center p-1" colspan="2">{{ 'reservation.table.calendarweek'|trans }} {{ curWeek }}</td>
-                    {% endif %}
-                {% else %}
-                    {% set colCount = colCount + 2 %}
-                {% endif %}
+            {% for header in grid.weekHeaders %}
+                <td class="text-center p-1" colspan="{{ header.colspan * 2 }}">{{ 'reservation.table.calendarweek'|trans }} {{ header.label }}</td>
             {% endfor %}
         </tr>
         {% endif %}
+
+        {# ── Weekday headers ── #}
         {% if displayWeekday %}
         <tr id="reservation-table-header-weekday" class="table-weekdays">
             <th class="text-center"></th>
-            {% set firstWasSummer = today|date('I') %}
-            {% set weekdayLabels = {
-                1: 'reservation.table.weekday.monday'|trans,
-                2: 'reservation.table.weekday.tuesday'|trans,
-                3: 'reservation.table.weekday.wednesday'|trans,
-                4: 'reservation.table.weekday.thursday'|trans,
-                5: 'reservation.table.weekday.friday'|trans,
-                6: 'reservation.table.weekday.saturday'|trans,
-                7: 'reservation.table.weekday.sunday'|trans,
-            } %}
-            {% for i in 0..interval %}
-                {% set addToDate = "+" ~ i ~ "day" %}
-                {% set tmpDate = today|date_modify(addToDate) %}
-                {# if there is a change from summer to winter time #}
-                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-                {% endif %}
-                {# check for weekend #}
-                {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
-                    {% set weekendCss = ' reservation-table-weekend' %}
-                {% else %}
-                    {% set weekendCss = '' %}
-                {% endif %}
-                {# Holidays #}
-                {% if selectedSubdivision == 'all' %}
-                    {% set showCountry =  holidayCountry %}
-                {% else %}
-                    {% set showCountry =  selectedSubdivision %}
-                {% endif %}
-                {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
+            {% for col in grid.dayColumns %}
+                {% set weekendCss = col.isWeekend ? ' reservation-table-weekend' : '' %}
+                {% set publicdays = getPublicdaysForDay(col.date|date_modify('+0 day'), showCountry, app.request.locale) %}
                 {% set holidayText = "" %}
                 {% for holiday in publicdays %}
                     {% set holidayText = holidayText ~ holiday.name %}
-                    {% if loop.last == false %}
-                        {% set holidayText = holidayText ~ "<br />" %}
-                    {% endif %}
+                    {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
                 {% endfor %}
-                {% if holidayText|length > 0 %}
-                    {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
-                    {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
-                {% else %}
-                    {% set holidayPopover = "" %}
-                    {% set holidayCss = "" %}
-                {% endif %}
-                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}>
-                    {{ weekdayLabels[tmpDate|date('N')] ?? '' }}
-                </th>
+                {% set holidayCss = holidayText|length > 0 ? " bg-info bg-opacity-25 holiday-info" : "" %}
+                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2"
+                    {% if holidayText|length > 0 %}
+                        data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                        data-bs-content="{{ holidayText }}" data-bs-trigger="hover" data-bs-html="true"
+                    {% endif %}
+                >{{ weekdayLabels[col.isoDayOfWeek] ?? '' }}</th>
             {% endfor %}
         </tr>
         {% endif %}
+
+        {# ── Day number headers ── #}
         <tr class="table-days">
             <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
-            {% set firstWasSummer = today|date('I') %}
-            {% for i in 0..interval %}
-                {% set addToDate = "+" ~ i ~ "day" %}
-                {% set tmpDate = today|date_modify(addToDate) %}
-                {# if there is a change from summer to winter time #}
-                {% if firstWasSummer == 1 and tmpDate|date('I') == 0 %}
-                    {% set tmpDate = tmpDate|date_modify("+1 hour") %}
-                {% endif %}
-                {# check for weekend #}
-                {% if tmpDate|date('N') == 6 or tmpDate|date('N') == 7 %}
-                    {% set weekendCss = ' reservation-table-weekend' %}
-                {% else %}
-                    {% set weekendCss = '' %}
-                {% endif %}
-                {# Holidays #}
-                {% if selectedSubdivision == 'all' %}
-                    {% set showCountry =  holidayCountry %}
-                {% else %}
-                    {% set showCountry =  selectedSubdivision %}
-                {% endif %}
-                {% set publicdays = getPublicdaysForDay(tmpDate, showCountry, app.request.locale) %}
+            {% for col in grid.dayColumns %}
+                {% set weekendCss = col.isWeekend ? ' reservation-table-weekend' : '' %}
+                {% set publicdays = getPublicdaysForDay(col.date|date_modify('+0 day'), showCountry, app.request.locale) %}
                 {% set holidayText = "" %}
                 {% for holiday in publicdays %}
                     {% set holidayText = holidayText ~ holiday.name %}
-                    {% if loop.last == false %}
-                        {% set holidayText = holidayText ~ "<br />" %}
-                    {% endif %}
+                    {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
                 {% endfor %}
-                {% if holidayText|length > 0 %}
-                    {% set holidayPopover = 'data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-content="' ~ holidayText ~ '" data-bs-trigger="hover" data-bs-html="true"' %}
-                    {% set holidayCss = " bg-info bg-opacity-25 holiday-info" %}
-                {% else %}
-                    {% set holidayPopover = "" %}
-                    {% set holidayCss = "" %}
-                {% endif %}
-                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" {{ holidayPopover|raw }}
-                    >{{ tmpDate|date('d') }}</th>
+                {% set holidayCss = holidayText|length > 0 ? " bg-info bg-opacity-25 holiday-info" : "" %}
+                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2"
+                    {% if holidayText|length > 0 %}
+                        data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                        data-bs-content="{{ holidayText }}" data-bs-trigger="hover" data-bs-html="true"
+                    {% endif %}
+                >{{ '%02d'|format(col.dayOfMonth) }}</th>
             {% endfor %}
         </tr>
         </thead>
+
         <tbody>
-        {% set totalColumnCount = ((interval + 1) * 2) + 1 %}
-        {% set previousSubsidiaryId = null %}
-        {% for appartment in appartments %}
-            {% set currentSubsidiaryId = appartment.object is defined and appartment.object ? appartment.object.id : null %}
-            {% if previousSubsidiaryId != currentSubsidiaryId and objectId == "all" %}
+        {% set totalColumnCount = grid.dayColumns|length * 2 + 1 %}
+        {% set emptyTdNr = 0 %}
+
+        {% for row in grid.rows %}
+            {# Subsidiary group header #}
+            {% if grid.subsidiaryBreaks[row.apartment.id] is defined %}
                 <tr>
                     <td colspan="{{ totalColumnCount }}" class="fw-semibold">
-                        {{ appartment.object.name ?? '' }}
+                        {{ grid.subsidiaryBreaks[row.apartment.id] ?? '' }}
                     </td>
                 </tr>
-                {% set previousSubsidiaryId = currentSubsidiaryId %}
-            {% endif %}
-            {% set reservations = get_reservations_for_period(today, interval, appartment) %}
-            {% if appartment.multipleOccupancy %}
-                {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
-                {% set printReservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}
-            {% else %}
-                {% set printReservations = reservations %}
             {% endif %}
 
-            {% set j = 0 %}
-            {# empty tds between a reservation will get a different number so we can prevent, that user selects a new reservation over an existing #}
-            {% set emptyTdNr = 0 %}
-            {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ appartment.bedsMax %}
-            {% if appartment.multipleOccupancy %} 
-                {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
+            {# Room info for first row of each apartment #}
+            {% if not row.isSubRow %}
+                {% set roomInfo = 'appartment.bedsmax'|trans ~ ": " ~ row.apartment.bedsMax %}
+                {% if row.apartment.multipleOccupancy %}
+                    {% set roomInfo = roomInfo ~ ' <i class="fa-solid fa-users" title="' ~ 'apartment.multiple.occupancy.text'|trans ~ '"></i>' %}
+                {% endif %}
             {% endif %}
-            <tr>
-                <td class="text-center room-info" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="{{ roomInfo }}" data-bs-trigger="hover">
-                    {{ appartment.number }}{% if appartment.roomCategory.acronym|length > 0 %} ({{ appartment.roomCategory.acronym }}){% endif %}
-                </td>
-                {% with %}
-                    {% set reservations = printReservations %}
-                    {{ block('table_day') }}
-                {% endwith %}
 
-            </tr>
-            {% if appartment.multipleOccupancy and multipleReservations|length > 1 %}
-                {% for i in 1..multipleReservations|length-1 %}
-                <tr class="border-top-0">
+            <tr{% if row.isSubRow %} class="border-top-0"{% endif %}>
+                {% if row.isSubRow %}
                     <td></td>
-                    {% with %}
-                        {% set reservations = attribute(multipleReservations, i) %}
-                        {{ block('table_day') }}
-                    {% endwith %}
-                </tr>
+                {% else %}
+                    <td class="text-center room-info"
+                        data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right"
+                        data-bs-content="{{ roomInfo }}" data-bs-trigger="hover"
+                    >{{ row.apartment.number }}{% if row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 %} ({{ row.apartment.roomCategory.acronym }}){% endif %}</td>
+                {% endif %}
+
+                {# ── Cells ── #}
+                {% for cell in row.cells %}
+                    {% if cell.type == 'reservation' %}
+                        {# Reservation cell #}
+                        {% set reservation = cell.reservation %}
+                        <td class="reservation text-center cell-{{ cell.position }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}"
+                            colspan="{{ cell.span }}"
+                        >
+                            <div data-action="click->reservations#openReservationAction"
+                                 data-reservation-id="{{ cell.reservationId }}"
+                                 data-url="{{ path('reservations.get.reservation', {'id': cell.reservationId}) }}"
+                                 style="background-color: {{ cell.color }}; color: {{ cell.contrastColor }}"
+                                 class="reservation-inner text-center"
+                                 title="{{ block('popTitle') }}"
+                                 data-bs-content="{{ block('popBody') }}"
+                            >{{ cell.displayName }}</div>
+                        </td>
+                    {% elseif cell.type == 'blocked' %}
+                        {# Blocked cell #}
+                        <td class="td-blocked" colspan="{{ cell.span }}">
+                            <div class="blocked-inner"></div>
+                        </td>
+                    {% else %}
+                        {# Empty half-day cell #}
+                        <td class="td-empty td-half td-half-{{ cell.side }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}"
+                            data-day="{{ cell.date }}" data-appartment="{{ row.apartment.id }}"
+                            data-tdnumber="{{ emptyTdNr }}"
+                        ></td>
+                        {% set emptyTdNr = emptyTdNr + 1 %}
+                    {% endif %}
                 {% endfor %}
-            {% endif %}
+            </tr>
         {% endfor %}
         </tbody>
     </table>

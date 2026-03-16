@@ -8,14 +8,10 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    version: '4.3.1'
+    version: '4.4.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
-    customer_salutations: '%env(csv:CUSTOMER_SALUTATIONS)%'
-    invoice_filename_pattern: '%env(INVOICE_FILENAME_PATTERN)%'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
-    # define default when env variable is not defined
-    env(INVOICE_FILENAME_PATTERN): 'Invoice-<number>'
 
 services:
     # default configuration for services in *this* file
@@ -52,6 +48,10 @@ services:
             - '%returnPath%'
             - '%mailCopy%'
     
+    App\Service\AppSettingsService:
+        arguments:
+            $fromMail: '%fromMail%'
+
     App\Service\TemplatesService:
         arguments:
             - '%webHost%'
@@ -60,10 +60,6 @@ services:
         arguments:
             $publicDirectory: '%publicUploadDirectory%'
             $targetDirectory: '%uploadDirectory%'
-
-    App\Service\InvoiceService:
-        arguments:
-            $invoiceFilenamePattern: '%invoice_filename_pattern%'
 
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:

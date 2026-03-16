@@ -2,9 +2,12 @@ parameters:
     # fallback parameters
     env(USE_PASSWORD_BLACKLIST): 'true'
     env(PASSKEY_ENABLED): 'false'
+    env(TRUSTED_PROXIES): ''
 
 framework:
     secret: '%env(APP_SECRET)%'
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: [ 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix' ]
     #default_locale: en
     #csrf_protection: true
     http_method_override: false
@@ -21,6 +24,18 @@ framework:
     #fragments: true
     php_errors:
         log: true
+
+    rate_limiter:
+        public_booking_availability:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '5 minutes'
+            cache_pool: cache.app
+        public_booking_submit:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.app
 
     cache:
         # Put the unique name of your app here: the prefix seed

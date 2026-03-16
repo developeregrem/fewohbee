@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\AppSettings;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -147,7 +149,12 @@ final class InvoiceServicePricingFlagsTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $translator = $this->createStub(TranslatorInterface::class);
 
-        return new InvoiceService($em, $priceService, $translator, 'Invoice-<number>');
+        $appSettings = new AppSettings();
+        $appSettings->setInvoiceFilenamePattern('Invoice-<number>');
+        $appSettingsService = $this->createStub(AppSettingsService::class);
+        $appSettingsService->method('getSettings')->willReturn($appSettings);
+
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService);
     }
 
     private function createRequestStack(): RequestStack
