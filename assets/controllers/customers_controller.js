@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest } from './http_controller.js';
-import { setModalTitle } from './utils_controller.js';
+import { request as httpRequest } from '../js/http.js';
+import { setModalTitle } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 

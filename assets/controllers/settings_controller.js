@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest, serializeForm as httpSerializeForm } from './http_controller.js';
-import { setModalTitle, enableDeletePopover } from './utils_controller.js';
+import { request as httpRequest, serializeForm as httpSerializeForm } from '../js/http.js';
+import { setModalTitle, enableDeletePopover } from '../js/utils.js';
 
 export default class extends Controller {
     connect() {
