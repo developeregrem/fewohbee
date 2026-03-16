@@ -112,7 +112,7 @@ class InvoiceAppartment
         }
         // else
         $interval = $this->startDate->diff($this->endDate);
-        $days = (int) $interval->format('%a');
+        $days = max(1, (int) $interval->format('%a'));
 
         return $days * ($this->isPerRoom ? 1 : $this->persons);
     }

@@ -8,6 +8,7 @@ use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
+use App\Service\AppSettingsService;
 use horstoeko\zugferd\codelists\ZugferdCurrencyCodes;
 use horstoeko\zugferd\codelists\ZugferdElectronicAddressScheme;
 use horstoeko\zugferd\codelists\ZugferdInvoiceType;
@@ -21,7 +22,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 // Shared generator for ZUGFeRD-based profiles.
 class ZugferdInvoiceGenerator
 {
-    public function __construct(private TranslatorInterface $translator)
+    public function __construct(private TranslatorInterface $translator, private AppSettingsService $appSettingsService)
     {
     }
 
@@ -51,7 +52,7 @@ class ZugferdInvoiceGenerator
             $invoice->getNumber(),                                     // Invoice number (BT-1)
             ZugferdInvoiceType::INVOICE,                               // Type "Invoice" (BT-3)
             $invoice->getDate(),                                       // Invoice date (BT-2)
-            ZugferdCurrencyCodes::EURO,                                // Invoice currency is EUR (Euro) (BT-5)
+            $this->resolveCurrencyCode(),                              // Currency from app settings, fallback EUR (BT-5)
             $this->translator->trans('invoice.number.short').'-'.$invoice->getNumber(), // A document title
         );
 
@@ -109,7 +110,9 @@ class ZugferdInvoiceGenerator
         }
 
         // payment terms and due date
-        $dueDate = (!is_null($settings->getPaymentDueDays()) ? $invoice->getDate()->modify('+'.$settings->getPaymentDueDays().' days') : null);
+        $dueDate = !is_null($settings->getPaymentDueDays())
+            ? (clone $invoice->getDate())->modify('+'.$settings->getPaymentDueDays().' days')
+            : null;
         $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate, $mandateReference); // Payment term
 
         $documentBuilder->setDocumentBuyerReference(null !== $invoice->getBuyerReference() ? $invoice->getBuyerReference() : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
@@ -162,5 +165,81 @@ class ZugferdInvoiceGenerator
         $documentBuilder->setDocumentSummation($netSum + $vatSum, $duePayableAmount, $netSum, 0.0, 0.0, $netSum, $vatSum, null, $prepaidAmount);
 
         return $documentBuilder->getContent();
+    }
+
+    private function resolveCurrencyCode(): string
+    {
+        $settings = $this->appSettingsService->getSettings();
+        $codesByConstantName = $this->getCurrencyCodeMap();
+        $supportedCodes = array_flip($codesByConstantName);
+
+        $candidates = [
+            $settings->getCurrency(),
+            $settings->getCurrencySymbol(),
+            $this->mapSymbolToIsoCode($settings->getCurrencySymbol()),
+        ];
+
+        foreach ($candidates as $candidate) {
+            $resolved = $this->resolveCandidateToIsoCode($candidate, $codesByConstantName, $supportedCodes);
+            if (null !== $resolved) {
+                return $resolved;
+            }
+        }
+
+        return ZugferdCurrencyCodes::EURO;
+    }
+
+    /**
+     * @return array<string, string> Constant name => ISO code.
+     */
+    private function getCurrencyCodeMap(): array
+    {
+        static $map = null;
+        if (is_array($map)) {
+            return $map;
+        }
+
+        /** @var array<string, mixed> $constants */
+        $constants = (new \ReflectionClass(ZugferdCurrencyCodes::class))->getConstants();
+
+        $map = array_filter($constants, static fn ($value): bool => is_string($value));
+
+        return $map;
+    }
+
+    /**
+     * @param array<string, string> $codesByConstantName
+     * @param array<string, int>    $supportedCodes
+     */
+    private function resolveCandidateToIsoCode(mixed $candidate, array $codesByConstantName, array $supportedCodes): ?string
+    {
+        if (!is_string($candidate)) {
+            return null;
+        }
+
+        $normalized = strtoupper(trim($candidate));
+        if ('' === $normalized) {
+            return null;
+        }
+
+        if (isset($supportedCodes[$normalized])) {
+            return $normalized;
+        }
+
+        if (isset($codesByConstantName[$normalized])) {
+            return $codesByConstantName[$normalized];
+        }
+
+        return null;
+    }
+
+    private function mapSymbolToIsoCode(string $symbol): ?string
+    {
+        return match (trim($symbol)) {
+            '€' => ZugferdCurrencyCodes::EURO,
+            '$' => ZugferdCurrencyCodes::US_DOLLAR,
+            '£' => ZugferdCurrencyCodes::POUND_STERLING,
+            default => null,
+        };
     }
 }

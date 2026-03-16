@@ -33,6 +33,7 @@ use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -51,6 +52,8 @@ use Symfony\Component\Uid\Uuid;
 #[Route('/reservation')]
 class ReservationServiceController extends AbstractController
 {
+    private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
+
     private $perPage = 15;
 
     /**
@@ -120,11 +123,11 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService);
         } else {
             return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
         }
@@ -133,7 +136,7 @@ class ReservationServiceController extends AbstractController
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -175,7 +178,25 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
+        // Build the grid using the new service (single bulk query instead of N+1)
+        $startDate = new \DateTimeImmutable(date('Y-m-d', $date), new \DateTimeZone('UTC'));
+        $endDate = $startDate->modify('+'.$interval.' days');
+        $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $statusMode = $showCanceled ? 'non_blocking' : 'blocking';
+
+        $allReservations = $em->getRepository(Reservation::class)
+            ->loadReservationsForApartments($startDate, $endDate, $appartments, $statusMode);
+
+        $grid = $tableService->buildGrid(
+            $appartments,
+            $startDate,
+            $interval,
+            $allReservations,
+            'all' === $objectId || null === $objectId,
+        );
+
         return $this->render('Reservations/reservation_table.html.twig', [
+            'grid' => $grid,
             'appartments' => $appartments,
             'today' => $date,
             'interval' => $interval,
@@ -358,7 +379,8 @@ class ReservationServiceController extends AbstractController
     }
 
     /**
-     * Adds an Appartment to create a reservation if user selects period in reservation table (mouse).
+     * Adds one or more Appartments to create a reservation if user selects period in reservation table (mouse).
+     * Supports single apartment (appartmentid, from, end) or multiple apartments (apartments[]).
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
     public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
@@ -368,38 +390,69 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
             $requestStack->getSession()->remove('customersInReservation');
             $requestStack->getSession()->remove('reservatioInCreationPrices');
+        } else {
+            $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation', []);
         }
 
-        if (null != $request->request->get('appartmentid')) {
-            $from = $request->request->get('from');
+        $em = $doctrine->getManager();
+        $defaultStatusId = $rs->getDefaultSelectableReservationStatusId();
+
+        // Build list of apartments to add: supports both single and multi-apartment requests
+        $apartmentsToAdd = [];
+        $multiApartments = $request->request->all('apartments');
+        if (!empty($multiApartments)) {
+            foreach ($multiApartments as $apt) {
+                $apartmentsToAdd[] = [
+                    'id' => $apt['id'],
+                    'from' => $apt['from'],
+                    'end' => $apt['end'],
+                ];
+            }
+        } elseif (null != $request->request->get('appartmentid')) {
+            $apartmentsToAdd[] = [
+                'id' => $request->request->get('appartmentid'),
+                'from' => $request->request->get('from'),
+                'end' => $request->request->get('end'),
+            ];
+        }
+
+        $hasConflict = false;
+        foreach ($apartmentsToAdd as $aptData) {
+            $from = $aptData['from'];
+            $end = $aptData['end'];
             $fromDate = new \DateTime($from);
-            $end = $request->request->get('end');
             $endDate = new \DateTime($end);
 
-            // if start is grater end -> change start and end
+            // if start is greater end -> swap
             if ($fromDate > $endDate) {
-                $end = $from;
-                $from = $request->request->get('end');
-                $fromDate = $endDate;
+                $tmp = $from;
+                $from = $end;
+                $end = $tmp;
+                $fromDate = new \DateTime($from);
                 $endDate = new \DateTime($end);
             }
-            $em = $doctrine->getManager();
-            $room = $em->getRepository(Appartment::class)->find($request->request->get('appartmentid'));
-            $defaultStatusId = $rs->getDefaultSelectableReservationStatusId();
 
+            $room = $em->getRepository(Appartment::class)->find($aptData['id']);
             $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
-                    $request->request->get('appartmentid'),
+                    $aptData['id'],
                     $from,
                     $end,
                     $request->request->get('status', $defaultStatusId),
-                    $request->request->get('persons', $room->getBedsMax())
+                    $room->getBedsMax()
                 );
-                $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
             } else {
-                $this->addFlash('warning', 'reservation.flash.update.conflict');
+                $hasConflict = true;
             }
+        }
+
+        if ($hasConflict) {
+            $this->addFlash('warning', 'reservation.flash.update.conflict');
+        }
+
+        if (!empty($newReservationsInformationArray)) {
+            $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
         }
 
         $request2 = $request->duplicate([], []);
@@ -1126,6 +1179,11 @@ class ReservationServiceController extends AbstractController
         if ('true' == $request->request->get('inProcess')) {
             $search = ['TEMPLATE_FILE%', 'TEMPLATE_RESERVATION_PDF'];
             $requestStack->getSession()->set('selectedTemplateId', $request->request->get('templateId'));
+            $requestStack->getSession()->set(self::EMAIL_DRAFT_SESSION_KEY, [
+                'to' => (string) $request->request->get('to', ''),
+                'subject' => (string) $request->request->get('subject', ''),
+                'msg' => (string) $request->request->get('msg', ''),
+            ]);
             $correspondences = $ts->getCorrespondencesForAttachment();
             $invoices = $rs->getInvoicesForReservationsInProgress();
         } else {
@@ -1133,6 +1191,7 @@ class ReservationServiceController extends AbstractController
             // reset do defaults at start of progress
             $requestStack->getSession()->set('selectedTemplateId', null);
             $requestStack->getSession()->set('templateAttachmentIds', []);
+            $requestStack->getSession()->remove(self::EMAIL_DRAFT_SESSION_KEY);
             $correspondences = [];
             $invoices = [];
         }
@@ -1165,6 +1224,7 @@ class ReservationServiceController extends AbstractController
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
         $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
+        $emailDraft = $requestStack->getSession()->get(self::EMAIL_DRAFT_SESSION_KEY, []);
 
         // add attachments
         $attachments = [];
@@ -1183,6 +1243,7 @@ class ReservationServiceController extends AbstractController
             'inProcess' => $inProcess,
             'attachmentIds' => $requestStack->getSession()->get('templateAttachmentIds'),
             'attachments' => $attachments,
+            'emailDraft' => $emailDraft,
         ]);
     }
 

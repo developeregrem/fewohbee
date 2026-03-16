@@ -92,6 +92,7 @@ class ReservationOriginServiceController extends AbstractController
 
                 // add succes message
                 $this->addFlash('success', 'reservationorigin.flash.create.success');
+                $this->addFlash('info', 'reservationorigin.flash.create.check_prices');
             }
         }
 

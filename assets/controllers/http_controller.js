@@ -1,6 +1,7 @@
 /**
  * Shared HTTP helpers for Stimulus controllers and legacy scripts.
  */
+import { generateCsrfHeaders, generateCsrfToken } from './csrf_protection_controller.js';
 
 export function serializeData(data) {
     if (!data) {
@@ -24,6 +25,11 @@ export function serializeForm(selectorOrNode) {
         return '';
     }
     if (node instanceof HTMLFormElement) {
+        // Only trigger stateless CSRF rotation for fields managed by Symfony's csrf-protection controller.
+        // Legacy forms using the custom CSRFProtectionService rely on a stable `_csrf_token` value.
+        if (node.querySelector('input[data-controller="csrf-protection"]')) {
+            generateCsrfToken(node);
+        }
         return serializeData(new FormData(node));
     }
     const params = new URLSearchParams();
@@ -45,7 +51,7 @@ export function serializeSelectors(selectors = []) {
     return params.toString();
 }
 
-export function request({ url, method = 'GET', data = null, target = null, loader = true, onSuccess = null, onError = null, onComplete = null }) {
+export function request({ url, method = 'GET', data = null, target = null, loader = true, onSuccess = null, onError = null, onComplete = null, csrfForm = null }) {
     const serialized = serializeData(data);
     let finalUrl = url;
     const fetchOptions = { method: method.toUpperCase(), headers: {} };
@@ -60,6 +66,15 @@ export function request({ url, method = 'GET', data = null, target = null, loade
     } else {
         fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
         fetchOptions.body = serialized;
+
+        const form = typeof csrfForm === 'string' ? document.querySelector(csrfForm) : csrfForm;
+        if (form instanceof HTMLFormElement && form.querySelector('input[data-controller="csrf-protection"]')) {
+            generateCsrfToken(form);
+            const csrfHeaders = generateCsrfHeaders(form);
+            Object.keys(csrfHeaders).forEach((key) => {
+                fetchOptions.headers[key] = csrfHeaders[key];
+            });
+        }
     }
 
     const targetEl = typeof target === 'string' ? document.querySelector(target) : target;

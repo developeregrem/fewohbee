@@ -11,6 +11,8 @@ import {
     setModalTitle
 } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 const debounce = (fn, delay = 300) => {
     let t;
     return (...args) => {
@@ -165,7 +167,7 @@ export default class extends Controller {
         const url = event.currentTarget.dataset.url;
         const successUrl = event.currentTarget.dataset.successUrl;
         const form = event.target.closest('form');
-        if (!url || !successUrl) return;
+        if (!url || !successUrl || !form) return;
         httpRequest({ 
             url, 
             method: 'POST', 

@@ -45,6 +45,43 @@ class AppartmentRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Load all apartment IDs for configuration resolution in Online Booking.
+     *
+     * @return int[]
+     */
+    public function loadAllIds(): array
+    {
+        $rows = $this->createQueryBuilder('a')
+            ->select('a.id')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): int => (int) $row['id'], $rows);
+    }
+
+    /**
+     * Return only existing apartment IDs from a given selection.
+     *
+     * @param int[] $ids
+     * @return int[]
+     */
+    public function loadExistingIds(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('a')
+            ->select('a.id')
+            ->where('a.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): int => (int) $row['id'], $rows);
+    }
+
     public function loadSumBedsMinForObject($objectId)
     {
         if ('all' === $objectId) {
@@ -103,4 +140,57 @@ class AppartmentRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Return rooms limited to the given room and subsidiary IDs with joins needed for public booking.
+     *
+     * @param int[] $roomIds
+     * @param int[] $subsidiaryIds
+     *
+     * @return Appartment[]
+     */
+    public function findForPublicBooking(array $roomIds, array $subsidiaryIds): array
+    {
+        if ([] === $roomIds || [] === $subsidiaryIds) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('a')
+            ->leftJoin('a.roomCategory', 'rc')
+            ->addSelect('rc')
+            ->join('a.object', 'o')
+            ->addSelect('o')
+            ->where('a.id IN (:roomIds)')
+            ->andWhere('o.id IN (:subsidiaryIds)')
+            ->setParameter('roomIds', $roomIds)
+            ->setParameter('subsidiaryIds', $subsidiaryIds)
+            ->addOrderBy('rc.name', 'ASC')
+            ->addOrderBy('LENGTH(a.number)', 'ASC')
+            ->addOrderBy('a.number', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Load rooms by IDs including category and subsidiary joins used during deterministic assignment.
+     *
+     * @param int[] $ids
+     *
+     * @return Appartment[]
+     */
+    public function findByIdsWithRelations(array $ids): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('a')
+            ->leftJoin('a.roomCategory', 'rc')
+            ->addSelect('rc')
+            ->join('a.object', 'o')
+            ->addSelect('o')
+            ->where('a.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -1,6 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import { enableDeletePopover } from './utils_controller.js';
 
+/* stimulusFetch: 'lazy' */
+
 export default class extends Controller {
     static targets = ['list', 'edit', 'create', 'editPanel'];
 
