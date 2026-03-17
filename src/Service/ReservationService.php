@@ -52,6 +52,29 @@ class ReservationService
         }
     }
 
+    /**
+     * Adds the reservation with the given ID and all other reservations of the same booking group to the selection.
+     */
+    public function addReservationGroupToSelection(int $reservationId): void
+    {
+        $reservation = $this->em->getRepository(Reservation::class)->find($reservationId);
+        if (!$reservation instanceof Reservation) {
+            return;
+        }
+
+        $this->addReservationToSelection($reservationId);
+
+        $bookingGroupUuid = $reservation->getBookingGroupUuid();
+        if (null === $bookingGroupUuid) {
+            return;
+        }
+
+        $groupReservations = $this->em->getRepository(Reservation::class)->findByBookingGroupUuid($bookingGroupUuid);
+        foreach ($groupReservations as $groupReservation) {
+            $this->addReservationToSelection((int) $groupReservation->getId());
+        }
+    }
+
     public function removeReservationFromSelection(int|string $reservationKey): void
     {
         $selectedReservationIds = $this->getSelectedReservationIds();
@@ -385,7 +408,7 @@ class ReservationService
      *
      * @return type
      */
-    public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack)
+    public function getMiscPricesInCreation(InvoiceService $is, array $reservations, PriceService $ps, RequestStack $requestStack): array
     {
         // prices will be filles based on already selected prices
         if (null !== $requestStack->getSession()->get('reservatioInCreationPrices', null)) {

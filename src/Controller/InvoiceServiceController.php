@@ -175,7 +175,7 @@ class InvoiceServiceController extends AbstractController
         }
 
         if (null != $request->request->get('reservationid')) {
-            $reservationService->addReservationToSelection((int) $request->request->get('reservationid'));
+            $reservationService->addReservationGroupToSelection((int) $request->request->get('reservationid'));
         }
 
         $reservations = $reservationService->getSelectedReservations();
