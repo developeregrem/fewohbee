@@ -715,6 +715,7 @@ class ReservationServiceController extends AbstractController
             $origin = $em->getRepository(ReservationOrigin::class)->find($request->request->get('reservation-origin'));
 
             $pricesInCreation = $requestStack->getSession()->get('reservatioInCreationPrices', []);
+            $groupUuid = count($reservations) > 1 ? Uuid::v4() : null;
 
             foreach ($reservations as $reservation) {
                 $reservation->setRemark($request->request->get('remark'));
@@ -722,6 +723,7 @@ class ReservationServiceController extends AbstractController
                 $reservation->setDepartureTime($departureTime ? clone $departureTime : null);
                 $reservation->setReservationOrigin($origin);
                 $reservation->setUuid(Uuid::v4());
+                $reservation->setBookingGroupUuid($groupUuid);
 
                 foreach ($customersInReservation as $guest) {
                     // add guest only if he is in the appartment
