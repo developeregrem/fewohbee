@@ -46,6 +46,16 @@ class OnlineBookingConfigType extends AbstractType
                 'label' => 'online_booking.settings.enabled',
                 'label_attr' => ['class' => 'checkbox-switch'],
             ])
+            ->add('bookingHorizonMonths', IntegerType::class, [
+                'label' => 'online_booking.settings.booking_horizon_months',
+                'help' => 'online_booking.settings.booking_horizon_months_help',
+                'required' => false,
+                'attr' => [
+                    'min' => 1,
+                    'max' => 60,
+                    'placeholder' => 'online_booking.placeholder.unlimited',
+                ],
+            ])
             ->add('bookingMode', ChoiceType::class, [
                 'label' => 'online_booking.settings.booking_mode',
                 'choices' => [

@@ -13,7 +13,7 @@
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
 {% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
 <script>window.addEventListener("message",function(e){if(e.data&&e.data.type==="fhb-resize"){document.getElementById("fhb-booking").style.height=e.data.height+"px"}});</script>{% endset %}
-<div class="container" data-controller="settings online-booking-settings">
+<div class="container" data-controller="settings online-booking-settings online-booking-restrictions">
     <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-9">
 
@@ -59,6 +59,9 @@
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.enabled) }}</div>
                         <div class="col-md-6">{{ form_row(form.bookingMode) }}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">{{ form_row(form.bookingHorizonMonths) }}</div>
                     </div>
                 </div>
             </div>
@@ -173,6 +176,184 @@
             </div>
 
             {{ form_end(form) }}
+
+            {# ── Category Restrictions ── #}
+            {% if categories|length > 0 %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-shield-halved text-primary me-2"></i>{{ 'online_booking.settings.section_restrictions'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_restrictions_desc'|trans }}</p>
+                </div>
+                <div class="card-body p-0">
+                    <form method="post" action="{{ path('settings.online_booking.save_category_restrictions') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('ob_category_restrictions') }}">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">{{ 'online_booking.settings.restriction_category'|trans }}</th>
+                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_weekday'|trans }}</th>
+                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_weekend'|trans }}</th>
+                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_max_rooms'|trans }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for category in categories %}
+                                        {% set catId = category.id %}
+                                        {% set minStay = minStayByCategory[catId] ?? null %}
+                                        {% set limit = limitsByCategory[catId] ?? null %}
+                                        <tr>
+                                            <td class="ps-3 fw-semibold small">{{ category.name }}</td>
+                                            <td class="text-center">
+                                                <input type="number" name="min_weekday_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
+                                                    value="{{ minStay ? minStay.minNightsWeekday : '' }}" min="1" max="365"
+                                                    placeholder="-">
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="number" name="min_weekend_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
+                                                    value="{{ minStay ? minStay.minNightsWeekend : '' }}" min="1" max="365"
+                                                    placeholder="-">
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="number" name="max_rooms_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
+                                                    value="{{ limit ? limit.maxRooms : '' }}" min="1" max="999"
+                                                    placeholder="-">
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-body py-2 border-top d-flex justify-content-end">
+                            <button class="btn btn-sm btn-primary" type="submit">
+                                <i class="fas fa-save me-1"></i>{{ 'online_booking.settings.restrictions_save'|trans }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Special Periods (Min Stay Overrides) ── #}
+            <div class="card mb-3">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title fs-6 mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>{{ 'online_booking.settings.section_overrides'|trans }}</h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_overrides_desc'|trans }}</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#overrideOffcanvas">
+                        <i class="fas fa-plus me-1"></i>{{ 'online_booking.settings.override_add'|trans }}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if overrides|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">{{ 'online_booking.settings.override_period'|trans }}</th>
+                                        <th>{{ 'online_booking.settings.override_category'|trans }}</th>
+                                        <th class="text-center" style="width:120px">{{ 'online_booking.settings.override_min_nights'|trans }}</th>
+                                        <th class="text-end pe-3" style="width:100px"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for override in overrides %}
+                                        <tr>
+                                            <td class="ps-3 small">
+                                                {{ override.startDate|date('d.m.Y') }} – {{ override.endDate|date('d.m.Y') }}
+                                            </td>
+                                            <td class="small">
+                                                {{ override.roomCategory ? override.roomCategory.name : ('online_booking.settings.override_all_categories'|trans) }}
+                                            </td>
+                                            <td class="text-center fw-semibold">{{ override.minNights }}</td>
+                                            <td class="text-end pe-3">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                                                    data-bs-toggle="offcanvas" data-bs-target="#overrideOffcanvas"
+                                                    data-override-id="{{ override.id }}"
+                                                    data-override-start="{{ override.startDate|date('Y-m-d') }}"
+                                                    data-override-end="{{ override.endDate|date('Y-m-d') }}"
+                                                    data-override-nights="{{ override.minNights }}"
+                                                    data-override-category="{{ override.roomCategory ? override.roomCategory.id : '' }}"
+                                                    data-action="click->online-booking-restrictions#editOverride">
+                                                    <i class="fas fa-pen-to-square"></i>
+                                                </button>
+                                                <form method="post" action="{{ path('settings.online_booking.delete_override', {'id': override.id}) }}" class="d-inline">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('ob_delete_override_' ~ override.id) }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        onclick="return confirm('{{ 'online_booking.settings.override_confirm_delete'|trans|e('js') }}')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-body-secondary small text-center">
+                            {{ 'online_booking.settings.override_none'|trans }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Override Offcanvas ── #}
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="overrideOffcanvas">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="overrideOffcanvasLabel">{{ 'online_booking.settings.override_add'|trans }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <form method="post" action="{{ path('settings.online_booking.save_override') }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('ob_override') }}">
+                        <input type="hidden" name="override_id" value="" data-online-booking-restrictions-target="overrideId">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.override_start_date'|trans }}</label>
+                            <input type="date" name="start_date" class="form-control" required data-online-booking-restrictions-target="startDate">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.override_end_date'|trans }}</label>
+                            <input type="date" name="end_date" class="form-control" required data-online-booking-restrictions-target="endDate">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.override_min_nights'|trans }}</label>
+                            <input type="number" name="min_nights" class="form-control" min="1" max="365" value="1" required data-online-booking-restrictions-target="minNights">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">{{ 'online_booking.settings.override_category'|trans }}</label>
+                            <div class="border rounded p-2" style="max-height:12rem;overflow:auto" data-online-booking-restrictions-target="categoryList">
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="room_category_ids[]" value="" id="overrideCatAll"
+                                        data-online-booking-restrictions-target="categoryAll"
+                                        data-action="change->online-booking-restrictions#toggleAll" checked>
+                                    <label class="form-check-label small" for="overrideCatAll">{{ 'online_booking.settings.override_all_categories'|trans }}</label>
+                                </div>
+                                <hr class="my-1">
+                                {% for category in categories %}
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="room_category_ids[]" value="{{ category.id }}" id="overrideCat{{ category.id }}"
+                                            data-online-booking-restrictions-target="categoryItem"
+                                            data-action="change->online-booking-restrictions#toggleItem">
+                                        <label class="form-check-label small" for="overrideCat{{ category.id }}">{{ category.name }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>{{ 'online_booking.settings.override_save'|trans }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             {# ── Embed ── #}
             <div class="card mb-3">
