@@ -15,7 +15,8 @@ class PublicAvailabilityService
     public function __construct(
         private readonly AppartmentRepository $appartmentRepository,
         private readonly ReservationRepository $reservationRepository,
-        private readonly OnlineBookingConfigService $configService
+        private readonly OnlineBookingConfigService $configService,
+        private readonly OnlineBookingRestrictionService $restrictionService,
     ) {
     }
 
@@ -81,6 +82,7 @@ class PublicAvailabilityService
                     'availableCount' => 0,
                     'roomIds' => [],
                     'subsidiaryIds' => [],
+                    '_category' => $category,
                 ];
             }
 
@@ -90,10 +92,31 @@ class PublicAvailabilityService
             $grouped[$typeKey]['maxGuests'] = max($grouped[$typeKey]['maxGuests'], (int) $room->getBedsMax());
         }
 
-        foreach ($grouped as &$row) {
+        $stayNights = (int) $dateFrom->diff($dateTo)->days;
+
+        foreach ($grouped as $key => &$row) {
             sort($row['roomIds']);
             $row['subsidiaryIds'] = array_values(array_unique($row['subsidiaryIds']));
             sort($row['subsidiaryIds']);
+
+            $category = $row['_category'] ?? null;
+
+            // Apply minimum stay restriction: hide category if stay is too short
+            if ($category instanceof RoomCategory) {
+                if (!$this->restrictionService->isStayLongEnough($category, $dateFrom, $stayNights)) {
+                    unset($grouped[$key]);
+                    continue;
+                }
+
+                // Apply max rooms limit per category
+                $maxRooms = $this->restrictionService->getMaxRoomsForCategory($category);
+                if (null !== $maxRooms && $row['availableCount'] > $maxRooms) {
+                    $row['availableCount'] = $maxRooms;
+                    $row['roomIds'] = array_slice($row['roomIds'], 0, $maxRooms);
+                }
+            }
+
+            unset($row['_category']);
         }
         unset($row);
 
@@ -103,8 +126,8 @@ class PublicAvailabilityService
     /**
      * Reduce public output to only room types that are relevant for the current request.
      *
-     * This hides oversized room types and caps the displayed availability to the highest count
-     * that can actually participate in a valid selection for the requested guests/rooms.
+     * Caps the displayed availability per type to the highest count that can actually
+     * participate in a valid selection for the requested guests/rooms (DP feasibility check).
      *
      * @param array<string, array{
      *   typeKey: string,
@@ -131,11 +154,7 @@ class PublicAvailabilityService
             return [];
         }
 
-        $maxRelevantCapacity = $persons - $roomsCount + 1;
-        $rows = array_values(array_filter(
-            $grouped,
-            static fn (array $row): bool => (int) $row['maxGuests'] <= $maxRelevantCapacity
-        ));
+        $rows = array_values($grouped);
 
         if ([] === $rows) {
             return [];

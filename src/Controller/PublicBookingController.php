@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBookingRestrictionService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
 use Symfony\Component\Intl\Countries;
@@ -22,7 +23,8 @@ class PublicBookingController extends AbstractController
         Request $request,
         PublicBookingService $publicBookingService,
         OnlineBookingConfigService $configService,
-        PublicBookingAbuseProtectionService $abuseProtectionService
+        PublicBookingAbuseProtectionService $abuseProtectionService,
+        OnlineBookingRestrictionService $restrictionService,
     ): Response
     {
         $config = $configService->getConfig();
@@ -46,6 +48,7 @@ class PublicBookingController extends AbstractController
             'errorMessage' => $error,
             'successMessage' => $successMessage,
             'minArrivalDate' => (new \DateTimeImmutable('tomorrow'))->format('Y-m-d'),
+            'maxDepartureDate' => $restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
             'formState' => $abuseProtectionService->createFormState(false),
             'step' => 1,
@@ -94,6 +97,11 @@ class PublicBookingController extends AbstractController
             }
 
             [$dateFrom, $dateTo, $persons, $roomsCount] = $this->parseSearchInput($request);
+
+            $maxDeparture = $restrictionService->getMaxDepartureDate();
+            if (null !== $maxDeparture && $dateTo > $maxDeparture) {
+                throw new PublicBookingException('online_booking.error.booking_horizon_exceeded');
+            }
 
             if ('availability' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request);
