@@ -41,7 +41,8 @@ final class Version20260320120000 extends AbstractMigration
         $this->addSql('CREATE TABLE online_booking_room_category_limit (
             id INT AUTO_INCREMENT NOT NULL,
             room_category_id INT NOT NULL,
-            max_rooms SMALLINT NOT NULL,
+            max_rooms SMALLINT DEFAULT NULL,
+            min_occupancy SMALLINT DEFAULT NULL,
             INDEX IDX_OB_RC_LIMIT_RC (room_category_id),
             UNIQUE INDEX uniq_ob_room_cat_limit (room_category_id),
             PRIMARY KEY(id),

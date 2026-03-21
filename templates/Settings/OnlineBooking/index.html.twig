@@ -109,6 +109,11 @@
                             {{ form_errors(form.selectedRoomIds) }}
                         </div>
                     </div>
+                    {# ── Price coverage hint ── #}
+                    <div class="alert alert-info mt-3 small" role="alert">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ 'online_booking.settings.price_coverage_hint'|trans|raw }}
+                    </div>
                 </div>
             </div>
 
@@ -195,6 +200,7 @@
                                         <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_weekday'|trans }}</th>
                                         <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_weekend'|trans }}</th>
                                         <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_max_rooms'|trans }}</th>
+                                        <th class="text-center" style="width:140px">{{ 'online_booking.settings.restriction_min_occupancy'|trans }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -217,6 +223,11 @@
                                             <td class="text-center">
                                                 <input type="number" name="max_rooms_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
                                                     value="{{ limit ? limit.maxRooms : '' }}" min="1" max="999"
+                                                    placeholder="-">
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="number" name="min_occupancy_{{ catId }}" class="form-control form-control-sm text-center mx-auto" style="width:80px"
+                                                    value="{{ limit ? limit.minOccupancy : '' }}" min="1" max="99"
                                                     placeholder="-">
                                             </td>
                                         </tr>
@@ -278,13 +289,16 @@
                                                     data-action="click->online-booking-restrictions#editOverride">
                                                     <i class="fas fa-pen-to-square"></i>
                                                 </button>
-                                                <form method="post" action="{{ path('settings.online_booking.delete_override', {'id': override.id}) }}" class="d-inline">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('ob_delete_override_' ~ override.id) }}">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                        onclick="return confirm('{{ 'online_booking.settings.override_confirm_delete'|trans|e('js') }}')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                {% set id = override.id %}
+                                                {% set targetUrl = path('settings.online_booking.delete_override', {'id': override.id}) %}
+                                                {% set deletePopoverHint = 'online_booking.settings.override_confirm_delete'|trans %}
+                                                {% use "common/delete_popover.html.twig" %}
+                                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                                    <i class="fas fa-trash text-danger"
+                                                        data-popover="delete"
+                                                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                                        data-bs-content='{{ block('deletePopoverContent') }}'></i>
+                                                </a>
                                             </td>
                                         </tr>
                                     {% endfor %}

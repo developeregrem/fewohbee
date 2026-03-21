@@ -89,6 +89,7 @@ class OnlineBookingSettingsController extends AbstractController
             $weekday = $this->parseNullableInt($request->request->get('min_weekday_'.$catId));
             $weekend = $this->parseNullableInt($request->request->get('min_weekend_'.$catId));
             $maxRooms = $this->parseNullableInt($request->request->get('max_rooms_'.$catId));
+            $minOccupancy = $this->parseNullableInt($request->request->get('min_occupancy_'.$catId));
 
             // Min stay
             $minStay = $minStayByCategory[$catId] ?? null;
@@ -104,15 +105,16 @@ class OnlineBookingSettingsController extends AbstractController
                 $em->remove($minStay);
             }
 
-            // Room limit
+            // Room limit + min occupancy
             $limit = $limitsByCategory[$catId] ?? null;
-            if (null !== $maxRooms) {
+            if (null !== $maxRooms || null !== $minOccupancy) {
                 if (null === $limit) {
                     $limit = new OnlineBookingRoomCategoryLimit();
                     $limit->setRoomCategory($category);
                     $em->persist($limit);
                 }
                 $limit->setMaxRooms($maxRooms);
+                $limit->setMinOccupancy($minOccupancy);
             } elseif (null !== $limit) {
                 $em->remove($limit);
             }
@@ -185,17 +187,17 @@ class OnlineBookingSettingsController extends AbstractController
     }
 
     /** Delete a min-stay override. */
-    #[Route('/restrictions/override/{id}/delete', name: 'settings.online_booking.delete_override', methods: ['POST'])]
+    #[Route('/restrictions/override/{id}/delete', name: 'settings.online_booking.delete_override', methods: ['DELETE'])]
     public function deleteOverride(
         Request $request,
         int $id,
         OnlineBookingMinStayOverrideRepository $overrideRepository,
         EntityManagerInterface $em,
     ): Response {
-        if (!$this->isCsrfTokenValid('ob_delete_override_'.$id, $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
             $this->addFlash('danger', 'online_booking.flash.invalid_token');
 
-            return $this->redirectToRoute('settings.online_booking.index');
+            return new Response('', Response::HTTP_FORBIDDEN);
         }
 
         $override = $overrideRepository->find($id);
@@ -205,7 +207,7 @@ class OnlineBookingSettingsController extends AbstractController
             $this->addFlash('success', 'online_booking.flash.override_deleted');
         }
 
-        return $this->redirectToRoute('settings.online_booking.index');
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     /** Return horizon warning data as JSON for async checks. */

@@ -76,6 +76,19 @@ class OnlineBookingRestrictionService
     }
 
     /**
+     * Get the minimum occupancy for online booking for a given category.
+     *
+     * @return int|null null means no restriction (any occupancy allowed)
+     */
+    public function getMinOccupancyForCategory(RoomCategory $category): ?int
+    {
+        $indexed = $this->limitRepository->findAllIndexedByCategory();
+        $limit = $indexed[$category->getId()] ?? null;
+
+        return $limit?->getMinOccupancy();
+    }
+
+    /**
      * Get the maximum departure date based on the booking horizon.
      *
      * @return \DateTimeImmutable|null null means no limit

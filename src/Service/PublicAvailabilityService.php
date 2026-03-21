@@ -17,11 +17,16 @@ class PublicAvailabilityService
         private readonly ReservationRepository $reservationRepository,
         private readonly OnlineBookingConfigService $configService,
         private readonly OnlineBookingRestrictionService $restrictionService,
+        private readonly PublicPricingService $pricingService,
     ) {
     }
 
     /**
      * Return grouped availability by room type for the public booking form.
+     *
+     * Each row includes an `occupancyOptions` array with pre-calculated prices
+     * for each valid number-of-persons. Only occupancy levels that have a matching
+     * price category are included.
      *
      * @return array<int, array{
      *   typeKey: string,
@@ -30,7 +35,8 @@ class PublicAvailabilityService
      *   maxGuests: int,
      *   availableCount: int,
      *   roomIds: int[],
-     *   subsidiaryIds: int[]
+     *   subsidiaryIds: int[],
+     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
      * }>
      */
     public function getAvailability(
@@ -83,6 +89,7 @@ class PublicAvailabilityService
                     'roomIds' => [],
                     'subsidiaryIds' => [],
                     '_category' => $category,
+                    '_sampleRoom' => $room,
                 ];
             }
 
@@ -116,7 +123,34 @@ class PublicAvailabilityService
                 }
             }
 
-            unset($row['_category']);
+            // Compute occupancy options with prices (cap at requested persons count)
+            $sampleRoom = $row['_sampleRoom'];
+            $row['occupancyOptions'] = $this->pricingService->getOccupancyPrices(
+                $category ?? $sampleRoom->getRoomCategory(),
+                $sampleRoom,
+                $dateFrom,
+                $dateTo,
+                min((int) $row['maxGuests'], $persons),
+            );
+
+            // Apply minimum occupancy restriction: remove occupancy options below threshold
+            if ($category instanceof RoomCategory) {
+                $minOccupancy = $this->restrictionService->getMinOccupancyForCategory($category);
+                if (null !== $minOccupancy) {
+                    $row['occupancyOptions'] = array_values(array_filter(
+                        $row['occupancyOptions'],
+                        static fn (array $opt): bool => $opt['persons'] >= $minOccupancy,
+                    ));
+                }
+            }
+
+            unset($row['_category'], $row['_sampleRoom']);
+
+            // If no occupancy option has a valid price, hide this category entirely
+            if ([] === $row['occupancyOptions']) {
+                unset($grouped[$key]);
+                continue;
+            }
         }
         unset($row);
 

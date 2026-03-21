@@ -22,7 +22,7 @@
                                 {% for label in steps %}
                                     {% set stepNum = loop.index %}
                                     <span class="badge {{ step >= stepNum + 1 ? 'text-bg-primary' : 'text-bg-secondary' }} bg-opacity-{{ step >= stepNum + 1 ? '100' : '25' }}">{{ stepNum }}. {{ label }}</span>
-                                    {% if not loop.last %}<i class="fas fa-chevron-right text-muted" style="font-size:.6rem"></i>{% endif %}
+                                    {% if not loop.last %}<span class="text-muted" style="font-size:.6rem">&#9654;</span>{% endif %}
                                 {% endfor %}
                             </div>
                         {% endif %}
@@ -85,42 +85,59 @@
                                 </div>
                             {% endif %}
 
-                            {# ── Step 2: Room selection as cards ── #}
+                            {# ── Step 2: Room selection with occupancy options ── #}
                             {% if availability is not empty %}
                                 <hr class="my-3">
                                 <h6 class="mb-2">{{ 'online_booking.public.available_room_types'|trans }}</h6>
                                 {% for row in availability %}
-                                    {% set fieldName = 'qty_' ~ row.typeKey %}
-                                    <div class="card mb-2">
-                                        <div class="card-body d-flex justify-content-between align-items-center py-2 px-3">
-                                            <div class="me-2">
-                                                <div class="fw-semibold">{{ row.typeLabel }}</div>
-                                                <small class="text-body-secondary">{{ 'online_booking.public.table.max_guests'|trans }}: {{ row.maxGuests }} &middot; {{ 'online_booking.public.table.available'|trans }}: {{ row.availableCount }}</small>
-                                                {% if row.typeDescription is not empty %}
-                                                    <div class="small text-body-secondary">{{ row.typeDescription }}</div>
-                                                {% endif %}
+                                    <div class="card mb-3">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div>
+                                                    <div class="fw-semibold">{{ row.typeLabel }}</div>
+                                                    <small class="text-body-secondary">{{ 'online_booking.public.table.available'|trans }}: {{ row.availableCount }}</small>
+                                                </div>
                                             </div>
-                                            <div style="width:80px;flex-shrink:0">
-                                                <input
-                                                    class="form-control form-control-sm text-center"
-                                                    type="number"
-                                                    min="0"
-                                                    max="{{ row.availableCount }}"
-                                                    name="{{ fieldName }}"
-                                                    value="{{ selectedQty[row.typeKey]|default(0) }}"
-                                                >
+                                            {% if row.typeDescription is not empty %}
+                                                <div class="small text-body-secondary mb-2">{{ row.typeDescription }}</div>
+                                            {% endif %}
+                                            <div class="list-group list-group-flush">
+                                                {% for option in row.occupancyOptions %}
+                                                    {% set fieldName = 'occ_' ~ row.typeKey ~ '_p' ~ option.persons %}
+                                                    {% set selectedVal = selectedQty[row.typeKey][option.persons]|default(0) %}
+                                                    <div class="list-group-item px-0 py-2 d-flex align-items-center justify-content-between gap-2">
+                                                        <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                                            <span title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}" style="letter-spacing:.1em">
+                                                                {% for i in 1..option.persons %}👤{% endfor %}
+                                                            </span>
+                                                            <span class="fw-semibold ms-auto me-2">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
+                                                        </div>
+                                                        <div style="width:70px;flex-shrink:0">
+                                                            <input class="form-control form-control-sm text-center" type="number" min="0" max="{{ row.availableCount }}" name="{{ fieldName }}" value="{{ selectedVal }}">
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
                                             </div>
                                         </div>
                                     </div>
                                 {% endfor %}
 
-                                <div class="mt-3 text-end">
+                                <div class="mt-2 text-end">
                                     <button type="submit" name="intent" value="preview" class="btn btn-primary btn-sm">{{ 'online_booking.public.continue'|trans }}</button>
                                 </div>
                             {% endif %}
 
                             {# ── Step 3: Booker details + summary ── #}
                             {% if step >= 3 and availability is not empty %}
+                                {# Persist occupancy selection as hidden fields #}
+                                {% for row in availability %}
+                                    {% set typeSelection = selectedQty[row.typeKey]|default({}) %}
+                                    {% for persons, qty in typeSelection %}
+                                        {% if qty > 0 %}
+                                            <input type="hidden" name="occ_{{ row.typeKey }}_p{{ persons }}" value="{{ qty }}">
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
                                 <hr class="my-3">
                                 <h6 class="mb-2">{{ 'online_booking.public.booker_details'|trans }}</h6>
 
@@ -209,11 +226,14 @@
                                     <div class="small">
                                         {% set renderedSelection = false %}
                                         {% for row in availability %}
-                                            {% if selectedQty[row.typeKey]|default(0) > 0 %}
-                                                {% if renderedSelection %}, {% endif %}
-                                                {{ selectedQty[row.typeKey] }}x {{ row.typeLabel }}
-                                                {% set renderedSelection = true %}
-                                            {% endif %}
+                                            {% set typeSelection = selectedQty[row.typeKey]|default({}) %}
+                                            {% for persons, qty in typeSelection %}
+                                                {% if qty > 0 %}
+                                                    {% if renderedSelection %}, {% endif %}
+                                                    {{ qty }}x {{ row.typeLabel }} ({{ persons }} {{ persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }})
+                                                    {% set renderedSelection = true %}
+                                                {% endif %}
+                                            {% endfor %}
                                         {% endfor %}
                                     </div>
                                 </div>
