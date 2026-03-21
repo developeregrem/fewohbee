@@ -39,30 +39,30 @@ class PublicBookingService
     /**
      * Validate public input and return preview data (availability + room total).
      *
-     * @param array<string, int> $qtyByType
-     * @return array{availability: array, selected: array<string,int>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, roomReservations: Reservation[]}
+     * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1, 1 => 0]]
+     * @return array{availability: array, selected: array<string,array<int,int>>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, roomReservations: Reservation[]}
      */
     public function buildSelectionPreview(
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
         int $persons,
         int $roomsCount,
-        array $qtyByType,
+        array $occupancySelection,
         Request $request
     ): array {
         $config = $this->configService->getConfig();
         $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config);
 
-        $selection = $this->normalizeSelection($qtyByType);
-        if ([] === $selection && [] !== $qtyByType) {
+        $selection = $this->normalizeOccupancySelection($occupancySelection);
+        if ([] === $selection && [] !== $occupancySelection) {
             throw new PublicBookingException('online_booking.error.select_at_least_one_room');
         }
 
         if ([] !== $selection) {
-            $this->validateSelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
+            $this->validateOccupancySelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
         }
-        $assignedRooms = $this->assignRoomsFromAvailability($availability, $selection);
-        $roomReservations = $this->buildTransientReservationsForRooms($assignedRooms, $dateFrom, $dateTo, $persons);
+        $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
+        $roomReservations = $this->buildTransientReservationsWithExplicitPersons($assignedRoomsWithPersons, $dateFrom, $dateTo);
         $pricing = $this->calculateRoomTotal($roomReservations);
 
         return [
@@ -78,7 +78,7 @@ class PublicBookingService
     /**
      * Create reservations for a public booking request.
      *
-     * @param array<string, int> $qtyByType
+     * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1]]
      * @param array<string, string> $booker
      * @return array{reservations: Reservation[], bookingGroupUuid: Uuid, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
      */
@@ -87,19 +87,19 @@ class PublicBookingService
         \DateTimeImmutable $dateTo,
         int $persons,
         int $roomsCount,
-        array $qtyByType,
+        array $occupancySelection,
         array $booker,
         Request $request
     ): array {
         $config = $this->configService->getConfig();
         $this->assertConfigReady($config);
 
-        $selection = $this->normalizeSelection($qtyByType);
+        $selection = $this->normalizeOccupancySelection($occupancySelection);
         $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config);
-        $this->validateSelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
+        $this->validateOccupancySelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
 
-        $assignedRooms = $this->assignRoomsFromAvailability($availability, $selection);
-        $reservations = $this->buildTransientReservationsForRooms($assignedRooms, $dateFrom, $dateTo, $persons);
+        $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
+        $reservations = $this->buildTransientReservationsWithExplicitPersons($assignedRoomsWithPersons, $dateFrom, $dateTo);
 
         $status = OnlineBookingConfig::BOOKING_MODE_BOOKING === $config->getBookingMode()
             ? $this->configService->getBookingStatus($config)
@@ -185,18 +185,29 @@ class PublicBookingService
     }
 
     /**
-     * Normalize posted quantity values and keep only positive selections.
+     * Normalize occupancy-based selection: keep only positive quantities.
      *
-     * @param array<string, int|string|null> $qtyByType
-     * @return array<string, int>
+     * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1, 1 => 0]]
+     * @return array<string, array<int, int>> Only entries with qty > 0
      */
-    private function normalizeSelection(array $qtyByType): array
+    private function normalizeOccupancySelection(array $occupancySelection): array
     {
         $normalized = [];
-        foreach ($qtyByType as $typeKey => $qty) {
-            $qtyInt = max(0, (int) $qty);
-            if ($qtyInt > 0) {
-                $normalized[(string) $typeKey] = $qtyInt;
+        foreach ($occupancySelection as $typeKey => $personQtyMap) {
+            if (!is_array($personQtyMap)) {
+                continue;
+            }
+            $filtered = [];
+            foreach ($personQtyMap as $persons => $qty) {
+                $personsInt = max(0, (int) $persons);
+                $qtyInt = max(0, (int) $qty);
+                if ($qtyInt > 0 && $personsInt > 0) {
+                    $filtered[$personsInt] = $qtyInt;
+                }
+            }
+            if ([] !== $filtered) {
+                ksort($filtered);
+                $normalized[(string) $typeKey] = $filtered;
             }
         }
 
@@ -206,32 +217,39 @@ class PublicBookingService
     }
 
     /**
-     * Deterministically map selected room-type quantities to concrete rooms using repository-loaded room entities.
+     * Map occupancy selection to concrete rooms with explicit person counts.
      *
      * @param array<int, array{typeKey: string, typeLabel: string, maxGuests: int, availableCount: int, roomIds: int[]}> $availability
-     * @param array<string, int> $selection
-     * @return Appartment[]
+     * @param array<string, array<int, int>> $selection
+     * @return array<int, array{room: Appartment, persons: int}>
      */
-    private function assignRoomsFromAvailability(array $availability, array $selection): array
+    private function assignRoomsWithOccupancy(array $availability, array $selection): array
     {
         $assignedRoomIds = [];
-        $roomOrder = [];
+        /** @var array<int, int> $personsByRoomOrder person count for each assigned room */
+        $personsByRoomOrder = [];
 
         foreach ($availability as $row) {
             $typeKey = $row['typeKey'];
-            $qty = $selection[$typeKey] ?? 0;
-            if ($qty < 1) {
+            $personQtyMap = $selection[$typeKey] ?? [];
+            if ([] === $personQtyMap) {
                 continue;
             }
 
-            if ($qty > (int) $row['availableCount']) {
+            $totalQtyForType = array_sum($personQtyMap);
+            if ($totalQtyForType > (int) $row['availableCount']) {
                 throw new PublicBookingException('online_booking.error.qty_exceeds_availability');
             }
 
-            $picked = array_slice($row['roomIds'], 0, $qty);
-            foreach ($picked as $roomId) {
-                $assignedRoomIds[] = (int) $roomId;
-                $roomOrder[] = (int) $roomId;
+            $picked = array_slice($row['roomIds'], 0, $totalQtyForType);
+            $roomIndex = 0;
+            foreach ($personQtyMap as $persons => $qty) {
+                for ($i = 0; $i < $qty; ++$i) {
+                    $roomId = (int) $picked[$roomIndex];
+                    $assignedRoomIds[] = $roomId;
+                    $personsByRoomOrder[] = (int) $persons;
+                    ++$roomIndex;
+                }
             }
         }
 
@@ -240,105 +258,111 @@ class PublicBookingService
         }
 
         $rooms = $this->appartmentRepository->findByIdsWithRelations($assignedRoomIds);
-
         $byId = [];
         foreach ($rooms as $room) {
             $byId[(int) $room->getId()] = $room;
         }
 
-        $ordered = [];
-        foreach ($roomOrder as $roomId) {
+        $result = [];
+        foreach ($assignedRoomIds as $idx => $roomId) {
             if (isset($byId[$roomId])) {
-                $ordered[] = $byId[$roomId];
+                $result[] = [
+                    'room' => $byId[$roomId],
+                    'persons' => $personsByRoomOrder[$idx],
+                ];
             }
         }
 
-        return $ordered;
+        return $result;
     }
 
     /**
-     * Validate room quantities and capacity against freshly computed availability.
+     * Validate occupancy-based selection against freshly computed availability.
      *
-     * @param array<string, int> $selection
-     * @param array<int, array{typeKey: string, maxGuests: int, availableCount: int}> $availability
+     * @param array<string, array<int, int>> $selection
+     * @param array<int, array{typeKey: string, maxGuests: int, availableCount: int, occupancyOptions: array}> $availability
      */
-    private function validateSelectionAgainstAvailability(array $selection, array $availability, int $persons, int $roomsCount): void
+    private function validateOccupancySelectionAgainstAvailability(array $selection, array $availability, int $persons, int $roomsCount): void
     {
-        $sumQty = array_sum($selection);
-        if ($sumQty !== $roomsCount) {
-            throw new PublicBookingException('online_booking.error.qty_sum_mismatch');
-        }
-
-        if ($sumQty < 1) {
-            throw new PublicBookingException('online_booking.error.select_at_least_one_room');
-        }
+        $totalRooms = 0;
+        $totalPersons = 0;
 
         $availabilityMap = [];
-        $capacity = 0;
         foreach ($availability as $row) {
             $availabilityMap[$row['typeKey']] = $row;
         }
 
-        foreach ($selection as $typeKey => $qty) {
+        foreach ($selection as $typeKey => $personQtyMap) {
             if (!isset($availabilityMap[$typeKey])) {
                 throw new PublicBookingException('online_booking.error.room_type_no_longer_available');
             }
             $row = $availabilityMap[$typeKey];
-            if ($qty > (int) $row['availableCount']) {
+            $typeQty = 0;
+
+            foreach ($personQtyMap as $personsCount => $qty) {
+                if ($personsCount > (int) $row['maxGuests']) {
+                    throw new PublicBookingException('online_booking.error.insufficient_capacity');
+                }
+                // Validate that this occupancy level has a valid price
+                if (!isset($row['occupancyOptions'][$personsCount])) {
+                    throw new PublicBookingException('online_booking.error.occupancy_no_price');
+                }
+                $typeQty += $qty;
+                $totalPersons += $qty * $personsCount;
+            }
+
+            if ($typeQty > (int) $row['availableCount']) {
                 throw new PublicBookingException('online_booking.error.qty_exceeds_availability');
             }
-            $capacity += $qty * (int) $row['maxGuests'];
+            $totalRooms += $typeQty;
         }
 
-        if ($capacity < $persons) {
-            throw new PublicBookingException('online_booking.error.insufficient_capacity');
+        if ($totalRooms !== $roomsCount) {
+            throw new PublicBookingException('online_booking.error.qty_sum_mismatch');
+        }
+
+        if ($totalRooms < 1) {
+            throw new PublicBookingException('online_booking.error.select_at_least_one_room');
+        }
+
+        if ($totalPersons !== $persons) {
+            throw new PublicBookingException('online_booking.error.persons_sum_mismatch');
         }
     }
 
     /**
-     * Build transient reservations for pricing and final persistence using a deterministic person distribution.
+     * Build transient reservations with explicit person counts (no auto-distribution).
      *
-     * @param Appartment[] $rooms
+     * @param array<int, array{room: Appartment, persons: int}> $assignedRoomsWithPersons
      * @return Reservation[]
      */
-    private function buildTransientReservationsForRooms(array $rooms, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, int $persons): array
+    private function buildTransientReservationsWithExplicitPersons(array $assignedRoomsWithPersons, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo): array
     {
-        if ([] === $rooms) {
+        if ([] === $assignedRoomsWithPersons) {
             return [];
         }
 
-        $totalCapacity = array_sum(array_map(static fn (Appartment $room): int => (int) $room->getBedsMax(), $rooms));
-        if ($persons < count($rooms) || $persons > $totalCapacity) {
-            throw new PublicBookingException('online_booking.error.guest_distribution_invalid');
-        }
-
         $origin = $this->configService->getReservationOrigin();
-        $remainingPersons = $persons;
-        $remainingRooms = count($rooms);
         $reservations = [];
 
-        foreach ($rooms as $room) {
-            $remainingRooms--;
-            $minReserveForOthers = $remainingRooms; // at least one person per remaining room
-            $maxForRoom = (int) $room->getBedsMax();
-            $assignable = $remainingPersons - $minReserveForOthers;
-            $assigned = max(1, min($maxForRoom, $assignable));
+        foreach ($assignedRoomsWithPersons as $entry) {
+            $room = $entry['room'];
+            $persons = $entry['persons'];
+
+            if ($persons < 1 || $persons > (int) $room->getBedsMax()) {
+                throw new PublicBookingException('online_booking.error.guest_distribution_invalid');
+            }
 
             $reservation = new Reservation();
             $reservation->setAppartment($room);
             $reservation->setStartDate(new \DateTime($dateFrom->format('Y-m-d')));
             $reservation->setEndDate(new \DateTime($dateTo->format('Y-m-d')));
-            $reservation->setPersons($assigned);
+            $reservation->setPersons($persons);
             if (null !== $origin) {
                 $reservation->setReservationOrigin($origin);
             }
 
             $reservations[] = $reservation;
-            $remainingPersons -= $assigned;
-        }
-
-        if (0 !== $remainingPersons) {
-            throw new PublicBookingException('online_booking.error.guest_distribution_failed');
         }
 
         return $reservations;

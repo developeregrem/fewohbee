@@ -22,8 +22,11 @@ class OnlineBookingRoomCategoryLimit
     #[ORM\JoinColumn(nullable: false)]
     private ?RoomCategory $roomCategory = null;
 
-    #[ORM\Column(type: Types::SMALLINT)]
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $maxRooms = null;
+
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $minOccupancy = null;
 
     public function getId(): ?int
     {
@@ -50,6 +53,18 @@ class OnlineBookingRoomCategoryLimit
     public function setMaxRooms(?int $maxRooms): self
     {
         $this->maxRooms = $maxRooms;
+
+        return $this;
+    }
+
+    public function getMinOccupancy(): ?int
+    {
+        return $this->minOccupancy;
+    }
+
+    public function setMinOccupancy(?int $minOccupancy): self
+    {
+        $this->minOccupancy = $minOccupancy;
 
         return $this;
     }

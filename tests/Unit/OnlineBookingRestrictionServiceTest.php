@@ -188,6 +188,34 @@ final class OnlineBookingRestrictionServiceTest extends TestCase
         self::assertSame(2, $service->getMaxRoomsForCategory($category));
     }
 
+    // ── Min occupancy ──
+
+    public function testMinOccupancyReturnsNullWhenNoLimit(): void
+    {
+        $category = $this->createCategory(1);
+        $service = $this->createService(limitsByCategory: []);
+
+        self::assertNull($service->getMinOccupancyForCategory($category));
+    }
+
+    public function testMinOccupancyReturnsNullWhenLimitHasNoOccupancy(): void
+    {
+        $category = $this->createCategory(1);
+        $limit = $this->createLimit($category, 2);
+        $service = $this->createService(limitsByCategory: [1 => $limit]);
+
+        self::assertNull($service->getMinOccupancyForCategory($category));
+    }
+
+    public function testMinOccupancyReturnsConfiguredValue(): void
+    {
+        $category = $this->createCategory(1);
+        $limit = $this->createLimit($category, null, 2);
+        $service = $this->createService(limitsByCategory: [1 => $limit]);
+
+        self::assertSame(2, $service->getMinOccupancyForCategory($category));
+    }
+
     // ── Booking horizon ──
 
     public function testMaxDepartureDateReturnsNullWhenNoHorizon(): void
@@ -259,11 +287,12 @@ final class OnlineBookingRestrictionServiceTest extends TestCase
         return $entity;
     }
 
-    private function createLimit(RoomCategory $category, int $maxRooms): OnlineBookingRoomCategoryLimit
+    private function createLimit(RoomCategory $category, ?int $maxRooms = null, ?int $minOccupancy = null): OnlineBookingRoomCategoryLimit
     {
         $entity = new OnlineBookingRoomCategoryLimit();
         $entity->setRoomCategory($category);
         $entity->setMaxRooms($maxRooms);
+        $entity->setMinOccupancy($minOccupancy);
 
         return $entity;
     }

@@ -67,6 +67,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'availableCount' => 1,
             'roomIds' => [11],
             'subsidiaryIds' => [1],
+            'occupancyOptions' => [['persons' => 1, 'totalPrice' => 80.0, 'totalPriceFormatted' => '80,00 €']],
         ]];
 
         $publicBookingService = $this->createMock(PublicBookingService::class);

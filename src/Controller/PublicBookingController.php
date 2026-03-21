@@ -83,7 +83,7 @@ class PublicBookingController extends AbstractController
         }
 
         $intent = (string) $request->request->get('intent', 'availability');
-        $qtyByType = $this->extractQtyByType($request);
+        $occupancySelection = $this->extractOccupancySelection($request);
         $dateFrom = null;
         $dateTo = null;
         $persons = null;
@@ -110,7 +110,7 @@ class PublicBookingController extends AbstractController
                 $view['availability'] = $preview['availability'];
                 $view['formState'] = $abuseProtectionService->createFormState(false);
             } elseif ('preview' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $qtyByType, $request);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 3;
                 $view['availability'] = $preview['availability'];
@@ -124,7 +124,7 @@ class PublicBookingController extends AbstractController
                     $dateTo,
                     $persons,
                     $roomsCount,
-                    $qtyByType,
+                    $occupancySelection,
                     $this->extractBookerInput($request, $defaultCountry),
                     $request
                 );
@@ -152,8 +152,8 @@ class PublicBookingController extends AbstractController
                 && [] === $view['availability']
             ) {
                 try {
-                    $selectedQtyForPreview = 'submit' === $intent ? $qtyByType : [];
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedQtyForPreview, $request);
+                    $selectedForPreview = 'submit' === $intent ? $occupancySelection : [];
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
                     if ('submit' === $intent && isset($fallbackPreview['roomTotalFormatted'])) {
@@ -168,7 +168,7 @@ class PublicBookingController extends AbstractController
                 $view['step'] = 'submit' === $intent ? 3 : 2;
                 $view['formState'] = $abuseProtectionService->createFormState('submit' === $intent);
                 if ('submit' === $intent) {
-                    $view['selectedQty'] = array_filter($qtyByType, static fn (int $qty): bool => $qty > 0);
+                    $view['selectedQty'] = $occupancySelection;
                 }
             } elseif ('' !== (string) $request->request->get('dateFrom') && '' !== (string) $request->request->get('dateTo')) {
                 $view['step'] = 2;
@@ -215,27 +215,41 @@ class PublicBookingController extends AbstractController
     }
 
     /**
-     * Extract room-type quantity selections from POST fields with the `qty_` prefix.
+     * Extract occupancy-based selection from POST fields.
      *
-     * @return array<string, int>
+     * Field format: occ_{typeKey}_p{persons} = quantity
+     * Example: occ_category:1_p2 = 1 means "1 room of category:1 with 2 persons"
+     *
+     * @return array<string, array<int, int>> e.g. ['category:1' => [2 => 1]]
      */
-    private function extractQtyByType(Request $request): array
+    private function extractOccupancySelection(Request $request): array
     {
-        $qtyByType = [];
+        $selection = [];
         foreach ($request->request->all() as $key => $value) {
-            if (!is_string($key) || !str_starts_with($key, 'qty_')) {
+            if (!is_string($key) || !str_starts_with($key, 'occ_')) {
                 continue;
             }
 
-            $typeKey = substr($key, 4);
-            if ('' === $typeKey) {
+            $remainder = substr($key, 4);
+            $lastUnderscore = strrpos($remainder, '_p');
+            if (false === $lastUnderscore) {
                 continue;
             }
 
-            $qtyByType[$typeKey] = max(0, (int) $value);
+            $typeKey = substr($remainder, 0, $lastUnderscore);
+            $personsStr = substr($remainder, $lastUnderscore + 2);
+            if ('' === $typeKey || '' === $personsStr) {
+                continue;
+            }
+
+            $persons = max(0, (int) $personsStr);
+            $qty = max(0, (int) $value);
+            if ($persons > 0) {
+                $selection[$typeKey][$persons] = $qty;
+            }
         }
 
-        return $qtyByType;
+        return $selection;
     }
 
     /**
