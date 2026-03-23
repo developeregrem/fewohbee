@@ -8,6 +8,8 @@ parameters:
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
+    roomCategoryImageDirectory: '%kernel.project_dir%/public/resources/images/room-categories'
+    roomCategoryImagePublicDirectory: 'resources/images/room-categories'
     version: '4.4.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
@@ -60,6 +62,11 @@ services:
         arguments:
             $publicDirectory: '%publicUploadDirectory%'
             $targetDirectory: '%uploadDirectory%'
+
+    App\Service\RoomCategoryImageService:
+        arguments:
+            $imageDirectory: '%roomCategoryImageDirectory%'
+            $imagePublicDirectory: '%roomCategoryImagePublicDirectory%'
 
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:

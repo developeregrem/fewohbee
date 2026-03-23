@@ -9,6 +9,7 @@ use App\Entity\OnlineBookingConfig;
 use App\Entity\RoomCategory;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicAvailabilityService
 {
@@ -18,6 +19,8 @@ class PublicAvailabilityService
         private readonly OnlineBookingConfigService $configService,
         private readonly OnlineBookingRestrictionService $restrictionService,
         private readonly PublicPricingService $pricingService,
+        private readonly RoomCategoryImageService $imageService,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -142,6 +145,17 @@ class PublicAvailabilityService
                         static fn (array $opt): bool => $opt['persons'] >= $minOccupancy,
                     ));
                 }
+            }
+
+            // Build amenity and image data for the public booking page
+            if ($category instanceof RoomCategory) {
+                $row['amenities'] = $this->buildAmenityData($category);
+                $row['primaryImage'] = $this->buildPrimaryImageData($category);
+                $row['images'] = $this->buildImageData($category);
+            } else {
+                $row['amenities'] = [];
+                $row['primaryImage'] = null;
+                $row['images'] = [];
             }
 
             unset($row['_category'], $row['_sampleRoom']);
@@ -305,5 +319,75 @@ class PublicAvailabilityService
         }
 
         return $maxCapacity;
+    }
+
+    /**
+     * Returns amenity data for a category: the first 6 for inline display,
+     * the remaining amenities for the expandable section, and the total count.
+     * Uses iconFaClass (Font Awesome) as the single icon source for both admin and public pages.
+     *
+     * @return array{items: list<array{slug: string, label: string, iconClass: string}>, remaining: list<array{slug: string, label: string, iconClass: string}>, totalCount: int}
+     */
+    private function buildAmenityData(RoomCategory $category): array
+    {
+        $items = [];
+        $remaining = [];
+        $count = 0;
+        foreach ($category->getAmenities() as $amenity) {
+            $entry = [
+                'slug' => $amenity->getSlug(),
+                'label' => $this->translator->trans('amenity.' . $amenity->getSlug()),
+                'iconClass' => $amenity->getIconFaClass(),
+            ];
+            if ($count < 6) {
+                $items[] = $entry;
+            } else {
+                $remaining[] = $entry;
+            }
+            ++$count;
+        }
+
+        return [
+            'items' => $items,
+            'remaining' => $remaining,
+            'totalCount' => $count,
+        ];
+    }
+
+    /**
+     * Returns the primary image URLs for a category, or null if no images exist.
+     *
+     * @return array{thumbnailUrl: string, mediumUrl: string}|null
+     */
+    private function buildPrimaryImageData(RoomCategory $category): ?array
+    {
+        $primaryImage = $category->getPrimaryImage();
+        if (null === $primaryImage) {
+            return null;
+        }
+
+        return [
+            'thumbnailUrl' => $this->imageService->getPublicUrl($primaryImage, 'thumb'),
+            'mediumUrl' => $this->imageService->getPublicUrl($primaryImage, 'medium'),
+        ];
+    }
+
+    /**
+     * Returns all image URLs for a category (used for gallery/lightbox).
+     *
+     * @return list<array{thumbnailUrl: string, mediumUrl: string, fullUrl: string}>
+     */
+    private function buildImageData(RoomCategory $category): array
+    {
+        $images = [];
+        foreach ($category->getImages() as $image) {
+            $images[] = [
+                'thumbnailUrl' => $this->imageService->getPublicUrl($image, 'thumb'),
+                'mediumUrl' => $this->imageService->getPublicUrl($image, 'medium'),
+                'fullUrl' => $this->imageService->getPublicUrl($image, 'original'),
+            ];
+        }
+
+        return $images;
     }
 }
