@@ -126,6 +126,110 @@ final class InvoiceServicePricingFlagsTest extends TestCase
         self::assertSame(100.0, $apartmentTotal);
     }
 
+    public function testCalculateSumsIncludesVatTrueExtractsVatFromGross(): void
+    {
+        $service = $this->createService($this->createStub(PriceService::class));
+
+        // 119.00€ brutto/night × 3 nights, 7% VAT (typical hotel room scenario)
+        $apartment = new InvoiceAppartment();
+        $apartment->setStartDate(new \DateTime('2026-03-28'));
+        $apartment->setEndDate(new \DateTime('2026-03-31'));
+        $apartment->setPersons(1);
+        $apartment->setBeds(1);
+        $apartment->setNumber('1');
+        $apartment->setDescription('EZ');
+        $apartment->setPrice(119);
+        $apartment->setVat(7);
+        $apartment->setIncludesVat(true);
+        $apartment->setIsFlatPrice(false);
+        $apartment->setIsPerRoom(true);
+
+        // 10.00€ brutto × 1, 19% VAT (e.g. breakfast)
+        $misc = new InvoicePosition();
+        $misc->setDescription('Frühstück');
+        $misc->setAmount(1);
+        $misc->setPrice(10);
+        $misc->setVat(19);
+        $misc->setIncludesVat(true);
+        $misc->setIsFlatPrice(false);
+        $misc->setIsPerRoom(false);
+
+        $vats = [];
+        $brutto = 0.0;
+        $netto = 0.0;
+        $apartmentTotal = 0.0;
+        $miscTotal = 0.0;
+
+        $service->calculateSums(
+            new ArrayCollection([$apartment]),
+            new ArrayCollection([$misc]),
+            $vats,
+            $brutto,
+            $netto,
+            $apartmentTotal,
+            $miscTotal,
+        );
+
+        // Apartment: 3 × 119.00 = 357.00 brutto
+        self::assertSame(357.0, $apartmentTotal);
+        // Misc: 1 × 10.00 = 10.00 brutto
+        self::assertSame(10.0, $miscTotal);
+
+        // Total brutto = 357.00 + 10.00 = 367.00
+        self::assertEqualsWithDelta(367.0, $brutto, 0.01);
+
+        // VAT 7%: 357.00 × 7 / 107 = 23.3551... → rounded 23.36
+        self::assertArrayHasKey(7.0, $vats);
+        self::assertEqualsWithDelta(357.0, $vats[7.0]['brutto'], 0.01);
+        self::assertEqualsWithDelta(23.36, round($vats[7.0]['netto'], 2), 0.01);
+        self::assertEqualsWithDelta(333.64, round($vats[7.0]['netSum'], 2), 0.01);
+
+        // VAT 19%: 10.00 × 19 / 119 = 1.5966... → rounded 1.60
+        self::assertArrayHasKey(19.0, $vats);
+        self::assertEqualsWithDelta(10.0, $vats[19.0]['brutto'], 0.01);
+        self::assertEqualsWithDelta(1.60, round($vats[19.0]['netto'], 2), 0.01);
+        self::assertEqualsWithDelta(8.40, round($vats[19.0]['netSum'], 2), 0.01);
+    }
+
+    public function testCalculateSumsIncludesVatFalseAddsVatToNet(): void
+    {
+        $service = $this->createService($this->createStub(PriceService::class));
+
+        // 100.00€ netto × 2, 19% VAT
+        $misc = new InvoicePosition();
+        $misc->setDescription('Service');
+        $misc->setAmount(2);
+        $misc->setPrice(100);
+        $misc->setVat(19);
+        $misc->setIncludesVat(false);
+        $misc->setIsFlatPrice(false);
+        $misc->setIsPerRoom(false);
+
+        $vats = [];
+        $brutto = 0.0;
+        $netto = 0.0;
+        $apartmentTotal = 0.0;
+        $miscTotal = 0.0;
+
+        $service->calculateSums(
+            new ArrayCollection(),
+            new ArrayCollection([$misc]),
+            $vats,
+            $brutto,
+            $netto,
+            $apartmentTotal,
+            $miscTotal,
+        );
+
+        self::assertSame(200.0, $miscTotal);
+        // 200.00 netto + 38.00 VAT = 238.00 brutto
+        self::assertEqualsWithDelta(238.0, $brutto, 0.001);
+        self::assertEqualsWithDelta(38.0, $netto, 0.001);
+        self::assertEqualsWithDelta(238.0, $vats[19.0]['brutto'], 0.001);
+        self::assertEqualsWithDelta(38.0, $vats[19.0]['netto'], 0.001);
+        self::assertEqualsWithDelta(200.0, $vats[19.0]['netSum'], 0.001);
+    }
+
     public function testFlatPriceDisablesPerRoomFlag(): void
     {
         $price = new Price();

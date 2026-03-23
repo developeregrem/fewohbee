@@ -122,10 +122,11 @@ class ZugferdInvoiceGenerator
         $netSums = [];
         /* @var $apartmentPosition \App\Entity\InvoiceAppartment */
         foreach ($invoice->getAppartments() as $apartmentPosition) {
-            $sum = round($apartmentPosition->getNetPrice() * $apartmentPosition->getAmount(), 2);
+            $netPrice = round($apartmentPosition->getNetPrice(), 2);
+            $sum = round($netPrice * $apartmentPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string) $pos);
             $documentBuilder->setDocumentPositionProductDetails($apartmentPosition->getDescription(), $apartmentPosition->getStartDate()->format('d.m.Y').' - '.$apartmentPosition->getEndDate()->format('d.m.Y'));
-            $documentBuilder->setDocumentPositionNetPrice($apartmentPosition->getNetPrice());
+            $documentBuilder->setDocumentPositionNetPrice($netPrice);
             $documentBuilder->setDocumentPositionQuantity($apartmentPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $apartmentPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
@@ -136,10 +137,11 @@ class ZugferdInvoiceGenerator
         // invoice misc positions
         /* @var $miscPosition \App\Entity\InvoicePosition */
         foreach ($invoice->getPositions() as $miscPosition) {
-            $sum = round($miscPosition->getNetPrice() * $miscPosition->getAmount(), 2);
+            $netPrice = round($miscPosition->getNetPrice(), 2);
+            $sum = round($netPrice * $miscPosition->getAmount(), 2);
             $documentBuilder->addNewPosition((string) $pos);
             $documentBuilder->setDocumentPositionProductDetails($miscPosition->getDescription(), '');
-            $documentBuilder->setDocumentPositionNetPrice($miscPosition->getNetPrice());
+            $documentBuilder->setDocumentPositionNetPrice($netPrice);
             $documentBuilder->setDocumentPositionQuantity($miscPosition->getAmount(), ZugferdUnitCodes::REC20_PIECE);
             $documentBuilder->addDocumentPositionTax(ZugferdVatCategoryCodes::STAN_RATE, ZugferdVatTypeCodes::VALUE_ADDED_TAX, $miscPosition->getVat());
             $documentBuilder->setDocumentPositionLineSummation($sum);
