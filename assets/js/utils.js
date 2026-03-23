@@ -24,7 +24,7 @@ export function updatePDFExportLinks(templateId) {
 /**
  * Creates a confirmation popover (yes/no) when clicking on an element which has the data-popover="delete" attribute assigned
  */
-export function enableDeletePopover() {
+export function enableDeletePopover({ onSuccess, root = document } = {}) {
     if (!window.bootstrap || !window.bootstrap.Tooltip || !window.bootstrap.Popover) {
         return;
     }
@@ -33,9 +33,22 @@ export function enableDeletePopover() {
     myDefaultAllowList.form = ['action'];
     myDefaultAllowList.input = ['type', 'name', 'value'];
 
-    const popoverTriggerList = Array.from(document.querySelectorAll('[data-popover="delete"]'));
+    const rootEl = root?.querySelectorAll ? root : document;
+    const popoverTriggerList = [];
+    if (rootEl instanceof Element && rootEl.matches('[data-popover="delete"]')) {
+        popoverTriggerList.push(rootEl);
+    }
+    popoverTriggerList.push(...Array.from(rootEl.querySelectorAll('[data-popover="delete"]')));
+
     popoverTriggerList.forEach((popoverTriggerEl) => {
+        popoverTriggerEl._deletePopoverOnSuccess = onSuccess || null;
         popoverTriggerEl.setAttribute('data-bs-toggle', 'popover');
+        if (popoverTriggerEl.dataset.deletePopoverInitialized === 'true') {
+            return;
+        }
+
+        popoverTriggerEl.dataset.deletePopoverInitialized = 'true';
+
         popoverTriggerEl.addEventListener('click', (e) => {
             e.preventDefault();
             // Hide any other open delete popovers before toggling the current one
@@ -66,11 +79,13 @@ export function enableDeletePopover() {
                         instance.hide();
                     }
                     if (action && doRequestDelete) {
+                        const successHandler = popoverTriggerEl._deletePopoverOnSuccess || null;
                         doRequestDelete({
                             url: action,
                             method: 'DELETE',
                             data: form ? new FormData(form) : null,
-                            target: target || null,
+                            target: successHandler ? null : (target || null),
+                            onSuccess: successHandler ? () => successHandler(popoverTriggerEl) : null,
                         });
                     }
                 });

@@ -1,0 +1,65 @@
+{# Image management tab for room category edit modal.
+   Uses the room_category_images Stimulus controller for upload, delete, reorder, and primary toggle. #}
+{% use "common/delete_popover.html.twig" %}
+
+<div data-controller="room-category-images"
+     data-room-category-images-upload-url-value="{{ path('room_category_image_upload', {'id': category.id}) }}"
+     data-room-category-images-reorder-url-value="{{ path('room_category_image_reorder', {'id': category.id}) }}"
+     data-room-category-images-label-delete-value="{{ 'button.delete'|trans }}"
+     data-room-category-images-label-cancel-value="{{ 'button.cancel'|trans }}"
+     data-room-category-images-label-delete-title-value="{{ 'category.images.delete'|trans }}"
+     data-room-category-images-label-set-primary-value="{{ 'category.images.set_primary'|trans }}">
+
+    {# Hidden file input triggered by the upload button #}
+    <input type="file" multiple accept="image/jpeg,image/png,image/webp"
+           class="d-none"
+           data-room-category-images-target="fileInput"
+           data-action="change->room-category-images#handleFileSelect">
+
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-2"
+            data-action="click->room-category-images#selectFiles">
+        <i class="fas fa-upload me-1"></i> {{ 'category.images.upload'|trans }}
+    </button>
+    <p class="text-body-secondary small mb-3">
+        <i class="fas fa-circle-info me-1"></i>{{ 'category.images.hint'|trans }}
+    </p>
+
+    {# Empty state message — hidden when images exist #}
+    <p class="text-body-secondary rc-img-empty"
+       {% if category.images|length > 0 %}style="display:none"{% endif %}>
+        {{ 'category.images.no_images'|trans }}
+    </p>
+
+    {# Grid of existing image thumbnails — supports drag & drop reorder #}
+    <div class="row" data-room-category-images-target="grid">
+        {% for image in category.images %}
+            {% set id = image.id %}
+            {% set targetUrl = path('room_category_image_delete', {'id': category.id, 'imageId': image.id}) %}
+            <div class="col-4 col-md-3 mb-3"
+                 data-image-id="{{ image.id }}"
+                 data-primary-url="{{ path('room_category_image_primary', {'id': category.id, 'imageId': image.id}) }}"
+                 draggable="true"
+                 data-action="dragstart->room-category-images#dragStart dragover->room-category-images#dragOver drop->room-category-images#drop dragend->room-category-images#dragEnd">
+                <div class="card h-100">
+                    <img src="{{ app.request.basepath }}/{{ imagePublicDirectory }}/{{ category.id }}/thumb_{{ image.filename }}"
+                         class="card-img-top" alt="" style="height:100px;object-fit:cover">
+                    <div class="card-body p-1 text-center">
+                        <button type="button"
+                                class="btn btn-sm btn-link rc-img-primary {{ image.isPrimary ? 'text-warning' : 'text-secondary' }}"
+                                data-action="click->room-category-images#setPrimary"
+                                title="{{ 'category.images.set_primary'|trans }}">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-link text-danger"
+                                title="{{ 'category.images.delete'|trans }}"
+                                data-popover="delete"
+                                data-bs-content='{{ block('deletePopoverContent') }}'>
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,69 @@
+category:
+  acronym: Kürzel
+  action: Aktion
+  delete:
+    ask: Möchten Sie diese Kategorie wirklich löschen?
+  details: Details / öffentliche Beschreibung
+  description: Verwaltung der Zimmerkategorien
+  double: Doppelzimmer
+  flash:
+    create:
+      success: Kategorie wurde erfolgreich erstellt.
+    delete:
+      error:
+        still:
+          in:
+            use: >-
+              Kategorie kann nicht gelöscht werden, da noch Zimmer oder
+              Preisbereiche zugeordnet sind.
+      success: Kategorie wurde erfolgreich gelöscht.
+    edit:
+      success: Kategorie wurde erfolgreich bearbeitet.
+  name: Bezeichnung
+  single: Einzelzimmer
+  title: Zimmerkategorieverwaltung
+  tab:
+    general: Allgemein
+    amenities: Ausstattung
+    images: Bilder
+  amenity_group:
+    room: Zimmer
+    bathroom: Bad
+    kitchen: Küche
+    outdoor: Allgemein
+    other: Sonstiges
+  images:
+    save_first: Bitte speichern Sie die Kategorie zuerst, bevor Sie Bilder hochladen.
+    upload: Bilder hochladen
+    set_primary: Als Hauptbild setzen
+    delete: Bild löschen
+    no_images: Noch keine Bilder hochgeladen.
+    hint: "Erlaubte Formate: JPEG, PNG, WebP. Maximale Dateigröße: 10 MB. Bilder im Querformat werden empfohlen."
+
+amenity:
+  wifi: WLAN
+  tv: Fernseher
+  air_conditioning: Klimaanlage
+  heating: Heizung
+  safe: Safe
+  desk: Schreibtisch
+  balcony: Balkon
+  terrace: Terrasse
+  view_mountain: Bergblick
+  view_lake: Seeblick
+  view_garden: Gartenblick
+  private_bathroom: Eigenes Bad
+  shower: Dusche
+  bathtub: Badewanne
+  hairdryer: Föhn
+  towels: Handtücher
+  kitchenette: Küchenzeile
+  fridge: Kühlschrank
+  coffee_machine: Kaffeemaschine
+  kettle: Wasserkocher
+  dishwasher: Geschirrspüler
+  parking: Parkplatz
+  pets_allowed: Haustiere erlaubt
+  non_smoking: Nichtraucher
+  accessible: Barrierefrei
+  crib_available: Babybett verfügbar

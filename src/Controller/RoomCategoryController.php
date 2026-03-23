@@ -7,8 +7,10 @@ namespace App\Controller;
 use App\Entity\RoomCategory;
 use App\Form\RoomCategoryType;
 use App\Repository\RoomCategoryRepository;
+use App\Service\RoomCategoryImageService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -16,6 +18,13 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/settings/category')]
 class RoomCategoryController extends AbstractController
 {
+    public function __construct(
+        private readonly RoomCategoryImageService $imageService,
+        #[Autowire('%roomCategoryImagePublicDirectory%')]
+        private readonly string $imagePublicDirectory,
+    ) {
+    }
+
     #[Route('/', name: 'room_category_index', methods: ['GET'])]
     public function index(RoomCategoryRepository $roomCategoryRepository): Response
     {
@@ -31,6 +40,7 @@ class RoomCategoryController extends AbstractController
         $form = $this->createForm(RoomCategoryType::class, $roomCategory);
         $form->handleRequest($request);
 
+
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $doctrine->getManager();
             $entityManager->persist($roomCategory);
@@ -45,6 +55,7 @@ class RoomCategoryController extends AbstractController
         return $this->render('RoomCategory/new.html.twig', [
             'category' => $roomCategory,
             'form' => $form->createView(),
+            'imagePublicDirectory' => $this->imagePublicDirectory,
         ]);
     }
 
@@ -66,6 +77,7 @@ class RoomCategoryController extends AbstractController
         return $this->render('RoomCategory/edit.html.twig', [
             'category' => $roomCategory,
             'form' => $form->createView(),
+            'imagePublicDirectory' => $this->imagePublicDirectory,
         ]);
     }
 
@@ -81,6 +93,9 @@ class RoomCategoryController extends AbstractController
             if ($roomCategory->getPrices()->count() > 0 || $roomCategory->getApartments()->count() > 0) {
                 $this->addFlash('warning', 'category.flash.delete.error.still.in.use');
             } else {
+                // Delete image files from disk before removing the entity
+                $this->imageService->deleteAllForCategory($roomCategory);
+
                 $entityManager = $doctrine->getManager();
                 $entityManager->remove($roomCategory);
                 $entityManager->flush();

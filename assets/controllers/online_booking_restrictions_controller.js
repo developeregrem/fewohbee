@@ -1,9 +1,28 @@
 import { Controller } from '@hotwired/stimulus';
+import { enableDeletePopover } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
 export default class extends Controller {
-    static targets = ['overrideId', 'startDate', 'endDate', 'minNights', 'categoryAll', 'categoryItem'];
+    static values = {
+        restoreHash: { type: String, default: 'online-booking-overrides' },
+    };
+
+    static targets = [
+        'overrideId',
+        'startDate',
+        'endDate',
+        'minNights',
+        'categoryAll',
+        'categoryItem',
+        'overridesTable',
+        'overridesEmpty',
+    ];
+
+    connect() {
+        this.initDeletePopovers();
+        this.restoreScrollTarget();
+    }
 
     editOverride(event) {
         const btn = event.currentTarget;
@@ -42,5 +61,57 @@ export default class extends Controller {
             // If nothing selected, re-check "All"
             this.categoryAllTarget.checked = true;
         }
+    }
+
+    initDeletePopovers() {
+        enableDeletePopover({
+            root: this.element,
+            onSuccess: (triggerEl) => {
+                const row = triggerEl.closest('tr');
+                if (row) {
+                    row.remove();
+                }
+                this.updateEmptyState();
+            },
+        });
+    }
+
+    updateEmptyState() {
+        if (!this.hasOverridesTableTarget || !this.hasOverridesEmptyTarget) {
+            return;
+        }
+
+        const hasRows = this.overridesTableTarget.querySelector('tbody tr') !== null;
+        this.overridesTableTarget.classList.toggle('d-none', !hasRows);
+        this.overridesEmptyTarget.classList.toggle('d-none', hasRows);
+    }
+
+    rememberScrollTarget() {
+        window.sessionStorage.setItem(
+            'online-booking-restrictions:return-hash',
+            this.restoreHashValue
+        );
+    }
+
+    restoreScrollTarget() {
+        const hash = window.sessionStorage.getItem('online-booking-restrictions:return-hash');
+        if (!hash) {
+            return;
+        }
+
+        window.sessionStorage.removeItem('online-booking-restrictions:return-hash');
+
+        const target = document.getElementById(hash);
+        if (!target) {
+            return;
+        }
+
+        if (window.location.hash !== `#${hash}`) {
+            window.history.replaceState(null, '', `#${hash}`);
+        }
+
+        requestAnimationFrame(() => {
+            target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
     }
 }

@@ -15,7 +15,6 @@ use App\Repository\RoomCategoryRepository;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -55,6 +54,18 @@ class OnlineBookingSettingsController extends AbstractController
         $limitsByCategory = $limitRepository->findAllIndexedByCategory();
         $overrides = $overrideRepository->findBy([], ['startDate' => 'ASC']);
 
+        // print warning when restriction special periods (overrides) exists but only in the past
+        $restrictionOverrideWarning = false;
+        $today = new \DateTimeImmutable('today');
+        $allOverridesAreInPast = [] !== $overrides && array_all(
+            $overrides,
+            static fn (OnlineBookingMinStayOverride $override): bool => $override->getEndDate() < $today
+        );
+
+        if ($allOverridesAreInPast) {
+            $restrictionOverrideWarning = true;
+        }
+
         return $this->render('Settings/OnlineBooking/index.html.twig', [
             'form' => $form->createView(),
             'reservationOriginConfigured' => null !== $configService->getReservationOrigin($config),
@@ -62,6 +73,7 @@ class OnlineBookingSettingsController extends AbstractController
             'minStayByCategory' => $minStayByCategory,
             'limitsByCategory' => $limitsByCategory,
             'overrides' => $overrides,
+            'restrictionOverrideWarning' => $restrictionOverrideWarning,
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
@@ -208,37 +220,6 @@ class OnlineBookingSettingsController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
-    }
-
-    /** Return horizon warning data as JSON for async checks. */
-    #[Route('/restrictions/horizon-check', name: 'settings.online_booking.horizon_check', methods: ['GET'])]
-    public function horizonCheck(
-        OnlineBookingConfigService $configService,
-        OnlineBookingMinStayRepository $minStayRepository,
-        OnlineBookingMinStayOverrideRepository $overrideRepository,
-    ): JsonResponse {
-        $config = $configService->getConfig();
-        $months = $config->getBookingHorizonMonths();
-
-        if (null === $months || $months < 1) {
-            return $this->json(['warning' => false]);
-        }
-
-        $horizonEnd = (new \DateTimeImmutable('today'))->modify(sprintf('+%d months', $months));
-        $minStayEntries = $minStayRepository->findAll();
-        $overrides = $overrideRepository->findAll();
-
-        $hasAnyRestriction = [] !== $minStayEntries || [] !== $overrides;
-
-        if (!$hasAnyRestriction) {
-            return $this->json([
-                'warning' => true,
-                'horizonEnd' => $horizonEnd->format('Y-m-d'),
-                'message' => 'no_restrictions_configured',
-            ]);
-        }
-
-        return $this->json(['warning' => false]);
     }
 
     /**

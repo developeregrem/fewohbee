@@ -99,6 +99,7 @@ online_booking:
     save_hint: "Changes apply immediately to the public booking page."
     booking_horizon_months: "Booking horizon (months)"
     booking_horizon_months_help: "For how many months in the future are online bookings allowed? Empty = unlimited."
+    restriction_override_warning: "There are special periods configured for restrictions, but all of them are in the past. If you want to consider periods for future bookings, these need to be adjusted."
     section_restrictions: "Category Restrictions"
     section_restrictions_desc: "Minimum stay per booking, maximum room count per category as well as minimum occupancy per room available for online booking."
     restriction_category: "Category"
@@ -156,6 +157,7 @@ online_booking:
     guest_singular: "guest"
     guest_plural: "guests"
     occupancy_hint: "Please select a total of %rooms% rooms for %persons% persons."
+    view_photos: "View photos (%count%)"
     table:
       type: "Type"
       max_guests: "Max guests"

@@ -99,6 +99,7 @@ online_booking:
     save_hint: "Änderungen wirken sofort auf die öffentliche Buchungsseite."
     booking_horizon_months: "Buchungshorizont (Monate)"
     booking_horizon_months_help: "Für wie viele Monate in der Zukunft sind Online-Buchungen möglich? Leer = unbegrenzt."
+    restriction_override_warning: "Es sind Sonderzeiträume für Beschränkungen konfiguriert, die alle in der Vergangenheit liegen. Sofern Zeiträume für zukünftige Buchungen berücksichtigt werden sollen, müssen diese angepasst werden."
     section_restrictions: "Beschränkungen pro Zimmerkategorie"
     section_restrictions_desc: "Mindestübernachtungen pro Buchung, max. Zimmeranzahl pro Kategorie sowie Mindestbelegung pro Zimmer, die für die Online-Buchung verfügbar gemacht werden dürfen."
     restriction_category: "Kategorie"
@@ -119,7 +120,7 @@ online_booking:
     override_save: "Sonderzeitraum speichern"
     override_confirm_delete: "Diesen Sonderzeitraum wirklich löschen?"
     override_none: "Keine Sonderzeiträume konfiguriert."
-    price_coverage_hint: "Stellen Sie sicher, dass für jede Zimmerkategorie <strong>Preiskategorien für alle möglichen Belegungen</strong> (z.&thinsp;B. 1 Person, 2 Personen usw.) existieren. Nur Belegungen mit hinterlegter Preiskategorie werden den Gästen als buchbar angezeigt."
+    price_coverage_hint: "Es sollte sichergeestellt sein, dass für jede Zimmerkategorie <strong>Preiskategorien für alle möglichen Belegungen</strong> (z.B. 1 Person, 2 Personen usw.) existieren. Nur Belegungen mit hinterlegter Preiskategorie werden den Gästen als buchbar angezeigt."
     form_invalid_title: "Speichern nicht möglich"
     form_invalid_hint: "Beim Aktivieren der Onlinebuchung müssen Bestätigungs-Template, Anfrage-Status, Buchungs-Status und Reservierungsherkunft gesetzt sein."
   public:
@@ -156,6 +157,7 @@ online_booking:
     guest_singular: "Gast"
     guest_plural: "Gäste"
     occupancy_hint: "Bitte wählen Sie insgesamt %rooms% Zimmer für %persons% Personen."
+    view_photos: "Fotos ansehen (%count%)"
     table:
       type: "Typ"
       max_guests: "Max. Gäste"

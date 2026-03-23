@@ -1,3 +1,83 @@
 <fieldset id="entry-form-fieldset-{{ category.id }}" {% if category.id != null %} disabled {% endif %}>
-    {{ form_widget(form) }}
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="rc-tab-general" data-bs-toggle="tab"
+                    data-bs-target="#rc-pane-general" type="button" role="tab"
+                    aria-controls="rc-pane-general" aria-selected="true">
+                {{ 'category.tab.general'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rc-tab-amenities" data-bs-toggle="tab"
+                    data-bs-target="#rc-pane-amenities" type="button" role="tab"
+                    aria-controls="rc-pane-amenities" aria-selected="false">
+                {{ 'category.tab.amenities'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="rc-tab-images" data-bs-toggle="tab"
+                    data-bs-target="#rc-pane-images" type="button" role="tab"
+                    aria-controls="rc-pane-images" aria-selected="false">
+                {{ 'category.tab.images'|trans }}
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content pt-4">
+        {# === Tab 1: General fields (name, acronym, description) === #}
+        <div class="tab-pane fade show active" id="rc-pane-general" role="tabpanel"
+             aria-labelledby="rc-tab-general" tabindex="0">
+            {{ form_row(form.name) }}
+            {{ form_row(form.acronym) }}
+            {{ form_row(form.details) }}
+        </div>
+
+        {# === Tab 2: Amenity checkboxes grouped by category === #}
+        <div class="tab-pane fade" id="rc-pane-amenities" role="tabpanel"
+             aria-labelledby="rc-tab-amenities" tabindex="0">
+
+            {# Iterate form children — grouped by category via group_by in the FormType.
+               Icon class and category come from choice_attr (data-icon, data-category). #}
+            {% set currentGroup = null %}
+            {% for child in form.amenities %}
+                {% set iconClass = child.vars.attr['data-icon']|default('') %}
+                {% set catKey = child.vars.attr['data-category']|default('') %}
+                {% set groupLabel = ('category.amenity_group.' ~ catKey)|trans %}
+
+                {% if groupLabel != currentGroup %}
+                    {% if currentGroup is not null %}</div>{% endif %}
+                    <h6 class="text-secondary mt-3 mb-2">{{ groupLabel }}</h6>
+                    <div class="row">
+                    {% set currentGroup = groupLabel %}
+                {% endif %}
+
+                <div class="col-6 col-md-4 mb-2">
+                    <div class="form-check">
+                        <input type="checkbox"
+                               id="{{ child.vars.id }}"
+                               name="{{ child.vars.full_name }}"
+                               class="form-check-input"
+                               value="{{ child.vars.value }}"
+                               {{ child.vars.checked ? 'checked' : '' }}>
+                        <label class="form-check-label" for="{{ child.vars.id }}">
+                            {% if iconClass %}<i class="{{ iconClass }} text-secondary me-1"></i>{% endif %}
+                            {{ child.vars.label }}
+                        </label>
+                    </div>
+                </div>
+            {% endfor %}
+            {% if currentGroup is not null %}</div>{% endif %}
+
+            {% do form.amenities.setRendered %}
+        </div>
+
+        {# === Tab 3: Images (managed by Stimulus controller) === #}
+        <div class="tab-pane fade" id="rc-pane-images" role="tabpanel"
+             aria-labelledby="rc-tab-images" tabindex="0">
+            {% if category.id %}
+                {{ include('RoomCategory/_images_tab.html.twig') }}
+            {% else %}
+                <p class="text-body-secondary">{{ 'category.images.save_first'|trans }}</p>
+            {% endif %}
+        </div>
+    </div>
 </fieldset>

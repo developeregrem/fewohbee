@@ -91,6 +91,18 @@
                                 <h6 class="mb-2">{{ 'online_booking.public.available_room_types'|trans }}</h6>
                                 {% for row in availability %}
                                     <div class="card mb-3">
+                                        {# Hero image (primary image of this room category) #}
+                                        {% if row.primaryImage is defined and row.primaryImage %}
+                                            <img src="{{ app.request.basepath }}/{{ row.primaryImage.mediumUrl }}"
+                                                 alt="{{ row.typeLabel }}"
+                                                 class="card-img-top"
+                                                 style="max-height:200px;object-fit:cover"
+                                                 {% if row.images|length > 1 %}
+                                                     role="button"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#gallery-{{ row.typeKey|replace({':': '-'}) }}"
+                                                 {% endif %}>
+                                        {% endif %}
                                         <div class="card-body py-2 px-3">
                                             <div class="d-flex justify-content-between align-items-start mb-1">
                                                 <div>
@@ -100,6 +112,32 @@
                                             </div>
                                             {% if row.typeDescription is not empty %}
                                                 <div class="small text-body-secondary mb-2">{{ row.typeDescription }}</div>
+                                            {% endif %}
+
+                                            {# Amenity icons (max 6) + "+N" toggle to expand remaining #}
+                                            {% if row.amenities is defined and row.amenities.items is not empty %}
+                                                <div class="d-flex flex-wrap gap-2 mb-2 small text-body-secondary fhb-amenity-row align-items-center">
+                                                    {% for amenity in row.amenities.items %}
+                                                        <span title="{{ amenity.label }}"><i class="{{ amenity.iconClass }}"></i></span>
+                                                    {% endfor %}
+                                                    {% if row.amenities.remaining is not empty %}
+                                                        {% for amenity in row.amenities.remaining %}
+                                                            <span class="fhb-amenity-hidden" title="{{ amenity.label }}"><i class="{{ amenity.iconClass }}"></i></span>
+                                                        {% endfor %}
+                                                        <span class="fhb-amenity-more" role="button" tabindex="0"
+                                                              onclick="this.parentNode.classList.add('fhb-amenity-expanded');this.remove()">
+                                                            +{{ row.amenities.remaining|length }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+
+                                            {# Gallery link if multiple images exist #}
+                                            {% if row.images is defined and row.images|length > 1 %}
+                                                <a href="#" class="small text-body-secondary" data-bs-toggle="modal"
+                                                   data-bs-target="#gallery-{{ row.typeKey|replace({':': '-'}) }}">
+                                                    {{ 'online_booking.public.view_photos'|trans({'%count%': row.images|length}) }}
+                                                </a>
                                             {% endif %}
                                             <div class="list-group list-group-flush">
                                                 {% for option in row.occupancyOptions %}
@@ -125,6 +163,43 @@
                                 <div class="mt-2 text-end">
                                     <button type="submit" name="intent" value="preview" class="btn btn-primary btn-sm">{{ 'online_booking.public.continue'|trans }}</button>
                                 </div>
+
+                                {# Image gallery modals (Bootstrap carousel lightbox) #}
+                                {% for row in availability %}
+                                    {% if row.images is defined and row.images|length > 1 %}
+                                        <div class="modal fade" id="gallery-{{ row.typeKey|replace({':': '-'}) }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header py-2">
+                                                        <h6 class="modal-title">{{ row.typeLabel }}</h6>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-0">
+                                                        <div id="carousel-{{ row.typeKey|replace({':': '-'}) }}" class="carousel slide">
+                                                            <div class="carousel-inner">
+                                                                {% for img in row.images %}
+                                                                    <div class="carousel-item {{ loop.first ? 'active' : '' }}">
+                                                                        <img src="{{ app.request.basepath }}/{{ img.mediumUrl }}" class="d-block w-100" alt="">
+                                                                    </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                            {% if row.images|length > 1 %}
+                                                                <button class="carousel-control-prev" type="button"
+                                                                        data-bs-target="#carousel-{{ row.typeKey|replace({':': '-'}) }}" data-bs-slide="prev">
+                                                                    <span class="carousel-control-prev-icon"></span>
+                                                                </button>
+                                                                <button class="carousel-control-next" type="button"
+                                                                        data-bs-target="#carousel-{{ row.typeKey|replace({':': '-'}) }}" data-bs-slide="next">
+                                                                    <span class="carousel-control-next-icon"></span>
+                                                                </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
                             {% endif %}
 
                             {# ── Step 3: Booker details + summary ── #}
