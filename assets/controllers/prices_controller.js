@@ -163,6 +163,14 @@ export default class extends Controller {
         if (defaultActiveCheckbox) {
             defaultActiveCheckbox.disabled = !isMisc;
         }
+        const bookableOnlineWrapper = this.element.querySelector(`#bookable-online-wrap-${priceId}`);
+        const bookableOnlineCheckbox = this.element.querySelector(`#isBookableOnline-${priceId}`);
+        if (bookableOnlineWrapper) {
+            bookableOnlineWrapper.classList.toggle('d-none', !isMisc);
+        }
+        if (bookableOnlineCheckbox) {
+            bookableOnlineCheckbox.disabled = !isMisc;
+        }
         if (priceId === 'new' && isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
             isPerRoomCheckbox.checked = true;
         }

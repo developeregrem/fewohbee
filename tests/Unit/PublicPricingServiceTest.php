@@ -6,15 +6,29 @@ namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
 use App\Entity\InvoiceAppartment;
+use App\Entity\Price;
 use App\Entity\RoomCategory;
+use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
+use App\Service\PriceService;
 use App\Service\PublicPricingService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class PublicPricingServiceTest extends TestCase
 {
+    private function createService(InvoiceService $invoiceService, OnlineBookingConfigService $configService): PublicPricingService
+    {
+        $priceService = $this->createStub(PriceService::class);
+        $priceRepo = $this->createStub(PriceRepository::class);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($priceRepo);
+
+        return new PublicPricingService($invoiceService, $configService, $priceService, $em);
+    }
+
     /** Only occupancy levels with non-zero prices should be returned. */
     public function testGetOccupancyPricesReturnsOnlyPricedOptions(): void
     {
@@ -69,7 +83,7 @@ final class PublicPricingServiceTest extends TestCase
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
-        $service = new PublicPricingService($invoiceService, $configService);
+        $service = $this->createService($invoiceService, $configService);
         $options = $service->getOccupancyPrices($category, $room, $dateFrom, $dateTo, 3);
 
         // Should only contain 1 and 3 persons (2 persons had no positions)
@@ -101,7 +115,7 @@ final class PublicPricingServiceTest extends TestCase
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
-        $service = new PublicPricingService($invoiceService, $configService);
+        $service = $this->createService($invoiceService, $configService);
         $options = $service->getOccupancyPrices(
             $category,
             $room,

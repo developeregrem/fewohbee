@@ -13,6 +13,7 @@ use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Service\PublicPricingService;
 use App\Service\BookingNotificationService;
 use App\Service\MailService;
 use App\Service\TemplatesService;
@@ -48,6 +49,7 @@ final class PublicBookingOccupancyTest extends TestCase
             $this->createStub(MailService::class),
             $this->createStub(TranslatorInterface::class),
             $this->createStub(BookingNotificationService::class),
+            $this->createStub(PublicPricingService::class),
         );
     }
 
@@ -218,12 +220,14 @@ final class PublicBookingOccupancyTest extends TestCase
                 'maxGuests' => 3,
                 'availableCount' => 2,
                 'roomIds' => [1, 2],
+                'roomCapacities' => [1 => 2, 2 => 3],
                 'subsidiaryIds' => [1],
                 'occupancyOptions' => [
                     1 => ['persons' => 1, 'totalPrice' => 50.0, 'totalPriceFormatted' => '50,00'],
                     2 => ['persons' => 2, 'totalPrice' => 80.0, 'totalPriceFormatted' => '80,00'],
                     3 => ['persons' => 3, 'totalPrice' => 100.0, 'totalPriceFormatted' => '100,00'],
                 ],
+                'occupancyAvailableCounts' => [1 => 2, 2 => 2, 3 => 1],
             ],
         ];
 
@@ -251,6 +255,7 @@ final class PublicBookingOccupancyTest extends TestCase
             $this->createStub(MailService::class),
             $this->createStub(TranslatorInterface::class),
             $this->createStub(BookingNotificationService::class),
+            $this->createStub(PublicPricingService::class),
         );
 
         // Select: 1x with 1 person, 1x with 3 persons = 4 total, 2 rooms
@@ -266,8 +271,124 @@ final class PublicBookingOccupancyTest extends TestCase
         $reservations = $result['roomReservations'];
         self::assertCount(2, $reservations);
 
-        // First room gets 1 person, second room gets 3 persons
+        $personsByRoomId = [];
+        foreach ($reservations as $reservation) {
+            $personsByRoomId[(int) $reservation->getAppartment()->getId()] = $reservation->getPersons();
+        }
+
+        ksort($personsByRoomId);
+        self::assertSame([1 => 1, 2 => 3], $personsByRoomId);
+    }
+
+    /** Mixed capacities in one category must still allow a valid 1x single + 1x double-room selection. */
+    public function testMixedCategoryCapacitiesDoNotInvalidateValidRoomCountSelection(): void
+    {
+        $subsidiary = $this->createStub(Subsidiary::class);
+        $subsidiary->method('getId')->willReturn(1);
+
+        $singleCategory = new RoomCategory();
+        $doubleCategory = new RoomCategory();
+
+        $singleRoom = new Appartment();
+        $singleRoom->setId(10);
+        $singleRoom->setBedsMax(1);
+        $singleRoom->setNumber('201');
+        $singleRoom->setDescription('EZ');
+        $singleRoom->setRoomCategory($singleCategory);
+        $singleRoom->setObject($subsidiary);
+
+        $doubleRoom = new Appartment();
+        $doubleRoom->setId(20);
+        $doubleRoom->setBedsMax(2);
+        $doubleRoom->setNumber('202');
+        $doubleRoom->setDescription('DZ');
+        $doubleRoom->setRoomCategory($doubleCategory);
+        $doubleRoom->setObject($subsidiary);
+
+        $doublePlusRoom = new Appartment();
+        $doublePlusRoom->setId(21);
+        $doublePlusRoom->setBedsMax(3);
+        $doublePlusRoom->setNumber('203');
+        $doublePlusRoom->setDescription('DZ+');
+        $doublePlusRoom->setRoomCategory($doubleCategory);
+        $doublePlusRoom->setObject($subsidiary);
+
+        $availability = [
+            [
+                'typeKey' => 'category:1',
+                'typeLabel' => 'Einzelzimmer',
+                'typeDescription' => null,
+                'maxGuests' => 1,
+                'availableCount' => 1,
+                'roomIds' => [10],
+                'roomCapacities' => [10 => 1],
+                'subsidiaryIds' => [1],
+                'occupancyOptions' => [
+                    1 => ['persons' => 1, 'totalPrice' => 60.0, 'totalPriceFormatted' => '60,00'],
+                ],
+                'occupancyAvailableCounts' => [1 => 1],
+            ],
+            [
+                'typeKey' => 'category:2',
+                'typeLabel' => 'Doppelzimmer',
+                'typeDescription' => null,
+                'maxGuests' => 3,
+                'availableCount' => 2,
+                'roomIds' => [20, 21],
+                'roomCapacities' => [20 => 2, 21 => 3],
+                'subsidiaryIds' => [1],
+                'occupancyOptions' => [
+                    1 => ['persons' => 1, 'totalPrice' => 80.0, 'totalPriceFormatted' => '80,00'],
+                    2 => ['persons' => 2, 'totalPrice' => 100.0, 'totalPriceFormatted' => '100,00'],
+                    3 => ['persons' => 3, 'totalPrice' => 120.0, 'totalPriceFormatted' => '120,00'],
+                ],
+                'occupancyAvailableCounts' => [1 => 2, 2 => 2, 3 => 1],
+            ],
+        ];
+
+        $this->availabilityService->method('getAvailability')->willReturn($availability);
+        $this->appartmentRepository->method('findByIdsWithRelations')
+            ->willReturn([$singleRoom, $doubleRoom, $doublePlusRoom]);
+
+        $invoiceService = $this->createStub(InvoiceService::class);
+        $invoiceService->method('buildAppartmentPositions')->willReturn([]);
+        $invoiceService->method('calculateSums')->willReturnCallback(function ($apps, $poss, &$vats, &$brutto, &$netto, &$singleTotal, &$miscTotal) {
+            $singleTotal = 0.0;
+        });
+
+        $configService = $this->createStub(OnlineBookingConfigService::class);
+        $configService->method('getReservationOrigin')->willReturn(null);
+
+        $service = new PublicBookingService(
+            $this->createStub(EntityManagerInterface::class),
+            $this->appartmentRepository,
+            $configService,
+            $this->availabilityService,
+            $invoiceService,
+            $this->createStub(TemplatesService::class),
+            $this->createStub(MailService::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(BookingNotificationService::class),
+            $this->createStub(PublicPricingService::class),
+        );
+
+        $result = $service->buildSelectionPreview(
+            new \DateTimeImmutable('2026-04-02'),
+            new \DateTimeImmutable('2026-04-04'),
+            3,
+            2,
+            [
+                'category:1' => [1 => 1],
+                'category:2' => [2 => 1],
+            ],
+            new Request()
+        );
+
+        $reservations = $result['roomReservations'];
+        self::assertCount(2, $reservations);
         self::assertSame(1, $reservations[0]->getPersons());
-        self::assertSame(3, $reservations[1]->getPersons());
+        self::assertSame(2, $reservations[1]->getPersons());
+        self::assertSame(10, $reservations[0]->getAppartment()->getId());
+        self::assertSame(20, $reservations[1]->getAppartment()->getId());
     }
 }

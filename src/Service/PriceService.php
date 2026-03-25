@@ -170,6 +170,12 @@ class PriceService
             $price->setIsDefaultActiveInReservationCreation(false);
         }
 
+        if (1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id)) {
+            $price->setIsBookableOnline(true);
+        } else {
+            $price->setIsBookableOnline(false);
+        }
+
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
             $price->setMinStay($request->request->get('min-stay-'.$id));

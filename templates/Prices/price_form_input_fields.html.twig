@@ -101,6 +101,15 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row{% if not isMiscPriceType %} d-none{% endif %}" id="bookable-online-wrap-{{ price.id }}">
+                        <div class="col-sm-4"></div>
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="isBookableOnline-{{ price.id }}" id="isBookableOnline-{{ price.id }}" class="form-check-input"{% if price.isBookableOnline is defined and price.isBookableOnline == 1 %} checked {% endif %}{% if not isMiscPriceType %} disabled{% endif %} value="1">
+                                <label class="form-check-label" for="isBookableOnline-{{ price.id }}">{{ 'price.bookableonline'|trans }}</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

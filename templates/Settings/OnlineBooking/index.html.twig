@@ -118,11 +118,43 @@
                             {{ form_errors(form.selectedRoomIds) }}
                         </div>
                     </div>
-                    {# ── Price coverage hint ── #}
-                    <div class="alert alert-info mt-3 small" role="alert">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ 'online_booking.settings.price_coverage_hint'|trans|raw }}
-                    </div>
+                    {# ── Price overview ── #}
+                    {% if reservationOriginConfigured %}
+                        <div class="border rounded mt-3">
+                            <div class="px-3 py-2 bg-body-secondary border-bottom">
+                                <p class="fw-semibold small mb-0"><i class="fas fa-tags me-1"></i>{{ 'online_booking.settings.price_overview_title'|trans }}</p>
+                                <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.price_overview_hint'|trans }}</p>
+                            </div>
+                            <div class="px-3 py-2">
+                                <div class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_room'|trans }}</div>
+                                {% if priceOverview.room is not empty %}
+                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                        {% for price in priceOverview.room %}
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">{{ price.description }}{% if price.numberOfPersons %} ({{ price.numberOfPersons }}P){% endif %}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-body-secondary small mb-2"><i class="fas fa-triangle-exclamation text-warning me-1"></i>{{ 'online_booking.settings.price_overview_none'|trans }}</p>
+                                {% endif %}
+
+                                <div class="small fw-semibold mb-1">{{ 'online_booking.settings.price_overview_extras'|trans }}</div>
+                                {% if priceOverview.extras is not empty %}
+                                    <div class="d-flex flex-wrap gap-1 mb-0">
+                                        {% for price in priceOverview.extras %}
+                                            <span class="badge bg-success-subtle text-success-emphasis">{{ price.description }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.price_overview_no_extras'|trans }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-3 small" role="alert">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ 'online_booking.settings.price_coverage_hint'|trans|raw }}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
