@@ -75,6 +75,11 @@ class PublicBookingController extends AbstractController
             ],
             'roomTotalFormatted' => null,
             'roomPriceBreakdown' => [],
+            'extras' => [],
+            'selectedExtras' => [],
+            'extrasTotalFormatted' => null,
+            'grandTotalFormatted' => null,
+            'extrasBreakdown' => [],
             'bookingResult' => null,
         ];
 
@@ -84,6 +89,7 @@ class PublicBookingController extends AbstractController
 
         $intent = (string) $request->request->get('intent', 'availability');
         $occupancySelection = $this->extractOccupancySelection($request);
+        $extrasSelection = $this->extractExtrasSelection($request);
         $dateFrom = null;
         $dateTo = null;
         $persons = null;
@@ -108,15 +114,21 @@ class PublicBookingController extends AbstractController
                 $view['availabilityChecked'] = true;
                 $view['step'] = 2;
                 $view['availability'] = $preview['availability'];
+                $view['extras'] = $preview['extras'];
                 $view['formState'] = $abuseProtectionService->createFormState(false);
             } elseif ('preview' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 3;
                 $view['availability'] = $preview['availability'];
                 $view['selectedQty'] = $preview['selected'];
+                $view['extras'] = $preview['extras'];
+                $view['selectedExtras'] = $preview['selectedExtras'];
                 $view['roomTotalFormatted'] = $preview['roomTotalFormatted'];
                 $view['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
+                $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
+                $view['extrasBreakdown'] = $preview['extrasBreakdown'];
+                $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
                 $view['formState'] = $abuseProtectionService->createFormState(true);
             } elseif ('submit' === $intent) {
                 $result = $publicBookingService->createBooking(
@@ -126,7 +138,8 @@ class PublicBookingController extends AbstractController
                     $roomsCount,
                     $occupancySelection,
                     $this->extractBookerInput($request, $defaultCountry),
-                    $request
+                    $request,
+                    $extrasSelection,
                 );
 
                 $view['step'] = 4;
@@ -153,12 +166,18 @@ class PublicBookingController extends AbstractController
             ) {
                 try {
                     $selectedForPreview = 'submit' === $intent ? $occupancySelection : [];
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request);
+                    $selectedExtrasForPreview = 'submit' === $intent ? $extrasSelection : [];
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
+                    $view['extras'] = $fallbackPreview['extras'] ?? [];
                     if ('submit' === $intent && isset($fallbackPreview['roomTotalFormatted'])) {
                         $view['roomTotalFormatted'] = $fallbackPreview['roomTotalFormatted'];
                         $view['roomPriceBreakdown'] = $fallbackPreview['roomPriceBreakdown'] ?? [];
+                        $view['selectedExtras'] = $extrasSelection;
+                        $view['extrasTotalFormatted'] = $fallbackPreview['extrasTotalFormatted'] ?? null;
+                        $view['extrasBreakdown'] = $fallbackPreview['extrasBreakdown'] ?? [];
+                        $view['grandTotalFormatted'] = $fallbackPreview['grandTotalFormatted'] ?? null;
                     }
                 } catch (\Throwable) {
                 }
@@ -169,6 +188,7 @@ class PublicBookingController extends AbstractController
                 $view['formState'] = $abuseProtectionService->createFormState('submit' === $intent);
                 if ('submit' === $intent) {
                     $view['selectedQty'] = $occupancySelection;
+                    $view['selectedExtras'] = $extrasSelection;
                 }
             } elseif ('' !== (string) $request->request->get('dateFrom') && '' !== (string) $request->request->get('dateTo')) {
                 $view['step'] = 2;
@@ -250,6 +270,30 @@ class PublicBookingController extends AbstractController
         }
 
         return $selection;
+    }
+
+    /**
+     * Extract selected extras with quantities from POST fields.
+     *
+     * Field format: extra_{priceId} = quantity (1+ means selected)
+     *
+     * @return array<int, int> Map of Price ID => quantity
+     */
+    private function extractExtrasSelection(Request $request): array
+    {
+        $selected = [];
+        foreach ($request->request->all() as $key => $value) {
+            if (!is_string($key) || !str_starts_with($key, 'extra_')) {
+                continue;
+            }
+            $priceId = (int) substr($key, 6);
+            $qty = max(0, (int) $value);
+            if ($priceId > 0 && $qty > 0) {
+                $selected[$priceId] = $qty;
+            }
+        }
+
+        return $selected;
     }
 
     /**

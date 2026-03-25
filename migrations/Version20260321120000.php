@@ -60,6 +60,9 @@ final class Version20260321120000 extends AbstractMigration
         // Add OTA room type code to room_category for future channel manager mapping
         $this->addSql('ALTER TABLE room_category ADD ota_room_type_code VARCHAR(50) DEFAULT NULL');
 
+        // Add online-bookable flag to prices for public booking extras
+        $this->addSql('ALTER TABLE prices ADD is_bookable_online TINYINT(1) NOT NULL DEFAULT 0');
+
         // Seed predefined amenities with Font Awesome icon classes
         $amenities = $this->getAmenitySeedData();
         foreach ($amenities as $a) {
@@ -72,6 +75,7 @@ final class Version20260321120000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->addSql('ALTER TABLE prices DROP is_bookable_online');
         $this->addSql('DROP TABLE room_category_image');
         $this->addSql('DROP TABLE room_category_amenity');
         $this->addSql('DROP TABLE amenity');

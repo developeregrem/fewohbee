@@ -1,12 +1,23 @@
 {% extends 'PublicBooking/base.html.twig' %}
 
 {% block body %}
+{% set autoScrollTarget = null %}
+{% if step >= 3 and availability is not empty %}
+    {% set autoScrollTarget = 'fhb-booker-details' %}
+{% elseif availabilityChecked %}
+    {% set autoScrollTarget = 'fhb-availability-results' %}
+{% endif %}
 <div class="fhb-booking-root">
     <div class="container{{ embed ? '-fluid' : '' }}">
         <div class="row justify-content-center">
             <div class="col-lg-8 col-xl-7">
                 <div class="card fhb-booking-card">
                     <div class="card-body p-3 p-md-4">
+                        <style>
+                            .fhb-scroll-target {
+                                scroll-margin-top: 1rem;
+                            }
+                        </style>
                         {% if not embed %}
                             <h2 class="mb-3 fs-4">{{ 'online_booking.public.page_title'|trans }}</h2>
                         {% endif %}
@@ -67,11 +78,11 @@
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <label class="form-label small mb-1" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
-                                    <input class="form-control form-control-sm" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}">
+                                    <input class="form-control form-control-sm" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
                                 </div>
                                 <div class="col-6 col-md-3">
                                     <label class="form-label small mb-1" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
-                                    <input class="form-control form-control-sm" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}">
+                                    <input class="form-control form-control-sm" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
                                 </div>
                             </div>
 
@@ -87,7 +98,7 @@
 
                             {# ── Step 2: Room selection with occupancy options ── #}
                             {% if availability is not empty %}
-                                <hr class="my-3">
+                                <hr class="my-3 fhb-scroll-target" id="fhb-availability-results" tabindex="-1">
                                 <h6 class="mb-2">{{ 'online_booking.public.available_room_types'|trans }}</h6>
                                 {% for row in availability %}
                                     <div class="card mb-3">
@@ -151,7 +162,7 @@
                                                             <span class="fw-semibold ms-auto me-2">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
                                                         </div>
                                                         <div style="width:70px;flex-shrink:0">
-                                                            <input class="form-control form-control-sm text-center" type="number" min="0" max="{{ row.availableCount }}" name="{{ fieldName }}" value="{{ selectedVal }}">
+                                                            <input class="form-control form-control-sm text-center" type="number" min="0" max="{{ row.availableCount }}" name="{{ fieldName }}" value="{{ selectedVal }}" onwheel="this.blur()">
                                                         </div>
                                                     </div>
                                                 {% endfor %}
@@ -160,7 +171,56 @@
                                     </div>
                                 {% endfor %}
 
-                                <div class="mt-2 text-end">
+                                {# ── Extras (bookable miscellaneous prices) ── #}
+                                {% if extras is not empty %}
+                                    <div class="mt-3">
+                                        <h6 class="mb-2">{{ 'online_booking.public.extras_title'|trans }}</h6>
+                                        <div class="list-group">
+                                            {% for extra in extras %}
+                                                {% set extraFieldName = 'extra_' ~ extra.id %}
+                                                {% set selectedQtyVal = selectedExtras[extra.id]|default(0) %}
+                                                {% set needsQuantity = extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
+                                                <div class="list-group-item d-flex align-items-center justify-content-between gap-2 py-2">
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-semibold small">{{ extra.description }}</div>
+                                                        <div class="small text-body-secondary">
+                                                            {{ extra.unitPriceFormatted }}&nbsp;{{ currency_symbol }}
+                                                            {% if extra.calculationType == 'per_person_night' %}
+                                                                {{ 'online_booking.public.per_person_night'|trans }}
+                                                            {% elseif extra.calculationType == 'per_room_night' %}
+                                                                {{ 'online_booking.public.per_room_night'|trans }}
+                                                            {% else %}
+                                                                {{ 'online_booking.public.flat_price'|trans }}
+                                                            {% endif %}
+                                                            <span class="ms-1 text-body-secondary">
+                                                                (= {{ extra.pricePerUnitFormatted }}&nbsp;{{ currency_symbol }})
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {% if needsQuantity %}
+                                                        <div style="width:70px;flex-shrink:0">
+                                                            <select class="form-select form-select-sm" name="{{ extraFieldName }}"
+                                                                    onwheel="this.blur()">
+                                                                <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
+                                                                {% for q in 1..extra.maxQuantity %}
+                                                                    <option value="{{ q }}" {% if selectedQtyVal == q %}selected{% endif %}>{{ q }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="form-check form-switch mb-0 ms-2">
+                                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                                   id="{{ extraFieldName }}" name="{{ extraFieldName }}" value="1"
+                                                                   {% if selectedQtyVal > 0 %}checked{% endif %}>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mt-3 text-end">
                                     <button type="submit" name="intent" value="preview" class="btn btn-primary btn-sm">{{ 'online_booking.public.continue'|trans }}</button>
                                 </div>
 
@@ -204,16 +264,10 @@
 
                             {# ── Step 3: Booker details + summary ── #}
                             {% if step >= 3 and availability is not empty %}
-                                {# Persist occupancy selection as hidden fields #}
-                                {% for row in availability %}
-                                    {% set typeSelection = selectedQty[row.typeKey]|default({}) %}
-                                    {% for persons, qty in typeSelection %}
-                                        {% if qty > 0 %}
-                                            <input type="hidden" name="occ_{{ row.typeKey }}_p{{ persons }}" value="{{ qty }}">
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endfor %}
-                                <hr class="my-3">
+                                {# No hidden fields needed for occ_/extra_ — the visible Step 2
+                                   inputs are still in the DOM and carry the current values.
+                                   Duplicating them as hidden fields would override user changes. #}
+                                <hr class="my-3 fhb-scroll-target" id="fhb-booker-details" tabindex="-1">
                                 <h6 class="mb-2">{{ 'online_booking.public.booker_details'|trans }}</h6>
 
                                 {# Row 1: Salutation / First name / Last name #}
@@ -325,11 +379,39 @@
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <span>{{ 'online_booking.public.room_total'|trans }}</span>
-                                            <strong class="text-primary">{{ roomTotalFormatted }} {{ currency_symbol }}</strong>
-                                        </div>
-                                        <div class="small text-body-secondary">{{ 'online_booking.public.room_total_hint'|trans }}</div>
+
+                                        {# Extras breakdown #}
+                                        {% if extrasBreakdown is not empty %}
+                                            <div class="mb-2">
+                                                {% for extraRow in extrasBreakdown %}
+                                                    <div class="d-flex justify-content-between align-items-center small{% if not loop.last %} mb-1{% endif %}">
+                                                        <span>{{ extraRow.label }}{% if extraRow.quantity|default(1) > 1 %} &times; {{ extraRow.quantity }}{% endif %}</span>
+                                                        <span>{{ extraRow.totalFormatted }} {{ currency_symbol }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if grandTotalFormatted and extrasBreakdown is not empty %}
+                                            <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-1">
+                                                <span>{{ 'online_booking.public.room_total'|trans }}</span>
+                                                <span>{{ roomTotalFormatted }} {{ currency_symbol }}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-2">
+                                                <span>{{ 'online_booking.public.extras_total'|trans }}</span>
+                                                <span>{{ extrasTotalFormatted }} {{ currency_symbol }}</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                                                <span>{{ 'online_booking.public.grand_total'|trans }}</span>
+                                                <strong class="text-primary">{{ grandTotalFormatted }} {{ currency_symbol }}</strong>
+                                            </div>
+                                        {% else %}
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ 'online_booking.public.room_total'|trans }}</span>
+                                                <strong class="text-primary">{{ roomTotalFormatted }} {{ currency_symbol }}</strong>
+                                            </div>
+                                            <div class="small text-body-secondary">{{ 'online_booking.public.room_total_hint'|trans }}</div>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
 
@@ -361,4 +443,30 @@
         </div>
     </div>
 </div>
+{% if autoScrollTarget %}
+<script>
+(function() {
+    var targetId = {{ autoScrollTarget|json_encode|raw }};
+    function jumpToStep() {
+        var target = document.getElementById(targetId);
+        if (!target) {
+            return;
+        }
+
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        if (typeof target.focus === 'function') {
+            target.focus({ preventScroll: true });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            requestAnimationFrame(jumpToStep);
+        }, { once: true });
+    } else {
+        requestAnimationFrame(jumpToStep);
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}

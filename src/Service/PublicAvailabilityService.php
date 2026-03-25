@@ -38,8 +38,10 @@ class PublicAvailabilityService
      *   maxGuests: int,
      *   availableCount: int,
      *   roomIds: int[],
+     *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[],
-     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
+     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
+     *   occupancyAvailableCounts: array<int, int>
      * }>
      */
     public function getAvailability(
@@ -90,6 +92,7 @@ class PublicAvailabilityService
                     'maxGuests' => (int) $maxGuests,
                     'availableCount' => 0,
                     'roomIds' => [],
+                    'roomCapacities' => [],
                     'subsidiaryIds' => [],
                     '_category' => $category,
                     '_sampleRoom' => $room,
@@ -98,6 +101,7 @@ class PublicAvailabilityService
 
             $grouped[$typeKey]['availableCount']++;
             $grouped[$typeKey]['roomIds'][] = (int) $room->getId();
+            $grouped[$typeKey]['roomCapacities'][(int) $room->getId()] = (int) $room->getBedsMax();
             $grouped[$typeKey]['subsidiaryIds'][] = (int) $room->getObject()->getId();
             $grouped[$typeKey]['maxGuests'] = max($grouped[$typeKey]['maxGuests'], (int) $room->getBedsMax());
         }
@@ -106,6 +110,7 @@ class PublicAvailabilityService
 
         foreach ($grouped as $key => &$row) {
             sort($row['roomIds']);
+            $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
             $row['subsidiaryIds'] = array_values(array_unique($row['subsidiaryIds']));
             sort($row['subsidiaryIds']);
 
@@ -123,6 +128,7 @@ class PublicAvailabilityService
                 if (null !== $maxRooms && $row['availableCount'] > $maxRooms) {
                     $row['availableCount'] = $maxRooms;
                     $row['roomIds'] = array_slice($row['roomIds'], 0, $maxRooms);
+                    $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
                 }
             }
 
@@ -146,6 +152,11 @@ class PublicAvailabilityService
                     ));
                 }
             }
+
+            $row['occupancyAvailableCounts'] = $this->buildOccupancyAvailableCounts(
+                $row['roomCapacities'],
+                $row['occupancyOptions'],
+            );
 
             // Build amenity and image data for the public booking page
             if ($category instanceof RoomCategory) {
@@ -184,6 +195,7 @@ class PublicAvailabilityService
      *   maxGuests: int,
      *   availableCount: int,
      *   roomIds: int[],
+     *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[]
      * }> $grouped
      * @return array<int, array{
@@ -193,6 +205,7 @@ class PublicAvailabilityService
      *   maxGuests: int,
      *   availableCount: int,
      *   roomIds: int[],
+     *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[]
      * }>
      */
@@ -217,6 +230,11 @@ class PublicAvailabilityService
 
             $row['availableCount'] = $maxFeasibleCount;
             $row['roomIds'] = array_slice($row['roomIds'], 0, $maxFeasibleCount);
+            $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
+            $row['occupancyAvailableCounts'] = $this->buildOccupancyAvailableCounts(
+                $row['roomCapacities'],
+                $row['occupancyOptions']
+            );
             $filtered[] = $row;
         }
 
@@ -229,6 +247,36 @@ class PublicAvailabilityService
         });
 
         return $filtered;
+    }
+
+    /**
+     * Count how many concrete rooms in a category can satisfy each visible occupancy option.
+     *
+     * @param array<int, int> $roomCapacities
+     * @param array<int|string, array{persons?: int}> $occupancyOptions
+     * @return array<int, int>
+     */
+    private function buildOccupancyAvailableCounts(array $roomCapacities, array $occupancyOptions): array
+    {
+        $counts = [];
+
+        foreach ($occupancyOptions as $option) {
+            $persons = (int) ($option['persons'] ?? 0);
+            if ($persons < 1) {
+                continue;
+            }
+
+            $count = 0;
+            foreach ($roomCapacities as $capacity) {
+                if ((int) $capacity >= $persons) {
+                    ++$count;
+                }
+            }
+
+            $counts[$persons] = $count;
+        }
+
+        return $counts;
     }
 
     /**

@@ -11,6 +11,7 @@ use App\Form\OnlineBookingConfigType;
 use App\Repository\OnlineBookingMinStayOverrideRepository;
 use App\Repository\OnlineBookingMinStayRepository;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
+use App\Repository\PriceRepository;
 use App\Repository\RoomCategoryRepository;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +34,7 @@ class OnlineBookingSettingsController extends AbstractController
         OnlineBookingMinStayRepository $minStayRepository,
         OnlineBookingRoomCategoryLimitRepository $limitRepository,
         OnlineBookingMinStayOverrideRepository $overrideRepository,
+        PriceRepository $priceRepository,
     ): Response {
         $config = $configService->getConfig();
         $form = $this->createForm(OnlineBookingConfigType::class, $config, [
@@ -66,14 +68,20 @@ class OnlineBookingSettingsController extends AbstractController
             $restrictionOverrideWarning = true;
         }
 
+        $origin = $configService->getReservationOrigin($config);
+        $priceOverview = null !== $origin
+            ? $priceRepository->findActivePricesByOrigin((int) $origin->getId())
+            : ['room' => [], 'misc' => [], 'extras' => []];
+
         return $this->render('Settings/OnlineBooking/index.html.twig', [
             'form' => $form->createView(),
-            'reservationOriginConfigured' => null !== $configService->getReservationOrigin($config),
+            'reservationOriginConfigured' => null !== $origin,
             'categories' => $categories,
             'minStayByCategory' => $minStayByCategory,
             'limitsByCategory' => $limitsByCategory,
             'overrides' => $overrides,
             'restrictionOverrideWarning' => $restrictionOverrideWarning,
+            'priceOverview' => $priceOverview,
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
