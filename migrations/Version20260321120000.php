@@ -126,4 +126,9 @@ final class Version20260321120000 extends AbstractMigration
             ['slug' => 'crib_available', 'fa' => 'fa-solid fa-baby', 'cat' => 'outdoor', 'sort' => 5],
         ];
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }
