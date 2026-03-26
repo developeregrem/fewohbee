@@ -13,7 +13,6 @@ use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PriceService;
 use App\Service\PublicPricingService;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class PublicPricingServiceExtrasTest extends TestCase
@@ -63,9 +62,6 @@ final class PublicPricingServiceExtrasTest extends TestCase
         $priceRepo = $this->createStub(PriceRepository::class);
         $priceRepo->method('findBookableOnlineExtras')->willReturn($repoExtras);
 
-        $em = $this->createStub(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturn($priceRepo);
-
         // Simulate getPricesForReservationDays: return price for days 1..$validDays, null beyond
         $priceService = $this->createStub(PriceService::class);
         $priceService->method('getPricesForReservationDays')
@@ -82,7 +78,7 @@ final class PublicPricingServiceExtrasTest extends TestCase
 
         $invoiceService = $this->createStub(InvoiceService::class);
 
-        return new PublicPricingService($invoiceService, $configService, $priceService, $em);
+        return new PublicPricingService($invoiceService, $configService, $priceService, $priceRepo);
     }
 
     public function testPerPersonNightCalculation(): void
@@ -162,12 +158,10 @@ final class PublicPricingServiceExtrasTest extends TestCase
         $configService->method('getReservationOrigin')->willReturn(null);
 
         $priceRepo = $this->createStub(PriceRepository::class);
-        $em = $this->createStub(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturn($priceRepo);
         $priceService = $this->createStub(PriceService::class);
         $invoiceService = $this->createStub(InvoiceService::class);
 
-        $service = new PublicPricingService($invoiceService, $configService, $priceService, $em);
+        $service = new PublicPricingService($invoiceService, $configService, $priceService, $priceRepo);
 
         $extras = $service->getBookableExtras($this->sampleRoom, $this->dateFrom, $this->dateTo, 2, 1);
 

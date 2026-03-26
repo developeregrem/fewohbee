@@ -224,8 +224,9 @@ class TemplatesServiceController extends AbstractController
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
         }
+        $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->renderTemplateString($templateText, $params);
+            $html = $templatesService->renderTemplateString($templateText, $params, $hostTypeName);
         } catch (\Throwable $e) {
             return $this->json([
                 'html' => '',
@@ -286,8 +287,9 @@ class TemplatesServiceController extends AbstractController
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
         }
+        $hostTypeName = $template->getTemplateType()?->getName();
         try {
-            $html = $templatesService->renderTemplateString($templateText, $params);
+            $html = $templatesService->renderTemplateString($templateText, $params, $hostTypeName);
         } catch (\Throwable $e) {
             if ($request->isXmlHttpRequest()) {
                 return $this->json([
@@ -431,6 +433,27 @@ class TemplatesServiceController extends AbstractController
         $schema = $schemaService->buildSchema($variableMap);
 
         return $this->json($schema);
+    }
+
+    /**
+     * Return templates that can be embedded into templates of the given type.
+     */
+    #[Route('/embeddable/{id}', name: 'settings.templates.embeddable', methods: ['GET'])]
+    public function getEmbeddableTemplates(
+        TemplatesService $templatesService,
+        TemplateType $id,
+        Request $request
+    ): Response {
+        $excludeId = $request->query->has('exclude') ? (int) $request->query->get('exclude') : null;
+        $templates = $templatesService->getEmbeddableTemplates($id, $excludeId);
+
+        $result = array_map(static fn (Template $t) => [
+            'id' => $t->getId(),
+            'name' => $t->getName(),
+            'typeName' => $t->getTemplateType()?->getName(),
+        ], $templates);
+
+        return $this->json(array_values($result));
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
