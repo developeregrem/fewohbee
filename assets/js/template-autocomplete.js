@@ -17,7 +17,7 @@ import { autocompletion } from '@codemirror/autocomplete';
  * Create the autocomplete CodeMirror extension for template variables.
  *
  * @param {Object}  opts
- * @param {string}  opts.schemaUrl  – Backend URL that returns the JSON schema tree
+ * @param {string}  opts.schemaUrl       – Backend URL that returns the JSON schema tree
  * @returns {import('@codemirror/state').Extension}
  */
 export function templateAutocomplete({ schemaUrl }) {

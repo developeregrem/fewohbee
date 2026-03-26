@@ -790,6 +790,22 @@
                 <source>templates.notfound</source>
                 <target>Es konnte keine Vorlage gefunden werden. Stelle bitte sicher, dass ein Template für die ausgewählte Aktion existiert.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.template_includes">
+                <source>templates.editor.template_includes</source>
+                <target>Vorlagen</target>
+            </trans-unit>
+            <trans-unit id="templates.include.error.circular">
+                <source>templates.include.error.circular</source>
+                <target>Zirkuläre Vorlageneinbindung erkannt (ID: %id%)</target>
+            </trans-unit>
+            <trans-unit id="templates.include.error.notfound">
+                <source>templates.include.error.notfound</source>
+                <target>Eingebundene Vorlage nicht gefunden (ID: %id%)</target>
+            </trans-unit>
+            <trans-unit id="templates.include.error.incompatible">
+                <source>templates.include.error.incompatible</source>
+                <target>Vorlage "%name%" (%type%) ist nicht kompatibel mit diesem Vorlagentyp</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

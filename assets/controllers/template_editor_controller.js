@@ -240,6 +240,53 @@ const TemplateDiv = Node.create({
     },
 });
 
+/**
+ * Inline node for template includes — renders as a non-editable pill/badge
+ * in visual mode. Stores the referenced template ID as a data attribute.
+ *
+ * HTML: <span class="template-include" data-template-id="42">Fußzeile</span>
+ */
+const TemplateInclude = Node.create({
+    name: 'templateInclude',
+    inline: true,
+    group: 'inline',
+    atom: true,
+
+    addAttributes() {
+        return {
+            templateId: {
+                default: null,
+                parseHTML: (el) => el.getAttribute('data-template-id'),
+                renderHTML: (attrs) => attrs.templateId ? { 'data-template-id': attrs.templateId } : {},
+            },
+            label: {
+                default: '',
+                parseHTML: (el) => el.textContent || '',
+                renderHTML: () => ({}),
+            },
+        };
+    },
+
+    parseHTML() {
+        return [{ tag: 'span.template-include[data-template-id]' }];
+    },
+
+    renderHTML({ HTMLAttributes, node }) {
+        return ['span', { ...HTMLAttributes, class: 'template-include', contenteditable: 'false' }, node.attrs.label || `Template #${node.attrs.templateId}`];
+    },
+
+    addNodeView() {
+        return ({ node }) => {
+            const dom = document.createElement('span');
+            dom.className = 'template-include';
+            dom.contentEditable = 'false';
+            dom.textContent = node.attrs.label || `Template #${node.attrs.templateId}`;
+            dom.title = `Template ID: ${node.attrs.templateId}`;
+            return { dom };
+        };
+    },
+});
+
 const TemplateInlineControlSpan = Node.create({
     name: 'templateInlineControlSpan',
     inline: true,
@@ -308,6 +355,8 @@ export default class extends Controller {
         this.schemaUrlTemplate = this.form?.dataset.templatesSchemaUrl || '';
         this.previewRenderUrl = this.form?.dataset.templatesPreviewRenderUrl || '';
         this.previewPdfUrl = this.form?.dataset.templatesPreviewPdfUrl || '';
+        this.embeddableUrlTemplate = this.form?.dataset.templatesEmbeddableUrl || '';
+        this.currentTemplateId = this.form?.dataset.templatesCurrentId || null;
         this.templateTypeSelect = this.form?.querySelector('#template-type');
         this.snippets = [];
         this.codeDropListenersAttached = false;
@@ -865,13 +914,15 @@ export default class extends Controller {
         try {
             const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             if (!response.ok) {
-                return;
+                this.snippets = [];
+            } else {
+                this.snippets = await response.json();
             }
-            this.snippets = await response.json();
-            this.renderSnippetSidebar();
         } catch (error) {
-            // ignore
+            this.snippets = [];
         }
+        this.renderSnippetSidebar();
+        await this.refreshEmbeddableTemplates();
     }
 
     renderSnippetSidebar() {
@@ -901,6 +952,84 @@ export default class extends Controller {
                 container.appendChild(item);
             });
         }
+    }
+
+    async refreshEmbeddableTemplates() {
+        if (!this.embeddableUrlTemplate || !this.templateTypeSelect) {
+            return;
+        }
+        const typeId = this.templateTypeSelect.value;
+        if (!typeId) {
+            return;
+        }
+        let url = this.embeddableUrlTemplate.replace('placeholder', typeId);
+        if (this.currentTemplateId) {
+            url += '?exclude=' + this.currentTemplateId;
+        }
+        try {
+            const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!response.ok) {
+                return;
+            }
+            this.embeddableTemplates = await response.json();
+            this.renderEmbeddableTemplatesSidebar();
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    renderEmbeddableTemplatesSidebar() {
+        if (!this.hasSnippetSidebarTarget || !this.embeddableTemplates?.length) {
+            return;
+        }
+
+        const container = this.snippetSidebarTarget;
+        const title = document.createElement('h6');
+        title.className = 'mt-2 mb-2';
+        title.textContent = this.i18n.i18nTemplateIncludes || 'Templates';
+        container.appendChild(title);
+
+        this.embeddableTemplates.forEach((tmpl) => {
+            const item = document.createElement('div');
+            item.className = 'snippet-item border rounded p-2 mb-2 d-flex align-items-center gap-2';
+            item.draggable = true;
+            item.style.cursor = 'pointer';
+
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-file-import text-muted';
+            item.appendChild(icon);
+
+            const label = document.createElement('span');
+            label.textContent = tmpl.name;
+            item.appendChild(label);
+
+            const includeHtml = `<span class="template-include" data-template-id="${tmpl.id}">${this.escapeHtml(tmpl.name)}</span>`;
+
+            item.addEventListener('dragstart', (event) => {
+                event.dataTransfer.setData('application/x-template-snippet', includeHtml);
+                event.dataTransfer.setData('application/x-template-snippet-complexity', 'simple');
+                event.dataTransfer.effectAllowed = 'copy';
+            });
+
+            item.addEventListener('click', () => {
+                if (this.isCodeMode()) {
+                    this.insertIntoCodeEditor(includeHtml);
+                } else if (this.editorInstance) {
+                    this.editorInstance.chain().focus().insertContent({
+                        type: 'templateInclude',
+                        attrs: { templateId: String(tmpl.id), label: tmpl.name },
+                    }).run();
+                }
+            });
+
+            container.appendChild(item);
+        });
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     groupSnippets() {
@@ -1391,6 +1520,7 @@ export default class extends Controller {
             extensions: [
                 TemplateDiv,
                 TemplateInlineControlSpan,
+                TemplateInclude,
                 StarterKit.configure({
                     heading: { levels: [1, 2, 3, 4] },
                     link: false,

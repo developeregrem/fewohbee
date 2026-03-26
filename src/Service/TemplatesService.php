@@ -32,6 +32,7 @@ use Twig\Environment;
 class TemplatesService
 {
     public const EXAMPLES_BASE_URL = 'https://raw.githubusercontent.com/developeregrem/fewohbee-examples/master/templates/';
+    private const MAX_INCLUDE_DEPTH = 5;
     /**
      * Default mPDF layout parameters for templates.
      */
@@ -128,7 +129,9 @@ class TemplatesService
 
         $params = $this->renderParamsResolver->resolve($template, $param);
 
-        $str = $this->replaceTwigSyntax($template->getText());
+        $hostTypeName = $template->getTemplateType()?->getName();
+        $text = $this->resolveTemplateIncludes($template->getText(), $hostTypeName);
+        $str = $this->replaceTwigSyntax($text);
         $templateStr = $this->twig->createTemplate($str);
 
         return $templateStr->render($params);
@@ -139,10 +142,11 @@ class TemplatesService
      *
      * @param array<string, mixed> $params
      */
-    public function renderTemplateString(string $templateText, array $params): string
+    public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null): string
     {
         try {
-            $str = $this->replaceTwigSyntax($templateText);
+            $text = $this->resolveTemplateIncludes($templateText, $hostTypeName);
+            $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
 
             return $templateStr->render($params);
@@ -556,6 +560,110 @@ class TemplatesService
         }
 
         return $requestStack->getSession()->get($sessionName, $templateId);
+    }
+
+    /**
+     * Resolve template include spans by replacing them with the referenced template content.
+     *
+     * Matches: <span class="template-include" data-template-id="42">...</span>
+     * Replaces the entire span with the referenced template's text content.
+     *
+     * Compatibility rules:
+     * - TEMPLATE_FILE_PDF can be embedded into any template
+     * - Otherwise, only templates sharing the same base type are allowed
+     *   (e.g. TEMPLATE_RESERVATION_PDF ↔ TEMPLATE_RESERVATION_EMAIL)
+     *
+     * @param string   $text             The template text to process
+     * @param string|null $hostTypeName  The template type name of the host template (for compatibility checks)
+     * @param int      $depth            Current recursion depth
+     * @param int[]    $visitedIds       IDs already resolved in this chain (cycle detection)
+     */
+    public function resolveTemplateIncludes(string $text, ?string $hostTypeName = null, int $depth = 0, array $visitedIds = []): string
+    {
+        if ($depth >= self::MAX_INCLUDE_DEPTH) {
+            return $text;
+        }
+
+        return preg_replace_callback(
+            '/<span\b(?=[^>]*\bclass="[^"]*\btemplate-include\b[^"]*")(?=[^>]*\bdata-template-id="(\d+)")[^>]*>.*?<\/span>/is',
+            function (array $matches) use ($hostTypeName, $depth, $visitedIds): string {
+                $templateId = (int) $matches[1];
+
+                if (in_array($templateId, $visitedIds, true)) {
+                    throw new \RuntimeException($this->translator->trans('templates.include.error.circular', ['%id%' => $templateId]));
+                }
+
+                $included = $this->em->getRepository(Template::class)->find($templateId);
+                if (!$included instanceof Template) {
+                    throw new \RuntimeException($this->translator->trans('templates.include.error.notfound', ['%id%' => $templateId]));
+                }
+
+                $includedTypeName = $included->getTemplateType()?->getName() ?? '';
+                if (null !== $hostTypeName && !$this->isTemplateIncludeCompatible($hostTypeName, $includedTypeName)) {
+                    throw new \RuntimeException($this->translator->trans('templates.include.error.incompatible', [
+                        '%name%' => $included->getName(),
+                        '%type%' => $includedTypeName,
+                    ]));
+                }
+
+                $includedText = $included->getText() ?? '';
+                $visitedIds[] = $templateId;
+
+                return $this->resolveTemplateIncludes($includedText, $hostTypeName, $depth + 1, $visitedIds);
+            },
+            $text
+        ) ?? $text;
+    }
+
+    /**
+     * Check if a template type is compatible for inclusion into a host template.
+     *
+     * TEMPLATE_FILE_PDF is always allowed. Otherwise the base type must match
+     * (e.g. TEMPLATE_RESERVATION_PDF and TEMPLATE_RESERVATION_EMAIL share "RESERVATION").
+     */
+    public function isTemplateIncludeCompatible(string $hostTypeName, string $includedTypeName): bool
+    {
+        if ($includedTypeName === 'TEMPLATE_FILE_PDF') {
+            return true;
+        }
+
+        return $this->extractTemplateBaseType($hostTypeName) === $this->extractTemplateBaseType($includedTypeName);
+    }
+
+    /**
+     * Extract the base type from a template type name.
+     * e.g. "TEMPLATE_RESERVATION_PDF" → "RESERVATION", "TEMPLATE_RESERVATION_EMAIL" → "RESERVATION"
+     */
+    private function extractTemplateBaseType(string $typeName): string
+    {
+        $name = preg_replace('/^TEMPLATE_/', '', $typeName);
+        $name = preg_replace('/_(PDF|EMAIL)$/', '', $name);
+
+        return $name;
+    }
+
+    /**
+     * Return templates that can be embedded into a template of the given type.
+     *
+     * @return Template[]
+     */
+    public function getEmbeddableTemplates(TemplateType $hostType, ?int $excludeTemplateId = null): array
+    {
+        $allTemplates = $this->em->getRepository(Template::class)->findAll();
+        $hostTypeName = $hostType->getName();
+        $result = [];
+
+        foreach ($allTemplates as $template) {
+            if (null !== $excludeTemplateId && $template->getId() === $excludeTemplateId) {
+                continue;
+            }
+            $includedTypeName = $template->getTemplateType()?->getName() ?? '';
+            if ($this->isTemplateIncludeCompatible($hostTypeName, $includedTypeName)) {
+                $result[] = $template;
+            }
+        }
+
+        return $result;
     }
 
     private function replaceTwigSyntax(string $string): string

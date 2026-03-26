@@ -14,7 +14,6 @@ use App\Service\OnlineBookingConfigService;
 use App\Service\PriceService;
 use App\Service\PublicPricingService;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class PublicPricingServiceTest extends TestCase
@@ -23,10 +22,8 @@ final class PublicPricingServiceTest extends TestCase
     {
         $priceService = $this->createStub(PriceService::class);
         $priceRepo = $this->createStub(PriceRepository::class);
-        $em = $this->createStub(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturn($priceRepo);
 
-        return new PublicPricingService($invoiceService, $configService, $priceService, $em);
+        return new PublicPricingService($invoiceService, $configService, $priceService, $priceRepo);
     }
 
     /** Only occupancy levels with non-zero prices should be returned. */

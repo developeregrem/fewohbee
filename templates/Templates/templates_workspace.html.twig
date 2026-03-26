@@ -18,7 +18,9 @@
           data-templates-snippets-url="{{ path('settings.templates.preview.snippets', {'id': 'placeholder'}) }}"
           data-templates-schema-url="{{ path('settings.templates.schema', {'id': 'placeholder'}) }}"
           data-templates-preview-render-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.render', {'id': template.id}) }}"
-          data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}">
+          data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}"
+          data-templates-embeddable-url="{{ path('settings.templates.embeddable', {'id': 'placeholder'}) }}"
+          data-templates-current-id="{{ template.id }}">
 
         <div id="flash-message-overlay"></div>
 
@@ -131,7 +133,9 @@
                              data-i18n-protected-content="{{ 'templates.editor.alert.protected_content'|trans }}"
                              data-i18n-variable="{{ 'templates.editor.toolbar.variable'|trans }}"
                              data-i18n-variable-picker-title="{{ 'templates.editor.variable_picker.title'|trans }}"
-                             data-i18n-variable-insert-loop="{{ 'templates.editor.variable_picker.insert_loop'|trans }}"></div>
+                             data-i18n-variable-insert-loop="{{ 'templates.editor.variable_picker.insert_loop'|trans }}"
+                             data-i18n-template-includes="{{ 'templates.editor.template_includes'|trans }}"
+                             data-i18n-preview-render-error="{{ 'templates.preview.render.error.generic'|trans }}"></div>
                         <div class="template-editor-toolbar-group ms-auto" role="group">
                             <button type="button"
                                 class="btn btn-secondary btn-sm template-editor-btn"
