@@ -334,12 +334,14 @@
                                                 {% set targetUrl = path('settings.online_booking.delete_override', {'id': override.id}) %}
                                                 {% set deletePopoverHint = 'online_booking.settings.override_confirm_delete'|trans %}
                                                 {% use "common/delete_popover.html.twig" %}
-                                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                                    <i class="fas fa-trash text-danger"
+                                                <button type="button"
+                                                        class="btn btn-sm btn-link text-danger p-0 border-0 align-baseline"
+                                                        title="{{ 'button.delete'|trans }}"
                                                         data-popover="delete"
                                                         data-title="{{ 'registrationbook.delete.ask'|trans }}"
-                                                        data-bs-content='{{ block('deletePopoverContent') }}'></i>
-                                                </a>
+                                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     {% endfor %}
