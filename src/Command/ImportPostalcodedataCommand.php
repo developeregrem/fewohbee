@@ -20,6 +20,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class ImportPostalcodedataCommand extends Command
 {
+    private const BATCH_SIZE = 500;
+
     public function __construct(private readonly EntityManagerInterface $em, ?string $name = null)
     {
         parent::__construct($name);
@@ -40,100 +42,132 @@ class ImportPostalcodedataCommand extends Command
         $override = $input->getOption('override');
 
         if ($override) {
-            $this->emptyTaple();
+            $this->emptyTable();
             $io->info('Successfully cleared old data.');
         }
 
         $stream = null;
-        $batchSize = 20;
-        $i = 0;
+        $connection = $this->em->getConnection();
+        $nativeConnection = $connection->getNativeConnection();
+        $importedRows = 0;
+        $pendingRows = 0;
+        $insertSql = sprintf(
+            'INSERT INTO %s (country_code, postal_code, place_name, state_name, state_name_short) VALUES (?, ?, ?, ?, ?)',
+            $this->em->getClassMetadata(PostalCodeData::class)->getTableName()
+        );
+
         try {
+            if (!$nativeConnection instanceof \PDO) {
+                throw new \RuntimeException('Native database connection is not a PDO instance.');
+            }
+
             if (!($stream = fopen($inputFile, 'r'))) {
-                throw new \RuntimeException('Could not open input file.');
+                throw new \RuntimeException(sprintf('Could not open input file "%s".', $inputFile));
+            }
+
+            $stmt = $nativeConnection->prepare($insertSql);
+
+            if (false === $stmt) {
+                throw new \RuntimeException('Could not prepare insert statement.');
             }
 
             $io->info('Starting import ...');
-            while (($line = stream_get_line($stream, 1024, "\n")) !== false) {
-                $entity = $this->makeEntityFromLine($line);
-                if (null !== $entity) {
-                    $this->em->persist($entity);
-                    ++$i;
+            $nativeConnection->beginTransaction();
+
+            while (($line = fgets($stream)) !== false) {
+                $row = $this->makeRowFromLine($line);
+
+                if (null !== $row) {
+                    $stmt->execute(array_values($row));
+                    ++$importedRows;
+                    ++$pendingRows;
                 }
-                if (($i % $batchSize) === 0) {
-                    $this->em->flush();
-                    $this->em->clear(); // Detaches all objects from Doctrine!
+
+                if ($pendingRows >= self::BATCH_SIZE) {
+                    $nativeConnection->commit();
+                    $nativeConnection->beginTransaction();
+                    $pendingRows = 0;
                 }
             }
 
-            $this->em->flush(); // Persist objects that did not make up an entire batch
-            $this->em->clear();
-        } catch (\Exception $ex) {
-            throw new \RuntimeException('Could not process input file. '.$ex->getMessage());
+            if (!feof($stream)) {
+                throw new \RuntimeException(sprintf('Error while reading input file "%s".', $inputFile));
+            }
+
+            $nativeConnection->commit();
+        } catch (\Throwable $ex) {
+            if ($nativeConnection instanceof \PDO && $nativeConnection->inTransaction()) {
+                $nativeConnection->rollBack();
+            }
+
+            throw new \RuntimeException('Could not process input file. '.$ex->getMessage(), 0, $ex);
         } finally {
             $this->safeClose($stream);
         }
 
-        $io->success('All done! Imported '.$i.' entries.');
+        $io->success('All done! Imported '.$importedRows.' entries.');
 
         return Command::SUCCESS;
     }
 
-    private function makeEntityFromLine(string $line): ?PostalCodeData
+    /**
+     * Columns must be separated by a tab and must contain the following items:
+     * country code, postal code, place name, admin name1, admin code1.
+     *
+     * @return array<string, string|null>|null
+     */
+    private function makeRowFromLine(string $line): ?array
     {
-        /*
-         * Columns must be separated by a tab and must contain the following items
-         * country code      : iso country code, 2 characters
-         * postal code       : varchar(20)
-         * place name        : varchar(180)
-         * admin name1       : 1. order subdivision (state) varchar(100)
-         * admin code1       : 1. order subdivision (state) varchar(20)
-         */
-        $items = explode("\t", $line);
-        $entity = null;
+        $items = explode("\t", rtrim($line, "\r\n"));
 
-        if (count($items) >= 5) {
-            $entity = new PostalCodeData();
-            $entity
-                ->setCountryCode($items[0])
-                ->setPostalCode($items[1])
-                ->setPlaceName($items[2])
-                ->setStateName($items[3])
-                ->setStateNameShort($items[4])
-            ;
+        if (count($items) < 5) {
+            return null;
         }
 
-        return $entity;
+        return [
+            'countryCode' => $items[0],
+            'postalCode' => $items[1],
+            'placeName' => $items[2],
+            'stateName' => $this->normalizeNullableValue($items[3]),
+            'stateNameShort' => $this->normalizeNullableValue($items[4]),
+        ];
     }
 
+    private function normalizeNullableValue(string $value): ?string
+    {
+        $value = trim($value);
+
+        return '' === $value ? null : $value;
+    }
+
+    /**
+     * @param resource|null $stream
+     */
     private function safeClose($stream): void
     {
         if (null !== $stream) {
             try {
                 fclose($stream);
-            } catch (\Exception $ex) {
-                throw new \RuntimeException('Error while closing stream');
+            } catch (\Throwable $ex) {
+                throw new \RuntimeException('Error while closing stream.', 0, $ex);
             }
         }
     }
 
-    private function emptyTaple(): void
+    private function emptyTable(): void
     {
         $cmd = $this->em->getClassMetadata(PostalCodeData::class);
         $connection = $this->em->getConnection();
-        $connection->setAutoCommit(false);
-        $connection->beginTransaction();
+        $platform = $connection->getDatabasePlatform();
+        $tableName = $cmd->getTableName();
 
         try {
-            $connection->query('SET FOREIGN_KEY_CHECKS=0');
-            $connection->query('DELETE FROM '.$cmd->getTableName());
-            // Beware of ALTER TABLE here--it's another DDL statement and will cause
-            // an implicit commit.
-            $connection->query('SET FOREIGN_KEY_CHECKS=1');
-            $connection->query('ALTER TABLE '.$cmd->getTableName().' AUTO_INCREMENT = 1');
-
-            $connection->commit();
-        } catch (\Exception $e) {
-            $connection->rollback();
+            $connection->executeStatement('SET FOREIGN_KEY_CHECKS=0');
+            $connection->executeStatement($platform->getTruncateTableSQL($tableName, true));
+        } catch (\Throwable $e) {
+            throw new \RuntimeException(sprintf('Could not clear table "%s".', $tableName), 0, $e);
+        } finally {
+            $connection->executeStatement('SET FOREIGN_KEY_CHECKS=1');
         }
     }
 }
