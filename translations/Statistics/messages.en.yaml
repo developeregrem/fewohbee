@@ -35,6 +35,12 @@ statistics:
     utilization: Utilization
     warnings: Notes/Warnings
     room_label: Room
+    show_by_state: Show by state/province
+    state: State/Province
+    by_state_table: Arrivals and overnights by state/province
+    arrivals_by_state: Arrivals by state/province
+    overnights_by_state: Overnights by state/province
+    no_state_data: No state data available. Please populate the PostalCodeData table to enable state-level statistics. See <a href="https://github.com/developeregrem/fewohbee/wiki/City-Lookup" target="_blank">instructions</a>.
   snapshot:
     warning:
       persons_mismatch: Persons count differs from guest count; please verify the reservation completeness.

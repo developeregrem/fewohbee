@@ -6,7 +6,7 @@ parameters:
 
 framework:
     secret: '%env(APP_SECRET)%'
-    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_proxies: '%env(trim:TRUSTED_PROXIES)%'
     trusted_headers: [ 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix' ]
     #default_locale: en
     #csrf_protection: true

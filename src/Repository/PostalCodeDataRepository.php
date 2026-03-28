@@ -38,15 +38,19 @@ class PostalCodeDataRepository extends ServiceEntityRepository
         ;
     }
 
-    /*
-    public function findOneBySomeField($value): ?PostalCodeData
+    public function findStateByCountryAndZip(string $countryCode, string $zip): ?string
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
+        $result = $this->createQueryBuilder('p')
+            ->select('p.stateName')
+            ->where('p.countryCode = :country')
+            ->andWhere('p.postalCode = :zip')
+            ->setParameter('country', $countryCode)
+            ->setParameter('zip', $zip)
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
+
+        return $result['stateName'] ?? null;
     }
-    */
 }

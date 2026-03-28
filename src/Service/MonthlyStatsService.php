@@ -6,11 +6,13 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\ReservationStatus;
+use App\Repository\PostalCodeDataRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -18,12 +20,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class MonthlyStatsService
 {
+    private array $stateCache = [];
+
     public function __construct(
         private EntityManagerInterface $em,
         private readonly ManagerRegistry $registry,
         private readonly StatisticsService $statisticsService,
         private readonly InvoiceService $invoiceService,
-        private readonly TranslatorInterface $translator
+        private readonly TranslatorInterface $translator,
+        private readonly PostalCodeDataRepository $postalCodeDataRepository
     ) {
     }
 
@@ -77,11 +82,14 @@ class MonthlyStatsService
             'departures_total' => 0,
             'turnovers_count' => 0,
         ];
+        $this->stateCache = [];
         $tourism = [
             'arrivals_total' => 0,
             'overnights_total' => 0,
             'arrivals_by_country' => [],
             'overnights_by_country' => [],
+            'arrivals_by_state' => [],
+            'overnights_by_state' => [],
         ];
         $originStats = [];
         $stays = 0;
@@ -104,6 +112,8 @@ class MonthlyStatsService
                         'overnights_total' => 0,
                         'arrivals_by_country' => [],
                         'overnights_by_country' => [],
+                        'arrivals_by_state' => [],
+                        'overnights_by_state' => [],
                     ],
                     'utilization' => [
                         'stays' => 0,
@@ -153,26 +163,45 @@ class MonthlyStatsService
                 }
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
+                    $state = $this->resolveStateForCustomer($reservation->getBooker());
+                    $overnightCount = $nights * $persons;
                     $byStatus[$statusKey]['tourism']['overnights_by_country'][$country] =
-                        ($byStatus[$statusKey]['tourism']['overnights_by_country'][$country] ?? 0) + ($nights * $persons);
-                    $byStatus[$statusKey]['tourism']['overnights_total'] += $nights * $persons;
+                        ($byStatus[$statusKey]['tourism']['overnights_by_country'][$country] ?? 0) + $overnightCount;
+                    $byStatus[$statusKey]['tourism']['overnights_total'] += $overnightCount;
+                    if (null !== $state) {
+                        $byStatus[$statusKey]['tourism']['overnights_by_state'][$state] =
+                            ($byStatus[$statusKey]['tourism']['overnights_by_state'][$state] ?? 0) + $overnightCount;
+                    }
                     if ($isDefaultStatus) {
                         $tourism['overnights_by_country'][$country] =
-                            ($tourism['overnights_by_country'][$country] ?? 0) + ($nights * $persons);
-                        $tourism['overnights_total'] += $nights * $persons;
-                        $summary['nights_total'] += $nights * $persons;
+                            ($tourism['overnights_by_country'][$country] ?? 0) + $overnightCount;
+                        $tourism['overnights_total'] += $overnightCount;
+                        $summary['nights_total'] += $overnightCount;
+                        if (null !== $state) {
+                            $tourism['overnights_by_state'][$state] =
+                                ($tourism['overnights_by_state'][$state] ?? 0) + $overnightCount;
+                        }
                     }
                 } else {
                     foreach ($customers as $customer) {
                         $country = $this->resolveCountryForCustomer($customer);
+                        $state = $this->resolveStateForCustomer($customer);
                         $byStatus[$statusKey]['tourism']['overnights_by_country'][$country] =
                             ($byStatus[$statusKey]['tourism']['overnights_by_country'][$country] ?? 0) + $nights;
                         $byStatus[$statusKey]['tourism']['overnights_total'] += $nights;
+                        if (null !== $state) {
+                            $byStatus[$statusKey]['tourism']['overnights_by_state'][$state] =
+                                ($byStatus[$statusKey]['tourism']['overnights_by_state'][$state] ?? 0) + $nights;
+                        }
                         if ($isDefaultStatus) {
                             $tourism['overnights_by_country'][$country] =
                                 ($tourism['overnights_by_country'][$country] ?? 0) + $nights;
                             $tourism['overnights_total'] += $nights;
                             $summary['nights_total'] += $nights;
+                            if (null !== $state) {
+                                $tourism['overnights_by_state'][$state] =
+                                    ($tourism['overnights_by_state'][$state] ?? 0) + $nights;
+                            }
                         }
                     }
                 }
@@ -182,28 +211,46 @@ class MonthlyStatsService
             if ($startDate >= $monthStart && $startDate < $monthEndExclusive) {
                 if ($useBookerFallback) {
                     $country = $this->resolveCountryForCustomer($reservation->getBooker());
+                    $state = $this->resolveStateForCustomer($reservation->getBooker());
                     $byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] =
                         ($byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] ?? 0) + $persons;
                     $byStatus[$statusKey]['tourism']['arrivals_total'] += $persons;
+                    if (null !== $state) {
+                        $byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] =
+                            ($byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] ?? 0) + $persons;
+                    }
                     if ($isDefaultStatus) {
                         $tourism['arrivals_by_country'][$country] =
                             ($tourism['arrivals_by_country'][$country] ?? 0) + $persons;
                         $tourism['arrivals_total'] += $persons;
                         $summary['arrivals_total'] += $persons;
                         $summary['guests_total'] += $persons;
+                        if (null !== $state) {
+                            $tourism['arrivals_by_state'][$state] =
+                                ($tourism['arrivals_by_state'][$state] ?? 0) + $persons;
+                        }
                     }
                 } else {
                     foreach ($customers as $customer) {
                         $country = $this->resolveCountryForCustomer($customer);
+                        $state = $this->resolveStateForCustomer($customer);
                         $byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] =
                             ($byStatus[$statusKey]['tourism']['arrivals_by_country'][$country] ?? 0) + 1;
                         $byStatus[$statusKey]['tourism']['arrivals_total'] += 1;
+                        if (null !== $state) {
+                            $byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] =
+                                ($byStatus[$statusKey]['tourism']['arrivals_by_state'][$state] ?? 0) + 1;
+                        }
                         if ($isDefaultStatus) {
                             $tourism['arrivals_by_country'][$country] =
                                 ($tourism['arrivals_by_country'][$country] ?? 0) + 1;
                             $tourism['arrivals_total'] += 1;
                             $summary['arrivals_total'] += 1;
                             $summary['guests_total'] += 1;
+                            if (null !== $state) {
+                                $tourism['arrivals_by_state'][$state] =
+                                    ($tourism['arrivals_by_state'][$state] ?? 0) + 1;
+                            }
                         }
                     }
                 }
@@ -241,6 +288,8 @@ class MonthlyStatsService
         foreach ($byStatus as $statusKey => &$bucket) {
             ksort($bucket['tourism']['arrivals_by_country']);
             ksort($bucket['tourism']['overnights_by_country']);
+            ksort($bucket['tourism']['arrivals_by_state']);
+            ksort($bucket['tourism']['overnights_by_state']);
         }
         unset($bucket);
 
@@ -256,6 +305,8 @@ class MonthlyStatsService
         $summary['turnovers_count'] = $turnoversTotal;
         ksort($tourism['arrivals_by_country']);
         ksort($tourism['overnights_by_country']);
+        ksort($tourism['arrivals_by_state']);
+        ksort($tourism['overnights_by_state']);
         ksort($originStats);
 
         $dailyUtilization = $this->buildDailyUtilization(
@@ -350,6 +401,54 @@ class MonthlyStatsService
         $country = trim($country);
 
         return '' === $country ? 'unknown' : $country;
+    }
+
+    /**
+     * Resolve the state/province for a customer by looking up their postal code in PostalCodeData.
+     * Returns "CC/StateName" (e.g. "DE/Bayern") or null if not resolvable.
+     */
+    private function resolveStateForCustomer(?Customer $customer): ?string
+    {
+        if (null === $customer) {
+            return null;
+        }
+
+        $preferred = $this->getPreferredAddress($customer);
+        if (null === $preferred) {
+            return null;
+        }
+
+        $country = trim((string) $preferred->getCountry());
+        $zip = trim((string) $preferred->getZip());
+        if ('' === $country || '' === $zip) {
+            return null;
+        }
+
+        $cacheKey = $country.':'.$zip;
+        if (array_key_exists($cacheKey, $this->stateCache)) {
+            return $this->stateCache[$cacheKey];
+        }
+
+        $stateName = $this->postalCodeDataRepository->findStateByCountryAndZip($country, $zip);
+        $result = null !== $stateName && '' !== $stateName ? $country.'/'.$stateName : null;
+        $this->stateCache[$cacheKey] = $result;
+
+        return $result;
+    }
+
+    /**
+     * Get the preferred address for a customer (private address preferred, fallback to first).
+     */
+    private function getPreferredAddress(Customer $customer): ?CustomerAddresses
+    {
+        $addresses = $customer->getCustomerAddresses();
+        foreach ($addresses as $address) {
+            if ('CUSTOMER_ADDRESS_TYPE_PRIVATE' === $address->getType()) {
+                return $address;
+            }
+        }
+
+        return $addresses->first() ?: null;
     }
 
     /**
@@ -530,6 +629,8 @@ class MonthlyStatsService
             'overnights_total' => 0,
             'arrivals_by_country' => [],
             'overnights_by_country' => [],
+            'arrivals_by_state' => [],
+            'overnights_by_state' => [],
         ];
         $stays = 0;
 
@@ -547,11 +648,19 @@ class MonthlyStatsService
             foreach (($bucket['tourism']['overnights_by_country'] ?? []) as $country => $count) {
                 $tourism['overnights_by_country'][$country] = ($tourism['overnights_by_country'][$country] ?? 0) + (int) $count;
             }
+            foreach (($bucket['tourism']['arrivals_by_state'] ?? []) as $state => $count) {
+                $tourism['arrivals_by_state'][$state] = ($tourism['arrivals_by_state'][$state] ?? 0) + (int) $count;
+            }
+            foreach (($bucket['tourism']['overnights_by_state'] ?? []) as $state => $count) {
+                $tourism['overnights_by_state'][$state] = ($tourism['overnights_by_state'][$state] ?? 0) + (int) $count;
+            }
             $stays += (int) ($bucket['utilization']['stays'] ?? 0);
         }
 
         ksort($tourism['arrivals_by_country']);
         ksort($tourism['overnights_by_country']);
+        ksort($tourism['arrivals_by_state']);
+        ksort($tourism['overnights_by_state']);
 
         $utilization = [
             'stays' => $stays,
