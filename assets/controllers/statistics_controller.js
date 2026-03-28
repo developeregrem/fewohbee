@@ -26,6 +26,12 @@ export default class extends Controller {
         'snapshotArrivalsChart',
         'snapshotOvernightsChart',
         'snapshotByCountryBody',
+        'showByState',
+        'byCountryTableHeader',
+        'byCountryColumnHeader',
+        'arrivalsChartHeader',
+        'overnightsChartHeader',
+        'noStateDataHint',
     ];
 
     static values = {
@@ -40,6 +46,15 @@ export default class extends Controller {
         snapshotArrivalsLabel: String,
         snapshotOvernightsLabel: String,
         snapshotRoomLabel: String,
+        byCountryTableLabel: String,
+        byStateTableLabel: String,
+        countryLabel: String,
+        stateLabel: String,
+        arrivalsByCountryLabel: String,
+        overnightsByCountryLabel: String,
+        arrivalsByStateLabel: String,
+        overnightsByStateLabel: String,
+        noStateDataLabel: String,
     };
 
     connect() {
@@ -320,17 +335,52 @@ export default class extends Controller {
         const data = await response.json();
         this.currentSnapshotId = data.id || null;
         const countryNames = data.countryNames || {};
+        this.lastTourismData = (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {};
+        this.lastCountryNames = countryNames;
 
         this.updateSnapshotSummary(data.metrics || {});
         this.updateSnapshotWarnings(data.warnings || []);
-        this.updateSnapshotByCountryTable(
-            (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {},
-            countryNames
-        );
-        await this.drawSnapshotCharts(
-            (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {},
-            countryNames
-        );
+        this.renderTourismView();
+    }
+
+    get isStateView() {
+        return this.hasShowByStateTarget && this.showByStateTarget.checked;
+    }
+
+    toggleByState() {
+        this.renderTourismView();
+    }
+
+    renderTourismView() {
+        const tourism = this.lastTourismData || {};
+        const countryNames = this.lastCountryNames || {};
+        this.updateHeaders();
+        this.updateSnapshotByCountryTable(tourism, countryNames);
+        this.drawSnapshotCharts(tourism, countryNames);
+    }
+
+    updateHeaders() {
+        const byState = this.isStateView;
+        if (this.hasByCountryTableHeaderTarget) {
+            this.byCountryTableHeaderTarget.textContent = byState
+                ? (this.byStateTableLabelValue || 'By state')
+                : (this.byCountryTableLabelValue || 'By country');
+        }
+        if (this.hasByCountryColumnHeaderTarget) {
+            this.byCountryColumnHeaderTarget.textContent = byState
+                ? (this.stateLabelValue || 'State')
+                : (this.countryLabelValue || 'Country');
+        }
+        if (this.hasArrivalsChartHeaderTarget) {
+            this.arrivalsChartHeaderTarget.textContent = byState
+                ? (this.arrivalsByStateLabelValue || 'Arrivals by state')
+                : (this.arrivalsByCountryLabelValue || 'Arrivals by country');
+        }
+        if (this.hasOvernightsChartHeaderTarget) {
+            this.overnightsChartHeaderTarget.textContent = byState
+                ? (this.overnightsByStateLabelValue || 'Overnights by state')
+                : (this.overnightsByCountryLabelValue || 'Overnights by country');
+        }
     }
 
     snapshotParams(force = false) {
@@ -413,39 +463,53 @@ export default class extends Controller {
 
     updateSnapshotByCountryTable(tourism, countryNames) {
         if (!this.hasSnapshotByCountryBodyTarget) return;
-        const arrivals = tourism.arrivals_by_country || {};
-        const overnights = tourism.overnights_by_country || {};
-        const countries = Array.from(new Set([
+        const byState = this.isStateView;
+        const arrivals = byState ? (tourism.arrivals_by_state || {}) : (tourism.arrivals_by_country || {});
+        const overnights = byState ? (tourism.overnights_by_state || {}) : (tourism.overnights_by_country || {});
+        const keys = Array.from(new Set([
             ...Object.keys(arrivals),
             ...Object.keys(overnights),
         ])).sort();
 
         this.snapshotByCountryBodyTarget.innerHTML = '';
-        countries.forEach((country) => {
-            const label = this.mapCountryLabel(country, countryNames);
+        keys.forEach((key) => {
+            const label = byState ? this.formatStateLabel(key) : this.mapCountryLabel(key, countryNames);
             const tr = document.createElement('tr');
-            const tdCountry = document.createElement('td');
+            const tdKey = document.createElement('td');
             const tdArrivals = document.createElement('td');
             const tdOvernights = document.createElement('td');
-            tdCountry.textContent = label;
-            tdArrivals.textContent = (arrivals[country] ?? 0).toLocaleString();
-            tdOvernights.textContent = (overnights[country] ?? 0).toLocaleString();
-            tr.appendChild(tdCountry);
+            tdKey.textContent = label;
+            tdArrivals.textContent = (arrivals[key] ?? 0).toLocaleString();
+            tdOvernights.textContent = (overnights[key] ?? 0).toLocaleString();
+            tr.appendChild(tdKey);
             tr.appendChild(tdArrivals);
             tr.appendChild(tdOvernights);
             this.snapshotByCountryBodyTarget.appendChild(tr);
         });
+
+        if (this.hasNoStateDataHintTarget) {
+            this.noStateDataHintTarget.classList.toggle('d-none', !byState || keys.length > 0);
+        }
+    }
+
+    formatStateLabel(stateKey) {
+        const slashPos = stateKey.indexOf('/');
+        if (slashPos === -1) return stateKey;
+        const countryCode = stateKey.substring(0, slashPos);
+        const stateName = stateKey.substring(slashPos + 1);
+        return `${stateName} (${countryCode})`;
     }
 
     async drawSnapshotCharts(tourism, countryNames) {
         if (!(await this.waitForChart())) return;
-        const arrivals = tourism.arrivals_by_country || {};
-        const overnights = tourism.overnights_by_country || {};
+        const byState = this.isStateView;
+        const arrivals = byState ? (tourism.arrivals_by_state || {}) : (tourism.arrivals_by_country || {});
+        const overnights = byState ? (tourism.overnights_by_state || {}) : (tourism.overnights_by_country || {});
         const codes = Array.from(new Set([
             ...Object.keys(arrivals),
             ...Object.keys(overnights),
         ])).sort();
-        const labels = codes;
+        const labels = codes.map((code) => byState ? this.formatStateLabel(code) : code);
         const arrivalsData = codes.map((code) => arrivals[code] ?? 0);
         const overnightsData = codes.map((code) => overnights[code] ?? 0);
 
