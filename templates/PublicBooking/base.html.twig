@@ -44,6 +44,10 @@
             padding: 0.75rem 1rem;
             border-radius: var(--bs-border-radius);
         }
+        .fhb-amenity-row { line-height: 1.8; }
+        .fhb-amenity-hidden { display: none; }
+        .fhb-amenity-expanded .fhb-amenity-hidden { display: inline; }
+        .fhb-amenity-more { cursor: pointer; font-weight: 500; text-decoration: underline dotted; }
     </style>
 {% if config.customCss %}
     <style>{{ config.customCss|raw }}</style>
@@ -51,6 +55,7 @@
 </head>
 <body>
 {% block body %}{% endblock %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
 <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
 {% if embed %}
 <script>

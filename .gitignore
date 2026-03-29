@@ -3,6 +3,7 @@ nbproject/
 .env
 .vscode/
 public/resources/images/export/
+public/resources/images/room-categories/
 .DS_Store
 node_modules
 package-lock.json

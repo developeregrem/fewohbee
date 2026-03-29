@@ -3,14 +3,14 @@ import {
     request as httpRequest,
     serializeForm as httpSerializeForm,
     serializeSelectors as httpSerializeSelectors,
-} from './http_controller.js';
+} from '../js/http.js';
 import {
     setLocalStorageItemIfNotExists,
     getLocalStorageItem,
     iniStartOrEndDate,
     setModalTitle,
     enableDeletePopover,
-} from './utils_controller.js';
+} from '../js/utils.js';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
 
 /* stimulusFetch: 'lazy' */

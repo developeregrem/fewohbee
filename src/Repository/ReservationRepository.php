@@ -12,6 +12,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * ReservationRepository.
@@ -299,6 +300,20 @@ class ReservationRepository extends ServiceEntityRepository
         }
 
         return $reservations;
+    }
+
+    /**
+     * @return Reservation[]
+     */
+    public function findByBookingGroupUuid(Uuid $bookingGroupUuid): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.bookingGroupUuid = :bookingGroupUuid')
+            ->setParameter('bookingGroupUuid', $bookingGroupUuid, 'uuid')
+            ->orderBy('u.startDate', 'ASC')
+            ->addOrderBy('u.id', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     public function loadUtilizationForDay($day, $objectId, array $reservationStatus = [])

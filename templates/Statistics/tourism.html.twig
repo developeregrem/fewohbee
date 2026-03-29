@@ -21,7 +21,16 @@
          data-statistics-snapshot-ignore-url-value="{{ path('statistics.snapshot.warning.ignore', { snapshot: 0 }) }}"
          data-statistics-snapshot-arrivals-label-value="{{ 'statistics.tourism.arrivals'|trans }}"
          data-statistics-snapshot-overnights-label-value="{{ 'statistics.tourism.overnights'|trans }}"
-         data-statistics-snapshot-room-label-value="{{ 'statistics.tourism.room_label'|trans }}">
+         data-statistics-snapshot-room-label-value="{{ 'statistics.tourism.room_label'|trans }}"
+         data-statistics-by-country-table-label-value="{{ 'statistics.tourism.by_country_table'|trans }}"
+         data-statistics-by-state-table-label-value="{{ 'statistics.tourism.by_state_table'|trans }}"
+         data-statistics-country-label-value="{{ 'statistics.tourism.country'|trans }}"
+         data-statistics-state-label-value="{{ 'statistics.tourism.state'|trans }}"
+         data-statistics-arrivals-by-country-label-value="{{ 'statistics.tourism.arrivals_by_country'|trans }}"
+         data-statistics-overnights-by-country-label-value="{{ 'statistics.tourism.overnights_by_country'|trans }}"
+         data-statistics-arrivals-by-state-label-value="{{ 'statistics.tourism.arrivals_by_state'|trans }}"
+         data-statistics-overnights-by-state-label-value="{{ 'statistics.tourism.overnights_by_state'|trans }}"
+         data-statistics-no-state-data-label-value="{{ 'statistics.tourism.no_state_data'|trans }}">
         <input type="hidden" id="statistics_csrf_token" name="_csrf_token" value="{{ csrf_token('statistics.snapshot.warning.ignore') }}">
         <div class="row align-items-end justify-content-between">
             <div class="col-md-8">
@@ -83,6 +92,16 @@
                 </form>
             </div>
         </div>
+        <div class="row mt-2">
+            <div class="col">
+                <div class="form-check form-switch form-check-inline">
+                    <input type="checkbox" class="form-check-input" id="show-by-state"
+                           data-statistics-target="showByState"
+                           data-action="change->statistics#toggleByState">
+                    <label class="form-check-label" for="show-by-state">{{ 'statistics.tourism.show_by_state'|trans }}</label>
+                </div>
+            </div>
+        </div>
 
         <div class="row mt-4">
             <div class="col-md-6">
@@ -118,7 +137,7 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white" data-statistics-target="byCountryTableHeader">
                         {{ 'statistics.tourism.by_country_table'|trans }}
                     </div>
                     <div class="card-body">
@@ -126,7 +145,7 @@
                             <table class="table table-striped table-sm mb-0">
                                 <thead>
                                     <tr>
-                                        <th>{{ 'statistics.tourism.country'|trans }}</th>
+                                        <th data-statistics-target="byCountryColumnHeader">{{ 'statistics.tourism.country'|trans }}</th>
                                         <th>{{ 'statistics.tourism.arrivals'|trans }}</th>
                                         <th>{{ 'statistics.tourism.overnights'|trans }}</th>
                                     </tr>
@@ -134,12 +153,15 @@
                                 <tbody data-statistics-target="snapshotByCountryBody"></tbody>
                             </table>
                         </div>
+                        <div class="text-muted small mt-2 d-none" data-statistics-target="noStateDataHint">
+                            {{ 'statistics.tourism.no_state_data'|trans|raw }}
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white" data-statistics-target="arrivalsChartHeader">
                         {{ 'statistics.tourism.arrivals_by_country'|trans }}
                     </div>
                     <div class="card-body">
@@ -149,7 +171,7 @@
                     </div>
                 </div>
                 <div class="card mt-3">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white" data-statistics-target="overnightsChartHeader">
                         {{ 'statistics.tourism.overnights_by_country'|trans }}
                     </div>
                     <div class="card-body">

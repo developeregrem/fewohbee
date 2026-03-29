@@ -1,7 +1,7 @@
 /**
  * Shared HTTP helpers for Stimulus controllers and legacy scripts.
  */
-import { generateCsrfHeaders, generateCsrfToken } from './csrf_protection_controller.js';
+import { generateCsrfHeaders, generateCsrfToken } from './csrf_protection.js';
 
 export function serializeData(data) {
     if (!data) {
@@ -123,11 +123,3 @@ if (!window.HttpHelper) {
         serializeData,
     };
 }
-
-// Default export to satisfy auto-registration tooling (even though this is a helper, not a Stimulus controller)
-export default {
-    request,
-    serializeForm,
-    serializeSelectors,
-    serializeData,
-};
