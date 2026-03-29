@@ -22,3 +22,48 @@ category:
   name: Description
   single: Single room
   title: Room category management
+  tab:
+    general: General
+    amenities: Amenities
+    images: Images
+  amenity_group:
+    room: Room
+    bathroom: Bathroom
+    kitchen: Kitchen
+    outdoor: General
+    other: Other
+  images:
+    save_first: Please save the category first before uploading images.
+    upload: Upload images
+    set_primary: Set as primary image
+    delete: Delete image
+    no_images: No images uploaded yet.
+    hint: "Allowed formats: JPEG, PNG, WebP. Maximum file size: 10 MB. Landscape orientation is recommended."
+
+amenity:
+  wifi: WiFi
+  tv: TV
+  air_conditioning: Air conditioning
+  heating: Heating
+  safe: Safe
+  desk: Desk
+  balcony: Balcony
+  terrace: Terrace
+  view_mountain: Mountain view
+  view_lake: Lake view
+  view_garden: Garden view
+  private_bathroom: Private bathroom
+  shower: Shower
+  bathtub: Bathtub
+  hairdryer: Hairdryer
+  towels: Towels
+  kitchenette: Kitchenette
+  fridge: Fridge
+  coffee_machine: Coffee machine
+  kettle: Kettle
+  dishwasher: Dishwasher
+  parking: Parking
+  pets_allowed: Pets allowed
+  non_smoking: Non-smoking
+  accessible: Accessible
+  crib_available: Crib available

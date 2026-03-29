@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBookingRestrictionService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
 use Symfony\Component\Intl\Countries;
@@ -22,7 +23,8 @@ class PublicBookingController extends AbstractController
         Request $request,
         PublicBookingService $publicBookingService,
         OnlineBookingConfigService $configService,
-        PublicBookingAbuseProtectionService $abuseProtectionService
+        PublicBookingAbuseProtectionService $abuseProtectionService,
+        OnlineBookingRestrictionService $restrictionService,
     ): Response
     {
         $config = $configService->getConfig();
@@ -46,6 +48,7 @@ class PublicBookingController extends AbstractController
             'errorMessage' => $error,
             'successMessage' => $successMessage,
             'minArrivalDate' => (new \DateTimeImmutable('tomorrow'))->format('Y-m-d'),
+            'maxDepartureDate' => $restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
             'formState' => $abuseProtectionService->createFormState(false),
             'step' => 1,
@@ -72,6 +75,11 @@ class PublicBookingController extends AbstractController
             ],
             'roomTotalFormatted' => null,
             'roomPriceBreakdown' => [],
+            'extras' => [],
+            'selectedExtras' => [],
+            'extrasTotalFormatted' => null,
+            'grandTotalFormatted' => null,
+            'extrasBreakdown' => [],
             'bookingResult' => null,
         ];
 
@@ -80,7 +88,8 @@ class PublicBookingController extends AbstractController
         }
 
         $intent = (string) $request->request->get('intent', 'availability');
-        $qtyByType = $this->extractQtyByType($request);
+        $occupancySelection = $this->extractOccupancySelection($request);
+        $extrasSelection = $this->extractExtrasSelection($request);
         $dateFrom = null;
         $dateTo = null;
         $persons = null;
@@ -95,20 +104,31 @@ class PublicBookingController extends AbstractController
 
             [$dateFrom, $dateTo, $persons, $roomsCount] = $this->parseSearchInput($request);
 
+            $maxDeparture = $restrictionService->getMaxDepartureDate();
+            if (null !== $maxDeparture && $dateTo > $maxDeparture) {
+                throw new PublicBookingException('online_booking.error.booking_horizon_exceeded');
+            }
+
             if ('availability' === $intent) {
                 $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 2;
                 $view['availability'] = $preview['availability'];
+                $view['extras'] = $preview['extras'];
                 $view['formState'] = $abuseProtectionService->createFormState(false);
             } elseif ('preview' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $qtyByType, $request);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 3;
                 $view['availability'] = $preview['availability'];
                 $view['selectedQty'] = $preview['selected'];
+                $view['extras'] = $preview['extras'];
+                $view['selectedExtras'] = $preview['selectedExtras'];
                 $view['roomTotalFormatted'] = $preview['roomTotalFormatted'];
                 $view['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
+                $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
+                $view['extrasBreakdown'] = $preview['extrasBreakdown'];
+                $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
                 $view['formState'] = $abuseProtectionService->createFormState(true);
             } elseif ('submit' === $intent) {
                 $result = $publicBookingService->createBooking(
@@ -116,9 +136,10 @@ class PublicBookingController extends AbstractController
                     $dateTo,
                     $persons,
                     $roomsCount,
-                    $qtyByType,
+                    $occupancySelection,
                     $this->extractBookerInput($request, $defaultCountry),
-                    $request
+                    $request,
+                    $extrasSelection,
                 );
 
                 $view['step'] = 4;
@@ -144,13 +165,19 @@ class PublicBookingController extends AbstractController
                 && [] === $view['availability']
             ) {
                 try {
-                    $selectedQtyForPreview = 'submit' === $intent ? $qtyByType : [];
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedQtyForPreview, $request);
+                    $selectedForPreview = 'submit' === $intent ? $occupancySelection : [];
+                    $selectedExtrasForPreview = 'submit' === $intent ? $extrasSelection : [];
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
+                    $view['extras'] = $fallbackPreview['extras'] ?? [];
                     if ('submit' === $intent && isset($fallbackPreview['roomTotalFormatted'])) {
                         $view['roomTotalFormatted'] = $fallbackPreview['roomTotalFormatted'];
                         $view['roomPriceBreakdown'] = $fallbackPreview['roomPriceBreakdown'] ?? [];
+                        $view['selectedExtras'] = $extrasSelection;
+                        $view['extrasTotalFormatted'] = $fallbackPreview['extrasTotalFormatted'] ?? null;
+                        $view['extrasBreakdown'] = $fallbackPreview['extrasBreakdown'] ?? [];
+                        $view['grandTotalFormatted'] = $fallbackPreview['grandTotalFormatted'] ?? null;
                     }
                 } catch (\Throwable) {
                 }
@@ -160,7 +187,8 @@ class PublicBookingController extends AbstractController
                 $view['step'] = 'submit' === $intent ? 3 : 2;
                 $view['formState'] = $abuseProtectionService->createFormState('submit' === $intent);
                 if ('submit' === $intent) {
-                    $view['selectedQty'] = array_filter($qtyByType, static fn (int $qty): bool => $qty > 0);
+                    $view['selectedQty'] = $occupancySelection;
+                    $view['selectedExtras'] = $extrasSelection;
                 }
             } elseif ('' !== (string) $request->request->get('dateFrom') && '' !== (string) $request->request->get('dateTo')) {
                 $view['step'] = 2;
@@ -207,27 +235,65 @@ class PublicBookingController extends AbstractController
     }
 
     /**
-     * Extract room-type quantity selections from POST fields with the `qty_` prefix.
+     * Extract occupancy-based selection from POST fields.
      *
-     * @return array<string, int>
+     * Field format: occ_{typeKey}_p{persons} = quantity
+     * Example: occ_category:1_p2 = 1 means "1 room of category:1 with 2 persons"
+     *
+     * @return array<string, array<int, int>> e.g. ['category:1' => [2 => 1]]
      */
-    private function extractQtyByType(Request $request): array
+    private function extractOccupancySelection(Request $request): array
     {
-        $qtyByType = [];
+        $selection = [];
         foreach ($request->request->all() as $key => $value) {
-            if (!is_string($key) || !str_starts_with($key, 'qty_')) {
+            if (!is_string($key) || !str_starts_with($key, 'occ_')) {
                 continue;
             }
 
-            $typeKey = substr($key, 4);
-            if ('' === $typeKey) {
+            $remainder = substr($key, 4);
+            $lastUnderscore = strrpos($remainder, '_p');
+            if (false === $lastUnderscore) {
                 continue;
             }
 
-            $qtyByType[$typeKey] = max(0, (int) $value);
+            $typeKey = substr($remainder, 0, $lastUnderscore);
+            $personsStr = substr($remainder, $lastUnderscore + 2);
+            if ('' === $typeKey || '' === $personsStr) {
+                continue;
+            }
+
+            $persons = max(0, (int) $personsStr);
+            $qty = max(0, (int) $value);
+            if ($persons > 0) {
+                $selection[$typeKey][$persons] = $qty;
+            }
         }
 
-        return $qtyByType;
+        return $selection;
+    }
+
+    /**
+     * Extract selected extras with quantities from POST fields.
+     *
+     * Field format: extra_{priceId} = quantity (1+ means selected)
+     *
+     * @return array<int, int> Map of Price ID => quantity
+     */
+    private function extractExtrasSelection(Request $request): array
+    {
+        $selected = [];
+        foreach ($request->request->all() as $key => $value) {
+            if (!is_string($key) || !str_starts_with($key, 'extra_')) {
+                continue;
+            }
+            $priceId = (int) substr($key, 6);
+            $qty = max(0, (int) $value);
+            if ($priceId > 0 && $qty > 0) {
+                $selected[$priceId] = $qty;
+            }
+        }
+
+        return $selected;
     }
 
     /**

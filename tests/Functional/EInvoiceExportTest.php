@@ -215,6 +215,91 @@ final class EInvoiceExportTest extends KernelTestCase
         ];
     }
 
+    public function testArithmeticConsistencyWithIncludesVatTrue(): void
+    {
+        $settings = $this->createSettingsEntity('xrechnung');
+        $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+
+        // Add apartment position: 119€ brutto/night × 3 nights, 7% VAT, includesVat=true
+        $apartment = new \App\Entity\InvoiceAppartment();
+        $apartment->setStartDate(new \DateTime('2026-03-28'));
+        $apartment->setEndDate(new \DateTime('2026-03-31'));
+        $apartment->setPersons(1);
+        $apartment->setBeds(1);
+        $apartment->setNumber('1');
+        $apartment->setDescription('EZ');
+        $apartment->setPrice(119);
+        $apartment->setVat(7);
+        $apartment->setIncludesVat(true);
+        $apartment->setIsFlatPrice(false);
+        $apartment->setIsPerRoom(true);
+        $invoice->addAppartment($apartment);
+
+        // Add misc position: 10€ brutto, 19% VAT, includesVat=true
+        $breakfast = new InvoicePosition();
+        $breakfast->setDescription('Frühstück');
+        $breakfast->setAmount(1);
+        $breakfast->setPrice(10);
+        $breakfast->setVat(19);
+        $breakfast->setIncludesVat(true);
+        $breakfast->setIsFlatPrice(false);
+        $breakfast->setIsPerRoom(false);
+        $invoice->addPosition($breakfast);
+
+        $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+
+        // Parse and verify arithmetic consistency
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+        $xpath = new \DOMXPath($doc);
+        $xpath->registerNamespace('ram', 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100');
+        $xpath->registerNamespace('rsm', 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100');
+
+        // Verify each line: NetPrice × Quantity = LineTotalAmount
+        $lineItems = $xpath->query('//ram:IncludedSupplyChainTradeLineItem');
+        $lineTotalSum = 0.0;
+        foreach ($lineItems as $item) {
+            $netPrice = (float) $xpath->evaluate('string(.//ram:NetPriceProductTradePrice/ram:ChargeAmount)', $item);
+            $quantity = (float) $xpath->evaluate('string(.//ram:BilledQuantity)', $item);
+            $lineTotal = (float) $xpath->evaluate('string(.//ram:LineTotalAmount)', $item);
+
+            self::assertEqualsWithDelta(
+                round($netPrice * $quantity, 2),
+                $lineTotal,
+                0.001,
+                sprintf('Line arithmetic mismatch: %.2f × %.2f = %.2f, expected %.2f', $netPrice, $quantity, $netPrice * $quantity, $lineTotal),
+            );
+            $lineTotalSum += $lineTotal;
+        }
+
+        // Verify summation: sum of LineTotalAmounts = TaxBasisTotalAmount
+        $taxBasisTotal = (float) $xpath->evaluate('string(//ram:SpecifiedTradeSettlementHeaderMonetarySummation/ram:TaxBasisTotalAmount)');
+        self::assertEqualsWithDelta($lineTotalSum, $taxBasisTotal, 0.001, 'TaxBasisTotalAmount must equal sum of LineTotalAmounts');
+
+        // Verify tax amounts: BasisAmount × Rate / 100 = CalculatedAmount (within rounding)
+        $taxEntries = $xpath->query('//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax');
+        $taxTotalComputed = 0.0;
+        foreach ($taxEntries as $taxEntry) {
+            $basisAmount = (float) $xpath->evaluate('string(./ram:BasisAmount)', $taxEntry);
+            $rate = (float) $xpath->evaluate('string(./ram:RateApplicablePercent)', $taxEntry);
+            $calculatedAmount = (float) $xpath->evaluate('string(./ram:CalculatedAmount)', $taxEntry);
+
+            self::assertEqualsWithDelta(
+                round($basisAmount * $rate / 100, 2),
+                $calculatedAmount,
+                0.001,
+                sprintf('Tax arithmetic mismatch: %.2f × %.2f%% = %.2f, expected %.2f', $basisAmount, $rate, $basisAmount * $rate / 100, $calculatedAmount),
+            );
+            $taxTotalComputed += $calculatedAmount;
+        }
+
+        // Verify grand total: TaxBasisTotalAmount + TaxTotalAmount = GrandTotalAmount
+        $taxTotal = (float) $xpath->evaluate('string(//ram:TaxTotalAmount)');
+        $grandTotal = (float) $xpath->evaluate('string(//ram:GrandTotalAmount)');
+        self::assertEqualsWithDelta($taxBasisTotal + $taxTotal, $grandTotal, 0.001, 'GrandTotalAmount must equal TaxBasisTotalAmount + TaxTotalAmount');
+        self::assertEqualsWithDelta($taxTotalComputed, $taxTotal, 0.001, 'TaxTotalAmount must equal sum of all CalculatedAmounts');
+    }
+
     // Creates a valid invoice with required base fields populated.
     private function createValidInvoice(?PaymentMeansCode $paymentMeans): Invoice
     {

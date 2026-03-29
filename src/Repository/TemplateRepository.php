@@ -28,11 +28,8 @@ class TemplateRepository extends EntityRepository
         $q = $this
             ->createQueryBuilder('t')
             ->select('t', 'tt')
-            ->join('t.templateType', 'tt');
-        // ->where('tt.name LIKE :name ')
-        // ->setParameter('name', $name);
-        // ->addOrderBy('u.endDate', 'ASC')
-        // ->getQuery();
+            ->join('t.templateType', 'tt')
+            ->addOrderBy('t.name', 'ASC');
 
         $len = count($names);
         for ($i = 0; $i < $len; ++$i) {

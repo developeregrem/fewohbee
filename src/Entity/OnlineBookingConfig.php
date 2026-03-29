@@ -80,6 +80,9 @@ class OnlineBookingConfig
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $customCss = null;
 
+    #[ORM\Column(type: Types::SMALLINT, nullable: true)]
+    private ?int $bookingHorizonMonths = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -296,6 +299,18 @@ class OnlineBookingConfig
     public function setCustomCss(?string $customCss): self
     {
         $this->customCss = '' === trim((string) $customCss) ? null : $customCss;
+
+        return $this;
+    }
+
+    public function getBookingHorizonMonths(): ?int
+    {
+        return $this->bookingHorizonMonths;
+    }
+
+    public function setBookingHorizonMonths(?int $bookingHorizonMonths): self
+    {
+        $this->bookingHorizonMonths = $bookingHorizonMonths;
 
         return $this;
     }

@@ -200,4 +200,8 @@ templates.sendemail.preview: Send message
 templates.sendemail.success: The message was successfully sent.
 templates.subject: Subject
 templates.title: Templates
+templates.editor.template_includes: Templates
+templates.include.error.circular: "Circular template include detected (ID: %id%)"
+templates.include.error.notfound: "Included template not found (ID: %id%)"
+templates.include.error.incompatible: "Template \"%name%\" (%type%) is not compatible with this template type"
 templates.type: Template type

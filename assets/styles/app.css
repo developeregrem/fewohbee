@@ -291,7 +291,8 @@ body {
     font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    color: var(--bs-secondary);
+    color: var(--bs-body-color);
+    opacity: 0.65;
 }
 
 .template-editor-code {
@@ -473,6 +474,23 @@ body {
 .template-editor-image-wrapper:hover .template-editor-image-resize-handle,
 .template-editor-image-wrapper.is-selected .template-editor-image-resize-handle {
     opacity: 1;
+}
+
+/* Template include pill (template-in-template) */
+.template-include {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    background: var(--bs-info-bg-subtle, #cff4fc);
+    color: var(--bs-info-text-emphasis, #055160);
+    border: 1px solid var(--bs-info-border-subtle, #9eeaf9);
+    border-radius: 0.375rem;
+    padding: 0.1em 0.5em;
+    font-size: 0.85em;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: default;
+    user-select: none;
 }
 
 .template-editor-image-toolbar {

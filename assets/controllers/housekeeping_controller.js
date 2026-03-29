@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { request as httpRequest, serializeForm as httpSerializeForm } from './http_controller.js';
+import { request as httpRequest, serializeForm as httpSerializeForm } from '../js/http.js';
 
 /* stimulusFetch: 'lazy' */
 

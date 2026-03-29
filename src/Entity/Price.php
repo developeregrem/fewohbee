@@ -68,6 +68,8 @@ class Price
     private bool $isPerRoom;
     #[ORM\Column(type: 'boolean')]
     private bool $isDefaultActiveInReservationCreation;
+    #[ORM\Column(type: 'boolean')]
+    private bool $isBookableOnline;
 
     /**
      * Constructor.
@@ -81,6 +83,7 @@ class Price
         $this->isFlatPrice = false;
         $this->isPerRoom = false;
         $this->isDefaultActiveInReservationCreation = true;
+        $this->isBookableOnline = false;
     }
 
     public function getId()
@@ -401,6 +404,18 @@ class Price
     public function setIsDefaultActiveInReservationCreation(bool $isDefaultActiveInReservationCreation): self
     {
         $this->isDefaultActiveInReservationCreation = $isDefaultActiveInReservationCreation;
+
+        return $this;
+    }
+
+    public function getIsBookableOnline(): bool
+    {
+        return $this->isBookableOnline;
+    }
+
+    public function setIsBookableOnline(bool $isBookableOnline): self
+    {
+        $this->isBookableOnline = $isBookableOnline;
 
         return $this;
     }

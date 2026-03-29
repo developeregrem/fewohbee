@@ -2,14 +2,16 @@ import { Controller } from '@hotwired/stimulus';
 import { 
     request as httpRequest, 
     serializeForm as httpSerializeForm 
-} from './http_controller.js';
+} from '../js/http.js';
 import { 
     setLocalStorageItemIfNotExists, 
     getLocalStorageItem, 
     updatePDFExportLinks, 
     setModalTitle,
     enableDeletePopover
-} from './utils_controller.js';
+} from '../js/utils.js';
+
+/* stimulusFetch: 'lazy' */
 
 export default class extends Controller {
     static targets = ['table', 'year', 'template', 'defaultBox'];

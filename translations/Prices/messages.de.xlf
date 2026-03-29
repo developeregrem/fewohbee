@@ -214,6 +214,10 @@
                 <source>price.defaultactiveinreservationcreation</source>
                 <target>Bei Reservierungs-Neuanlage standardmäßig aktiv</target>
             </trans-unit>
+            <trans-unit id="price.bookableonline">
+                <source>price.bookableonline</source>
+                <target>Für Online-Buchung verfügbar</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

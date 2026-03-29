@@ -33,6 +33,7 @@ price.includesvat: incl. VAT
 price.isflatprice: flat rate
 price.perroom: per night (else per person)
 price.defaultactiveinreservationcreation: active by default in reservation creation
+price.bookableonline: Available for online booking
 price.minstay: Minimum nights
 price.miscellaneous: Other price
 price.monday: Monday
