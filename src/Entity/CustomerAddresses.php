@@ -35,6 +35,16 @@ class CustomerAddresses
     private $mobile_phone;
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $email;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $buyerVatId = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $buyerReference = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $customerIBAN = null;
+
     #[ORM\ManyToMany(targetEntity: 'Customer', mappedBy: 'customerAddresses')]
     private $customers;
 
@@ -294,6 +304,42 @@ class CustomerAddresses
     public function getEmail()
     {
         return $this->email;
+    }
+
+    public function getBuyerVatId(): ?string
+    {
+        return $this->buyerVatId;
+    }
+
+    public function setBuyerVatId(?string $buyerVatId): static
+    {
+        $this->buyerVatId = $buyerVatId;
+
+        return $this;
+    }
+
+    public function getBuyerReference(): ?string
+    {
+        return $this->buyerReference;
+    }
+
+    public function setBuyerReference(?string $buyerReference): static
+    {
+        $this->buyerReference = $buyerReference;
+
+        return $this;
+    }
+
+    public function getCustomerIBAN(): ?string
+    {
+        return $this->customerIBAN;
+    }
+
+    public function setCustomerIBAN(?string $customerIBAN): static
+    {
+        $this->customerIBAN = $customerIBAN;
+
+        return $this;
     }
 
     /**

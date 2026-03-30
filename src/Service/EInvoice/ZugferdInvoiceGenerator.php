@@ -71,6 +71,10 @@ class ZugferdInvoiceGenerator
         $documentBuilder->setDocumentBuyerContact($customerName, null, $invoice->getPhone(), null, $invoice->getEmail());
         $documentBuilder->setDocumentBuyerCommunication(ZugferdElectronicAddressScheme::UNECE3155_EM, $invoice->getEmail());
 
+        if (!empty($invoice->getBuyerVatId())) {
+            $documentBuilder->addDocumentBuyerVATRegistrationNumber($invoice->getBuyerVatId());
+        }
+
         $mandateReference = null;
         if (PaymentMeansCode::CASH === $invoice->getPaymentMeans()) {
             $documentBuilder->addDocumentPaymentMean(ZugferdPaymentMeans::UNTDID_4461_10);
