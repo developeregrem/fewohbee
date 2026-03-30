@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -491,18 +492,36 @@ class InvoiceService
         $invoice->setFirstname($customer->getFirstname());
         $invoice->setLastname($customer->getLastname());
 
-        $addresses = $customer->getCustomerAddresses();
+        $address = $this->getPreferredAddress($customer);
         // set first address as default address for invoice
-        if (count($addresses) > 0) {
-            $invoice->setCompany($addresses[0]->getCompany());
-            $invoice->setAddress($addresses[0]->getAddress());
-            $invoice->setZip($addresses[0]->getZip());
-            $invoice->setCity($addresses[0]->getCity());
-            $invoice->setCountry($addresses[0]->getCountry());
-            $invoice->setPhone($addresses[0]->getPhone());
-            $invoice->setEmail($addresses[0]->getEmail());
+        if ($address) {
+            $invoice->setCompany($address->getCompany());
+            $invoice->setAddress($address->getAddress());
+            $invoice->setZip($address->getZip());
+            $invoice->setCity($address->getCity());
+            $invoice->setCountry($address->getCountry());
+            $invoice->setPhone($address->getPhone());
+            $invoice->setEmail($address->getEmail());
+            $invoice->setBuyerVatId($address->getBuyerVatId());
+            $invoice->setBuyerReference($address->getBuyerReference());
+            $invoice->setCustomerIBAN($address->getCustomerIBAN());
         }
         $requestStack->getSession()->set('newInvoice', $invoice);
+    }
+
+    /**
+     * Get the preferred address for a customer (busniness address preferred, fallback to first).
+     */
+    private function getPreferredAddress(Customer $customer): ?CustomerAddresses
+    {
+        $addresses = $customer->getCustomerAddresses();
+        foreach ($addresses as $address) {
+            if ('CUSTOMER_ADDRESS_TYPE_BUSINESS' === $address->getType()) {
+                return $address;
+            }
+        }
+
+        return $addresses->first() ?: null;
     }
 
     /**

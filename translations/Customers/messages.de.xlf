@@ -170,9 +170,17 @@
                 <source>customer.id.number</source>
                 <target>Ausweisnummer</target>
             </trans-unit>
+            <trans-unit id="customer.buyerVatId">
+                <source>customer.buyerVatId</source>
+                <target>USt-IdNr. (Käufer)</target>
+            </trans-unit>
             <trans-unit id="customer.buyerReference.label">
                 <source>customer.buyerReference.label</source>
                 <target>Kundenreferenz</target>
+            </trans-unit>
+            <trans-unit id="customer.buyerReference.placeholder">
+                <source>customer.buyerReference.placeholder</source>
+                <target>z.B. Leitweg-ID</target>
             </trans-unit>
             <trans-unit id="customer.buyerReference.hint">
                 <source>customer.buyerReference.hint</source>

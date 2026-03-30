@@ -72,6 +72,9 @@ class CustomerService
             $address->setFax($request->request->all('fax-'.$id)[$i]);
             $address->setMobilePhone($request->request->all('mobilephone-'.$id)[$i]);
             $address->setEmail($request->request->all('email-'.$id)[$i]);
+            $address->setBuyerVatId($request->request->all('buyervatid-'.$id)[$i] ?? null);
+            $address->setBuyerReference($request->request->all('buyerreference-'.$id)[$i] ?? null);
+            $address->setCustomerIBAN($request->request->all('customeriban-'.$id)[$i] ?? null);
 
             $newAddresses[] = $address;
         }

@@ -74,6 +74,9 @@ class Invoice
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $mandateReference = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $buyerVatId = null;
+
     public function __construct()
     {
         $this->positions = new ArrayCollection();
@@ -384,6 +387,18 @@ class Invoice
     public function setCardHolder(?string $cardHolder): static
     {
         $this->cardHolder = $cardHolder;
+
+        return $this;
+    }
+
+    public function getBuyerVatId(): ?string
+    {
+        return $this->buyerVatId;
+    }
+
+    public function setBuyerVatId(?string $buyerVatId): static
+    {
+        $this->buyerVatId = $buyerVatId;
 
         return $this;
     }

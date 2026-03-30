@@ -182,7 +182,7 @@ export default class extends Controller {
         const elm = event.currentTarget;
         let values = (elm.value || '').split('|');
         if (values.length === 1) return;
-        const ids = ['invoice_customer_salutation', 'invoice_customer_firstname', 'invoice_customer_lastname', 'invoice_customer_company', 'invoice_customer_address', 'invoice_customer_zip', 'invoice_customer_city', 'invoice_customer_country', 'invoice_customer_phone', 'invoice_customer_email'];
+        const ids = ['invoice_customer_salutation', 'invoice_customer_firstname', 'invoice_customer_lastname', 'invoice_customer_company', 'invoice_customer_address', 'invoice_customer_zip', 'invoice_customer_city', 'invoice_customer_country', 'invoice_customer_phone', 'invoice_customer_email', 'invoice_customer_buyerVatId', 'invoice_customer_buyerReference', 'invoice_customer_customerIBAN'];
         ids.forEach((id, idx) => {
             const node = document.getElementById(id);
             if (node) {
