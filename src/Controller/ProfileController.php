@@ -15,16 +15,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use Webauthn\Bundle\Repository\PublicKeyCredentialUserEntityRepositoryInterface;
 
 #[Route('/profile')]
 final class ProfileController extends AbstractController
 {
     public function __construct(
-        private readonly PublicKeyCredentialUserEntityRepositoryInterface $keyCredentialUserEntityRepository,
-        private readonly WebauthnCredentialRepository $keyCredentialSourceRepository,
-        private readonly CsrfTokenManagerInterface $csrfTokenManager
+        private readonly WebauthnCredentialRepository $credentialRepository,
     ) {
     }
 
@@ -52,12 +48,7 @@ final class ProfileController extends AbstractController
 
         $credentials = [];
         if ($passkeyEnabled) {
-            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string) $user->getId());
-            if (null === $userEntity) {
-                throw new AccessDeniedHttpException();
-            }
-
-            $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
+            $credentials = $this->credentialRepository->findByUserHandle((string) $user->getId());
         }
 
         return $this->render('Profile/index.html.twig', [
@@ -80,12 +71,7 @@ final class ProfileController extends AbstractController
                 throw new AccessDeniedHttpException();
             }
 
-            $userEntity = $this->keyCredentialUserEntityRepository->findOneByUserHandle((string) $user->getId());
-            if (null === $userEntity) {
-                throw new AccessDeniedHttpException();
-            }
-
-            $credentials = $this->keyCredentialSourceRepository->findAllForUserEntity($userEntity);
+            $credentials = $this->credentialRepository->findByUserHandle((string) $user->getId());
             foreach ($credentials as $credential) {
                 if ($credential->getId() === $id) {
                     $doctrine->getManager()->remove($credential);

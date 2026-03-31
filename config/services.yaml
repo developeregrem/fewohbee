@@ -75,3 +75,8 @@ services:
     App\Service\TemplatePreview\TemplatePreviewProviderRegistry:
         arguments:
             $providers: !tagged_iterator app.template_preview_provider
+
+    App\Service\WebauthnService:
+        arguments:
+            $rpId: '%env(RELYING_PARTY_ID)%'
+            $rpName: '%env(RELYING_PARTY_NAME)%'

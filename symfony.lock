@@ -635,21 +635,5 @@
     },
     "twig/twig": {
         "version": "v3.3.3"
-    },
-    "web-auth/webauthn-stimulus": {
-        "version": "5.2.2"
-    },
-    "web-auth/webauthn-symfony-bundle": {
-        "version": "5.2",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "3.0",
-            "ref": "a5dff33bd46575bea263af94069650af7742dcb6"
-        },
-        "files": [
-            "config/packages/webauthn.yaml",
-            "config/routes/webauthn_routes.yaml"
-        ]
     }
 }

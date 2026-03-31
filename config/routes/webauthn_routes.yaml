@@ -1,3 +1,0 @@
-webauthn_routes:
-    resource: .
-    type: webauthn
