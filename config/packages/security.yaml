@@ -17,13 +17,9 @@ security:
         main:
             #pattern:    ^/
             provider: our_db_provider
-            webauthn: 
-                authentication:
-                    routes:
-                        options_path: /login/webauthn/options
-                        result_path: /login/webauthn
-                registration:
-                    enabled: true
+            entry_point: form_login
+            custom_authenticators:
+                - App\Security\WebauthnAuthenticator
             form_login:
                 login_path: login
                 check_path: login

@@ -17,17 +17,16 @@
 <main class="form-signin text-center" {{ stimulus_controller('login', { startUrl: path('dashboard.redirect') }) }}>
   <form action="{{ path('login') }}" method="post" data-turbo="false"
   {% if passkey_enabled %}
-  {{ stimulus_controller('@web-auth/webauthn-stimulus',
+  {{ stimulus_controller('webauthn',
         {
-            useBrowserAutofill: true,
-            usernameField: '_username',
-            requestSuccessRedirectUri: path('dashboard.redirect'),
-            requestResultUrl: path('webauthn.controller.security.main.request.result'),
-            requestOptionsUrl: path('webauthn.controller.security.main.request.options')
+            conditionalUi: true,
+            successRedirectUri: path('dashboard.redirect'),
+            resultUrl: path('webauthn_authentication_verify'),
+            optionsUrl: path('webauthn_authentication_options')
         }
     ) }}
     {% endif %}
-    >    
+    >
     <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
     <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
 
@@ -39,7 +38,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}">
+      <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}" {% if passkey_enabled %}data-webauthn-target="username"{% endif %}>
       <label for="floatingInput">{{ 'login.username.placeholder'|trans }}</label>
     </div>
     <div class="form-floating">
@@ -47,7 +46,7 @@
       <label for="floatingPassword">{{ 'login.password.placeholder'|trans }}</label>
     </div>
     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-    
+
     <div class="checkbox mb-3">
       <label>
         <input type="checkbox" name="_remember_me"> {{ 'login.rememberme'|trans }}
@@ -55,8 +54,8 @@
     </div>
     <button class="w-100 btn btn-lg btn-primary" type="submit">{{ 'login.submit.value'|trans }}</button>
     {% if passkey_enabled %}
-        <button class="w-100 btn btn-lg btn-secondary mt-2" 
-        {{ stimulus_action('@web-auth/webauthn-stimulus', 'signin') }}>
+    <button class="w-100 btn btn-lg btn-secondary mt-2"
+        {{ stimulus_action('webauthn', 'authenticate') }}>
             <i class="fas fa-key"></i> {{ 'login.passkey'|trans }}
         </button>
     {% endif %}

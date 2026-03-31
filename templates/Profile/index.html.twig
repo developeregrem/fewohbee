@@ -54,21 +54,31 @@
         </div>
     </div>
     {% if passkey_enabled %}
-        <div>
+        <div
+            data-controller="profile-passkey"
+            data-action="webauthn:registration:error->profile-passkey#handleRegistrationError webauthn:registration:verify:error->profile-passkey#handleVerifyError"
+            data-profile-passkey-already-registered-value="{{ 'profile.passkeys.error.already_registered'|trans }}"
+            data-profile-passkey-registration-failed-value="{{ 'profile.passkeys.error.registration_failed'|trans }}"
+            data-profile-passkey-save-failed-value="{{ 'profile.passkeys.error.save_failed'|trans }}"
+            data-profile-passkey-unauthorized-value="{{ 'profile.passkeys.error.unauthorized'|trans }}"
+            data-profile-passkey-no-registration-in-progress-value="{{ 'profile.passkeys.error.no_registration_in_progress'|trans }}"
+            data-profile-passkey-invalid-response-type-value="{{ 'profile.passkeys.error.invalid_response_type'|trans }}"
+        >
             <h4 class="text-gray-600">{{ 'profile.passkeys.title'|trans }}</h4>
-        </div>
-        <div class="row mt-3">        
-            <div class="col" {{ stimulus_controller(
-                '@web-auth/webauthn-stimulus',
-                {
-                    creationOptionsUrl: path('webauthn.controller.creation.request.from_user_account'),
-                    creationResultUrl: path('webauthn.controller.creation.response.from_user_account'),
-                    creationSuccessRedirectUri: path('profile')
-                }
-            ) }}>
-                <button type="button" class="btn btn-secondary" {{ stimulus_action('@web-auth/webauthn-stimulus', 'signup') }}>
-                        <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
-                    </button>
+            <div class="alert d-none mt-3" data-profile-passkey-target="message" role="alert"></div>
+            <div class="row mt-3">
+                <div class="col" {{ stimulus_controller(
+                    'webauthn',
+                    {
+                        optionsUrl: path('webauthn_registration_options'),
+                        resultUrl: path('webauthn_registration_verify'),
+                        successRedirectUri: path('profile')
+                    }
+                ) }}>
+                    <button type="button" class="btn btn-secondary" {{ stimulus_action('webauthn', 'register') }}>
+                            <i class="fas fa-plus"></i> {{ 'profile.passkeys.create'|trans }}
+                        </button>
+                </div>
             </div>
         </div>
         <div class="row mt-3">
@@ -101,7 +111,7 @@
                                     <span class="text-muted">{{ 'profile.passkeys.unknown'|trans }}</span>
                                 {% endif %}
                             </td>
-                            <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey|toBase64 }}</td>
+                            <td class="text-truncate" style="max-width: 400px;">{{ credential.credentialPublicKey }}</td>
                             <td>
                                 {% set id = credential.id %}
                                 {% set targetUrl = path('profile_delete_credential', {id: credential.id }) %}
