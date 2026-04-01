@@ -14,6 +14,8 @@ parameters:
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
+    default_frame_ancestors: ''
+    frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
 
 services:
     # default configuration for services in *this* file
@@ -80,3 +82,7 @@ services:
         arguments:
             $rpId: '%env(RELYING_PARTY_ID)%'
             $rpName: '%env(RELYING_PARTY_NAME)%'
+
+    App\EventSubscriber\EmbeddingSecuritySubscriber:
+        arguments:
+            $frameAncestors: '%frameAncestors%'
