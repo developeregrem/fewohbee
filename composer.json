@@ -105,6 +105,9 @@
         "symfony/symfony": "*"
     },
     "extra": {
+        "runtime": {
+            "prod_envs": ["prod", "redis"]
+        },
         "symfony": {
             "allow-contrib": false,
             "require": "8.0.*"
