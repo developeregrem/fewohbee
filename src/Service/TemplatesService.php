@@ -144,7 +144,14 @@ class TemplatesService
      */
     public function renderTemplateString(string $templateText, array $params, ?string $hostTypeName = null): string
     {
+        $wasStrictVariables = $this->twig->isStrictVariables();
+
         try {
+            // enable strict variables to show friendly error messages as it is disabled globally
+            if (!$wasStrictVariables) {
+                $this->twig->enableStrictVariables();
+            }
+
             $text = $this->resolveTemplateIncludes($templateText, $hostTypeName);
             $str = $this->replaceTwigSyntax($text);
             $templateStr = $this->twig->createTemplate($str);
@@ -152,6 +159,10 @@ class TemplatesService
             return $templateStr->render($params);
         } catch (TwigError|\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
+        } finally {
+            if (!$wasStrictVariables) {
+                $this->twig->disableStrictVariables();
+            }
         }
     }
 
