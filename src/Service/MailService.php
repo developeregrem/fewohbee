@@ -8,6 +8,7 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\HtmlToTextConverter\DefaultHtmlToTextConverter;
 
 /*
  * This file is part of the guesthouse administration package.
@@ -19,6 +20,7 @@ use Symfony\Component\Mime\Email;
  */
 class MailService
 {
+    private readonly DefaultHtmlToTextConverter $htmlToTextConverter;
     private $fromMail;
     private $fromName;
     private $mailer;
@@ -27,6 +29,7 @@ class MailService
 
     public function __construct(string $fromMail, string $fromName, string $returnPath, string $mailCopy, MailerInterface $mailer)
     {
+        $this->htmlToTextConverter = new DefaultHtmlToTextConverter();
         $this->fromMail = $fromMail;
         $this->fromName = $fromName;
         $this->mailer = $mailer;
@@ -53,10 +56,11 @@ class MailService
             ->to(new Address($to))
             ->subject($subject)
             ->html($body)
+            ->text($this->htmlToTextConverter->convert($body, 'utf-8'))
         ;
 
-        if ($this->returnPath != $this->fromMail) {
-            $email->replyTo(new Address($this->returnPath));
+        if ('' !== trim($this->returnPath)) {
+            $email->returnPath(new Address($this->returnPath));
         }
 
         if ('true' == $this->mailCopy) {
