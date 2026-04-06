@@ -416,6 +416,27 @@ class InvoiceService
      */
     private function prefillMiscPositions(array $reservations, RequestStack $requestStack, bool $useExistingPrices = false): void
     {
+        $tmpMiscArr = $this->computeMiscPriceAggregates($reservations, $useExistingPrices);
+        $this->makeMiscPositions($tmpMiscArr, $requestStack);
+    }
+
+    /**
+     * Build miscellaneous invoice positions without writing to the session.
+     *
+     * @return InvoicePosition[]
+     */
+    public function buildMiscPositions(array $reservations, bool $useExistingPrices = false): array
+    {
+        $tmpMiscArr = $this->computeMiscPriceAggregates($reservations, $useExistingPrices);
+
+        return $this->createMiscPositionsFromAggregates($tmpMiscArr);
+    }
+
+    /**
+     * Aggregates price amounts across all reservations and days into a keyed array, without any session involvement.
+     */
+    private function computeMiscPriceAggregates(array $reservations, bool $useExistingPrices = false): array
+    {
         $tmpMiscArr = [];
         $existingPrices = null;
         // loop over all selected reservations, this avoids dublicate entries in the result, prices that are equal will be aggregated
@@ -457,7 +478,8 @@ class InvoiceService
                 }
             }
         }
-        $this->makeMiscPositions($tmpMiscArr, $requestStack);
+
+        return $tmpMiscArr;
     }
 
     /**
@@ -620,6 +642,17 @@ class InvoiceService
 
     private function makeMiscPositions(array $tmpPricesArr, RequestStack $requestStack): void
     {
+        foreach ($this->createMiscPositionsFromAggregates($tmpPricesArr) as $position) {
+            $this->saveNewMiscPosition($position, $requestStack);
+        }
+    }
+
+    /**
+     * @return InvoicePosition[]
+     */
+    private function createMiscPositionsFromAggregates(array $tmpPricesArr): array
+    {
+        $positions = [];
         foreach ($tmpPricesArr as $tmpPrice) {
             $position = new InvoicePosition();
             $position->setAmount($tmpPrice['amount']);
@@ -629,9 +662,10 @@ class InvoiceService
             $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
             $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
             $position->setIsPerRoom($tmpPrice['price']->getIsPerRoom());
-
-            $this->saveNewMiscPosition($position, $requestStack);
+            $positions[] = $position;
         }
+
+        return $positions;
     }
 
     /**
