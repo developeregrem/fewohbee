@@ -16,6 +16,7 @@ namespace App\Command;
 use App\DataFixtures\ReservationFixtures;
 use App\DataFixtures\SettingsFixtures;
 use App\DataFixtures\TemplatesFixtures;
+use App\Workflow\WorkflowSeeder;
 use App\Entity\Customer;
 use App\Entity\Role;
 use App\Entity\Subsidiary;
@@ -47,6 +48,7 @@ class FirstRunCommand extends Command
         private readonly TemplatesFixtures $templatesFixtures,
         private readonly SettingsFixtures $settingsFixtures,
         private readonly ReservationFixtures $reservationFixtures,
+        private readonly WorkflowSeeder $workflowSeeder,
     ) {
         parent::__construct();
     }
@@ -182,6 +184,9 @@ class FirstRunCommand extends Command
             $this->settingsFixtures->load($this->em);
             $this->reservationFixtures->load($this->em);
             $io->note('Sample data loaded.');
+
+            $this->workflowSeeder->seedExampleWorkflows();
+            $io->note('Example workflows created.');
         }
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
@@ -192,7 +197,9 @@ class FirstRunCommand extends Command
     private function createTemplateTypes(): void
     {
         $definitions = [
+            'TEMPLATE_GENERAL_EMAIL' => 'fa-envelope',
             'TEMPLATE_RESERVATION_EMAIL' => 'fa-envelope',
+            'TEMPLATE_INVOICE_EMAIL' => 'fa-envelope',
             'TEMPLATE_FILE_PDF' => 'fa-file-pdf',
             'TEMPLATE_INVOICE_PDF' => 'fa-file-pdf',
             'TEMPLATE_RESERVATION_PDF' => 'fa-file-pdf',

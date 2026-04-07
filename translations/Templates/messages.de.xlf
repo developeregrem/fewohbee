@@ -454,6 +454,14 @@
                 <source>templates.type</source>
                 <target>Vorlagentyp</target>
             </trans-unit>
+            <trans-unit id="TEMPLATE_GENERAL_EMAIL">
+                <source>TEMPLATE_GENERAL_EMAIL</source>
+                <target>E-Mail Vorlage Allgemein</target>
+            </trans-unit>
+            <trans-unit id="TEMPLATE_INVOICE_EMAIL">
+                <source>TEMPLATE_INVOICE_EMAIL</source>
+                <target>E-Mail Vorlage für Rechnungen</target>
+            </trans-unit>
             <trans-unit id="TEMPLATE_RESERVATION_EMAIL">
                 <source>TEMPLATE_RESERVATION_EMAIL</source>
                 <target>E-Mail Vorlage für Reservierungen</target>

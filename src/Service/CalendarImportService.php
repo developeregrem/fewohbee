@@ -6,9 +6,11 @@ namespace App\Service;
 
 use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
+use App\Event\CalendarImportBookingCreatedEvent;
 use App\Repository\ReservationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -31,7 +33,7 @@ class CalendarImportService
         private readonly HttpClientInterface $httpClient,
         private readonly CacheInterface $cache,
         private readonly TranslatorInterface $translator,
-        private readonly BookingNotificationService $notificationService
+        private readonly EventDispatcherInterface $eventDispatcher
     ) {
     }
 
@@ -298,7 +300,7 @@ class CalendarImportService
         $this->em->persist($reservation);
         $this->em->flush();
 
-        $this->notificationService->notifyCalendarImport($reservation);
+        $this->eventDispatcher->dispatch(new CalendarImportBookingCreatedEvent($reservation));
 
         return self::SYNC_OK;
     }

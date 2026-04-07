@@ -25,9 +25,12 @@ use App\Form\InvoiceCustomerType;
 use App\Form\InvoiceMiscPositionType;
 use App\Form\InvoicePaymentRemarkType;
 use App\Form\InvoiceSettingsType;
+use App\Event\InvoiceCreatedEvent;
+use App\Event\InvoiceStatusChangedEvent;
 use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -648,7 +651,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
-    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, Request $request)
+    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EventDispatcherInterface $eventDispatcher, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -684,6 +687,9 @@ class InvoiceServiceController extends AbstractController
             }
 
             $em->flush();
+            $em->refresh($invoice);
+
+            $eventDispatcher->dispatch(new InvoiceCreatedEvent($invoice));
 
             $this->addFlash('success', 'invoice.flash.create.success');
         } else {
@@ -699,15 +705,18 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/update/{id}/status', name: 'invoices.update.status', methods: ['POST'])]
-    public function updateStatusAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request, $id)
+    public function updateStatusAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, EventDispatcherInterface $eventDispatcher, Request $request, $id)
     {
         $em = $doctrine->getManager();
 
         if ($csrf->validateCSRFToken($request)) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
+            $previousStatus = (int) $invoice->getStatus();
             $invoice->setStatus($request->request->get('invoice-status'));
             $em->persist($invoice);
             $em->flush();
+
+            $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
         }
 
         return new Response('');

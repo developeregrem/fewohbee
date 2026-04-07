@@ -9,8 +9,8 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
-use App\Service\BookingNotificationService;
 use App\Service\CalendarImportService;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -173,9 +173,9 @@ final class CalendarImportServiceTest extends KernelTestCase
         $cache = static::getContainer()->get(CacheInterface::class);
         $translator = static::getContainer()->get(TranslatorInterface::class);
 
-        $notificationService = $this->createStub(BookingNotificationService::class);
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
 
-        return new CalendarImportService($this->em, $httpClient, $cache, $translator, $notificationService);
+        return new CalendarImportService($this->em, $httpClient, $cache, $translator, $eventDispatcher);
     }
 
     /** Persist a calendar import with required relations. */

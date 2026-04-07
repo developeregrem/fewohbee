@@ -1,6 +1,8 @@
 TEMPLATE_CASHJOURNAL_PDF: PDF Cash Journal
 TEMPLATE_FILE_PDF: PDF file
 TEMPLATE_GDPR_PDF: PDF for GDPR Export
+TEMPLATE_GENERAL_EMAIL: General Email Template
+TEMPLATE_INVOICE_EMAIL: Email template for invoices
 TEMPLATE_INVOICE_PDF: PDF invoice
 TEMPLATE_RESERVATION_EMAIL: Email template for reservations
 TEMPLATE_RESERVATION_PDF: PDF template for reservations

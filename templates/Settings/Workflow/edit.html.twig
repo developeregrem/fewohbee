@@ -1,0 +1,201 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ isNew ? 'workflow.new'|trans : 'workflow.edit'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9"
+             data-controller="workflow-form"
+             data-workflow-form-compatible-url-value="{{ path('settings.workflows.compatible_options') }}"
+             data-workflow-form-preview-url-value="{{ path('settings.workflows.preview') }}"
+             {% if not isNew %}data-workflow-form-log-url-value="{{ path('settings.workflows.logs', {id: workflow.id}) }}"{% endif %}
+             data-workflow-form-translations-value="{{ {
+                 'no_condition': 'workflow.form.no_condition'|trans,
+                 'preview_loading': 'workflow.preview.loading'|trans,
+                 'preview_empty': 'workflow.preview.empty'|trans,
+                 'preview_count': 'workflow.preview.count'|trans,
+                 'preview_count_one': 'workflow.preview.count_one'|trans,
+             }|json_encode|e('html_attr') }}">
+
+            {# -- Header -- #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="fs-4 mb-0">
+                    <i class="fas fa-bolt text-primary me-1"></i>
+                    {{ isNew ? 'workflow.new'|trans : 'workflow.edit'|trans }}
+                </h2>
+                <a href="{{ path('settings.workflows.index') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>{{ 'workflow.back_to_list'|trans }}
+                </a>
+            </div>
+
+            <form method="post" data-action="submit->workflow-form#collectConfigJson">
+
+                {# -- Name & Description -- #}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0">
+                            <i class="fas fa-tag text-primary me-2"></i>{{ 'workflow.form.section_general'|trans }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="wf-name" class="form-label">{{ 'workflow.form.name'|trans }} *</label>
+                            <input type="text" class="form-control" id="wf-name" name="name"
+                                   value="{{ workflow.system ? workflow.name|trans : workflow.name }}" required maxlength="150">
+                        </div>
+                        <div class="mb-0">
+                            <label for="wf-description" class="form-label">{{ 'workflow.form.description'|trans }}</label>
+                            <textarea class="form-control" id="wf-description" name="description"
+                                      rows="2" maxlength="1000">{{ workflow.system ? workflow.description|trans : workflow.description }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                {# -- Trigger: "When..." -- #}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0">
+                            <i class="fas fa-play text-warning me-2"></i>{{ 'workflow.form.section_trigger'|trans }}
+                        </h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'workflow.form.section_trigger_desc'|trans }}</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="wf-trigger" class="form-label">{{ 'workflow.form.trigger_type'|trans }} *</label>
+                            <select class="form-select" id="wf-trigger" name="triggerType" required
+                                    data-workflow-form-target="triggerType"
+                                    data-action="change->workflow-form#onTriggerChange">
+                                <option value="">-- {{ 'workflow.form.select_trigger'|trans }} --</option>
+                                {% for trigger in triggerChoices %}
+                                    <option value="{{ trigger.type }}"
+                                            data-entity-class="{{ trigger.entityClass }}"
+                                            data-event-driven="{{ trigger.isEventDriven ? '1' : '0' }}"
+                                            {{ workflow.triggerType == trigger.type ? 'selected' : '' }}>
+                                        {{ trigger.label|trans }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div data-workflow-form-target="triggerConfig">
+                            {# Dynamic trigger config fields rendered by Stimulus #}
+                        </div>
+                        <input type="hidden" name="triggerConfig" data-workflow-form-target="triggerConfigJson"
+                               value="{{ workflow.triggerConfig|json_encode }}">
+                    </div>
+                </div>
+
+                {# -- Condition: "Only if..." -- #}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0">
+                            <i class="fas fa-filter text-info me-2"></i>{{ 'workflow.form.section_condition'|trans }}
+                        </h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'workflow.form.section_condition_desc'|trans }}</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="wf-condition" class="form-label">{{ 'workflow.form.condition_type'|trans }}</label>
+                            <select class="form-select" id="wf-condition" name="conditionType"
+                                    data-workflow-form-target="conditionType"
+                                    data-action="change->workflow-form#onConditionChange"
+                                    data-restore-value="{{ workflow.conditionType }}">
+                                <option value="">-- {{ 'workflow.form.no_condition'|trans }} --</option>
+                                {# Options populated dynamically by Stimulus based on trigger #}
+                            </select>
+                        </div>
+                        <div data-workflow-form-target="conditionConfig">
+                            {# Dynamic condition config fields rendered by Stimulus #}
+                        </div>
+                        <input type="hidden" name="conditionConfig" data-workflow-form-target="conditionConfigJson"
+                               value="{{ workflow.conditionConfig|json_encode }}">
+                    </div>
+                </div>
+
+                {# -- Action: "Then..." -- #}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0">
+                            <i class="fas fa-paper-plane text-success me-2"></i>{{ 'workflow.form.section_action'|trans }}
+                        </h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'workflow.form.section_action_desc'|trans }}</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="wf-action" class="form-label">{{ 'workflow.form.action_type'|trans }} *</label>
+                            <select class="form-select" id="wf-action" name="actionType" required
+                                    data-workflow-form-target="actionType"
+                                    data-action="change->workflow-form#onActionChange"
+                                    data-restore-value="{{ workflow.actionType }}">
+                                <option value="">-- {{ 'workflow.form.select_action'|trans }} --</option>
+                                {# Options populated dynamically by Stimulus based on trigger #}
+                            </select>
+                        </div>
+                        <div data-workflow-form-target="actionConfig">
+                            {# Dynamic action config fields rendered by Stimulus #}
+                        </div>
+                        <input type="hidden" name="actionConfig" data-workflow-form-target="actionConfigJson"
+                               value="{{ workflow.actionConfig|json_encode }}">
+                    </div>
+                </div>
+
+                {# -- Preview -- #}
+                <div class="card mb-3" data-workflow-form-target="previewCard">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <h5 class="card-title fs-6 mb-0">
+                                <i class="fas fa-eye text-secondary me-2"></i>{{ 'workflow.preview.title'|trans }}
+                            </h5>
+                            <p class="text-body-secondary small mb-0 mt-1">{{ 'workflow.preview.description'|trans }}</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                data-action="click->workflow-form#runPreview">
+                            <i class="fas fa-play me-1"></i>{{ 'workflow.preview.run'|trans }}
+                        </button>
+                    </div>
+                    <div data-workflow-form-target="previewResults" class="d-none">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead data-workflow-form-target="previewHead"></thead>
+                                    <tbody data-workflow-form-target="previewBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# -- Save bar -- #}
+                <div class="card sticky-bottom mb-3" style="z-index:10">
+                    <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                        <p class="text-body-secondary small mb-0 d-none d-md-block"></p>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-save me-1"></i>{{ 'workflow.save'|trans }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            {# -- Logs (only for existing workflows) -- #}
+            {% if not isNew %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0">
+                        <i class="fas fa-history text-secondary me-2"></i>{{ 'workflow.logs.title'|trans }}
+                    </h5>
+                </div>
+                <div class="card-body p-0"
+                     data-workflow-form-target="logContainer">
+                    <div class="text-center py-3 text-body-secondary">
+                        <i class="fas fa-spinner fa-spin me-1"></i>{{ 'workflow.logs.loading'|trans }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}
