@@ -41,12 +41,6 @@ class AppSettings
     #[Assert\Email]
     private ?string $notificationEmail = null;
 
-    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
-    private bool $notifyOnOnlineBooking = true;
-
-    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
-    private bool $notifyOnCalendarImport = true;
-
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -125,30 +119,6 @@ class AppSettings
     public function setNotificationEmail(?string $notificationEmail): self
     {
         $this->notificationEmail = (null !== $notificationEmail && '' === trim($notificationEmail)) ? null : $notificationEmail;
-
-        return $this;
-    }
-
-    public function isNotifyOnOnlineBooking(): bool
-    {
-        return $this->notifyOnOnlineBooking;
-    }
-
-    public function setNotifyOnOnlineBooking(bool $notifyOnOnlineBooking): self
-    {
-        $this->notifyOnOnlineBooking = $notifyOnOnlineBooking;
-
-        return $this;
-    }
-
-    public function isNotifyOnCalendarImport(): bool
-    {
-        return $this->notifyOnCalendarImport;
-    }
-
-    public function setNotifyOnCalendarImport(bool $notifyOnCalendarImport): self
-    {
-        $this->notifyOnCalendarImport = $notifyOnCalendarImport;
 
         return $this;
     }

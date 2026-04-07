@@ -40,7 +40,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use App\Event\ReservationCreatedEvent;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Intl\Countries;
@@ -694,7 +696,7 @@ class ReservationServiceController extends AbstractController
      */
     #[Route('/reservation/create', name: 'reservations.create.reservations', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, Request $request)
+    public function createNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, ReservationService $rs, EventDispatcherInterface $eventDispatcher, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -745,6 +747,8 @@ class ReservationServiceController extends AbstractController
                 $em->persist($reservation);
             }
             $em->flush();
+
+            $eventDispatcher->dispatch(new ReservationCreatedEvent($reservations));
 
             $this->addFlash('success', 'reservation.flash.create.success');
         }

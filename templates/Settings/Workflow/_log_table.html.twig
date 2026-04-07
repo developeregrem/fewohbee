@@ -1,0 +1,48 @@
+{% if logs|length > 0 %}
+<div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+        <thead>
+            <tr>
+                <th>{{ 'workflow.logs.date'|trans }}</th>
+                <th>{{ 'workflow.logs.status'|trans }}</th>
+                <th>{{ 'workflow.logs.entity'|trans }}</th>
+                <th>{{ 'workflow.logs.message'|trans }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td class="text-nowrap">{{ log.executedAt|date('d.m.Y H:i') }}</td>
+                <td>
+                    {% if log.status == 'success' %}
+                        <span class="badge bg-success">{{ 'workflow.logs.status_success'|trans }}</span>
+                    {% elseif log.status == 'skipped' %}
+                        <span class="badge bg-warning text-dark">{{ 'workflow.logs.status_skipped'|trans }}</span>
+                    {% else %}
+                        <span class="badge bg-danger">{{ 'workflow.logs.status_error'|trans }}</span>
+                    {% endif %}
+                </td>
+                <td class="small text-body-secondary">
+                    {% if log.entityId %}#{{ log.entityId }}{% endif %}
+                </td>
+                <td class="small">{{ log.message|length > 120 ? log.message[:120] ~ '...' : log.message }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if pages is defined and pages > 1 %}
+<div class="px-3 pt-2">
+    {% include 'paginator.html.twig' with {
+        url: path('settings.workflows.logs', {'id': workflow.id}),
+        page: page,
+        pages: pages,
+        search: ''
+    } %}
+</div>
+{% endif %}
+{% else %}
+<div class="text-center py-3 text-body-secondary small">
+    {{ 'workflow.logs.empty'|trans }}
+</div>
+{% endif %}

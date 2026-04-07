@@ -16,10 +16,12 @@ use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
+use App\Event\OnlineBookingCreatedEvent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicBookingService
@@ -33,7 +35,7 @@ class PublicBookingService
         private readonly TemplatesService $templatesService,
         private readonly MailService $mailService,
         private readonly TranslatorInterface $translator,
-        private readonly BookingNotificationService $notificationService,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PublicPricingService $pricingService,
     ) {
     }
@@ -174,7 +176,7 @@ class PublicBookingService
         $extrasResult = $this->calculateExtrasTotal($extras, $selectedExtras);
 
         $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
-        $this->notificationService->notifyOnlineBooking($reservations);
+        $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
 
         return [
             'reservations' => $reservations,

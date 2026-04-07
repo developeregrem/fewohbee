@@ -2,57 +2,99 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Workflow\Action;
 
 use App\Entity\Reservation;
+use App\Service\AppSettingsService;
+use App\Service\MailService;
+use App\Workflow\WorkflowSkippedException;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/** Send lightweight notification emails when new bookings are created. */
-class BookingNotificationService
+/**
+ * Sends a lightweight notification email to the hotelier.
+ *
+ * This action replaces the former BookingNotificationService and is used
+ * by internal (system) workflows for online-booking and calendar-import
+ * notifications. The email body is built from translation keys, not from
+ * user-defined templates.
+ */
+class SendNotificationEmailAction implements WorkflowActionInterface
 {
     public function __construct(
         private readonly AppSettingsService $settingsService,
         private readonly MailService $mailService,
         private readonly TranslatorInterface $translator,
-        private readonly UrlGeneratorInterface $urlGenerator
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
-    /** Notify on a new online booking (one or more reservations in the same booking group). */
-    public function notifyOnlineBooking(array $reservations): void
+    public function getType(): string
     {
-        $settings = $this->settingsService->getSettings();
-        if (!$settings->isNotifyOnOnlineBooking()) {
-            return;
-        }
+        return 'send_notification_email';
+    }
 
-        $to = $this->settingsService->getNotificationEmail($settings);
+    public function getLabelKey(): string
+    {
+        return 'workflow.action.send_notification_email';
+    }
+
+    public function getSupportedEntityClasses(): array
+    {
+        return [Reservation::class];
+    }
+
+    public function getSupportedTriggerTypes(): array
+    {
+        return ['online_booking.created', 'calendar_import.created'];
+    }
+
+    public function getConfigSchema(): array
+    {
+        return [];
+    }
+
+    public function execute(array $config, mixed $entity, array $context): string
+    {
+        $to = $this->settingsService->getNotificationEmail();
         if (null === $to || '' === $to) {
-            return;
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_notification_email'));
         }
 
+        $allReservations = $context['allReservations'] ?? null;
+
+        if (is_array($allReservations) && count($allReservations) > 0) {
+            return $this->sendOnlineBookingNotification($to, $allReservations);
+        }
+
+        if ($entity instanceof Reservation) {
+            if (null !== $entity->getCalendarSyncImport()) {
+                return $this->sendCalendarImportNotification($to, $entity);
+            }
+
+            return $this->sendOnlineBookingNotification($to, [$entity]);
+        }
+
+        throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_unsupported_entity'));
+    }
+
+    /** @param Reservation[] $reservations */
+    private function sendOnlineBookingNotification(string $to, array $reservations): string
+    {
         $subject = $this->translator->trans('app_settings.notification_mail.online_booking_subject');
         $body = $this->buildOnlineBookingBody($reservations);
         $this->mailService->sendHTMLMail($to, $subject, $body);
+
+        return $this->translator->trans('workflow.log.notification_online_booking_sent', ['%recipient%' => $to, '%count%' => count($reservations)]);
     }
 
-    /** Notify on a new reservation created via calendar import. */
-    public function notifyCalendarImport(Reservation $reservation): void
+    private function sendCalendarImportNotification(string $to, Reservation $reservation): string
     {
-        $settings = $this->settingsService->getSettings();
-        if (!$settings->isNotifyOnCalendarImport()) {
-            return;
-        }
-
-        $to = $this->settingsService->getNotificationEmail($settings);
-        if (null === $to || '' === $to) {
-            return;
-        }
-
         $subject = $this->translator->trans('app_settings.notification_mail.calendar_import_subject');
         $body = $this->buildCalendarImportBody($reservation);
         $this->mailService->sendHTMLMail($to, $subject, $body);
+
+        return $this->translator->trans('workflow.log.notification_calendar_import_sent', ['%recipient%' => $to]);
     }
 
     /** @param Reservation[] $reservations */

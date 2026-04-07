@@ -103,6 +103,7 @@
                                     <a class="dropdown-item{% if activeRouteName starts with "status" %} active{% endif %}" href="{{ path('reservation_status_index') }}"><i class="fas fa-info text-secondary ms-1 me-1"></i> {{ 'nav.status'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.online_booking" %} active{% endif %}" href="{{ path('settings.online_booking.index') }}"><i class="fas fa-globe text-secondary"></i> {{ 'online_booking.nav.label'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.workflows" %} active{% endif %}" href="{{ path('settings.workflows.index') }}"><i class="fas fa-bolt text-secondary"></i> {{ 'workflow.nav.label'|trans }}</a>
                                 </div>
                             </li>
                         {% endif %}

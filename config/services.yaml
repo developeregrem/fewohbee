@@ -30,6 +30,12 @@ services:
             tags: ['app.einvoice.profile']
         App\Interfaces\ITemplatePreviewProvider:
             tags: ['app.template_preview_provider']
+        App\Workflow\Trigger\WorkflowTriggerInterface:
+            tags: ['app.workflow.trigger']
+        App\Workflow\Condition\WorkflowConditionInterface:
+            tags: ['app.workflow.condition']
+        App\Workflow\Action\WorkflowActionInterface:
+            tags: ['app.workflow.action']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -86,3 +92,15 @@ services:
     App\EventSubscriber\EmbeddingSecuritySubscriber:
         arguments:
             $frameAncestors: '%frameAncestors%'
+
+    App\Workflow\Trigger\WorkflowTriggerRegistry:
+        arguments:
+            $triggers: !tagged_iterator app.workflow.trigger
+
+    App\Workflow\Condition\WorkflowConditionRegistry:
+        arguments:
+            $conditions: !tagged_iterator app.workflow.condition
+
+    App\Workflow\Action\WorkflowActionRegistry:
+        arguments:
+            $actions: !tagged_iterator app.workflow.action

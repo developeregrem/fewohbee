@@ -26,8 +26,6 @@ app_settings:
     notification_email: "Recipient email"
     notification_email_help: "If left empty, the sender address (<code>FROM_MAIL</code>) will be used as recipient."
     notification_email_placeholder: "e.g. owner@hotel.com"
-    notify_on_online_booking: "Notify on new online booking"
-    notify_on_calendar_import: "Notify on new calendar import"
   notification_mail:
     online_booking_subject: "New online booking received"
     calendar_import_subject: "New booking via calendar import"
