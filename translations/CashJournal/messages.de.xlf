@@ -162,6 +162,10 @@
                 <source>journal.positions.desc</source>
                 <target>Fügt eine Tabelle hinzu mit allen Kassenblattpositionen. Bei einem Export werden alle Zeilen sichtbar, hier in der Vorlage ist nur eine sichtbar.</target>
             </trans-unit>
+            <trans-unit id="journal.error.journal.closed">
+                <source>journal.error.journal.closed</source>
+                <target>Kassenblatt %month%/%year% ist geschlossen. Eintrag konnte nicht hinzugefügt werden.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

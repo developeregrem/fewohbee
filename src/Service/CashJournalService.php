@@ -15,16 +15,16 @@ namespace App\Service;
 
 use App\Entity\CashJournal;
 use App\Entity\CashJournalEntry;
+use App\Entity\Invoice;
 use App\Entity\Template;
+use App\Service\InvoiceService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class CashJournalService
 {
-    private $em;
-
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(private readonly EntityManagerInterface $em, private readonly InvoiceService $invoiceService, private readonly TranslatorInterface $translator)
     {
-        $this->em = $em;
     }
 
     public function getJournalFromForm($request, $id = 'new'): CashJournal
@@ -76,7 +76,6 @@ class CashJournalService
     public function calcaulateInventory(CashJournal &$journal): void
     {
         $inventory = $journal->getCashStart();
-        /* @var $entry \Pensionsverwaltung\Database\Entity\CashJournalEntry */
         foreach ($journal->getCashJournalEntries() as $entry) {
             if (null != $entry->getIncomes()) {
                 $inventory += $entry->getIncomes();
@@ -120,6 +119,78 @@ class CashJournalService
         $this->em->flush();
 
         return $journal;
+    }
+
+    /**
+     * Creates a CashJournalEntry from an Invoice.
+     *
+     * The CashJournal for the invoice's year/month is looked up and created automatically if missing.
+     * Throws \RuntimeException if the target journal is closed.
+     */
+    public function createEntryFromInvoice(Invoice $invoice, ?string $remark = null): CashJournalEntry
+    {
+        $invoiceDate = $invoice->getDate();
+        $year = (int) $invoiceDate->format('Y');
+        $month = (int) $invoiceDate->format('n');
+
+        $journal = $this->em->getRepository(CashJournal::class)->findByYearAndMonth($year, $month);
+
+        if (null === $journal) {
+            $journal = new CashJournal();
+            $journal->setCashYear($year);
+            $journal->setCashMonth($month);
+
+            $youngestJournal = $this->em->getRepository(CashJournal::class)->getYoungestJournal();
+            $cashStart = ($youngestJournal instanceof CashJournal) ? $youngestJournal->getCashEnd() : 0.0;
+            $journal->setCashStart($cashStart);
+            $journal->setCashEnd($cashStart);
+
+            $this->em->persist($journal);
+            $this->em->flush();
+        }
+
+        if ($journal->getIsClosed()) {
+            throw new \RuntimeException(
+                $this->translator->trans('journal.error.journal.closed', [
+                    '%month%' => $month,
+                    '%year%' => $year,
+                ])
+            );
+        }
+
+        $vats = [];
+        $brutto = 0.0;
+        $netto = 0.0;
+        $appartmentTotal = 0.0;
+        $miscTotal = 0.0;
+        $this->invoiceService->calculateSums(
+            $invoice->getAppartments(),
+            $invoice->getPositions(),
+            $vats,
+            $brutto,
+            $netto,
+            $appartmentTotal,
+            $miscTotal
+        );
+
+        $nextDocNumber = $this->em->getRepository(CashJournalEntry::class)->getLastDocumentNumber($journal) + 1;
+
+        $entry = new CashJournalEntry();
+        $entry->setDate(\DateTime::createFromInterface($invoiceDate));
+        $entry->setDocumentNumber($nextDocNumber);
+        $entry->setInvoiceNumber($invoice->getNumber());
+        $entry->setIncomes(round($brutto, 2));
+        $entry->setExpenses(0.0);
+        $entry->setRemark($remark ?? '');
+        $entry->setCashJournal($journal);
+        $journal->addCashJournalEntry($entry);
+
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        $this->recalculateCashEnd($journal);
+
+        return $entry;
     }
 
     /**
