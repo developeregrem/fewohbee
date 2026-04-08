@@ -19,7 +19,7 @@
                             }
                         </style>
                         {% if not embed %}
-                            <h2 class="mb-3 fs-4">{{ 'online_booking.public.page_title'|trans }}</h2>
+                            <h2 class="mb-3 fs-4">{{ config.bookingMode == 'BOOKING' ? 'online_booking.public.page_title'|trans : 'online_booking.public.page_title_inquiry'|trans }}</h2>
                         {% endif %}
 
                         {# ── Step indicator ── #}

@@ -132,7 +132,8 @@ online_booking:
     form_invalid_title: "Speichern nicht möglich"
     form_invalid_hint: "Beim Aktivieren der Onlinebuchung müssen Bestätigungs-Template, Anfrage-Status, Buchungs-Status und Reservierungsherkunft gesetzt sein."
   public:
-    page_title: "Onlinebuchung"
+    page_title: "Online-Buchung"
+    page_title_inquiry: "Online-Anfrage"
     group_label: "Gruppe:"
     arrival: "Anreise"
     departure: "Abreise"
