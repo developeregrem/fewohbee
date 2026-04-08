@@ -16,6 +16,8 @@ final class Version20260402073403 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        $this->addSql("INSERT IGNORE INTO amenity (slug, icon_fa_class, category, sort_order) VALUES ('washing_machine', 'fa-solid fa-soap', 'bathroom', 6)");
+
         $this->addSql('CREATE TABLE workflows (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(150) NOT NULL, description LONGTEXT DEFAULT NULL, is_enabled TINYINT DEFAULT 1 NOT NULL, is_system TINYINT DEFAULT 0 NOT NULL, system_code VARCHAR(80) DEFAULT NULL, trigger_type VARCHAR(80) NOT NULL, trigger_config JSON NOT NULL, condition_type VARCHAR(80) DEFAULT NULL, condition_config JSON DEFAULT NULL, action_type VARCHAR(80) NOT NULL, action_config JSON NOT NULL, priority INT DEFAULT 0 NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE INDEX UNIQ_EFBFBFC266D9836E (system_code), INDEX idx_workflow_trigger_type (trigger_type), INDEX idx_workflow_system_code (system_code), INDEX idx_workflow_enabled (is_enabled), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE workflow_logs (id INT AUTO_INCREMENT NOT NULL, workflow_id INT DEFAULT NULL, workflow_name VARCHAR(150) NOT NULL, trigger_type VARCHAR(80) NOT NULL, entity_class VARCHAR(255) DEFAULT NULL, entity_id INT DEFAULT NULL, status VARCHAR(20) NOT NULL, message LONGTEXT DEFAULT NULL, executed_at DATETIME NOT NULL, INDEX idx_wflog_workflow (workflow_id), INDEX idx_wflog_executed_at (executed_at), INDEX idx_wflog_dedup (workflow_id, entity_class, entity_id, status), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('ALTER TABLE workflow_logs ADD CONSTRAINT FK_B510D6672C7C2CBA FOREIGN KEY (workflow_id) REFERENCES workflows (id) ON DELETE SET NULL');
@@ -44,6 +46,8 @@ final class Version20260402073403 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
+        $this->addSql("DELETE FROM amenity WHERE slug = 'washing_machine'");
+
         $this->addSql('ALTER TABLE workflow_logs DROP FOREIGN KEY FK_B510D6672C7C2CBA');
         $this->addSql('DROP TABLE workflow_logs');
         $this->addSql('DROP TABLE workflows');
@@ -56,5 +60,10 @@ final class Version20260402073403 extends AbstractMigration
         $this->addSql('DROP INDEX idx_reservation_start_date ON reservations');
         $this->addSql('DROP INDEX idx_reservation_end_date ON reservations');
         $this->addSql('DROP INDEX idx_invoice_date ON invoices');
+    }
+
+    public function isTransactional(): bool
+    {
+        return false;
     }
 }
