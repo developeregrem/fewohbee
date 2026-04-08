@@ -233,26 +233,15 @@ class RegistrationBookServiceController extends AbstractController
      *
      * @return string
      */
-    #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['GET', 'POST'])]
-    public function deleteAction(CSRFProtectionService $csrf, AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, $id)
+    #[Route('/{id}/delete', name: 'registrationbook.delete.origin', methods: ['DELETE'])]
+    public function deleteAction(AuthorizationCheckerInterface $authChecker, RegistrationBookService $rbs, Request $request, int $id)
     {
         if ($authChecker->isGranted('ROLE_ADMIN')) {
-            if ('POST' == $request->getMethod()) {
-                if ($csrf->validateCSRFToken($request, true)) {
-                    $origin = $rbs->deleteEntry($id);
-                    if ($origin) {
-                        $this->addFlash('success', 'registrationbook.flash.delete.success');
-                    }
-                }
-
-                return new Response('ok');
-            } else {
-                // initial get load (ask for deleting)
-                return $this->render('common/form_delete_entry.html.twig', [
-                    'id' => $id,
-                    'token' => $csrf->getCSRFTokenForForm(),
-                ]);
+            if ($this->isCsrfTokenValid('delete' . $id, $request->request->get('_token'))) {
+                $rbs->deleteEntry($id);
             }
         }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }
