@@ -115,8 +115,6 @@ class WorkflowController extends AbstractController
     public function preview(Request $request): JsonResponse
     {
         $triggerType = $request->request->get('triggerType', '');
-        $conditionType = $request->request->get('conditionType');
-        $conditionConfigRaw = $request->request->get('conditionConfig', '{}');
 
         if (!$this->triggerRegistry->has($triggerType)) {
             return new JsonResponse(['entities' => [], 'total' => 0]);
@@ -125,17 +123,21 @@ class WorkflowController extends AbstractController
         $trigger = $this->triggerRegistry->get($triggerType);
         $triggerConfigRaw = $request->request->get('triggerConfig', '{}');
         $triggerConfig = json_decode($triggerConfigRaw, true) ?: [];
-        $conditionConfig = json_decode($conditionConfigRaw, true) ?: [];
+        $conditions = json_decode($request->request->get('conditions', '[]'), true) ?: [];
 
         $entities = $trigger->findPreviewEntities($this->em, $triggerConfig, 20);
 
-        // Apply condition filter if set
-        if ($conditionType && $this->conditionRegistry->has($conditionType)) {
-            $condition = $this->conditionRegistry->get($conditionType);
-            $entities = array_filter(
-                $entities,
-                fn ($entity) => $condition->evaluate($conditionConfig, $entity, [])
-            );
+        // Apply all condition filters (AND)
+        foreach ($conditions as $conditionDef) {
+            $condType = $conditionDef['type'] ?? '';
+            if ($condType && $this->conditionRegistry->has($condType)) {
+                $condition = $this->conditionRegistry->get($condType);
+                $condConfig = $conditionDef['config'] ?? [];
+                $entities = array_filter(
+                    $entities,
+                    fn ($entity) => $condition->evaluate($condConfig, $entity, [])
+                );
+            }
         }
 
         $results = [];
@@ -313,12 +315,7 @@ class WorkflowController extends AbstractController
             $workflow->setDescription($request->request->get('description') ?: null);
             $workflow->setTriggerType((string) $request->request->get('triggerType', ''));
             $workflow->setTriggerConfig(json_decode($request->request->get('triggerConfig', '{}'), true) ?: []);
-            $workflow->setConditionType($request->request->get('conditionType') ?: null);
-            $workflow->setConditionConfig(
-                $request->request->get('conditionType')
-                    ? (json_decode($request->request->get('conditionConfig', '{}'), true) ?: [])
-                    : null
-            );
+            $workflow->setConditions(json_decode($request->request->get('conditions', '[]'), true) ?: []);
             $workflow->setActionType((string) $request->request->get('actionType', ''));
             $workflow->setActionConfig(json_decode($request->request->get('actionConfig', '{}'), true) ?: []);
 

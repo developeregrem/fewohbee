@@ -27,7 +27,9 @@ workflow:
     section_trigger: "Trigger – When?"
     section_trigger_desc: "Choose the event that should start this automation."
     section_condition: "Condition – Only if?"
-    section_condition_desc: "Optional: Add a filter condition. Without a condition the automation runs on every trigger."
+    section_condition_desc: "Optional: Add one or more filter conditions (all must be met). Without conditions the automation runs on every trigger."
+    add_condition: "Add condition"
+    remove_condition: "Remove"
     section_action: "Action – Then?"
     section_action_desc: "Choose what should happen when the trigger fires."
     name: "Name"
@@ -66,6 +68,7 @@ workflow:
     reservation_status_is: "Reservation status is"
     reservation_has_booker_email: "Booker has an email address"
     invoice_has_email: "Invoice has an email address"
+    payment_means_is: "Payment method is"
 
   action:
     send_template_email: "Send email using a template"

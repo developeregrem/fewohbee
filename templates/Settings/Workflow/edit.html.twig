@@ -18,6 +18,7 @@
                  'preview_empty': 'workflow.preview.empty'|trans,
                  'preview_count': 'workflow.preview.count'|trans,
                  'preview_count_one': 'workflow.preview.count_one'|trans,
+                 'remove_condition': 'workflow.form.remove_condition'|trans,
              }|json_encode|e('html_attr') }}">
 
             {# -- Header -- #}
@@ -87,7 +88,7 @@
                     </div>
                 </div>
 
-                {# -- Condition: "Only if..." -- #}
+                {# -- Conditions: "Only if..." (multiple, AND) -- #}
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="card-title fs-6 mb-0">
@@ -96,22 +97,16 @@
                         <p class="text-body-secondary small mb-0 mt-1">{{ 'workflow.form.section_condition_desc'|trans }}</p>
                     </div>
                     <div class="card-body">
-                        <div class="mb-3">
-                            <label for="wf-condition" class="form-label">{{ 'workflow.form.condition_type'|trans }}</label>
-                            <select class="form-select" id="wf-condition" name="conditionType"
-                                    data-workflow-form-target="conditionType"
-                                    data-action="change->workflow-form#onConditionChange"
-                                    data-restore-value="{{ workflow.conditionType }}">
-                                <option value="">-- {{ 'workflow.form.no_condition'|trans }} --</option>
-                                {# Options populated dynamically by Stimulus based on trigger #}
-                            </select>
+                        <div data-workflow-form-target="conditionsContainer">
+                            {# Condition rows rendered dynamically by Stimulus #}
                         </div>
-                        <div data-workflow-form-target="conditionConfig">
-                            {# Dynamic condition config fields rendered by Stimulus #}
-                        </div>
-                        <input type="hidden" name="conditionConfig" data-workflow-form-target="conditionConfigJson"
-                               value="{{ workflow.conditionConfig|json_encode }}">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                data-action="click->workflow-form#addCondition">
+                            <i class="fas fa-plus me-1"></i>{{ 'workflow.form.add_condition'|trans }}
+                        </button>
                     </div>
+                    <input type="hidden" name="conditions" data-workflow-form-target="conditionsJson"
+                           value="{{ workflow.conditions|json_encode }}">
                 </div>
 
                 {# -- Action: "Then..." -- #}

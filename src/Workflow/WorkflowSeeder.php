@@ -55,7 +55,7 @@ class WorkflowSeeder
             triggerType: 'reservation.created',
             actionType: 'send_template_email',
             defaultEnabled: false,
-            conditionType: 'reservation.has_booker_email',
+            conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
             actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
         );
 
@@ -66,7 +66,7 @@ class WorkflowSeeder
             triggerType: 'reservation.days_before_start',
             actionType: 'send_template_email',
             defaultEnabled: false,
-            conditionType: 'reservation.has_booker_email',
+            conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
             triggerConfig: ['days' => 3],
             actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
         );
@@ -78,7 +78,7 @@ class WorkflowSeeder
             triggerType: 'invoice.days_after_date',
             actionType: 'send_template_email',
             defaultEnabled: false,
-            conditionType: 'invoice.has_email',
+            conditions: [['type' => 'invoice.has_email', 'config' => []]],
             triggerConfig: ['days' => 14],
             actionConfig: ['recipientType' => 'invoice_email', 'templateId' => 0, 'customRecipient' => ''],
         );
@@ -97,8 +97,7 @@ class WorkflowSeeder
         string $triggerType,
         string $actionType,
         bool $defaultEnabled = true,
-        ?string $conditionType = null,
-        ?array $conditionConfig = null,
+        array $conditions = [],
         array $actionConfig = [],
         array $triggerConfig = [],
     ): void {
@@ -119,8 +118,7 @@ class WorkflowSeeder
         $workflow->setSystemCode($systemCode);
         $workflow->setTriggerType($triggerType);
         $workflow->setTriggerConfig($triggerConfig);
-        $workflow->setConditionType($conditionType);
-        $workflow->setConditionConfig($conditionConfig);
+        $workflow->setConditions($conditions);
         $workflow->setActionType($actionType);
         $workflow->setActionConfig($actionConfig);
         $workflow->setIsEnabled($defaultEnabled);

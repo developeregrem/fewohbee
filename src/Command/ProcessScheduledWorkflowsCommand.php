@@ -141,13 +141,19 @@ class ProcessScheduledWorkflowsCommand extends Command
             $entities = $this->em->getRepository($entityClass)->findBy(['id' => array_values($pendingIds)]);
 
             foreach ($entities as $entity) {
-                // Evaluate condition (same logic as engine, but without executing or logging)
-                $conditionType = $workflow->getConditionType();
-                if ($conditionType && $this->conditionRegistry->has($conditionType)) {
-                    $condition = $this->conditionRegistry->get($conditionType);
-                    if (!$condition->evaluate($workflow->getConditionConfig() ?? [], $entity, [])) {
-                        continue;
+                // Evaluate all conditions (AND logic, same as engine but without logging)
+                $conditionsMet = true;
+                foreach ($workflow->getConditions() as $conditionDef) {
+                    if ($this->conditionRegistry->has($conditionDef['type'])) {
+                        $condition = $this->conditionRegistry->get($conditionDef['type']);
+                        if (!$condition->evaluate($conditionDef['config'] ?? [], $entity, [])) {
+                            $conditionsMet = false;
+                            break;
+                        }
                     }
+                }
+                if (!$conditionsMet) {
+                    continue;
                 }
 
                 if ($dryRun) {

@@ -9,9 +9,11 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\Enum\PaymentMeansCode;
 use App\Workflow\Condition\HasBookerEmailCondition;
 use App\Workflow\Condition\InvoiceHasEmailCondition;
 use App\Workflow\Condition\InvoiceStatusCondition;
+use App\Workflow\Condition\PaymentMeansCodeCondition;
 use App\Workflow\Condition\ReservationStatusCondition;
 use PHPUnit\Framework\TestCase;
 
@@ -206,5 +208,53 @@ final class WorkflowConditionTest extends TestCase
         $invoice = $this->createStub(Invoice::class);
 
         self::assertFalse($condition->evaluate(['statusId' => 1], $invoice, []));
+    }
+
+    // -------------------------------------------------------------------------
+    // PaymentMeansCodeCondition
+    // -------------------------------------------------------------------------
+
+    public function testPaymentMeansCodeConditionMatchesCorrectCode(): void
+    {
+        $condition = new PaymentMeansCodeCondition();
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getPaymentMeans')->willReturn(PaymentMeansCode::CASH);
+
+        self::assertTrue($condition->evaluate(['paymentMeansCode' => 10], $invoice, []));
+    }
+
+    public function testPaymentMeansCodeConditionReturnsFalseOnMismatch(): void
+    {
+        $condition = new PaymentMeansCodeCondition();
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getPaymentMeans')->willReturn(PaymentMeansCode::SEPA_CREDIT_TRANSFER);
+
+        self::assertFalse($condition->evaluate(['paymentMeansCode' => 10], $invoice, []));
+    }
+
+    public function testPaymentMeansCodeConditionReturnsFalseWhenPaymentMeansNull(): void
+    {
+        $condition = new PaymentMeansCodeCondition();
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getPaymentMeans')->willReturn(null);
+
+        self::assertFalse($condition->evaluate(['paymentMeansCode' => 10], $invoice, []));
+    }
+
+    public function testPaymentMeansCodeConditionReturnsFalseForWrongEntityType(): void
+    {
+        $condition = new PaymentMeansCodeCondition();
+        $reservation = $this->createStub(Reservation::class);
+
+        self::assertFalse($condition->evaluate(['paymentMeansCode' => 10], $reservation, []));
+    }
+
+    public function testPaymentMeansCodeConditionReturnsFalseWhenConfigMissing(): void
+    {
+        $condition = new PaymentMeansCodeCondition();
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getPaymentMeans')->willReturn(PaymentMeansCode::CASH);
+
+        self::assertFalse($condition->evaluate([], $invoice, []));
     }
 }
