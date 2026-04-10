@@ -5,13 +5,13 @@ import { request as httpRequest } from '../js/http.js';
  * Manages the dynamic workflow create/edit form.
  *
  * When the trigger type changes, fetches compatible conditions and actions
- * from the server and repopulates the dropdowns. Also handles the preview
- * (dry run) feature.
+ * from the server and repopulates the dropdowns. Supports multiple conditions
+ * (AND logic) via repeatable condition rows.
  */
 export default class extends Controller {
     static targets = [
         'triggerType', 'triggerConfig', 'triggerConfigJson',
-        'conditionType', 'conditionConfig', 'conditionConfigJson',
+        'conditionsContainer', 'conditionsJson',
         'actionType', 'actionConfig', 'actionConfigJson',
         'previewCard', 'previewResults', 'previewHead', 'previewBody',
         'logContainer',
@@ -24,6 +24,8 @@ export default class extends Controller {
     };
 
     connect() {
+        this._conditionCounter = 0;
+
         // If editing an existing workflow, load compatible options for current trigger
         const currentTrigger = this.triggerTypeTarget.value;
         if (currentTrigger) {
@@ -49,7 +51,7 @@ export default class extends Controller {
     onTriggerChange() {
         const triggerType = this.triggerTypeTarget.value;
         this.triggerConfigTarget.innerHTML = '';
-        this._clearSection(this.conditionTypeTarget, this.conditionConfigTarget);
+        this.conditionsContainerTarget.innerHTML = '';
         this._clearSection(this.actionTypeTarget, this.actionConfigTarget);
         this._hidePreview();
         this._updatePreviewVisibility();
@@ -59,13 +61,27 @@ export default class extends Controller {
         }
     }
 
-    onConditionChange() {
-        this.conditionConfigTarget.innerHTML = '';
-        const conditionType = this.conditionTypeTarget.value;
+    // --- Condition management ---
+
+    addCondition() {
+        if (!this._currentConditions || this._currentConditions.length === 0) return;
+        this._addConditionRow();
+    }
+
+    removeCondition(event) {
+        const row = event.currentTarget.closest('[data-condition-row]');
+        if (row) row.remove();
+    }
+
+    onConditionTypeChange(event) {
+        const row = event.currentTarget.closest('[data-condition-row]');
+        const configContainer = row.querySelector('[data-condition-config]');
+        configContainer.innerHTML = '';
+        const conditionType = event.currentTarget.value;
         if (conditionType && this._currentConditions) {
             const cond = this._currentConditions.find(c => c.type === conditionType);
             if (cond && cond.configSchema && cond.configSchema.length > 0) {
-                this._renderConfigFields(this.conditionConfigTarget, cond.configSchema, 'condition');
+                this._renderConfigFields(configContainer, cond.configSchema, `condition-${row.dataset.conditionIndex}`);
             }
         }
     }
@@ -79,8 +95,7 @@ export default class extends Controller {
         const data = {
             triggerType: triggerType,
             triggerConfig: this.triggerConfigJsonTarget.value || '{}',
-            conditionType: this.conditionTypeTarget.value || '',
-            conditionConfig: this.conditionConfigJsonTarget.value || '{}',
+            conditions: this.conditionsJsonTarget.value || '[]',
         };
 
         this.previewResultsTarget.classList.remove('d-none');
@@ -103,8 +118,8 @@ export default class extends Controller {
     // Called before form submit to collect config JSON (also used as Stimulus action)
     collectConfigJson() {
         this.triggerConfigJsonTarget.value = this._gatherConfig(this.triggerConfigTarget);
-        this.conditionConfigJsonTarget.value = this._gatherConfig(this.conditionConfigTarget);
         this.actionConfigJsonTarget.value = this._gatherConfig(this.actionConfigTarget);
+        this.conditionsJsonTarget.value = this._gatherConditions();
     }
 
     _gatherConfig(container) {
@@ -119,6 +134,25 @@ export default class extends Controller {
         return JSON.stringify(config);
     }
 
+    _gatherConditions() {
+        const rows = this.conditionsContainerTarget.querySelectorAll('[data-condition-row]');
+        const conditions = [];
+        rows.forEach(row => {
+            const select = row.querySelector('[data-condition-type-select]');
+            if (!select || !select.value) return;
+            const configContainer = row.querySelector('[data-condition-config]');
+            const config = {};
+            if (configContainer) {
+                configContainer.querySelectorAll('[data-config-key]').forEach(input => {
+                    const key = input.dataset.configKey;
+                    config[key] = input.type === 'number' ? Number(input.value) : input.value;
+                });
+            }
+            conditions.push({ type: select.value, config });
+        });
+        return JSON.stringify(conditions);
+    }
+
     _loadCompatibleOptions(triggerType, isRestore) {
         httpRequest({
             url: this.compatibleUrlValue,
@@ -127,7 +161,6 @@ export default class extends Controller {
             onSuccess: (text) => {
                 const result = JSON.parse(text);
                 this._currentConditions = result.conditions;
-                this._populateConditions(result.conditions, isRestore);
                 this._populateActions(result.actions, isRestore);
 
                 if (result.triggerConfigSchema && result.triggerConfigSchema.length > 0) {
@@ -136,29 +169,78 @@ export default class extends Controller {
                         this._restoreConfig(this.triggerConfigTarget, this.triggerConfigJsonTarget.value);
                     }
                 }
+
+                // Restore conditions if editing
+                if (isRestore) {
+                    this._restoreConditions();
+                }
             },
         });
     }
 
-    _populateConditions(conditions, isRestore) {
-        const select = this.conditionTypeTarget;
-        const currentValue = isRestore ? (select.dataset.restoreValue || this.conditionTypeTarget.closest('form')?.querySelector('[name=conditionType]')?.dataset?.currentValue || '') : '';
+    _restoreConditions() {
+        const savedConditions = (() => {
+            try { return JSON.parse(this.conditionsJsonTarget.value); }
+            catch { return []; }
+        })();
 
-        select.innerHTML = `<option value="">-- ${this.translationsValue.no_condition || 'No condition'} --</option>`;
-        (conditions || []).forEach(c => {
-            if (!c.type) return;
-            const opt = document.createElement('option');
-            opt.value = c.type;
-            opt.textContent = c.label;
-            if (isRestore && c.type === currentValue) opt.selected = true;
-            select.appendChild(opt);
+        if (!Array.isArray(savedConditions) || savedConditions.length === 0) return;
+
+        savedConditions.forEach(saved => {
+            const row = this._addConditionRow(saved.type);
+            if (row && saved.config) {
+                const configContainer = row.querySelector('[data-condition-config]');
+                if (configContainer) {
+                    this._restoreConfig(configContainer, JSON.stringify(saved.config));
+                }
+            }
         });
+    }
 
-        // Restore condition config if editing
-        if (isRestore && currentValue) {
-            this.onConditionChange();
-            this._restoreConfig(this.conditionConfigTarget, this.conditionConfigJsonTarget.value);
+    _addConditionRow(preselectedType) {
+        if (!this._currentConditions) return null;
+
+        const index = this._conditionCounter++;
+        const row = document.createElement('div');
+        row.dataset.conditionRow = '';
+        row.dataset.conditionIndex = index;
+        row.className = 'mb-3 border rounded p-3 position-relative';
+
+        const removeLabel = this.translationsValue.remove_condition || 'Remove';
+
+        // Build condition type select
+        const options = this._currentConditions
+            .filter(c => c.type) // skip the empty "no condition" entry
+            .map(c => `<option value="${c.type}"${c.type === preselectedType ? ' selected' : ''}>${c.label}</option>`)
+            .join('');
+
+        row.innerHTML = `
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <select class="form-select form-select-sm" data-condition-type-select
+                        data-action="change->workflow-form#onConditionTypeChange">
+                    <option value="">--</option>
+                    ${options}
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0"
+                        data-action="click->workflow-form#removeCondition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div data-condition-config></div>
+        `;
+
+        this.conditionsContainerTarget.appendChild(row);
+
+        // If preselected, render config fields
+        if (preselectedType) {
+            const cond = this._currentConditions.find(c => c.type === preselectedType);
+            if (cond && cond.configSchema && cond.configSchema.length > 0) {
+                const configContainer = row.querySelector('[data-condition-config]');
+                this._renderConfigFields(configContainer, cond.configSchema, `condition-${index}`);
+            }
         }
+
+        return row;
     }
 
     onActionChange() {
@@ -324,4 +406,3 @@ export default class extends Controller {
         this.previewBodyTarget.innerHTML += countRow;
     }
 }
-

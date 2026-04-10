@@ -18,16 +18,16 @@ final class Version20260402073403 extends AbstractMigration
     {
         $this->addSql("INSERT IGNORE INTO amenity (slug, icon_fa_class, category, sort_order) VALUES ('washing_machine', 'fa-solid fa-soap', 'bathroom', 6)");
 
-        $this->addSql('CREATE TABLE workflows (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(150) NOT NULL, description LONGTEXT DEFAULT NULL, is_enabled TINYINT DEFAULT 1 NOT NULL, is_system TINYINT DEFAULT 0 NOT NULL, system_code VARCHAR(80) DEFAULT NULL, trigger_type VARCHAR(80) NOT NULL, trigger_config JSON NOT NULL, condition_type VARCHAR(80) DEFAULT NULL, condition_config JSON DEFAULT NULL, action_type VARCHAR(80) NOT NULL, action_config JSON NOT NULL, priority INT DEFAULT 0 NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE INDEX UNIQ_EFBFBFC266D9836E (system_code), INDEX idx_workflow_trigger_type (trigger_type), INDEX idx_workflow_system_code (system_code), INDEX idx_workflow_enabled (is_enabled), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
+        $this->addSql('CREATE TABLE workflows (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(150) NOT NULL, description LONGTEXT DEFAULT NULL, is_enabled TINYINT DEFAULT 1 NOT NULL, is_system TINYINT DEFAULT 0 NOT NULL, system_code VARCHAR(80) DEFAULT NULL, trigger_type VARCHAR(80) NOT NULL, trigger_config JSON NOT NULL, conditions JSON NOT NULL, action_type VARCHAR(80) NOT NULL, action_config JSON NOT NULL, priority INT DEFAULT 0 NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, UNIQUE INDEX UNIQ_EFBFBFC266D9836E (system_code), INDEX idx_workflow_trigger_type (trigger_type), INDEX idx_workflow_system_code (system_code), INDEX idx_workflow_enabled (is_enabled), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('CREATE TABLE workflow_logs (id INT AUTO_INCREMENT NOT NULL, workflow_id INT DEFAULT NULL, workflow_name VARCHAR(150) NOT NULL, trigger_type VARCHAR(80) NOT NULL, entity_class VARCHAR(255) DEFAULT NULL, entity_id INT DEFAULT NULL, status VARCHAR(20) NOT NULL, message LONGTEXT DEFAULT NULL, executed_at DATETIME NOT NULL, INDEX idx_wflog_workflow (workflow_id), INDEX idx_wflog_executed_at (executed_at), INDEX idx_wflog_dedup (workflow_id, entity_class, entity_id, status), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4');
         $this->addSql('ALTER TABLE workflow_logs ADD CONSTRAINT FK_B510D6672C7C2CBA FOREIGN KEY (workflow_id) REFERENCES workflows (id) ON DELETE SET NULL');
 
         // add internal system workflows
         $this->addSql("INSERT IGNORE INTO workflows
-            (name, description, is_enabled, is_system, system_code, trigger_type, trigger_config, condition_type, condition_config, action_type, action_config, priority, created_at, updated_at)
+            (name, description, is_enabled, is_system, system_code, trigger_type, trigger_config, conditions, action_type, action_config, priority, created_at, updated_at)
             VALUES
-            ('workflow.system.notify_online_booking.name', 'workflow.system.notify_online_booking.description', 1, 1, 'notify_online_booking', 'online_booking.created', '[]', NULL, NULL, 'send_notification_email', '[]', 0, NOW(), NOW()),
-            ('workflow.system.notify_calendar_import.name', 'workflow.system.notify_calendar_import.description', 1, 1, 'notify_calendar_import', 'calendar_import.created', '[]', NULL, NULL, 'send_notification_email', '[]', 0, NOW(), NOW())
+            ('workflow.system.notify_online_booking.name', 'workflow.system.notify_online_booking.description', 1, 1, 'notify_online_booking', 'online_booking.created', '[]', '[]', 'send_notification_email', '[]', 0, NOW(), NOW()),
+            ('workflow.system.notify_calendar_import.name', 'workflow.system.notify_calendar_import.description', 1, 1, 'notify_calendar_import', 'calendar_import.created', '[]', '[]', 'send_notification_email', '[]', 0, NOW(), NOW())
         ");
 
         // Add TEMPLATE_INVOICE_EMAIL template type

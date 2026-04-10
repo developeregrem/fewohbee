@@ -66,9 +66,9 @@ class WorkflowEngine
     private function executeWorkflow(Workflow $workflow, mixed $entity, array $context, bool $logConditionSkip = true): bool
     {
         try {
-            if ($workflow->getConditionType() !== null) {
-                $condition = $this->conditionRegistry->get($workflow->getConditionType());
-                if (!$condition->evaluate($workflow->getConditionConfig() ?? [], $entity, $context)) {
+            foreach ($workflow->getConditions() as $conditionDef) {
+                $condition = $this->conditionRegistry->get($conditionDef['type']);
+                if (!$condition->evaluate($conditionDef['config'] ?? [], $entity, $context)) {
                     if ($logConditionSkip) {
                         $this->logService->logSkipped($workflow, $entity, $this->translator->trans('workflow.log.condition_not_met'));
                     }

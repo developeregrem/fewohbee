@@ -46,11 +46,9 @@ class Workflow
     #[ORM\Column(type: Types::JSON)]
     private array $triggerConfig = [];
 
-    #[ORM\Column(type: Types::STRING, length: 80, nullable: true)]
-    private ?string $conditionType = null;
-
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $conditionConfig = null;
+    /** @var list<array{type: string, config: array}> */
+    #[ORM\Column(type: Types::JSON)]
+    private array $conditions = [];
 
     #[ORM\Column(type: Types::STRING, length: 80)]
     #[Assert\NotBlank]
@@ -169,26 +167,16 @@ class Workflow
         return $this;
     }
 
-    public function getConditionType(): ?string
+    /** @return list<array{type: string, config: array}> */
+    public function getConditions(): array
     {
-        return $this->conditionType;
+        return $this->conditions;
     }
 
-    public function setConditionType(?string $conditionType): static
+    /** @param list<array{type: string, config: array}> $conditions */
+    public function setConditions(array $conditions): static
     {
-        $this->conditionType = $conditionType;
-
-        return $this;
-    }
-
-    public function getConditionConfig(): ?array
-    {
-        return $this->conditionConfig;
-    }
-
-    public function setConditionConfig(?array $conditionConfig): static
-    {
-        $this->conditionConfig = $conditionConfig;
+        $this->conditions = $conditions;
 
         return $this;
     }

@@ -27,7 +27,9 @@ workflow:
     section_trigger: "Auslöser – Wann?"
     section_trigger_desc: "Wähle das Ereignis, das diese Automatisierung starten soll."
     section_condition: "Bedingung – Nur wenn?"
-    section_condition_desc: "Optional: Lege eine zusätzliche Bedingung fest. Ohne Bedingung wird die Automatisierung bei jedem Auslöser ausgeführt."
+    section_condition_desc: "Optional: Lege eine oder mehrere Bedingungen fest (alle müssen erfüllt sein). Ohne Bedingung wird die Automatisierung bei jedem Auslöser ausgeführt."
+    add_condition: "Bedingung hinzufügen"
+    remove_condition: "Entfernen"
     section_action: "Aktion – Dann?"
     section_action_desc: "Wähle, was passieren soll, wenn der Auslöser eintritt."
     name: "Bezeichnung"
@@ -68,6 +70,7 @@ workflow:
     reservation_status_is: "Reservierungsstatus ist"
     reservation_has_booker_email: "Bucher hat eine E-Mail-Adresse"
     invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
+    payment_means_is: "Zahlungsmethode ist"
 
   # Action labels
   action:

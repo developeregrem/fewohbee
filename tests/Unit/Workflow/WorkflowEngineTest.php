@@ -24,14 +24,14 @@ final class WorkflowEngineTest extends TestCase
     private function makeWorkflow(
         string $triggerType = 'reservation.created',
         string $actionType = 'send_notification_email',
-        ?string $conditionType = null,
+        array $conditions = [],
         bool $enabled = true,
     ): Workflow {
         $wf = new Workflow();
         $wf->setName('Test Workflow');
         $wf->setTriggerType($triggerType);
         $wf->setActionType($actionType);
-        $wf->setConditionType($conditionType);
+        $wf->setConditions($conditions);
         $wf->setIsEnabled($enabled);
         $wf->setActionConfig([]);
         $wf->setTriggerConfig([]);
@@ -94,8 +94,7 @@ final class WorkflowEngineTest extends TestCase
     public function testProcessEventSkipsWhenConditionNotMet(): void
     {
         $entity = $this->createStub(Reservation::class);
-        $workflow = $this->makeWorkflow(conditionType: 'reservation.has_booker_email');
-        $workflow->setConditionConfig([]);
+        $workflow = $this->makeWorkflow(conditions: [['type' => 'reservation.has_booker_email', 'config' => []]]);
 
         $action = $this->createMock(WorkflowActionInterface::class);
         $action->expects(self::never())->method('execute');
@@ -113,8 +112,7 @@ final class WorkflowEngineTest extends TestCase
     public function testProcessEventExecutesWhenConditionMet(): void
     {
         $entity = $this->createStub(Reservation::class);
-        $workflow = $this->makeWorkflow(conditionType: 'reservation.has_booker_email');
-        $workflow->setConditionConfig([]);
+        $workflow = $this->makeWorkflow(conditions: [['type' => 'reservation.has_booker_email', 'config' => []]]);
 
         $action = $this->createMock(WorkflowActionInterface::class);
         $action->expects(self::once())->method('execute')->willReturn('done');
@@ -123,6 +121,94 @@ final class WorkflowEngineTest extends TestCase
         $condition->method('evaluate')->willReturn(true);
 
         $engine = $this->makeEngine([$workflow], $action, $condition);
+        $engine->processEvent('reservation.created', $entity);
+    }
+
+    public function testProcessEventSkipsWhenSecondConditionNotMet(): void
+    {
+        $entity = $this->createStub(Reservation::class);
+        $workflow = $this->makeWorkflow(conditions: [
+            ['type' => 'cond_a', 'config' => []],
+            ['type' => 'cond_b', 'config' => []],
+        ]);
+
+        $action = $this->createMock(WorkflowActionInterface::class);
+        $action->expects(self::never())->method('execute');
+
+        $condA = $this->createStub(WorkflowConditionInterface::class);
+        $condA->method('evaluate')->willReturn(true);
+        $condB = $this->createStub(WorkflowConditionInterface::class);
+        $condB->method('evaluate')->willReturn(false);
+
+        $conditionRegistry = $this->createStub(WorkflowConditionRegistry::class);
+        $conditionRegistry->method('get')->willReturnMap([
+            ['cond_a', $condA],
+            ['cond_b', $condB],
+        ]);
+
+        $workflowRepo = $this->createStub(WorkflowRepository::class);
+        $workflowRepo->method('findActiveByTriggerType')->willReturn([$workflow]);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+
+        $logService = $this->createMock(WorkflowLogService::class);
+        $logService->expects(self::once())->method('logSkipped');
+
+        $engine = new WorkflowEngine(
+            $workflowRepo,
+            $this->createStub(WorkflowTriggerRegistry::class),
+            $conditionRegistry,
+            $this->createStub(WorkflowActionRegistry::class),
+            $logService,
+            new NullLogger(),
+            $translator,
+        );
+
+        $engine->processEvent('reservation.created', $entity);
+    }
+
+    public function testProcessEventExecutesWhenAllConditionsMet(): void
+    {
+        $entity = $this->createStub(Reservation::class);
+        $workflow = $this->makeWorkflow(conditions: [
+            ['type' => 'cond_a', 'config' => []],
+            ['type' => 'cond_b', 'config' => []],
+        ]);
+
+        $action = $this->createMock(WorkflowActionInterface::class);
+        $action->expects(self::once())->method('execute')->willReturn('done');
+
+        $condA = $this->createStub(WorkflowConditionInterface::class);
+        $condA->method('evaluate')->willReturn(true);
+        $condB = $this->createStub(WorkflowConditionInterface::class);
+        $condB->method('evaluate')->willReturn(true);
+
+        $conditionRegistry = $this->createStub(WorkflowConditionRegistry::class);
+        $conditionRegistry->method('get')->willReturnMap([
+            ['cond_a', $condA],
+            ['cond_b', $condB],
+        ]);
+
+        $workflowRepo = $this->createStub(WorkflowRepository::class);
+        $workflowRepo->method('findActiveByTriggerType')->willReturn([$workflow]);
+
+        $actionRegistry = $this->createStub(WorkflowActionRegistry::class);
+        $actionRegistry->method('get')->willReturn($action);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+
+        $engine = new WorkflowEngine(
+            $workflowRepo,
+            $this->createStub(WorkflowTriggerRegistry::class),
+            $conditionRegistry,
+            $actionRegistry,
+            $this->createStub(WorkflowLogService::class),
+            new NullLogger(),
+            $translator,
+        );
+
         $engine->processEvent('reservation.created', $entity);
     }
 
@@ -307,8 +393,7 @@ final class WorkflowEngineTest extends TestCase
         $entity = $this->createStub(Reservation::class);
         $entity->method('getId')->willReturn(99);
 
-        $workflow = $this->makeWorkflow(conditionType: 'reservation.has_booker_email');
-        $workflow->setConditionConfig([]);
+        $workflow = $this->makeWorkflow(conditions: [['type' => 'reservation.has_booker_email', 'config' => []]]);
 
         $ref = new \ReflectionProperty(Workflow::class, 'id');
         $ref->setValue($workflow, 1);
