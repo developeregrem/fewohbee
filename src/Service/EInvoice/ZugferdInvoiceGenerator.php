@@ -163,7 +163,7 @@ class ZugferdInvoiceGenerator
 
         $prepaidAmount = null;
         $duePayableAmount = $netSum + $vatSum;
-        if ($invoice->getStatus() === InvoiceStatus::{'PAID'}->value) {
+        if ($invoice->getStatus() === InvoiceStatus::PAID->value) {
             $prepaidAmount = $netSum + $vatSum;
             $duePayableAmount = 0.0;
         } // todo collect amount if status is prepaid

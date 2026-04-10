@@ -80,9 +80,9 @@
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
                         {% set invoiceBadgeClass = 'text-bg-light' %}
-                        {% if item.invoiceStatusLabel == 'invoice.status.notpayed' %}
+                        {% if item.invoiceStatusLabel == 'invoice.status.unpaid' %}
                             {% set invoiceBadgeClass = 'text-bg-warning' %}
-                        {% elseif item.invoiceStatusLabel == 'invoice.status.payed' %}
+                        {% elseif item.invoiceStatusLabel == 'invoice.status.paid' %}
                             {% set invoiceBadgeClass = 'text-bg-success' %}
                         {% endif %}
                         <a href="#"
@@ -217,9 +217,9 @@
                     {% if reservation.invoices|length > 0 %}
                         {% set invoice = reservation.invoices|first %}
                         {% set invoiceBadgeClass = 'text-bg-light' %}
-                        {% if item.invoiceStatusLabel == 'invoice.status.notpayed' %}
+                        {% if item.invoiceStatusLabel == 'invoice.status.unpaid' %}
                             {% set invoiceBadgeClass = 'text-bg-warning' %}
-                        {% elseif item.invoiceStatusLabel == 'invoice.status.payed' %}
+                        {% elseif item.invoiceStatusLabel == 'invoice.status.paid' %}
                             {% set invoiceBadgeClass = 'text-bg-success' %}
                         {% endif %}
                         <a href="#"

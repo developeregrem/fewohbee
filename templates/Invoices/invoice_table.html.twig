@@ -18,11 +18,11 @@
             <td>{{ invoice.company }}</td>
             <td>
                 {% if invoice.status == 1 %}
-                    {{ 'invoice.status.notpayed'|trans }}
+                    {{ 'invoice.status.unpaid'|trans }}
                 {% elseif invoice.status == 2 %}
-                    {{ 'invoice.status.payed'|trans }}
+                    {{ 'invoice.status.paid'|trans }}
                 {% elseif invoice.status == 3 %}
-                    {{ 'invoice.status.prepayment'|trans }}
+                    {{ 'invoice.status.prepaid'|trans }}
                 {% else %}
                     {{ 'invoice.status.canceled'|trans }}
                 {% endif %}

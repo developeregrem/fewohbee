@@ -22,7 +22,7 @@ use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\Template;
-use App\Enum\InvoiceStatus;
+use App\Entity\Enum\InvoiceStatus;
 use App\Service\EInvoice\EInvoiceExportService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
