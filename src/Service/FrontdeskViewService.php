@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Reservation;
-use App\Enum\InvoiceStatus;
+use App\Entity\Enum\InvoiceStatus;
 
 /**
  * Builds frontdesk list items with arrival/departure/inhouse categories.

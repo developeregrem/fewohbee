@@ -56,9 +56,9 @@ invoice.select.open.reservation: Select reservation without invoice
 invoice.startdate: From
 invoice.status: Status
 invoice.status.canceled: canceled
-invoice.status.notpayed: Open
-invoice.status.payed: Paid
-invoice.status.prepayment: partially paid
+invoice.status.unpaid: Open
+invoice.status.paid: Paid
+invoice.status.prepaid: partially paid
 invoice.template: Select invoice template
 invoice.title: Invoice management
 invoice.vat: VAT

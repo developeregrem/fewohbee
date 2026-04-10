@@ -115,7 +115,7 @@ final class InvoiceServiceFilenameTest extends TestCase
         $translator
             ->method('trans')
             ->willReturnCallback(static function (string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string {
-                if ('invoice.status.payed' === $id) {
+                if ('invoice.status.paid' === $id) {
                     return 'Bezahlt!';
                 }
                 if ('SEPA_CREDIT_TRANSFER' === $id) {
