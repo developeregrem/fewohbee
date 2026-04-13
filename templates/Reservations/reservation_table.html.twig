@@ -94,7 +94,7 @@
 
         {% for row in grid.rows %}
             {# Subsidiary group header #}
-            {% if grid.subsidiaryBreaks[row.apartment.id] is defined %}
+            {% if not row.isSubRow and grid.subsidiaryBreaks[row.apartment.id] is defined %}
                 <tr>
                     <td colspan="{{ totalColumnCount }}" class="fw-semibold">
                         {{ grid.subsidiaryBreaks[row.apartment.id] ?? '' }}

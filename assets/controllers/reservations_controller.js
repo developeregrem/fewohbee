@@ -90,6 +90,7 @@ export default class extends Controller {
         setLocalStorageItemIfNotExists('reservation-settings-show-month', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-weekday', 'false');
+        setLocalStorageItemIfNotExists('reservation-settings-show-object', 'all');
 
         this.tableFilter.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -101,8 +102,11 @@ export default class extends Controller {
             if (!target) {
                 return;
             }
-            const selectors = ['#start', '#year', 'input[name="interval"]', 'select[name="apartment"]', '#objects', '#holidayCountry', '#holidaySubdivision'];
+            const selectors = ['#start', '#year', 'input[name="interval"]', 'select[name="apartment"]', 'select[name="object"]', '#holidayCountry', '#holidaySubdivision'];
             if (selectors.some((s) => target.matches(s))) {
+                if(target.matches('select[name="object"]')) {
+                    this.setLocalTableSetting('object', 'reservation-settings-show-object');
+                }
                 this.getNewTable();
             }
         });
@@ -678,8 +682,9 @@ export default class extends Controller {
             onComplete: () => { 
                 if (initial) {
                     this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
+                    this.getLocalTableSetting('object', 'reservation-settings-show-object');
                     this.getNewTable();
-                }
+                }                
                 this.updateDisplaySettingsOnChange();
             }
         });

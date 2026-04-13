@@ -166,11 +166,7 @@ class ReservationServiceController extends AbstractController
             $interval = (int) $interval;
         }
 
-        if (null == $objectId || 'all' == $objectId) {
-            $appartments = $em->getRepository(Appartment::class)->findAll();
-        } else {
-            $appartments = $em->getRepository(Appartment::class)->findBy(['object' => $objectId], ['number' => 'ASC']);
-        }
+        $appartments = $em->getRepository(Appartment::class)->findAllByProperty($objectId ?? 'all');
 
         $requestStack->getSession()->set('reservation-overview-start', $date);
         $requestStack->getSession()->set('reservation-overview-interval', $interval);
