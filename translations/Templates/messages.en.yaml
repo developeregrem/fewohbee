@@ -207,3 +207,4 @@ templates.include.error.circular: "Circular template include detected (ID: %id%)
 templates.include.error.notfound: "Included template not found (ID: %id%)"
 templates.include.error.incompatible: "Template \"%name%\" (%type%) is not compatible with this template type"
 templates.type: Template type
+templates.journal.name: Booking journal

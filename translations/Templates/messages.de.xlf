@@ -814,6 +814,10 @@
                 <source>templates.include.error.incompatible</source>
                 <target>Vorlage "%name%" (%type%) ist nicht kompatibel mit diesem Vorlagentyp</target>
             </trans-unit>
+            <trans-unit id="templates.journal.name">
+                <source>templates.journal.name</source>
+                <target>Buchungsjournal</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
