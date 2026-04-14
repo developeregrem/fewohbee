@@ -47,7 +47,11 @@ workflow:
     recipient_notification: "Notification email (%email%)"
     recipient_custom: "Custom email address"
     custom_recipient: "Custom email address"
-    cash_journal_remark: "Remark (optional)"
+    debit_account: "Debit account"
+    debit_account_help: "Account to be debited (e.g. cash, bank)"
+    fallback_credit_account: "Credit account (fallback)"
+    fallback_credit_account_help: "Used when a tax rate has no revenue account configured"
+    booking_entry_remark: "Remark (optional)"
 
   trigger:
     online_booking_created: "New online booking received"
@@ -68,13 +72,13 @@ workflow:
     reservation_status_is: "Reservation status is"
     reservation_has_booker_email: "Booker has an email address"
     invoice_has_email: "Invoice has an email address"
-    payment_means_is: "Payment method is"
+    invoice_payment_means_is: "Payment method is"
 
   action:
     send_template_email: "Send email using a template"
     send_general_email: "Send general email using a template"
     send_notification_email: "Send notification email"
-    create_cash_journal_entry: "Create cash journal entry"
+    create_booking_entry: "Create booking entry"
 
   preview:
     title: "Dry Run"
@@ -125,7 +129,8 @@ workflow:
     skipped_unsupported_entity: "Skipped: unsupported entity type"
     notification_online_booking_sent: "Online booking notification sent to %recipient% (%count% reservation(s))"
     notification_calendar_import_sent: "Calendar import notification sent to %recipient%"
-    cash_journal_entry_created: "Cash journal entry created for invoice %number% (document no. %doc%)"
+    booking_entries_created: "%count% booking entries created for invoice %number%"
+    skipped_no_amounts: "Skipped: invoice contains no bookable amounts"
 
   error:
     name_required: "Please enter a name."

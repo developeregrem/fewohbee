@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\AccountingAccount;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
@@ -82,7 +83,7 @@ class WorkflowController extends AbstractController
         if ($workflow->isSystem()) {
             $this->addFlash('danger', 'workflow.flash.cannot_delete_system');
 
-            return $this->redirectToRoute('settings.workflows.index', [], 303);
+            return new Response('', Response::HTTP_NO_CONTENT);
         }
 
         if ($this->isCsrfTokenValid('delete' . $workflow->getId(), $request->request->get('_token'))) {
@@ -91,7 +92,7 @@ class WorkflowController extends AbstractController
             $this->addFlash('success', 'workflow.flash.deleted');
         }
 
-        return $this->redirectToRoute('settings.workflows.index', [], 303);
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/{id}/logs', name: 'settings.workflows.logs', methods: ['GET'])]
@@ -214,6 +215,9 @@ class WorkflowController extends AbstractController
             } elseif ($type === 'reservation_status_select') {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadReservationStatusOptions();
+            } elseif ($type === 'accounting_account_select') {
+                $field['type'] = 'select';
+                $field['options'] = $this->loadAccountingAccountOptions();
             }
 
             $field = $this->translateField($field);
@@ -253,6 +257,22 @@ class WorkflowController extends AbstractController
 
         return $options;
     }
+
+    /** @return array<int, array{value: int|string, label: string}> */
+    private function loadAccountingAccountOptions(): array
+    {
+        $accounts = $this->em->getRepository(AccountingAccount::class)->findBy([], ['sortOrder' => 'ASC', 'accountNumber' => 'ASC']);
+        $options = [['value' => '', 'label' => '–']];
+        foreach ($accounts as $account) {
+            $options[] = [
+                'value' => $account->getId(),
+                'label' => $account->getAccountNumber().' – '.$account->getName(),
+            ];
+        }
+
+        return $options;
+    }
+
 
     /** @param array<string, mixed> $field */
     private function translateField(array $field): array

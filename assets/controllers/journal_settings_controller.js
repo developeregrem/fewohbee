@@ -1,0 +1,57 @@
+import { Controller } from '@hotwired/stimulus';
+import { enableDeletePopover } from '../js/utils.js';
+
+/* stimulusFetch: 'lazy' */
+
+export default class extends Controller {
+    static targets = ['offcanvas', 'offcanvasTitle', 'offcanvasBody'];
+
+    connect() {
+        this._waitForBootstrapAndInit();
+    }
+
+    disconnect() {
+        this._disposeTooltips();
+    }
+
+    _waitForBootstrapAndInit(attempt = 0) {
+        if ((!window.bootstrap || !window.bootstrap.Popover) && attempt < 20) {
+            setTimeout(() => this._waitForBootstrapAndInit(attempt + 1), 100);
+            return;
+        }
+        enableDeletePopover();
+        this._initTooltips();
+    }
+
+    async openOffcanvas(event) {
+        event.preventDefault();
+
+        const button = event.currentTarget;
+        const url = button.dataset.url;
+        const title = button.dataset.offcanvasTitle;
+
+        this.offcanvasTitleTarget.textContent = title;
+        this.offcanvasBodyTarget.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>';
+
+        const offcanvas = window.bootstrap.Offcanvas.getOrCreateInstance(this.offcanvasTarget);
+        offcanvas.show();
+
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            this.offcanvasBodyTarget.innerHTML = await response.text();
+        } catch {
+            this.offcanvasBodyTarget.innerHTML = '<div class="alert alert-danger">Error loading form.</div>';
+        }
+    }
+
+    _initTooltips() {
+        this._tooltips = [...this.element.querySelectorAll('[data-bs-toggle="tooltip"]')]
+            .map(el => new window.bootstrap.Tooltip(el));
+    }
+
+    _disposeTooltips() {
+        (this._tooltips || []).forEach(t => t.dispose());
+    }
+}

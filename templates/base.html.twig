@@ -81,7 +81,9 @@
                         </li>
                         {% endif %}
                         {% if showCashjournal %}
-                        <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "journal" %} active{% endif %}">
+                            <a class="nav-link" href="{{ path('journal.overview') }}">{{ 'nav.journal'|trans }}</a>
+                        </li>
                         {% endif %}
                     </ul>
                     {% endif %}

@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'nav.journal'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="booking-journal"
+     data-booking-journal-batches-url-value="{{ path('journal.batches') }}">
+    <div class="row justify-content-between mb-3">
+        <div class="col">
+            <h4>{{ 'nav.journal'|trans }}</h4>
+        </div>
+        <div class="col-auto d-flex gap-2 align-items-center">
+            <select class="form-select form-select-sm" style="width:6rem"
+                    data-booking-journal-target="yearSelect"
+                    data-action="change->booking-journal#yearChange">
+                {% for y in years %}
+                    <option value="{{ y.year }}" {% if y.year == currentYear %}selected{% endif %}>{{ y.year }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-action="click->booking-journal#openOffcanvas"
+                    data-url="{{ path('journal.batch.new') }}"
+                    data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
+                <i class="fas fa-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
+            </button>
+            <a href="{{ path('journal.settings.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.settings.title'|trans }}">
+                <i class="fas fa-cog"></i>
+            </a>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    <div data-booking-journal-target="batchTable">
+        {% include 'BookingJournal/batch_table.html.twig' with {'batches': [], 'year': currentYear, 'page': 1, 'pages': 0} %}
+    </div>
+
+    {# ── Offcanvas for forms ─────────────────────────────── #}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="journalOffcanvas"
+         data-booking-journal-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-booking-journal-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" data-booking-journal-target="offcanvasBody">
+        </div>
+    </div>
+</div>
+{% endblock %}

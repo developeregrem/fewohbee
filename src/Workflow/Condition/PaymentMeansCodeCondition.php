@@ -16,7 +16,7 @@ class PaymentMeansCodeCondition implements WorkflowConditionInterface
 
     public function getLabelKey(): string
     {
-        return 'workflow.condition.payment_means_is';
+        return 'workflow.condition.invoice_payment_means_is';
     }
 
     public function getSupportedEntityClasses(): array
@@ -35,7 +35,7 @@ class PaymentMeansCodeCondition implements WorkflowConditionInterface
             [
                 'key' => 'paymentMeansCode',
                 'type' => 'select',
-                'label' => 'workflow.condition.payment_means_is',
+                'label' => 'workflow.condition.invoice_payment_means_is',
                 'options' => $options,
             ],
         ];

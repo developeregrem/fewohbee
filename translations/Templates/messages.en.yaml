@@ -1,4 +1,4 @@
-TEMPLATE_CASHJOURNAL_PDF: PDF Cash Journal
+TEMPLATE_CASHJOURNAL_PDF: PDF Booking Journal
 TEMPLATE_FILE_PDF: PDF file
 TEMPLATE_GDPR_PDF: PDF for GDPR Export
 TEMPLATE_GENERAL_EMAIL: General Email Template
@@ -117,13 +117,13 @@ templates.preview.date_end: End date
 templates.preview.subsidiary: Subsidiary
 templates.preview.subsidiary.all: All subsidiaries
 templates.preview.occupancy: Occupancy types
-templates.preview.cashjournal.year: Cash year
+templates.preview.cashjournal.year: Journal year
 templates.preview.cashjournal.year.placeholder: e.g. 2026
-templates.preview.cashjournal.year.help: Enter the cash year as number.
-templates.preview.cashjournal.month: Cash month
+templates.preview.cashjournal.year.help: Enter the journal year as number.
+templates.preview.cashjournal.month: Journal month
 templates.preview.cashjournal.month.placeholder: '1-12'
-templates.preview.cashjournal.month.help: Enter the cash month as number from 1 to 12.
-templates.preview.cashjournal.notfound: "Cash journal \"%value%\" not found. Showing sample data."
+templates.preview.cashjournal.month.help: Enter the journal month as number from 1 to 12.
+templates.preview.cashjournal.notfound: "Journal period \"%value%\" not found. Showing sample data."
 templates.preview.gdpr.customer_id: Customer ID
 templates.preview.gdpr.customer_id.placeholder: e.g. 42
 templates.preview.gdpr.customer_id.help: Enter an existing customer ID or leave empty for latest/sample data.
@@ -143,11 +143,11 @@ templates.preview.snippet.invoice_positions: Invoice positions table
 templates.preview.snippet.invoice_appartments: Invoice apartment table
 templates.preview.snippet.operations_period: Report period
 templates.preview.snippet.operations_dayviews: Day overview repeat block
-templates.preview.snippet.cashjournal.month: Journal month
-templates.preview.snippet.cashjournal.year: Journal year
-templates.preview.snippet.cashjournal.cash_start: Opening balance
-templates.preview.snippet.cashjournal.cash_end: Closing balance
-templates.preview.snippet.cashjournal.positions: Journal entries table
+templates.preview.snippet.bookingjournal.month: Journal month
+templates.preview.snippet.bookingjournal.year: Journal year
+templates.preview.snippet.bookingjournal.period: Journal period
+templates.preview.snippet.bookingjournal.entries_count: Number of journal entries
+templates.preview.snippet.bookingjournal.positions: Journal entries table
 templates.preview.snippet.gdpr.general_name: Customer name
 templates.preview.snippet.gdpr.general_birthday: Customer birth date
 templates.preview.snippet.gdpr.general_remark: Customer remark

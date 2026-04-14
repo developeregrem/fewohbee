@@ -30,7 +30,7 @@ class DashboardRedirectController extends AbstractController
             'ROLE_INVOICES' => 'invoices.overview',
             'ROLE_REGISTRATIONBOOK' => 'registrationbook.overview',
             'ROLE_STATISTICS' => 'statistics.utilization',
-            'ROLE_CASHJOURNAL' => 'cashjournal.overview',
+            'ROLE_CASHJOURNAL' => 'journal.overview',
             'ROLE_RESERVATIONS_RO' => 'start',
         ];
 

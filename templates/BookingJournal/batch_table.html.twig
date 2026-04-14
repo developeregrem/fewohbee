@@ -1,0 +1,51 @@
+{% if batches|length > 0 %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead>
+        <tr>
+            <th>{{ 'accounting.journal.batch.month'|trans }}</th>
+            <th class="text-end">{{ 'accounting.journal.cashbook.start'|trans }}</th>
+            <th class="text-end">{{ 'accounting.journal.cashbook.end'|trans }}</th>
+            <th class="text-center">{{ 'accounting.journal.batch.status'|trans }}</th>
+            <th>{{ 'accounting.journal.batch.entries_count'|trans }}</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for batch in batches %}
+            <tr>
+                <td>
+                    <a href="{{ path('journal.batch.entries', {'id': batch.id}) }}">
+                        {{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}
+                    </a>
+                </td>
+                <td class="text-end">{{ batch.cashStart|number_format(2, ',', '.') }}</td>
+                <td class="text-end">{{ batch.cashEnd|number_format(2, ',', '.') }}</td>
+                <td class="text-center">
+                    {% if batch.closed %}
+                        <span class="badge bg-secondary"><i class="fas fa-lock"></i> {{ 'accounting.journal.batch.closed'|trans }}</span>
+                    {% endif %}
+                    {% if batch.exported %}
+                        <span class="badge bg-success"><i class="fas fa-check"></i> {{ 'accounting.journal.batch.exported'|trans }}</span>
+                    {% endif %}
+                    {% if not batch.closed and not batch.exported %}
+                        <span class="badge bg-light text-muted">{{ 'accounting.journal.batch.open'|trans }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ batch.entries|length }}</td>
+                <td>
+                    <a href="{{ path('journal.batch.entries', {'id': batch.id}) }}" title="{{ 'button.details'|trans }}">
+                        <i class="fas fa-list"></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'paginator.html.twig' with { 'url': path('journal.batches', {'year': year}), 'search': '', 'pagination_action': 'click->booking-journal#paginateBatchesAction' } %}
+{% else %}
+<div class="text-center text-muted py-4">
+    {{ 'accounting.journal.batch.empty'|trans }}
+</div>
+{% endif %}
