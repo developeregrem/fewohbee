@@ -22,3 +22,4 @@ framework:
             - '%kernel.project_dir%/translations/ReservationStatus'
             - '%kernel.project_dir%/translations/Housekeeping'
             - '%kernel.project_dir%/translations/OnlineBooking'
+            - '%kernel.project_dir%/translations/BookingJournal'

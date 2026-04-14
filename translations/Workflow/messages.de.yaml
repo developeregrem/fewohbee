@@ -47,7 +47,11 @@ workflow:
     recipient_notification: "Benachrichtigungs-E-Mail (%email%)"
     recipient_custom: "Eigene E-Mail-Adresse"
     custom_recipient: "Eigene E-Mail-Adresse"
-    cash_journal_remark: "Bemerkung (optional)"
+    debit_account: "Sollkonto"
+    debit_account_help: "Konto, das belastet wird (z.B. Kasse, Bank)"
+    fallback_credit_account: "Habenkonto (Fallback)"
+    fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
+    booking_entry_remark: "Bemerkung (optional)"
 
   # Trigger labels
   trigger:
@@ -70,14 +74,14 @@ workflow:
     reservation_status_is: "Reservierungsstatus ist"
     reservation_has_booker_email: "Bucher hat eine E-Mail-Adresse"
     invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
-    payment_means_is: "Zahlungsmethode ist"
+    invoice_payment_means_is: "Zahlungsmethode ist"
 
   # Action labels
   action:
     send_template_email: "E-Mail anhand eines Templates versenden"
     send_general_email: "Allgemeine E-Mail anhand eines Templates versenden"
     send_notification_email: "Benachrichtigungs-E-Mail senden"
-    create_cash_journal_entry: "Kassenbucheintrag erstellen"
+    create_booking_entry: "Buchungseintrag erstellen"
 
   # Preview (dry run)
   preview:
@@ -130,7 +134,8 @@ workflow:
     skipped_unsupported_entity: "Übersprungen: nicht unterstützter Datensatztyp"
     notification_online_booking_sent: "Online-Buchungs-Benachrichtigung an %recipient% gesendet (%count% Reservierung(en))"
     notification_calendar_import_sent: "Kalenderimport-Benachrichtigung an %recipient% gesendet"
-    cash_journal_entry_created: "Kassenbucheintrag für Rechnung %number% erstellt (Belegnr. %doc%)"
+    booking_entries_created: "%count% Buchungseinträge für Rechnung %number% erstellt"
+    skipped_no_amounts: "Übersprungen: Rechnung enthält keine buchbaren Beträge"
 
   error:
     name_required: "Bitte gib eine Bezeichnung ein."

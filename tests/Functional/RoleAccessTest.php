@@ -121,7 +121,7 @@ final class RoleAccessTest extends WebTestCase
         yield 'invoices' => [['ROLE_INVOICES'], 'invoices.overview'];
         yield 'registrationbook' => [['ROLE_REGISTRATIONBOOK'], 'registrationbook.overview'];
         yield 'statistics' => [['ROLE_STATISTICS'], 'statistics.utilization'];
-        yield 'cashjournal' => [['ROLE_CASHJOURNAL'], 'cashjournal.overview'];
+        yield 'cashjournal' => [['ROLE_CASHJOURNAL'], 'journal.overview'];
         yield 'reservations ro' => [['ROLE_RESERVATIONS_RO'], 'start'];
         yield 'admin' => [['ROLE_ADMIN'], 'start'];
         yield 'multiple roles order' => [['ROLE_INVOICES', 'ROLE_CUSTOMERS'], 'customers.overview'];
@@ -140,7 +140,7 @@ final class RoleAccessTest extends WebTestCase
         yield 'invoices' => ['ROLE_INVOICES', '/invoices/'];
         yield 'registrationbook' => ['ROLE_REGISTRATIONBOOK', '/registrationbook/'];
         yield 'statistics' => ['ROLE_STATISTICS', '/statistics/utilization'];
-        yield 'cashjournal' => ['ROLE_CASHJOURNAL', '/cashjournal/'];
+        yield 'cashjournal' => ['ROLE_CASHJOURNAL', '/journal'];
         yield 'admin' => ['ROLE_ADMIN', '/settings/users'];
     }
 
@@ -151,7 +151,7 @@ final class RoleAccessTest extends WebTestCase
     {
         yield 'invoices user on reservations' => ['ROLE_INVOICES', '/reservation/'];
         yield 'reservations ro user on invoices' => ['ROLE_RESERVATIONS_RO', '/invoices/'];
-        yield 'customers user on cashjournal' => ['ROLE_CUSTOMERS', '/cashjournal/'];
+        yield 'customers user on journal' => ['ROLE_CUSTOMERS', '/journal'];
         yield 'cashjournal user on customers' => ['ROLE_CASHJOURNAL', '/customers/'];
     }
 }

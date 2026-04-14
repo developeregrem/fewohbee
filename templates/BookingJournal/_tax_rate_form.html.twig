@@ -1,0 +1,15 @@
+{{ form_start(form) }}
+    {{ form_row(form.name) }}
+    {{ form_row(form.rate) }}
+    {{ form_row(form.datevBuKey) }}
+    {{ form_row(form.validFrom) }}
+    {{ form_row(form.validTo) }}
+    {{ form_row(form.revenueAccount) }}
+    {{ form_row(form.isDefault) }}
+    {{ form_row(form.sortOrder) }}
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+        </button>
+    </div>
+{{ form_end(form) }}

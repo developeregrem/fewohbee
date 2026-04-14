@@ -350,6 +350,14 @@
                 <source>nav.cashjournal</source>
                 <target>Kassenbuch</target>
             </trans-unit>
+            <trans-unit id="nav.accounting">
+                <source>nav.accounting</source>
+                <target>Buchhaltung</target>
+            </trans-unit>
+            <trans-unit id="nav.journal">
+                <source>nav.journal</source>
+                <target>Buchungsjournal</target>
+            </trans-unit>
             <trans-unit id="flash.access.denied">
                 <source>flash.access.denied</source>
                 <target>Zugriff verweigert.</target>

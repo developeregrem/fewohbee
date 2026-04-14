@@ -140,7 +140,7 @@
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.year">
                 <source>templates.preview.cashjournal.year</source>
-                <target>Kassenjahr</target>
+                <target>Jahr</target>
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.year.placeholder">
                 <source>templates.preview.cashjournal.year.placeholder</source>
@@ -148,11 +148,11 @@
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.year.help">
                 <source>templates.preview.cashjournal.year.help</source>
-                <target>Kassenjahr numerisch eingeben.</target>
+                <target>Jahr numerisch eingeben.</target>
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.month">
                 <source>templates.preview.cashjournal.month</source>
-                <target>Kassenmonat</target>
+                <target>Monat</target>
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.month.placeholder">
                 <source>templates.preview.cashjournal.month.placeholder</source>
@@ -160,11 +160,11 @@
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.month.help">
                 <source>templates.preview.cashjournal.month.help</source>
-                <target>Kassenmonat numerisch von 1 bis 12 eingeben.</target>
+                <target>Monat numerisch von 1 bis 12 eingeben.</target>
             </trans-unit>
             <trans-unit id="templates.preview.cashjournal.notfound">
                 <source>templates.preview.cashjournal.notfound</source>
-                <target>Kassenblatt "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
+                <target>Buchungsperiode "%value%" nicht gefunden. Es werden Beispieldaten angezeigt.</target>
             </trans-unit>
             <trans-unit id="templates.preview.gdpr.customer_id">
                 <source>templates.preview.gdpr.customer_id</source>
@@ -242,25 +242,25 @@
                 <source>templates.preview.snippet.operations_dayviews</source>
                 <target>Tagesübersicht Wiederholungsblock</target>
             </trans-unit>
-            <trans-unit id="templates.preview.snippet.cashjournal.month">
-                <source>templates.preview.snippet.cashjournal.month</source>
-                <target>Monat des Kassenblatts</target>
+            <trans-unit id="templates.preview.snippet.bookingjournal.month">
+                <source>templates.preview.snippet.bookingjournal.month</source>
+                <target>Journalmonat</target>
             </trans-unit>
-            <trans-unit id="templates.preview.snippet.cashjournal.year">
-                <source>templates.preview.snippet.cashjournal.year</source>
-                <target>Jahr des Kassenblatts</target>
+            <trans-unit id="templates.preview.snippet.bookingjournal.year">
+                <source>templates.preview.snippet.bookingjournal.year</source>
+                <target>Journaljahr</target>
             </trans-unit>
-            <trans-unit id="templates.preview.snippet.cashjournal.cash_start">
-                <source>templates.preview.snippet.cashjournal.cash_start</source>
-                <target>Anfangsbestand</target>
+            <trans-unit id="templates.preview.snippet.bookingjournal.period">
+                <source>templates.preview.snippet.bookingjournal.period</source>
+                <target>Buchungsperiode</target>
             </trans-unit>
-            <trans-unit id="templates.preview.snippet.cashjournal.cash_end">
-                <source>templates.preview.snippet.cashjournal.cash_end</source>
-                <target>Endbestand</target>
+            <trans-unit id="templates.preview.snippet.bookingjournal.entries_count">
+                <source>templates.preview.snippet.bookingjournal.entries_count</source>
+                <target>Anzahl Buchungen</target>
             </trans-unit>
-            <trans-unit id="templates.preview.snippet.cashjournal.positions">
-                <source>templates.preview.snippet.cashjournal.positions</source>
-                <target>Tabelle Kassenblattpositionen</target>
+            <trans-unit id="templates.preview.snippet.bookingjournal.positions">
+                <source>templates.preview.snippet.bookingjournal.positions</source>
+                <target>Tabelle Buchungsjournal</target>
             </trans-unit>
             <trans-unit id="templates.preview.snippet.gdpr.general_name">
                 <source>templates.preview.snippet.gdpr.general_name</source>
@@ -580,7 +580,7 @@
             </trans-unit>
             <trans-unit id="TEMPLATE_CASHJOURNAL_PDF">
                 <source>TEMPLATE_CASHJOURNAL_PDF</source>
-                <target>PDF Kassenblatt</target>
+                <target>PDF Buchungsjournal</target>
             </trans-unit>
             <trans-unit id="TEMPLATE_GDPR_PDF">
                 <source>TEMPLATE_GDPR_PDF</source>
