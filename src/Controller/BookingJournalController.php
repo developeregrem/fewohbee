@@ -10,9 +10,11 @@ use App\Entity\BookingEntry;
 use App\Entity\Template;
 use App\Form\BookingBatchType;
 use App\Form\BookingEntryType;
+use App\Repository\AccountingSettingsRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
 use App\Service\BookingJournalService;
+use App\Service\JournalExport\DatevExportService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -357,6 +359,46 @@ class BookingJournalController extends AbstractController
             $entry->setDebitAccount($category);
             $entry->setCreditAccount($cashAccount);
         }
+    }
+
+    #[Route('/batch/{id}/export/datev', name: 'journal.batch.export.datev', methods: ['GET'])]
+    public function exportDatev(
+        BookingBatch $batch,
+        DatevExportService $datevExport,
+        AccountingSettingsRepository $settingsRepo,
+        \App\Service\AppSettingsService $appSettingsService,
+        EntityManagerInterface $em,
+        Request $request,
+    ): Response {
+        $settings = $settingsRepo->findSingleton();
+
+        if (null === $settings) {
+            $this->addFlash('warning', 'accounting.journal.export.no_settings');
+
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId()]);
+        }
+
+        $warnings = $datevExport->validateWithSettings($batch, $settings);
+
+        if (count($warnings) > 0 && !$request->query->getBoolean('force')) {
+            $this->addFlash('datev_warnings', implode('||', $warnings));
+
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId()]);
+        }
+
+        $currency = $appSettingsService->getSettings()->getCurrency();
+        $csv = $datevExport->export($batch, $settings, $currency);
+
+        $batch->setIsExported(true);
+        $em->flush();
+
+        $filename = sprintf('EXTF_Buchungsstapel_%d_%02d.csv', $batch->getYear(), $batch->getMonth());
+
+        $response = new Response($csv);
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
+
+        return $response;
     }
 
     #[Route('/batch/{id:batch}/export/pdf/{templateId:template.id}', name: 'journal.batch.export.pdf', methods: ['GET'])]

@@ -8,7 +8,7 @@ accounting.settings.flash.preset_loaded: "Preset %preset% loaded: %accounts% acc
 
 # Preset
 accounting.settings.preset.title: Chart of Accounts
-accounting.settings.preset.help: "Select a country-specific chart of accounts. Missing accounts and tax rates will be created automatically."
+accounting.settings.preset.help: "Select a preset with typical starting values for Germany, Austria, or Switzerland. Missing accounts and tax rates will be added automatically; all values can then be adjusted freely and extended with additional country-specific settings if needed."
 accounting.settings.preset.label: Preset
 accounting.settings.preset.load: Load Preset
 accounting.settings.preset.confirm: "Loading a preset will add missing accounts and tax rates. Existing entries will not be changed. Continue?"
@@ -113,6 +113,15 @@ accounting.journal.cashbook.category: Counter account
 
 # Journal - Export
 accounting.journal.export: Export
+accounting.journal.export.datev: DATEV Booking Stack (CSV)
+accounting.journal.export.no_settings: "Please configure the DATEV export settings first."
+accounting.journal.export.warn_intro: "The following entries are incomplete. Export is still possible – corrections can be made here or later in DATEV."
+accounting.journal.export.force: "Export anyway"
+accounting.journal.export.warn.missing_advisor_number: "advisor number is missing in journal settings."
+accounting.journal.export.warn.missing_client_number: "client number is missing in journal settings."
+accounting.journal.export.warn.no_debit: "Entry #%doc%: missing debit account."
+accounting.journal.export.warn.no_credit: "Entry #%doc%: missing credit account."
+accounting.journal.export.warn.no_bukey: "Entry #%doc%: tax rate \"%taxrate%\" has no DATEV BU key."
 
 # Journal - Entries
 accounting.journal.entry.add: Add Entry
