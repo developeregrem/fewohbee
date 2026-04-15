@@ -1531,7 +1531,24 @@ export default class extends Controller {
                 Underline,
                 TemplateLink.configure({ openOnClick: false }),
                 ResizableImage,
-                TextStyle,
+                TextStyle.extend({
+                    parseHTML() {
+                        return [{ tag: 'span', getAttrs: (el) => {
+                            if (el.hasAttribute('style') || el.hasAttribute('class')) return {};
+                            return false;
+                        }}];
+                    },
+                    addAttributes() {
+                        return {
+                            ...this.parent?.(),
+                            class: {
+                                default: null,
+                                parseHTML: (el) => el.getAttribute('class') || null,
+                                renderHTML: (attrs) => attrs.class ? { class: attrs.class } : {},
+                            },
+                        };
+                    },
+                }),
                 TemplateControlAttributes,
                 TextAlign.configure({ types: ['heading', 'paragraph', 'div'] }),
                 FontFamily.configure({ types: ['textStyle'] }),
