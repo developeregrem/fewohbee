@@ -318,9 +318,17 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $start = $request->request->get('from');
-        $startDate = new \DateTime($start);
+        $startDate = new \DateTime($start);        
         $end = $request->request->get('end');
         $endDate = new \DateTime($end);
+
+        // if start is greater than end -> swap
+        if ($startDate > $endDate) {
+            $tmp = $startDate;
+            $startDate = $endDate;
+            $endDate = $tmp;
+        }
+
         $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -342,6 +350,13 @@ class ReservationServiceController extends AbstractController
         $end = $request->request->get('end');
         $endDate = new \DateTime($end);
 
+        // if start is greater than end -> swap
+        if ($startDate > $endDate) {
+            $tmp = $startDate;
+            $startDate = $endDate;
+            $endDate = $tmp;
+        }
+
         $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
 
@@ -360,10 +375,15 @@ class ReservationServiceController extends AbstractController
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         if (null != $request->request->get('appartmentid')) {
+            $from = $request->request->get('from');
+            $end = $request->request->get('end');
+            if ($from > $end) {
+                [$from, $end] = [$end, $from];
+            }
             $newReservationsInformationArray[] = new ReservationObject(
                 $request->request->get('appartmentid'),
-                $request->request->get('from'),
-                $request->request->get('end'),
+                $from,
+                $end,
                 $request->request->get('status'),
                 $request->request->get('persons')
             );
