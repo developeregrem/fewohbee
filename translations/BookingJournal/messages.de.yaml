@@ -3,16 +3,16 @@ accounting.settings.title: Buchungsjournal Einstellungen
 accounting.settings.back_to_journal: Zurück zum Journal
 accounting.settings.back: Zurück zu Einstellungen
 accounting.settings.flash.saved: Einstellungen erfolgreich gespeichert.
-accounting.settings.flash.preset_invalid: Ungültiges Preset ausgewählt.
-accounting.settings.flash.preset_loaded: "Preset %preset% geladen: %accounts% Konten, %taxRates% Steuersätze, %workflows% Workflows angelegt."
+accounting.settings.flash.preset_invalid: Ungültige Voreinstellung ausgewählt.
+accounting.settings.flash.preset_loaded: "Voreinstellung %preset% geladen: %accounts% Konten, %taxRates% Steuersätze, %workflows% Workflows angelegt."
 
 # Preset
 accounting.settings.preset.title: Kontenrahmen
-accounting.settings.preset.help: "Wählen Sie einen länderspezifischen Kontenrahmen. Fehlende Konten und Steuersätze werden automatisch angelegt."
-accounting.settings.preset.label: Preset
-accounting.settings.preset.load: Preset laden
-accounting.settings.preset.confirm: "Das Laden eines Presets fügt fehlende Konten und Steuersätze hinzu. Bestehende Einträge werden nicht verändert. Fortfahren?"
-accounting.settings.preset.current: "Aktives Preset: %preset%"
+accounting.settings.preset.help: "Wählen Sie eine Voreinstellung mit typischen Ausgangswerten für Deutschland, Österreich oder die Schweiz. Fehlende Konten und Steuersätze werden ergänzt; alle Werte können anschließend frei angepasst und bei Bedarf um weitere länderspezifische Einstellungen ergänzt werden."
+accounting.settings.preset.label: Voreinstellung
+accounting.settings.preset.load: Voreinstellung laden
+accounting.settings.preset.confirm: "Das Laden einer Voreinstellung fügt fehlende Konten und Steuersätze hinzu. Bestehende Einträge werden nicht verändert. Fortfahren?"
+accounting.settings.preset.current: "Aktive Voreinstellung: %preset%"
 accounting.settings.preset.seed_workflows: Beispiel-Workflows anlegen
 accounting.settings.preset.seed_workflows_help: "Erstellt vorkonfigurierte Workflows für automatische Buchungen bei Rechnungszahlung (Bar, Überweisung, Karte). Bereits vorhandene Preset-Workflows werden nicht erneut angelegt."
 accounting.settings.preset.skr03: SKR03 (Deutschland)
@@ -43,7 +43,7 @@ accounting.accounts.cash: Kasse
 accounting.accounts.is_cash: Dies ist das Kassenkonto
 accounting.accounts.sort_order: Sortierung
 accounting.accounts.system_locked: Systemkonto (kann nicht gelöscht werden)
-accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie ein Preset um zu starten.
+accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
 accounting.accounts.delete.ask: Soll dieses Konto wirklich gelöscht werden?
 accounting.accounts.flash.created: Konto erfolgreich angelegt.
 accounting.accounts.flash.updated: Konto erfolgreich aktualisiert.
@@ -73,7 +73,7 @@ accounting.taxrates.revenue_account.help: "Wird bei automatischen Buchungen als 
 accounting.taxrates.is_default: Standard-Steuersatz
 accounting.taxrates.default: Standard
 accounting.taxrates.always_valid: Unbegrenzt
-accounting.taxrates.empty: Keine Steuersätze konfiguriert. Laden Sie ein Preset um zu starten.
+accounting.taxrates.empty: Keine Steuersätze konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
 accounting.taxrates.delete.ask: Soll dieser Steuersatz wirklich gelöscht werden?
 accounting.taxrates.flash.created: Steuersatz erfolgreich angelegt.
 accounting.taxrates.flash.updated: Steuersatz erfolgreich aktualisiert.
@@ -113,6 +113,15 @@ accounting.journal.cashbook.category: Gegenkonto
 
 # Journal - Export
 accounting.journal.export: Export
+accounting.journal.export.datev: DATEV Buchungsstapel (CSV)
+accounting.journal.export.no_settings: "Bitte zuerst die DATEV-Export-Einstellungen konfigurieren."
+accounting.journal.export.warn_intro: "Folgende Einträge sind unvollständig. Der Export ist trotzdem möglich – die Korrekturen können hier oder nachträglich in DATEV vorgenommen werden."
+accounting.journal.export.force: "Trotzdem exportieren"
+accounting.journal.export.warn.missing_advisor_number: "Beraternummer fehlt in den Journal-Einstellungen."
+accounting.journal.export.warn.missing_client_number: "Mandantennummer fehlt in den Journal-Einstellungen."
+accounting.journal.export.warn.no_debit: "Buchung #%doc%: Sollkonto fehlt."
+accounting.journal.export.warn.no_credit: "Buchung #%doc%: Habenkonto fehlt."
+accounting.journal.export.warn.no_bukey: "Buchung #%doc%: Steuersatz \"%taxrate%\" hat keinen DATEV BU-Schlüssel."
 
 # Journal - Entries
 accounting.journal.entry.add: Buchung hinzufügen

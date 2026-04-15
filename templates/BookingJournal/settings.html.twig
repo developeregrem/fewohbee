@@ -6,11 +6,13 @@
 
 {% block content %}
 <div class="container" data-controller="journal-settings">
-    <div class="row mb-3">
+    <div class="row">
         <div class="col">
-            <a href="{{ path('journal.overview') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> {{ 'accounting.settings.back_to_journal'|trans }}
-            </a>
+            <ul class="pagination me-auto">
+            <li class="page-item">
+                <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
+            </li>
+        </ul>
         </div>
     </div>
 
