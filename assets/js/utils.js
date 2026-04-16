@@ -22,16 +22,124 @@ export function updatePDFExportLinks(templateId) {
 }
 
 /**
- * Creates a confirmation popover (yes/no) when clicking on an element which has the data-popover="delete" attribute assigned
+ * Wait until the document has finished parsing (DOMContentLoaded).
  */
-export function enableDeletePopover({ onSuccess, root = document } = {}) {
-    if (!window.bootstrap || !window.bootstrap.Tooltip || !window.bootstrap.Popover) {
+function _whenDomReady() {
+    if (document.readyState !== 'loading') {
+        return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+        document.addEventListener('DOMContentLoaded', () => resolve(), { once: true });
+    });
+}
+
+/**
+ * Polls for Bootstrap Popover/Tooltip availability. Resolves to true if available, false on timeout.
+ */
+function _whenBootstrapReady(maxAttempts = 30, intervalMs = 50) {
+    return new Promise((resolve) => {
+        let attempt = 0;
+        const check = () => {
+            if (window.bootstrap && window.bootstrap.Popover && window.bootstrap.Tooltip) {
+                resolve(true);
+                return;
+            }
+            if (++attempt >= maxAttempts) {
+                resolve(false);
+                return;
+            }
+            setTimeout(check, intervalMs);
+        };
+        check();
+    });
+}
+
+/**
+ * Forces Font Awesome (SVG/JS mode) to convert all pending <i> icons to <svg> now
+ * and waits for completion. No-op if FA is absent or in webfont mode.
+ */
+async function _ensureFontAwesomeRendered() {
+    const fa = window.FontAwesome;
+    if (!fa || !fa.dom || typeof fa.dom.i2svg !== 'function') {
         return;
     }
+    try {
+        await fa.dom.i2svg();
+    } catch {
+        /* silent */
+    }
+}
+
+/**
+ * Resolves once the DOM is parsed, Bootstrap is available, and Font Awesome
+ * has replaced all queued <i> icons with <svg>. Callers should await this
+ * before initializing Bootstrap components that target FA icons.
+ */
+export async function whenBootstrapAndIconsReady() {
+    await _whenDomReady();
+    const bootstrapReady = await _whenBootstrapReady();
+    if (!bootstrapReady) {
+        return false;
+    }
+    await _ensureFontAwesomeRendered();
+    return true;
+}
+
+/**
+ * Extend the Bootstrap Tooltip/Popover sanitizer allow-list once so that
+ * the delete popover form content survives sanitization.
+ */
+let _allowListPatched = false;
+function _patchTooltipAllowList() {
+    if (_allowListPatched || !window.bootstrap?.Tooltip?.Default?.allowList) {
+        return;
+    }
+    const allowList = window.bootstrap.Tooltip.Default.allowList;
+    allowList.form = ['action'];
+    allowList.input = ['type', 'name', 'value'];
+    _allowListPatched = true;
+}
+
+/**
+ * Initialize Bootstrap tooltips on all `[data-bs-toggle="tooltip"]` elements
+ * within the given root element. Waits for Bootstrap and Font Awesome.
+ * Returns a Promise that resolves to the array of created Tooltip instances.
+ */
+export async function enableTooltips(root = document) {
+    const ready = await whenBootstrapAndIconsReady();
+    if (!ready) return [];
+    const rootEl = root?.querySelectorAll ? root : document;
+    return [...rootEl.querySelectorAll('[data-bs-toggle="tooltip"]')]
+        .map((el) => window.bootstrap.Tooltip.getOrCreateInstance(el));
+}
+
+/**
+ * Dispose all Bootstrap tooltips previously created within the given root.
+ */
+export function disposeTooltips(root = document) {
+    const rootEl = root?.querySelectorAll ? root : document;
+    rootEl.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+        const instance = window.bootstrap?.Tooltip?.getInstance?.(el);
+        if (instance) instance.dispose();
+    });
+}
+
+/**
+ * Creates a confirmation popover (yes/no) when clicking on an element which has the
+ * data-popover="delete" attribute assigned. Internally waits for Bootstrap and Font
+ * Awesome to be ready, so callers do not need to worry about load timing.
+ */
+export function enableDeletePopover({ onSuccess, root = document } = {}) {
+    whenBootstrapAndIconsReady().then((ready) => {
+        if (ready) {
+            _enableDeletePopoverNow({ onSuccess, root });
+        }
+    });
+}
+
+function _enableDeletePopoverNow({ onSuccess, root }) {
+    _patchTooltipAllowList();
     const doRequestDelete = window.HttpHelper?.request || null;
-    const myDefaultAllowList = window.bootstrap.Tooltip.Default.allowList;
-    myDefaultAllowList.form = ['action'];
-    myDefaultAllowList.input = ['type', 'name', 'value'];
 
     const rootEl = root?.querySelectorAll ? root : document;
     const popoverTriggerList = [];

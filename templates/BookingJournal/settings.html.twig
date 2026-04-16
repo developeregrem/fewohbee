@@ -110,12 +110,13 @@
                                     {% set id = account.id %}
                                     {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
                                     {% use "common/delete_popover.html.twig" %}
-                                    <a href="#" title="{{ 'button.delete'|trans }}">
-                                        <i class="fas fa-trash-alt"
-                                           data-popover="delete"
-                                           data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
-                                           data-bs-content='{{ block('deletePopoverContent') }}'></i>
-                                    </a>
+                                    <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                            title="{{ 'button.delete'|trans }}"
+                                            data-popover="delete"
+                                            data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'>
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
                                 {% else %}
                                     <span class="text-muted ms-2" title="{{ 'accounting.accounts.system_locked'|trans }}">
                                         <i class="fas fa-lock"></i>
@@ -197,12 +198,13 @@
                                 {% set id = rate.id %}
                                 {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
                                 {% use "common/delete_popover.html.twig" %}
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i class="fas fa-trash-alt"
-                                       data-popover="delete"
-                                       data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
-                                       data-bs-content='{{ block('deletePopoverContent') }}'></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        title="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             </td>
                         </tr>
                     {% else %}

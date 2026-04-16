@@ -163,12 +163,13 @@
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
                                 {% use "common/delete_popover.html.twig" %}
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i class="fas fa-trash-alt"
-                                       data-popover="delete"
-                                       data-title="{{ 'accounting.journal.entry.delete_ask'|trans }}"
-                                       data-bs-content='{{ block('deletePopoverContent') }}'></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        title="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'accounting.journal.entry.delete_ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             {% endif %}
                         </td>
                     </tr>
@@ -218,12 +219,13 @@
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
                                 {% use "common/delete_popover.html.twig" %}
-                                <a href="#" title="{{ 'button.delete'|trans }}">
-                                    <i class="fas fa-trash-alt"
-                                       data-popover="delete"
-                                       data-title="{{ 'accounting.journal.entry.delete_ask'|trans }}"
-                                       data-bs-content='{{ block('deletePopoverContent') }}'></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        title="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'accounting.journal.entry.delete_ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                             {% endif %}
                         </td>
                     </tr>
