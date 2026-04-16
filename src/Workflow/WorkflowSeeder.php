@@ -25,22 +25,24 @@ class WorkflowSeeder
 
     public function seedInternalWorkflows(): void
     {
-        $this->createOrUpdateSystem(
+        $this->createOrUpdate(
             systemCode: 'notify_online_booking',
             name: 'workflow.system.notify_online_booking.name',
             description: 'workflow.system.notify_online_booking.description',
             triggerType: 'online_booking.created',
             actionType: 'send_notification_email',
             defaultEnabled: true,
+            isSystem: true,
         );
 
-        $this->createOrUpdateSystem(
+        $this->createOrUpdate(
             systemCode: 'notify_calendar_import',
             name: 'workflow.system.notify_calendar_import.name',
             description: 'workflow.system.notify_calendar_import.description',
             triggerType: 'calendar_import.created',
             actionType: 'send_notification_email',
             defaultEnabled: true,
+            isSystem: true,
         );
 
         $this->em->flush();
@@ -48,7 +50,7 @@ class WorkflowSeeder
 
     public function seedExampleWorkflows(): void
     {
-        $this->createOrUpdateSystem(
+        $this->createOrUpdate(
             systemCode: 'example_booking_confirmation',
             name: 'workflow.system.example_booking_confirmation.name',
             description: 'workflow.system.example_booking_confirmation.description',
@@ -57,9 +59,10 @@ class WorkflowSeeder
             defaultEnabled: false,
             conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
             actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
+            isSystem: false,
         );
 
-        $this->createOrUpdateSystem(
+        $this->createOrUpdate(
             systemCode: 'example_arrival_reminder',
             name: 'workflow.system.example_arrival_reminder.name',
             description: 'workflow.system.example_arrival_reminder.description',
@@ -69,9 +72,10 @@ class WorkflowSeeder
             conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
             triggerConfig: ['days' => 3],
             actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
+            isSystem: false,
         );
 
-        $this->createOrUpdateSystem(
+        $this->createOrUpdate(
             systemCode: 'example_invoice_reminder',
             name: 'workflow.system.example_invoice_reminder.name',
             description: 'workflow.system.example_invoice_reminder.description',
@@ -81,6 +85,7 @@ class WorkflowSeeder
             conditions: [['type' => 'invoice.has_email', 'config' => []]],
             triggerConfig: ['days' => 14],
             actionConfig: ['recipientType' => 'invoice_email', 'templateId' => 0, 'customRecipient' => ''],
+            isSystem: false,
         );
 
         $this->em->flush();
@@ -90,7 +95,7 @@ class WorkflowSeeder
      * Create a system workflow if it does not exist yet, or update its name/description
      * if it already exists. The is_enabled flag is only set on initial creation.
      */
-    private function createOrUpdateSystem(
+    private function createOrUpdate(
         string $systemCode,
         string $name,
         string $description,
@@ -100,6 +105,7 @@ class WorkflowSeeder
         array $conditions = [],
         array $actionConfig = [],
         array $triggerConfig = [],
+        bool $isSystem = true,
     ): void {
         $existing = $this->workflowRepository->findBySystemCode($systemCode);
 

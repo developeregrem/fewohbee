@@ -86,6 +86,13 @@ class AccountingPresetSeeder
             $taxRate->setIsDefault($def['isDefault'] ?? false);
             $taxRate->setSortOrder($i * 10);
 
+            if (!empty($def['revenueAccountNumber'])) {
+                $account = $this->accountRepo->findByNumber($def['revenueAccountNumber']);
+                if ($account !== null) {
+                    $taxRate->setRevenueAccount($account);
+                }
+            }
+
             $this->em->persist($taxRate);
             ++$created;
         }
@@ -110,12 +117,13 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return array<int, array{nameKey: string, rate: float, buKey?: string, isDefault?: bool}>
+     * @return array<int, array{nameKey: string, rate: float, buKey?: string, isDefault?: bool, revenueAccountNumber?: string}>
      */
     private function getTaxRateDefinitions(string $preset): array
     {
         return match ($preset) {
-            AccountingSettings::PRESET_SKR03, AccountingSettings::PRESET_SKR04 => $this->getDeTaxRates(),
+            AccountingSettings::PRESET_SKR03 => $this->getSkr03TaxRates(),
+            AccountingSettings::PRESET_SKR04 => $this->getSkr04TaxRates(),
             AccountingSettings::PRESET_EKR_AT => $this->getAtTaxRates(),
             AccountingSettings::PRESET_KMU_CH => $this->getChTaxRates(),
             default => [],
@@ -333,32 +341,41 @@ class AccountingPresetSeeder
 
     // ── Tax rates ────────────────────────────────────────────────────
 
-    private function getDeTaxRates(): array
+    private function getSkr03TaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.de_7', 'rate' => 7.00, 'buKey' => '2', 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.de_19', 'rate' => 19.00, 'buKey' => '3', 'isDefault' => true],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null,  'isDefault' => false, 'revenueAccountNumber' => '8100'],
+            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00, 'buKey' => '2',   'isDefault' => false, 'revenueAccountNumber' => '8300'],
+            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'buKey' => '3',  'isDefault' => true,  'revenueAccountNumber' => '8400'],
+        ];
+    }
+
+    private function getSkr04TaxRates(): array
+    {
+        return [
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null,  'isDefault' => false, 'revenueAccountNumber' => '4100'],
+            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00, 'buKey' => '2',   'isDefault' => false, 'revenueAccountNumber' => '4300'],
+            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'buKey' => '3',  'isDefault' => true,  'revenueAccountNumber' => '4400'],
         ];
     }
 
     private function getAtTaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.at_10', 'rate' => 10.00, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.at_13', 'rate' => 13.00, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.at_20', 'rate' => 20.00, 'buKey' => null, 'isDefault' => true],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00,  'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4090'],
+            ['nameKey' => 'preset.taxrate.at_10',    'rate' => 10.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4000'],
+            ['nameKey' => 'preset.taxrate.at_13',    'rate' => 13.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4010'],
+            ['nameKey' => 'preset.taxrate.at_20',    'rate' => 20.00, 'buKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '4020'],
         ];
     }
 
     private function getChTaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.ch_2_6', 'rate' => 2.60, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.ch_3_8', 'rate' => 3.80, 'buKey' => null, 'isDefault' => false],
-            ['nameKey' => 'preset.taxrate.ch_8_1', 'rate' => 8.10, 'buKey' => null, 'isDefault' => true],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3000'],
+            ['nameKey' => 'preset.taxrate.ch_2_6',   'rate' => 2.60, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
+            ['nameKey' => 'preset.taxrate.ch_3_8',   'rate' => 3.80, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
+            ['nameKey' => 'preset.taxrate.ch_8_1',   'rate' => 8.10, 'buKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '3400'],
         ];
     }
 }
