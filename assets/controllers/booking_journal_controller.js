@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { enableDeletePopover } from '../js/utils.js';
+import { enableDeletePopover, enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -8,21 +8,13 @@ export default class extends Controller {
     static values = { batchesUrl: String };
 
     connect() {
-        this._waitForBootstrapAndInit();
+        enableDeletePopover({ root: this.element });
+        enableTooltips(this.element);
         this._loadBatches();
     }
 
     disconnect() {
-        this._disposeTooltips();
-    }
-
-    _waitForBootstrapAndInit(attempt = 0) {
-        if ((!window.bootstrap || !window.bootstrap.Popover) && attempt < 20) {
-            setTimeout(() => this._waitForBootstrapAndInit(attempt + 1), 100);
-            return;
-        }
-        enableDeletePopover();
-        this._initTooltips();
+        disposeTooltips(this.element);
     }
 
     yearChange() {
@@ -74,12 +66,4 @@ export default class extends Controller {
         }
     }
 
-    _initTooltips() {
-        this._tooltips = [...this.element.querySelectorAll('[data-bs-toggle="tooltip"]')]
-            .map(el => new window.bootstrap.Tooltip(el));
-    }
-
-    _disposeTooltips() {
-        (this._tooltips || []).forEach(t => t.dispose());
-    }
 }
