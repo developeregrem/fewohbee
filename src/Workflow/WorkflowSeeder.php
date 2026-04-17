@@ -7,6 +7,7 @@ namespace App\Workflow;
 use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Creates or updates system workflows and example workflows.
@@ -20,6 +21,7 @@ class WorkflowSeeder
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly WorkflowRepository $workflowRepository,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -130,8 +132,8 @@ class WorkflowSeeder
         }
 
         $workflow = new Workflow();
-        $workflow->setName($name);
-        $workflow->setDescription($description);
+        $workflow->setName($this->translator->trans($name));
+        $workflow->setDescription($this->translator->trans($description));
         $workflow->setIsSystem($isSystem);
         $workflow->setSystemCode($systemCode);
         $workflow->setTriggerType($triggerType);
