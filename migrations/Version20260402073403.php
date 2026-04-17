@@ -42,6 +42,10 @@ final class Version20260402073403 extends AbstractMigration
         $this->addSql('CREATE INDEX idx_reservation_end_date ON reservations (end_date)');
         $this->addSql('CREATE INDEX idx_invoice_date ON invoices (date)');
 
+        // Add buyer VAT ID, buyer reference and customer IBAN to customer_addresses and buyer VAT ID to invoices
+        $this->addSql('ALTER TABLE customer_addresses ADD buyer_vat_id VARCHAR(50) DEFAULT NULL, ADD buyer_reference VARCHAR(100) DEFAULT NULL, ADD customer_iban VARCHAR(50) DEFAULT NULL');
+        $this->addSql('ALTER TABLE invoices ADD buyer_vat_id VARCHAR(50) DEFAULT NULL');
+
     }
 
     public function down(Schema $schema): void
@@ -60,6 +64,9 @@ final class Version20260402073403 extends AbstractMigration
         $this->addSql('DROP INDEX idx_reservation_start_date ON reservations');
         $this->addSql('DROP INDEX idx_reservation_end_date ON reservations');
         $this->addSql('DROP INDEX idx_invoice_date ON invoices');
+
+        $this->addSql('ALTER TABLE customer_addresses DROP buyer_vat_id, DROP buyer_reference, DROP customer_iban');
+        $this->addSql('ALTER TABLE invoices DROP buyer_vat_id');
     }
 
     public function isTransactional(): bool
