@@ -79,6 +79,9 @@ workflow:
     send_general_email: "Send general email using a template"
     send_notification_email: "Send notification email"
     create_booking_entry: "Create booking entry"
+    change_invoice_status: "Change invoice status"
+    change_payment_means: "Change payment method"
+    change_reservation_status: "Change reservation status"
 
   preview:
     title: "Dry Run"
@@ -117,6 +120,9 @@ workflow:
     example_invoice_reminder:
       name: "Example: Payment reminder (14 days after invoice date)"
       description: "Sends a payment reminder 14 days after the invoice date if the invoice is still open."
+    example_invoice_paid_reservation_status:
+      name: "Example: Change reservation status on payment"
+      description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
 
   log:
     condition_not_met: "Condition not met"
@@ -131,6 +137,12 @@ workflow:
     notification_calendar_import_sent: "Calendar import notification sent to %recipient%"
     booking_entries_created: "%count% booking entries created for invoice %number%"
     skipped_no_amounts: "Skipped: invoice contains no bookable amounts"
+    skipped_invalid_config: "Skipped: invalid configuration"
+    skipped_status_not_found: "Skipped: reservation status not found"
+    skipped_no_reservations: "Skipped: invoice has no linked reservations"
+    invoice_status_changed: "Invoice %number% status changed to \"%status%\""
+    payment_means_changed: "Invoice %number% payment method changed to \"%code%\""
+    reservation_status_changed: "%count% reservation(s) status changed to \"%status%\""
 
   error:
     name_required: "Please enter a name."

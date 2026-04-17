@@ -82,6 +82,9 @@ workflow:
     send_general_email: "Allgemeine E-Mail anhand eines Templates versenden"
     send_notification_email: "Benachrichtigungs-E-Mail senden"
     create_booking_entry: "Buchungseintrag erstellen"
+    change_invoice_status: "Rechnungsstatus ändern"
+    change_payment_means: "Zahlungsmethode ändern"
+    change_reservation_status: "Reservierungsstatus ändern"
 
   # Preview (dry run)
   preview:
@@ -122,6 +125,9 @@ workflow:
     example_invoice_reminder:
       name: "Beispiel: Zahlungserinnerung (14 Tage nach Rechnungsdatum)"
       description: "Sendet 14 Tage nach dem Rechnungsdatum eine Zahlungserinnerung, wenn die Rechnung noch offen ist."
+    example_invoice_paid_reservation_status:
+      name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
+      description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
 
   log:
     condition_not_met: "Bedingung nicht erfüllt"
@@ -136,6 +142,12 @@ workflow:
     notification_calendar_import_sent: "Kalenderimport-Benachrichtigung an %recipient% gesendet"
     booking_entries_created: "%count% Buchungseinträge für Rechnung %number% erstellt"
     skipped_no_amounts: "Übersprungen: Rechnung enthält keine buchbaren Beträge"
+    skipped_invalid_config: "Übersprungen: ungültige Konfiguration"
+    skipped_status_not_found: "Übersprungen: Reservierungsstatus nicht gefunden"
+    skipped_no_reservations: "Übersprungen: Rechnung hat keine verknüpften Reservierungen"
+    invoice_status_changed: "Rechnungsstatus von Rechnung %number% auf \"%status%\" geändert"
+    payment_means_changed: "Zahlungsmethode von Rechnung %number% auf \"%code%\" geändert"
+    reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"
 
   error:
     name_required: "Bitte gib eine Bezeichnung ein."

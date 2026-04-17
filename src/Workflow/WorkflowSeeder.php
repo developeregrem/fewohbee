@@ -88,6 +88,18 @@ class WorkflowSeeder
             isSystem: false,
         );
 
+        $this->createOrUpdate(
+            systemCode: 'example_invoice_paid_reservation_status',
+            name: 'workflow.system.example_invoice_paid_reservation_status.name',
+            description: 'workflow.system.example_invoice_paid_reservation_status.description',
+            triggerType: 'invoice.status_changed',
+            actionType: 'change_reservation_status',
+            defaultEnabled: false,
+            conditions: [['type' => 'invoice.status_is', 'config' => ['status' => 2]]],
+            actionConfig: ['statusId' => 0],
+            isSystem: false,
+        );
+
         $this->em->flush();
     }
 
@@ -120,7 +132,7 @@ class WorkflowSeeder
         $workflow = new Workflow();
         $workflow->setName($name);
         $workflow->setDescription($description);
-        $workflow->setIsSystem(true);
+        $workflow->setIsSystem($isSystem);
         $workflow->setSystemCode($systemCode);
         $workflow->setTriggerType($triggerType);
         $workflow->setTriggerConfig($triggerConfig);
