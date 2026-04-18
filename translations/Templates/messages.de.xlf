@@ -18,6 +18,10 @@
                 <source>templates.name</source>
                 <target>Name</target>
             </trans-unit>
+            <trans-unit id="templates.name.email_help">
+                <source>templates.name.email_help</source>
+                <target>Bei automatisch versendeten Nachrichten wird der Name auch als Betreff verwendet. Bitte einen aussagekräftigen Namen wählen.</target>
+            </trans-unit>
             <trans-unit id="templates.flash.create.success">
                 <source>templates.flash.create.success</source>
                 <target>Vorlage erfolgreich angelegt.</target>
