@@ -38,7 +38,7 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
             ],
             'TEMPLATE_CASHJOURNAL_PDF' => [
                 [
-                    'file' => 'kassenblatt.txt'
+                    'file' => 'kassenblatt.html'
                 ],
                 [
                     'file' => 'buchungsjournal.html',
