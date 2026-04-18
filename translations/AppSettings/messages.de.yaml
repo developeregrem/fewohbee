@@ -26,8 +26,6 @@ app_settings:
     notification_email: "Empfänger-E-Mail"
     notification_email_help: "Bleibt das Feld leer, wird die Absenderadresse (<code>FROM_MAIL</code>) als Empfänger verwendet."
     notification_email_placeholder: "z.B. inhaber@pension.de"
-    notify_on_online_booking: "Bei neuer Onlinebuchung benachrichtigen"
-    notify_on_calendar_import: "Bei neuem Kalenderimport benachrichtigen"
   notification_mail:
     online_booking_subject: "Neue Onlinebuchung eingegangen"
     calendar_import_subject: "Neue Buchung via Kalenderimport"

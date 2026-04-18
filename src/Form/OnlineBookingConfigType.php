@@ -12,6 +12,7 @@ use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -27,7 +28,8 @@ class OnlineBookingConfigType extends AbstractType
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly OnlineBookingConfigService $configService
+        private readonly OnlineBookingConfigService $configService,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -257,11 +259,15 @@ class OnlineBookingConfigType extends AbstractType
                 (string) $room->getObject()->getName(),
                 (string) $room->getRoomCategory()?->getName() ?: (string) $room->getDescription()
             );
+            if ($room->isMultipleOccupancy()) {
+                $label .= ' ('.$this->translator->trans('apartment.multiple.occupancy.text').')';
+            }
             $choices[$label] = (int) $room->getId();
         }
 
         return $choices;
     }
+
 
     /**
      * Build status choices used for inquiry and booking status mappings.

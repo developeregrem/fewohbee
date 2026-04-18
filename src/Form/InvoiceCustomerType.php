@@ -55,6 +55,10 @@ class InvoiceCustomerType extends AbstractType
             ->add('email', TextType::class, [
                 'label' => 'customer.email',
             ])
+             ->add('buyerVatId', TextType::class, [
+                'label' => 'customer.buyerVatId',
+                'required' => false,
+            ])
             ->add('cardHolder', TextType::class, [
                 'label' => 'customer.cardHolder.label',
                 'help' => 'customer.cardHolder.hint',

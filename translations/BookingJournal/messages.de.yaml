@@ -1,0 +1,202 @@
+# Buchungsjournal - Einstellungen
+accounting.settings.title: Buchungsjournal Einstellungen
+accounting.settings.back_to_journal: Zurück zum Journal
+accounting.settings.back: Zurück zu Einstellungen
+accounting.settings.flash.saved: Einstellungen erfolgreich gespeichert.
+accounting.settings.flash.preset_invalid: Ungültige Voreinstellung ausgewählt.
+accounting.settings.flash.preset_loaded: "Voreinstellung %preset% geladen: %accounts% Konten, %taxRates% Steuersätze, %workflows% Workflows angelegt."
+
+# Preset
+accounting.settings.preset.title: Kontenrahmen
+accounting.settings.preset.help: "Wählen Sie eine Voreinstellung mit typischen Ausgangswerten für Deutschland, Österreich oder die Schweiz. Fehlende Konten und Steuersätze werden ergänzt; alle Werte können anschließend frei angepasst und bei Bedarf um weitere länderspezifische Einstellungen ergänzt werden."
+accounting.settings.preset.label: Voreinstellung
+accounting.settings.preset.load: Voreinstellung laden
+accounting.settings.preset.confirm: "Das Laden einer Voreinstellung fügt fehlende Konten und Steuersätze hinzu. Bestehende Einträge werden nicht verändert. Fortfahren?"
+accounting.settings.preset.current: "Aktive Voreinstellung: %preset%"
+accounting.settings.preset.seed_workflows: Beispiel-Workflows anlegen
+accounting.settings.preset.seed_workflows_help: "Erstellt vorkonfigurierte Workflows für automatische Buchungen bei Rechnungszahlung (Bar, Überweisung, Karte). Bereits vorhandene Preset-Workflows werden nicht erneut angelegt."
+accounting.settings.preset.skr03: SKR03 (Deutschland)
+accounting.settings.preset.skr04: SKR04 (Deutschland)
+accounting.settings.preset.ekr_at: EKR (Österreich)
+accounting.settings.preset.kmu_ch: KMU (Schweiz)
+
+# DATEV Einstellungen
+accounting.settings.datev.title: DATEV-Export Einstellungen
+accounting.settings.datev.help: "Diese Angaben werden für den DATEV-CSV-Export benötigt. Fragen Sie Ihren Steuerberater nach den korrekten Werten."
+accounting.settings.advisor_number: Beraternummer
+accounting.settings.advisor_number.placeholder: z.B. 29098
+accounting.settings.client_number: Mandantennummer
+accounting.settings.client_number.placeholder: z.B. 55003
+accounting.settings.fiscal_year_start: Wirtschaftsjahr-Beginn (Monat)
+accounting.settings.account_number_length: Sachkontenlänge
+accounting.settings.dictation_code: Diktatkürzel
+
+# Konten
+accounting.accounts.title: Konten
+accounting.accounts.help: "Verwalten Sie hier die Buchungskonten für Soll- und Haben-Buchungen (z.B. Kasse, Bank, Erlöse)."
+accounting.accounts.add: Konto hinzufügen
+accounting.accounts.edit: Konto bearbeiten
+accounting.accounts.number: Konto-Nr.
+accounting.accounts.name: Bezeichnung
+accounting.accounts.type: Typ
+accounting.accounts.cash: Kasse
+accounting.accounts.is_cash: Dies ist das Kassenkonto
+accounting.accounts.sort_order: Sortierung
+accounting.accounts.system_locked: Systemkonto (kann nicht gelöscht werden)
+accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
+accounting.accounts.delete.ask: Soll dieses Konto wirklich gelöscht werden?
+accounting.accounts.flash.created: Konto erfolgreich angelegt.
+accounting.accounts.flash.updated: Konto erfolgreich aktualisiert.
+accounting.accounts.flash.deleted: Konto erfolgreich gelöscht.
+accounting.accounts.flash.cannot_delete_system: Systemkonten können nicht gelöscht werden.
+accounting.accounts.type.asset: Aktiv
+accounting.accounts.type.liability: Passiv
+accounting.accounts.type.revenue: Erlös
+accounting.accounts.type.expense: Aufwand
+
+# Steuersätze
+accounting.taxrates.title: Steuersätze
+accounting.taxrates.help: "Pflegen Sie die Umsatzsteuersätze für die Buchungen. Der DATEV BU-Schlüssel wird beim Export benötigt."
+accounting.taxrates.add: Steuersatz hinzufügen
+accounting.taxrates.edit: Steuersatz bearbeiten
+accounting.taxrates.name_header: Bezeichnung
+accounting.taxrates.name.placeholder: z.B. 19% USt
+accounting.taxrates.rate: Satz
+accounting.taxrates.bukey: DATEV BU-Schlüssel
+accounting.taxrates.bukey.placeholder: z.B. 3
+accounting.taxrates.bukey.help: "DATEV-Buchungsschlüssel. Fragen Sie Ihren Steuerberater nach den korrekten Werten."
+accounting.taxrates.valid: Gültigkeit
+accounting.taxrates.valid_from: Gültig ab
+accounting.taxrates.valid_to: Gültig bis
+accounting.taxrates.revenue_account: Erlöskonto
+accounting.taxrates.revenue_account.help: "Wird bei automatischen Buchungen als Habenkonto für diesen Steuersatz verwendet."
+accounting.taxrates.is_default: Standard-Steuersatz
+accounting.taxrates.default: Standard
+accounting.taxrates.always_valid: Unbegrenzt
+accounting.taxrates.empty: Keine Steuersätze konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
+accounting.taxrates.delete.ask: Soll dieser Steuersatz wirklich gelöscht werden?
+accounting.taxrates.flash.created: Steuersatz erfolgreich angelegt.
+accounting.taxrates.flash.updated: Steuersatz erfolgreich aktualisiert.
+accounting.taxrates.flash.deleted: Steuersatz erfolgreich gelöscht.
+
+# Journal - Batches
+accounting.journal.batch.add: Monat hinzufügen
+accounting.journal.batch.year: Jahr
+accounting.journal.batch.month: Monat
+accounting.journal.batch.status: Status
+accounting.journal.batch.entries_count: Einträge
+accounting.journal.batch.closed: Abgeschlossen
+accounting.journal.batch.exported: Exportiert
+accounting.journal.batch.open: Offen
+accounting.journal.batch.new: Neuen Monat anlegen
+accounting.journal.batch.empty: Noch keine Monate angelegt.
+accounting.journal.batch.close: Monat abschließen
+accounting.journal.batch.reopen: Monat wieder öffnen
+
+# Journal - Filter
+accounting.journal.filter.all: Alle Buchungen
+accounting.journal.filter.cashbook: Kassenbuch-Ansicht
+
+# Journal - Kassenbuch-Spalten
+accounting.journal.cashbook.incomes: Einnahmen
+accounting.journal.cashbook.expenses: Ausgaben
+accounting.journal.cashbook.counter_account: Gegenkto.
+
+# Journal - Kassenbuch-Bestand
+accounting.journal.cashbook.start: Anfangsbestand Kasse
+accounting.journal.cashbook.end: Endbestand Kasse
+accounting.journal.cashbook.start_help: "Bargeldbestand zu Beginn des Monats (nur für die Kassenbuch-Ansicht relevant)."
+
+# Journal - Kassenbuch-Formular
+accounting.journal.cashbook.direction: Art
+accounting.journal.cashbook.category: Gegenkonto
+
+# Journal - Export
+accounting.journal.export: Export
+accounting.journal.export.datev: DATEV Buchungsstapel (CSV)
+accounting.journal.export.no_settings: "Bitte zuerst die DATEV-Export-Einstellungen konfigurieren."
+accounting.journal.export.warn_intro: "Folgende Einträge sind unvollständig. Der Export ist trotzdem möglich – die Korrekturen können hier oder nachträglich in DATEV vorgenommen werden."
+accounting.journal.export.force: "Trotzdem exportieren"
+accounting.journal.export.warn.missing_advisor_number: "Beraternummer fehlt in den Journal-Einstellungen."
+accounting.journal.export.warn.missing_client_number: "Mandantennummer fehlt in den Journal-Einstellungen."
+accounting.journal.export.warn.no_debit: "Buchung #%doc%: Sollkonto fehlt."
+accounting.journal.export.warn.no_credit: "Buchung #%doc%: Habenkonto fehlt."
+accounting.journal.export.warn.no_bukey: "Buchung #%doc%: Steuersatz \"%taxrate%\" hat keinen DATEV BU-Schlüssel."
+
+# Journal - Entries
+accounting.journal.entry.add: Buchung hinzufügen
+accounting.journal.entry.edit: Buchung bearbeiten
+accounting.journal.entry.date: Datum
+accounting.journal.entry.doc_number: Beleg-Nr.
+accounting.journal.entry.amount: Betrag
+accounting.journal.entry.debit: Soll
+accounting.journal.entry.credit: Haben
+accounting.journal.entry.tax_rate: Steuersatz
+accounting.journal.entry.invoice: Rechnungs-Nr.
+accounting.journal.entry.remark: Bemerkung
+accounting.journal.entry.empty: Keine Buchungen vorhanden.
+accounting.journal.entry.delete_ask: Diese Buchung wirklich löschen?
+
+accounting.journal.back: Zurück zum Journal
+
+# Journal - Flash Messages
+accounting.journal.flash.batch_created: Monat erfolgreich angelegt.
+accounting.journal.flash.batch_closed: Monat abgeschlossen.
+accounting.journal.flash.batch_reopened: Monat wieder geöffnet.
+accounting.journal.flash.entry_created: Buchung erfolgreich angelegt.
+accounting.journal.flash.entry_updated: Buchung erfolgreich aktualisiert.
+accounting.journal.flash.entry_deleted: Buchung erfolgreich gelöscht.
+journal.error.journal.closed: Dieser Monat ist abgeschlossen. Änderungen sind nicht möglich.
+
+# Preset Kontonamen
+preset.account.cash: Kasse
+preset.account.cash_at: Kassa
+preset.account.bank: Bank
+preset.account.receivables: Forderungen aus Lieferungen und Leistungen
+preset.account.receivables_credit_card: Forderungen Kreditkartenabrechnung
+preset.account.input_tax: Vorsteuer
+preset.account.input_tax_reduced: Abziehbare Vorsteuer 7%
+preset.account.input_tax_standard: Abziehbare Vorsteuer 19%
+preset.account.vat: Umsatzsteuer
+preset.account.vat_reduced: Umsatzsteuer 7%
+preset.account.vat_standard: Umsatzsteuer 19%
+preset.account.vat_ch: Geschuldete MWST
+preset.account.transit: Durchlaufende Posten
+preset.account.revenue_accommodation: Erlöse 7% USt (Übernachtung)
+preset.account.revenue_accommodation_10: Erlöse Beherbergung 10%
+preset.account.revenue_accommodation_13: Erlöse Beherbergung 13%
+preset.account.revenue_accommodation_ch: Erlöse Beherbergung 3.8%
+preset.account.revenue_standard: Erlöse 19% USt
+preset.account.revenue_standard_ch: Erlöse 8.1% MWST
+preset.account.revenue_20: Erlöse 20% USt
+preset.account.revenue_tax_free: Steuerfreie Erlöse
+preset.account.revenue_deductions: Erlösschmälerungen (Provisionen)
+preset.account.office_supplies: Bürobedarf
+preset.account.other_expenses: Sonstige Aufwendungen
+preset.account.other_operating_expenses: Sonstige betriebliche Aufwendungen
+preset.account.premises: Raumkosten
+preset.account.cleaning: Reinigung
+preset.account.maintenance: Instandhaltung
+preset.account.maintenance_cleaning: Unterhalt/Reinigung
+
+# Preset Steuersatznamen
+preset.taxrate.tax_free: 0% steuerfrei
+preset.taxrate.de_7: 7% USt
+preset.taxrate.de_19: 19% USt
+preset.taxrate.at_10: 10% USt (Beherbergung)
+preset.taxrate.at_13: 13% USt (Beherbergung ab 11/2018)
+preset.taxrate.at_20: 20% USt
+preset.taxrate.ch_2_6: 2.6% MWST (reduziert)
+preset.taxrate.ch_3_8: 3.8% MWST (Beherbergung)
+preset.taxrate.ch_8_1: 8.1% MWST
+
+# Preset Workflow-Namen
+preset.workflow.booking_cash: "Buchung: Barzahlung"
+preset.workflow.booking_cash.desc: "Erstellt automatisch eine Buchung (Soll: Kasse), wenn eine Rechnung bar bezahlt wird."
+preset.workflow.booking_transfer: "Buchung: Überweisung"
+preset.workflow.booking_transfer.desc: "Erstellt automatisch eine Buchung (Soll: Bank), wenn eine Rechnung per Überweisung bezahlt wird."
+preset.workflow.booking_card: "Buchung: Kartenzahlung"
+preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kreditkartenforderungen), wenn eine Rechnung per Karte bezahlt wird."
+
+# Allgemein
+journal.action: Aktion

@@ -1,0 +1,150 @@
+workflow:
+  nav:
+    label: "Automations"
+  page_title: "Automations"
+  page_description: "Define rules that run automatically when certain events occur."
+  new: "New Automation"
+  edit: "Edit Automation"
+  save: "Save Automation"
+  back_to_list: "Back to list"
+  confirm_delete: "Really delete this automation?"
+  delete: "Delete automation"
+
+  section:
+    system: "System Automations"
+    user: "Your Automations"
+
+  empty_state: "No automations yet. Create your first automation!"
+
+  flash:
+    created: "Automation created."
+    updated: "Automation saved."
+    deleted: "Automation deleted."
+    cannot_delete_system: "System automations cannot be deleted."
+
+  form:
+    section_general: "General"
+    section_trigger: "Trigger – When?"
+    section_trigger_desc: "Choose the event that should start this automation."
+    section_condition: "Condition – Only if?"
+    section_condition_desc: "Optional: Add one or more filter conditions (all must be met). Without conditions the automation runs on every trigger."
+    add_condition: "Add condition"
+    remove_condition: "Remove"
+    section_action: "Action – Then?"
+    section_action_desc: "Choose what should happen when the trigger fires."
+    name: "Name"
+    description: "Description"
+    trigger_type: "Trigger"
+    condition_type: "Condition"
+    action_type: "Action"
+    select_trigger: "Select trigger …"
+    select_action: "Select action …"
+    no_condition: "No condition (always run)"
+    template: "Email template"
+    recipient_type: "Recipient"
+    recipient_booker: "Guest / Booker email"
+    recipient_invoice: "Invoice email address"
+    recipient_notification: "Notification email (%email%)"
+    recipient_custom: "Custom email address"
+    custom_recipient: "Custom email address"
+    debit_account: "Debit account"
+    debit_account_help: "Account to be debited (e.g. cash, bank)"
+    fallback_credit_account: "Credit account (fallback)"
+    fallback_credit_account_help: "Used when a tax rate has no revenue account configured"
+    booking_entry_remark: "Remark (optional)"
+
+  trigger:
+    online_booking_created: "New online booking received"
+    calendar_import_created: "New booking via calendar import"
+    reservation_created: "New reservation created (manually)"
+    invoice_created: "New invoice created"
+    invoice_status_changed: "Invoice status changed"
+    reservation_days_before_start: "X days before arrival date"
+    reservation_days_after_end: "X days after departure date"
+    invoice_days_after_date: "X days after invoice date"
+    schedule_monthly: "Monthly on a specific day"
+    days_before: "Days before"
+    days_after: "Days after"
+    day_of_month: "Day of month"
+
+  condition:
+    invoice_status_is: "Invoice status is"
+    reservation_status_is: "Reservation status is"
+    reservation_has_booker_email: "Booker has an email address"
+    invoice_has_email: "Invoice has an email address"
+    invoice_payment_means_is: "Payment method is"
+
+  action:
+    send_template_email: "Send email using a template"
+    send_general_email: "Send general email using a template"
+    send_notification_email: "Send notification email"
+    create_booking_entry: "Create booking entry"
+    change_invoice_status: "Change invoice status"
+    change_payment_means: "Change payment method"
+    change_reservation_status: "Change reservation status"
+
+  preview:
+    title: "Dry Run"
+    description: "Shows which records would currently be affected by this trigger and condition – without executing any action."
+    run: "Run dry run"
+    loading: "Loading …"
+    empty: "No matching records found."
+    count_one: "%count% record found"
+    count: "%count% records found"
+
+  logs:
+    title: "Execution Log"
+    loading: "Loading …"
+    empty: "No executions logged yet."
+    date: "Date"
+    status: "Status"
+    entity: "Record"
+    message: "Message"
+    status_success: "Success"
+    status_skipped: "Skipped"
+    status_error: "Error"
+
+  system:
+    notify_online_booking:
+      name: "Email notification for online bookings"
+      description: "Sends a notification email when a new online booking is received."
+    notify_calendar_import:
+      name: "Email notification for calendar import bookings"
+      description: "Sends a notification email when a new booking is created via calendar import."
+    example_booking_confirmation:
+      name: "Example: Booking confirmation by email"
+      description: "Sends a booking confirmation to the guest for every new reservation (email template required)."
+    example_arrival_reminder:
+      name: "Example: Arrival reminder (3 days before)"
+      description: "Sends a reminder email to the guest 3 days before the arrival date."
+    example_invoice_reminder:
+      name: "Example: Payment reminder (14 days after invoice date)"
+      description: "Sends a payment reminder 14 days after the invoice date if the invoice is still open."
+    example_invoice_paid_reservation_status:
+      name: "Example: Change reservation status on payment"
+      description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
+
+  log:
+    condition_not_met: "Condition not met"
+    skipped_no_template: "Skipped: no template configured"
+    skipped_template_not_found: "Skipped: template #%id% not found"
+    skipped_template_incompatible: "Skipped: template type \"%type%\" is not compatible (expected \"%expected%\")"
+    skipped_no_recipient: "Skipped: could not resolve recipient (type: %type%)"
+    email_sent: "Email sent to %recipient% using template \"%template%\""
+    skipped_no_notification_email: "Skipped: no notification email configured"
+    skipped_unsupported_entity: "Skipped: unsupported entity type"
+    notification_online_booking_sent: "Online booking notification sent to %recipient% (%count% reservation(s))"
+    notification_calendar_import_sent: "Calendar import notification sent to %recipient%"
+    booking_entries_created: "%count% booking entries created for invoice %number%"
+    skipped_no_amounts: "Skipped: invoice contains no bookable amounts"
+    skipped_invalid_config: "Skipped: invalid configuration"
+    skipped_status_not_found: "Skipped: reservation status not found"
+    skipped_no_reservations: "Skipped: invoice has no linked reservations"
+    invoice_status_changed: "Invoice %number% status changed to \"%status%\""
+    payment_means_changed: "Invoice %number% payment method changed to \"%code%\""
+    reservation_status_changed: "%count% reservation(s) status changed to \"%status%\""
+
+  error:
+    name_required: "Please enter a name."
+    trigger_required: "Please select a valid trigger."
+    action_required: "Please select a valid action."

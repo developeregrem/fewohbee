@@ -81,7 +81,9 @@
                         </li>
                         {% endif %}
                         {% if showCashjournal %}
-                        <li class="nav-item{% if activeRouteName starts with "cashjournal" %} active{% endif %}"><a class="nav-link" href="{{ path('cashjournal.overview') }}">{{ 'nav.cashjournal'|trans }}</a></li>
+                        <li class="nav-item{% if activeRouteName starts with "journal" %} active{% endif %}">
+                            <a class="nav-link" href="{{ path('journal.overview') }}">{{ 'nav.journal'|trans }}</a>
+                        </li>
                         {% endif %}
                     </ul>
                     {% endif %}
@@ -103,6 +105,7 @@
                                     <a class="dropdown-item{% if activeRouteName starts with "status" %} active{% endif %}" href="{{ path('reservation_status_index') }}"><i class="fas fa-info text-secondary ms-1 me-1"></i> {{ 'nav.status'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.templates" %} active{% endif %}" href="{{ path('settings.templates.overview') }}"><i class="fas fa-file text-secondary"></i> {{ 'nav.templates'|trans }}</a>
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.online_booking" %} active{% endif %}" href="{{ path('settings.online_booking.index') }}"><i class="fas fa-globe text-secondary"></i> {{ 'online_booking.nav.label'|trans }}</a>
+                                    <a class="dropdown-item{% if activeRouteName starts with "settings.workflows" %} active{% endif %}" href="{{ path('settings.workflows.index') }}"><i class="fas fa-bolt text-secondary"></i> {{ 'workflow.nav.label'|trans }}</a>
                                 </div>
                             </li>
                         {% endif %}

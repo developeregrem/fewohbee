@@ -3,7 +3,7 @@ import {
     request as httpRequest,
     serializeForm as httpSerializeForm,
 } from '../js/http.js';
-import { iniStartOrEndDate, setModalTitle } from '../js/utils.js';
+import { iniStartOrEndDate, setModalTitle, enableDeletePopover } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -17,6 +17,7 @@ export default class extends Controller {
         this.modalContent = document.getElementById('modal-content-ajax');
         this.searchDebounce = null;
         this.customerSearchDebounce = null;
+        enableDeletePopover({ onSuccess: () => this.performSearch() });
         const firstRow = this.element.querySelector('.js-registrationbook-reservation-row');
         if (firstRow) {
             this.toggleReservationCustomers(firstRow);
@@ -75,6 +76,7 @@ export default class extends Controller {
             target: this.tableTarget,
             onSuccess: (response) => {
                 this.tableTarget.innerHTML = response;
+                enableDeletePopover();
             },
         });
     }
@@ -194,9 +196,8 @@ export default class extends Controller {
         if (!form) {
             return;
         }
-        const tab = form.querySelector('#tab')?.value;
         const url = form.dataset.url;
-        this.editReservationNewCustomer(url, tab);
+        this.editReservationNewCustomer(url);
     }
 
     openAddReservations(url, title) {
@@ -212,7 +213,7 @@ export default class extends Controller {
         return false;
     }
 
-    editReservationNewCustomer(url, tab) {
+    editReservationNewCustomer(url) {
         if (!url) {
             return false;
         }
@@ -221,7 +222,7 @@ export default class extends Controller {
             method: 'POST',
             data: httpSerializeForm('#customer-selection'),
             target: this.modalContent,
-            onSuccess: (data) => {
+            onSuccess: () => {
                 this.openAddReservations(
                     this.element.dataset.registrationbookAddReservationsUrl,
                     this.element.dataset.registrationbookAddReservationsTitle
@@ -295,79 +296,4 @@ export default class extends Controller {
         }
     }
 
-    deleteEntryAction(event) {
-        event.preventDefault();
-        const url = event.currentTarget.dataset.url;
-        const entryId = event.currentTarget.dataset.entryId;
-        if (!url || !entryId) {
-            return;
-        }
-        const row = document.getElementById(`entry-${entryId}`);
-        const cell = document.getElementById(`entry-cell-${entryId}`);
-        if (!row || !cell) {
-            return;
-        }
-        const wasHidden = row.classList.contains('d-none');
-        this.toggleEntryRow(entryId);
-        if (!wasHidden) {
-            return;
-        }
-        cell.innerHTML = window.loader || '';
-        httpRequest({
-            url,
-            method: 'GET',
-            target: cell,
-            onSuccess: () => {
-                this.hydrateDeleteForm(entryId);
-            },
-        });
-    }
-
-    toggleEntryRow(entryId) {
-        const row = document.getElementById(`entry-${entryId}`);
-        if (!row) {
-            return;
-        }
-        row.classList.toggle('d-none');
-    }
-
-    hydrateDeleteForm(entryId) {
-        const cell = document.getElementById(`entry-cell-${entryId}`);
-        if (!cell) {
-            return;
-        }
-        const form = cell.querySelector('form');
-        if (form) {
-            form.removeAttribute('onsubmit');
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.doDeleteEntry(entryId, form.action || form.dataset.url, form);
-            });
-        }
-        const cancelBtn = cell.querySelector('button.btn-secondary');
-        if (cancelBtn) {
-            cancelBtn.removeAttribute('onclick');
-            cancelBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.toggleEntryRow(entryId);
-            });
-        }
-    }
-
-    doDeleteEntry(entryId, url, form) {
-        if (!url) {
-            url = form && form.action;
-        }
-        if (!url) {
-            return;
-        }
-        httpRequest({
-            url,
-            method: 'POST',
-            data: form ? new FormData(form) : null,
-            onSuccess: () => {
-                this.performSearch();
-            },
-        });
-    }
 }

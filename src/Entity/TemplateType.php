@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\TemplateTypeRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: TemplateTypeRepository::class)]
 #[ORM\Table(name: 'template_types')]
 class TemplateType
 {

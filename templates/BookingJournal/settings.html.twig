@@ -1,0 +1,254 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.settings.title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="journal-settings">
+    <div class="row">
+        <div class="col">
+            <ul class="pagination me-auto">
+            <li class="page-item">
+                <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
+            </li>
+        </ul>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    {# ── Preset ────────────────────────────────────────────────── #}
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">{{ 'accounting.settings.preset.title'|trans }}</h5>
+            <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.preset.help'|trans }}">
+                <i class="fas fa-circle-question"></i>
+            </span>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ path('journal.settings.preset.load') }}">
+                <div class="row align-items-end">
+                    <div class="col-md-6">
+                        <label for="preset" class="form-label">{{ 'accounting.settings.preset.label'|trans }}</label>
+                        <select id="preset" name="preset" class="form-select">
+                            {% for preset in presets %}
+                                <option value="{{ preset }}" {% if settings.chartPreset == preset %}selected{% endif %}>
+                                    {{ ('accounting.settings.preset.' ~ preset)|trans }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mt-2 mt-md-0">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> {{ 'accounting.settings.preset.load'|trans }}
+                        </button>
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="seedWorkflows" name="seedWorkflows" value="1">
+                    <label class="form-check-label" for="seedWorkflows">
+                        {{ 'accounting.settings.preset.seed_workflows'|trans }}
+                    </label>
+                    <div class="form-text">{{ 'accounting.settings.preset.seed_workflows_help'|trans }}</div>
+                </div>
+                {% if settings.chartPreset %}
+                    <p class="text-muted mt-2 mb-0">
+                        {{ 'accounting.settings.preset.current'|trans({'%preset%': settings.chartPreset|upper}) }}
+                    </p>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    {# ── Accounts ──────────────────────────────────────────────── #}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0">{{ 'accounting.accounts.title'|trans }}</h5>
+                <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.accounts.help'|trans }}">
+                    <i class="fas fa-circle-question"></i>
+                </span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-action="click->journal-settings#openOffcanvas"
+                    data-url="{{ path('journal.settings.accounts.new') }}"
+                    data-offcanvas-title="{{ 'accounting.accounts.add'|trans }}">
+                <i class="fas fa-plus"></i> {{ 'accounting.accounts.add'|trans }}
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>{{ 'accounting.accounts.number'|trans }}</th>
+                        <th>{{ 'accounting.accounts.name'|trans }}</th>
+                        <th class="d-none d-md-table-cell">{{ 'accounting.accounts.type'|trans }}</th>
+                        <th class="text-center">{{ 'accounting.accounts.cash'|trans }}</th>
+                        <th>{{ 'journal.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for account in accounts %}
+                        <tr>
+                            <td>{{ account.accountNumber }}</td>
+                            <td>{{ account.name }}</td>
+                            <td class="d-none d-md-table-cell">{{ ('accounting.accounts.type.' ~ account.type)|trans }}</td>
+                            <td class="text-center">
+                                {% if account.cashAccount %}<i class="fas fa-check text-success"></i>{% endif %}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->journal-settings#openOffcanvas"
+                                        data-url="{{ path('journal.settings.accounts.edit', {'id': account.id}) }}"
+                                        data-offcanvas-title="{{ 'accounting.accounts.edit'|trans }}"
+                                        title="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if not account.systemDefault %}
+                                    {% set id = account.id %}
+                                    {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
+                                    {% use "common/delete_popover.html.twig" %}
+                                    <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                            title="{{ 'button.delete'|trans }}"
+                                            data-popover="delete"
+                                            data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'>
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted ms-2" title="{{ 'accounting.accounts.system_locked'|trans }}">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-center text-muted">{{ 'accounting.accounts.empty'|trans }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ── Tax Rates ─────────────────────────────────────────────── #}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0">{{ 'accounting.taxrates.title'|trans }}</h5>
+                <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.taxrates.help'|trans }}">
+                    <i class="fas fa-circle-question"></i>
+                </span>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-action="click->journal-settings#openOffcanvas"
+                    data-url="{{ path('journal.settings.taxrates.new') }}"
+                    data-offcanvas-title="{{ 'accounting.taxrates.add'|trans }}">
+                <i class="fas fa-plus"></i> {{ 'accounting.taxrates.add'|trans }}
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>{{ 'accounting.taxrates.name_header'|trans }}</th>
+                        <th>{{ 'accounting.taxrates.rate'|trans }}</th>
+                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.revenue_account'|trans }}</th>
+                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.bukey'|trans }}</th>
+                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.valid'|trans }}</th>
+                        <th>{{ 'journal.action'|trans }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for rate in taxRates %}
+                        <tr>
+                            <td>
+                                {{ rate.name }}
+                                {% if rate.default %}<span class="badge bg-primary">{{ 'accounting.taxrates.default'|trans }}</span>{% endif %}
+                            </td>
+                            <td>{{ rate.rate|number_format(2, ',', '.') }}%</td>
+                            <td class="d-none d-md-table-cell">
+                                {% if rate.revenueAccount %}
+                                    {{ rate.revenueAccount.accountNumber }} – {{ rate.revenueAccount.name }}
+                                {% else %}
+                                    <span class="text-muted">–</span>
+                                {% endif %}
+                            </td>
+                            <td class="d-none d-md-table-cell">{{ rate.datevBuKey ?? '-' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                {% if rate.validFrom or rate.validTo %}
+                                    {{ rate.validFrom ? rate.validFrom|date('d.m.Y') : '...' }}
+                                    –
+                                    {{ rate.validTo ? rate.validTo|date('d.m.Y') : '...' }}
+                                {% else %}
+                                    {{ 'accounting.taxrates.always_valid'|trans }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->journal-settings#openOffcanvas"
+                                        data-url="{{ path('journal.settings.taxrates.edit', {'id': rate.id}) }}"
+                                        data-offcanvas-title="{{ 'accounting.taxrates.edit'|trans }}"
+                                        title="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% set id = rate.id %}
+                                {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
+                                {% use "common/delete_popover.html.twig" %}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        title="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">{{ 'accounting.taxrates.empty'|trans }}</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ── DATEV Export Settings ─────────────────────────────────── #}
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">{{ 'accounting.settings.datev.title'|trans }}</h5>
+            <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.datev.help'|trans }}">
+                <i class="fas fa-circle-question"></i>
+            </span>
+        </div>
+        <div class="card-body">
+            {{ form_start(settingsForm) }}
+                {{ form_row(settingsForm.advisorNumber) }}
+                {{ form_row(settingsForm.clientNumber) }}
+                {{ form_row(settingsForm.fiscalYearStart) }}
+                {{ form_row(settingsForm.accountNumberLength) }}
+                {{ form_row(settingsForm.dictationCode) }}
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'button.save'|trans }}
+                    </button>
+                </div>
+            {{ form_end(settingsForm) }}
+        </div>
+    </div>
+
+    {# ── Offcanvas for forms ──────────────────────────────────── #}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="settingsOffcanvas"
+         data-journal-settings-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-journal-settings-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" data-journal-settings-target="offcanvasBody">
+        </div>
+    </div>
+</div>
+{% endblock %}

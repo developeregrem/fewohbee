@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Form\AppSettingsType;
+use App\Repository\WorkflowRepository;
 use App\Service\AppSettingsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,7 +18,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class AppSettingsController extends AbstractController
 {
     #[Route('', name: 'settings.general.index', methods: ['GET', 'POST'])]
-    public function index(Request $request, AppSettingsService $settingsService): Response
+    public function index(Request $request, AppSettingsService $settingsService, WorkflowRepository $workflowRepository): Response
     {
         $settings = $settingsService->getSettings();
 
@@ -44,6 +45,8 @@ class AppSettingsController extends AbstractController
         return $this->render('Settings/AppSettings/index.html.twig', [
             'form' => $form->createView(),
             'fallbackEmail' => $settingsService->getNotificationEmail($settings),
+            'notifyOnlineBookingWorkflow' => $workflowRepository->findBySystemCode('notify_online_booking'),
+            'notifyCalendarImportWorkflow' => $workflowRepository->findBySystemCode('notify_calendar_import'),
         ]);
     }
 }

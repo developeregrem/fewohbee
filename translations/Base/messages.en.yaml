@@ -38,6 +38,8 @@ nav.appartment: Room
 nav.appartment.add: Create Room
 nav.appartment.overview: Room Overview
 nav.cashjournal: Cash Book
+nav.accounting: Accounting
+nav.journal: Booking Journal
 nav.category: Room Categories
 nav.category.add: Create Room Categories
 nav.customer.add: Create Guest

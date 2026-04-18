@@ -483,15 +483,12 @@ class ReservationService
      */
     private function getTotalPricesForTemplate(array $reservations): array
     {
-        $this->requestStack->getSession()->set('invoicePositionsMiscellaneous', []);
-        $this->is->prefillMiscPositionsWithReservations($reservations, $this->requestStack, true);
-        $invoicePositionsMiscellaneousArray = $this->requestStack->getSession()->get('invoicePositionsMiscellaneous');
+        $invoicePositionsMiscellaneousArray = $this->is->buildMiscPositions($reservations, true);
 
-        $this->requestStack->getSession()->set('invoicePositionsAppartments', []);
+        $invoicePositionsAppartmentsArray = [];
         foreach ($reservations as $reservation) {
-            $this->is->prefillAppartmentPositions($reservation, $this->requestStack);
+            array_push($invoicePositionsAppartmentsArray, ...$this->is->buildAppartmentPositions($reservation));
         }
-        $invoicePositionsAppartmentsArray = $this->requestStack->getSession()->get('invoicePositionsAppartments');
 
         // collect sums
         $sumApartment = 0;

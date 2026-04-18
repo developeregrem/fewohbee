@@ -10,10 +10,12 @@ parameters:
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
     roomCategoryImageDirectory: '%kernel.project_dir%/public/resources/images/room-categories'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
-    version: '4.5.0'
+    version: '4.6.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
+    default_frame_ancestors: ''
+    frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
 
 services:
     # default configuration for services in *this* file
@@ -28,6 +30,12 @@ services:
             tags: ['app.einvoice.profile']
         App\Interfaces\ITemplatePreviewProvider:
             tags: ['app.template_preview_provider']
+        App\Workflow\Trigger\WorkflowTriggerInterface:
+            tags: ['app.workflow.trigger']
+        App\Workflow\Condition\WorkflowConditionInterface:
+            tags: ['app.workflow.condition']
+        App\Workflow\Action\WorkflowActionInterface:
+            tags: ['app.workflow.action']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -75,3 +83,24 @@ services:
     App\Service\TemplatePreview\TemplatePreviewProviderRegistry:
         arguments:
             $providers: !tagged_iterator app.template_preview_provider
+
+    App\Service\WebauthnService:
+        arguments:
+            $rpId: '%env(RELYING_PARTY_ID)%'
+            $rpName: '%env(RELYING_PARTY_NAME)%'
+
+    App\EventSubscriber\EmbeddingSecuritySubscriber:
+        arguments:
+            $frameAncestors: '%frameAncestors%'
+
+    App\Workflow\Trigger\WorkflowTriggerRegistry:
+        arguments:
+            $triggers: !tagged_iterator app.workflow.trigger
+
+    App\Workflow\Condition\WorkflowConditionRegistry:
+        arguments:
+            $conditions: !tagged_iterator app.workflow.condition
+
+    App\Workflow\Action\WorkflowActionRegistry:
+        arguments:
+            $actions: !tagged_iterator app.workflow.action

@@ -44,7 +44,9 @@ customer.salutation: Title
 customer.search.addresses: Search addresses ...
 customer.template: Template
 customer.zip: Zip code
+customer.buyerVatId: VAT ID (Buyer)
 customer.buyerReference.label: Customer Reference
+customer.buyerReference.placeholder: e.g. Leitweg-ID
 customer.buyerReference.hint: >-
   A designation assigned by the guest and used for internal control purposes, also known as Leitweg-ID.
 customer.cardNumber: Card Number

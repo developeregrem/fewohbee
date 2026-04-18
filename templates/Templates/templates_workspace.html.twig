@@ -26,25 +26,30 @@
 
         {# ── Compact metadata bar ── #}
         <div class="card mb-2">
-            <div class="card-body py-2 px-3 d-flex align-items-center gap-2 flex-wrap">
-                <input type="text" class="form-control form-control-sm" style="max-width:300px" name="name-{{ template.id }}" id="name-{{ template.id }}" value="{{ template.name }}" required placeholder="{{ 'templates.name'|trans }}">
-                <select name="type-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" id="template-type" data-action="change->template-editor#onTemplateTypeChange">
-                    {% for type in types %}
-                        <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
-                    {% endfor %}
-                </select>
-                <div class="form-check form-switch form-check-inline m-0">
-                    <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
-                    <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
+            <div class="card-body py-2 px-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <input type="text" class="form-control form-control-sm" style="max-width:300px" name="name-{{ template.id }}" id="name-{{ template.id }}" value="{{ template.name }}" required placeholder="{{ 'templates.name'|trans }}">
+                    <select name="type-{{ template.id }}" class="form-select form-select-sm w-auto pe-5" id="template-type" data-action="change->template-editor#onTemplateTypeChange">
+                        {% for type in types %}
+                            <option value="{{ type.id }}" data-template-type-name="{{ type.name }}"{% if template.templateType and template.templateType.id == type.id %} selected{% endif %}>{{ type.name|trans }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-check form-switch form-check-inline m-0">
+                        <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
+                        <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
+                    </div>
+                    <div class="ms-auto d-flex align-items-center gap-1">
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-template-editor-target="pdfParamsPanel" data-bs-toggle="offcanvas" data-bs-target="#pdfParamsOffcanvas-{{ template.id }}" title="{{ 'templates.params'|trans }}">
+                            <i class="fas fa-gear" aria-hidden="true"></i>
+                        </button>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('settings.templates.overview') }}" title="{{ 'button.back'|trans }}">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
+                    </div>
                 </div>
-                <div class="ms-auto d-flex align-items-center gap-1">
-                    <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-template-editor-target="pdfParamsPanel" data-bs-toggle="offcanvas" data-bs-target="#pdfParamsOffcanvas-{{ template.id }}" title="{{ 'templates.params'|trans }}">
-                        <i class="fas fa-gear" aria-hidden="true"></i>
-                    </button>
-                    <a class="btn btn-outline-secondary btn-sm" href="{{ path('settings.templates.overview') }}" title="{{ 'button.back'|trans }}">
-                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                    </a>
-                    <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
+                <div class="form-text small mt-2 d-none" data-template-editor-target="emailNameHint">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i> {{ 'templates.name.email_help'|trans }}
                 </div>
             </div>
         </div>

@@ -30,7 +30,7 @@ class ApartmentType extends AbstractType
             ->add('bedsMax', IntegerType::class, [
                 'label' => 'appartment.bedsmax',
                 'constraints' => [
-                    new GreaterThan(['value' => 0]),
+                    new GreaterThan(0),
                 ],
             ])
             ->add('roomCategory', EntityType::class, [

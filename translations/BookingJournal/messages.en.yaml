@@ -1,0 +1,202 @@
+# Booking Journal - Settings
+accounting.settings.title: Booking Journal Settings
+accounting.settings.back_to_journal: Back to Journal
+accounting.settings.back: Back to Settings
+accounting.settings.flash.saved: Settings saved successfully.
+accounting.settings.flash.preset_invalid: Invalid preset selected.
+accounting.settings.flash.preset_loaded: "Preset %preset% loaded: %accounts% accounts, %taxRates% tax rates, %workflows% workflows created."
+
+# Preset
+accounting.settings.preset.title: Chart of Accounts
+accounting.settings.preset.help: "Select a preset with typical starting values for Germany, Austria, or Switzerland. Missing accounts and tax rates will be added automatically; all values can then be adjusted freely and extended with additional country-specific settings if needed."
+accounting.settings.preset.label: Preset
+accounting.settings.preset.load: Load Preset
+accounting.settings.preset.confirm: "Loading a preset will add missing accounts and tax rates. Existing entries will not be changed. Continue?"
+accounting.settings.preset.current: "Active preset: %preset%"
+accounting.settings.preset.seed_workflows: Create example workflows
+accounting.settings.preset.seed_workflows_help: "Creates preconfigured workflows for automatic bookings on invoice payment (cash, bank transfer, card). Existing preset workflows will not be duplicated."
+accounting.settings.preset.skr03: SKR03 (Germany)
+accounting.settings.preset.skr04: SKR04 (Germany)
+accounting.settings.preset.ekr_at: EKR (Austria)
+accounting.settings.preset.kmu_ch: KMU (Switzerland)
+
+# DATEV settings
+accounting.settings.datev.title: DATEV Export Settings
+accounting.settings.datev.help: "These values are required for the DATEV CSV export. Ask your tax advisor for the correct values."
+accounting.settings.advisor_number: Advisor Number
+accounting.settings.advisor_number.placeholder: e.g. 29098
+accounting.settings.client_number: Client Number
+accounting.settings.client_number.placeholder: e.g. 55003
+accounting.settings.fiscal_year_start: Fiscal Year Start (Month)
+accounting.settings.account_number_length: Account Number Length
+accounting.settings.dictation_code: Dictation Code
+
+# Accounts
+accounting.accounts.title: Accounts
+accounting.accounts.help: "Manage the booking accounts for debit and credit entries (e.g. cash, bank, revenue)."
+accounting.accounts.add: Add Account
+accounting.accounts.edit: Edit Account
+accounting.accounts.number: Account No.
+accounting.accounts.name: Name
+accounting.accounts.type: Type
+accounting.accounts.cash: Cash
+accounting.accounts.is_cash: This is the cash register account
+accounting.accounts.sort_order: Sort Order
+accounting.accounts.system_locked: System account (cannot be deleted)
+accounting.accounts.empty: No accounts configured. Load a preset to get started.
+accounting.accounts.delete.ask: Do you really want to delete this account?
+accounting.accounts.flash.created: Account created successfully.
+accounting.accounts.flash.updated: Account updated successfully.
+accounting.accounts.flash.deleted: Account deleted successfully.
+accounting.accounts.flash.cannot_delete_system: System accounts cannot be deleted.
+accounting.accounts.type.asset: Asset
+accounting.accounts.type.liability: Liability
+accounting.accounts.type.revenue: Revenue
+accounting.accounts.type.expense: Expense
+
+# Tax Rates
+accounting.taxrates.title: Tax Rates
+accounting.taxrates.help: "Manage the VAT rates for bookings. The DATEV BU key is required for the export."
+accounting.taxrates.add: Add Tax Rate
+accounting.taxrates.edit: Edit Tax Rate
+accounting.taxrates.name_header: Name
+accounting.taxrates.name.placeholder: e.g. 19% VAT
+accounting.taxrates.rate: Rate
+accounting.taxrates.bukey: DATEV BU Key
+accounting.taxrates.bukey.placeholder: e.g. 3
+accounting.taxrates.bukey.help: "DATEV tax key (Buchungsschlüssel). Ask your tax advisor for the correct values."
+accounting.taxrates.valid: Validity
+accounting.taxrates.valid_from: Valid From
+accounting.taxrates.valid_to: Valid To
+accounting.taxrates.revenue_account: Revenue account
+accounting.taxrates.revenue_account.help: "Used as the credit account for automated bookings with this tax rate."
+accounting.taxrates.is_default: Default rate
+accounting.taxrates.default: Default
+accounting.taxrates.always_valid: Always
+accounting.taxrates.empty: No tax rates configured. Load a preset to get started.
+accounting.taxrates.delete.ask: Do you really want to delete this tax rate?
+accounting.taxrates.flash.created: Tax rate created successfully.
+accounting.taxrates.flash.updated: Tax rate updated successfully.
+accounting.taxrates.flash.deleted: Tax rate deleted successfully.
+
+# Journal - Batches
+accounting.journal.batch.add: Add Month
+accounting.journal.batch.year: Year
+accounting.journal.batch.month: Month
+accounting.journal.batch.status: Status
+accounting.journal.batch.entries_count: Entries
+accounting.journal.batch.closed: Closed
+accounting.journal.batch.exported: Exported
+accounting.journal.batch.open: Open
+accounting.journal.batch.new: Create New Month
+accounting.journal.batch.empty: No months created yet.
+accounting.journal.batch.close: Close Month
+accounting.journal.batch.reopen: Reopen Month
+
+# Journal - Filter
+accounting.journal.filter.all: All entries
+accounting.journal.filter.cashbook: Cash book view
+
+# Journal - Cashbook columns
+accounting.journal.cashbook.incomes: Income
+accounting.journal.cashbook.expenses: Expense
+accounting.journal.cashbook.counter_account: Counter Acc.
+
+# Journal - Cashbook balance
+accounting.journal.cashbook.start: Cash Start Balance
+accounting.journal.cashbook.end: Cash End Balance
+accounting.journal.cashbook.start_help: "Cash balance at the beginning of the month (only relevant for the cash book view)."
+
+# Journal - Cashbook form
+accounting.journal.cashbook.direction: Type
+accounting.journal.cashbook.category: Counter account
+
+# Journal - Export
+accounting.journal.export: Export
+accounting.journal.export.datev: DATEV Booking Stack (CSV)
+accounting.journal.export.no_settings: "Please configure the DATEV export settings first."
+accounting.journal.export.warn_intro: "The following entries are incomplete. Export is still possible – corrections can be made here or later in DATEV."
+accounting.journal.export.force: "Export anyway"
+accounting.journal.export.warn.missing_advisor_number: "advisor number is missing in journal settings."
+accounting.journal.export.warn.missing_client_number: "client number is missing in journal settings."
+accounting.journal.export.warn.no_debit: "Entry #%doc%: missing debit account."
+accounting.journal.export.warn.no_credit: "Entry #%doc%: missing credit account."
+accounting.journal.export.warn.no_bukey: "Entry #%doc%: tax rate \"%taxrate%\" has no DATEV BU key."
+
+# Journal - Entries
+accounting.journal.entry.add: Add Entry
+accounting.journal.entry.edit: Edit Entry
+accounting.journal.entry.date: Date
+accounting.journal.entry.doc_number: Doc No.
+accounting.journal.entry.amount: Amount
+accounting.journal.entry.debit: Debit
+accounting.journal.entry.credit: Credit
+accounting.journal.entry.tax_rate: Tax Rate
+accounting.journal.entry.invoice: Invoice No.
+accounting.journal.entry.remark: Remark
+accounting.journal.entry.empty: No entries yet.
+accounting.journal.entry.delete_ask: Delete this entry?
+
+accounting.journal.back: Back to Journal
+
+# Journal - Flash Messages
+accounting.journal.flash.batch_created: Month created successfully.
+accounting.journal.flash.batch_closed: Month closed.
+accounting.journal.flash.batch_reopened: Month reopened.
+accounting.journal.flash.entry_created: Entry created successfully.
+accounting.journal.flash.entry_updated: Entry updated successfully.
+accounting.journal.flash.entry_deleted: Entry deleted successfully.
+journal.error.journal.closed: This month is closed. Changes are not allowed.
+
+# Preset account names
+preset.account.cash: Cash register
+preset.account.cash_at: Cash register
+preset.account.bank: Bank
+preset.account.receivables: Trade receivables
+preset.account.receivables_credit_card: Credit card receivables
+preset.account.input_tax: Input tax
+preset.account.input_tax_reduced: Input tax (reduced rate)
+preset.account.input_tax_standard: Input tax (standard rate)
+preset.account.vat: VAT
+preset.account.vat_reduced: VAT (reduced rate)
+preset.account.vat_standard: VAT (standard rate)
+preset.account.vat_ch: VAT payable
+preset.account.transit: Transit items
+preset.account.revenue_accommodation: Revenue accommodation (reduced rate)
+preset.account.revenue_accommodation_10: Revenue accommodation 10%
+preset.account.revenue_accommodation_13: Revenue accommodation 13%
+preset.account.revenue_accommodation_ch: Revenue accommodation 3.8%
+preset.account.revenue_standard: Revenue (standard rate)
+preset.account.revenue_standard_ch: Revenue 8.1% VAT
+preset.account.revenue_20: Revenue 20% VAT
+preset.account.revenue_tax_free: Tax-free revenue
+preset.account.revenue_deductions: Revenue deductions (commissions)
+preset.account.office_supplies: Office supplies
+preset.account.other_expenses: Other expenses
+preset.account.other_operating_expenses: Other operating expenses
+preset.account.premises: Premises costs
+preset.account.cleaning: Cleaning
+preset.account.maintenance: Maintenance
+preset.account.maintenance_cleaning: Maintenance / Cleaning
+
+# Preset tax rate names
+preset.taxrate.tax_free: 0% tax-free
+preset.taxrate.de_7: 7% VAT
+preset.taxrate.de_19: 19% VAT
+preset.taxrate.at_10: 10% VAT (accommodation)
+preset.taxrate.at_13: 13% VAT (accommodation from 11/2018)
+preset.taxrate.at_20: 20% VAT
+preset.taxrate.ch_2_6: 2.6% VAT (reduced)
+preset.taxrate.ch_3_8: 3.8% VAT (accommodation)
+preset.taxrate.ch_8_1: 8.1% VAT
+
+# Preset workflow names
+preset.workflow.booking_cash: "Booking: Cash payment"
+preset.workflow.booking_cash.desc: "Automatically creates a booking entry (debit: cash) when an invoice is paid in cash."
+preset.workflow.booking_transfer: "Booking: Bank transfer"
+preset.workflow.booking_transfer.desc: "Automatically creates a booking entry (debit: bank) when an invoice is paid by bank transfer."
+preset.workflow.booking_card: "Booking: Card payment"
+preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit: card receivables) when an invoice is paid by card."
+
+# General
+journal.action: Action

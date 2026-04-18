@@ -1,0 +1,23 @@
+{{ form_start(form) }}
+    {% if batch is defined and batch %}
+        <input type="hidden" name="batchId" value="{{ batch.id }}">
+    {% endif %}
+    {{ form_row(form.date) }}
+    {{ form_row(form.documentNumber) }}
+    {{ form_row(form.amount) }}
+    {% if form.direction is defined %}
+        {{ form_row(form.direction) }}
+        {{ form_row(form.category) }}
+    {% else %}
+        {{ form_row(form.debitAccount) }}
+        {{ form_row(form.creditAccount) }}
+    {% endif %}
+    {{ form_row(form.taxRate) }}
+    {{ form_row(form.invoiceNumber) }}
+    {{ form_row(form.remark) }}
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+        </button>
+    </div>
+{{ form_end(form) }}

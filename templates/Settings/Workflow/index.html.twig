@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'workflow.page_title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'workflow.page_title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="settings">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            {# -- Header -- #}
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="fs-4 mb-0">
+                    <i class="fas fa-bolt text-primary me-1"></i>
+                    {{ 'workflow.page_title'|trans }}
+                </h2>
+                <a href="{{ path('settings.workflows.new') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>{{ 'workflow.new'|trans }}
+                </a>
+            </div>
+
+            <p class="text-body-secondary mb-4">{{ 'workflow.page_description'|trans }}</p>
+
+            {# -- System Workflows -- #}
+            {% if systemWorkflows|length > 0 %}
+            <h5 class="fs-6 text-body-secondary mb-2">
+                <i class="fas fa-lock me-1"></i>{{ 'workflow.section.system'|trans }}
+            </h5>
+            {% for workflow in systemWorkflows %}
+                {% include 'Settings/Workflow/_workflow_card.html.twig' with {'workflow': workflow} %}
+            {% endfor %}
+            {% endif %}
+
+            {# -- User Workflows -- #}
+            <h5 class="fs-6 text-body-secondary mb-2 mt-4">
+                <i class="fas fa-user me-1"></i>{{ 'workflow.section.user'|trans }}
+            </h5>
+            {% if userWorkflows|length > 0 %}
+                {% for workflow in userWorkflows %}
+                    {% include 'Settings/Workflow/_workflow_card.html.twig' with {'workflow': workflow} %}
+                {% endfor %}
+            {% else %}
+                <div class="card mb-3">
+                    <div class="card-body text-center text-body-secondary py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        {{ 'workflow.empty_state'|trans }}
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

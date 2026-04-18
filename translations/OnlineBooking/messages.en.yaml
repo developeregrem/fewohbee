@@ -133,6 +133,7 @@ online_booking:
     form_invalid_hint: "When enabling online booking, you must set a confirmation template, inquiry status, booking status, and reservation origin."
   public:
     page_title: "Online Booking"
+    page_title_inquiry: "Online Inquiry"
     group_label: "Group:"
     arrival: "Arrival"
     departure: "Departure"

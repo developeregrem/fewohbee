@@ -17,10 +17,14 @@ class TemplateRepository extends EntityRepository
 {
     public function findAll(): array
     {
-        return $this->findBy([], [
-            'templateType' => 'ASC',
-            'name' => 'ASC'
-        ]);
+        return $this
+            ->createQueryBuilder('t')
+            ->select('t', 'tt')
+            ->leftJoin('t.templateType', 'tt')
+            ->addOrderBy('tt.name', 'ASC')
+            ->addOrderBy('t.name', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     public function loadByTypeName($names)

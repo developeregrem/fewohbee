@@ -29,20 +29,20 @@
                 - {{ bookEntry.reservation.endDate|date('d.m.Y') }}</td>
             <td>{{ bookEntry.reservation.amount }}</td>
             {% if is_granted('ROLE_ADMIN') %}
-            <td>                             
-                <a href="#" title="{{ 'button.delete'|trans }}">
-                    <i class="fas fa-trash-alt"
-                       data-action="click->registrationbook#deleteEntryAction"
-                       data-entry-id="{{ bookEntry.id }}"
-                       data-url="{{ path('registrationbook.delete.origin', {'id': bookEntry.id}) }}"></i></a>
+            <td>
+                {% set id = bookEntry.id %}
+                {% set targetUrl = path('registrationbook.delete.origin', {'id': bookEntry.id}) %}
+                {% use "common/delete_popover.html.twig" %}
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        title="{{ 'button.delete'|trans }}"
+                        data-popover="delete"
+                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </td>
             {% endif %}
         </tr>
-        <tr id="entry-{{ bookEntry.id }}" class="d-none">
-            <td colspan="9" id="entry-cell-{{ bookEntry.id }}">
-                <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
-            </td>
-        </tr>        
     {% endfor %}
     </tbody>
 </table>
