@@ -346,6 +346,7 @@ export default class extends Controller {
         'rowRepeatKey',
         'rowMetaBadge',
         'pdfParamsPanel',
+        'emailNameHint',
     ];
 
     connect() {
@@ -380,6 +381,7 @@ export default class extends Controller {
 
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
+        this.updateEmailNameHintVisibility();
         this.showEditTab();
         this.refreshToolbarState();
         this.previewPdfObjectUrl = null;
@@ -586,6 +588,16 @@ export default class extends Controller {
         const typeName = selectedOption?.dataset?.templateTypeName || '';
 
         return typeName.includes('_PDF');
+    }
+
+    isCurrentTemplateTypeEmail() {
+        if (!this.templateTypeSelect) {
+            return false;
+        }
+        const selectedOption = this.templateTypeSelect.options[this.templateTypeSelect.selectedIndex];
+        const typeName = selectedOption?.dataset?.templateTypeName || '';
+
+        return typeName.toUpperCase().includes('EMAIL');
     }
 
     toggleCodeMode() {
@@ -889,6 +901,7 @@ export default class extends Controller {
     onTemplateTypeChange() {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
+        this.updateEmailNameHintVisibility();
         this.schemaCache = null;
         // Rebuild CodeMirror with the new template type's schema
         this.rebuildCodeMirror();
@@ -900,6 +913,13 @@ export default class extends Controller {
         }
         const isPdf = this.isCurrentTemplateTypePdf();
         this.pdfParamsPanelTarget.classList.toggle('d-none', !isPdf);
+    }
+
+    updateEmailNameHintVisibility() {
+        if (!this.hasEmailNameHintTarget) {
+            return;
+        }
+        this.emailNameHintTarget.classList.toggle('d-none', !this.isCurrentTemplateTypeEmail());
     }
 
     async refreshSnippets() {
