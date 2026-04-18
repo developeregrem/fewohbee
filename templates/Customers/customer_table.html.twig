@@ -1,6 +1,7 @@
 <table class="table table-bordered table-hover">
     <thead>
     <tr>
+        <th class="text-muted small text-end">ID</th>
         <th>{{ 'customer.firstname'|trans }}</th>
         <th>{{ 'customer.lastname'|trans }}</th>
         <th>{{ 'customer.company'|trans }}</th>
@@ -12,6 +13,7 @@
     {% for customer in customers %}
         {% if customer.id != 0 %}
             <tr>
+                <td class="text-muted small text-end" width="3%">{{ customer.id }}</td>
                 <td>{{ customer.firstname }}</td>
                 <td>{{ customer.lastname }}</td>
                 <td>
