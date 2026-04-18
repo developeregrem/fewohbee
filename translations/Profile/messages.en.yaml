@@ -22,3 +22,10 @@ profile:
     unknown: unknown
     none: No passkeys registered.
     delete: Passkey was successfully deleted.
+    error:
+      already_registered: This device is already registered as a passkey.
+      registration_failed: The passkey could not be created.
+      save_failed: The passkey could not be saved.
+      unauthorized: Unauthorized.
+      no_registration_in_progress: No passkey registration is currently active.
+      invalid_response_type: Invalid authenticator response.

@@ -37,7 +37,15 @@ class TemplatesFixtures extends Fixture implements FixtureGroupInterface
                 ['file' => 'dsgvo-export.txt', 'isDefault' => true],
             ],
             'TEMPLATE_CASHJOURNAL_PDF' => [
-                ['file' => 'kassenblatt.txt', 'isDefault' => true],
+                [
+                    'file' => 'kassenblatt.html'
+                ],
+                [
+                    'file' => 'buchungsjournal.html',
+                    'name' => 'templates.journal.name',
+                    'isDefault' => true,
+                    'params' => ['orientation' => 'L'],
+                ],
             ],
             'TEMPLATE_RESERVATION_EMAIL' => [
                 ['file' => 'email-buchungsbestätigung.txt', 'isDefault' => true,],

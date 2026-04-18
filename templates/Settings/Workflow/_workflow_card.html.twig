@@ -1,0 +1,49 @@
+<div class="card mb-2">
+    <div class="card-body py-2 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center flex-grow-1 me-3">
+            <div class="form-check form-switch me-3 mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       id="toggle-{{ workflow.id }}"
+                       {{ workflow.enabled ? 'checked' : '' }}
+                       data-controller="workflow-toggle"
+                       data-action="change->workflow-toggle#toggle"
+                       data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: workflow.id}) }}"
+                       data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ workflow.id) }}">
+            </div>
+            <div>
+                <strong>{{ workflow.system ? workflow.name|trans : workflow.name }}</strong>
+                {% if workflow.description %}
+                    <br><span class="text-body-secondary small">{{ workflow.system ? workflow.description|trans : workflow.description }}</span>
+                {% endif %}
+                <br>
+                <span class="badge bg-secondary bg-opacity-25 text-body-secondary small">
+                    {{ ('workflow.trigger.' ~ workflow.triggerType|replace({'.': '_'}))|trans }}
+                </span>
+                {% for cond in workflow.conditions %}
+                    <span class="badge bg-info bg-opacity-25 text-body-secondary small">
+                        {{ ('workflow.condition.' ~ cond.type|replace({'.': '_'}))|trans }}
+                    </span>
+                {% endfor %}
+                <span class="badge bg-success bg-opacity-25 text-body-secondary small">
+                    {{ ('workflow.action.' ~ workflow.actionType|replace({'.': '_'}))|trans }}
+                </span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <a href="{{ path('settings.workflows.edit', {id: workflow.id}) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'workflow.edit'|trans }}">
+                <i class="fas fa-pen"></i>
+            </a>
+            {% if not workflow.system %}
+                {% set id = workflow.id %}
+                {% set targetUrl = path('settings.workflows.delete', {id: workflow.id}) %}
+                {% use "common/delete_popover.html.twig" %}
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        title="{{ 'workflow.confirm_delete'|trans }}"
+                        data-popover="delete"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                    <i class="fas fa-trash"></i>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

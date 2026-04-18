@@ -69,6 +69,23 @@ class CashJournalRepository extends EntityRepository
         }
     }
 
+    public function findByYearAndMonth(int $year, int $month): ?object
+    {
+        $q = $this
+            ->createQueryBuilder('cj')
+            ->select('cj')
+            ->where('cj.cashYear = :year AND cj.cashMonth = :month')
+            ->setParameter('year', $year)
+            ->setParameter('month', $month)
+            ->getQuery();
+
+        try {
+            return $q->getSingleResult();
+        } catch (NoResultException $e) {
+            return null;
+        }
+    }
+
     public function supportsClass($class)
     {
         return $this->getEntityName() === $class

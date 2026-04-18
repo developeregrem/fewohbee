@@ -178,16 +178,16 @@
                 <source>invoice.id.last</source>
                 <target>letzte:</target>
             </trans-unit>
-            <trans-unit id="invoice.status.notpayed">
-                <source>invoice.status.notpayed</source>
+            <trans-unit id="invoice.status.unpaid">
+                <source>invoice.status.unpaid</source>
                 <target>offen</target>
             </trans-unit>
-            <trans-unit id="invoice.status.payed">
-                <source>invoice.status.payed</source>
+            <trans-unit id="invoice.status.paid">
+                <source>invoice.status.paid</source>
                 <target>bezahlt</target>
             </trans-unit>
-            <trans-unit id="invoice.status.prepayment">
-                <source>invoice.status.prepayment</source>
+            <trans-unit id="invoice.status.prepaid">
+                <source>invoice.status.prepaid</source>
                 <target>angezahlt</target>
             </trans-unit>
             <trans-unit id="invoice.status.canceled">

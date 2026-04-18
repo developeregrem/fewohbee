@@ -9,7 +9,7 @@ use App\Entity\Reservation;
 use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
-use App\Enum\InvoiceStatus;
+use App\Entity\Enum\InvoiceStatus;
 
 /**
  * Renders operations report templates.
@@ -517,8 +517,8 @@ class OperationsReportService
     {
         return [
             InvoiceStatus::OPEN->value => InvoiceStatus::OPEN->labelKey(),
-            InvoiceStatus::PAYED->value => InvoiceStatus::PAYED->labelKey(),
-            InvoiceStatus::PREPAYED->value => InvoiceStatus::PREPAYED->labelKey(),
+            InvoiceStatus::PAID->value => InvoiceStatus::PAID->labelKey(),
+            InvoiceStatus::PREPAID->value => InvoiceStatus::PREPAID->labelKey(),
             InvoiceStatus::CANCELED->value => InvoiceStatus::CANCELED->labelKey(),
         ];
     }

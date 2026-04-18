@@ -73,8 +73,29 @@
                             {{ 'app_settings.notification_fallback_hint'|trans({'%email%': fallbackEmail})|raw }}
                         </div>
                     {% endif %}
-                    {{ form_row(form.notifyOnOnlineBooking) }}
-                    {{ form_row(form.notifyOnCalendarImport) }}
+                    {% for wf in [notifyOnlineBookingWorkflow, notifyCalendarImportWorkflow] %}
+                        {% if wf %}
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <strong class="small">{{ wf.name }}</strong>
+                                {% if wf.description %}
+                                    <br><span class="text-body-secondary small">{{ wf.description }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center gap-2 ms-3">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="wf-toggle-{{ wf.id }}"
+                                           {{ wf.enabled ? 'checked' : '' }}
+                                           data-controller="workflow-toggle"
+                                           data-action="change->workflow-toggle#toggle"
+                                           data-workflow-toggle-url-value="{{ path('settings.workflows.toggle', {id: wf.id}) }}"
+                                           data-workflow-toggle-token-value="{{ csrf_token('workflow-toggle-' ~ wf.id) }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
             </div>
 

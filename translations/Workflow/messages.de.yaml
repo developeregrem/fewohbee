@@ -1,0 +1,155 @@
+workflow:
+  nav:
+    label: "Automatisierungen"
+  page_title: "Automatisierungen"
+  page_description: "Definiere Regeln, die automatisch ausgeführt werden, wenn bestimmte Ereignisse eintreten."
+  new: "Neue Automatisierung"
+  edit: "Automatisierung bearbeiten"
+  save: "Automatisierung speichern"
+  back_to_list: "Zurück zur Übersicht"
+  confirm_delete: "Diese Automatisierung wirklich löschen?"
+  delete: "Automatisierung löschen"
+
+  section:
+    system: "Systeminterne Automatisierungen"
+    user: "Eigene Automatisierungen"
+
+  empty_state: "Noch keine eigenen Automatisierungen vorhanden. Erstelle deine erste Automatisierung!"
+
+  flash:
+    created: "Automatisierung wurde erstellt."
+    updated: "Automatisierung wurde gespeichert."
+    deleted: "Automatisierung wurde gelöscht."
+    cannot_delete_system: "Systeminterne Automatisierungen können nicht gelöscht werden."
+
+  form:
+    section_general: "Allgemein"
+    section_trigger: "Auslöser – Wann?"
+    section_trigger_desc: "Wähle das Ereignis, das diese Automatisierung starten soll."
+    section_condition: "Bedingung – Nur wenn?"
+    section_condition_desc: "Optional: Lege eine oder mehrere Bedingungen fest (alle müssen erfüllt sein). Ohne Bedingung wird die Automatisierung bei jedem Auslöser ausgeführt."
+    add_condition: "Bedingung hinzufügen"
+    remove_condition: "Entfernen"
+    section_action: "Aktion – Dann?"
+    section_action_desc: "Wähle, was passieren soll, wenn der Auslöser eintritt."
+    name: "Bezeichnung"
+    description: "Beschreibung"
+    trigger_type: "Auslöser"
+    condition_type: "Bedingung"
+    action_type: "Aktion"
+    select_trigger: "Auslöser auswählen …"
+    select_action: "Aktion auswählen …"
+    no_condition: "Keine Bedingung (immer ausführen)"
+    template: "E-Mail-Vorlage"
+    recipient_type: "Empfänger"
+    recipient_booker: "Gast / Bucher-E-Mail"
+    recipient_invoice: "Rechnungs-E-Mail-Adresse"
+    recipient_notification: "Benachrichtigungs-E-Mail (%email%)"
+    recipient_custom: "Eigene E-Mail-Adresse"
+    custom_recipient: "Eigene E-Mail-Adresse"
+    debit_account: "Sollkonto"
+    debit_account_help: "Konto, das belastet wird (z.B. Kasse, Bank)"
+    fallback_credit_account: "Habenkonto (Fallback)"
+    fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
+    booking_entry_remark: "Bemerkung (optional)"
+
+  # Trigger labels
+  trigger:
+    online_booking_created: "Neue Online-Buchung eingegangen"
+    calendar_import_created: "Neue Buchung via Kalenderimport"
+    reservation_created: "Neue Reservierung angelegt (manuell)"
+    invoice_created: "Neue Rechnung erstellt"
+    invoice_status_changed: "Rechnungsstatus geändert"
+    reservation_days_before_start: "X Tage vor dem Anreisedatum"
+    reservation_days_after_end: "X Tage nach dem Abreisedatum"
+    invoice_days_after_date: "X Tage nach dem Rechnungsdatum"
+    schedule_monthly: "Monatlich an einem bestimmten Tag"
+    days_before: "Tage vorher"
+    days_after: "Tage danach"
+    day_of_month: "Tag des Monats"
+
+  # Condition labels
+  condition:
+    invoice_status_is: "Rechnungsstatus ist"
+    reservation_status_is: "Reservierungsstatus ist"
+    reservation_has_booker_email: "Bucher hat eine E-Mail-Adresse"
+    invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
+    invoice_payment_means_is: "Zahlungsmethode ist"
+
+  # Action labels
+  action:
+    send_template_email: "E-Mail anhand eines Templates versenden"
+    send_general_email: "Allgemeine E-Mail anhand eines Templates versenden"
+    send_notification_email: "Benachrichtigungs-E-Mail senden"
+    create_booking_entry: "Buchungseintrag erstellen"
+    change_invoice_status: "Rechnungsstatus ändern"
+    change_payment_means: "Zahlungsmethode ändern"
+    change_reservation_status: "Reservierungsstatus ändern"
+
+  # Preview (dry run)
+  preview:
+    title: "Probelauf"
+    description: "Zeigt, welche Datensätze aktuell von diesem Auslöser und dieser Bedingung betroffen wären – ohne tatsächlich eine Aktion auszuführen."
+    run: "Probelauf starten"
+    loading: "Wird geladen …"
+    empty: "Keine passenden Datensätze gefunden."
+    count_one: "%count% Datensatz gefunden"
+    count: "%count% Datensätze gefunden"
+
+  # Logs
+  logs:
+    title: "Ausführungsprotokoll"
+    loading: "Wird geladen …"
+    empty: "Noch keine Ausführungen protokolliert."
+    date: "Zeitpunkt"
+    status: "Status"
+    entity: "Datensatz"
+    message: "Meldung"
+    status_success: "Erfolg"
+    status_skipped: "Übersprungen"
+    status_error: "Fehler"
+
+  system:
+    notify_online_booking:
+      name: "E-Mail-Benachrichtigung bei Online-Buchung"
+      description: "Sendet eine Benachrichtigungs-E-Mail, wenn eine neue Online-Buchung eingeht."
+    notify_calendar_import:
+      name: "E-Mail-Benachrichtigung bei Kalender-Import"
+      description: "Sendet eine Benachrichtigungs-E-Mail, wenn eine neue Buchung über den Kalender-Import erstellt wird."
+    example_booking_confirmation:
+      name: "Beispiel: Buchungsbestätigung per E-Mail"
+      description: "Sendet bei jeder neuen Reservierung eine Buchungsbestätigung an den Gast (E-Mail-Vorlage erforderlich)."
+    example_arrival_reminder:
+      name: "Beispiel: Anreise-Erinnerung (3 Tage vorher)"
+      description: "Sendet 3 Tage vor dem Anreisedatum eine Erinnerungs-E-Mail an den Gast."
+    example_invoice_reminder:
+      name: "Beispiel: Zahlungserinnerung (14 Tage nach Rechnungsdatum)"
+      description: "Sendet 14 Tage nach dem Rechnungsdatum eine Zahlungserinnerung, wenn die Rechnung noch offen ist."
+    example_invoice_paid_reservation_status:
+      name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
+      description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
+
+  log:
+    condition_not_met: "Bedingung nicht erfüllt"
+    skipped_no_template: "Übersprungen: keine Vorlage konfiguriert"
+    skipped_template_not_found: "Übersprungen: Vorlage #%id% nicht gefunden"
+    skipped_template_incompatible: "Übersprungen: Vorlagentyp \"%type%\" ist nicht kompatibel (erwartet: \"%expected%\")"
+    skipped_no_recipient: "Übersprungen: Empfänger konnte nicht ermittelt werden (Typ: %type%)"
+    email_sent: "E-Mail an %recipient% versendet (Vorlage: \"%template%\")"
+    skipped_no_notification_email: "Übersprungen: keine Benachrichtigungs-E-Mail konfiguriert"
+    skipped_unsupported_entity: "Übersprungen: nicht unterstützter Datensatztyp"
+    notification_online_booking_sent: "Online-Buchungs-Benachrichtigung an %recipient% gesendet (%count% Reservierung(en))"
+    notification_calendar_import_sent: "Kalenderimport-Benachrichtigung an %recipient% gesendet"
+    booking_entries_created: "%count% Buchungseinträge für Rechnung %number% erstellt"
+    skipped_no_amounts: "Übersprungen: Rechnung enthält keine buchbaren Beträge"
+    skipped_invalid_config: "Übersprungen: ungültige Konfiguration"
+    skipped_status_not_found: "Übersprungen: Reservierungsstatus nicht gefunden"
+    skipped_no_reservations: "Übersprungen: Rechnung hat keine verknüpften Reservierungen"
+    invoice_status_changed: "Rechnungsstatus von Rechnung %number% auf \"%status%\" geändert"
+    payment_means_changed: "Zahlungsmethode von Rechnung %number% auf \"%code%\" geändert"
+    reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"
+
+  error:
+    name_required: "Bitte gib eine Bezeichnung ein."
+    trigger_required: "Bitte wähle einen gültigen Auslöser."
+    action_required: "Bitte wähle eine gültige Aktion."

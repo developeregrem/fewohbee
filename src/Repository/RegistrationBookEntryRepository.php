@@ -57,7 +57,7 @@ class RegistrationBookEntryRepository extends EntityRepository
      */
     public function getReservationsNotInBook($start, $end)
     {
-        $q = $this->_em->createQueryBuilder()
+        $q = $this->createQueryBuilder('rbe')
             ->select('r')
             ->from('App\Entity\Reservation', 'r')
             ->where('r.endDate >= :start AND r.endDate <= :end')

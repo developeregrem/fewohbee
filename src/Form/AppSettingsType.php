@@ -6,7 +6,6 @@ namespace App\Form;
 
 use App\Entity\AppSettings;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -41,16 +40,6 @@ class AppSettingsType extends AbstractType
                 'help' => 'app_settings.form.notification_email_help',
                 'help_html' => true,
                 'attr' => ['placeholder' => 'app_settings.form.notification_email_placeholder'],
-            ])
-            ->add('notifyOnOnlineBooking', CheckboxType::class, [
-                'label' => 'app_settings.form.notify_on_online_booking',
-                'required' => false,
-                'label_attr' => ['class' => 'checkbox-switch'],
-            ])
-            ->add('notifyOnCalendarImport', CheckboxType::class, [
-                'label' => 'app_settings.form.notify_on_calendar_import',
-                'required' => false,
-                'label_attr' => ['class' => 'checkbox-switch'],
             ])
         ;
     }

@@ -1,0 +1,10 @@
+{{ form_start(form) }}
+    {{ form_row(form.year) }}
+    {{ form_row(form.month) }}
+    {{ form_row(form.cashStart) }}
+    <div class="d-grid">
+        <button type="submit" id="btn-save" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+        </button>
+    </div>
+{{ form_end(form) }}

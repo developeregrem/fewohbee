@@ -18,13 +18,27 @@
             <td>{{ invoice.company }}</td>
             <td>
                 {% if invoice.status == 1 %}
-                    {{ 'invoice.status.notpayed'|trans }}
+                    {{ 'invoice.status.unpaid'|trans }}
                 {% elseif invoice.status == 2 %}
-                    {{ 'invoice.status.payed'|trans }}
+                    {{ 'invoice.status.paid'|trans }}
                 {% elseif invoice.status == 3 %}
-                    {{ 'invoice.status.prepayment'|trans }}
+                    {{ 'invoice.status.prepaid'|trans }}
                 {% else %}
                     {{ 'invoice.status.canceled'|trans }}
+                {% endif %}
+                {% if invoice.paymentMeans %}
+                    {% set paymentMeansIcon = {
+                        'CASH': 'fa-coins',
+                        'CREDIT_TRANSFER': 'fa-building-columns',
+                        'CARD_PAYMENT': 'fa-credit-card',
+                        'SEPA_CREDIT_TRANSFER': 'fa-building-columns',
+                        'SEPA_DIRECT_DEBIT': 'fa-money-check'
+                    }[invoice.paymentMeans.name]|default('fa-circle-question') %}
+                    <span class="ms-1 text-secondary"
+                       title="{{ invoice.paymentMeans.name|trans }}"
+                       aria-label="{{ invoice.paymentMeans.name|trans }}">
+                        <i class="fa-solid {{ paymentMeansIcon }}" aria-hidden="true"></i>
+                    </span>
                 {% endif %}
             </td>
             <td>

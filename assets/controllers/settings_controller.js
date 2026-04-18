@@ -10,16 +10,6 @@ export default class extends Controller {
             return;
         }
         this.modalContent.dataset.settingsBootstrapped = 'true';
-        this.waitForIconsAndPopover();
-    }
-
-    waitForIconsAndPopover(attempt = 0) {
-        // Ensure font-awesome icons are present and popover assets loaded
-        const iconsReady = !!document.querySelector('svg.fa-trash-can');
-        if (!iconsReady && attempt < 10) {
-            setTimeout(() => this.waitForIconsAndPopover(attempt + 1), 100);
-            return;
-        }
         enableDeletePopover();
     }
 

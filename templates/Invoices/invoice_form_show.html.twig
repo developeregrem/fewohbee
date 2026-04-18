@@ -218,9 +218,9 @@
            <div class="row"> 
                 <div class="col-sm-2">
             <select id="invoce-status" name="invoice-status" class="form-control me-sm-2" data-action="change->invoices#invoiceStatusChangeAction">
-                <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.notpayed'|trans }}</option>
-                <option value="3"{% if invoice.status == 3 %} selected{% endif %}>{{ 'invoice.status.prepayment'|trans }}</option>
-                <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.payed'|trans }}</option>
+                <option value="1"{% if invoice.status == 1 %} selected{% endif %}>{{ 'invoice.status.unpaid'|trans }}</option>
+                <option value="3"{% if invoice.status == 3 %} selected{% endif %}>{{ 'invoice.status.prepaid'|trans }}</option>
+                <option value="2"{% if invoice.status == 2 %} selected{% endif %}>{{ 'invoice.status.paid'|trans }}</option>
                 <option value="4"{% if invoice.status == 4 %} selected{% endif %}>{{ 'invoice.status.canceled'|trans }}</option>
             </select>
                 </div>

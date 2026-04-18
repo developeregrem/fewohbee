@@ -42,3 +42,4 @@ journal.template: Select export template
 journal.title: Journal
 journal.year: Year
 journal.year.desc: Year of the journal
+journal.error.journal.closed: 'Cash journal %month%/%year% is closed. Entry could not be added.'

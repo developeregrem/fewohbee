@@ -82,14 +82,22 @@ class PublicAvailabilityService
                 ? (string) ($category->getName() ?? $category->getAcronym() ?? 'Room')
                 : trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $room->getDescription()));
             $typeDescription = $category ? $this->buildCategoryDescription($category) : null;
-            $maxGuests = (int) $room->getBedsMax();
+            $roomId = (int) $room->getId();
+            $bedsMax = (int) $room->getBedsMax();
+
+            // For multipleOccupancy rooms, reduce capacity by already occupied persons
+            $effectiveCapacity = $bedsMax;
+            if ($room->isMultipleOccupancy()) {
+                $occupiedPersons = $occupancyByRoomId[$roomId]['persons'] ?? 0;
+                $effectiveCapacity = $bedsMax - $occupiedPersons;
+            }
 
             if (!isset($grouped[$typeKey])) {
                 $grouped[$typeKey] = [
                     'typeKey' => $typeKey,
                     'typeLabel' => $typeLabel,
                     'typeDescription' => $typeDescription,
-                    'maxGuests' => (int) $maxGuests,
+                    'maxGuests' => $effectiveCapacity,
                     'availableCount' => 0,
                     'roomIds' => [],
                     'roomCapacities' => [],
@@ -100,10 +108,10 @@ class PublicAvailabilityService
             }
 
             $grouped[$typeKey]['availableCount']++;
-            $grouped[$typeKey]['roomIds'][] = (int) $room->getId();
-            $grouped[$typeKey]['roomCapacities'][(int) $room->getId()] = (int) $room->getBedsMax();
+            $grouped[$typeKey]['roomIds'][] = $roomId;
+            $grouped[$typeKey]['roomCapacities'][$roomId] = $effectiveCapacity;
             $grouped[$typeKey]['subsidiaryIds'][] = (int) $room->getObject()->getId();
-            $grouped[$typeKey]['maxGuests'] = max($grouped[$typeKey]['maxGuests'], (int) $room->getBedsMax());
+            $grouped[$typeKey]['maxGuests'] = max($grouped[$typeKey]['maxGuests'], $effectiveCapacity);
         }
 
         $stayNights = (int) $dateFrom->diff($dateTo)->days;
@@ -295,7 +303,7 @@ class PublicAvailabilityService
             return false;
         }
 
-        return $occupancy['persons'] <= (int) $room->getBedsMax();
+        return $occupancy['persons'] < (int) $room->getBedsMax();
     }
 
     /** Return the optional public-facing room category description. */

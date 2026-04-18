@@ -71,6 +71,10 @@ class ZugferdInvoiceGenerator
         $documentBuilder->setDocumentBuyerContact($customerName, null, $invoice->getPhone(), null, $invoice->getEmail());
         $documentBuilder->setDocumentBuyerCommunication(ZugferdElectronicAddressScheme::UNECE3155_EM, $invoice->getEmail());
 
+        if (!empty($invoice->getBuyerVatId())) {
+            $documentBuilder->addDocumentBuyerVATRegistrationNumber($invoice->getBuyerVatId());
+        }
+
         $mandateReference = null;
         if (PaymentMeansCode::CASH === $invoice->getPaymentMeans()) {
             $documentBuilder->addDocumentPaymentMean(ZugferdPaymentMeans::UNTDID_4461_10);
@@ -114,8 +118,8 @@ class ZugferdInvoiceGenerator
             ? (clone $invoice->getDate())->modify('+'.$settings->getPaymentDueDays().' days')
             : null;
         $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate, $mandateReference); // Payment term
-
-        $documentBuilder->setDocumentBuyerReference(null !== $invoice->getBuyerReference() ? $invoice->getBuyerReference() : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
+        $buyerReference = $invoice->getBuyerReference();
+        $documentBuilder->setDocumentBuyerReference(null !== $buyerReference && '' !== trim($buyerReference) ? $buyerReference : 'not used'); // Leitweg-ID, required for B2G communication. Here we set something because its not relevant for B2B or B2C
 
         // invoice positions
         $pos = 1;
@@ -159,7 +163,7 @@ class ZugferdInvoiceGenerator
 
         $prepaidAmount = null;
         $duePayableAmount = $netSum + $vatSum;
-        if ($invoice->getStatus() === InvoiceStatus::{'PAID'}->value) {
+        if ($invoice->getStatus() === InvoiceStatus::PAID->value) {
             $prepaidAmount = $netSum + $vatSum;
             $duePayableAmount = 0.0;
         } // todo collect amount if status is prepaid
