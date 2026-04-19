@@ -160,6 +160,12 @@ class BookingEntry
     {
         $this->creditAccount = $creditAccount;
 
+        if ($creditAccount?->isOpeningBalanceAccount() ?? false) {
+            $this->sourceType = self::SOURCE_OPENING_BALANCE;
+        } elseif (self::SOURCE_OPENING_BALANCE === $this->sourceType) {
+            $this->sourceType = self::SOURCE_MANUAL;
+        }
+
         return $this;
     }
 
