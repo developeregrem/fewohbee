@@ -10,11 +10,13 @@ use App\Entity\BookingEntry;
 use App\Entity\Template;
 use App\Form\BookingBatchType;
 use App\Form\BookingEntryType;
+use App\Repository\AccountingAccountRepository;
 use App\Repository\AccountingSettingsRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
 use App\Service\BookingJournalService;
 use App\Service\JournalExport\DatevExportService;
+use App\Service\OpeningBalanceService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -44,13 +46,18 @@ class BookingJournalController extends AbstractController
     }
 
     #[Route('/batches', name: 'journal.batches', methods: ['GET'])]
-    public function batches(BookingBatchRepository $batchRepo, Request $request): Response
-    {
+    public function batches(
+        BookingBatchRepository $batchRepo,
+        BookingJournalService $journalService,
+        Request $request,
+    ): Response {
         $year = (int) $request->query->get('year', date('Y'));
         $page = (int) $request->query->get('page', 1);
 
         $batches = $batchRepo->findByFilter($year, $page, self::PER_PAGE);
         $pages = ceil($batches->count() / self::PER_PAGE);
+
+        $journalService->populateCashBalances(iterator_to_array($batches), $year);
 
         return $this->render('BookingJournal/batch_table.html.twig', [
             'batches' => $batches,
@@ -79,10 +86,6 @@ class BookingJournalController extends AbstractController
             $batch->setMonth((int) date('n'));
         }
 
-        if (null !== $youngest && null !== $youngest->getCashEnd()) {
-            $batch->setCashStart($youngest->getCashEnd());
-        }
-
         $form = $this->createForm(BookingBatchType::class, $batch, [
             'action' => $this->generateUrl('journal.batch.create'),
         ]);
@@ -93,15 +96,13 @@ class BookingJournalController extends AbstractController
     #[Route('/batch/create', name: 'journal.batch.create', methods: ['POST'])]
     public function createBatch(
         Request $request,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
     ): Response {
         $batch = new BookingBatch();
         $form = $this->createForm(BookingBatchType::class, $batch);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $batch->setCashEnd($batch->getCashStart());
-
             $em->persist($batch);
             $em->flush();
 
@@ -117,22 +118,36 @@ class BookingJournalController extends AbstractController
     public function batchEntries(
         BookingBatch $batch,
         BookingEntryRepository $entryRepo,
+        BookingJournalService $journalService,
         EntityManagerInterface $em,
         Request $request,
     ): Response {
         $page = (int) $request->query->get('page', 1);
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', 'all');
-        $cashOnly = 'cashbook' === $filter;
+        if (!in_array($filter, ['all', 'cashbook', 'bankbook'], true)) {
+            $filter = 'all';
+        }
 
-        $entries = $entryRepo->findByBatch($batch, $search, $page, self::PER_PAGE, $cashOnly);
+        $entries = $entryRepo->findByBatch($batch, $search, $page, self::PER_PAGE, $filter);
         $pages = ceil($entries->count() / self::PER_PAGE);
 
         $pdfTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_CASHJOURNAL_PDF']);
 
+        $journalService->populateCashBalance($batch);
+
+        $bankOpeningBalance = 0.0;
+        $bankClosingBalance = 0.0;
+        if ('bankbook' === $filter) {
+            $bankOpeningBalance = $entryRepo->getBankOpeningBalance($batch);
+            $bankClosingBalance = $bankOpeningBalance + $entryRepo->getBankBatchDelta($batch);
+        }
+
         return $this->render('BookingJournal/entries.html.twig', [
             'batch' => $batch,
             'entries' => $entries,
+            'bankOpeningBalance' => $bankOpeningBalance,
+            'bankClosingBalance' => $bankClosingBalance,
             'page' => $page,
             'pages' => $pages,
             'search' => $search,
@@ -146,7 +161,6 @@ class BookingJournalController extends AbstractController
         BookingBatch $batch,
         Request $request,
         EntityManagerInterface $em,
-        BookingJournalService $journalService,
         AuthorizationCheckerInterface $authChecker,
     ): Response {
         if (!$this->isCsrfTokenValid('batch_toggle_'.$batch->getId(), $request->request->get('_token'))) {
@@ -162,10 +176,6 @@ class BookingJournalController extends AbstractController
         }
 
         $batch->setIsClosed(!$batch->isClosed());
-
-        if ($batch->isClosed()) {
-            $journalService->recalculateCashEnd($batch);
-        }
 
         $em->flush();
 
@@ -229,10 +239,17 @@ class BookingJournalController extends AbstractController
                 $this->applyCashbookMapping($form, $entry, $em);
             }
 
+            try {
+                $batch = $journalService->assignBatchByEntryDate($entry);
+            } catch (\RuntimeException $e) {
+                $this->addFlash('warning', $e->getMessage());
+
+                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter]);
+            }
+
             $em->persist($entry);
             $em->flush();
-
-            $journalService->recalculateCashEnd($batch);
+            $journalService->recalculateDocumentNumbersForYears($batch->getYear());
 
             $this->addFlash('success', 'accounting.journal.flash.entry_created');
 
@@ -281,6 +298,7 @@ class BookingJournalController extends AbstractController
         BookingJournalService $journalService,
     ): Response {
         $batch = $entry->getBookingBatch();
+        $oldYear = $batch->getYear();
         $filter = $request->query->get('filter', 'all');
         $cashbookMode = 'cashbook' === $filter;
 
@@ -300,9 +318,16 @@ class BookingJournalController extends AbstractController
                 $this->applyCashbookMapping($form, $entry, $em);
             }
 
-            $em->flush();
+            try {
+                $batch = $journalService->assignBatchByEntryDate($entry);
+            } catch (\RuntimeException $e) {
+                $this->addFlash('warning', $e->getMessage());
 
-            $journalService->recalculateCashEnd($batch);
+                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter]);
+            }
+
+            $em->flush();
+            $journalService->recalculateDocumentNumbersForYears($oldYear, $batch->getYear());
 
             $this->addFlash('success', 'accounting.journal.flash.entry_updated');
 
@@ -316,8 +341,8 @@ class BookingJournalController extends AbstractController
     public function deleteEntry(
         BookingEntry $entry,
         EntityManagerInterface $em,
-        BookingJournalService $journalService,
         Request $request,
+        BookingJournalService $journalService,
     ): Response {
         $batch = $entry->getBookingBatch();
 
@@ -335,8 +360,7 @@ class BookingJournalController extends AbstractController
 
         $em->remove($entry);
         $em->flush();
-
-        $journalService->recalculateCashEnd($batch);
+        $journalService->recalculateDocumentNumbersForYears($batch->getYear());
 
         $this->addFlash('success', 'accounting.journal.flash.entry_deleted');
 
@@ -399,6 +423,125 @@ class BookingJournalController extends AbstractController
         $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
 
         return $response;
+    }
+
+    #[Route('/export/year/{year}/datev', name: 'journal.export.year.datev', methods: ['GET'])]
+    public function exportYearDatev(
+        int $year,
+        BookingBatchRepository $batchRepo,
+        DatevExportService $datevExport,
+        AccountingSettingsRepository $settingsRepo,
+        \App\Service\AppSettingsService $appSettingsService,
+        EntityManagerInterface $em,
+        Request $request,
+    ): Response {
+        $settings = $settingsRepo->findSingleton();
+
+        if (null === $settings) {
+            $this->addFlash('warning', 'accounting.journal.export.no_settings');
+
+            return $this->redirectToRoute('journal.overview');
+        }
+
+        $batches = $batchRepo->findByYear($year);
+
+        if ([] === $batches) {
+            $this->addFlash('warning', 'accounting.journal.export.no_batches');
+
+            return $this->redirectToRoute('journal.overview');
+        }
+
+        $warnings = $datevExport->validateYear($batches, $settings);
+
+        if (count($warnings) > 0 && !$request->query->getBoolean('force')) {
+            $this->addFlash('datev_year_warnings', $year.'||'.implode('||', $warnings));
+
+            return $this->redirectToRoute('journal.overview');
+        }
+
+        $currency = $appSettingsService->getSettings()->getCurrency();
+        $csv = $datevExport->exportYear($year, $batches, $settings, $currency);
+
+        foreach ($batches as $batch) {
+            $batch->setIsExported(true);
+        }
+        $em->flush();
+
+        $filename = sprintf('EXTF_Buchungsjournal_%d.csv', $year);
+
+        $response = new Response($csv);
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
+
+        return $response;
+    }
+
+    #[Route('/opening-balance/new', name: 'journal.opening_balance.new', methods: ['GET'])]
+    public function newOpeningBalance(
+        Request $request,
+        OpeningBalanceService $openingBalanceService,
+        AccountingAccountRepository $accountRepo,
+    ): Response {
+        $year = (int) $request->query->get('year', (int) date('Y'));
+        $cashAccount = $accountRepo->findCashAccount();
+        $bankAccount = $accountRepo->findBankAccount();
+        $openingAccount = $accountRepo->findOpeningBalanceAccount();
+
+        $cashAmount = $cashAccount ? $openingBalanceService->getAmount($year, $cashAccount) : 0.0;
+        $bankAmount = $bankAccount ? $openingBalanceService->getAmount($year, $bankAccount) : 0.0;
+
+        if (0.0 === $cashAmount && null !== $cashAccount) {
+            $cashAmount = $openingBalanceService->getPriorYearCashClosing($year);
+        }
+        if (0.0 === $bankAmount && null !== $bankAccount) {
+            $bankAmount = $openingBalanceService->getPriorYearBankClosing($year);
+        }
+
+        return $this->render('BookingJournal/_opening_balance_form.html.twig', [
+            'year' => $year,
+            'cashAccount' => $cashAccount,
+            'bankAccount' => $bankAccount,
+            'openingAccount' => $openingAccount,
+            'cashAmount' => $cashAmount,
+            'bankAmount' => $bankAmount,
+        ]);
+    }
+
+    #[Route('/opening-balance/save', name: 'journal.opening_balance.save', methods: ['POST'])]
+    public function saveOpeningBalance(
+        Request $request,
+        OpeningBalanceService $openingBalanceService,
+        AccountingAccountRepository $accountRepo,
+    ): Response {
+        if (!$this->isCsrfTokenValid('opening_balance', $request->request->get('_token'))) {
+            $this->addFlash('danger', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('journal.overview');
+        }
+
+        $year = (int) $request->request->get('year', (int) date('Y'));
+        $cashAmount = $request->request->get('cashAmount');
+        $bankAmount = $request->request->get('bankAmount');
+
+        if (null === $accountRepo->findOpeningBalanceAccount()) {
+            $this->addFlash('warning', 'accounting.opening_balance.flash.no_account');
+
+            return $this->redirectToRoute('journal.overview');
+        }
+
+        $cashAccount = $accountRepo->findCashAccount();
+        if (null !== $cashAccount) {
+            $openingBalanceService->upsert($year, $cashAccount, '' === (string) $cashAmount ? null : (float) str_replace(',', '.', (string) $cashAmount));
+        }
+
+        $bankAccount = $accountRepo->findBankAccount();
+        if (null !== $bankAccount) {
+            $openingBalanceService->upsert($year, $bankAccount, '' === (string) $bankAmount ? null : (float) str_replace(',', '.', (string) $bankAmount));
+        }
+
+        $this->addFlash('success', 'accounting.opening_balance.flash.saved');
+
+        return $this->redirectToRoute('journal.overview');
     }
 
     #[Route('/batch/{id:batch}/export/pdf/{templateId:template.id}', name: 'journal.batch.export.pdf', methods: ['GET'])]
