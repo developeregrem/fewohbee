@@ -50,10 +50,13 @@ accounting.accounts.edit: Edit Account
 accounting.accounts.number: Account No.
 accounting.accounts.name: Name
 accounting.accounts.type: Type
+accounting.accounts.system_role: System role
 accounting.accounts.cash: Cash
 accounting.accounts.is_cash: This is the cash register account
 accounting.accounts.bank: Bank
 accounting.accounts.is_bank: This is the bank account
+accounting.accounts.opening_balance: Opening
+accounting.accounts.is_opening_balance: This is the opening balance account
 accounting.accounts.sort_order: Sort Order
 accounting.accounts.system_locked: System account (cannot be deleted)
 accounting.accounts.empty: No accounts configured. Load a preset to get started.

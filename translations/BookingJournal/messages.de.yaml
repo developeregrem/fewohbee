@@ -50,10 +50,13 @@ accounting.accounts.edit: Konto bearbeiten
 accounting.accounts.number: Konto-Nr.
 accounting.accounts.name: Bezeichnung
 accounting.accounts.type: Typ
+accounting.accounts.system_role: Systemrolle
 accounting.accounts.cash: Kasse
 accounting.accounts.is_cash: Dies ist das Kassenkonto
 accounting.accounts.bank: Bank
 accounting.accounts.is_bank: Dies ist das Bankkonto
+accounting.accounts.opening_balance: Eröffnung
+accounting.accounts.is_opening_balance: Dies ist das Eröffnungskonto
 accounting.accounts.sort_order: Sortierung
 accounting.accounts.system_locked: Systemkonto (kann nicht gelöscht werden)
 accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
