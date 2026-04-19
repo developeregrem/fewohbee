@@ -110,12 +110,15 @@ class BookingJournalSettingsController extends AbstractController
     public function createAccount(
         Request $request,
         EntityManagerInterface $em,
+        AccountingAccountRepository $accountRepo,
     ): Response {
         $account = new AccountingAccount();
         $form = $this->createForm(AccountingAccountType::class, $account);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->ensureExclusiveOpeningBalanceAccount($account, $accountRepo);
+
             $em->persist($account);
             $em->flush();
 
@@ -142,11 +145,14 @@ class BookingJournalSettingsController extends AbstractController
         AccountingAccount $account,
         Request $request,
         EntityManagerInterface $em,
+        AccountingAccountRepository $accountRepo,
     ): Response {
         $form = $this->createForm(AccountingAccountType::class, $account);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->ensureExclusiveOpeningBalanceAccount($account, $accountRepo);
+
             $em->flush();
 
             $this->addFlash('success', 'accounting.accounts.flash.updated');
@@ -276,5 +282,22 @@ class BookingJournalSettingsController extends AbstractController
     private function renderTaxRateForm($form): Response
     {
         return $this->render('BookingJournal/_tax_rate_form.html.twig', ['form' => $form]);
+    }
+
+    private function ensureExclusiveOpeningBalanceAccount(
+        AccountingAccount $selectedAccount,
+        AccountingAccountRepository $accountRepo,
+    ): void {
+        if (!$selectedAccount->isOpeningBalanceAccount()) {
+            return;
+        }
+
+        foreach ($accountRepo->findBy(['isOpeningBalanceAccount' => true]) as $account) {
+            if ($account === $selectedAccount || $account->getId() === $selectedAccount->getId()) {
+                continue;
+            }
+
+            $account->setIsOpeningBalanceAccount(false);
+        }
     }
 }

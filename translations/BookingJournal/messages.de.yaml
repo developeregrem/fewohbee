@@ -31,6 +31,17 @@ accounting.settings.fiscal_year_start: Wirtschaftsjahr-Beginn (Monat)
 accounting.settings.account_number_length: Sachkontenlänge
 accounting.settings.dictation_code: Diktatkürzel
 
+# Anfangsbestand (Eröffnungsbuchungen)
+accounting.opening_balance.title: Anfangsbestand
+accounting.opening_balance.help: "Einmal pro Jahr erfassen. Der Betrag wird automatisch als Eröffnungsbuchung auf dem 01.01. verbucht."
+accounting.opening_balance.year: Jahr
+accounting.opening_balance.cash: Kasse
+accounting.opening_balance.bank: Bank
+accounting.opening_balance.booking_info: "Wird gebucht gegen: %account%"
+accounting.opening_balance.no_account: "Es ist kein Eröffnungskonto konfiguriert. Bitte laden Sie zuerst einen Kontenrahmen-Preset."
+accounting.opening_balance.flash.saved: Anfangsbestand gespeichert.
+accounting.opening_balance.flash.no_account: "Kein Eröffnungskonto konfiguriert – bitte Preset laden."
+
 # Konten
 accounting.accounts.title: Konten
 accounting.accounts.help: "Verwalten Sie hier die Buchungskonten für Soll- und Haben-Buchungen (z.B. Kasse, Bank, Erlöse)."
@@ -39,8 +50,13 @@ accounting.accounts.edit: Konto bearbeiten
 accounting.accounts.number: Konto-Nr.
 accounting.accounts.name: Bezeichnung
 accounting.accounts.type: Typ
+accounting.accounts.system_role: Systemrolle
 accounting.accounts.cash: Kasse
 accounting.accounts.is_cash: Dies ist das Kassenkonto
+accounting.accounts.bank: Bank
+accounting.accounts.is_bank: Dies ist das Bankkonto
+accounting.accounts.opening_balance: Eröffnung
+accounting.accounts.is_opening_balance: Dies ist das Eröffnungskonto
 accounting.accounts.sort_order: Sortierung
 accounting.accounts.system_locked: Systemkonto (kann nicht gelöscht werden)
 accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
@@ -96,6 +112,7 @@ accounting.journal.batch.reopen: Monat wieder öffnen
 # Journal - Filter
 accounting.journal.filter.all: Alle Buchungen
 accounting.journal.filter.cashbook: Kassenbuch-Ansicht
+accounting.journal.filter.bankbook: Bank-Ansicht
 
 # Journal - Kassenbuch-Spalten
 accounting.journal.cashbook.incomes: Einnahmen
@@ -107,6 +124,13 @@ accounting.journal.cashbook.start: Anfangsbestand Kasse
 accounting.journal.cashbook.end: Endbestand Kasse
 accounting.journal.cashbook.start_help: "Bargeldbestand zu Beginn des Monats (nur für die Kassenbuch-Ansicht relevant)."
 
+# Journal - Bank-Spalten
+accounting.journal.bankbook.incomes: Zugang
+accounting.journal.bankbook.expenses: Abgang
+accounting.journal.bankbook.counter_account: Gegenkto.
+accounting.journal.bankbook.start: Anfangssaldo Bank
+accounting.journal.bankbook.end: Endsaldo Bank
+
 # Journal - Kassenbuch-Formular
 accounting.journal.cashbook.direction: Art
 accounting.journal.cashbook.category: Gegenkonto
@@ -114,6 +138,9 @@ accounting.journal.cashbook.category: Gegenkonto
 # Journal - Export
 accounting.journal.export: Export
 accounting.journal.export.datev: DATEV Buchungsstapel (CSV)
+accounting.journal.export.year: Jahresexport DATEV
+accounting.journal.export.year.help: "Alle Buchungen des ausgewählten Jahres in einer DATEV-CSV exportieren."
+accounting.journal.export.no_batches: "Für dieses Jahr gibt es keine Buchungen."
 accounting.journal.export.no_settings: "Bitte zuerst die DATEV-Export-Einstellungen konfigurieren."
 accounting.journal.export.warn_intro: "Folgende Einträge sind unvollständig. Der Export ist trotzdem möglich – die Korrekturen können hier oder nachträglich in DATEV vorgenommen werden."
 accounting.journal.export.force: "Trotzdem exportieren"
@@ -178,6 +205,7 @@ preset.account.premises: Raumkosten
 preset.account.cleaning: Reinigung
 preset.account.maintenance: Instandhaltung
 preset.account.maintenance_cleaning: Unterhalt/Reinigung
+preset.account.opening_balance: Saldenvorträge / Eröffnungsbilanz
 
 # Preset Steuersatznamen
 preset.taxrate.tax_free: 0% steuerfrei

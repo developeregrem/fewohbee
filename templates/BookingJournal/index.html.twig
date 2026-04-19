@@ -4,6 +4,10 @@
     {{ parent() }} - {{ 'nav.journal'|trans }}
 {% endblock %}
 
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="booking-journal"
      data-booking-journal-batches-url-value="{{ path('journal.batches') }}">
@@ -19,19 +23,40 @@
                     <option value="{{ y.year }}" {% if y.year == currentYear %}selected{% endif %}>{{ y.year }}</option>
                 {% endfor %}
             </select>
-            <button type="button" class="btn btn-secondary btn-sm"
-                    data-action="click->booking-journal#openOffcanvas"
-                    data-url="{{ path('journal.batch.new') }}"
-                    data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
-                <i class="fas fa-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
+            <div class="dropdown">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-plus"></i> {{ 'button.add'|trans }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-action="click->booking-journal#openOffcanvas"
+                                data-url="{{ path('journal.batch.new') }}"
+                                data-offcanvas-title="{{ 'accounting.journal.batch.add'|trans }}">
+                            <i class="fas fa-calendar-plus"></i> {{ 'accounting.journal.batch.add'|trans }}
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="dropdown-item"
+                                data-action="click->booking-journal#openOpeningBalance"
+                                data-url-template="{{ path('journal.opening_balance.new', {'year': '__YEAR__'}) }}"
+                                data-offcanvas-title="{{ 'accounting.opening_balance.title'|trans }}">
+                            <i class="fas fa-flag-checkered"></i> {{ 'accounting.opening_balance.title'|trans }}
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+                    data-action="click->booking-journal#exportYear"
+                    data-url-template="{{ path('journal.export.year.datev', {'year': '__YEAR__'}) }}"
+                    title="{{ 'accounting.journal.export.year.help'|trans }}">
+                <i class="fas fa-file-export"></i> {{ 'accounting.journal.export.year'|trans }}
             </button>
             <a href="{{ path('journal.settings.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.settings.title'|trans }}">
                 <i class="fas fa-cog"></i>
             </a>
         </div>
     </div>
-
-    {% include 'feedback.html.twig' %}
 
     <div data-booking-journal-target="batchTable">
         {% include 'BookingJournal/batch_table.html.twig' with {'batches': [], 'year': currentYear, 'page': 1, 'pages': 0} %}

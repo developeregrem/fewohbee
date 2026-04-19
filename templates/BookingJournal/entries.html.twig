@@ -5,42 +5,7 @@
 {% endblock %}
 
 {% block flashMessage %}
-    <div class="container mt-3">
-        {% for warningStr in app.flashes('datev_warnings') %}
-            <div class="row" id="flash-message-container">
-                <div class="col">
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        <p class="mb-2">{{ 'accounting.journal.export.warn_intro'|trans }}</p>
-                        <ul class="mb-2">
-                            {% for warning in warningStr|split('||') %}
-                                <li>{{ warning }}</li>
-                            {% endfor %}
-                        </ul>
-                        <div class="text-end">
-                            <a href="{{ path('journal.batch.export.datev', {'id': batch.id, 'force': 1}) }}"
-                               class="btn btn-sm btn-secondary"
-                               data-turbo="false" data-turbo-prefetch="false">
-                                <i class="fas fa-download"></i> {{ 'accounting.journal.export.force'|trans }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-        {% for type, flashMessages in app.flashes %}
-            {% for flashMessage in flashMessages %}
-                <div class="row" id="flash-message-container">
-                    <div class="col">
-                        <div class="alert alert-{{ type }} alert-dismissible fade show" role="alert">
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            {{ flashMessage|trans }}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endfor %}
-    </div>
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
 {% endblock %}
 
 {% block content %}
@@ -78,6 +43,7 @@
                     onchange="window.location.href='{{ path('journal.batch.entries', {'id': batch.id}) }}?filter=' + this.value">
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
                 <option value="cashbook"{% if filter == 'cashbook' %} selected{% endif %}>{{ 'accounting.journal.filter.cashbook'|trans }}</option>
+                <option value="bankbook"{% if filter == 'bankbook' %} selected{% endif %}>{{ 'accounting.journal.filter.bankbook'|trans }}</option>
             </select>
         </div>
         <div class="col-auto d-flex gap-2 align-items-center">
@@ -111,7 +77,75 @@
     </div>
 
 
-    {% if filter == 'cashbook' %}
+    {% if filter == 'bankbook' %}
+        {# ── Bankbuch view ── #}
+        <div class="row mb-2">
+            <div class="col-auto"><strong>{{ 'accounting.journal.bankbook.start'|trans }}:</strong> {{ bankOpeningBalance|number_format(2, ',', '.') }} &euro;</div>
+            <div class="col-auto"><strong>{{ 'accounting.journal.bankbook.end'|trans }}:</strong> {{ bankClosingBalance|number_format(2, ',', '.') }} &euro;</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm">
+                <thead>
+                <tr>
+                    <th>{{ 'accounting.journal.entry.date'|trans }}</th>
+                    <th>{{ 'accounting.journal.entry.doc_number'|trans }}</th>
+                    <th class="text-end">{{ 'accounting.journal.bankbook.incomes'|trans }}</th>
+                    <th class="text-end">{{ 'accounting.journal.bankbook.expenses'|trans }}</th>
+                    <th>{{ 'accounting.journal.bankbook.counter_account'|trans }}</th>
+                    <th class="d-none d-md-table-cell">{{ 'accounting.journal.entry.invoice'|trans }}</th>
+                    <th>{{ 'accounting.journal.entry.remark'|trans }}</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for entry in entries %}
+                    {% set isIncome = entry.debitAccount and entry.debitAccount.bankAccount %}
+                    {% set isExpense = entry.creditAccount and entry.creditAccount.bankAccount %}
+                    <tr>
+                        <td>{{ entry.date|date('d.m.Y') }}</td>
+                        <td>{{ '%04d'|format(entry.documentNumber) }}</td>
+                        <td class="text-end">{{ isIncome ? entry.amount|number_format(2, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ isExpense ? entry.amount|number_format(2, ',', '.') : '' }}</td>
+                        <td>
+                            {% if isIncome and entry.creditAccount %}
+                                {{ entry.creditAccount.label }}
+                            {% elseif isExpense and entry.debitAccount %}
+                                {{ entry.debitAccount.label }}
+                            {% else %}
+                                {{ entry.counterAccountLegacy ?? '-' }}
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td>{{ entry.remark ?? '' }}</td>
+                        <td>
+                            {% if not batch.closed %}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->booking-journal#openOffcanvas"
+                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter}) }}"
+                                        data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
+                                        title="{{ 'button.edit'|trans }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% set id = entry.id %}
+                                {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
+                                {% use "common/delete_popover.html.twig" %}
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        title="{{ 'button.delete'|trans }}"
+                                        data-popover="delete"
+                                        data-title="{{ 'accounting.journal.entry.delete_ask'|trans }}"
+                                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8" class="text-center text-muted">{{ 'accounting.journal.entry.empty'|trans }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elseif filter == 'cashbook' %}
         {# ── Kassenbuch view ── #}
         <div class="row mb-2">
             <div class="col-auto"><strong>{{ 'accounting.journal.cashbook.start'|trans }}:</strong> {{ batch.cashStart|number_format(2, ',', '.') }} &euro;</div>
