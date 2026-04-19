@@ -177,7 +177,6 @@ final class BookingJournalControllerTest extends WebTestCase
         $client->submitForm('btn-save', [
             'booking_batch[year]' => 2099,
             'booking_batch[month]' => 1,
-            'booking_batch[cashStart]' => '0',
         ]);
 
         // Should redirect to the new batch entries page

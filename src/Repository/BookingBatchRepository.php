@@ -45,6 +45,17 @@ class BookingBatchRepository extends ServiceEntityRepository
         return $this->findOneBy(['year' => $year, 'month' => $month]);
     }
 
+    /** @return BookingBatch[] */
+    public function findByYear(int $year): array
+    {
+        return $this->createQueryBuilder('b')
+            ->where('b.year = :year')
+            ->setParameter('year', $year)
+            ->orderBy('b.month', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getYoungestBatch(): ?BookingBatch
     {
         return $this->createQueryBuilder('b')

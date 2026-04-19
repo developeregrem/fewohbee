@@ -37,6 +37,10 @@ class AccountingAccountType extends AbstractType
                 'label' => 'accounting.accounts.is_cash',
                 'required' => false,
             ])
+            ->add('isBankAccount', CheckboxType::class, [
+                'label' => 'accounting.accounts.is_bank',
+                'required' => false,
+            ])
             ->add('sortOrder', IntegerType::class, [
                 'label' => 'accounting.accounts.sort_order',
                 'required' => false,

@@ -22,81 +22,114 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class BookingJournalServiceTest extends TestCase
 {
-    // ── recalculateCashEnd ───────────────────────────────────────────
+    // ── populateCashBalance ──────────────────────────────────────────
 
-    public function testRecalculateCashEndWithIncomeAndExpense(): void
+    public function testPopulateCashBalanceComputesFromRepo(): void
     {
-        $cash = $this->makeCashAccount();
-        $other = $this->makeAccount('8300', 'Revenue', false);
-
         $batch = new BookingBatch();
         $batch->setYear(2026);
         $batch->setMonth(4);
-        $batch->setCashStart(100.0);
 
-        // Income: debit=cash, 50€
-        $income = new BookingEntry();
-        $income->setAmount('50.00');
-        $income->setDebitAccount($cash);
-        $income->setCreditAccount($other);
-        $batch->addEntry($income);
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $entryRepo->method('getCashOpeningBalance')->willReturn(100.0);
+        $entryRepo->method('getCashBatchDelta')->willReturn(30.0);
 
-        // Expense: credit=cash, 20€
-        $expense = new BookingEntry();
-        $expense->setAmount('20.00');
-        $expense->setDebitAccount($other);
-        $expense->setCreditAccount($cash);
-        $batch->addEntry($expense);
+        $service = $this->createService(entryRepo: $entryRepo);
+        $service->populateCashBalance($batch);
 
-        $service = $this->createService();
-        $service->recalculateCashEnd($batch);
-
-        // 100 + 50 - 20 = 130
+        self::assertSame(100.0, $batch->getCashStart());
         self::assertSame(130.0, $batch->getCashEnd());
     }
 
-    public function testRecalculateCashEndIgnoresNonCashEntries(): void
+    public function testPopulateCashBalancesAcrossMonthsCarriesRunningTotal(): void
     {
-        $bank = $this->makeAccount('1200', 'Bank', false);
-        $revenue = $this->makeAccount('8400', 'Revenue', false);
+        $jan = (new BookingBatch())->setYear(2026)->setMonth(1);
+        $feb = (new BookingBatch())->setYear(2026)->setMonth(2);
+        $mar = (new BookingBatch())->setYear(2026)->setMonth(3);
 
-        $batch = new BookingBatch();
-        $batch->setYear(2026);
-        $batch->setMonth(4);
-        $batch->setCashStart(500.0);
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $entryRepo->method('getCashOpeningForYear')->willReturn(100.0);
+        $entryRepo->method('getCashDeltasByMonth')->willReturn([
+            1 => 50.0,
+            2 => -20.0,
+            3 => 10.0,
+        ]);
 
-        $entry = new BookingEntry();
-        $entry->setAmount('200.00');
-        $entry->setDebitAccount($bank);
-        $entry->setCreditAccount($revenue);
-        $batch->addEntry($entry);
+        $service = $this->createService(entryRepo: $entryRepo);
+        $service->populateCashBalances([$mar, $jan, $feb], 2026);
 
-        $service = $this->createService();
-        $service->recalculateCashEnd($batch);
-
-        self::assertSame(500.0, $batch->getCashEnd());
+        self::assertSame(100.0, $jan->getCashStart());
+        self::assertSame(150.0, $jan->getCashEnd());
+        self::assertSame(150.0, $feb->getCashStart());
+        self::assertSame(130.0, $feb->getCashEnd());
+        self::assertSame(130.0, $mar->getCashStart());
+        self::assertSame(140.0, $mar->getCashEnd());
     }
 
-    public function testRecalculateCashEndWithZeroStart(): void
+    public function testPopulateCashBalancesNoOpOnEmpty(): void
     {
-        $cash = $this->makeCashAccount();
-        $other = $this->makeAccount('8300', 'Revenue', false);
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $service = $this->createService(entryRepo: $entryRepo);
 
-        $batch = new BookingBatch();
-        $batch->setYear(2026);
-        $batch->setMonth(1);
-        $batch->setCashStart(0.0);
+        $service->populateCashBalances([], 2026);
+
+        self::assertTrue(true); // no exception
+    }
+
+    public function testAssignBatchByEntryDateMovesEntryToMatchingBatch(): void
+    {
+        $oldBatch = (new BookingBatch())->setYear(2026)->setMonth(4);
+        $targetBatch = (new BookingBatch())->setYear(2026)->setMonth(5);
 
         $entry = new BookingEntry();
-        $entry->setAmount('99.99');
-        $entry->setDebitAccount($cash);
-        $entry->setCreditAccount($other);
-        $batch->addEntry($entry);
+        $entry->setBookingBatch($oldBatch);
+        $entry->setDate(new \DateTime('2026-05-12'));
 
-        $service = $this->createService();
-        $service->recalculateCashEnd($batch);
+        $batchRepo = $this->createStub(BookingBatchRepository::class);
+        $batchRepo->method('findByYearAndMonth')->willReturn($targetBatch);
 
-        self::assertSame(99.99, $batch->getCashEnd());
+        $service = $this->createService(batchRepo: $batchRepo);
+
+        self::assertSame($targetBatch, $service->assignBatchByEntryDate($entry));
+        self::assertSame($targetBatch, $entry->getBookingBatch());
+    }
+
+    public function testAssignBatchByEntryDateRejectsClosedTargetBatch(): void
+    {
+        $oldBatch = (new BookingBatch())->setYear(2026)->setMonth(4);
+        $targetBatch = (new BookingBatch())->setYear(2026)->setMonth(5);
+        $targetBatch->setIsClosed(true);
+
+        $entry = new BookingEntry();
+        $entry->setBookingBatch($oldBatch);
+        $entry->setDate(new \DateTime('2026-05-12'));
+
+        $batchRepo = $this->createStub(BookingBatchRepository::class);
+        $batchRepo->method('findByYearAndMonth')->willReturn($targetBatch);
+
+        $service = $this->createService(batchRepo: $batchRepo);
+
+        $this->expectException(\RuntimeException::class);
+        $service->assignBatchByEntryDate($entry);
+    }
+
+    public function testRecalculateDocumentNumbersForYearsAssignsGaplessNumbers(): void
+    {
+        $first = (new BookingEntry())->setDocumentNumber(12);
+        $second = (new BookingEntry())->setDocumentNumber(30);
+
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $entryRepo->method('findEntriesForDocumentNumbering')
+            ->willReturn([$first, $second]);
+
+        $em = $this->createStub(EntityManagerInterface::class);
+
+        $service = $this->createService(em: $em, entryRepo: $entryRepo);
+
+        $service->recalculateDocumentNumbersForYears(2026);
+
+        self::assertSame(1, $first->getDocumentNumber());
+        self::assertSame(2, $second->getDocumentNumber());
     }
 
     // ── createEntriesFromInvoice ────────────────────────────────────
@@ -352,18 +385,18 @@ final class BookingJournalServiceTest extends TestCase
     // ── Helpers ─────────────────────────────────────────────────────
 
     private function createService(
+        ?EntityManagerInterface $em = null,
         ?BookingBatchRepository $batchRepo = null,
         ?BookingEntryRepository $entryRepo = null,
         ?AccountingAccountRepository $accountRepo = null,
         ?TaxRateRepository $taxRateRepo = null,
         ?InvoiceService $invoiceService = null,
     ): BookingJournalService {
-        $em = $this->createStub(EntityManagerInterface::class);
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnArgument(0);
 
         return new BookingJournalService(
-            $em,
+            $em ?? $this->createStub(EntityManagerInterface::class),
             $batchRepo ?? $this->createStub(BookingBatchRepository::class),
             $entryRepo ?? $this->createStub(BookingEntryRepository::class),
             $accountRepo ?? $this->createStub(AccountingAccountRepository::class),

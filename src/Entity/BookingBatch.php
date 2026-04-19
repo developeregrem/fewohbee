@@ -205,6 +205,9 @@ class BookingBatch
         $inventory = (float) ($this->cashStart ?? 0);
 
         foreach ($this->entries as $entry) {
+            if ($entry->isOpeningBalance()) {
+                continue;
+            }
             $isCashDebit = $entry->getDebitAccount()?->isCashAccount() ?? false;
             $isCashCredit = $entry->getCreditAccount()?->isCashAccount() ?? false;
 
@@ -230,5 +233,47 @@ class BookingBatch
         }
 
         return $cashEntries;
+    }
+
+    /**
+     * Returns entries filtered to the bank account (debit or credit is bank).
+     * Running balance starts from the given opening balance (carry-over from earlier batches).
+     *
+     * @return CashJournalEntryAdapter[]
+     */
+    public function getBankJournalEntries(float $openingBalance = 0.0): array
+    {
+        $bankEntries = [];
+        $inventory = $openingBalance;
+
+        foreach ($this->entries as $entry) {
+            if ($entry->isOpeningBalance()) {
+                continue;
+            }
+            $isBankDebit = $entry->getDebitAccount()?->isBankAccount() ?? false;
+            $isBankCredit = $entry->getCreditAccount()?->isBankAccount() ?? false;
+
+            if (!$isBankDebit && !$isBankCredit) {
+                continue;
+            }
+
+            $incomes = $isBankDebit ? (float) $entry->getAmount() : 0.0;
+            $expenses = $isBankCredit ? (float) $entry->getAmount() : 0.0;
+            $inventory += $incomes - $expenses;
+
+            $counterAccount = $isBankDebit
+                ? ($entry->getCreditAccount()?->getLabel() ?? $entry->getCounterAccountLegacy() ?? '')
+                : ($entry->getDebitAccount()?->getLabel() ?? $entry->getCounterAccountLegacy() ?? '');
+
+            $bankEntries[] = new CashJournalEntryAdapter(
+                $entry,
+                $incomes,
+                $expenses,
+                $inventory,
+                $counterAccount,
+            );
+        }
+
+        return $bankEntries;
     }
 }

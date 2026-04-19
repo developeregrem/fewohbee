@@ -31,6 +31,17 @@ accounting.settings.fiscal_year_start: Fiscal Year Start (Month)
 accounting.settings.account_number_length: Account Number Length
 accounting.settings.dictation_code: Dictation Code
 
+# Opening balance
+accounting.opening_balance.title: Opening balance
+accounting.opening_balance.help: "Enter once per year. The amount is booked automatically as an opening entry on 01 January."
+accounting.opening_balance.year: Year
+accounting.opening_balance.cash: Cash
+accounting.opening_balance.bank: Bank
+accounting.opening_balance.booking_info: "Booked against: %account%"
+accounting.opening_balance.no_account: "No opening balance account is configured. Please load a chart-of-accounts preset first."
+accounting.opening_balance.flash.saved: Opening balance saved.
+accounting.opening_balance.flash.no_account: "No opening balance account configured — please load a preset."
+
 # Accounts
 accounting.accounts.title: Accounts
 accounting.accounts.help: "Manage the booking accounts for debit and credit entries (e.g. cash, bank, revenue)."
@@ -41,6 +52,8 @@ accounting.accounts.name: Name
 accounting.accounts.type: Type
 accounting.accounts.cash: Cash
 accounting.accounts.is_cash: This is the cash register account
+accounting.accounts.bank: Bank
+accounting.accounts.is_bank: This is the bank account
 accounting.accounts.sort_order: Sort Order
 accounting.accounts.system_locked: System account (cannot be deleted)
 accounting.accounts.empty: No accounts configured. Load a preset to get started.
@@ -96,6 +109,7 @@ accounting.journal.batch.reopen: Reopen Month
 # Journal - Filter
 accounting.journal.filter.all: All entries
 accounting.journal.filter.cashbook: Cash book view
+accounting.journal.filter.bankbook: Bank view
 
 # Journal - Cashbook columns
 accounting.journal.cashbook.incomes: Income
@@ -107,6 +121,13 @@ accounting.journal.cashbook.start: Cash Start Balance
 accounting.journal.cashbook.end: Cash End Balance
 accounting.journal.cashbook.start_help: "Cash balance at the beginning of the month (only relevant for the cash book view)."
 
+# Journal - Bank columns
+accounting.journal.bankbook.incomes: Incoming
+accounting.journal.bankbook.expenses: Outgoing
+accounting.journal.bankbook.counter_account: Counter Acc.
+accounting.journal.bankbook.start: Opening Balance Bank
+accounting.journal.bankbook.end: Closing Balance Bank
+
 # Journal - Cashbook form
 accounting.journal.cashbook.direction: Type
 accounting.journal.cashbook.category: Counter account
@@ -114,6 +135,9 @@ accounting.journal.cashbook.category: Counter account
 # Journal - Export
 accounting.journal.export: Export
 accounting.journal.export.datev: DATEV Booking Stack (CSV)
+accounting.journal.export.year: Annual DATEV Export
+accounting.journal.export.year.help: "Export all entries of the selected year as a single DATEV CSV file."
+accounting.journal.export.no_batches: "No bookings exist for this year."
 accounting.journal.export.no_settings: "Please configure the DATEV export settings first."
 accounting.journal.export.warn_intro: "The following entries are incomplete. Export is still possible – corrections can be made here or later in DATEV."
 accounting.journal.export.force: "Export anyway"
@@ -178,6 +202,7 @@ preset.account.premises: Premises costs
 preset.account.cleaning: Cleaning
 preset.account.maintenance: Maintenance
 preset.account.maintenance_cleaning: Maintenance / Cleaning
+preset.account.opening_balance: Opening balance
 
 # Preset tax rate names
 preset.taxrate.tax_free: 0% tax-free

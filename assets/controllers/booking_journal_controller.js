@@ -21,6 +21,23 @@ export default class extends Controller {
         this._loadBatches();
     }
 
+    openOpeningBalance(event) {
+        event.preventDefault();
+        const template = event.currentTarget.dataset.urlTemplate;
+        const year = this.hasYearSelectTarget ? this.yearSelectTarget.value : '';
+        if (!template || !year) return;
+        event.currentTarget.dataset.url = template.replace('__YEAR__', encodeURIComponent(year));
+        this.openOffcanvas(event);
+    }
+
+    exportYear(event) {
+        event.preventDefault();
+        const template = event.currentTarget.dataset.urlTemplate;
+        const year = this.hasYearSelectTarget ? this.yearSelectTarget.value : '';
+        if (!template || !year) return;
+        window.location.href = template.replace('__YEAR__', encodeURIComponent(year));
+    }
+
     paginateBatchesAction(event) {
         event.preventDefault();
         const page = event.currentTarget.dataset.page || 1;

@@ -32,6 +32,16 @@ class AccountingAccountRepository extends ServiceEntityRepository
         return $this->findOneBy(['isCashAccount' => true]);
     }
 
+    public function findBankAccount(): ?AccountingAccount
+    {
+        return $this->findOneBy(['isBankAccount' => true]);
+    }
+
+    public function findOpeningBalanceAccount(): ?AccountingAccount
+    {
+        return $this->findOneBy(['isOpeningBalanceAccount' => true]);
+    }
+
     public function findByNumber(string $accountNumber): ?AccountingAccount
     {
         return $this->findOneBy(['accountNumber' => $accountNumber]);
