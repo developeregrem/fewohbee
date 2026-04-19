@@ -13,6 +13,17 @@ class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
 
+    public function getCacheDir(): string
+    {
+        if ('dev' === $this->environment) {
+            $projectHash = substr(sha1($this->getProjectDir()), 0, 12);
+
+            return sys_get_temp_dir().'/fewohbee/symfony-cache/'.$projectHash.'/'.$this->environment;
+        }
+
+        return parent::getCacheDir();
+    }
+
     protected function configureContainer(ContainerConfigurator $container): void
     {
         $container->import('../config/{packages}/*.yaml');
