@@ -1,0 +1,44 @@
+{% if openingAccount is null %}
+    <div class="alert alert-warning mb-0">
+        {{ 'accounting.opening_balance.no_account'|trans }}
+    </div>
+{% else %}
+    <form method="post" action="{{ path('journal.opening_balance.save') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('opening_balance') }}">
+
+        <div class="mb-3">
+            <label for="openingYear" class="form-label">{{ 'accounting.opening_balance.year'|trans }}</label>
+            <input type="number" id="openingYear" name="year" value="{{ year }}" min="2000" max="2099" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label for="openingCashAmount" class="form-label">
+                {{ 'accounting.opening_balance.cash'|trans }}
+                {% if cashAccount %}<span class="text-muted small">({{ cashAccount.label }})</span>{% endif %}
+            </label>
+            <input type="text" inputmode="decimal" id="openingCashAmount" name="cashAmount"
+                   value="{{ cashAmount|number_format(2, '.', '') }}"
+                   class="form-control" {% if cashAccount is null %}disabled{% endif %}>
+        </div>
+
+        <div class="mb-3">
+            <label for="openingBankAmount" class="form-label">
+                {{ 'accounting.opening_balance.bank'|trans }}
+                {% if bankAccount %}<span class="text-muted small">({{ bankAccount.label }})</span>{% endif %}
+            </label>
+            <input type="text" inputmode="decimal" id="openingBankAmount" name="bankAmount"
+                   value="{{ bankAmount|number_format(2, '.', '') }}"
+                   class="form-control" {% if bankAccount is null %}disabled{% endif %}>
+        </div>
+
+        <div class="form-text mb-3">
+            {{ 'accounting.opening_balance.booking_info'|trans({'%account%': openingAccount.label}) }}
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" id="btn-save" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+            </button>
+        </div>
+    </form>
+{% endif %}

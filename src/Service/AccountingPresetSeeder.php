@@ -50,6 +50,8 @@ class AccountingPresetSeeder
             $account->setName($this->translator->trans($def['nameKey']));
             $account->setType($def['type']);
             $account->setIsCashAccount($def['isCash'] ?? false);
+            $account->setIsBankAccount($def['isBank'] ?? false);
+            $account->setIsOpeningBalanceAccount($def['isOpening'] ?? false);
             $account->setIsSystemDefault(true);
             $account->setSortOrder($i * 10);
 
@@ -136,7 +138,7 @@ class AccountingPresetSeeder
     {
         return [
             ['number' => '1000', 'nameKey' => 'preset.account.cash', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
-            ['number' => '1200', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '1200', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '1400', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1450', 'nameKey' => 'preset.account.receivables_credit_card', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1570', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
@@ -153,6 +155,7 @@ class AccountingPresetSeeder
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '4200', 'nameKey' => 'preset.account.premises', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '4360', 'nameKey' => 'preset.account.cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '9000', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
     }
 
@@ -162,7 +165,7 @@ class AccountingPresetSeeder
     {
         return [
             ['number' => '1600', 'nameKey' => 'preset.account.cash', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
-            ['number' => '1800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '1800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '1200', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1210', 'nameKey' => 'preset.account.receivables_credit_card', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1400', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
@@ -178,6 +181,7 @@ class AccountingPresetSeeder
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6310', 'nameKey' => 'preset.account.premises', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6330', 'nameKey' => 'preset.account.cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '9000', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
     }
 
@@ -187,7 +191,7 @@ class AccountingPresetSeeder
     {
         return [
             ['number' => '2700', 'nameKey' => 'preset.account.cash_at', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
-            ['number' => '2800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '2800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '2000', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '2500', 'nameKey' => 'preset.account.input_tax', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '3500', 'nameKey' => 'preset.account.vat', 'type' => AccountingAccount::TYPE_LIABILITY],
@@ -200,6 +204,7 @@ class AccountingPresetSeeder
             ['number' => '7100', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '7200', 'nameKey' => 'preset.account.maintenance', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '7300', 'nameKey' => 'preset.account.cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '9800', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
     }
 
@@ -209,7 +214,7 @@ class AccountingPresetSeeder
     {
         return [
             ['number' => '1000', 'nameKey' => 'preset.account.cash', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
-            ['number' => '1020', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '1020', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '1100', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1170', 'nameKey' => 'preset.account.input_tax', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '2200', 'nameKey' => 'preset.account.vat_ch', 'type' => AccountingAccount::TYPE_LIABILITY],
@@ -220,6 +225,7 @@ class AccountingPresetSeeder
             ['number' => '6500', 'nameKey' => 'preset.account.office_supplies', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6000', 'nameKey' => 'preset.account.other_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6100', 'nameKey' => 'preset.account.maintenance_cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '9100', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
     }
 

@@ -43,51 +43,87 @@ class BookingJournalService
         $batch->setYear($year);
         $batch->setMonth($month);
 
-        $youngest = $this->batchRepo->getYoungestBatch();
-        $cashStart = $youngest?->getCashEnd() ?? 0.0;
-        $batch->setCashStart($cashStart);
-        $batch->setCashEnd($cashStart);
-
         $this->em->persist($batch);
-        $this->em->flush();
 
         return $batch;
     }
 
     /**
-     * Recalculate cash end for a batch based on cash-related entries.
+     * Assigns an entry to the month batch implied by its booking date.
      */
-    public function recalculateCashEnd(BookingBatch $batch): void
+    public function assignBatchByEntryDate(BookingEntry $entry): BookingBatch
     {
-        $inventory = (float) ($batch->getCashStart() ?? 0);
+        $date = $entry->getDate();
+        $batch = $this->getOrCreateBatch((int) $date->format('Y'), (int) $date->format('n'));
 
-        foreach ($batch->getEntries() as $entry) {
-            $isCashDebit = $entry->getDebitAccount()?->isCashAccount() ?? false;
-            $isCashCredit = $entry->getCreditAccount()?->isCashAccount() ?? false;
-
-            if ($isCashDebit) {
-                $inventory += (float) $entry->getAmount();
-            }
-            if ($isCashCredit) {
-                $inventory -= (float) $entry->getAmount();
-            }
+        if ($batch->isClosed()) {
+            throw new \RuntimeException(
+                $this->translator->trans('journal.error.journal.closed', [
+                    '%month%' => $batch->getMonth(),
+                    '%year%' => $batch->getYear(),
+                ])
+            );
         }
 
-        $batch->setCashEnd(round($inventory, 2));
-        $this->em->persist($batch);
-        $this->em->flush();
+        $entry->setBookingBatch($batch);
+
+        return $batch;
     }
 
     /**
-     * Renumber document numbers within a batch.
+     * Populate transient cashStart/cashEnd on a single batch (computed on the fly).
+     */
+    public function populateCashBalance(BookingBatch $batch): void
+    {
+        $start = $this->entryRepo->getCashOpeningBalance($batch);
+        $delta = $this->entryRepo->getCashBatchDelta($batch);
+        $batch->setCashStart(round($start, 2));
+        $batch->setCashEnd(round($start + $delta, 2));
+    }
+
+    /**
+     * Populate transient cashStart/cashEnd on all batches of a year using two bulk queries.
+     *
+     * @param BookingBatch[] $batches batches of the given year (any order)
+     */
+    public function populateCashBalances(array $batches, int $year): void
+    {
+        if ([] === $batches) {
+            return;
+        }
+
+        $opening = $this->entryRepo->getCashOpeningForYear($year);
+        $deltas = $this->entryRepo->getCashDeltasByMonth($year);
+
+        $sorted = $batches;
+        usort($sorted, fn (BookingBatch $a, BookingBatch $b) => $a->getMonth() <=> $b->getMonth());
+
+        $running = $opening;
+        foreach ($sorted as $batch) {
+            $batch->setCashStart(round($running, 2));
+            $running += $deltas[$batch->getMonth()] ?? 0.0;
+            $batch->setCashEnd(round($running, 2));
+        }
+    }
+
+    /**
+     * Renumber document numbers within a batch's year.
      */
     public function recalculateDocumentNumbers(BookingBatch $batch): void
     {
-        $minDoc = $this->entryRepo->getMinDocumentNumber($batch);
+        $this->recalculateDocumentNumbersForYears($batch->getYear());
+    }
 
-        foreach ($batch->getEntries() as $entry) {
-            $entry->setDocumentNumber($minDoc++);
-            $this->em->persist($entry);
+    public function recalculateDocumentNumbersForYears(int ...$years): void
+    {
+        $years = array_values(array_unique($years));
+        sort($years);
+
+        foreach ($years as $year) {
+            $documentNumber = 1;
+            foreach ($this->entryRepo->findEntriesForDocumentNumbering($year) as $entry) {
+                $entry->setDocumentNumber($documentNumber++);
+            }
         }
 
         $this->em->flush();
@@ -178,7 +214,7 @@ class BookingJournalService
         }
 
         $this->em->flush();
-        $this->recalculateCashEnd($batch);
+        $this->recalculateDocumentNumbersForYears($year);
 
         return $entries;
     }
@@ -189,6 +225,9 @@ class BookingJournalService
     public function buildTemplateRenderParams(int $batchId): array
     {
         $batch = $this->batchRepo->find($batchId);
+        if (null !== $batch) {
+            $this->populateCashBalance($batch);
+        }
 
         return [
             'journal' => $batch,

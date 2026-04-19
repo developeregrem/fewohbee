@@ -51,6 +51,12 @@ class AccountingAccount
     private bool $isCashAccount = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isBankAccount = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isOpeningBalanceAccount = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isSystemDefault = false;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
@@ -113,6 +119,30 @@ class AccountingAccount
     public function setIsCashAccount(bool $isCashAccount): self
     {
         $this->isCashAccount = $isCashAccount;
+
+        return $this;
+    }
+
+    public function isBankAccount(): bool
+    {
+        return $this->isBankAccount;
+    }
+
+    public function setIsBankAccount(bool $isBankAccount): self
+    {
+        $this->isBankAccount = $isBankAccount;
+
+        return $this;
+    }
+
+    public function isOpeningBalanceAccount(): bool
+    {
+        return $this->isOpeningBalanceAccount;
+    }
+
+    public function setIsOpeningBalanceAccount(bool $isOpeningBalanceAccount): self
+    {
+        $this->isOpeningBalanceAccount = $isOpeningBalanceAccount;
 
         return $this;
     }

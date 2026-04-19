@@ -97,12 +97,56 @@ class DatevExportService implements BookingExportInterface
 
     public function export(BookingBatch $batch, AccountingSettings $settings, string $currency = 'EUR'): string
     {
+        $periodStart = sprintf('%d%02d01', $batch->getYear(), $batch->getMonth());
+        $periodEnd = (new \DateTimeImmutable($periodStart))->format('Ymt');
+
         $lines = [];
-        $lines[] = $this->buildHeaderLine($batch, $settings, $currency);
+        $lines[] = $this->buildHeaderLine(
+            $batch->getYear(),
+            $periodStart,
+            $periodEnd,
+            $settings,
+            $currency,
+            self::FORMAT_NAME,
+        );
         $lines[] = $this->buildColumnHeaderLine();
 
         foreach ($batch->getEntries() as $entry) {
+            if ($entry->isOpeningBalance()) {
+                continue;
+            }
             $lines[] = $this->buildDataLine($entry, $currency);
+        }
+
+        return self::UTF8_BOM.implode("\r\n", $lines)."\r\n";
+    }
+
+    /**
+     * Exports every batch of the given year into one DATEV Buchungsstapel.
+     *
+     * @param BookingBatch[] $batches batches of the year, in ascending month order
+     */
+    public function exportYear(int $year, array $batches, AccountingSettings $settings, string $currency = 'EUR'): string
+    {
+        $periodStart = sprintf('%d0101', $year);
+        $periodEnd = sprintf('%d1231', $year);
+        $stapelName = sprintf('Buchungsjournal %d', $year);
+
+        $lines = [];
+        $lines[] = $this->buildHeaderLine(
+            $year,
+            $periodStart,
+            $periodEnd,
+            $settings,
+            $currency,
+            $stapelName,
+        );
+        $lines[] = $this->buildColumnHeaderLine();
+
+        foreach ($batches as $batch) {
+            foreach ($batch->getEntries() as $entry) {
+                $lines[] = $this->buildDataLine($entry, $currency);
+            }
         }
 
         return self::UTF8_BOM.implode("\r\n", $lines)."\r\n";
@@ -123,18 +167,48 @@ class DatevExportService implements BookingExportInterface
         $warnings = $this->buildSettingsWarnings($settings);
 
         foreach ($batch->getEntries() as $entry) {
+            if ($entry->isOpeningBalance()) {
+                continue;
+            }
             $warnings = [...$warnings, ...$this->buildEntryWarnings($entry)];
         }
 
         return $warnings;
     }
 
-    private function buildHeaderLine(BookingBatch $batch, AccountingSettings $settings, string $currency): string
+    /**
+     * Validate a whole year's batches. Settings are checked once.
+     *
+     * @param BookingBatch[] $batches
+     *
+     * @return string[]
+     */
+    public function validateYear(array $batches, ?AccountingSettings $settings): array
     {
+        $warnings = $this->buildSettingsWarnings($settings);
+
+        foreach ($batches as $batch) {
+            foreach ($batch->getEntries() as $entry) {
+                if ($entry->isOpeningBalance()) {
+                    continue;
+                }
+                $warnings = [...$warnings, ...$this->buildEntryWarnings($entry)];
+            }
+        }
+
+        return $warnings;
+    }
+
+    private function buildHeaderLine(
+        int $year,
+        string $periodStart,
+        string $periodEnd,
+        AccountingSettings $settings,
+        string $currency,
+        string $stapelName,
+    ): string {
         $now = new \DateTimeImmutable();
-        $fiscalYearStart = sprintf('%d%02d01', $batch->getYear(), $settings->getFiscalYearStart());
-        $periodStart = sprintf('%d%02d01', $batch->getYear(), $batch->getMonth());
-        $periodEnd = (new \DateTimeImmutable($periodStart))->format('Ymt');
+        $fiscalYearStart = sprintf('%d%02d01', $year, $settings->getFiscalYearStart());
 
         $skrType = $this->resolveSkrType($settings->getChartPreset());
 
@@ -156,7 +230,7 @@ class DatevExportService implements BookingExportInterface
         $fields[13] = (string) $settings->getAccountNumberLength();
         $fields[14] = $periodStart;
         $fields[15] = $periodEnd;
-        $fields[16] = '"'.self::FORMAT_NAME.'"';
+        $fields[16] = '"'.$this->escapeQuotes(mb_substr($stapelName, 0, 30)).'"';
         $fields[17] = null !== $settings->getDictationCode() ? '"'.$settings->getDictationCode().'"' : '""';
         $fields[18] = '1';
         $fields[19] = '0';

@@ -15,6 +15,7 @@ class BookingEntry
     public const SOURCE_MANUAL = 'manual';
     public const SOURCE_WORKFLOW = 'workflow';
     public const SOURCE_MIGRATION = 'migration';
+    public const SOURCE_OPENING_BALANCE = 'opening_balance';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -237,6 +238,11 @@ class BookingEntry
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function isOpeningBalance(): bool
+    {
+        return self::SOURCE_OPENING_BALANCE === $this->sourceType;
     }
 
     // ── Kassenbuch template compatibility getters ────────────────

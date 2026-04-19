@@ -85,7 +85,7 @@
                         <th>{{ 'accounting.accounts.number'|trans }}</th>
                         <th>{{ 'accounting.accounts.name'|trans }}</th>
                         <th class="d-none d-md-table-cell">{{ 'accounting.accounts.type'|trans }}</th>
-                        <th class="text-center">{{ 'accounting.accounts.cash'|trans }}</th>
+                        <th>{{ 'accounting.accounts.system_role'|trans }}</th>
                         <th>{{ 'journal.action'|trans }}</th>
                     </tr>
                     </thead>
@@ -95,8 +95,16 @@
                             <td>{{ account.accountNumber }}</td>
                             <td>{{ account.name }}</td>
                             <td class="d-none d-md-table-cell">{{ ('accounting.accounts.type.' ~ account.type)|trans }}</td>
-                            <td class="text-center">
-                                {% if account.cashAccount %}<i class="fas fa-check text-success"></i>{% endif %}
+                            <td>
+                                {% if account.cashAccount %}
+                                    <span class="badge bg-success">{{ 'accounting.accounts.cash'|trans }}</span>
+                                {% endif %}
+                                {% if account.bankAccount %}
+                                    <span class="badge bg-info text-dark">{{ 'accounting.accounts.bank'|trans }}</span>
+                                {% endif %}
+                                {% if account.openingBalanceAccount %}
+                                    <span class="badge bg-secondary">{{ 'accounting.accounts.opening_balance'|trans }}</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
