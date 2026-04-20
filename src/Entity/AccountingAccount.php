@@ -57,6 +57,17 @@ class AccountingAccount
     private bool $isOpeningBalanceAccount = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isAutoAccount = false;
+
+    #[ORM\Column(name: 'datev_sachverhalt_l_u_l', type: Types::SMALLINT, nullable: true)]
+    #[Assert\Range(min: 0, max: 99)]
+    private ?int $datevSachverhaltLuL = null;
+
+    #[ORM\Column(name: 'datev_funktionsergaenzung_l_u_l', type: Types::SMALLINT, nullable: true)]
+    #[Assert\Range(min: 0, max: 999)]
+    private ?int $datevFunktionsergaenzungLuL = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isSystemDefault = false;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
@@ -143,6 +154,42 @@ class AccountingAccount
     public function setIsOpeningBalanceAccount(bool $isOpeningBalanceAccount): self
     {
         $this->isOpeningBalanceAccount = $isOpeningBalanceAccount;
+
+        return $this;
+    }
+
+    public function isAutoAccount(): bool
+    {
+        return $this->isAutoAccount;
+    }
+
+    public function setIsAutoAccount(bool $isAutoAccount): self
+    {
+        $this->isAutoAccount = $isAutoAccount;
+
+        return $this;
+    }
+
+    public function getDatevSachverhaltLuL(): ?int
+    {
+        return $this->datevSachverhaltLuL;
+    }
+
+    public function setDatevSachverhaltLuL(?int $datevSachverhaltLuL): self
+    {
+        $this->datevSachverhaltLuL = $datevSachverhaltLuL;
+
+        return $this;
+    }
+
+    public function getDatevFunktionsergaenzungLuL(): ?int
+    {
+        return $this->datevFunktionsergaenzungLuL;
+    }
+
+    public function setDatevFunktionsergaenzungLuL(?int $datevFunktionsergaenzungLuL): self
+    {
+        $this->datevFunktionsergaenzungLuL = $datevFunktionsergaenzungLuL;
 
         return $this;
     }

@@ -72,6 +72,7 @@ class CreateBookingEntryAction implements WorkflowActionInterface
                 'key' => 'remark',
                 'type' => 'text',
                 'label' => 'workflow.form.booking_entry_remark',
+                'help' => 'workflow.form.booking_entry_remark_help',
                 'default' => '',
             ],
         ];

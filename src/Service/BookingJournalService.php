@@ -204,7 +204,8 @@ class BookingJournalService
             $entry->setTaxRate($taxRate);
             $entry->setInvoiceNumber($invoice->getNumber());
             $entry->setInvoiceId($invoice->getId());
-            $entry->setRemark($remark ?? '');
+            // Buchungstext fallback: explicit remark → credit account name → debit account name.
+            $entry->setRemark($remark ?: ($entryCreditAccount?->getName() ?: ($debitAccount?->getName() ?? '')));
             $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
             $entry->setBookingBatch($batch);
             $batch->addEntry($entry);
