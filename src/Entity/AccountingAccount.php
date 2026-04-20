@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AccountingAccountRepository::class)]
 #[ORM\Table(name: 'accounting_accounts')]
-#[UniqueEntity('accountNumber')]
+#[UniqueEntity(fields: ['accountNumber', 'chartPreset'])]
 class AccountingAccount
 {
     public const TYPE_ASSET = 'asset';
@@ -72,6 +72,13 @@ class AccountingAccount
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $sortOrder = 0;
+
+    /**
+     * Origin preset (skr03, skr04, ekr_at, kmu_ch). NULL for user-created accounts,
+     * which stay visible regardless of the active chart preset.
+     */
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    private ?string $chartPreset = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -214,6 +221,18 @@ class AccountingAccount
     public function setSortOrder(int $sortOrder): self
     {
         $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getChartPreset(): ?string
+    {
+        return $this->chartPreset;
+    }
+
+    public function setChartPreset(?string $chartPreset): self
+    {
+        $this->chartPreset = $chartPreset;
 
         return $this;
     }

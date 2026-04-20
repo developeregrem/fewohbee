@@ -196,7 +196,7 @@ final class AccountingPresetSeederTest extends TestCase
     public function testSeedAccountsSkipsExisting(): void
     {
         $accountRepo = $this->createStub(AccountingAccountRepository::class);
-        $accountRepo->method('findByNumber')->willReturn(new AccountingAccount());
+        $accountRepo->method('findByNumberAndPreset')->willReturn(new AccountingAccount());
 
         $seeder = $this->createSeeder(accountRepo: $accountRepo);
         $count = $seeder->seedAccounts(AccountingSettings::PRESET_SKR03);

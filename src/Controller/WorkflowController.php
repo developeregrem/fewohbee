@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\AccountingAccount;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
+use App\Repository\AccountingAccountRepository;
+use App\Service\AccountingSettingsService;
 use App\Service\AppSettingsService;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
@@ -35,6 +36,8 @@ class WorkflowController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
         private readonly AppSettingsService $settingsService,
+        private readonly AccountingSettingsService $accountingSettingsService,
+        private readonly AccountingAccountRepository $accountRepo,
     ) {
     }
 
@@ -261,7 +264,7 @@ class WorkflowController extends AbstractController
     /** @return array<int, array{value: int|string, label: string}> */
     private function loadAccountingAccountOptions(): array
     {
-        $accounts = $this->em->getRepository(AccountingAccount::class)->findBy([], ['sortOrder' => 'ASC', 'accountNumber' => 'ASC']);
+        $accounts = $this->accountRepo->findAllOrdered($this->accountingSettingsService->getActivePreset());
         $options = [['value' => '', 'label' => '–']];
         foreach ($accounts as $account) {
             $options[] = [

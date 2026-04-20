@@ -47,11 +47,13 @@ class BookingJournalSettingsController extends AbstractController
             return $this->redirectToRoute('journal.settings.index');
         }
 
+        $activePreset = $settings->getChartPreset();
+
         return $this->render('BookingJournal/settings.html.twig', [
             'settings' => $settings,
             'settingsForm' => $settingsForm,
-            'accounts' => $accountRepo->findAllOrdered(),
-            'taxRates' => $taxRateRepo->findAllOrdered(),
+            'accounts' => $accountRepo->findAllOrdered($activePreset),
+            'taxRates' => $taxRateRepo->findAllOrdered($activePreset),
             'presets' => AccountingSettings::VALID_PRESETS,
         ]);
     }

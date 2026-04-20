@@ -41,7 +41,7 @@ class AccountingPresetSeeder
         $created = 0;
 
         foreach ($definitions as $i => $def) {
-            if (null !== $this->accountRepo->findByNumber($def['number'])) {
+            if (null !== $this->accountRepo->findByNumberAndPreset($def['number'], $preset)) {
                 continue;
             }
 
@@ -57,6 +57,7 @@ class AccountingPresetSeeder
             $account->setDatevFunktionsergaenzungLuL($def['datevFunktionsergaenzungLuL'] ?? null);
             $account->setIsSystemDefault(true);
             $account->setSortOrder($i * 10);
+            $account->setChartPreset($preset);
 
             $this->em->persist($account);
             ++$created;
@@ -75,7 +76,10 @@ class AccountingPresetSeeder
     public function seedTaxRates(string $preset): int
     {
         $definitions = $this->getTaxRateDefinitions($preset);
-        $existing = $this->em->getRepository(TaxRate::class)->findAll();
+
+        // Dedup-Key: (name, rate, chartPreset) – verhindert Kollisionen zwischen Presets
+        // (z.B. "19% USt" existiert sowohl in SKR03 als auch SKR04 mit unterschiedlichem Erlöskonto).
+        $existing = $this->em->getRepository(TaxRate::class)->findBy(['chartPreset' => $preset]);
         $existingKeys = array_map(
             fn (TaxRate $t) => $t->getName().'|'.$t->getRate(),
             $existing,
@@ -96,9 +100,10 @@ class AccountingPresetSeeder
             $taxRate->setDatevInputBuKey($def['datevInputBuKey'] ?? null);
             $taxRate->setIsDefault($def['isDefault'] ?? false);
             $taxRate->setSortOrder($i * 10);
+            $taxRate->setChartPreset($preset);
 
             if (!empty($def['revenueAccountNumber'])) {
-                $account = $this->accountRepo->findByNumber($def['revenueAccountNumber']);
+                $account = $this->accountRepo->findByNumberAndPreset($def['revenueAccountNumber'], $preset);
                 if ($account !== null) {
                     $taxRate->setRevenueAccount($account);
                 }
@@ -261,8 +266,8 @@ class AccountingPresetSeeder
                 continue;
             }
 
-            // Resolve debit account by number
-            $debitAccount = $this->accountRepo->findByNumber($def['debitAccountNumber']);
+            // Resolve debit account by number, scoped to the active preset.
+            $debitAccount = $this->accountRepo->findByNumber($def['debitAccountNumber'], $preset);
             if (null === $debitAccount) {
                 continue; // account not found, skip this workflow
             }

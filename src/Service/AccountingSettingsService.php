@@ -41,6 +41,15 @@ class AccountingSettingsService
         return $this->cachedSettings;
     }
 
+    /**
+     * Convenience: active chart preset (skr03/skr04/...) or null if not configured.
+     * Used to scope account / tax-rate listings to the preset that's currently in use.
+     */
+    public function getActivePreset(): ?string
+    {
+        return $this->getSettings()->getChartPreset();
+    }
+
     public function saveSettings(AccountingSettings $settings): void
     {
         $this->em->persist($settings);

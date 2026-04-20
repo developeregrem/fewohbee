@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\TaxRate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 class TaxRateRepository extends ServiceEntityRepository
@@ -15,22 +16,37 @@ class TaxRateRepository extends ServiceEntityRepository
         parent::__construct($registry, TaxRate::class);
     }
 
+    private function applyPresetScope(QueryBuilder $qb, ?string $preset, string $alias = 't'): QueryBuilder
+    {
+        if (null === $preset) {
+            return $qb->andWhere($alias.'.chartPreset IS NULL');
+        }
+
+        return $qb
+            ->andWhere($alias.'.chartPreset = :preset OR '.$alias.'.chartPreset IS NULL')
+            ->setParameter('preset', $preset);
+    }
+
     /**
      * @return TaxRate[]
      */
-    public function findAllOrdered(): array
-    {
-        return $this->createQueryBuilder('t')
-            ->orderBy('t.sortOrder', 'ASC')
-            ->addOrderBy('t.rate', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findByRate(float $rate, ?\DateTimeInterface $date = null): ?TaxRate
+    public function findAllOrdered(?string $preset = null): array
     {
         $qb = $this->createQueryBuilder('t')
-            ->where('t.rate = :rate')
+            ->orderBy('t.sortOrder', 'ASC')
+            ->addOrderBy('t.rate', 'ASC');
+
+        if (null !== $preset) {
+            $this->applyPresetScope($qb, $preset);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findByRate(float $rate, ?\DateTimeInterface $date = null, ?string $preset = null): ?TaxRate
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->andWhere('t.rate = :rate')
             ->setParameter('rate', number_format($rate, 2, '.', ''));
 
         if (null !== $date) {
@@ -39,33 +55,53 @@ class TaxRateRepository extends ServiceEntityRepository
                ->setParameter('date', $date);
         }
 
+        if (null !== $preset) {
+            $this->applyPresetScope($qb, $preset);
+            $qb->orderBy('t.chartPreset', 'DESC');
+        }
+
         return $qb
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
-    public function findDefault(): ?TaxRate
+    public function findDefault(?string $preset = null): ?TaxRate
     {
-        return $this->findOneBy(['isDefault' => true]);
+        $qb = $this->createQueryBuilder('t')
+            ->andWhere('t.isDefault = true')
+            ->setMaxResults(1);
+
+        if (null !== $preset) {
+            $this->applyPresetScope($qb, $preset);
+            $qb->orderBy('t.chartPreset', 'DESC');
+        }
+
+        return $qb->getQuery()->getOneOrNullResult();
     }
 
-    public function createValidAtQueryBuilder(\DateTimeInterface $date): \Doctrine\ORM\QueryBuilder
+    public function createValidAtQueryBuilder(\DateTimeInterface $date, ?string $preset = null): \Doctrine\ORM\QueryBuilder
     {
-        return $this->createQueryBuilder('t')
-            ->where('t.validFrom IS NULL OR t.validFrom <= :date')
+        $qb = $this->createQueryBuilder('t')
+            ->andWhere('t.validFrom IS NULL OR t.validFrom <= :date')
             ->andWhere('t.validTo IS NULL OR t.validTo >= :date')
             ->setParameter('date', $date)
             ->orderBy('t.sortOrder', 'ASC')
             ->addOrderBy('t.rate', 'ASC');
+
+        if (null !== $preset) {
+            $this->applyPresetScope($qb, $preset);
+        }
+
+        return $qb;
     }
 
     /**
      * @return TaxRate[]
      */
-    public function findValidAt(\DateTimeInterface $date): array
+    public function findValidAt(\DateTimeInterface $date, ?string $preset = null): array
     {
-        return $this->createValidAtQueryBuilder($date)
+        return $this->createValidAtQueryBuilder($date, $preset)
             ->getQuery()
             ->getResult();
     }
