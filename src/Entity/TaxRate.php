@@ -28,9 +28,13 @@ class TaxRate
     #[Assert\GreaterThanOrEqual(0)]
     private string $rate = '0.00';
 
-    #[ORM\Column(type: Types::STRING, length: 4, nullable: true)]
+    #[ORM\Column(name: 'datev_output_bu_key', type: Types::STRING, length: 4, nullable: true)]
     #[Assert\Length(max: 4)]
-    private ?string $datevBuKey = null;
+    private ?string $datevOutputBuKey = null;
+
+    #[ORM\Column(name: 'datev_input_bu_key', type: Types::STRING, length: 4, nullable: true)]
+    #[Assert\Length(max: 4)]
+    private ?string $datevInputBuKey = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTime $validFrom = null;
@@ -47,6 +51,12 @@ class TaxRate
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $sortOrder = 0;
+
+    /**
+     * Origin preset (skr03, skr04, ekr_at, kmu_ch). NULL for user-created tax rates.
+     */
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    private ?string $chartPreset = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -90,14 +100,26 @@ class TaxRate
         return $this;
     }
 
-    public function getDatevBuKey(): ?string
+    public function getDatevOutputBuKey(): ?string
     {
-        return $this->datevBuKey;
+        return $this->datevOutputBuKey;
     }
 
-    public function setDatevBuKey(?string $datevBuKey): self
+    public function setDatevOutputBuKey(?string $datevOutputBuKey): self
     {
-        $this->datevBuKey = $datevBuKey;
+        $this->datevOutputBuKey = $datevOutputBuKey;
+
+        return $this;
+    }
+
+    public function getDatevInputBuKey(): ?string
+    {
+        return $this->datevInputBuKey;
+    }
+
+    public function setDatevInputBuKey(?string $datevInputBuKey): self
+    {
+        $this->datevInputBuKey = $datevInputBuKey;
 
         return $this;
     }
@@ -167,6 +189,18 @@ class TaxRate
         return $this->createdAt;
     }
 
+    public function getChartPreset(): ?string
+    {
+        return $this->chartPreset;
+    }
+
+    public function setChartPreset(?string $chartPreset): self
+    {
+        $this->chartPreset = $chartPreset;
+
+        return $this;
+    }
+
     /**
      * Check if this tax rate is valid for a given date.
      */
@@ -184,16 +218,11 @@ class TaxRate
     }
 
     /**
-     * Display label for dropdowns: "19% USt (BU 9)".
+     * Display label for dropdowns: "19% USt".
      */
     public function getLabel(): string
     {
-        $label = $this->name;
-        if (null !== $this->datevBuKey && '' !== $this->datevBuKey) {
-            $label .= ' (BU '.$this->datevBuKey.')';
-        }
-
-        return $label;
+        return $this->name;
     }
 
     public function __toString(): string

@@ -12,7 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AccountingAccountRepository::class)]
 #[ORM\Table(name: 'accounting_accounts')]
-#[UniqueEntity('accountNumber')]
+#[UniqueEntity(fields: ['accountNumber', 'chartPreset'])]
 class AccountingAccount
 {
     public const TYPE_ASSET = 'asset';
@@ -57,10 +57,28 @@ class AccountingAccount
     private bool $isOpeningBalanceAccount = false;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isAutoAccount = false;
+
+    #[ORM\Column(name: 'datev_sachverhalt_l_u_l', type: Types::SMALLINT, nullable: true)]
+    #[Assert\Range(min: 0, max: 99)]
+    private ?int $datevSachverhaltLuL = null;
+
+    #[ORM\Column(name: 'datev_funktionsergaenzung_l_u_l', type: Types::SMALLINT, nullable: true)]
+    #[Assert\Range(min: 0, max: 999)]
+    private ?int $datevFunktionsergaenzungLuL = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isSystemDefault = false;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $sortOrder = 0;
+
+    /**
+     * Origin preset (skr03, skr04, ekr_at, kmu_ch). NULL for user-created accounts,
+     * which stay visible regardless of the active chart preset.
+     */
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    private ?string $chartPreset = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -147,6 +165,42 @@ class AccountingAccount
         return $this;
     }
 
+    public function isAutoAccount(): bool
+    {
+        return $this->isAutoAccount;
+    }
+
+    public function setIsAutoAccount(bool $isAutoAccount): self
+    {
+        $this->isAutoAccount = $isAutoAccount;
+
+        return $this;
+    }
+
+    public function getDatevSachverhaltLuL(): ?int
+    {
+        return $this->datevSachverhaltLuL;
+    }
+
+    public function setDatevSachverhaltLuL(?int $datevSachverhaltLuL): self
+    {
+        $this->datevSachverhaltLuL = $datevSachverhaltLuL;
+
+        return $this;
+    }
+
+    public function getDatevFunktionsergaenzungLuL(): ?int
+    {
+        return $this->datevFunktionsergaenzungLuL;
+    }
+
+    public function setDatevFunktionsergaenzungLuL(?int $datevFunktionsergaenzungLuL): self
+    {
+        $this->datevFunktionsergaenzungLuL = $datevFunktionsergaenzungLuL;
+
+        return $this;
+    }
+
     public function isSystemDefault(): bool
     {
         return $this->isSystemDefault;
@@ -167,6 +221,18 @@ class AccountingAccount
     public function setSortOrder(int $sortOrder): self
     {
         $this->sortOrder = $sortOrder;
+
+        return $this;
+    }
+
+    public function getChartPreset(): ?string
+    {
+        return $this->chartPreset;
+    }
+
+    public function setChartPreset(?string $chartPreset): self
+    {
+        $this->chartPreset = $chartPreset;
 
         return $this;
     }

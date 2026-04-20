@@ -25,6 +25,7 @@ class BookingEntryType extends AbstractType
     {
         $cashbookMode = $options['cashbook_mode'];
         $referenceDate = $options['reference_date'];
+        $activePreset = $options['active_preset'];
 
         $builder
             ->add('date', DateType::class, [
@@ -58,7 +59,7 @@ class BookingEntryType extends AbstractType
                     'mapped' => false,
                     'class' => AccountingAccount::class,
                     'choice_label' => 'label',
-                    'query_builder' => fn (AccountingAccountRepository $repo) => $repo->createNonCashQueryBuilder(),
+                    'query_builder' => fn (AccountingAccountRepository $repo) => $repo->createNonCashQueryBuilder($activePreset),
                     'placeholder' => '-',
                     'data' => $options['category_default'],
                 ]);
@@ -70,6 +71,7 @@ class BookingEntryType extends AbstractType
                     'choice_label' => 'label',
                     'required' => false,
                     'placeholder' => '-',
+                    'query_builder' => fn (AccountingAccountRepository $repo) => $repo->createOrderedQueryBuilder($activePreset),
                 ])
                 ->add('creditAccount', EntityType::class, [
                     'label' => 'accounting.journal.entry.credit',
@@ -77,6 +79,7 @@ class BookingEntryType extends AbstractType
                     'choice_label' => 'label',
                     'required' => false,
                     'placeholder' => '-',
+                    'query_builder' => fn (AccountingAccountRepository $repo) => $repo->createOrderedQueryBuilder($activePreset),
                 ]);
         }
 
@@ -84,7 +87,7 @@ class BookingEntryType extends AbstractType
             ->add('taxRate', EntityType::class, [
                 'label' => 'accounting.journal.entry.tax_rate',
                 'class' => TaxRate::class,
-                'query_builder' => fn (TaxRateRepository $repo) => $repo->createValidAtQueryBuilder($referenceDate),
+                'query_builder' => fn (TaxRateRepository $repo) => $repo->createValidAtQueryBuilder($referenceDate, $activePreset),
                 'choice_label' => fn (TaxRate $rate) => $rate->getName().' ('.number_format($rate->getRateFloat(), 2, ',', '.').'%)',
                 'required' => false,
                 'placeholder' => '-',
@@ -110,6 +113,7 @@ class BookingEntryType extends AbstractType
             'cashbook_mode' => false,
             'direction_default' => 'income',
             'category_default' => null,
+            'active_preset' => null,
         ]);
     }
 }

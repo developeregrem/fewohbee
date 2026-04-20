@@ -52,6 +52,7 @@ workflow:
     fallback_credit_account: "Credit account (fallback)"
     fallback_credit_account_help: "Used when a tax rate has no revenue account configured"
     booking_entry_remark: "Remark (optional)"
+    booking_entry_remark_help: "If left empty, the revenue account name is used as the booking text (e.g. \"Revenue 7% VAT\")."
 
   trigger:
     online_booking_created: "New online booking received"

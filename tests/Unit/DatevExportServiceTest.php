@@ -157,15 +157,68 @@ final class DatevExportServiceTest extends TestCase
         self::assertSame('8300', $fields[7]);
     }
 
-    public function testDataLineTaxBuKey(): void
+    public function testDataLineTaxBuKeyOutputForRevenueBooking(): void
     {
-        $taxRate = $this->createTaxRate('7% USt', '7.00', '2');
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8400', 'Erlöse 19%', AccountingAccount::TYPE_REVENUE);
+        $taxRate = $this->createTaxRate('19% USt', '19.00', outputBuKey: '3', inputBuKey: '9');
 
-        $entry = $this->createEntry(amount: '100.00', taxRate: $taxRate);
-        $csv = $this->exportWithEntry($entry);
-        $fields = $this->parseLine($this->getLine($csv, 2));
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit, taxRate: $taxRate);
+        $fields = $this->parseLine($this->getLine($this->exportWithEntry($entry), 2));
 
-        self::assertSame('2', $fields[8]);
+        self::assertSame('3', $fields[8]);
+    }
+
+    public function testDataLineTaxBuKeyInputForExpenseBooking(): void
+    {
+        $debit = $this->createAccount('4930', 'Bürobedarf', AccountingAccount::TYPE_EXPENSE);
+        $credit = $this->createAccount('1200', 'Bank', AccountingAccount::TYPE_ASSET);
+        $taxRate = $this->createTaxRate('19% USt', '19.00', outputBuKey: '3', inputBuKey: '9');
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit, taxRate: $taxRate);
+        $fields = $this->parseLine($this->getLine($this->exportWithEntry($entry), 2));
+
+        self::assertSame('9', $fields[8]);
+    }
+
+    public function testDataLineBuKeySuppressedForAutomatikkonto(): void
+    {
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8400', 'Erlöse 19%', AccountingAccount::TYPE_REVENUE);
+        $credit->setIsAutoAccount(true);
+        $taxRate = $this->createTaxRate('19% USt', '19.00', outputBuKey: '3', inputBuKey: '9');
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit, taxRate: $taxRate);
+        $fields = $this->parseLine($this->getLine($this->exportWithEntry($entry), 2));
+
+        self::assertSame('', $fields[8]);
+    }
+
+    public function testDataLineLuLFieldsPopulatedFromAccount(): void
+    {
+        $debit = $this->createAccount('3123', 'Bezogene Leistungen §13b 19%', AccountingAccount::TYPE_EXPENSE);
+        $debit->setIsAutoAccount(true);
+        $debit->setDatevSachverhaltLuL(7);
+        $debit->setDatevFunktionsergaenzungLuL(190);
+        $credit = $this->createAccount('1200', 'Bank', AccountingAccount::TYPE_ASSET);
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit);
+        $fields = $this->parseLine($this->getLine($this->exportWithEntry($entry), 2));
+
+        self::assertSame('7', $fields[42]);
+        self::assertSame('190', $fields[43]);
+    }
+
+    public function testDataLineLuLFieldsEmptyWhenNotConfigured(): void
+    {
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8400', 'Erlöse 19%', AccountingAccount::TYPE_REVENUE);
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit);
+        $fields = $this->parseLine($this->getLine($this->exportWithEntry($entry), 2));
+
+        self::assertSame('', $fields[42]);
+        self::assertSame('', $fields[43]);
     }
 
     public function testDataLineDateFormat(): void
@@ -213,8 +266,10 @@ final class DatevExportServiceTest extends TestCase
 
     public function testDataLineQuotesTextFields(): void
     {
-        $taxRate = $this->createTaxRate('7% USt', '7.00', '2');
-        $entry = $this->createEntry(amount: '100.00', taxRate: $taxRate);
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8300', 'Erlöse 7%', AccountingAccount::TYPE_REVENUE);
+        $taxRate = $this->createTaxRate('7% USt', '7.00', outputBuKey: '2', inputBuKey: '8');
+        $entry = $this->createEntry(amount: '100.00', debit: $debit, credit: $credit, taxRate: $taxRate);
         $entry->setInvoiceNumber('AR-42');
         $entry->setRemark('Test');
 
@@ -229,7 +284,7 @@ final class DatevExportServiceTest extends TestCase
 
     public function testDataLineEscapesQuotesAndSemicolonsInTextFields(): void
     {
-        $taxRate = $this->createTaxRate('7% USt', '7.00', '2');
+        $taxRate = $this->createTaxRate('7% USt', '7.00', outputBuKey: '2', inputBuKey: '8');
         $entry = $this->createEntry(amount: '100.00', taxRate: $taxRate);
         $entry->setInvoiceNumber('AR;"42"');
         $entry->setRemark('Text mit ; und "Quote"');
@@ -302,11 +357,11 @@ final class DatevExportServiceTest extends TestCase
         self::assertStringContainsString('no_debit', $warnings[0]);
     }
 
-    public function testValidateReturnsWarningForMissingBuKey(): void
+    public function testValidateReturnsWarningForMissingOutputBuKeyOnRevenueBooking(): void
     {
-        $debit = $this->createAccount('1000', 'Kasse');
-        $credit = $this->createAccount('8300', 'Erlöse');
-        $taxRate = $this->createTaxRate('7% USt', '7.00', null);
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8300', 'Erlöse', AccountingAccount::TYPE_REVENUE);
+        $taxRate = $this->createTaxRate('7% USt', '7.00', outputBuKey: null, inputBuKey: '8');
 
         $entry = $this->createEntry(amount: '100.00', debit: $debit, credit: $credit, taxRate: $taxRate);
         $batch = $this->createBatch();
@@ -315,7 +370,39 @@ final class DatevExportServiceTest extends TestCase
         $warnings = $this->service->validate($batch);
 
         self::assertNotEmpty($warnings);
-        self::assertStringContainsString('no_bukey', $warnings[0]);
+        self::assertStringContainsString('no_output_bukey', $warnings[0]);
+    }
+
+    public function testValidateReturnsWarningForMissingInputBuKeyOnExpenseBooking(): void
+    {
+        $debit = $this->createAccount('4930', 'Bürobedarf', AccountingAccount::TYPE_EXPENSE);
+        $credit = $this->createAccount('1200', 'Bank', AccountingAccount::TYPE_ASSET);
+        $taxRate = $this->createTaxRate('19% USt', '19.00', outputBuKey: '3', inputBuKey: null);
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit, taxRate: $taxRate);
+        $batch = $this->createBatch();
+        $batch->addEntry($entry);
+
+        $warnings = $this->service->validate($batch);
+
+        self::assertNotEmpty($warnings);
+        self::assertStringContainsString('no_input_bukey', $warnings[0]);
+    }
+
+    public function testValidateSuppressesBuKeyWarningForAutomatikkonto(): void
+    {
+        $debit = $this->createAccount('1000', 'Kasse', AccountingAccount::TYPE_ASSET);
+        $credit = $this->createAccount('8400', 'Erlöse 19%', AccountingAccount::TYPE_REVENUE);
+        $credit->setIsAutoAccount(true);
+        $taxRate = $this->createTaxRate('19% USt', '19.00', outputBuKey: null, inputBuKey: null);
+
+        $entry = $this->createEntry(amount: '119.00', debit: $debit, credit: $credit, taxRate: $taxRate);
+        $batch = $this->createBatch();
+        $batch->addEntry($entry);
+
+        $warnings = $this->service->validate($batch);
+
+        self::assertEmpty($warnings);
     }
 
     public function testValidateReturnsWarningForMissingCreditAccount(): void
@@ -476,21 +563,23 @@ final class DatevExportServiceTest extends TestCase
         return $entry;
     }
 
-    private function createAccount(string $number, string $name): AccountingAccount
+    private function createAccount(string $number, string $name, string $type = AccountingAccount::TYPE_ASSET): AccountingAccount
     {
         $account = new AccountingAccount();
         $account->setAccountNumber($number);
         $account->setName($name);
+        $account->setType($type);
 
         return $account;
     }
 
-    private function createTaxRate(string $name, string $rate, ?string $buKey): TaxRate
+    private function createTaxRate(string $name, string $rate, ?string $outputBuKey, ?string $inputBuKey = null): TaxRate
     {
         $taxRate = new TaxRate();
         $taxRate->setName($name);
         $taxRate->setRate($rate);
-        $taxRate->setDatevBuKey($buKey);
+        $taxRate->setDatevOutputBuKey($outputBuKey);
+        $taxRate->setDatevInputBuKey($inputBuKey);
 
         return $taxRate;
     }

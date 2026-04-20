@@ -52,6 +52,7 @@ workflow:
     fallback_credit_account: "Habenkonto (Fallback)"
     fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
     booking_entry_remark: "Bemerkung (optional)"
+    booking_entry_remark_help: "Wenn leer, wird die Bezeichnung des Erlöskontos als Buchungstext verwendet (z. B. „Erlöse 7% USt“)."
 
   # Trigger labels
   trigger:
