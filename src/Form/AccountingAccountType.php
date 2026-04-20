@@ -45,6 +45,23 @@ class AccountingAccountType extends AbstractType
                 'label' => 'accounting.accounts.is_opening_balance',
                 'required' => false,
             ])
+            ->add('isAutoAccount', CheckboxType::class, [
+                'label' => 'accounting.accounts.is_auto',
+                'required' => false,
+                'help' => 'accounting.accounts.is_auto.help',
+            ])
+            ->add('datevSachverhaltLuL', IntegerType::class, [
+                'label' => 'accounting.accounts.sachverhalt_lul',
+                'required' => false,
+                'help' => 'accounting.accounts.sachverhalt_lul.help',
+                'attr' => ['min' => 0, 'max' => 99],
+            ])
+            ->add('datevFunktionsergaenzungLuL', IntegerType::class, [
+                'label' => 'accounting.accounts.funktion_lul',
+                'required' => false,
+                'help' => 'accounting.accounts.funktion_lul.help',
+                'attr' => ['min' => 0, 'max' => 999],
+            ])
             ->add('sortOrder', IntegerType::class, [
                 'label' => 'accounting.accounts.sort_order',
                 'required' => false,

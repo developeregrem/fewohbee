@@ -105,6 +105,9 @@
                                 {% if account.openingBalanceAccount %}
                                     <span class="badge bg-secondary">{{ 'accounting.accounts.opening_balance'|trans }}</span>
                                 {% endif %}
+                                {% if account.autoAccount %}
+                                    <span class="badge bg-warning text-dark" title="{{ 'accounting.accounts.is_auto.help'|trans }}">{{ 'accounting.accounts.is_auto.badge'|trans }}</span>
+                                {% endif %}
                             </td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
@@ -165,7 +168,7 @@
                         <th>{{ 'accounting.taxrates.name_header'|trans }}</th>
                         <th>{{ 'accounting.taxrates.rate'|trans }}</th>
                         <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.revenue_account'|trans }}</th>
-                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.bukey'|trans }}</th>
+                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.bukey_short'|trans }}</th>
                         <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.valid'|trans }}</th>
                         <th>{{ 'journal.action'|trans }}</th>
                     </tr>
@@ -185,7 +188,17 @@
                                     <span class="text-muted">–</span>
                                 {% endif %}
                             </td>
-                            <td class="d-none d-md-table-cell">{{ rate.datevBuKey ?? '-' }}</td>
+                            <td class="d-none d-md-table-cell">
+                                {% set o = rate.datevOutputBuKey %}
+                                {% set i = rate.datevInputBuKey %}
+                                {% if o or i %}
+                                    {{ 'accounting.taxrates.bukey.output_abbr'|trans }} {{ o ?: '–' }}
+                                    /
+                                    {{ 'accounting.taxrates.bukey.input_abbr'|trans }} {{ i ?: '–' }}
+                                {% else %}
+                                    –
+                                {% endif %}
+                            </td>
                             <td class="d-none d-md-table-cell">
                                 {% if rate.validFrom or rate.validTo %}
                                     {{ rate.validFrom ? rate.validFrom|date('d.m.Y') : '...' }}

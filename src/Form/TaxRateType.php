@@ -34,14 +34,23 @@ class TaxRateType extends AbstractType
                 'html5' => true,
                 'attr' => ['step' => '0.01', 'min' => '0'],
             ])
-            ->add('datevBuKey', TextType::class, [
-                'label' => 'accounting.taxrates.bukey',
+            ->add('datevOutputBuKey', TextType::class, [
+                'label' => 'accounting.taxrates.output_bukey',
                 'required' => false,
                 'attr' => [
                     'maxlength' => 4,
-                    'placeholder' => 'accounting.taxrates.bukey.placeholder',
+                    'placeholder' => 'accounting.taxrates.output_bukey.placeholder',
                 ],
-                'help' => 'accounting.taxrates.bukey.help',
+                'help' => 'accounting.taxrates.output_bukey.help',
+            ])
+            ->add('datevInputBuKey', TextType::class, [
+                'label' => 'accounting.taxrates.input_bukey',
+                'required' => false,
+                'attr' => [
+                    'maxlength' => 4,
+                    'placeholder' => 'accounting.taxrates.input_bukey.placeholder',
+                ],
+                'help' => 'accounting.taxrates.input_bukey.help',
             ])
             ->add('validFrom', DateType::class, [
                 'label' => 'accounting.taxrates.valid_from',
