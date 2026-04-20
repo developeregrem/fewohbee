@@ -57,6 +57,13 @@ accounting.accounts.bank: Bank
 accounting.accounts.is_bank: Dies ist das Bankkonto
 accounting.accounts.opening_balance: Eröffnung
 accounting.accounts.is_opening_balance: Dies ist das Eröffnungskonto
+accounting.accounts.is_auto: Automatikkonto (DATEV)
+accounting.accounts.is_auto.help: "Bei DATEV-Automatikkonten rechnet DATEV die Steuer selbst aus dem Kontenrahmen. Der BU-Schlüssel wird beim Export unterdrückt, sobald dieses Konto (Soll oder Haben) beteiligt ist. Typisch: SKR03 8300/8400, SKR04 4300/4400, §13b-Konten."
+accounting.accounts.is_auto.badge: Automatik
+accounting.accounts.sachverhalt_lul: Sachverhalt L+L
+accounting.accounts.sachverhalt_lul.help: "DATEV-Code für Spalte AQ, z.B. 7 = §13b EU-Leistung (Booking.com, Airbnb), 4 = §13b Bauleistung, 1 = innergemeinschaftlicher Erwerb. Leer lassen, wenn nicht benötigt."
+accounting.accounts.funktion_lul: Funktionserg. L+L
+accounting.accounts.funktion_lul.help: "DATEV-Code für Spalte AR (Steuersatz + Vorsteuerabzug), z.B. 190 = 19% mit Vorsteuerabzug, 101 = 7% mit Vorsteuerabzug. Leer lassen, wenn nicht benötigt."
 accounting.accounts.sort_order: Sortierung
 accounting.accounts.system_locked: Systemkonto (kann nicht gelöscht werden)
 accounting.accounts.empty: Keine Konten konfiguriert. Laden Sie eine Voreinstellung, um zu starten.
@@ -78,9 +85,15 @@ accounting.taxrates.edit: Steuersatz bearbeiten
 accounting.taxrates.name_header: Bezeichnung
 accounting.taxrates.name.placeholder: z.B. 19% USt
 accounting.taxrates.rate: Satz
-accounting.taxrates.bukey: DATEV BU-Schlüssel
-accounting.taxrates.bukey.placeholder: z.B. 3
-accounting.taxrates.bukey.help: "DATEV-Buchungsschlüssel. Fragen Sie Ihren Steuerberater nach den korrekten Werten."
+accounting.taxrates.bukey_short: BU-Schlüssel
+accounting.taxrates.bukey.output_abbr: USt
+accounting.taxrates.bukey.input_abbr: VSt
+accounting.taxrates.output_bukey: BU-Schlüssel Umsatzsteuer
+accounting.taxrates.output_bukey.placeholder: z.B. 3
+accounting.taxrates.output_bukey.help: "Wird bei Erlösbuchungen verwendet. DE: 2 = 7%, 3 = 19%. Leer lassen bei steuerfreien Sätzen oder wenn ausschließlich Automatikkonten verwendet werden."
+accounting.taxrates.input_bukey: BU-Schlüssel Vorsteuer
+accounting.taxrates.input_bukey.placeholder: z.B. 9
+accounting.taxrates.input_bukey.help: "Wird bei Aufwandsbuchungen (Ausgaben) verwendet. DE: 8 = 7%, 9 = 19%. Leer lassen bei steuerfreien Sätzen."
 accounting.taxrates.valid: Gültigkeit
 accounting.taxrates.valid_from: Gültig ab
 accounting.taxrates.valid_to: Gültig bis
@@ -148,7 +161,8 @@ accounting.journal.export.warn.missing_advisor_number: "Beraternummer fehlt in d
 accounting.journal.export.warn.missing_client_number: "Mandantennummer fehlt in den Journal-Einstellungen."
 accounting.journal.export.warn.no_debit: "Buchung #%doc%: Sollkonto fehlt."
 accounting.journal.export.warn.no_credit: "Buchung #%doc%: Habenkonto fehlt."
-accounting.journal.export.warn.no_bukey: "Buchung #%doc%: Steuersatz \"%taxrate%\" hat keinen DATEV BU-Schlüssel."
+accounting.journal.export.warn.no_output_bukey: "Buchung #%doc%: Erlösbuchung mit Steuersatz \"%taxrate%\" – BU-Schlüssel Umsatzsteuer fehlt."
+accounting.journal.export.warn.no_input_bukey: "Buchung #%doc%: Aufwandsbuchung mit Steuersatz \"%taxrate%\" – BU-Schlüssel Vorsteuer fehlt."
 
 # Journal - Entries
 accounting.journal.entry.add: Buchung hinzufügen
@@ -206,6 +220,9 @@ preset.account.cleaning: Reinigung
 preset.account.maintenance: Instandhaltung
 preset.account.maintenance_cleaning: Unterhalt/Reinigung
 preset.account.opening_balance: Saldenvorträge / Eröffnungsbilanz
+preset.account.reverse_charge_eu_19: Reverse Charge EU 19% (Booking.com, Airbnb)
+preset.account.advance_payments_7: Erhaltene Anzahlungen 7% USt
+preset.account.advance_payments_19: Erhaltene Anzahlungen 19% USt
 
 # Preset Steuersatznamen
 preset.taxrate.tax_free: 0% steuerfrei

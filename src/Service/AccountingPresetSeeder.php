@@ -41,7 +41,7 @@ class AccountingPresetSeeder
         $created = 0;
 
         foreach ($definitions as $i => $def) {
-            if (null !== $this->accountRepo->findByNumber($def['number'])) {
+            if (null !== $this->accountRepo->findByNumberAndPreset($def['number'], $preset)) {
                 continue;
             }
 
@@ -52,8 +52,12 @@ class AccountingPresetSeeder
             $account->setIsCashAccount($def['isCash'] ?? false);
             $account->setIsBankAccount($def['isBank'] ?? false);
             $account->setIsOpeningBalanceAccount($def['isOpening'] ?? false);
+            $account->setIsAutoAccount($def['isAuto'] ?? false);
+            $account->setDatevSachverhaltLuL($def['datevSachverhaltLuL'] ?? null);
+            $account->setDatevFunktionsergaenzungLuL($def['datevFunktionsergaenzungLuL'] ?? null);
             $account->setIsSystemDefault(true);
             $account->setSortOrder($i * 10);
+            $account->setChartPreset($preset);
 
             $this->em->persist($account);
             ++$created;
@@ -72,24 +76,34 @@ class AccountingPresetSeeder
     public function seedTaxRates(string $preset): int
     {
         $definitions = $this->getTaxRateDefinitions($preset);
-        $existing = $this->em->getRepository(TaxRate::class)->findAll();
-        $existingRates = array_map(fn (TaxRate $t) => $t->getRate(), $existing);
+
+        // Dedup-Key: (name, rate, chartPreset) – verhindert Kollisionen zwischen Presets
+        // (z.B. "19% USt" existiert sowohl in SKR03 als auch SKR04 mit unterschiedlichem Erlöskonto).
+        $existing = $this->em->getRepository(TaxRate::class)->findBy(['chartPreset' => $preset]);
+        $existingKeys = array_map(
+            fn (TaxRate $t) => $t->getName().'|'.$t->getRate(),
+            $existing,
+        );
 
         $created = 0;
         foreach ($definitions as $i => $def) {
-            if (in_array(number_format((float) $def['rate'], 2, '.', ''), $existingRates, true)) {
+            $name = $this->translator->trans($def['nameKey']);
+            $rate = number_format((float) $def['rate'], 2, '.', '');
+            if (in_array($name.'|'.$rate, $existingKeys, true)) {
                 continue;
             }
 
             $taxRate = new TaxRate();
-            $taxRate->setName($this->translator->trans($def['nameKey']));
-            $taxRate->setRate(number_format((float) $def['rate'], 2, '.', ''));
-            $taxRate->setDatevBuKey($def['buKey'] ?? null);
+            $taxRate->setName($name);
+            $taxRate->setRate($rate);
+            $taxRate->setDatevOutputBuKey($def['datevOutputBuKey'] ?? null);
+            $taxRate->setDatevInputBuKey($def['datevInputBuKey'] ?? null);
             $taxRate->setIsDefault($def['isDefault'] ?? false);
             $taxRate->setSortOrder($i * 10);
+            $taxRate->setChartPreset($preset);
 
             if (!empty($def['revenueAccountNumber'])) {
-                $account = $this->accountRepo->findByNumber($def['revenueAccountNumber']);
+                $account = $this->accountRepo->findByNumberAndPreset($def['revenueAccountNumber'], $preset);
                 if ($account !== null) {
                     $taxRate->setRevenueAccount($account);
                 }
@@ -105,7 +119,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return array<int, array{number: string, nameKey: string, type: string, isCash?: bool}>
+     * @return array<int, array{number: string, nameKey: string, type: string, isCash?: bool, isBank?: bool, isOpening?: bool, isAuto?: bool, sachverhaltLuL?: int, funktionsergaenzungLuL?: int}>
      */
     private function getAccountDefinitions(string $preset): array
     {
@@ -119,7 +133,7 @@ class AccountingPresetSeeder
     }
 
     /**
-     * @return array<int, array{nameKey: string, rate: float, buKey?: string, isDefault?: bool, revenueAccountNumber?: string}>
+     * @return array<int, array{nameKey: string, rate: float, outputBuKey?: string, inputBuKey?: string, isDefault?: bool, revenueAccountNumber?: string}>
      */
     private function getTaxRateDefinitions(string $preset): array
     {
@@ -146,10 +160,13 @@ class AccountingPresetSeeder
             ['number' => '1770', 'nameKey' => 'preset.account.vat_reduced', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '1776', 'nameKey' => 'preset.account.vat_standard', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '1590', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '8300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE],
-            ['number' => '8400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE],
+            ['number' => '1717', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '1718', 'nameKey' => 'preset.account.advance_payments_19', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '8300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
+            ['number' => '8400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
             ['number' => '8100', 'nameKey' => 'preset.account.revenue_tax_free', 'type' => AccountingAccount::TYPE_REVENUE],
             ['number' => '8720', 'nameKey' => 'preset.account.revenue_deductions', 'type' => AccountingAccount::TYPE_REVENUE],
+            ['number' => '3123', 'nameKey' => 'preset.account.reverse_charge_eu_19', 'type' => AccountingAccount::TYPE_EXPENSE, 'isAuto' => true, 'datevSachverhaltLuL' => 7, 'datevFunktionsergaenzungLuL' => 190],
             ['number' => '4930', 'nameKey' => 'preset.account.office_supplies', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '4980', 'nameKey' => 'preset.account.other_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
@@ -173,10 +190,13 @@ class AccountingPresetSeeder
             ['number' => '3800', 'nameKey' => 'preset.account.vat_reduced', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '3806', 'nameKey' => 'preset.account.vat_standard', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '1590', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '4300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE],
-            ['number' => '4400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE],
+            ['number' => '3271', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '3272', 'nameKey' => 'preset.account.advance_payments_19', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '4300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
+            ['number' => '4400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
             ['number' => '4100', 'nameKey' => 'preset.account.revenue_tax_free', 'type' => AccountingAccount::TYPE_REVENUE],
             ['number' => '4740', 'nameKey' => 'preset.account.revenue_deductions', 'type' => AccountingAccount::TYPE_REVENUE],
+            ['number' => '5923', 'nameKey' => 'preset.account.reverse_charge_eu_19', 'type' => AccountingAccount::TYPE_EXPENSE, 'isAuto' => true, 'datevSachverhaltLuL' => 7, 'datevFunktionsergaenzungLuL' => 190],
             ['number' => '6815', 'nameKey' => 'preset.account.office_supplies', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6310', 'nameKey' => 'preset.account.premises', 'type' => AccountingAccount::TYPE_EXPENSE],
@@ -246,8 +266,8 @@ class AccountingPresetSeeder
                 continue;
             }
 
-            // Resolve debit account by number
-            $debitAccount = $this->accountRepo->findByNumber($def['debitAccountNumber']);
+            // Resolve debit account by number, scoped to the active preset.
+            $debitAccount = $this->accountRepo->findByNumber($def['debitAccountNumber'], $preset);
             if (null === $debitAccount) {
                 continue; // account not found, skip this workflow
             }
@@ -350,38 +370,38 @@ class AccountingPresetSeeder
     private function getSkr03TaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null,  'isDefault' => false, 'revenueAccountNumber' => '8100'],
-            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00, 'buKey' => '2',   'isDefault' => false, 'revenueAccountNumber' => '8300'],
-            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'buKey' => '3',  'isDefault' => true,  'revenueAccountNumber' => '8400'],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00,  'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '8100'],
+            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00,  'datevOutputBuKey' => '2',  'datevInputBuKey' => '8',  'isDefault' => false, 'revenueAccountNumber' => '8300'],
+            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'datevOutputBuKey' => '3',  'datevInputBuKey' => '9',  'isDefault' => true,  'revenueAccountNumber' => '8400'],
         ];
     }
 
     private function getSkr04TaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null,  'isDefault' => false, 'revenueAccountNumber' => '4100'],
-            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00, 'buKey' => '2',   'isDefault' => false, 'revenueAccountNumber' => '4300'],
-            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'buKey' => '3',  'isDefault' => true,  'revenueAccountNumber' => '4400'],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00,  'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4100'],
+            ['nameKey' => 'preset.taxrate.de_7',     'rate' => 7.00,  'datevOutputBuKey' => '2',  'datevInputBuKey' => '8',  'isDefault' => false, 'revenueAccountNumber' => '4300'],
+            ['nameKey' => 'preset.taxrate.de_19',    'rate' => 19.00, 'datevOutputBuKey' => '3',  'datevInputBuKey' => '9',  'isDefault' => true,  'revenueAccountNumber' => '4400'],
         ];
     }
 
     private function getAtTaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00,  'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4090'],
-            ['nameKey' => 'preset.taxrate.at_10',    'rate' => 10.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4000'],
-            ['nameKey' => 'preset.taxrate.at_13',    'rate' => 13.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4010'],
-            ['nameKey' => 'preset.taxrate.at_20',    'rate' => 20.00, 'buKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '4020'],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00,  'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4090'],
+            ['nameKey' => 'preset.taxrate.at_10',    'rate' => 10.00, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4000'],
+            ['nameKey' => 'preset.taxrate.at_13',    'rate' => 13.00, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '4010'],
+            ['nameKey' => 'preset.taxrate.at_20',    'rate' => 20.00, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '4020'],
         ];
     }
 
     private function getChTaxRates(): array
     {
         return [
-            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3000'],
-            ['nameKey' => 'preset.taxrate.ch_2_6',   'rate' => 2.60, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
-            ['nameKey' => 'preset.taxrate.ch_3_8',   'rate' => 3.80, 'buKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
-            ['nameKey' => 'preset.taxrate.ch_8_1',   'rate' => 8.10, 'buKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '3400'],
+            ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3000'],
+            ['nameKey' => 'preset.taxrate.ch_2_6',   'rate' => 2.60, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
+            ['nameKey' => 'preset.taxrate.ch_3_8',   'rate' => 3.80, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
+            ['nameKey' => 'preset.taxrate.ch_8_1',   'rate' => 8.10, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '3400'],
         ];
     }
 }

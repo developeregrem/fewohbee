@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\JournalExport;
 
+use App\Entity\AccountingAccount;
 use App\Entity\AccountingSettings;
 use App\Entity\BookingBatch;
 use App\Entity\BookingEntry;
@@ -275,8 +276,9 @@ class DatevExportService implements BookingExportInterface
         // 8: Gegenkonto (credit account number, without BU key)
         $fields[7] = null !== $entry->getCreditAccount() ? $entry->getCreditAccount()->getAccountNumber() : '';
 
-        // 9: BU-Schlüssel
-        $fields[8] = null !== $entry->getTaxRate() ? ($entry->getTaxRate()->getDatevBuKey() ?? '') : '';
+        // 9: BU-Schlüssel – suppressed when an Automatikkonto is involved;
+        // otherwise selected by direction (expense→input/Vorsteuer, revenue→output/Umsatzsteuer).
+        $fields[8] = $this->resolveBuKey($entry);
 
         // 10: Belegdatum – DDMM format
         $fields[9] = $entry->getDate()->format('dm');
@@ -293,7 +295,67 @@ class DatevExportService implements BookingExportInterface
         }
         $fields[13] = $remark;
 
+        // 43/44: Sachverhalt L+L / Funktionsergänzung L+L – inherited from either account
+        // (typically set on §13b reverse-charge expense accounts like SKR03 3123 / SKR04 5923).
+        [$sachverhalt, $funktion] = $this->resolveLuL($entry);
+        $fields[42] = null !== $sachverhalt ? (string) $sachverhalt : '';
+        $fields[43] = null !== $funktion ? (string) $funktion : '';
+
         return $this->serializeDataLine($fields);
+    }
+
+    private function resolveBuKey(BookingEntry $entry): string
+    {
+        $taxRate = $entry->getTaxRate();
+        if (null === $taxRate) {
+            return '';
+        }
+
+        if ($this->involvesAutoAccount($entry)) {
+            return '';
+        }
+
+        $debit = $entry->getDebitAccount();
+        $credit = $entry->getCreditAccount();
+
+        // Expense posting (debit is an expense account) → Vorsteuer
+        if (null !== $debit && AccountingAccount::TYPE_EXPENSE === $debit->getType()) {
+            return $taxRate->getDatevInputBuKey() ?? '';
+        }
+
+        // Revenue posting (credit is a revenue account) → Umsatzsteuer
+        if (null !== $credit && AccountingAccount::TYPE_REVENUE === $credit->getType()) {
+            return $taxRate->getDatevOutputBuKey() ?? '';
+        }
+
+        // Fallback: prefer output key if set, then input
+        return $taxRate->getDatevOutputBuKey() ?? ($taxRate->getDatevInputBuKey() ?? '');
+    }
+
+    private function involvesAutoAccount(BookingEntry $entry): bool
+    {
+        $debit = $entry->getDebitAccount();
+        $credit = $entry->getCreditAccount();
+
+        return (null !== $debit && $debit->isAutoAccount())
+            || (null !== $credit && $credit->isAutoAccount());
+    }
+
+    /**
+     * @return array{0: ?int, 1: ?int} sachverhalt, funktionsergaenzung
+     */
+    private function resolveLuL(BookingEntry $entry): array
+    {
+        foreach ([$entry->getDebitAccount(), $entry->getCreditAccount()] as $account) {
+            if (null === $account) {
+                continue;
+            }
+            if (null !== $account->getDatevSachverhaltLuL() || null !== $account->getDatevFunktionsergaenzungLuL()) {
+                return [$account->getDatevSachverhaltLuL(), $account->getDatevFunktionsergaenzungLuL()];
+            }
+        }
+
+        return [null, null];
     }
 
     private function resolveSkrType(?string $chartPreset): ?string
@@ -341,11 +403,46 @@ class DatevExportService implements BookingExportInterface
         if (null === $entry->getCreditAccount()) {
             $warnings[] = $this->translator->trans('accounting.journal.export.warn.no_credit', ['%doc%' => $docNr]);
         }
-        if (null !== $entry->getTaxRate() && (null === $entry->getTaxRate()->getDatevBuKey() || '' === $entry->getTaxRate()->getDatevBuKey())) {
-            $warnings[] = $this->translator->trans('accounting.journal.export.warn.no_bukey', ['%doc%' => $docNr, '%taxrate%' => $entry->getTaxRate()->getName()]);
-        }
+        $warnings = [...$warnings, ...$this->buildBuKeyWarnings($entry, $docNr)];
 
         return $warnings;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function buildBuKeyWarnings(BookingEntry $entry, string $docNr): array
+    {
+        $taxRate = $entry->getTaxRate();
+        if (null === $taxRate) {
+            return [];
+        }
+
+        // Zero-rate (tax-free) does not require a BU-Schlüssel.
+        if (0.0 === (float) $taxRate->getRate()) {
+            return [];
+        }
+
+        // Automatikkonten: DATEV derives the tax itself, BU-Schlüssel must be omitted.
+        if ($this->involvesAutoAccount($entry)) {
+            return [];
+        }
+
+        $debit = $entry->getDebitAccount();
+        $credit = $entry->getCreditAccount();
+
+        $needsInput = null !== $debit && AccountingAccount::TYPE_EXPENSE === $debit->getType();
+        $needsOutput = null !== $credit && AccountingAccount::TYPE_REVENUE === $credit->getType();
+
+        if ($needsInput && null === $taxRate->getDatevInputBuKey()) {
+            return [$this->translator->trans('accounting.journal.export.warn.no_input_bukey', ['%doc%' => $docNr, '%taxrate%' => $taxRate->getName()])];
+        }
+
+        if ($needsOutput && null === $taxRate->getDatevOutputBuKey()) {
+            return [$this->translator->trans('accounting.journal.export.warn.no_output_bukey', ['%doc%' => $docNr, '%taxrate%' => $taxRate->getName()])];
+        }
+
+        return [];
     }
 
     private function serializeDataLine(array $fields): string

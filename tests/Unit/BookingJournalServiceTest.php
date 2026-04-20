@@ -13,6 +13,7 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
 use App\Repository\TaxRateRepository;
+use App\Service\AccountingSettingsService;
 use App\Service\BookingJournalService;
 use App\Service\InvoiceService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -391,9 +392,15 @@ final class BookingJournalServiceTest extends TestCase
         ?AccountingAccountRepository $accountRepo = null,
         ?TaxRateRepository $taxRateRepo = null,
         ?InvoiceService $invoiceService = null,
+        ?AccountingSettingsService $settingsService = null,
     ): BookingJournalService {
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnArgument(0);
+
+        if (null === $settingsService) {
+            $settingsService = $this->createStub(AccountingSettingsService::class);
+            $settingsService->method('getActivePreset')->willReturn(null);
+        }
 
         return new BookingJournalService(
             $em ?? $this->createStub(EntityManagerInterface::class),
@@ -403,6 +410,7 @@ final class BookingJournalServiceTest extends TestCase
             $taxRateRepo ?? $this->createStub(TaxRateRepository::class),
             $invoiceService ?? $this->createStub(InvoiceService::class),
             $translator,
+            $settingsService,
         );
     }
 

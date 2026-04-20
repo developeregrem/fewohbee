@@ -57,6 +57,13 @@ accounting.accounts.bank: Bank
 accounting.accounts.is_bank: This is the bank account
 accounting.accounts.opening_balance: Opening
 accounting.accounts.is_opening_balance: This is the opening balance account
+accounting.accounts.is_auto: Automatic account (DATEV)
+accounting.accounts.is_auto.help: "For DATEV automatic accounts, DATEV derives the tax itself from the chart of accounts. The BU key is suppressed during export whenever this account (debit or credit) is involved. Typical: SKR03 8300/8400, SKR04 4300/4400, §13b accounts."
+accounting.accounts.is_auto.badge: Auto
+accounting.accounts.sachverhalt_lul: Sachverhalt L+L
+accounting.accounts.sachverhalt_lul.help: "DATEV code for column AQ, e.g. 7 = §13b EU service (Booking.com, Airbnb), 4 = §13b construction service, 1 = intra-community acquisition. Leave empty if not needed."
+accounting.accounts.funktion_lul: Function ext. L+L
+accounting.accounts.funktion_lul.help: "DATEV code for column AR (tax rate + input VAT deduction), e.g. 190 = 19% with input VAT deduction, 101 = 7% with input VAT deduction. Leave empty if not needed."
 accounting.accounts.sort_order: Sort Order
 accounting.accounts.system_locked: System account (cannot be deleted)
 accounting.accounts.empty: No accounts configured. Load a preset to get started.
@@ -78,9 +85,15 @@ accounting.taxrates.edit: Edit Tax Rate
 accounting.taxrates.name_header: Name
 accounting.taxrates.name.placeholder: e.g. 19% VAT
 accounting.taxrates.rate: Rate
-accounting.taxrates.bukey: DATEV BU Key
-accounting.taxrates.bukey.placeholder: e.g. 3
-accounting.taxrates.bukey.help: "DATEV tax key (Buchungsschlüssel). Ask your tax advisor for the correct values."
+accounting.taxrates.bukey_short: BU key
+accounting.taxrates.bukey.output_abbr: Out
+accounting.taxrates.bukey.input_abbr: In
+accounting.taxrates.output_bukey: BU key output VAT
+accounting.taxrates.output_bukey.placeholder: e.g. 3
+accounting.taxrates.output_bukey.help: "Used on revenue bookings. DE: 2 = 7%, 3 = 19%. Leave empty for tax-free rates or if only automatic accounts are used."
+accounting.taxrates.input_bukey: BU key input VAT
+accounting.taxrates.input_bukey.placeholder: e.g. 9
+accounting.taxrates.input_bukey.help: "Used on expense bookings. DE: 8 = 7%, 9 = 19%. Leave empty for tax-free rates."
 accounting.taxrates.valid: Validity
 accounting.taxrates.valid_from: Valid From
 accounting.taxrates.valid_to: Valid To
@@ -148,7 +161,8 @@ accounting.journal.export.warn.missing_advisor_number: "advisor number is missin
 accounting.journal.export.warn.missing_client_number: "client number is missing in journal settings."
 accounting.journal.export.warn.no_debit: "Entry #%doc%: missing debit account."
 accounting.journal.export.warn.no_credit: "Entry #%doc%: missing credit account."
-accounting.journal.export.warn.no_bukey: "Entry #%doc%: tax rate \"%taxrate%\" has no DATEV BU key."
+accounting.journal.export.warn.no_output_bukey: "Entry #%doc%: revenue booking with tax rate \"%taxrate%\" – output BU key missing."
+accounting.journal.export.warn.no_input_bukey: "Entry #%doc%: expense booking with tax rate \"%taxrate%\" – input BU key missing."
 
 # Journal - Entries
 accounting.journal.entry.add: Add Entry
@@ -206,6 +220,9 @@ preset.account.cleaning: Cleaning
 preset.account.maintenance: Maintenance
 preset.account.maintenance_cleaning: Maintenance / Cleaning
 preset.account.opening_balance: Opening balance
+preset.account.reverse_charge_eu_19: Reverse Charge EU 19% (Booking.com, Airbnb)
+preset.account.advance_payments_7: Advance payments received 7% VAT
+preset.account.advance_payments_19: Advance payments received 19% VAT
 
 # Preset tax rate names
 preset.taxrate.tax_free: 0% tax-free

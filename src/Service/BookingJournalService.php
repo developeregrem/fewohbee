@@ -25,6 +25,7 @@ class BookingJournalService
         private readonly TaxRateRepository $taxRateRepo,
         private readonly InvoiceService $invoiceService,
         private readonly TranslatorInterface $translator,
+        private readonly AccountingSettingsService $settingsService,
     ) {
     }
 
@@ -175,9 +176,11 @@ class BookingJournalService
             $miscTotal,
         );
 
+        $activePreset = $this->settingsService->getActivePreset();
+
         // If no debit account given, default to cash account (backwards compat)
         if (null === $debitAccount) {
-            $debitAccount = $this->accountRepo->findCashAccount();
+            $debitAccount = $this->accountRepo->findCashAccount($activePreset);
         }
 
         $nextDocNumber = $this->entryRepo->getLastDocumentNumber($batch) + 1;
@@ -190,7 +193,7 @@ class BookingJournalService
             }
 
             // Match TaxRate entity by rate value, respecting validity
-            $taxRate = $this->taxRateRepo->findByRate((float) $vatRate, $today);
+            $taxRate = $this->taxRateRepo->findByRate((float) $vatRate, $today, $activePreset);
 
             // Credit account: TaxRate's revenueAccount → fallback to explicit param
             $entryCreditAccount = $taxRate?->getRevenueAccount() ?? $creditAccount;
@@ -204,7 +207,8 @@ class BookingJournalService
             $entry->setTaxRate($taxRate);
             $entry->setInvoiceNumber($invoice->getNumber());
             $entry->setInvoiceId($invoice->getId());
-            $entry->setRemark($remark ?? '');
+            // Buchungstext fallback: explicit remark → credit account name → debit account name.
+            $entry->setRemark($remark ?: ($entryCreditAccount?->getName() ?: ($debitAccount?->getName() ?? '')));
             $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
             $entry->setBookingBatch($batch);
             $batch->addEntry($entry);
