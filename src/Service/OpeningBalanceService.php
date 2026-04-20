@@ -28,6 +28,7 @@ class OpeningBalanceService
         private readonly BookingBatchRepository $batchRepo,
         private readonly BookingEntryRepository $entryRepo,
         private readonly AccountingAccountRepository $accountRepo,
+        private readonly AccountingSettingsService $settingsService,
     ) {
     }
 
@@ -37,7 +38,7 @@ class OpeningBalanceService
      */
     public function upsert(int $year, AccountingAccount $assetAccount, ?float $amount): void
     {
-        $openingAccount = $this->accountRepo->findOpeningBalanceAccount();
+        $openingAccount = $this->accountRepo->findOpeningBalanceAccount($this->settingsService->getActivePreset());
         if (null === $openingAccount) {
             throw new \RuntimeException('No opening balance account configured.');
         }

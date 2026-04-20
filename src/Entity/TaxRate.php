@@ -52,6 +52,12 @@ class TaxRate
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     private int $sortOrder = 0;
 
+    /**
+     * Origin preset (skr03, skr04, ekr_at, kmu_ch). NULL for user-created tax rates.
+     */
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    private ?string $chartPreset = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -181,6 +187,18 @@ class TaxRate
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getChartPreset(): ?string
+    {
+        return $this->chartPreset;
+    }
+
+    public function setChartPreset(?string $chartPreset): self
+    {
+        $this->chartPreset = $chartPreset;
+
+        return $this;
     }
 
     /**

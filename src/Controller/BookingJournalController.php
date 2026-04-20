@@ -14,6 +14,7 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\AccountingSettingsRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
+use App\Service\AccountingSettingsService;
 use App\Service\BookingJournalService;
 use App\Service\JournalExport\DatevExportService;
 use App\Service\OpeningBalanceService;
@@ -192,6 +193,7 @@ class BookingJournalController extends AbstractController
         BookingBatch $batch,
         BookingEntryRepository $entryRepo,
         Request $request,
+        AccountingSettingsService $settingsService,
     ): Response {
         $docNumber = $entryRepo->getLastDocumentNumber($batch) + 1;
         $cashbookMode = 'cashbook' === $request->query->get('filter');
@@ -203,6 +205,7 @@ class BookingJournalController extends AbstractController
         $form = $this->createForm(BookingEntryType::class, $entry, [
             'action' => $this->generateUrl('journal.entry.create', ['filter' => $request->query->get('filter', 'all')]),
             'cashbook_mode' => $cashbookMode,
+            'active_preset' => $settingsService->getActivePreset(),
         ]);
 
         return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);
@@ -214,6 +217,7 @@ class BookingJournalController extends AbstractController
         EntityManagerInterface $em,
         BookingBatchRepository $batchRepo,
         BookingJournalService $journalService,
+        AccountingSettingsService $settingsService,
     ): Response {
         $batch = $batchRepo->find($request->request->get('batchId'));
         $filter = $request->query->get('filter', 'all');
@@ -231,12 +235,13 @@ class BookingJournalController extends AbstractController
 
         $form = $this->createForm(BookingEntryType::class, $entry, [
             'cashbook_mode' => $cashbookMode,
+            'active_preset' => $settingsService->getActivePreset(),
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             if ($cashbookMode) {
-                $this->applyCashbookMapping($form, $entry, $em);
+                $this->applyCashbookMapping($form, $entry, $em, $settingsService->getActivePreset());
             }
 
             try {
@@ -264,18 +269,21 @@ class BookingJournalController extends AbstractController
         BookingEntry $entry,
         Request $request,
         EntityManagerInterface $em,
+        AccountingSettingsService $settingsService,
     ): Response {
         $filter = $request->query->get('filter', 'all');
         $cashbookMode = 'cashbook' === $filter;
+        $activePreset = $settingsService->getActivePreset();
 
         $formOptions = [
             'action' => $this->generateUrl('journal.entry.update', ['id' => $entry->getId(), 'filter' => $filter]),
             'reference_date' => $entry->getDate() ?? new \DateTime(),
             'cashbook_mode' => $cashbookMode,
+            'active_preset' => $activePreset,
         ];
 
         if ($cashbookMode) {
-            $cashAccount = $em->getRepository(AccountingAccount::class)->findCashAccount();
+            $cashAccount = $em->getRepository(AccountingAccount::class)->findCashAccount($activePreset);
             if ($entry->getDebitAccount() && $entry->getDebitAccount() === $cashAccount) {
                 $formOptions['direction_default'] = 'income';
                 $formOptions['category_default'] = $entry->getCreditAccount();
@@ -296,6 +304,7 @@ class BookingJournalController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         BookingJournalService $journalService,
+        AccountingSettingsService $settingsService,
     ): Response {
         $batch = $entry->getBookingBatch();
         $oldYear = $batch->getYear();
@@ -310,12 +319,13 @@ class BookingJournalController extends AbstractController
 
         $form = $this->createForm(BookingEntryType::class, $entry, [
             'cashbook_mode' => $cashbookMode,
+            'active_preset' => $settingsService->getActivePreset(),
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             if ($cashbookMode) {
-                $this->applyCashbookMapping($form, $entry, $em);
+                $this->applyCashbookMapping($form, $entry, $em, $settingsService->getActivePreset());
             }
 
             try {
@@ -371,8 +381,9 @@ class BookingJournalController extends AbstractController
         \Symfony\Component\Form\FormInterface $form,
         BookingEntry $entry,
         EntityManagerInterface $em,
+        ?string $activePreset = null,
     ): void {
-        $cashAccount = $em->getRepository(AccountingAccount::class)->findCashAccount();
+        $cashAccount = $em->getRepository(AccountingAccount::class)->findCashAccount($activePreset);
         $direction = $form->get('direction')->getData();
         $category = $form->get('category')->getData();
 
@@ -481,11 +492,13 @@ class BookingJournalController extends AbstractController
         Request $request,
         OpeningBalanceService $openingBalanceService,
         AccountingAccountRepository $accountRepo,
+        AccountingSettingsService $settingsService,
     ): Response {
         $year = (int) $request->query->get('year', (int) date('Y'));
-        $cashAccount = $accountRepo->findCashAccount();
-        $bankAccount = $accountRepo->findBankAccount();
-        $openingAccount = $accountRepo->findOpeningBalanceAccount();
+        $activePreset = $settingsService->getActivePreset();
+        $cashAccount = $accountRepo->findCashAccount($activePreset);
+        $bankAccount = $accountRepo->findBankAccount($activePreset);
+        $openingAccount = $accountRepo->findOpeningBalanceAccount($activePreset);
 
         $cashAmount = $cashAccount ? $openingBalanceService->getAmount($year, $cashAccount) : 0.0;
         $bankAmount = $bankAccount ? $openingBalanceService->getAmount($year, $bankAccount) : 0.0;
@@ -512,6 +525,7 @@ class BookingJournalController extends AbstractController
         Request $request,
         OpeningBalanceService $openingBalanceService,
         AccountingAccountRepository $accountRepo,
+        AccountingSettingsService $settingsService,
     ): Response {
         if (!$this->isCsrfTokenValid('opening_balance', $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -522,19 +536,20 @@ class BookingJournalController extends AbstractController
         $year = (int) $request->request->get('year', (int) date('Y'));
         $cashAmount = $request->request->get('cashAmount');
         $bankAmount = $request->request->get('bankAmount');
+        $activePreset = $settingsService->getActivePreset();
 
-        if (null === $accountRepo->findOpeningBalanceAccount()) {
+        if (null === $accountRepo->findOpeningBalanceAccount($activePreset)) {
             $this->addFlash('warning', 'accounting.opening_balance.flash.no_account');
 
             return $this->redirectToRoute('journal.overview');
         }
 
-        $cashAccount = $accountRepo->findCashAccount();
+        $cashAccount = $accountRepo->findCashAccount($activePreset);
         if (null !== $cashAccount) {
             $openingBalanceService->upsert($year, $cashAccount, '' === (string) $cashAmount ? null : (float) str_replace(',', '.', (string) $cashAmount));
         }
 
-        $bankAccount = $accountRepo->findBankAccount();
+        $bankAccount = $accountRepo->findBankAccount($activePreset);
         if (null !== $bankAccount) {
             $openingBalanceService->upsert($year, $bankAccount, '' === (string) $bankAmount ? null : (float) str_replace(',', '.', (string) $bankAmount));
         }
