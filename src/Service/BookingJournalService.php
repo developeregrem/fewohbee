@@ -23,7 +23,6 @@ class BookingJournalService
         private readonly BookingEntryRepository $entryRepo,
         private readonly AccountingAccountRepository $accountRepo,
         private readonly TaxRateRepository $taxRateRepo,
-        private readonly InvoiceService $invoiceService,
         private readonly TranslatorInterface $translator,
         private readonly AccountingSettingsService $settingsService,
     ) {
@@ -160,22 +159,6 @@ class BookingJournalService
             );
         }
 
-        // Calculate VAT breakdown
-        $vats = [];
-        $brutto = 0.0;
-        $netto = 0.0;
-        $appartmentTotal = 0.0;
-        $miscTotal = 0.0;
-        $this->invoiceService->calculateSums(
-            $invoice->getAppartments(),
-            $invoice->getPositions(),
-            $vats,
-            $brutto,
-            $netto,
-            $appartmentTotal,
-            $miscTotal,
-        );
-
         $activePreset = $this->settingsService->getActivePreset();
 
         // If no debit account given, default to cash account (backwards compat)
@@ -183,38 +166,104 @@ class BookingJournalService
             $debitAccount = $this->accountRepo->findCashAccount($activePreset);
         }
 
+        // Group by (scope, vatRate, effectiveCreditAccountId). Grouping must use the *resolved*
+        // credit account (override → TaxRate → fallback), not the raw override — otherwise a
+        // position with an explicit account that happens to match the tax-rate default would
+        // split off into its own journal line. Scopes stay separate so apartment
+        // ("Hauptleistung") and misc ("Sonstige Leistungen") surface as distinct entries even
+        // when they hit the same account + VAT.
+        $taxRateCache = [];
+        $resolveTaxRate = function (string $vatKey) use (&$taxRateCache, $today, $activePreset) {
+            if (!array_key_exists($vatKey, $taxRateCache)) {
+                // Strip the "v" prefix added to prevent PHP int-casting numeric string keys.
+                $taxRateCache[$vatKey] = $this->taxRateRepo->findByRate((float) ltrim($vatKey, 'v'), $today, $activePreset);
+            }
+
+            return $taxRateCache[$vatKey];
+        };
+        $resolveCreditAccount = function (?AccountingAccount $override, string $vatKey) use ($resolveTaxRate, $creditAccount) {
+            return $override ?? $resolveTaxRate($vatKey)?->getRevenueAccount() ?? $creditAccount;
+        };
+        // Prefix prevents PHP from silently casting numeric string keys (e.g. "19") to int.
+        $vatKeyOf = fn (float $vat): string => 'v'.(string) $vat;
+
+        $groups = [
+            'apartment' => [],
+            'misc' => [],
+        ];
+        foreach ($invoice->getAppartments() as $apartment) {
+            $apartmentPrice = $apartment->getTotalPriceRaw();
+            $bruttoAmount = $apartment->getIncludesVat()
+                ? $apartmentPrice
+                : $apartmentPrice + ($apartmentPrice * $apartment->getVat()) / 100;
+            $vatKey = $vatKeyOf($apartment->getVat());
+            $effective = $resolveCreditAccount($apartment->getRevenueAccount(), $vatKey);
+            $accountId = $effective?->getId() ?? 0;
+            if (!isset($groups['apartment'][$vatKey][$accountId])) {
+                $groups['apartment'][$vatKey][$accountId] = ['brutto' => 0.0, 'account' => $effective];
+            }
+            $groups['apartment'][$vatKey][$accountId]['brutto'] += $bruttoAmount;
+        }
+        foreach ($invoice->getPositions() as $pos) {
+            $posPrice = $pos->getTotalPriceRaw();
+            $bruttoAmount = $pos->getIncludesVat()
+                ? $posPrice
+                : $posPrice + ($posPrice * $pos->getVat()) / 100;
+            $vatKey = $vatKeyOf($pos->getVat());
+            $effective = $resolveCreditAccount($pos->getRevenueAccount(), $vatKey);
+            $accountId = $effective?->getId() ?? 0;
+            if (!isset($groups['misc'][$vatKey][$accountId])) {
+                $groups['misc'][$vatKey][$accountId] = ['brutto' => 0.0, 'account' => $effective];
+            }
+            $groups['misc'][$vatKey][$accountId]['brutto'] += $bruttoAmount;
+        }
+
+        $settings = $this->settingsService->getSettings();
+        $scopeLabels = [
+            'apartment' => $settings->getMainPositionLabel(),
+            'misc' => $settings->getMiscPositionLabel(),
+        ];
+
         $nextDocNumber = $this->entryRepo->getLastDocumentNumber($batch) + 1;
         $entries = [];
 
-        foreach ($vats as $vatRate => $vatData) {
-            $vatBrutto = round($vatData['brutto'], 2);
-            if (0.0 === $vatBrutto) {
-                continue;
+        foreach ($groups as $scope => $byVat) {
+            ksort($byVat);
+            foreach ($byVat as $vatKey => $byAccount) {
+                $taxRate = $resolveTaxRate($vatKey);
+
+                foreach ($byAccount as $row) {
+                    $vatBrutto = round($row['brutto'], 2);
+                    if (0.0 === $vatBrutto) {
+                        continue;
+                    }
+
+                    $entryCreditAccount = $row['account'];
+
+                    $entry = new BookingEntry();
+                    $entry->setDate(clone $today);
+                    $entry->setDocumentNumber($nextDocNumber++);
+                    $entry->setAmount($vatBrutto);
+                    $entry->setDebitAccount($debitAccount);
+                    $entry->setCreditAccount($entryCreditAccount);
+                    $entry->setTaxRate($taxRate);
+                    $entry->setInvoiceNumber($invoice->getNumber());
+                    $entry->setInvoiceId($invoice->getId());
+                    // Remark: explicit param → "{scope label} – {account name}" → account name → debit account name.
+                    $accountName = $entryCreditAccount?->getName() ?? '';
+                    $scopeLabel = $scopeLabels[$scope] ?? null;
+                    $defaultRemark = $scopeLabel && $accountName
+                        ? $scopeLabel.' – '.$accountName
+                        : ($accountName ?: ($debitAccount?->getName() ?? ''));
+                    $entry->setRemark($remark ?: $defaultRemark);
+                    $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
+                    $entry->setBookingBatch($batch);
+                    $batch->addEntry($entry);
+
+                    $this->em->persist($entry);
+                    $entries[] = $entry;
+                }
             }
-
-            // Match TaxRate entity by rate value, respecting validity
-            $taxRate = $this->taxRateRepo->findByRate((float) $vatRate, $today, $activePreset);
-
-            // Credit account: TaxRate's revenueAccount → fallback to explicit param
-            $entryCreditAccount = $taxRate?->getRevenueAccount() ?? $creditAccount;
-
-            $entry = new BookingEntry();
-            $entry->setDate(clone $today);
-            $entry->setDocumentNumber($nextDocNumber++);
-            $entry->setAmount($vatBrutto);
-            $entry->setDebitAccount($debitAccount);
-            $entry->setCreditAccount($entryCreditAccount);
-            $entry->setTaxRate($taxRate);
-            $entry->setInvoiceNumber($invoice->getNumber());
-            $entry->setInvoiceId($invoice->getId());
-            // Buchungstext fallback: explicit remark → credit account name → debit account name.
-            $entry->setRemark($remark ?: ($entryCreditAccount?->getName() ?: ($debitAccount?->getName() ?? '')));
-            $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
-            $entry->setBookingBatch($batch);
-            $batch->addEntry($entry);
-
-            $this->em->persist($entry);
-            $entries[] = $entry;
         }
 
         $this->em->flush();

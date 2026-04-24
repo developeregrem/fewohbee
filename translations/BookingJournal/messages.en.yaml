@@ -5,6 +5,7 @@ accounting.settings.back: Back to Settings
 accounting.settings.flash.saved: Settings saved successfully.
 accounting.settings.flash.preset_invalid: Invalid preset selected.
 accounting.settings.flash.preset_loaded: "Preset %preset% loaded: %accounts% accounts, %taxRates% tax rates, %workflows% workflows created."
+accounting.settings.flash.preset_stale_account_refs: "Warning: %count% prices/components still reference revenue accounts from another preset. Please review them in the price settings."
 
 # Preset
 accounting.settings.preset.title: Chart of Accounts
@@ -30,6 +31,14 @@ accounting.settings.client_number.placeholder: e.g. 55003
 accounting.settings.fiscal_year_start: Fiscal Year Start (Month)
 accounting.settings.account_number_length: Account Number Length
 accounting.settings.dictation_code: Dictation Code
+
+# Booking journal remark labels
+accounting.settings.remark_labels.title: Booking remark labels
+accounting.settings.remark_labels.help: 'Optional labels for the automatic booking-journal remark. Split by main service (room/main positions) and miscellaneous services. Same account + VAT are grouped per section; the label is combined with the account name as remark (e.g. <b>"Accommodation – Revenue 7%"</b>). When empty, only the account name is written.'
+accounting.settings.main_position_label: Main service
+accounting.settings.main_position_label.placeholder: "e.g. Accommodation, Boat rental, Seminar fee"
+accounting.settings.misc_position_label: Miscellaneous services
+accounting.settings.misc_position_label.placeholder: "e.g. Miscellaneous, Extras"
 
 # Opening balance
 accounting.opening_balance.title: Opening balance
@@ -203,7 +212,7 @@ preset.account.vat_reduced: VAT (reduced rate)
 preset.account.vat_standard: VAT (standard rate)
 preset.account.vat_ch: VAT payable
 preset.account.transit: Transit items
-preset.account.revenue_accommodation: Revenue accommodation (reduced rate)
+preset.account.revenue_accommodation: Revenue accommodation 7%
 preset.account.revenue_accommodation_10: Revenue accommodation 10%
 preset.account.revenue_accommodation_13: Revenue accommodation 13%
 preset.account.revenue_accommodation_ch: Revenue accommodation 3.8%

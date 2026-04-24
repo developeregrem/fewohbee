@@ -250,6 +250,33 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Count Price + PriceComponent entries whose revenueAccount belongs to a different chartPreset.
+     */
+    public function countStaleRevenueAccountRefs(string $preset): int
+    {
+        $priceStale = (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->join('p.revenueAccount', 'a')
+            ->where('a.chartPreset IS NOT NULL')
+            ->andWhere('a.chartPreset != :preset')
+            ->setParameter('preset', $preset)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $componentStale = (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c.id)')
+            ->from(\App\Entity\PriceComponent::class, 'c')
+            ->join('c.revenueAccount', 'a')
+            ->where('a.chartPreset IS NOT NULL')
+            ->andWhere('a.chartPreset != :preset')
+            ->setParameter('preset', $preset)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $priceStale + $componentStale;
+    }
+
+    /**
      * Find active prices linked to a specific reservation origin, grouped by type.
      *
      * @return array{room: Price[], misc: Price[], extras: Price[]}

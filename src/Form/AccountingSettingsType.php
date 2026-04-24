@@ -48,6 +48,22 @@ class AccountingSettingsType extends AbstractType
                 'required' => false,
                 'attr' => ['maxlength' => 5],
             ])
+            ->add('mainPositionLabel', TextType::class, [
+                'label' => 'accounting.settings.main_position_label',
+                'required' => false,
+                'attr' => [
+                    'maxlength' => 60,
+                    'placeholder' => 'accounting.settings.main_position_label.placeholder',
+                ],
+            ])
+            ->add('miscPositionLabel', TextType::class, [
+                'label' => 'accounting.settings.misc_position_label',
+                'required' => false,
+                'attr' => [
+                    'maxlength' => 60,
+                    'placeholder' => 'accounting.settings.misc_position_label.placeholder',
+                ],
+            ])
         ;
     }
 

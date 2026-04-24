@@ -5,6 +5,7 @@ accounting.settings.back: Zurück zu Einstellungen
 accounting.settings.flash.saved: Einstellungen erfolgreich gespeichert.
 accounting.settings.flash.preset_invalid: Ungültige Voreinstellung ausgewählt.
 accounting.settings.flash.preset_loaded: "Voreinstellung %preset% geladen: %accounts% Konten, %taxRates% Steuersätze, %workflows% Workflows angelegt."
+accounting.settings.flash.preset_stale_account_refs: "Achtung: %count% Preise/Komponenten verweisen noch auf Erlöskonten aus einer anderen Voreinstellung. Bitte in der Preisverwaltung korrigieren."
 
 # Preset
 accounting.settings.preset.title: Kontenrahmen
@@ -30,6 +31,14 @@ accounting.settings.client_number.placeholder: z.B. 55003
 accounting.settings.fiscal_year_start: Wirtschaftsjahr-Beginn (Monat)
 accounting.settings.account_number_length: Sachkontenlänge
 accounting.settings.dictation_code: Diktatkürzel
+
+# Buchungstext-Labels
+accounting.settings.remark_labels.title: Buchungstext-Bezeichnungen
+accounting.settings.remark_labels.help: 'Optionale Bezeichnungen für die automatisch erzeugten Buchungstexte im Journal. Getrennt nach Hauptleistung (Zimmer-/Hauptpositionen) und sonstigen Leistungen. Beim Buchen werden gleiche Konten und Steuersätze je Gruppe zusammengefasst; die Bezeichnung wird zusammen mit dem Kontennamen als Buchungstext verwendet (z. B. <b>„Übernachtung – Erlöse 7 %"</b>). Bleiben die Felder leer, wird nur der Kontenname geschrieben.'
+accounting.settings.main_position_label: Hauptleistung
+accounting.settings.main_position_label.placeholder: "z.B. Übernachtung, Bootsmiete, Seminargebühr"
+accounting.settings.misc_position_label: Sonstige Leistungen
+accounting.settings.misc_position_label.placeholder: "z.B. Sonstige Leistungen, Zusatzleistungen"
 
 # Anfangsbestand (Eröffnungsbuchungen)
 accounting.opening_balance.title: Anfangsbestand
@@ -203,7 +212,7 @@ preset.account.vat_reduced: Umsatzsteuer 7%
 preset.account.vat_standard: Umsatzsteuer 19%
 preset.account.vat_ch: Geschuldete MWST
 preset.account.transit: Durchlaufende Posten
-preset.account.revenue_accommodation: Erlöse 7% USt (Übernachtung)
+preset.account.revenue_accommodation: Erlöse 7% USt
 preset.account.revenue_accommodation_10: Erlöse Beherbergung 10%
 preset.account.revenue_accommodation_13: Erlöse Beherbergung 13%
 preset.account.revenue_accommodation_ch: Erlöse Beherbergung 3.8%

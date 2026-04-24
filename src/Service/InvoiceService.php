@@ -636,6 +636,7 @@ class InvoiceService
         $positionAppartment->setIncludesVat($price->getIncludesVat());
         $positionAppartment->setIsFlatPrice($price->getIsFlatPrice());
         $positionAppartment->setIsPerRoom($price->getIsPerRoom());
+        $positionAppartment->setRevenueAccount($price->getRevenueAccount());
 
         return $positionAppartment;
     }
@@ -654,14 +655,57 @@ class InvoiceService
     {
         $positions = [];
         foreach ($tmpPricesArr as $tmpPrice) {
+            $price = $tmpPrice['price'];
+            if ($price instanceof Price && $price->isPackage()) {
+                foreach ($this->expandPackageAggregate($tmpPrice) as $packagePos) {
+                    $positions[] = $packagePos;
+                }
+                continue;
+            }
+
             $position = new InvoicePosition();
             $position->setAmount($tmpPrice['amount']);
-            $position->setDescription($tmpPrice['price']->getDescription());
-            $position->setPrice($tmpPrice['price']->getPrice());
-            $position->setVat($tmpPrice['price']->getVat());
-            $position->setIncludesVat($tmpPrice['price']->getIncludesVat());
-            $position->setIsFlatPrice($tmpPrice['price']->getIsFlatPrice());
-            $position->setIsPerRoom($tmpPrice['price']->getIsPerRoom());
+            $position->setDescription($price->getDescription());
+            $position->setPrice($price->getPrice());
+            $position->setVat($price->getVat());
+            $position->setIncludesVat($price->getIncludesVat());
+            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsPerRoom($price->getIsPerRoom());
+            $position->setRevenueAccount($price->getRevenueAccount());
+            $positions[] = $position;
+        }
+
+        return $positions;
+    }
+
+    /**
+     * Expand a single package-price aggregate into one InvoicePosition per component, preserving
+     * quantity + flags. Component unit prices are derived via PriceService::expandPackage().
+     *
+     * @return InvoicePosition[]
+     */
+    private function expandPackageAggregate(array $tmpPrice): array
+    {
+        /** @var Price $price */
+        $price = $tmpPrice['price'];
+        $expanded = $this->ps->expandPackage(
+            $price,
+            (float) $price->getPrice(),
+            (int) $tmpPrice['amount'],
+            (bool) $price->getIncludesVat(),
+        );
+
+        $positions = [];
+        foreach ($expanded as $component) {
+            $position = new InvoicePosition();
+            $position->setAmount($component['amount']);
+            $position->setDescription($price->getDescription().' – '.$component['component']->getDescription());
+            $position->setPrice(number_format($component['unitPrice'], 2, '.', ''));
+            $position->setVat($component['component']->getVat());
+            $position->setIncludesVat($component['includesVat']);
+            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsPerRoom($price->getIsPerRoom());
+            $position->setRevenueAccount($component['component']->getRevenueAccount() ?? $price->getRevenueAccount());
             $positions[] = $position;
         }
 

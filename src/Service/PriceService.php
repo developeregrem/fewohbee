@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\AccountingAccount;
+use App\Entity\Enum\PriceComponentAllocationType;
 use App\Entity\Price;
+use App\Entity\PriceComponent;
 use App\Entity\PricePeriod;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
@@ -187,7 +190,218 @@ class PriceService
             $price->setMinStay(null);
         }
 
+        $this->setComponents($request, $price, $id);
+
+        $revenueAccountId = $request->request->get('revenue-account-'.$id);
+        $price->setRevenueAccount($this->resolveAccount($revenueAccountId));
+
         return $price;
+    }
+
+    private function resolveAccount(mixed $id): ?AccountingAccount
+    {
+        if (null === $id || '' === $id) {
+            return null;
+        }
+
+        return $this->em->getRepository(AccountingAccount::class)->find((int) $id);
+    }
+
+    /**
+     * Sync price components (packages) from the POSTed form fields. When "is-package" is not set,
+     * any existing components are removed.
+     */
+    private function setComponents(Request $request, Price $price, $id): void
+    {
+        // Packages are currently only supported for misc prices (type=1). Clear otherwise.
+        $isPackage = 1 === (int) $price->getType() && null != $request->request->get('is-package-'.$id);
+
+        if (!$isPackage) {
+            foreach ($price->getComponents()->toArray() as $existing) {
+                $price->removeComponent($existing);
+            }
+
+            return;
+        }
+
+        $descriptions = $request->request->all('component-desc-'.$id) ?? [];
+        $vats = $request->request->all('component-vat-'.$id) ?? [];
+        $types = $request->request->all('component-type-'.$id) ?? [];
+        $values = $request->request->all('component-value-'.$id) ?? [];
+        $accounts = $request->request->all('component-account-'.$id) ?? [];
+        $remainderIdx = $request->request->get('component-remainder-'.$id, '');
+
+        $keys = array_keys($descriptions);
+        $sortOrder = 0;
+        $kept = new ArrayCollection();
+
+        foreach ($keys as $key) {
+            $desc = trim((string) ($descriptions[$key] ?? ''));
+            if ('' === $desc) {
+                continue;
+            }
+
+            $component = new PriceComponent();
+            $component->setDescription($desc);
+            $component->setVat((float) str_replace(',', '.', (string) ($vats[$key] ?? '0')));
+            $type = ('amount' === ($types[$key] ?? 'percent'))
+                ? PriceComponentAllocationType::AMOUNT
+                : PriceComponentAllocationType::PERCENT;
+            $component->setAllocationType($type);
+            $component->setAllocationValue((float) str_replace(',', '.', (string) ($values[$key] ?? '0')));
+            $component->setIsRemainder((string) $key === (string) $remainderIdx);
+            $component->setSortOrder($sortOrder++);
+            $component->setRevenueAccount($this->resolveAccount($accounts[$key] ?? null));
+
+            $price->addComponent($component);
+            $kept->add($component);
+        }
+
+        // Drop components that existed before but were removed in the form.
+        foreach ($price->getComponents()->toArray() as $existing) {
+            if (!$kept->contains($existing)) {
+                $price->removeComponent($existing);
+            }
+        }
+    }
+
+    /**
+     * Validates a price's package components. Returns a list of translation keys describing
+     * each error; an empty array means the price is valid (or is not a package at all).
+     */
+    public function validateComponents(Price $price): array
+    {
+        if (!$price->isPackage()) {
+            return [];
+        }
+
+        $errors = [];
+        $total = (float) $price->getPrice();
+        $percentSum = 0.0;
+        $amountSum = 0.0;
+        $remainderCount = 0;
+
+        foreach ($price->getComponents() as $component) {
+            if ('' === trim($component->getDescription())) {
+                $errors[] = 'price.package.error.description_required';
+            }
+
+            if ($component->getVat() < 0) {
+                $errors[] = 'price.package.error.vat_negative';
+            }
+
+            if ($component->isRemainder()) {
+                ++$remainderCount;
+                continue; // remainder component's value is derived, skip sum checks
+            }
+
+            if ($component->getAllocationValue() <= 0) {
+                $errors[] = 'price.package.error.value_required';
+            }
+
+            if (PriceComponentAllocationType::PERCENT === $component->getAllocationType()) {
+                $percentSum += $component->getAllocationValue();
+            } else {
+                $amountSum += $component->getAllocationValue();
+            }
+        }
+
+        if ($remainderCount > 1) {
+            $errors[] = 'price.package.error.multiple_remainder';
+        }
+
+        $epsilon = 0.01;
+
+        if (0 === $remainderCount) {
+            // Without remainder: percent part must fill the remaining amount exactly.
+            $percentBrutto = $total * $percentSum / 100.0;
+            $covered = $percentBrutto + $amountSum;
+            if (abs($covered - $total) > $epsilon) {
+                $errors[] = 'price.package.error.sum_mismatch';
+            }
+        } else {
+            // With remainder: percent must be <= 100, amounts must be <= total.
+            if ($percentSum > 100.0 + $epsilon) {
+                $errors[] = 'price.package.error.percent_over_100';
+            }
+            if ($amountSum > $total + $epsilon) {
+                $errors[] = 'price.package.error.amount_over_total';
+            }
+        }
+
+        return array_values(array_unique($errors));
+    }
+
+    /**
+     * Expands a package price into per-component aggregates suitable for building N invoice positions.
+     * Each returned aggregate mirrors the shape produced by InvoiceService::computeMiscPriceAggregates()
+     * so it can be fed directly into createMiscPositionsFromAggregates().
+     *
+     * @param Price $price       the package price (expected to satisfy $price->isPackage())
+     * @param float $unitPrice   unit (bulk) price per item - usually $price->getPrice() but can be overridden by user edits
+     * @param int   $amount      quantity of items (copied onto each resulting aggregate)
+     * @param bool  $includesVat whether $unitPrice is gross (true) or net (false)
+     *
+     * @return array<int, array{price: Price, component: PriceComponent, amount: int, unitPrice: float, includesVat: bool}>
+     */
+    public function expandPackage(Price $price, float $unitPrice, int $amount, bool $includesVat): array
+    {
+        if (!$price->isPackage()) {
+            return [];
+        }
+
+        $components = $price->getComponents()->toArray();
+        usort($components, static fn (PriceComponent $a, PriceComponent $b) => $a->getSortOrder() <=> $b->getSortOrder());
+
+        $results = [];
+        $allocated = 0.0;
+        $remainderIndex = null;
+
+        foreach ($components as $idx => $component) {
+            if ($component->isRemainder()) {
+                $remainderIndex = $idx;
+                $results[$idx] = null;
+                continue;
+            }
+
+            if (PriceComponentAllocationType::PERCENT === $component->getAllocationType()) {
+                $componentUnit = round($unitPrice * $component->getAllocationValue() / 100.0, 2);
+            } else {
+                $componentUnit = round($component->getAllocationValue(), 2);
+            }
+
+            $allocated += $componentUnit;
+            $results[$idx] = [
+                'price' => $price,
+                'component' => $component,
+                'amount' => $amount,
+                'unitPrice' => $componentUnit,
+                'includesVat' => $includesVat,
+            ];
+        }
+
+        if (null !== $remainderIndex) {
+            $remainderUnit = round($unitPrice - $allocated, 2);
+            if ($remainderUnit < 0) {
+                $remainderUnit = 0.0;
+            }
+            $results[$remainderIndex] = [
+                'price' => $price,
+                'component' => $components[$remainderIndex],
+                'amount' => $amount,
+                'unitPrice' => $remainderUnit,
+                'includesVat' => $includesVat,
+            ];
+        } else {
+            // Absorb rounding residue into the last non-zero component so the sum matches unitPrice exactly.
+            $residue = round($unitPrice - $allocated, 2);
+            if (0.0 !== $residue && [] !== $results) {
+                $lastKey = array_key_last($results);
+                $results[$lastKey]['unitPrice'] = round($results[$lastKey]['unitPrice'] + $residue, 2);
+            }
+        }
+
+        return array_values(array_filter($results));
     }
 
     public function getActiveMiscellaneousPrices(): ?array

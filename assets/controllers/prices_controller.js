@@ -1,5 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
-import { iniStartOrEndDate } from '../js/utils.js';
+import { iniStartOrEndDate, whenBootstrapAndIconsReady } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -19,6 +19,15 @@ export default class extends Controller {
         }
         this.initState();
         this.observePeriodList();
+        this.initPopovers();
+    }
+
+    async initPopovers() {
+        const ready = await whenBootstrapAndIconsReady();
+        if (!ready) return;
+        this.element.querySelectorAll('[data-bs-toggle="popover"]').forEach((el) => {
+            window.bootstrap.Popover.getOrCreateInstance(el);
+        });
     }
 
     disconnect() {
@@ -170,6 +179,20 @@ export default class extends Controller {
         }
         if (bookableOnlineCheckbox) {
             bookableOnlineCheckbox.disabled = !isMisc;
+        }
+        const packageWrapper = this.element.querySelector(`#package-wrap-${priceId}`);
+        if (packageWrapper) {
+            packageWrapper.style.display = isMisc ? '' : 'none';
+            if (!isMisc) {
+                const packageCheckbox = this.element.querySelector(`#is-package-${priceId}`);
+                if (packageCheckbox) {
+                    packageCheckbox.checked = false;
+                }
+                const packageBody = this.element.querySelector(`#package-body-${priceId}`);
+                if (packageBody) {
+                    packageBody.classList.add('d-none');
+                }
+            }
         }
         if (priceId === 'new' && isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
             isPerRoomCheckbox.checked = true;
