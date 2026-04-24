@@ -60,6 +60,7 @@ workflow:
     reservation_created: "New reservation created (manually)"
     invoice_created: "New invoice created"
     invoice_status_changed: "Invoice status changed"
+    reservation_status_changed: "Reservation status changed"
     reservation_days_before_start: "X days before arrival date"
     reservation_days_after_end: "X days after departure date"
     invoice_days_after_date: "X days after invoice date"

@@ -10,6 +10,7 @@ use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Event\ReservationCreatedEvent;
+use App\Event\ReservationStatusChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,6 +29,7 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
             OnlineBookingCreatedEvent::class => 'onOnlineBookingCreated',
             CalendarImportBookingCreatedEvent::class => 'onCalendarImportBookingCreated',
             ReservationCreatedEvent::class => 'onReservationCreated',
+            ReservationStatusChangedEvent::class => 'onReservationStatusChanged',
             InvoiceCreatedEvent::class => 'onInvoiceCreated',
             InvoiceStatusChangedEvent::class => 'onInvoiceStatusChanged',
         ];
@@ -60,6 +62,13 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
 
         $this->engine->processEvent('reservation.created', $first, [
             'allReservations' => $event->reservations,
+        ]);
+    }
+
+    public function onReservationStatusChanged(ReservationStatusChangedEvent $event): void
+    {
+        $this->engine->processEvent('reservation.status_changed', $event->reservation, [
+            'previousStatus' => $event->previousStatus,
         ]);
     }
 

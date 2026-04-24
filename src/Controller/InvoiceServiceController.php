@@ -764,11 +764,14 @@ class InvoiceServiceController extends AbstractController
         if ($csrf->validateCSRFToken($request)) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
             $previousStatus = (int) $invoice->getStatus();
-            $invoice->setStatus($request->request->get('invoice-status'));
+            $newStatus = (int) $request->request->get('invoice-status');
+            $invoice->setStatus($newStatus);
             $em->persist($invoice);
             $em->flush();
 
-            $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
+            if ($previousStatus !== $newStatus) {
+                $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
+            }
         }
 
         return new Response('');
