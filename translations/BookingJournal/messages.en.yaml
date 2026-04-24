@@ -204,6 +204,7 @@ preset.account.cash_at: Cash register
 preset.account.bank: Bank
 preset.account.receivables: Trade receivables
 preset.account.receivables_credit_card: Credit card receivables
+preset.account.credit_card_settlement: Credit card settlement
 preset.account.input_tax: Input tax
 preset.account.input_tax_reduced: Input tax (reduced rate)
 preset.account.input_tax_standard: Input tax (standard rate)
@@ -218,6 +219,7 @@ preset.account.revenue_accommodation_13: Revenue accommodation 13%
 preset.account.revenue_accommodation_ch: Revenue accommodation 3.8%
 preset.account.revenue_standard: Revenue (standard rate)
 preset.account.revenue_standard_ch: Revenue 8.1% VAT
+preset.account.service_revenue_ch: Service revenue
 preset.account.revenue_20: Revenue 20% VAT
 preset.account.revenue_tax_free: Tax-free revenue
 preset.account.revenue_deductions: Revenue deductions (commissions)
@@ -225,7 +227,9 @@ preset.account.office_supplies: Office supplies
 preset.account.other_expenses: Other expenses
 preset.account.other_operating_expenses: Other operating expenses
 preset.account.premises: Premises costs
+preset.account.rent_real_estate: Rent (real estate)
 preset.account.cleaning: Cleaning
+preset.account.insurance: Insurance
 preset.account.maintenance: Maintenance
 preset.account.maintenance_cleaning: Maintenance / Cleaning
 preset.account.opening_balance: Opening balance
@@ -250,7 +254,7 @@ preset.workflow.booking_cash.desc: "Automatically creates a booking entry (debit
 preset.workflow.booking_transfer: "Booking: Bank transfer"
 preset.workflow.booking_transfer.desc: "Automatically creates a booking entry (debit: bank) when an invoice is paid by bank transfer."
 preset.workflow.booking_card: "Booking: Card payment"
-preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit: card receivables) when an invoice is paid by card."
+preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit: credit card settlement) when an invoice is paid by card."
 
 # General
 journal.action: Action

@@ -204,6 +204,7 @@ preset.account.cash_at: Kassa
 preset.account.bank: Bank
 preset.account.receivables: Forderungen aus Lieferungen und Leistungen
 preset.account.receivables_credit_card: Forderungen Kreditkartenabrechnung
+preset.account.credit_card_settlement: Kreditkartenabrechnung
 preset.account.input_tax: Vorsteuer
 preset.account.input_tax_reduced: Abziehbare Vorsteuer 7%
 preset.account.input_tax_standard: Abziehbare Vorsteuer 19%
@@ -218,6 +219,7 @@ preset.account.revenue_accommodation_13: Erlöse Beherbergung 13%
 preset.account.revenue_accommodation_ch: Erlöse Beherbergung 3.8%
 preset.account.revenue_standard: Erlöse 19% USt
 preset.account.revenue_standard_ch: Erlöse 8.1% MWST
+preset.account.service_revenue_ch: Dienstleistungserlöse
 preset.account.revenue_20: Erlöse 20% USt
 preset.account.revenue_tax_free: Steuerfreie Erlöse
 preset.account.revenue_deductions: Erlösschmälerungen (Provisionen)
@@ -225,7 +227,9 @@ preset.account.office_supplies: Bürobedarf
 preset.account.other_expenses: Sonstige Aufwendungen
 preset.account.other_operating_expenses: Sonstige betriebliche Aufwendungen
 preset.account.premises: Raumkosten
+preset.account.rent_real_estate: Miete (unbewegliche Wirtschaftsgüter)
 preset.account.cleaning: Reinigung
+preset.account.insurance: Versicherungen
 preset.account.maintenance: Instandhaltung
 preset.account.maintenance_cleaning: Unterhalt/Reinigung
 preset.account.opening_balance: Saldenvorträge / Eröffnungsbilanz
@@ -250,7 +254,7 @@ preset.workflow.booking_cash.desc: "Erstellt automatisch eine Buchung (Soll: Kas
 preset.workflow.booking_transfer: "Buchung: Überweisung"
 preset.workflow.booking_transfer.desc: "Erstellt automatisch eine Buchung (Soll: Bank), wenn eine Rechnung per Überweisung bezahlt wird."
 preset.workflow.booking_card: "Buchung: Kartenzahlung"
-preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kreditkartenforderungen), wenn eine Rechnung per Karte bezahlt wird."
+preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kreditkartenabrechnung), wenn eine Rechnung per Karte bezahlt wird."
 
 # Allgemein
 journal.action: Aktion
