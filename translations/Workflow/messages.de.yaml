@@ -61,6 +61,7 @@ workflow:
     reservation_created: "Neue Reservierung angelegt (manuell)"
     invoice_created: "Neue Rechnung erstellt"
     invoice_status_changed: "Rechnungsstatus geändert"
+    reservation_status_changed: "Reservierungsstatus geändert"
     reservation_days_before_start: "X Tage vor dem Anreisedatum"
     reservation_days_after_end: "X Tage nach dem Abreisedatum"
     invoice_days_after_date: "X Tage nach dem Rechnungsdatum"

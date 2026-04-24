@@ -33,7 +33,8 @@ class CalendarImportService
         private readonly HttpClientInterface $httpClient,
         private readonly CacheInterface $cache,
         private readonly TranslatorInterface $translator,
-        private readonly EventDispatcherInterface $eventDispatcher
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ReservationService $reservationService,
     ) {
     }
 
@@ -273,7 +274,7 @@ class CalendarImportService
         $reservation->setStartDate($this->toDate($start));
         $reservation->setEndDate($this->toDate($end));
         $reservation->setReservationOrigin($import->getReservationOrigin());
-        $reservation->setReservationStatus($import->getReservationStatus());
+        $this->reservationService->changeStatus($reservation, $import->getReservationStatus(), flush: false);
         $reservation->setRemark($event['DESCRIPTION'] ?? null);
         $reservation->setRefUid($event['UID']);
         $reservation->setIsConflict(false);
@@ -331,7 +332,7 @@ class CalendarImportService
             $reservation->setStartDate($this->toDate($start));
             $reservation->setEndDate($this->toDate($end));
             $reservation->setReservationOrigin($import->getReservationOrigin());
-            $reservation->setReservationStatus($import->getReservationStatus());
+            $this->reservationService->changeStatus($reservation, $import->getReservationStatus(), flush: false);
             $reservation->setRemark($event['DESCRIPTION'] ?? null);
             $reservation->setRefUid($event['UID']);
             $reservation->setIsConflict(false);
@@ -354,7 +355,7 @@ class CalendarImportService
             $conflictReservation->setStartDate($this->toDate($start));
             $conflictReservation->setEndDate($this->toDate($end));
             $conflictReservation->setReservationOrigin($import->getReservationOrigin());
-            $conflictReservation->setReservationStatus($import->getReservationStatus());
+            $this->reservationService->changeStatus($conflictReservation, $import->getReservationStatus(), flush: false);
             $conflictReservation->setRemark($event['DESCRIPTION'] ?? null);
             $conflictReservation->setRefUid($event['UID']);
             $conflictReservation->setIsConflict(true);

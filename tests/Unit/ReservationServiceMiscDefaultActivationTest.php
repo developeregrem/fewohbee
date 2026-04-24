@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class ReservationServiceMiscDefaultActivationTest extends TestCase
 {
@@ -50,7 +51,8 @@ final class ReservationServiceMiscDefaultActivationTest extends TestCase
         $reservationService = new ReservationService(
             $this->createStub(EntityManagerInterface::class),
             $requestStack,
-            $invoiceService
+            $invoiceService,
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $reservationService->getMiscPricesInCreation(
