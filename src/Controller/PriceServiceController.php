@@ -13,10 +13,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\AccountingAccount;
 use App\Entity\Price;
 use App\Entity\PricePeriod;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Entity\TaxRate;
+use App\Service\AccountingSettingsService;
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -40,13 +43,16 @@ class PriceServiceController extends AbstractController
     }
 
     #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, $id)
     {
         $em = $doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
+        $preset = $accountingSettings->getActivePreset();
+        $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
+        $accounts = $em->getRepository(AccountingAccount::class)->findRevenueOverrideCandidates($preset);
 
         $originIds = [];
         // extract ids for twig template
@@ -60,16 +66,21 @@ class PriceServiceController extends AbstractController
             'origins' => $origins,
             'originPricesIds' => $originIds,
             'categories' => $categories,
+            'taxRates' => $taxRates,
+            'accounts' => $accounts,
         ]);
     }
 
     #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
-    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
+    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings)
     {
         $em = $doctrine->getManager();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
+        $preset = $accountingSettings->getActivePreset();
+        $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
+        $accounts = $em->getRepository(AccountingAccount::class)->findRevenueOverrideCandidates($preset);
 
         $originIds = [];
         // extract ids for twig template, all origins will be preselected
@@ -86,6 +97,8 @@ class PriceServiceController extends AbstractController
             'origins' => $origins,
             'originPricesIds' => $originIds,
             'categories' => $categories,
+            'taxRates' => $taxRates,
+            'accounts' => $accounts,
         ]);
     }
 
@@ -103,18 +116,26 @@ class PriceServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
-                $conflicts = $ps->findConflictingPrices($price);
-
-                // complain conflicts only when current price is marked as acitve
-                if (!$price->getActive() || 0 === count($conflicts)) {
-                    $em = $doctrine->getManager();
-                    $em->persist($price);
-                    $em->flush();
-                    // add succes message
-                    $this->addFlash('success', 'price.flash.create.success');
-                } else {
+                $componentErrors = $ps->validateComponents($price);
+                if (!empty($componentErrors)) {
                     $error = true;
-                    $this->addFlash('warning', 'price.flash.create.conflict');
+                    foreach ($componentErrors as $key) {
+                        $this->addFlash('warning', $key);
+                    }
+                } else {
+                    $conflicts = $ps->findConflictingPrices($price);
+
+                    // complain conflicts only when current price is marked as acitve
+                    if (!$price->getActive() || 0 === count($conflicts)) {
+                        $em = $doctrine->getManager();
+                        $em->persist($price);
+                        $em->flush();
+                        // add succes message
+                        $this->addFlash('success', 'price.flash.create.success');
+                    } else {
+                        $error = true;
+                        $this->addFlash('warning', 'price.flash.create.conflict');
+                    }
                 }
             }
         }
@@ -143,23 +164,33 @@ class PriceServiceController extends AbstractController
                 $em->clear(Price::class);
                 $em->clear(PricePeriod::class);
             } else {
-                $conflicts = $ps->findConflictingPrices($price);
-                // during edit we need to remove the current item from the list
-                $conflicts->removeElement($price);
-
-                // complain conflicts only when current price is marked as acitve
-                if (!$price->getActive() || 0 === count($conflicts)) {
-                    $em->persist($price);
-                    $em->flush();
-
-                    // add succes message
-                    $this->addFlash('success', 'price.flash.edit.success');
-                } else {
+                $componentErrors = $ps->validateComponents($price);
+                if (!empty($componentErrors)) {
                     $error = true;
-                    $this->addFlash('warning', 'price.flash.create.conflict');
-                    // stop auto commit of doctrine with invalid field values
+                    foreach ($componentErrors as $key) {
+                        $this->addFlash('warning', $key);
+                    }
                     $em->clear(Price::class);
                     $em->clear(PricePeriod::class);
+                } else {
+                    $conflicts = $ps->findConflictingPrices($price);
+                    // during edit we need to remove the current item from the list
+                    $conflicts->removeElement($price);
+
+                    // complain conflicts only when current price is marked as acitve
+                    if (!$price->getActive() || 0 === count($conflicts)) {
+                        $em->persist($price);
+                        $em->flush();
+
+                        // add succes message
+                        $this->addFlash('success', 'price.flash.edit.success');
+                    } else {
+                        $error = true;
+                        $this->addFlash('warning', 'price.flash.create.conflict');
+                        // stop auto commit of doctrine with invalid field values
+                        $em->clear(Price::class);
+                        $em->clear(PricePeriod::class);
+                    }
                 }
             }
         }

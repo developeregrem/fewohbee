@@ -11,6 +11,7 @@ use App\Form\AccountingAccountType;
 use App\Form\AccountingSettingsType;
 use App\Form\TaxRateType;
 use App\Repository\AccountingAccountRepository;
+use App\Repository\PriceRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\AccountingPresetSeeder;
 use App\Service\AccountingSettingsService;
@@ -66,6 +67,7 @@ class BookingJournalSettingsController extends AbstractController
         AccountingSettingsService $settingsService,
         AccountingPresetSeeder $seeder,
         TranslatorInterface $translator,
+        PriceRepository $priceRepo,
     ): Response {
         $preset = $request->request->get('preset');
         if (!in_array($preset, AccountingSettings::VALID_PRESETS, true)) {
@@ -92,6 +94,13 @@ class BookingJournalSettingsController extends AbstractController
             '%workflows%' => $workflowsCreated,
             '%preset%' => strtoupper($preset),
         ]));
+
+        $staleRefs = $priceRepo->countStaleRevenueAccountRefs($preset);
+        if ($staleRefs > 0) {
+            $this->addFlash('warning', $translator->trans('accounting.settings.flash.preset_stale_account_refs', [
+                '%count%' => $staleRefs,
+            ]));
+        }
 
         return $this->redirectToRoute('journal.settings.index');
     }

@@ -47,6 +47,28 @@ class AccountingAccountRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * Accounts eligible as revenue-account overrides on Price/PriceComponent.
+     * Includes revenue accounts (normal case) plus liability accounts (for
+     * pass-through items like tourist tax booked on a 1590-style account).
+     *
+     * @return AccountingAccount[]
+     */
+    public function findRevenueOverrideCandidates(?string $preset = null): array
+    {
+        $qb = $this->createQueryBuilder('a')
+            ->andWhere('a.type IN (:types)')
+            ->setParameter('types', [AccountingAccount::TYPE_REVENUE, AccountingAccount::TYPE_LIABILITY])
+            ->orderBy('a.sortOrder', 'ASC')
+            ->addOrderBy('a.accountNumber', 'ASC');
+
+        if (null !== $preset) {
+            $this->applyPresetScope($qb, $preset);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function findCashAccount(?string $preset = null): ?AccountingAccount
     {
         $qb = $this->createQueryBuilder('a')

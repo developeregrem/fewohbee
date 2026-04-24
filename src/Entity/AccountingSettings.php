@@ -55,6 +55,14 @@ class AccountingSettings
     #[Assert\Length(max: 5)]
     private ?string $dictationCode = 'WD';
 
+    #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
+    #[Assert\Length(max: 60)]
+    private ?string $mainPositionLabel = null;
+
+    #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
+    #[Assert\Length(max: 60)]
+    private ?string $miscPositionLabel = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -150,5 +158,29 @@ class AccountingSettings
     public function getUpdatedAt(): \DateTime
     {
         return $this->updatedAt;
+    }
+
+    public function getMainPositionLabel(): ?string
+    {
+        return $this->mainPositionLabel;
+    }
+
+    public function setMainPositionLabel(?string $mainPositionLabel): self
+    {
+        $this->mainPositionLabel = $mainPositionLabel ? trim($mainPositionLabel) : null;
+
+        return $this;
+    }
+
+    public function getMiscPositionLabel(): ?string
+    {
+        return $this->miscPositionLabel;
+    }
+
+    public function setMiscPositionLabel(?string $miscPositionLabel): self
+    {
+        $this->miscPositionLabel = $miscPositionLabel ? trim($miscPositionLabel) : null;
+
+        return $this;
     }
 }

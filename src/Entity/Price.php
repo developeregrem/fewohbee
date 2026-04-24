@@ -70,6 +70,12 @@ class Price
     private bool $isDefaultActiveInReservationCreation;
     #[ORM\Column(type: 'boolean')]
     private bool $isBookableOnline;
+    #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
+    #[ORM\OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
+    private Collection $components;
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\AccountingAccount')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?AccountingAccount $revenueAccount = null;
 
     /**
      * Constructor.
@@ -78,6 +84,7 @@ class Price
     {
         $this->reservationOrigins = new ArrayCollection();
         $this->pricePeriods = new ArrayCollection();
+        $this->components = new ArrayCollection();
         $this->allPeriods = true;
         $this->includesVat = true;
         $this->isFlatPrice = false;
@@ -416,6 +423,53 @@ class Price
     public function setIsBookableOnline(bool $isBookableOnline): self
     {
         $this->isBookableOnline = $isBookableOnline;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|PriceComponent[]
+     */
+    public function getComponents(): Collection
+    {
+        return $this->components;
+    }
+
+    public function addComponent(PriceComponent $component): self
+    {
+        if (!$this->components->contains($component)) {
+            $this->components[] = $component;
+            $component->setPrice($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComponent(PriceComponent $component): self
+    {
+        if ($this->components->contains($component)) {
+            $this->components->removeElement($component);
+            if ($component->getPrice() === $this) {
+                $component->setPrice(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function isPackage(): bool
+    {
+        return !$this->components->isEmpty();
+    }
+
+    public function getRevenueAccount(): ?AccountingAccount
+    {
+        return $this->revenueAccount;
+    }
+
+    public function setRevenueAccount(?AccountingAccount $revenueAccount): self
+    {
+        $this->revenueAccount = $revenueAccount;
 
         return $this;
     }

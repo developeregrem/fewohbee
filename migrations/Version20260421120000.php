@@ -98,4 +98,9 @@ final class Version20260421120000 extends AbstractMigration
         $this->addSql('UPDATE tax_rates SET datev_bu_key = datev_output_bu_key WHERE datev_output_bu_key IS NOT NULL');
         $this->addSql('ALTER TABLE tax_rates DROP datev_output_bu_key, DROP datev_input_bu_key, DROP chart_preset');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

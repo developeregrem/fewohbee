@@ -7,10 +7,16 @@
                 data-action="change->invoices#fillFieldsFromPriceCategoryAction">
             <option value="0|0" selected></option>
             {% for price in prices %}
-                <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.description }}|{{ price.includesVat }}|{{ price.isFlatPrice }}|{{ price.isPerRoom }}">{{ price.description }}</option>
+                <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.description }}|{{ price.includesVat }}|{{ price.isFlatPrice }}|{{ price.isPerRoom }}"
+                        data-is-package="{{ price.isPackage ? 1 : 0 }}"
+                        data-price-id="{{ price.id }}">{{ price.description }}</option>
             {% endfor %}
         </select>
     </div>
+</div>
+<input type="hidden" id="packagePriceId" name="packagePriceId" value="">
+<div id="package-info" class="alert alert-info mt-2 d-none" role="alert">
+    <small>{{ 'invoice.misc.package.hint'|trans }}</small>
 </div>
 {{ form_row(form.amount) }}
 {{ form_row(form.description) }}                    

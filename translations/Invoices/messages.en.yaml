@@ -120,3 +120,4 @@ CARD_PAYMENT: Card payment
 CREDIT_CARD_PAYMENT: Credit card payment
 SEPA_CREDIT_TRANSFER: SEPA bank transfer
 SEPA_DIRECT_DEBIT: SEPA direct debit
+invoice.misc.package.hint: This package will be split into multiple lines on save.

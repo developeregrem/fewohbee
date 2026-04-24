@@ -218,6 +218,102 @@
                 <source>price.bookableonline</source>
                 <target>Für Online-Buchung verfügbar</target>
             </trans-unit>
+            <trans-unit id="price.collapsable.group.4.description">
+                <source>price.collapsable.group.4.description</source>
+                <target>Paket mit mehreren Steuersätzen (optional)</target>
+            </trans-unit>
+            <trans-unit id="price.package.enable">
+                <source>price.package.enable</source>
+                <target>Als Paket konfigurieren</target>
+            </trans-unit>
+            <trans-unit id="price.package.hint">
+                <source>price.package.hint</source>
+                <target>Teile diesen Preis in Komponenten mit unterschiedlichen Steuersätzen auf (z. B. Speisen 7 %, Getränke 19 %). Die Komponenten erscheinen als separate Rechnungspositionen.</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.description">
+                <source>price.package.col.description</source>
+                <target>Beschreibung</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.vat">
+                <source>price.package.col.vat</source>
+                <target>USt</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.allocation_type">
+                <source>price.package.col.allocation_type</source>
+                <target>Art</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.value">
+                <source>price.package.col.value</source>
+                <target>Wert</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.remainder">
+                <source>price.package.col.remainder</source>
+                <target>Rest</target>
+            </trans-unit>
+            <trans-unit id="price.package.col.revenue_account">
+                <source>price.package.col.revenue_account</source>
+                <target>Erlöskonto</target>
+            </trans-unit>
+            <trans-unit id="price.revenue_account">
+                <source>price.revenue_account</source>
+                <target>Erlöskonto</target>
+            </trans-unit>
+            <trans-unit id="price.revenue_account.default">
+                <source>price.revenue_account.default</source>
+                <target>Standard (aus Steuersatz)</target>
+            </trans-unit>
+            <trans-unit id="price.revenue_account.help">
+                <source>price.revenue_account.help</source>
+                <target><![CDATA[Optional und nur in Automatisierungen verwendet. Legt ein bestimmtes Erlöskonto fest, auf das Umsätze dieses Preises im Buchungsjournal gebucht werden.<br><br>Ist das Feld leer, wird das Standard-Erlöskonto des jeweiligen Steuersatzes verwendet (z. B. 8300 für 7 %, 8400 für 19 %).<br><br>Nützlich, wenn bestimmte Umsätze (z. B. Speisen, Getränke, Kurtaxe) getrennt auf eigene Konten laufen sollen.]]></target>
+            </trans-unit>
+            <trans-unit id="price.package.remainder.help">
+                <source>price.package.remainder.help</source>
+                <target><![CDATA[Markiert diese Komponente als Rest. Ihr Wert wird automatisch berechnet — aus dem, was nach Abzug aller anderen Komponenten vom Gesamtpreis übrig bleibt.<br><br><b>Nützlich für:</b><br>• Mischung aus Prozent- und Betragskomponenten (z. B. Getränke fest 4,50 €, Speisen = Rest)<br>• Rundungs-Cents auffangen<br><br>Pro Paket darf nur <b>eine</b> Komponente als Rest markiert sein.]]></target>
+            </trans-unit>
+            <trans-unit id="price.package.add_row">
+                <source>price.package.add_row</source>
+                <target>Komponente hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="price.package.sum_preview">
+                <source>price.package.sum_preview</source>
+                <target>Summenvorschau</target>
+            </trans-unit>
+            <trans-unit id="price.package.allocation.percent">
+                <source>price.package.allocation.percent</source>
+                <target>Prozent</target>
+            </trans-unit>
+            <trans-unit id="price.package.allocation.amount">
+                <source>price.package.allocation.amount</source>
+                <target>Betrag</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.description_required">
+                <source>price.package.error.description_required</source>
+                <target>Jede Paket-Komponente benötigt eine Beschreibung.</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.vat_negative">
+                <source>price.package.error.vat_negative</source>
+                <target>Der Steuersatz einer Paket-Komponente darf nicht negativ sein.</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.value_required">
+                <source>price.package.error.value_required</source>
+                <target>Jede Paket-Komponente benötigt einen Wert größer als Null (außer wenn als Rest markiert).</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.multiple_remainder">
+                <source>price.package.error.multiple_remainder</source>
+                <target>Es darf nur eine Komponente als Rest markiert sein.</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.sum_mismatch">
+                <source>price.package.error.sum_mismatch</source>
+                <target>Die Paket-Komponenten ergeben in Summe nicht den Gesamtpreis.</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.percent_over_100">
+                <source>price.package.error.percent_over_100</source>
+                <target>Die Prozent-Komponenten überschreiten 100 %.</target>
+            </trans-unit>
+            <trans-unit id="price.package.error.amount_over_total">
+                <source>price.package.error.amount_over_total</source>
+                <target>Die Betrags-Komponenten überschreiten den Gesamtpreis.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

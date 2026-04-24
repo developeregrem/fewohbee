@@ -193,7 +193,27 @@ export default class extends Controller {
     }
 
     fillFieldsFromPriceCategoryAction(event) {
-        const values = (event.currentTarget.value || '').split('|');
+        const select = event.currentTarget;
+        const selected = select.options[select.selectedIndex];
+        const values = (select.value || '').split('|');
+        const isPackage = !!(selected && selected.dataset.isPackage === '1');
+        const priceId = selected ? selected.dataset.priceId || '' : '';
+
+        const packageHidden = document.getElementById('packagePriceId');
+        const packageInfo = document.getElementById('package-info');
+        const description = document.getElementById('invoice_misc_position_description');
+        const vat = document.getElementById('invoice_misc_position_vat');
+        const price = document.getElementById('invoice_misc_position_price');
+        const includesVat = document.getElementById('invoice_misc_position_includesVat');
+        const isFlatPrice = document.getElementById('invoice_misc_position_isFlatPrice');
+        const isPerRoom = document.getElementById('invoice_misc_position_isPerRoom');
+
+        if (packageHidden) packageHidden.value = isPackage ? priceId : '';
+        if (packageInfo) packageInfo.classList.toggle('d-none', !isPackage);
+        [description, vat, price, includesVat, isFlatPrice, isPerRoom].forEach((node) => {
+            if (node) node.disabled = isPackage;
+        });
+
         if (values.length === 2) return;
         const map = [
             ['invoice_misc_position_vat', 0],
@@ -204,13 +224,10 @@ export default class extends Controller {
             const node = document.getElementById(id);
             if (node) node.value = values[idx] || '';
         });
-        const includesVat = document.getElementById('invoice_misc_position_includesVat');
-        const isFlatPrice = document.getElementById('invoice_misc_position_isFlatPrice');
-        const isPerRoom = document.getElementById('invoice_misc_position_isPerRoom');
         if (includesVat) includesVat.checked = values[3] === '1';
         if (isFlatPrice) isFlatPrice.checked = values[4] === '1';
         if (isPerRoom) isPerRoom.checked = values[5] === '1';
-        if (isFlatPrice) {
+        if (isFlatPrice && !isPackage) {
             this.applyFlatPriceState(isFlatPrice, isPerRoom);
         }
         const amount = document.getElementById('invoice_misc_position_amount');
