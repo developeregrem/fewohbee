@@ -140,6 +140,8 @@ accounting.journal.batch.new: Create New Month
 accounting.journal.batch.empty: No months created yet.
 accounting.journal.batch.close: Close Month
 accounting.journal.batch.reopen: Reopen Month
+accounting.journal.batch.previous_month: 'Previous month: %month%'
+accounting.journal.batch.next_month: 'Next month: %month%'
 
 # Journal - Filter
 accounting.journal.filter.all: All entries

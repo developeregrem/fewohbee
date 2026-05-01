@@ -37,8 +37,36 @@
         </div>
     </div>
     <div class="row justify-content-between mb-3">
-        <div class="col d-flex align-items-center gap-3">
-            <h4 class="mb-0">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
+        <div class="col d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                {% if previousBatch %}
+                    {% set previousBatchLabel = getLocalizedMonth(previousBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ previousBatch.year %}
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item">
+                            <a href="{{ path('journal.batch.entries', {'id': previousBatch.id, 'filter': filter}) }}"
+                               class="page-link"
+                               title="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}"
+                               aria-label="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}">
+                                &larr;
+                            </a>
+                        </li>
+                    </ul>
+                {% endif %}
+                <h4 class="mb-0">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
+                {% if nextBatch %}
+                    {% set nextBatchLabel = getLocalizedMonth(nextBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ nextBatch.year %}
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item">
+                            <a href="{{ path('journal.batch.entries', {'id': nextBatch.id, 'filter': filter}) }}"
+                               class="page-link"
+                               title="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}"
+                               aria-label="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}">
+                                &rarr;
+                            </a>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
             <select class="form-select form-select-sm" style="width: 12rem"
                     onchange="window.location.href='{{ path('journal.batch.entries', {'id': batch.id}) }}?filter=' + this.value">
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
