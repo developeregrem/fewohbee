@@ -140,6 +140,8 @@ accounting.journal.batch.new: Neuen Monat anlegen
 accounting.journal.batch.empty: Noch keine Monate angelegt.
 accounting.journal.batch.close: Monat abschließen
 accounting.journal.batch.reopen: Monat wieder öffnen
+accounting.journal.batch.previous_month: 'Vorheriger Monat: %month%'
+accounting.journal.batch.next_month: 'Nächster Monat: %month%'
 
 # Journal - Filter
 accounting.journal.filter.all: Alle Buchungen
