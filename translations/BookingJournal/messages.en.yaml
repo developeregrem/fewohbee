@@ -81,6 +81,7 @@ accounting.accounts.flash.created: Account created successfully.
 accounting.accounts.flash.updated: Account updated successfully.
 accounting.accounts.flash.deleted: Account deleted successfully.
 accounting.accounts.flash.cannot_delete_system: System accounts cannot be deleted.
+accounting.accounts.flash.cannot_delete_in_use: "This account cannot be deleted because it is still used in journal entries, tax rates, prices, or workflows. Remove configuration references first; accounts used in journal entries must remain."
 accounting.accounts.type.asset: Asset
 accounting.accounts.type.liability: Liability
 accounting.accounts.type.revenue: Revenue
@@ -116,6 +117,7 @@ accounting.taxrates.delete.ask: Do you really want to delete this tax rate?
 accounting.taxrates.flash.created: Tax rate created successfully.
 accounting.taxrates.flash.updated: Tax rate updated successfully.
 accounting.taxrates.flash.deleted: Tax rate deleted successfully.
+accounting.taxrates.flash.cannot_delete_in_use: "This tax rate cannot be deleted because it is already used in booking journal entries. Use the validity fields to prevent future use."
 
 # Journal - Batches
 accounting.journal.batch.add: Add Month

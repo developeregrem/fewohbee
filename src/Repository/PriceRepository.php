@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\AccountingAccount;
 use App\Entity\Price;
+use App\Entity\PriceComponent;
 use App\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
@@ -276,6 +278,26 @@ class PriceRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
 
         return $priceStale + $componentStale;
+    }
+
+    public function countByRevenueAccount(AccountingAccount $account): int
+    {
+        $priceRefs = (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.revenueAccount = :account')
+            ->setParameter('account', $account)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $componentRefs = (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c.id)')
+            ->from(PriceComponent::class, 'c')
+            ->where('c.revenueAccount = :account')
+            ->setParameter('account', $account)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $priceRefs + $componentRefs;
     }
 
     /**

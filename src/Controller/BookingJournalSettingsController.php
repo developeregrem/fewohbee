@@ -11,8 +11,10 @@ use App\Form\AccountingAccountType;
 use App\Form\AccountingSettingsType;
 use App\Form\TaxRateType;
 use App\Repository\AccountingAccountRepository;
+use App\Repository\BookingEntryRepository;
 use App\Repository\PriceRepository;
 use App\Repository\TaxRateRepository;
+use App\Repository\WorkflowRepository;
 use App\Service\AccountingPresetSeeder;
 use App\Service\AccountingSettingsService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -179,6 +181,10 @@ class BookingJournalSettingsController extends AbstractController
         AccountingAccount $account,
         EntityManagerInterface $em,
         Request $request,
+        BookingEntryRepository $bookingEntryRepo,
+        TaxRateRepository $taxRateRepo,
+        PriceRepository $priceRepo,
+        WorkflowRepository $workflowRepo,
     ): Response {
         if (!$this->isCsrfTokenValid('delete'.$account->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -188,6 +194,12 @@ class BookingJournalSettingsController extends AbstractController
 
         if ($account->isSystemDefault()) {
             $this->addFlash('warning', 'accounting.accounts.flash.cannot_delete_system');
+
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        if ($this->accountHasReferences($account, $bookingEntryRepo, $taxRateRepo, $priceRepo, $workflowRepo)) {
+            $this->addFlash('warning', 'accounting.accounts.flash.cannot_delete_in_use');
 
             return new Response('', Response::HTTP_NO_CONTENT);
         }
@@ -268,9 +280,16 @@ class BookingJournalSettingsController extends AbstractController
         TaxRate $taxRate,
         EntityManagerInterface $em,
         Request $request,
+        BookingEntryRepository $bookingEntryRepo,
     ): Response {
         if (!$this->isCsrfTokenValid('delete'.$taxRate->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
+
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        if ($bookingEntryRepo->countByTaxRate($taxRate) > 0) {
+            $this->addFlash('warning', 'accounting.taxrates.flash.cannot_delete_in_use');
 
             return new Response('', Response::HTTP_NO_CONTENT);
         }
@@ -293,6 +312,28 @@ class BookingJournalSettingsController extends AbstractController
     private function renderTaxRateForm($form): Response
     {
         return $this->render('BookingJournal/_tax_rate_form.html.twig', ['form' => $form]);
+    }
+
+    private function accountHasReferences(
+        AccountingAccount $account,
+        BookingEntryRepository $bookingEntryRepo,
+        TaxRateRepository $taxRateRepo,
+        PriceRepository $priceRepo,
+        WorkflowRepository $workflowRepo,
+    ): bool {
+        if ($bookingEntryRepo->countByAccount($account) > 0) {
+            return true;
+        }
+
+        if ($taxRateRepo->countByRevenueAccount($account) > 0) {
+            return true;
+        }
+
+        if ($priceRepo->countByRevenueAccount($account) > 0) {
+            return true;
+        }
+
+        return $workflowRepo->countCreateBookingEntryAccountReferences($account) > 0;
     }
 
     private function ensureExclusiveOpeningBalanceAccount(
