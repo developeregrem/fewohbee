@@ -1,0 +1,348 @@
+accounting:
+  accounts:
+    iban: IBAN of this bank account
+    iban.help: Enables automatic mapping when importing bank statements.
+
+  bank_import:
+    title: Bank statement import
+    subtitle: Read bank transactions and turn them into journal entries.
+
+    drafts:
+      title: Open imports
+      file: File
+      account: Bank account
+      period: Period
+      lines: Lines
+      created: Uploaded
+      open: Open
+      discard: Discard
+      account_missing: (Bank account was deleted)
+
+    draft:
+      not_found: This import draft was not found (session may have expired).
+      account_missing: The bank account for this draft no longer exists — draft discarded.
+      discarded: Draft discarded.
+      session_required: Bank import drafts require an active HTTP session.
+
+    parser:
+      warning:
+        row_skipped: 'Row %line% skipped: %message%'
+      error:
+        profile_required: The generic CSV parser requires a CSV profile.
+        file_read_failed: 'Could not read file: %path%'
+        temp_stream_failed: Could not open temporary memory stream.
+        invalid_date: 'Invalid date "%value%" (expected: %format%).'
+        amount_parse_failed: Amount could not be parsed.
+        required_column: 'Profile requires a column mapping for "%field%".'
+        required_separate_columns: Profile with separate columns requires "amountDebit" and "amountCredit".
+        format_not_registered: 'No parser registered for format "%format%". Available: %available%'
+        none_available: none
+
+    upload:
+      title: Upload a new bank statement
+      submit: Parse file
+      bank_account: Bank account
+      bank_account.placeholder: Please choose…
+      bank_account.help: |
+        Bookings will be posted against this ledger account. For incoming
+        amounts it is auto-filled as the debit account, for outgoing ones as
+        the credit account. You only have to assign the other side.
+      csv_profile: CSV profile
+      csv_profile.placeholder: Please choose…
+      file: CSV file
+      file.invalid_type: Please upload a CSV file.
+      flash:
+        invalid: Input incomplete — please check all fields.
+        parse_failed: 'Could not parse the CSV: %message%'
+        no_lines: No recognizable transaction lines were found — does the chosen profile fit the file?
+        iban_mismatch: 'Warning: IBAN in file (%file%) differs from the bank account on record (%account%).'
+
+    preview:
+      title: Bank statement preview
+      empty: No transactions in this file.
+      warnings: Notes encountered while parsing
+      remark_placeholder: Remark
+      toggle_ignore: Exclude this line from the import
+      select_all: Select all visible rows
+      update_failed: Update failed.
+      save_failed: Save failed.
+      error_prefix: 'Error: %message%'
+      filter:
+        all: All
+        pending: Open
+        ready: Ready
+        duplicate: Duplicates
+        ignored: Ignored
+        rule: With rule
+        invoice: With invoice
+      bulk:
+        ignore: Ignore selected
+        unignore: Re-include selected
+        account_placeholder: Pick account
+        assign_debit: → Set debit account
+        assign_credit: → Set credit account
+        selected_count: '%count% selected'
+      col:
+        status: Status
+        date: Date
+        counterparty: Counterparty
+        purpose: Purpose
+        amount: Amount
+        debit: Debit account
+        credit: Credit account
+        tax_rate: Tax rate
+        remark: Remark
+      duplicate:
+        help: Already committed in a previous import.
+      ignored:
+        help: Excluded from import.
+      ready:
+        help: Ready to book.
+      pending:
+        help: Not yet assigned.
+      matched_invoice: Detected invoice from the purpose text.
+      invoice_matching_disabled:
+        title: Automatic invoice matching is disabled.
+        help: No sample invoice numbers are configured in the journal settings. Add examples there so invoices can be detected in payment purpose text.
+      invoice_accounts:
+        label: from invoice
+        help: Credit accounts are derived from the invoice positions, tax rates, and revenue accounts.
+      invoice_tax_rate:
+        label: from invoice
+        help: Tax rates are taken from the invoice positions.
+      overlap_warning:
+        message: 'Warning: This bank account already has %count% committed import(s) overlapping %from% to %to%: %imports%%more%'
+        import: '%from%-%to% (committed at %committedAt%, %committed% lines posted)'
+        more: ' and %count% more'
+
+    commit:
+      button: Commit now
+      confirm: '%count% lines will be posted to the booking journal. Continue?'
+      summary:
+        ready: ready
+        pending: still open
+        ignored: ignored
+        duplicate: duplicates
+      flash:
+        done: 'Done: %committed% booked, %redated% re-dated, %ignored% ignored, %duplicates% duplicates.'
+        failed: 'Booking failed: %message%'
+
+    split:
+      title: Split booking
+      intro: |
+        Split this transaction into multiple bookings — e.g. when the purpose
+        contains multiple items (interest, fees, charges).
+      original_amount: Bank line amount
+      assigned_sum: Assigned sum
+      add_row: Add another split
+      mode:
+        amount: Fixed amount
+        percent: Percent
+        remainder: Remainder
+      delta:
+        remainder: 'Remainder: %amount%'
+        too_much: '%amount% too much'
+        open: '+ %amount% open'
+
+    rule:
+      title: Save as rule
+      intro: |
+        Save the account mapping of this line as a rule — on the next import,
+        matching lines are filled in automatically.
+      name: Rule name
+      default_name: Rule
+      name.placeholder: e.g. PayPal expenses
+      save: Save rule
+      remark_template: Booking remark
+      remark_template.placeholder: 'e.g. {counterparty} – payment'
+      remark_template.help: |
+        Placeholders: {counterparty} {purpose} {date} {invoiceNumber}
+      priority: Priority
+      priority.help: Higher = checked first. 50 is a sensible default.
+      scope_to_account: Only apply to this bank account
+      validation:
+        condition_required: Choose at least one condition.
+        name_required: Enter a name.
+      section:
+        conditions: When should the rule fire?
+        action: What should happen?
+        scope: Other
+      cond:
+        counterparty: Counterparty contains
+        iban: IBAN is
+        direction: Direction is
+        purpose: Purpose contains
+        purpose.placeholder: 'e.g. "invoice", "salary"'
+      direction:
+        in: Incoming
+        out: Outgoing
+      rule_applied:
+        help: A rule auto-filled this line.
+      split:
+        help: Split into multiple bookings.
+      count:
+        total: total
+        pending: pending
+        ready: ready
+        duplicate: duplicates
+        ignored: ignored
+
+    rules:
+      title: Import rules
+      subtitle: |
+        Rules auto-fill matching bank lines on the next import. New rules are
+        created from a real line in the preview via "Save as rule".
+      empty: No rules saved yet.
+      edit: Edit rule
+      edit.help: Adjust name, priority and scope here.
+      edit.recreate_hint: |
+        A rule's conditions and action are authored from a real line in the
+        preview — if you need to change them, delete the rule and re-create
+        it from a fresh bank line.
+      and: AND
+      conditions_empty: No conditions — rule fires on every line.
+      create_hint: |
+        New rules are created right inside the import — by clicking
+        "Save as rule" in the preview.
+      scope:
+        global: All bank accounts
+      col:
+        priority: Prio
+        name: Name
+        scope: Bank account
+        conditions: Conditions
+        action: Action
+        actions: Actions
+      action:
+        ignore: Ignore
+        split: Split (%count% parts)
+        enable: Enable
+        disable: Disable
+      field:
+        name: Name
+        description: Description
+        priority: Priority
+        priority.help: Higher = checked first. 50 is a sensible default.
+        enabled: Active
+        bank_account: Bank account
+        bank_account.help: |
+          Leave empty to make the rule apply to all bank accounts — or pick
+          one to limit it to that account.
+        bank_account.global: All bank accounts (global)
+      field_label:
+        counterparty_name: Counterparty
+        counterparty_iban: IBAN
+        purpose: Purpose
+        amount: Amount
+        direction: Direction
+      op:
+        contains: contains
+        not_contains: does not contain
+        equals: equals
+        regex: matches pattern
+        gt: is greater than
+        lt: is less than
+        between: is between
+      section:
+        basics: Basics
+        conditions: Conditions
+        action: Action
+      flash:
+        updated: Rule updated.
+        deleted: Rule deleted.
+
+    profile:
+      title: CSV profiles for bank statements
+      subtitle: |
+        For each bank, describe what its CSV export looks like — columns,
+        date and number format. These profiles are picked when uploading.
+      add: Add profile
+      edit: Edit profile
+      empty: No CSV profiles yet.
+      actions: Actions
+
+      name: Name
+      description: Description
+      delimiter: Delimiter
+      enclosure: Enclosure
+      encoding: Encoding
+      header_skip: Preamble rows
+      header_skip.help: Lines above the column header (account info, period, …).
+      has_header_row: Has header row
+      date_format: Date format
+      date_format.help: 'd=day, m=month, Y=4-digit year, y=2-digit year. Example: d.m.Y → 24.04.2026'
+      amount_decimal_separator: Decimal sep.
+      amount_thousands_separator: Thousands sep.
+      direction_mode: Sign
+      direction_mode.help: |
+        "Signed" = incoming positive, outgoing negative in one column.
+        "Separate columns" = one column each for debit and credit amounts.
+      direction:
+        signed: Signed (single column)
+        separate_columns: Separate columns (debit/credit)
+      iban_source_line: Account IBAN line
+      iban_source_line.help: 0-based line index; empty if not present.
+      period_source_line: Period line
+      period_source_line.help: 0-based line index; empty if not present.
+
+      help:
+        intro: |
+          Describe what the CSV export from your bank looks like. The
+          example on the right uses a statement to illustrate which
+          fields are used for what.
+
+      section:
+        basics: Basics
+        csv: CSV format
+        values: Value format
+        header: Preamble (optional)
+        header.help: |
+          Some banks include the account IBAN and statement period at the
+          top of the file. If yours does, enter the matching line numbers
+          (0-based) — otherwise leave them empty.
+        columns: Column mapping
+        columns.help: |
+          For each field, enter the 0-based column index in your CSV.
+          Book date and amount (or debit/credit columns, if your bank uses
+          separate columns) are required. Leave fields blank when the
+          column does not exist.
+
+      example:
+        title: Example checking account
+        intro: |
+          A typical CSV export. The highlights show which values are
+          read from which row or column.
+        iban: Account IBAN (top of file)
+        period: Statement period
+        dates: Book and value date
+        context: Counterparty and purpose
+        amount: Amount (signed)
+        signed_hint: signed
+        header_skip: Preamble
+        header_skip.help: |
+          Four metadata rows, then the column header row, then the actual
+          transactions.
+
+      col:
+        group:
+          required: Required
+          separate: Only if your bank uses separate debit/credit columns
+          context: Recommended (used for preview and rules)
+          optional: Optional fields
+        book_date: Book date
+        value_date: Value date
+        counterparty_name: Counterparty (name)
+        counterparty_iban: Counterparty (IBAN)
+        purpose: Purpose
+        amount: Amount
+        amount_debit: Debit amount
+        amount_credit: Credit amount
+        end_to_end_id: Customer reference
+        mandate_reference: Mandate reference
+        creditor_id: Creditor ID
+
+      flash:
+        created: Profile created.
+        updated: Profile updated.
+        deleted: Profile deleted.
+      form_load_failed: Could not load the form.

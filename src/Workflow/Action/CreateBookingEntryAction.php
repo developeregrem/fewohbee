@@ -6,7 +6,7 @@ namespace App\Workflow\Action;
 
 use App\Entity\Invoice;
 use App\Repository\AccountingAccountRepository;
-use App\Service\BookingJournalService;
+use App\Service\BookingJournal\BookingJournalService;
 use App\Workflow\WorkflowSkippedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

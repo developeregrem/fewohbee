@@ -1,0 +1,154 @@
+{# Save-as-rule modal — pre-filled with the selected line's data when opened. #}
+<div class="modal fade" id="bankImportRuleModal" tabindex="-1" aria-hidden="true"
+     data-bank-import-preview-target="ruleModal">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-bolt me-1"></i> {{ 'accounting.bank_import.rule.title'|trans }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'button.close'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">{{ 'accounting.bank_import.rule.intro'|trans }}</p>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.name'|trans }}</label>
+                    <input type="text" class="form-control form-control-sm"
+                           maxlength="150"
+                           data-bank-import-preview-target="ruleName"
+                           placeholder="{{ 'accounting.bank_import.rule.name.placeholder'|trans }}">
+                </div>
+
+                <h6 class="text-uppercase small text-muted mt-3 mb-2"
+                    style="letter-spacing:.04em">
+                    {{ 'accounting.bank_import.rule.section.conditions'|trans }}
+                </h6>
+
+                <div class="form-check small">
+                    <input type="checkbox" class="form-check-input"
+                           id="bi-rule-cond-counterparty"
+                           data-bank-import-preview-target="ruleCondCounterparty"
+                           data-cond-field="counterpartyName" checked>
+                    <label class="form-check-label" for="bi-rule-cond-counterparty">
+                        {{ 'accounting.bank_import.rule.cond.counterparty'|trans }}:
+                        <code data-bank-import-preview-target="ruleCondCounterpartyValue">…</code>
+                    </label>
+                </div>
+
+                <div class="form-check small">
+                    <input type="checkbox" class="form-check-input"
+                           id="bi-rule-cond-iban"
+                           data-bank-import-preview-target="ruleCondIban"
+                           data-cond-field="counterpartyIban">
+                    <label class="form-check-label" for="bi-rule-cond-iban">
+                        {{ 'accounting.bank_import.rule.cond.iban'|trans }}:
+                        <code data-bank-import-preview-target="ruleCondIbanValue">…</code>
+                    </label>
+                </div>
+
+                <div class="form-check small mb-2">
+                    <input type="checkbox" class="form-check-input"
+                           id="bi-rule-cond-direction"
+                           data-bank-import-preview-target="ruleCondDirection"
+                           data-cond-field="direction">
+                    <label class="form-check-label" for="bi-rule-cond-direction">
+                        {{ 'accounting.bank_import.rule.cond.direction'|trans }}:
+                        <code data-bank-import-preview-target="ruleCondDirectionValue"
+                              data-in="{{ 'accounting.bank_import.rule.direction.in'|trans }}"
+                              data-out="{{ 'accounting.bank_import.rule.direction.out'|trans }}">…</code>
+                    </label>
+                </div>
+
+                <div class="form-check small">
+                    <input type="checkbox" class="form-check-input"
+                           id="bi-rule-cond-purpose"
+                           data-bank-import-preview-target="ruleCondPurpose"
+                           data-cond-field="purpose">
+                    <label class="form-check-label" for="bi-rule-cond-purpose">
+                        {{ 'accounting.bank_import.rule.cond.purpose'|trans }}:
+                    </label>
+                    <input type="text" class="form-control form-control-sm mt-1"
+                           data-bank-import-preview-target="ruleCondPurposeValue"
+                           placeholder="{{ 'accounting.bank_import.rule.cond.purpose.placeholder'|trans }}">
+                </div>
+
+                <h6 class="text-uppercase small text-muted mt-4 mb-2"
+                    style="letter-spacing:.04em">
+                    {{ 'accounting.bank_import.rule.section.action'|trans }}
+                </h6>
+
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">{{ 'accounting.bank_import.preview.col.debit'|trans }}</label>
+                        <select class="form-select form-select-sm" data-bank-import-preview-target="ruleDebit">
+                            <option value="">—</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">{{ 'accounting.bank_import.preview.col.credit'|trans }}</label>
+                        <select class="form-select form-select-sm" data-bank-import-preview-target="ruleCredit">
+                            <option value="">—</option>
+                            {% for account in accounts %}
+                                <option value="{{ account.id }}">{{ account.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">{{ 'accounting.bank_import.preview.col.tax_rate'|trans }}</label>
+                        <select class="form-select form-select-sm" data-bank-import-preview-target="ruleTaxRate">
+                            <option value="">—</option>
+                            {% for rate in taxRates %}
+                                <option value="{{ rate.id }}">{{ rate.name }} ({{ rate.rateFloat|number_format(2, ',', '.') }}%)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.remark_template'|trans }}</label>
+                    <input type="text" class="form-control form-control-sm" maxlength="255"
+                           data-bank-import-preview-target="ruleRemark"
+                           placeholder="{{ 'accounting.bank_import.rule.remark_template.placeholder'|trans }}">
+                    <div class="form-text small">{{ 'accounting.bank_import.rule.remark_template.help'|trans }}</div>
+                </div>
+
+                <h6 class="text-uppercase small text-muted mt-4 mb-2"
+                    style="letter-spacing:.04em">
+                    {{ 'accounting.bank_import.rule.section.scope'|trans }}
+                </h6>
+
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.priority'|trans }}</label>
+                        <input type="number" min="0" max="999" step="1" value="50"
+                               class="form-control form-control-sm"
+                               data-bank-import-preview-target="rulePriority">
+                        <div class="form-text small">{{ 'accounting.bank_import.rule.priority.help'|trans }}</div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input"
+                                   id="bi-rule-scope" checked
+                                   data-bank-import-preview-target="ruleScope">
+                            <label class="form-check-label small" for="bi-rule-scope">
+                                {{ 'accounting.bank_import.rule.scope_to_account'|trans }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {{ 'button.cancel'|trans }}
+                </button>
+                <button type="button" class="btn btn-primary" data-action="click->bank-import-preview#ruleSubmit">
+                    <i class="fas fa-save me-1"></i> {{ 'accounting.bank_import.rule.save'|trans }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

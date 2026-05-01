@@ -1,0 +1,109 @@
+{# Split modal — rendered once on the preview page, populated by Stimulus when opened. #}
+<div class="modal fade" id="bankImportSplitModal" tabindex="-1" aria-hidden="true"
+     data-bank-import-preview-target="splitModal">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-code-branch me-1"></i> {{ 'accounting.bank_import.split.title'|trans }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'button.close'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">
+                    {{ 'accounting.bank_import.split.intro'|trans }}
+                </p>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="small text-muted">{{ 'accounting.bank_import.split.original_amount'|trans }}</div>
+                        <div class="fw-bold fs-5" data-bank-import-preview-target="splitTotal">—</div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="small text-muted">{{ 'accounting.bank_import.split.assigned_sum'|trans }}</div>
+                        <div class="fw-bold fs-5" data-bank-import-preview-target="splitAssigned">0,00 {{ currency_symbol }}</div>
+                        <div class="small text-muted" data-bank-import-preview-target="splitDelta"></div>
+                    </div>
+                </div>
+
+                <div data-bank-import-preview-target="splitRows"></div>
+
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                        data-action="click->bank-import-preview#splitAddRow">
+                    <i class="fas fa-plus"></i> {{ 'accounting.bank_import.split.add_row'|trans }}
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    {{ 'button.cancel'|trans }}
+                </button>
+                <button type="button" class="btn btn-primary" data-action="click->bank-import-preview#splitSubmit">
+                    <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Hidden template for one split row — cloned by Stimulus. #}
+<template data-bank-import-preview-target="splitRowTemplate">
+    <div class="split-row border rounded p-2 mb-2">
+    <div class="row g-2 align-items-center">
+        <div class="col-md-2">
+            <select class="form-select form-select-sm split-mode"
+                    data-action="change->bank-import-preview#splitModeChange">
+                <option value="amount">{{ 'accounting.bank_import.split.mode.amount'|trans }}</option>
+                <option value="percent">{{ 'accounting.bank_import.split.mode.percent'|trans }}</option>
+                <option value="remainder">{{ 'accounting.bank_import.split.mode.remainder'|trans }}</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="input-group input-group-sm">
+                <input type="number" step="0.01" min="0"
+                       class="form-control split-value"
+                       placeholder="0,00"
+                       data-action="input->bank-import-preview#splitRecalc">
+                <span class="input-group-text split-unit">{{ currency_symbol }}</span>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select form-select-sm split-debit">
+                <option value="">— {{ 'accounting.bank_import.preview.col.debit'|trans }} —</option>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}">{{ account.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select form-select-sm split-credit">
+                <option value="">— {{ 'accounting.bank_import.preview.col.credit'|trans }} —</option>
+                {% for account in accounts %}
+                    <option value="{{ account.id }}">{{ account.label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select form-select-sm split-tax-rate">
+                <option value="">— {{ 'accounting.bank_import.preview.col.tax_rate'|trans }} —</option>
+                {% for rate in taxRates %}
+                    <option value="{{ rate.id }}">{{ rate.name }} ({{ rate.rateFloat|number_format(2, ',', '.') }}%)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-1 text-end">
+            <button type="button" class="btn btn-sm btn-link text-danger"
+                    title="{{ 'button.delete'|trans }}"
+                    data-action="click->bank-import-preview#splitRemoveRow">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+    <div class="row g-2 mt-1">
+        <div class="col">
+            <input type="text" class="form-control form-control-sm split-remark"
+                   maxlength="255"
+                   placeholder="{{ 'accounting.bank_import.preview.remark_placeholder'|trans }}">
+        </div>
+    </div>
+    </div>
+</template>

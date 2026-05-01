@@ -1,0 +1,225 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} -
+    {% if isNew %}{{ 'accounting.bank_import.profile.add'|trans }}{% else %}{{ 'accounting.bank_import.profile.edit'|trans }}{% endif %}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{# ── Reusable horizontal field row ────────────────────────────────
+   Renders any field as: right-aligned label | input — always on one
+   line, with all inputs across the form starting at the same x-axis.
+─────────────────────────────────────────────────────────────────── #}
+{% macro field(field, options = {}) %}
+    {% set width = options.width|default(null) %}
+    <div class="row mb-2 align-items-center">
+        <label class="col-sm-5 col-form-label col-form-label-sm text-sm-end pe-3" for="{{ field.vars.id }}">
+            {{ field.vars.label|default(field.vars.name)|trans }}
+        </label>
+        <div class="col-sm-7">
+            {% if width %}
+                {{ form_widget(field, {'attr': field.vars.attr|merge({'style': 'max-width: ' ~ width})}) }}
+            {% else %}
+                {{ form_widget(field) }}
+            {% endif %}
+            {% if field.vars.help %}
+                <div class="form-text small mt-0">{{ field.vars.help|trans }}</div>
+            {% endif %}
+            {{ form_errors(field) }}
+        </div>
+    </div>
+{% endmacro %}
+
+{# Section heading inside the form card. #}
+{% macro section(label, help = null) %}
+    <div class="row mt-3 mb-2">
+        <div class="col-12">
+            <h6 class="text-muted text-uppercase small fw-semibold border-bottom pb-1 mb-0"
+                style="letter-spacing: .04em;">
+                {{ label|trans }}
+            </h6>
+            {% if help %}<p class="text-muted small mb-0 mt-1">{{ help|trans }}</p>{% endif %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% block content %}
+{% import _self as ui %}
+<div class="container">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.profiles.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">
+                {% if isNew %}
+                    {{ 'accounting.bank_import.profile.add'|trans }}
+                {% else %}
+                    {{ 'accounting.bank_import.profile.edit'|trans }}
+                {% endif %}
+            </h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.profile.help.intro'|trans }}</p>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    {{ form_start(form) }}
+    <div class="row">
+        {# ── Left: form ────────────────────────────────────────── #}
+        <div class="col-lg-8">
+            <div class="card mb-3">
+                <div class="card-body">
+
+                    {{ ui.field(form.name) }}
+                    {{ ui.field(form.description) }}
+
+                    {{ ui.section('accounting.bank_import.profile.section.csv') }}
+                    {{ ui.field(form.delimiter, {'width': '4rem'}) }}
+                    {{ ui.field(form.enclosure, {'width': '4rem'}) }}
+                    {{ ui.field(form.encoding, {'width': '14rem'}) }}
+                    {{ ui.field(form.headerSkip, {'width': '4rem'}) }}
+                    {{ ui.field(form.hasHeaderRow) }}
+
+                    {{ ui.section('accounting.bank_import.profile.section.values') }}
+                    {{ ui.field(form.dateFormat, {'width': '8rem'}) }}
+                    {{ ui.field(form.directionMode, {'width': '18rem'}) }}
+                    {{ ui.field(form.amountDecimalSeparator, {'width': '4rem'}) }}
+                    {{ ui.field(form.amountThousandsSeparator, {'width': '4rem'}) }}
+
+                    {{ ui.section(
+                        'accounting.bank_import.profile.section.header',
+                        'accounting.bank_import.profile.section.header.help'
+                    ) }}
+                    {{ ui.field(form.ibanSourceLine, {'width': '4rem'}) }}
+                    {{ ui.field(form.periodSourceLine, {'width': '4rem'}) }}
+
+                    {{ ui.section(
+                        'accounting.bank_import.profile.section.columns',
+                        'accounting.bank_import.profile.section.columns.help'
+                    ) }}
+
+                    <div class="text-muted small fw-semibold mt-2 mb-1 text-uppercase" style="letter-spacing:.04em">
+                        {{ 'accounting.bank_import.profile.col.group.required'|trans }}
+                    </div>
+                    {{ ui.field(form.col_bookDate, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_amount, {'width': '4rem'}) }}
+
+                    <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
+                        {{ 'accounting.bank_import.profile.col.group.separate'|trans }}
+                    </div>
+                    {{ ui.field(form.col_amountDebit, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_amountCredit, {'width': '4rem'}) }}
+
+                    <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
+                        {{ 'accounting.bank_import.profile.col.group.context'|trans }}
+                    </div>
+                    {{ ui.field(form.col_valueDate, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_purpose, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_counterpartyName, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_counterpartyIban, {'width': '4rem'}) }}
+
+                    <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
+                        {{ 'accounting.bank_import.profile.col.group.optional'|trans }}
+                    </div>
+                    {{ ui.field(form.col_endToEndId, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_mandateReference, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_creditorId, {'width': '4rem'}) }}
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mb-4">
+                <a href="{{ path('bank_import.profiles.index') }}" class="btn btn-outline-secondary">
+                    {{ 'button.cancel'|trans }}
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+                </button>
+            </div>
+        </div>
+
+        {# ── Right: visual example ────────────────────────────── #}
+        <div class="col-lg-4">
+            <div class="card sticky-lg-top" style="top: 1rem;">
+                <div class="card-header py-2">
+                    <strong><i class="fas fa-lightbulb text-warning me-1"></i> {{ 'accounting.bank_import.profile.example.title'|trans }}</strong>
+                </div>
+                <div class="card-body small">
+                    <p class="mb-2">{{ 'accounting.bank_import.profile.example.intro'|trans }}</p>
+
+                    <div class="bg-light border rounded p-2 mb-3 font-monospace small" style="overflow-x: auto;">
+<pre class="mb-0" style="white-space: pre;">
+<span class="text-muted">Z 0:</span> "Girokonto";"<span class="bg-warning bg-opacity-25">DE44…</span>"
+<span class="text-muted">Z 1:</span> "Zeitraum:";"<span class="bg-info bg-opacity-25">01.03.2026 - 31.03.2026</span>"
+<span class="text-muted">Z 2:</span> "Kontostand vom …"
+<span class="text-muted">Z 3:</span> <em>(leer)</em>
+<span class="text-muted">Z 4:</span> "Buchungsdatum";"Wertstellung";"Status";"Zahler";"Empfänger";"Zweck";"Typ";"IBAN";"Betrag";…
+<span class="text-muted">Z 5:</span> "<span class="bg-success bg-opacity-25">31.03.26</span>";"<span class="bg-success bg-opacity-25">31.03.26</span>";"Gebucht";"ISSUER";"<span class="bg-primary bg-opacity-25">Company XYZ</span>";"<span class="bg-primary bg-opacity-25">VISA Debitkartenumsatz</span>";"Ausgang";"<span class="bg-primary bg-opacity-25">DE45…</span>";"<span class="bg-danger bg-opacity-25">-41,98</span>";…
+<span class="text-muted">    </span>  <span class="text-muted">↑0</span>          <span class="text-muted">↑1</span>           <span class="text-muted">↑2</span>        <span class="text-muted">↑3</span>      <span class="text-muted">↑4</span>            <span class="text-muted">↑5</span>                  <span class="text-muted">↑6</span>       <span class="text-muted">↑7</span>     <span class="text-muted">↑8</span></pre>
+                    </div>
+
+                    <dl class="mb-0">
+                        <dt class="small">
+                            <span class="badge bg-warning text-dark">●</span>
+                            {{ 'accounting.bank_import.profile.example.iban'|trans }}
+                        </dt>
+                        <dd class="small text-muted mb-2">
+                            <code>{{ 'accounting.bank_import.profile.iban_source_line'|trans }}</code> = 0
+                        </dd>
+
+                        <dt class="small">
+                            <span class="badge bg-info text-dark">●</span>
+                            {{ 'accounting.bank_import.profile.example.period'|trans }}
+                        </dt>
+                        <dd class="small text-muted mb-2">
+                            <code>{{ 'accounting.bank_import.profile.period_source_line'|trans }}</code> = 1
+                        </dd>
+
+                        <dt class="small">
+                            <span class="badge" style="background-color:#d6e6d6">●</span>
+                            {{ 'accounting.bank_import.profile.example.dates'|trans }}
+                        </dt>
+                        <dd class="small text-muted mb-2">
+                            <code>col_bookDate</code> = 0, <code>col_valueDate</code> = 1
+                        </dd>
+
+                        <dt class="small">
+                            <span class="badge" style="background-color:#cfe2ff">●</span>
+                            {{ 'accounting.bank_import.profile.example.context'|trans }}
+                        </dt>
+                        <dd class="small text-muted mb-2">
+                            <code>col_counterpartyName</code> = 4, <code>col_purpose</code> = 5,<br>
+                            <code>col_counterpartyIban</code> = 7
+                        </dd>
+
+                        <dt class="small">
+                            <span class="badge" style="background-color:#f8d7da">●</span>
+                            {{ 'accounting.bank_import.profile.example.amount'|trans }}
+                        </dt>
+                        <dd class="small text-muted mb-2">
+                            <code>col_amount</code> = 8 ({{ 'accounting.bank_import.profile.example.signed_hint'|trans }})
+                        </dd>
+
+                        <dt class="small">{{ 'accounting.bank_import.profile.example.header_skip'|trans }}</dt>
+                        <dd class="small text-muted mb-0">
+                            {{ 'accounting.bank_import.profile.example.header_skip.help'|trans }}<br>
+                            <code>headerSkip</code> = 4, <code>hasHeaderRow</code> = ✓
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

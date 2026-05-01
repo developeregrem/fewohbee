@@ -40,6 +40,14 @@ accounting.settings.main_position_label.placeholder: "e.g. Accommodation, Boat r
 accounting.settings.misc_position_label: Miscellaneous services
 accounting.settings.misc_position_label.placeholder: "e.g. Miscellaneous, Extras"
 
+# Invoice number detection for bank import
+accounting.settings.invoice_number_samples.title: Detect invoice numbers
+accounting.settings.invoice_number_samples.help: 'Enter 1–3 example numbers that look like your real invoice numbers. When importing bank statements, the purpose text is searched for numbers in the same shape.'
+accounting.settings.invoice_number_samples.intro: "Just provide examples — a detection pattern is derived from them automatically."
+accounting.settings.invoice_number_sample.1: "Example 1"
+accounting.settings.invoice_number_sample.2: "Example 2 (optional)"
+accounting.settings.invoice_number_sample.3: "Example 3 (optional)"
+
 # Opening balance
 accounting.opening_balance.title: Opening balance
 accounting.opening_balance.help: "Enter once per year. The amount is booked automatically as an opening entry on 01 January."

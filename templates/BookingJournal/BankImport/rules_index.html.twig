@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+{% import 'BookingJournal/BankImport/_rule_summary.html.twig' as ruleUi %}
+
+{% block title %}{{ parent() }} - {{ 'accounting.bank_import.rules.title'|trans }}{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="bank-import">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">{{ 'accounting.bank_import.rules.title'|trans }}</h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.rules.subtitle'|trans }}</p>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light small">
+                    <tr>
+                        <th style="width: 4rem">{{ 'accounting.bank_import.rules.col.priority'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.rules.col.name'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.rules.col.scope'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.rules.col.conditions'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.rules.col.action'|trans }}</th>
+                        <th class="text-end" style="width: 11rem">{{ 'accounting.bank_import.rules.col.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for rule in rules %}
+                    {% set id = rule.id %}
+                    {% set targetUrl = path('bank_import.rules.delete', {'id': rule.id}) %}
+                    {% use "common/delete_popover.html.twig" %}
+                    <tr class="{% if not rule.isEnabled %}text-muted{% endif %}">
+                        <td class="text-center"><span class="badge bg-secondary">{{ rule.priority }}</span></td>
+                        <td>
+                            <strong>{{ rule.name }}</strong>
+                            {% if rule.description %}
+                                <div class="text-muted small">{{ rule.description }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {% if rule.bankAccount %}
+                                <code>{{ rule.bankAccount.label }}</code>
+                            {% else %}
+                                <span class="text-muted fst-italic">{{ 'accounting.bank_import.rules.scope.global'|trans }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ ruleUi.conditionsList(rule.conditions) }}</td>
+                        <td>{{ ruleUi.actionSummary(rule.action, accountsById, taxRatesById) }}</td>
+                        <td class="text-end">
+                            <form method="post" action="{{ path('bank_import.rules.toggle', {'id': rule.id}) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ rule.id) }}">
+                                <button type="submit"
+                                        class="btn btn-sm {% if rule.isEnabled %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                        title="{{ (rule.isEnabled ? 'accounting.bank_import.rules.action.disable' : 'accounting.bank_import.rules.action.enable')|trans }}">
+                                    <i class="fas {% if rule.isEnabled %}fa-toggle-on{% else %}fa-toggle-off{% endif %}"></i>
+                                </button>
+                            </form>
+                            <a href="{{ path('bank_import.rules.edit', {'id': rule.id}) }}"
+                               class="btn btn-sm btn-outline-secondary" title="{{ 'button.edit'|trans }}">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    title="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            {{ 'accounting.bank_import.rules.empty'|trans }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3 mb-0">
+        <i class="fas fa-info-circle me-1"></i>
+        {{ 'accounting.bank_import.rules.create_hint'|trans }}
+    </p>
+</div>
+{% endblock %}

@@ -40,6 +40,14 @@ accounting.settings.main_position_label.placeholder: "z.B. Übernachtung, Bootsm
 accounting.settings.misc_position_label: Sonstige Leistungen
 accounting.settings.misc_position_label.placeholder: "z.B. Sonstige Leistungen, Zusatzleistungen"
 
+# Rechnungsnummer-Erkennung im Bank-Import
+accounting.settings.invoice_number_samples.title: Rechnungsnummern erkennen
+accounting.settings.invoice_number_samples.help: 'Trage 1–3 Beispielnummern ein, die typisch für deine Rechnungen sind. Beim Import von Kontoauszügen wird im Verwendungszweck nach Nummern in derselben Form gesucht.'
+accounting.settings.invoice_number_samples.intro: "Beispiele genügen — daraus wird automatisch ein Erkennungsmuster abgeleitet."
+accounting.settings.invoice_number_sample.1: "Beispiel 1"
+accounting.settings.invoice_number_sample.2: "Beispiel 2 (optional)"
+accounting.settings.invoice_number_sample.3: "Beispiel 3 (optional)"
+
 # Anfangsbestand (Eröffnungsbuchungen)
 accounting.opening_balance.title: Anfangsbestand
 accounting.opening_balance.help: "Einmal pro Jahr erfassen. Der Betrag wird automatisch als Eröffnungsbuchung auf dem 01.01. verbucht."

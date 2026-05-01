@@ -8,7 +8,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
-use App\Service\AccountingSettingsService;
+use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\AppSettingsService;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
