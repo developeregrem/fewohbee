@@ -10,7 +10,7 @@ parameters:
     uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
     roomCategoryImageDirectory: '%kernel.project_dir%/public/resources/images/room-categories'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
-    version: '4.6.2'
+    version: '4.7.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     default_mailcopy: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'

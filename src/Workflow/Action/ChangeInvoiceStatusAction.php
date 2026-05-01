@@ -6,8 +6,10 @@ namespace App\Workflow\Action;
 
 use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Invoice;
+use App\Event\InvoiceStatusChangedEvent;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ChangeInvoiceStatusAction implements WorkflowActionInterface
@@ -15,6 +17,7 @@ class ChangeInvoiceStatusAction implements WorkflowActionInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -68,8 +71,13 @@ class ChangeInvoiceStatusAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_invalid_config'));
         }
 
+        $previousStatus = (int) $entity->getStatus();
         $entity->setStatus($newStatus);
         $this->em->flush();
+
+        if ($previousStatus !== $newStatus) {
+            $this->eventDispatcher->dispatch(new InvoiceStatusChangedEvent($entity, $previousStatus));
+        }
 
         return $this->translator->trans('workflow.log.invoice_status_changed', [
             '%number%' => $entity->getNumber(),

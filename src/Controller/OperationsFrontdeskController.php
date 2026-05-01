@@ -106,6 +106,7 @@ class OperationsFrontdeskController extends AbstractController
     public function updateReservationStatusAction(
         ManagerRegistry $doctrine,
         CsrfTokenManagerInterface $csrfTokenManager,
+        ReservationService $reservationService,
         Request $request,
         Reservation $reservation
     ): Response {
@@ -117,8 +118,7 @@ class OperationsFrontdeskController extends AbstractController
         $statusId = (int) $request->request->get('status');
         $status = $doctrine->getManager()->getRepository(ReservationStatus::class)->find($statusId);
         if ($status instanceof ReservationStatus) {
-            $reservation->setReservationStatus($status);
-            $doctrine->getManager()->flush();
+            $reservationService->changeStatus($reservation, $status);
         }
 
         return new Response('ok');

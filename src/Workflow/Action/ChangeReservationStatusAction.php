@@ -7,6 +7,7 @@ namespace App\Workflow\Action;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Service\ReservationService;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -22,6 +23,7 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
+        private readonly ReservationService $reservationService,
     ) {
     }
 
@@ -88,7 +90,7 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
     private function changeStatus(array $reservations, ReservationStatus $status): string
     {
         foreach ($reservations as $reservation) {
-            $reservation->setReservationStatus($status);
+            $this->reservationService->changeStatus($reservation, $status, flush: false);
         }
 
         $this->em->flush();

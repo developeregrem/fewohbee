@@ -35,6 +35,9 @@ class InvoicePosition
     private $isFlatPrice;
     #[ORM\Column(type: 'boolean')]
     private bool $isPerRoom;
+    #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?AccountingAccount $revenueAccount = null;
 
     public function __construct()
     {
@@ -160,6 +163,18 @@ class InvoicePosition
     public function setIsPerRoom(bool $isPerRoom): self
     {
         $this->isPerRoom = $isPerRoom;
+
+        return $this;
+    }
+
+    public function getRevenueAccount(): ?AccountingAccount
+    {
+        return $this->revenueAccount;
+    }
+
+    public function setRevenueAccount(?AccountingAccount $revenueAccount): self
+    {
+        $this->revenueAccount = $revenueAccount;
 
         return $this;
     }

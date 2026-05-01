@@ -5,6 +5,7 @@ accounting.settings.back: Back to Settings
 accounting.settings.flash.saved: Settings saved successfully.
 accounting.settings.flash.preset_invalid: Invalid preset selected.
 accounting.settings.flash.preset_loaded: "Preset %preset% loaded: %accounts% accounts, %taxRates% tax rates, %workflows% workflows created."
+accounting.settings.flash.preset_stale_account_refs: "Warning: %count% prices/components still reference revenue accounts from another preset. Please review them in the price settings."
 
 # Preset
 accounting.settings.preset.title: Chart of Accounts
@@ -30,6 +31,14 @@ accounting.settings.client_number.placeholder: e.g. 55003
 accounting.settings.fiscal_year_start: Fiscal Year Start (Month)
 accounting.settings.account_number_length: Account Number Length
 accounting.settings.dictation_code: Dictation Code
+
+# Booking journal remark labels
+accounting.settings.remark_labels.title: Booking remark labels
+accounting.settings.remark_labels.help: 'Optional labels for the automatic booking-journal remark. Split by main service (room/main positions) and miscellaneous services. Same account + VAT are grouped per section; the label is combined with the account name as remark (e.g. <b>"Accommodation – Revenue 7%"</b>). When empty, only the account name is written.'
+accounting.settings.main_position_label: Main service
+accounting.settings.main_position_label.placeholder: "e.g. Accommodation, Boat rental, Seminar fee"
+accounting.settings.misc_position_label: Miscellaneous services
+accounting.settings.misc_position_label.placeholder: "e.g. Miscellaneous, Extras"
 
 # Opening balance
 accounting.opening_balance.title: Opening balance
@@ -72,6 +81,7 @@ accounting.accounts.flash.created: Account created successfully.
 accounting.accounts.flash.updated: Account updated successfully.
 accounting.accounts.flash.deleted: Account deleted successfully.
 accounting.accounts.flash.cannot_delete_system: System accounts cannot be deleted.
+accounting.accounts.flash.cannot_delete_in_use: "This account cannot be deleted because it is still used in journal entries, tax rates, prices, or workflows. Remove configuration references first; accounts used in journal entries must remain."
 accounting.accounts.type.asset: Asset
 accounting.accounts.type.liability: Liability
 accounting.accounts.type.revenue: Revenue
@@ -107,6 +117,7 @@ accounting.taxrates.delete.ask: Do you really want to delete this tax rate?
 accounting.taxrates.flash.created: Tax rate created successfully.
 accounting.taxrates.flash.updated: Tax rate updated successfully.
 accounting.taxrates.flash.deleted: Tax rate deleted successfully.
+accounting.taxrates.flash.cannot_delete_in_use: "This tax rate cannot be deleted because it is already used in booking journal entries. Use the validity fields to prevent future use."
 
 # Journal - Batches
 accounting.journal.batch.add: Add Month
@@ -195,6 +206,7 @@ preset.account.cash_at: Cash register
 preset.account.bank: Bank
 preset.account.receivables: Trade receivables
 preset.account.receivables_credit_card: Credit card receivables
+preset.account.credit_card_settlement: Credit card settlement
 preset.account.input_tax: Input tax
 preset.account.input_tax_reduced: Input tax (reduced rate)
 preset.account.input_tax_standard: Input tax (standard rate)
@@ -203,12 +215,13 @@ preset.account.vat_reduced: VAT (reduced rate)
 preset.account.vat_standard: VAT (standard rate)
 preset.account.vat_ch: VAT payable
 preset.account.transit: Transit items
-preset.account.revenue_accommodation: Revenue accommodation (reduced rate)
+preset.account.revenue_accommodation: Revenue accommodation 7%
 preset.account.revenue_accommodation_10: Revenue accommodation 10%
 preset.account.revenue_accommodation_13: Revenue accommodation 13%
 preset.account.revenue_accommodation_ch: Revenue accommodation 3.8%
 preset.account.revenue_standard: Revenue (standard rate)
 preset.account.revenue_standard_ch: Revenue 8.1% VAT
+preset.account.service_revenue_ch: Service revenue
 preset.account.revenue_20: Revenue 20% VAT
 preset.account.revenue_tax_free: Tax-free revenue
 preset.account.revenue_deductions: Revenue deductions (commissions)
@@ -216,7 +229,9 @@ preset.account.office_supplies: Office supplies
 preset.account.other_expenses: Other expenses
 preset.account.other_operating_expenses: Other operating expenses
 preset.account.premises: Premises costs
+preset.account.rent_real_estate: Rent (real estate)
 preset.account.cleaning: Cleaning
+preset.account.insurance: Insurance
 preset.account.maintenance: Maintenance
 preset.account.maintenance_cleaning: Maintenance / Cleaning
 preset.account.opening_balance: Opening balance
@@ -241,7 +256,7 @@ preset.workflow.booking_cash.desc: "Automatically creates a booking entry (debit
 preset.workflow.booking_transfer: "Booking: Bank transfer"
 preset.workflow.booking_transfer.desc: "Automatically creates a booking entry (debit: bank) when an invoice is paid by bank transfer."
 preset.workflow.booking_card: "Booking: Card payment"
-preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit: card receivables) when an invoice is paid by card."
+preset.workflow.booking_card.desc: "Automatically creates a booking entry (debit: credit card settlement) when an invoice is paid by card."
 
 # General
 journal.action: Action

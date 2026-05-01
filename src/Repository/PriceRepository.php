@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\AccountingAccount;
 use App\Entity\Price;
+use App\Entity\PriceComponent;
 use App\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
@@ -44,6 +46,8 @@ class PriceRepository extends ServiceEntityRepository
     public function findAllOrdered()
     {
         $q = $this->createQueryBuilder('p')
+                ->addSelect('components')
+                ->leftJoin('p.components', 'components')
                 ->addSelect('CASE WHEN p.roomCategory is null THEN 1 ELSE 0 END as HIDDEN cat_is_null')
                 ->addOrderBy('cat_is_null', 'ASC')
                 ->addOrderBy('p.roomCategory', 'ASC')
@@ -247,6 +251,53 @@ class PriceRepository extends ServiceEntityRepository
             ->setParameter('roid', $reservation->getReservationOrigin()->getId());
 
         return $q;
+    }
+
+    /**
+     * Count Price + PriceComponent entries whose revenueAccount belongs to a different chartPreset.
+     */
+    public function countStaleRevenueAccountRefs(string $preset): int
+    {
+        $priceStale = (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->join('p.revenueAccount', 'a')
+            ->where('a.chartPreset IS NOT NULL')
+            ->andWhere('a.chartPreset != :preset')
+            ->setParameter('preset', $preset)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $componentStale = (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c.id)')
+            ->from(\App\Entity\PriceComponent::class, 'c')
+            ->join('c.revenueAccount', 'a')
+            ->where('a.chartPreset IS NOT NULL')
+            ->andWhere('a.chartPreset != :preset')
+            ->setParameter('preset', $preset)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $priceStale + $componentStale;
+    }
+
+    public function countByRevenueAccount(AccountingAccount $account): int
+    {
+        $priceRefs = (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.revenueAccount = :account')
+            ->setParameter('account', $account)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $componentRefs = (int) $this->getEntityManager()->createQueryBuilder()
+            ->select('COUNT(c.id)')
+            ->from(PriceComponent::class, 'c')
+            ->where('c.revenueAccount = :account')
+            ->setParameter('account', $account)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $priceRefs + $componentRefs;
     }
 
     /**
