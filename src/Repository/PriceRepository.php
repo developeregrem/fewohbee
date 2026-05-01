@@ -44,6 +44,8 @@ class PriceRepository extends ServiceEntityRepository
     public function findAllOrdered()
     {
         $q = $this->createQueryBuilder('p')
+                ->addSelect('components')
+                ->leftJoin('p.components', 'components')
                 ->addSelect('CASE WHEN p.roomCategory is null THEN 1 ELSE 0 END as HIDDEN cat_is_null')
                 ->addOrderBy('cat_is_null', 'ASC')
                 ->addOrderBy('p.roomCategory', 'ASC')

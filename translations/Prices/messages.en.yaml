@@ -40,6 +40,9 @@ price.package.remainder.help: >-
   absorb rounding cents. Only one component per package may be marked as
   remainder.
 price.package.add_row: Add component
+price.package.taxrates.empty: No tax rates are configured. Configure tax rates in the booking journal settings before creating package components.
+price.package.overview.badge: Package (%count%)
+price.package.overview.tooltip: Contains %count% package components.
 price.package.sum_preview: Sum preview
 price.package.allocation.percent: Percent
 price.package.allocation.amount: Amount
