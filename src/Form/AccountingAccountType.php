@@ -41,6 +41,12 @@ class AccountingAccountType extends AbstractType
                 'label' => 'accounting.accounts.is_bank',
                 'required' => false,
             ])
+            ->add('iban', TextType::class, [
+                'label' => 'accounting.accounts.iban',
+                'required' => false,
+                'help' => 'accounting.accounts.iban.help',
+                'attr' => ['maxlength' => 34, 'placeholder' => 'DE00…'],
+            ])
             ->add('isOpeningBalanceAccount', CheckboxType::class, [
                 'label' => 'accounting.accounts.is_opening_balance',
                 'required' => false,

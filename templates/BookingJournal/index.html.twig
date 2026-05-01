@@ -52,6 +52,9 @@
                     title="{{ 'accounting.journal.export.year.help'|trans }}">
                 <i class="fas fa-file-export"></i> {{ 'accounting.journal.export.year'|trans }}
             </button>
+            <a href="{{ path('bank_import.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.bank_import.title'|trans }}">
+                <i class="fas fa-file-import"></i>
+            </a>
             <a href="{{ path('journal.settings.index') }}" class="btn btn-outline-secondary btn-sm" title="{{ 'accounting.settings.title'|trans }}">
                 <i class="fas fa-cog"></i>
             </a>

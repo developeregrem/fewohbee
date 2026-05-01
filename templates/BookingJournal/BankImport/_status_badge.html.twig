@@ -1,0 +1,22 @@
+{# Renders the leading status badge for one statement line. #}
+{% if line.isDuplicate %}
+    <span class="badge bg-info text-dark" data-bs-toggle="tooltip"
+          title="{{ 'accounting.bank_import.preview.duplicate.help'|trans }}">
+        <i class="fas fa-clone"></i>
+    </span>
+{% elseif line.isIgnored %}
+    <span class="badge bg-light text-dark border" data-bs-toggle="tooltip"
+          title="{{ 'accounting.bank_import.preview.ignored.help'|trans }}">
+        <i class="fas fa-eye-slash"></i>
+    </span>
+{% elseif line.status == 'ready' %}
+    <span class="badge bg-success" data-bs-toggle="tooltip"
+          title="{{ 'accounting.bank_import.preview.ready.help'|trans }}">
+        <i class="fas fa-check"></i>
+    </span>
+{% else %}
+    <span class="badge bg-warning text-dark" data-bs-toggle="tooltip"
+          title="{{ 'accounting.bank_import.preview.pending.help'|trans }}">
+        <i class="fas fa-circle-notch"></i>
+    </span>
+{% endif %}

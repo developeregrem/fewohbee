@@ -1,0 +1,98 @@
+{# Renders a human-readable summary of a BankImportRule's conditions + action.
+   Reusable in the list view and the edit view. #}
+
+{% macro conditionLine(condition) %}
+    {% set fieldLabels = {
+        'counterpartyName': 'accounting.bank_import.rules.field_label.counterparty_name',
+        'counterpartyIban': 'accounting.bank_import.rules.field_label.counterparty_iban',
+        'purpose': 'accounting.bank_import.rules.field_label.purpose',
+        'amount': 'accounting.bank_import.rules.field_label.amount',
+        'direction': 'accounting.bank_import.rules.field_label.direction',
+    } %}
+    {% set opLabels = {
+        'contains':     'accounting.bank_import.rules.op.contains',
+        'not_contains': 'accounting.bank_import.rules.op.not_contains',
+        'equals':       'accounting.bank_import.rules.op.equals',
+        'regex':        'accounting.bank_import.rules.op.regex',
+        'gt':           'accounting.bank_import.rules.op.gt',
+        'lt':           'accounting.bank_import.rules.op.lt',
+        'between':      'accounting.bank_import.rules.op.between',
+    } %}
+    <span class="text-body-secondary">{{ (fieldLabels[condition.field] ?? condition.field)|trans }}</span>
+    <span class="text-muted small">{{ (opLabels[condition.operator] ?? condition.operator)|trans }}</span>
+    <code>{% if condition.value is iterable %}{{ condition.value|join(' – ') }}{% else %}{{ condition.value }}{% endif %}</code>
+{% endmacro %}
+
+{% macro conditionsList(conditions) %}
+    {% import _self as ui %}
+    {% if conditions is empty %}
+        <span class="text-muted small fst-italic">{{ 'accounting.bank_import.rules.conditions_empty'|trans }}</span>
+    {% else %}
+        {% for cond in conditions %}
+            <div class="small">{{ ui.conditionLine(cond) }}</div>
+            {% if not loop.last %}
+                <div class="text-muted small fst-italic">{{ 'accounting.bank_import.rules.and'|trans }}</div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endmacro %}
+
+{% macro actionSummary(action, accountsById, taxRatesById) %}
+    {% set mode = action.mode|default('ignore') %}
+    {% if mode == 'ignore' %}
+        <span class="badge bg-light text-dark border"><i class="fas fa-eye-slash"></i> {{ 'accounting.bank_import.rules.action.ignore'|trans }}</span>
+    {% elseif mode == 'split' %}
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+            <i class="fas fa-code-branch"></i>
+            {{ 'accounting.bank_import.rules.action.split'|trans({'%count%': (action.splits|default([]))|length}) }}
+        </span>
+        {% for split in action.splits|default([]) %}
+            {% set debit = accountsById[split.debitAccountId|default(0)] ?? null %}
+            {% set credit = accountsById[split.creditAccountId|default(0)] ?? null %}
+            {% set taxRate = taxRatesById[split.taxRateId|default(0)] ?? null %}
+            <div class="small mt-1">
+                <span class="text-muted">#{{ loop.index }}</span>
+                {% if split.amount is defined %}
+                    <code>{{ split.amount|number_format(2, ',', '.') }}</code>
+                {% elseif split.percent is defined %}
+                    <code>{{ split.percent|number_format(2, ',', '.') }}%</code>
+                {% elseif split.remainder|default(false) %}
+                    <code>{{ 'accounting.bank_import.split.mode.remainder'|trans }}</code>
+                {% endif %}
+                {% if debit %}
+                    <span class="text-muted ms-1">{{ 'accounting.bank_import.preview.col.debit'|trans }}:</span>
+                    <code>{{ debit.label }}</code>
+                {% endif %}
+                {% if credit %}
+                    <span class="text-muted ms-1">{{ 'accounting.bank_import.preview.col.credit'|trans }}:</span>
+                    <code>{{ credit.label }}</code>
+                {% endif %}
+                {% if taxRate %}
+                    <span class="text-muted ms-1">{{ 'accounting.bank_import.preview.col.tax_rate'|trans }}:</span>
+                    <code>{{ taxRate.name }} ({{ taxRate.rateFloat|number_format(2, ',', '.') }}%)</code>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        {% set debit = accountsById[action.debitAccountId|default(0)] ?? null %}
+        {% set credit = accountsById[action.creditAccountId|default(0)] ?? null %}
+        {% set taxRate = taxRatesById[action.taxRateId|default(0)] ?? null %}
+        <div class="small">
+            {% if debit %}
+                <span class="text-muted">{{ 'accounting.bank_import.preview.col.debit'|trans }}:</span>
+                <code>{{ debit.label }}</code>
+            {% endif %}
+            {% if credit %}
+                <span class="text-muted ms-2">{{ 'accounting.bank_import.preview.col.credit'|trans }}:</span>
+                <code>{{ credit.label }}</code>
+            {% endif %}
+            {% if taxRate %}
+                <span class="text-muted ms-2">{{ 'accounting.bank_import.preview.col.tax_rate'|trans }}:</span>
+                <code>{{ taxRate.name }} ({{ taxRate.rateFloat|number_format(2, ',', '.') }}%)</code>
+            {% endif %}
+            {% if action.remarkTemplate is defined and action.remarkTemplate %}
+                <div class="text-muted small">„{{ action.remarkTemplate }}"</div>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endmacro %}

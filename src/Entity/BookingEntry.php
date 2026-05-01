@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: BookingEntryRepository::class)]
 #[ORM\Table(name: 'booking_entries')]
+#[ORM\Index(name: 'idx_booking_entry_split_group', columns: ['split_group_uuid'])]
 class BookingEntry
 {
     public const SOURCE_MANUAL = 'manual';
@@ -61,6 +62,14 @@ class BookingEntry
 
     #[ORM\Column(type: Types::STRING, length: 30, nullable: true)]
     private ?string $sourceType = null;
+
+    /**
+     * Groups entries that originate from the same underlying document, e.g. a bank
+     * statement line split across multiple debit accounts. Entries with the same
+     * UUID are rendered together in the journal view.
+     */
+    #[ORM\Column(type: Types::STRING, length: 36, nullable: true)]
+    private ?string $splitGroupUuid = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -244,6 +253,18 @@ class BookingEntry
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getSplitGroupUuid(): ?string
+    {
+        return $this->splitGroupUuid;
+    }
+
+    public function setSplitGroupUuid(?string $splitGroupUuid): self
+    {
+        $this->splitGroupUuid = $splitGroupUuid;
+
+        return $this;
     }
 
     public function isOpeningBalance(): bool

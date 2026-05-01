@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\WorkflowRepository;
-use App\Service\AccountingPresetSeeder;
+use App\Service\BookingJournal\AccountingPresetSeeder;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;

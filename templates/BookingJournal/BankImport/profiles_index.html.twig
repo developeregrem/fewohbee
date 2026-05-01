@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.bank_import.profile.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container"
+     data-controller="bank-import-profiles"
+     data-bank-import-profiles-form-load-failed-value="{{ 'accounting.bank_import.profile.form_load_failed'|trans|e('html_attr') }}">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">{{ 'accounting.bank_import.profile.title'|trans }}</h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.profile.subtitle'|trans }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('bank_import.profiles.new') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> {{ 'accounting.bank_import.profile.add'|trans }}
+            </a>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ 'accounting.bank_import.profile.name'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.profile.delimiter'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.profile.encoding'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.profile.date_format'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.profile.direction_mode'|trans }}</th>
+                        <th class="text-end">{{ 'accounting.bank_import.profile.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for profile in profiles %}
+                    {% set id = profile.id %}
+                    {% set targetUrl = path('bank_import.profiles.delete', {'id': profile.id}) %}
+                    {% use "common/delete_popover.html.twig" %}
+                    <tr>
+                        <td>
+                            <strong>{{ profile.name }}</strong>
+                            {% if profile.description %}
+                                <div class="text-muted small">{{ profile.description }}</div>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ profile.delimiter }}</code></td>
+                        <td>{{ profile.encoding }}</td>
+                        <td><code>{{ profile.dateFormat }}</code></td>
+                        <td>
+                            {{ ('accounting.bank_import.profile.direction.' ~ profile.directionMode)|trans }}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ path('bank_import.profiles.edit', {'id': profile.id}) }}"
+                               class="btn btn-link btn-sm" title="{{ 'button.edit'|trans }}">
+                                <i class="fas fa-pen"></i>
+                            </a>
+                            <button type="button" class="btn btn-link btn-sm text-danger"
+                                    title="{{ 'button.delete'|trans }}"
+                                    data-popover="delete"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            {{ 'accounting.bank_import.profile.empty'|trans }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\BookingJournal;
 
 use App\Entity\AccountingAccount;
 use App\Entity\BookingBatch;
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
+use App\Entity\TaxRate;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
@@ -143,10 +144,14 @@ class BookingJournalService
         ?AccountingAccount $debitAccount = null,
         ?AccountingAccount $creditAccount = null,
         ?string $remark = null,
+        ?\DateTimeInterface $bookingDate = null,
+        string $sourceType = BookingEntry::SOURCE_WORKFLOW,
     ): array {
-        $today = new \DateTime();
-        $year = (int) $today->format('Y');
-        $month = (int) $today->format('n');
+        $bookingDate = null !== $bookingDate
+            ? \DateTime::createFromInterface($bookingDate)
+            : new \DateTime();
+        $year = (int) $bookingDate->format('Y');
+        $month = (int) $bookingDate->format('n');
 
         $batch = $this->getOrCreateBatch($year, $month);
 
@@ -173,10 +178,10 @@ class BookingJournalService
         // ("Hauptleistung") and misc ("Sonstige Leistungen") surface as distinct entries even
         // when they hit the same account + VAT.
         $taxRateCache = [];
-        $resolveTaxRate = function (string $vatKey) use (&$taxRateCache, $today, $activePreset) {
+        $resolveTaxRate = function (string $vatKey) use (&$taxRateCache, $bookingDate, $activePreset) {
             if (!array_key_exists($vatKey, $taxRateCache)) {
                 // Strip the "v" prefix added to prevent PHP int-casting numeric string keys.
-                $taxRateCache[$vatKey] = $this->taxRateRepo->findByRate((float) ltrim($vatKey, 'v'), $today, $activePreset);
+                $taxRateCache[$vatKey] = $this->taxRateRepo->findByRate((float) ltrim($vatKey, 'v'), $bookingDate, $activePreset);
             }
 
             return $taxRateCache[$vatKey];
@@ -241,7 +246,7 @@ class BookingJournalService
                     $entryCreditAccount = $row['account'];
 
                     $entry = new BookingEntry();
-                    $entry->setDate(clone $today);
+                    $entry->setDate(clone $bookingDate);
                     $entry->setDocumentNumber($nextDocNumber++);
                     $entry->setAmount($vatBrutto);
                     $entry->setDebitAccount($debitAccount);
@@ -256,7 +261,7 @@ class BookingJournalService
                         ? $scopeLabel.' – '.$accountName
                         : ($accountName ?: ($debitAccount?->getName() ?? ''));
                     $entry->setRemark($remark ?: $defaultRemark);
-                    $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
+                    $entry->setSourceType($sourceType);
                     $entry->setBookingBatch($batch);
                     $batch->addEntry($entry);
 
@@ -270,6 +275,88 @@ class BookingJournalService
         $this->recalculateDocumentNumbersForYears($year);
 
         return $entries;
+    }
+
+    /**
+     * Creates one BookingEntry for a single statement piece — either a whole
+     * line or one of its splits. Persisted (but not yet flushed) and assigned
+     * to the matching month batch.
+     *
+     * Caller is expected to set Source via {@see BookingEntry::setSourceType()}
+     * (typically SOURCE_MANUAL — bank-import is a kind of manual booking).
+     */
+    public function createEntryFromStatement(
+        \DateTimeInterface $date,
+        string $amount,
+        ?AccountingAccount $debitAccount,
+        ?AccountingAccount $creditAccount,
+        ?string $remark,
+        ?string $invoiceNumber = null,
+        ?int $invoiceId = null,
+        ?string $splitGroupUuid = null,
+        ?TaxRate $taxRate = null,
+    ): BookingEntry {
+        $entry = new BookingEntry();
+        $entry->setDate(\DateTime::createFromInterface($date));
+        $entry->setAmount($amount);
+        $entry->setDebitAccount($debitAccount);
+        $entry->setCreditAccount($creditAccount);
+        $entry->setRemark($remark);
+        $entry->setInvoiceNumber($invoiceNumber);
+        $entry->setInvoiceId($invoiceId);
+        $entry->setTaxRate($taxRate);
+        $entry->setSourceType(BookingEntry::SOURCE_MANUAL);
+        if (null !== $splitGroupUuid) {
+            $entry->setSplitGroupUuid($splitGroupUuid);
+        }
+
+        $batch = $this->assignBatchByEntryDate($entry);
+        $entry->setDocumentNumber($this->entryRepo->getLastDocumentNumber($batch) + 1);
+        $this->em->persist($entry);
+
+        return $entry;
+    }
+
+    /**
+     * Moves an existing entry to a new date — used when a bank statement reveals
+     * the actual value date for an invoice that was previously booked on the
+     * invoice date by a workflow.
+     *
+     * Re-assigns the entry to the matching month batch when the month changes
+     * and re-numbers the affected year(s). Throws when either the source or the
+     * target batch is closed.
+     */
+    public function updateEntryDate(BookingEntry $entry, \DateTimeInterface $newDate): void
+    {
+        $newDate = \DateTime::createFromInterface($newDate);
+        if ($entry->getDate()->format('Y-m-d') === $newDate->format('Y-m-d')) {
+            return;
+        }
+
+        $oldBatch = $entry->getBookingBatch();
+        if ($oldBatch->isClosed()) {
+            throw new \RuntimeException(
+                $this->translator->trans('journal.error.journal.closed', [
+                    '%month%' => $oldBatch->getMonth(),
+                    '%year%' => $oldBatch->getYear(),
+                ])
+            );
+        }
+
+        $entry->setDate($newDate);
+
+        $oldYear = $oldBatch->getYear();
+        $oldMonth = $oldBatch->getMonth();
+        $newYear = (int) $newDate->format('Y');
+        $newMonth = (int) $newDate->format('n');
+
+        if ($oldYear !== $newYear || $oldMonth !== $newMonth) {
+            $this->assignBatchByEntryDate($entry); // throws if target closed
+        }
+
+        $this->em->flush();
+        $years = array_unique([$oldYear, $newYear]);
+        $this->recalculateDocumentNumbersForYears(...$years);
     }
 
     /**

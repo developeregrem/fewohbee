@@ -264,6 +264,21 @@
                 {{ form_row(settingsForm.mainPositionLabel) }}
                 {{ form_row(settingsForm.miscPositionLabel) }}
 
+                <hr>
+                <h6 class="mb-1">
+                    {{ 'accounting.settings.invoice_number_samples.title'|trans }}
+                    <span class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
+                        <i class="fas fa-circle-question"></i>
+                    </span>
+                </h6>
+                <p class="form-text mb-2">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
+                <div class="row g-2">
+                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample1) }}</div>
+                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample2) }}</div>
+                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample3) }}</div>
+                </div>
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> {{ 'button.save'|trans }}

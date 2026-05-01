@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.bank_import.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="bank-import">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('journal.overview') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">{{ 'accounting.bank_import.title'|trans }}</h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.subtitle'|trans }}</p>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-bolt"></i> {{ 'accounting.bank_import.rules.title'|trans }}
+            </a>
+            <a href="{{ path('bank_import.profiles.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-cog"></i> {{ 'accounting.bank_import.profile.title'|trans }}
+            </a>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    {# ── Open drafts ─────────────────────────────────────────────── #}
+    {% if drafts is not empty %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">{{ 'accounting.bank_import.drafts.title'|trans }}</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>{{ 'accounting.bank_import.drafts.file'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.drafts.account'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.drafts.period'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.drafts.lines'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.drafts.created'|trans }}</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for draft in drafts %}
+                    {% set id = draft.sessionImportId %}
+                    {% set targetUrl = path('bank_import.discard', {'sessionImportId': draft.sessionImportId}) %}
+                    {% use "common/delete_popover.html.twig" %}
+                    <tr>
+                        <td><i class="fas fa-file-csv me-1 text-muted"></i> {{ draft.originalFilename }}</td>
+                        <td>
+                            {% set acc = accountsById[draft.bankAccountId] ?? null %}
+                            {% if acc %}{{ acc.label }}{% else %}<span class="text-danger">{{ 'accounting.bank_import.drafts.account_missing'|trans }}</span>{% endif %}
+                        </td>
+                        <td class="small">
+                            {% if draft.periodFrom and draft.periodTo %}
+                                {{ draft.periodFrom|date('d.m.Y') }} – {{ draft.periodTo|date('d.m.Y') }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ draft.lines|length }}</td>
+                        <td class="small text-muted">{{ draft.createdAt|date('d.m.Y H:i') }}</td>
+                        <td class="text-end">
+                            <a href="{{ path('bank_import.preview', {'sessionImportId': draft.sessionImportId}) }}"
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> {{ 'accounting.bank_import.drafts.open'|trans }}
+                            </a>
+                            <button type="button" class="btn btn-link btn-sm text-danger"
+                                    title="{{ 'accounting.bank_import.drafts.discard'|trans }}"
+                                    data-popover="delete"
+                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Upload form ─────────────────────────────────────────────── #}
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-upload me-1"></i> {{ 'accounting.bank_import.upload.title'|trans }}</h6>
+        </div>
+        <div class="card-body">
+            {{ form_start(uploadForm, {'attr': {'enctype': 'multipart/form-data'}}) }}
+                <div class="row">
+                    <div class="col-md-6">{{ form_row(uploadForm.bankAccount) }}</div>
+                    <div class="col-md-6">{{ form_row(uploadForm.csvProfile) }}</div>
+                </div>
+                {{ form_row(uploadForm.file) }}
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i> {{ 'accounting.bank_import.upload.submit'|trans }}
+                    </button>
+                </div>
+            {{ form_end(uploadForm) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

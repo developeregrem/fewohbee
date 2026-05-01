@@ -17,9 +17,9 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
 use App\Repository\TaxRateRepository;
-use App\Service\AccountingSettingsService;
+use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\AppSettingsService;
-use App\Service\BookingJournalService;
+use App\Service\BookingJournal\BookingJournalService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -130,6 +130,53 @@ final class BookingJournalServiceTest extends TestCase
 
         self::assertSame(1, $first->getDocumentNumber());
         self::assertSame(2, $second->getDocumentNumber());
+    }
+
+    public function testCreateEntryFromStatementAssignsNextDocumentNumber(): void
+    {
+        $batch = (new BookingBatch())->setYear(2026)->setMonth(4);
+
+        $batchRepo = $this->createStub(BookingBatchRepository::class);
+        $batchRepo->method('findByYearAndMonth')->willReturn($batch);
+
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $entryRepo->method('getLastDocumentNumber')->willReturn(7);
+
+        $entry = $this->createService(
+            batchRepo: $batchRepo,
+            entryRepo: $entryRepo,
+        )->createEntryFromStatement(
+            new \DateTimeImmutable('2026-04-01'),
+            '12.34',
+            null,
+            null,
+            null,
+        );
+
+        self::assertSame(8, $entry->getDocumentNumber());
+        self::assertSame($batch, $entry->getBookingBatch());
+    }
+
+    public function testUpdateEntryDateRenumbersEvenWithinSameMonth(): void
+    {
+        $batch = (new BookingBatch())->setYear(2026)->setMonth(4);
+        $entry = (new BookingEntry())
+            ->setBookingBatch($batch)
+            ->setDate(new \DateTime('2026-04-20'))
+            ->setDocumentNumber(8);
+
+        $entryRepo = $this->createStub(BookingEntryRepository::class);
+        $entryRepo->method('findEntriesForDocumentNumbering')->willReturn([$entry]);
+
+        $service = $this->createService(
+            em: $this->createStub(EntityManagerInterface::class),
+            entryRepo: $entryRepo,
+        );
+
+        $service->updateEntryDate($entry, new \DateTimeImmutable('2026-04-01'));
+
+        self::assertSame('2026-04-01', $entry->getDate()->format('Y-m-d'));
+        self::assertSame(1, $entry->getDocumentNumber());
     }
 
     public function testCreateEntriesFromInvoiceThrowsWhenBatchClosed(): void
@@ -305,6 +352,29 @@ final class BookingJournalServiceTest extends TestCase
         $entries = $this->runWithPositions([], [$p], $revenue, null);
 
         self::assertSame(BookingEntry::SOURCE_WORKFLOW, $entries[0]->getSourceType());
+    }
+
+    public function testCreateEntriesFromInvoiceCanUseExplicitDateAndSource(): void
+    {
+        $bank = $this->makeAccount('1200', 'Bank');
+        $revenue = $this->makeAccount('8300', 'Erlöse 7%');
+        $apt = $this->makeApartment(100.0, 7.0);
+
+        $entries = $this->runWithPositions(
+            [$apt],
+            [],
+            $revenue,
+            null,
+            debitAccount: $bank,
+            bookingDate: new \DateTimeImmutable('2026-05-12'),
+            sourceType: BookingEntry::SOURCE_MANUAL,
+        );
+
+        self::assertCount(1, $entries);
+        self::assertSame($bank, $entries[0]->getDebitAccount());
+        self::assertSame('2026-05-12', $entries[0]->getDate()->format('Y-m-d'));
+        self::assertSame(BookingEntry::SOURCE_MANUAL, $entries[0]->getSourceType());
+        self::assertSame(5, $entries[0]->getBookingBatch()->getMonth());
     }
 
     // ── calculateSums ↔ journal consistency ──────────────────────────
@@ -512,10 +582,14 @@ final class BookingJournalServiceTest extends TestCase
         ?string $remark = null,
         ?AccountingSettings $settings = null,
         ?BookingEntryRepository $entryRepo = null,
+        ?AccountingAccount $debitAccount = null,
+        ?\DateTimeInterface $bookingDate = null,
+        string $sourceType = BookingEntry::SOURCE_WORKFLOW,
     ): array {
         $cash = $this->makeAccount('1000', 'Kasse');
 
-        $batch = (new BookingBatch())->setYear(2026)->setMonth(4);
+        $targetDate = null !== $bookingDate ? \DateTime::createFromInterface($bookingDate) : new \DateTime();
+        $batch = (new BookingBatch())->setYear((int) $targetDate->format('Y'))->setMonth((int) $targetDate->format('n'));
 
         $invoice = $this->createStub(Invoice::class);
         $invoice->method('getAppartments')->willReturn(new ArrayCollection($apartments));
@@ -560,7 +634,7 @@ final class BookingJournalServiceTest extends TestCase
         $settingsService->method('getActivePreset')->willReturn(null);
         $settingsService->method('getSettings')->willReturn($settings ?? new AccountingSettings());
 
-        $debit = $fallbackCredit ? null : $cash;
+        $debit = $debitAccount ?? ($fallbackCredit ? null : $cash);
 
         return $this->createService(
             batchRepo: $batchRepo,
@@ -568,7 +642,7 @@ final class BookingJournalServiceTest extends TestCase
             accountRepo: $accountRepo,
             taxRateRepo: $taxRateRepo,
             settingsService: $settingsService,
-        )->createEntriesFromInvoice($invoice, $debit, $fallbackCredit, $remark);
+        )->createEntriesFromInvoice($invoice, $debit, $fallbackCredit, $remark, $bookingDate, $sourceType);
     }
 
     private function makeApartment(float $price, float $vat): InvoiceAppartment

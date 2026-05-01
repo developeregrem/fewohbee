@@ -1,0 +1,349 @@
+accounting:
+  accounts:
+    iban: IBAN dieses Bankkontos
+    iban.help: Erlaubt automatische Zuordnung beim Import von Kontoauszügen.
+
+  bank_import:
+    title: Kontoauszug-Import
+    subtitle: Bankumsätze einlesen und ins Buchungsjournal überführen.
+
+    drafts:
+      title: Offene Imports
+      file: Datei
+      account: Bankkonto
+      period: Zeitraum
+      lines: Zeilen
+      created: Hochgeladen
+      open: Öffnen
+      discard: Verwerfen
+      account_missing: (Bankkonto wurde gelöscht)
+
+    draft:
+      not_found: Dieser Import-Entwurf wurde nicht gefunden (Sitzung möglicherweise abgelaufen).
+      account_missing: Das Bankkonto zu diesem Entwurf existiert nicht mehr — Entwurf wurde verworfen.
+      discarded: Entwurf verworfen.
+      session_required: Bankimport-Entwürfe benötigen eine aktive HTTP-Session.
+
+    parser:
+      warning:
+        row_skipped: 'Zeile %line% übersprungen: %message%'
+      error:
+        profile_required: Für den generischen CSV-Parser wird ein CSV-Profil benötigt.
+        file_read_failed: 'Konnte Datei nicht lesen: %path%'
+        temp_stream_failed: Konnte temporären Speicher-Stream nicht öffnen.
+        invalid_date: 'Ungültiges Datum "%value%" (erwartet: %format%).'
+        amount_parse_failed: Betrag konnte nicht geparst werden.
+        required_column: 'Profil benötigt eine Spalten-Zuordnung für "%field%".'
+        required_separate_columns: Profil mit separaten Spalten benötigt "amountDebit" und "amountCredit".
+        format_not_registered: 'Kein Parser für Format "%format%" registriert. Verfügbar: %available%'
+        none_available: keine
+
+    upload:
+      title: Neuen Kontoauszug hochladen
+      submit: Datei einlesen
+      bank_account: Bankkonto
+      bank_account.placeholder: Bitte wählen…
+      bank_account.help: |
+        Auf dieses Sachkonto werden die Buchungen gegengebucht. Bei Eingängen
+        wird es automatisch als Soll-Konto vorausgefüllt, bei Ausgängen als
+        Haben-Konto. Du musst dann nur noch die jeweils andere Seite zuordnen.
+      csv_profile: CSV-Profil
+      csv_profile.placeholder: Bitte wählen…
+      file: CSV-Datei
+      file.invalid_type: Bitte eine CSV-Datei hochladen.
+      flash:
+        invalid: Eingabe unvollständig — bitte alle Felder prüfen.
+        parse_failed: 'CSV konnte nicht eingelesen werden: %message%'
+        no_lines: Die Datei enthielt keine erkennbaren Buchungszeilen — passt das gewählte Profil zur Datei?
+        iban_mismatch: 'Achtung: IBAN in der Datei (%file%) weicht vom hinterlegten Bankkonto (%account%) ab.'
+
+    preview:
+      title: Vorschau Kontoauszug
+      empty: Keine Buchungen in dieser Datei.
+      warnings: Beim Einlesen aufgetretene Hinweise
+      remark_placeholder: Bemerkung
+      toggle_ignore: Diese Zeile vom Import ausschließen
+      select_all: Alle sichtbaren Zeilen auswählen
+      update_failed: Aktualisierung fehlgeschlagen.
+      save_failed: Speichern fehlgeschlagen.
+      error_prefix: 'Fehler: %message%'
+      filter:
+        all: Alle
+        pending: Offen
+        ready: Bereit
+        duplicate: Duplikate
+        ignored: Ignoriert
+        rule: Mit Regel
+        invoice: Mit Rechnung
+      bulk:
+        ignore: Markierte ignorieren
+        unignore: Markierte einbeziehen
+        account_placeholder: Konto wählen
+        assign_debit: → Soll-Konto setzen
+        assign_credit: → Haben-Konto setzen
+        selected_count: '%count% markiert'
+      col:
+        status: Status
+        date: Datum
+        counterparty: Gegenpartei
+        purpose: Verwendungszweck
+        amount: Betrag
+        debit: Soll-Konto
+        credit: Haben-Konto
+        tax_rate: Steuersatz
+        remark: Bemerkung
+      duplicate:
+        help: Bereits in einem früheren Import übernommen.
+      ignored:
+        help: Vom Import ausgeschlossen.
+      ready:
+        help: Bereit zur Buchung.
+      pending:
+        help: Noch nicht zugeordnet.
+      matched_invoice: Erkannte Rechnung anhand des Verwendungszwecks.
+      invoice_matching_disabled:
+        title: Automatische Rechnungserkennung ist deaktiviert.
+        help: In den Journal-Einstellungen sind keine Beispiel-Rechnungsnummern hinterlegt. Trage dort Beispiele ein, damit Rechnungen im Verwendungszweck erkannt werden können.
+      invoice_accounts:
+        label: aus Rechnung
+        help: Die Haben-Konten werden aus den Rechnungspositionen, Steuersätzen und Erlöskonten gebildet.
+      invoice_tax_rate:
+        label: aus Rechnung
+        help: Die Steuersätze werden aus den Rechnungspositionen übernommen.
+      overlap_warning:
+        message: 'Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchte Import(e), die den Zeitraum %from% bis %to% überschneiden: %imports%%more%'
+        import: '%from%–%to% (gebucht am %committedAt%, %committed% Zeilen übernommen)'
+        more: ' und %count% weitere'
+
+    commit:
+      button: Jetzt buchen
+      confirm: '%count% Zeilen werden ins Buchungsjournal übernommen. Fortfahren?'
+      summary:
+        ready: bereit
+        pending: noch offen
+        ignored: ignoriert
+        duplicate: Duplikate
+      flash:
+        done: 'Übernommen: %committed% gebucht, %redated% Datum aktualisiert, %ignored% ignoriert, %duplicates% Duplikate.'
+        failed: 'Fehler beim Buchen: %message%'
+
+    split:
+      title: Buchung aufteilen
+      intro: |
+        Teile diese Buchung in mehrere Teilbuchungen auf — z. B. wenn der
+        Verwendungszweck mehrere Posten enthält (Zinsen, Provision, Entgelte).
+      original_amount: Betrag der Bankzeile
+      assigned_sum: Summe der Aufteilung
+      add_row: Weitere Aufteilung hinzufügen
+      mode:
+        amount: Festbetrag
+        percent: Prozent
+        remainder: Restbetrag
+      delta:
+        remainder: 'Rest: %amount%'
+        too_much: '%amount% zu viel'
+        open: '+ %amount% offen'
+
+    rule:
+      title: Als Regel speichern
+      intro: |
+        Speichere die Konten-Zuordnung dieser Zeile als Regel — beim nächsten
+        Import werden gleichartige Zeilen automatisch befüllt.
+      name: Name der Regel
+      default_name: Regel
+      name.placeholder: z.B. PayPal Ausgaben
+      save: Regel speichern
+      remark_template: Bemerkung beim automatischen Buchen
+      remark_template.placeholder: 'z.B. {counterparty} – Zahlung'
+      remark_template.help: |
+        Platzhalter: {counterparty} {purpose} {date} {invoiceNumber}
+      priority: Priorität
+      priority.help: Höher = wird zuerst geprüft. 50 ist ein guter Standardwert.
+      scope_to_account: Nur für dieses Bankkonto anwenden
+      validation:
+        condition_required: Mindestens eine Bedingung wählen.
+        name_required: Name angeben.
+      section:
+        conditions: Wann soll die Regel greifen?
+        action: Was soll passieren?
+        scope: Sonstiges
+      cond:
+        counterparty: Gegenpartei enthält
+        iban: IBAN ist
+        direction: Richtung ist
+        purpose: Verwendungszweck enthält
+        purpose.placeholder: 'z. B. "Rechnung", "Lohn"'
+      direction:
+        in: Eingang
+        out: Ausgang
+      rule_applied:
+        help: Eine Regel hat diese Zeile automatisch befüllt.
+      split:
+        help: Aufgeteilt auf mehrere Buchungen.
+      count:
+        total: gesamt
+        pending: offen
+        ready: bereit
+        duplicate: Duplikate
+        ignored: ignoriert
+
+    rules:
+      title: Import-Regeln
+      subtitle: |
+        Regeln befüllen passende Bankzeilen beim nächsten Import automatisch.
+        Neue Regeln entstehen aus einer konkreten Zeile in der Vorschau über
+        „Als Regel speichern".
+      empty: Noch keine Regeln gespeichert.
+      edit: Regel bearbeiten
+      edit.help: Hier kannst du Name, Priorität und Geltungsbereich anpassen.
+      edit.recreate_hint: |
+        Bedingungen und Aktion einer Regel werden in der Import-Vorschau
+        neu erfasst — falls du sie ändern willst, lösche die Regel und
+        erstelle sie aus einer neuen Bankzeile heraus.
+      and: UND
+      conditions_empty: Keine Bedingungen — Regel greift auf jede Zeile.
+      create_hint: |
+        Neue Regeln entstehen direkt im Import — beim Klick auf „Als Regel
+        speichern" in der Vorschau.
+      scope:
+        global: Alle Bankkonten
+      col:
+        priority: Prio
+        name: Name
+        scope: Bankkonto
+        conditions: Bedingungen
+        action: Aktion
+        actions: Aktionen
+      action:
+        ignore: Ignorieren
+        split: Aufteilen (%count% Teile)
+        enable: Aktivieren
+        disable: Deaktivieren
+      field:
+        name: Name
+        description: Beschreibung
+        priority: Priorität
+        priority.help: Höher = wird zuerst geprüft. 50 ist ein guter Standardwert.
+        enabled: Aktiv
+        bank_account: Bankkonto
+        bank_account.help: |
+          Leer lassen, damit die Regel auf alle Bankkonten greift —
+          oder ein Konto wählen, um sie auf dieses Konto einzuschränken.
+        bank_account.global: Alle Bankkonten (global)
+      field_label:
+        counterparty_name: Gegenpartei
+        counterparty_iban: IBAN
+        purpose: Verwendungszweck
+        amount: Betrag
+        direction: Richtung
+      op:
+        contains: enthält
+        not_contains: enthält nicht
+        equals: ist gleich
+        regex: passt auf Muster
+        gt: ist grösser als
+        lt: ist kleiner als
+        between: liegt zwischen
+      section:
+        basics: Grunddaten
+        conditions: Bedingungen
+        action: Aktion
+      flash:
+        updated: Regel aktualisiert.
+        deleted: Regel gelöscht.
+
+    profile:
+      title: CSV-Profile für Kontoauszüge
+      subtitle: |
+        Definiere für jede Bank, wie deren CSV-Export aussieht – Spalten,
+        Datums- und Zahlenformat. Diese Profile werden beim Hochladen ausgewählt.
+      add: Profil hinzufügen
+      edit: Profil bearbeiten
+      empty: Noch keine CSV-Profile angelegt.
+      actions: Aktionen
+
+      name: Name
+      description: Beschreibung
+      delimiter: Trennzeichen
+      enclosure: Texttrenner
+      encoding: Zeichensatz
+      header_skip: Kopfzeilen
+      header_skip.help: Anzahl Zeilen oberhalb der Spaltenüberschrift (Konto-Info, Zeitraum, …).
+      has_header_row: Hat Spaltenüberschrift
+      date_format: Datumsformat
+      date_format.help: 'd=Tag, m=Monat, Y=4-stelliges Jahr, y=2-stelliges Jahr. Beispiel: d.m.Y → 24.04.2026'
+      amount_decimal_separator: Dezimaltrenner
+      amount_thousands_separator: Tausendertrenner
+      direction_mode: Vorzeichen
+      direction_mode.help: |
+        "Vorzeichenbehaftet" = Eingang positiv, Ausgang negativ in einer Spalte.
+        "Getrennte Spalten" = je eine Spalte für Soll- und Haben-Beträge.
+      direction:
+        signed: Vorzeichenbehaftet (eine Spalte)
+        separate_columns: Getrennte Spalten (Soll/Haben)
+      iban_source_line: Zeile mit Konto-IBAN
+      iban_source_line.help: 0-basierte Zeilennummer; leer = nicht vorhanden.
+      period_source_line: Zeile mit Zeitraum
+      period_source_line.help: 0-basierte Zeilennummer; leer = nicht vorhanden.
+
+      help:
+        intro: |
+          Lege fest, wie die CSV-Datei deiner Bank aussieht. Rechts siehst
+          du an einem Beispiel-Auszug, wofür die einzelnen Felder
+          gebraucht werden.
+
+      section:
+        basics: Grunddaten
+        csv: CSV-Format
+        values: Werte-Format
+        header: Aus Datei-Kopf lesen (optional)
+        header.help: |
+          Manche Banken schreiben oben in die Datei Konto-IBAN und Zeitraum.
+          Wenn deine Bank das tut, gib hier die jeweiligen Zeilennummern
+          (0-basiert) an — sonst leer lassen.
+        columns: Spalten-Zuordnung
+        columns.help: |
+          Pro Feld die 0-basierte Spaltennummer aus deiner CSV eintragen.
+          Pflicht sind Buchungsdatum und Betrag (oder Soll-/Haben-Spalten,
+          falls deine Bank getrennte Spalten benutzt). Felder leer lassen,
+          wenn die Spalte nicht existiert.
+
+      example:
+        title: Beispiel Girokonto
+        intro: |
+          So sieht ein typischer CSV-Export aus. Die Markierungen zeigen,
+          welche Werte aus welcher Zeile bzw. Spalte gelesen werden.
+        iban: Konto-IBAN (oben in der Datei)
+        period: Zeitraum
+        dates: Buchungs- und Wertstellungsdatum
+        context: Gegenpartei und Verwendungszweck
+        amount: Betrag (mit Vorzeichen)
+        signed_hint: vorzeichenbehaftet
+        header_skip: Kopfzeilen
+        header_skip.help: |
+          Vier Zeilen mit Konto-Info, dann eine Zeile mit den Spaltennamen,
+          dann die eigentlichen Buchungen.
+
+      col:
+        group:
+          required: Pflichtfelder
+          separate: Bei getrennten Soll-/Haben-Spalten
+          context: Empfohlen (für Vorschau und Regeln)
+          optional: Optionale Felder
+        book_date: Buchungsdatum
+        value_date: Wertstellung
+        counterparty_name: Gegenpartei (Name)
+        counterparty_iban: Gegenpartei (IBAN)
+        purpose: Verwendungszweck
+        amount: Betrag
+        amount_debit: Soll-Betrag
+        amount_credit: Haben-Betrag
+        end_to_end_id: Kundenreferenz
+        mandate_reference: Mandatsreferenz
+        creditor_id: Gläubiger-ID
+
+      flash:
+        created: Profil angelegt.
+        updated: Profil aktualisiert.
+        deleted: Profil gelöscht.
+      form_load_failed: Formular konnte nicht geladen werden.

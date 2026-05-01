@@ -1,0 +1,383 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.bank_import.preview.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .bi-preview .form-select-sm,
+    .bi-preview .form-control-sm { font-size: .8125rem; }
+    .bi-preview .table > tbody > tr > td { vertical-align: middle; }
+    .bi-preview tr.is-saving td { transition: background-color .25s; }
+    .bi-preview tr.is-saving { background-color: rgba(255, 152, 0, .08); }
+    .bi-preview tr.is-saved   { background-color: rgba(76, 175, 80, .08); transition: background-color 1.2s; }
+    .bi-preview .col-account { width: 12rem; }
+    .bi-preview .col-remark  { min-width: 16rem; }
+    .bi-preview .col-status  { width: 7.5rem; }
+    .bi-preview .col-amount  { width: 7rem; }
+    .bi-preview .col-tax     { width: 10rem; }
+</style>
+<div class="container-fluid bi-preview"
+     data-controller="bank-import-preview"
+     data-bank-import-preview-line-url-prefix-value="{{ path('bank_import.preview', {'sessionImportId': state.sessionImportId}) }}/line/"
+     data-bank-import-preview-bulk-url-value="{{ path('bank_import.bulk', {'sessionImportId': state.sessionImportId}) }}"
+     data-bank-import-preview-discard-redirect-url-value="{{ path('bank_import.index') }}"
+     data-bank-import-preview-csrf-value="{{ csrf_token('bank_import_line_' ~ state.sessionImportId) }}"
+     data-bank-import-preview-locale-value="{{ app.request.locale|default(app.locale)|replace({'_': '-'}) }}"
+     data-bank-import-preview-currency-symbol-value="{{ currency_symbol }}"
+     data-bank-import-preview-bulk-selected-label-value="{{ 'accounting.bank_import.preview.bulk.selected_count'|trans|e('html_attr') }}"
+     data-bank-import-preview-status-pending-title-value="{{ 'accounting.bank_import.preview.pending.help'|trans|e('html_attr') }}"
+     data-bank-import-preview-status-duplicate-title-value="{{ 'accounting.bank_import.preview.duplicate.help'|trans|e('html_attr') }}"
+     data-bank-import-preview-status-ignored-title-value="{{ 'accounting.bank_import.preview.ignored.help'|trans|e('html_attr') }}"
+     data-bank-import-preview-status-ready-title-value="{{ 'accounting.bank_import.preview.ready.help'|trans|e('html_attr') }}"
+     data-bank-import-preview-update-failed-message-value="{{ 'accounting.bank_import.preview.update_failed'|trans|e('html_attr') }}"
+     data-bank-import-preview-save-failed-message-value="{{ 'accounting.bank_import.preview.save_failed'|trans|e('html_attr') }}"
+     data-bank-import-preview-error-prefix-value="{{ 'accounting.bank_import.preview.error_prefix'|trans|e('html_attr') }}"
+     data-bank-import-preview-split-remainder-label-value="{{ 'accounting.bank_import.split.delta.remainder'|trans|e('html_attr') }}"
+     data-bank-import-preview-split-too-much-label-value="{{ 'accounting.bank_import.split.delta.too_much'|trans|e('html_attr') }}"
+     data-bank-import-preview-split-open-label-value="{{ 'accounting.bank_import.split.delta.open'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-default-name-value="{{ 'accounting.bank_import.rule.default_name'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-condition-required-message-value="{{ 'accounting.bank_import.rule.validation.condition_required'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-name-required-message-value="{{ 'accounting.bank_import.rule.validation.name_required'|trans|e('html_attr') }}">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">
+                <i class="fas fa-file-csv me-2 text-muted"></i>{{ state.originalFilename }}
+            </h4>
+            <p class="text-muted small mb-0">
+                {{ bankAccount.label }}
+                {% if state.periodFrom and state.periodTo %}
+                    · {{ state.periodFrom|date('d.m.Y') }} – {{ state.periodTo|date('d.m.Y') }}
+                {% endif %}
+                {% if state.sourceIban %}· {{ state.sourceIban }}{% endif %}
+            </p>
+        </div>
+        <div class="col-auto">
+            {% set id = state.sessionImportId %}
+            {% set targetUrl = path('bank_import.discard', {'sessionImportId': state.sessionImportId}) %}
+            {% use "common/delete_popover.html.twig" %}
+            <button type="button" class="btn btn-outline-danger btn-sm"
+                    data-popover="delete"
+                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                <i class="fas fa-trash"></i> {{ 'accounting.bank_import.drafts.discard'|trans }}
+            </button>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    {# ── Filter chips ─────────────────────────────────────────── #}
+    <div class="d-flex flex-wrap gap-1 mb-2 align-items-center">
+        {% set filters = [
+            {'key': 'all',       'label': 'accounting.bank_import.preview.filter.all',       'count': counts.total,     'class': 'btn-outline-secondary'},
+            {'key': 'pending',   'label': 'accounting.bank_import.preview.filter.pending',   'count': counts.pending,   'class': 'btn-outline-warning'},
+            {'key': 'ready',     'label': 'accounting.bank_import.preview.filter.ready',     'count': counts.ready,     'class': 'btn-outline-success'},
+            {'key': 'duplicate', 'label': 'accounting.bank_import.preview.filter.duplicate', 'count': counts.duplicate, 'class': 'btn-outline-info'},
+            {'key': 'ignored',   'label': 'accounting.bank_import.preview.filter.ignored',   'count': counts.ignored,   'class': 'btn-outline-dark'},
+            {'key': 'rule',      'label': 'accounting.bank_import.preview.filter.rule',      'count': null,             'class': 'btn-outline-primary'},
+            {'key': 'invoice',   'label': 'accounting.bank_import.preview.filter.invoice',   'count': null,             'class': 'btn-outline-primary'},
+        ] %}
+        {% for f in filters %}
+            <button type="button"
+                    class="btn btn-sm filter-chip {{ f.class }}{% if f.key == 'all' %} active{% endif %}"
+                    data-action="click->bank-import-preview#setFilter"
+                    data-filter="{{ f.key }}"
+                    data-bank-import-preview-target="filterChip">
+                {{ f.label|trans }}
+                {% if f.count is not null %}<span class="badge text-bg-light ms-1">{{ f.count }}</span>{% endif %}
+            </button>
+        {% endfor %}
+    </div>
+
+    {# ── Bulk action bar ──────────────────────────────────────── #}
+    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center small text-muted"
+         data-bank-import-preview-target="bulkBar"
+         hidden>
+        <span data-bank-import-preview-target="bulkCount"></span>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-action="click->bank-import-preview#bulkIgnore">
+            <i class="fas fa-eye-slash"></i> {{ 'accounting.bank_import.preview.bulk.ignore'|trans }}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-action="click->bank-import-preview#bulkUnignore">
+            <i class="fas fa-eye"></i> {{ 'accounting.bank_import.preview.bulk.unignore'|trans }}
+        </button>
+        <div class="vr"></div>
+        <select class="form-select form-select-sm" style="max-width: 12rem"
+                data-bank-import-preview-target="bulkAccountSelect">
+            <option value="">— {{ 'accounting.bank_import.preview.bulk.account_placeholder'|trans }} —</option>
+            {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.label }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-action="click->bank-import-preview#bulkAssignDebit">
+            {{ 'accounting.bank_import.preview.bulk.assign_debit'|trans }}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-action="click->bank-import-preview#bulkAssignCredit">
+            {{ 'accounting.bank_import.preview.bulk.assign_credit'|trans }}
+        </button>
+    </div>
+
+    {% if state.warnings is not empty %}
+        <div class="alert alert-warning alert-dismissible fade show small" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ 'button.close'|trans }}"></button>
+            <strong>{{ 'accounting.bank_import.preview.warnings'|trans }}</strong>
+            <ul class="mb-0">
+                {% for warning in state.warnings %}<li>{{ warning }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if invoiceMatchingDisabled %}
+        <div class="alert alert-warning alert-dismissible fade show small d-flex gap-2 align-items-start" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ 'button.close'|trans }}"></button>
+            <i class="fas fa-exclamation-triangle mt-1"></i>
+            <div>
+                <strong>{{ 'accounting.bank_import.preview.invoice_matching_disabled.title'|trans }}</strong>
+                <div>{{ 'accounting.bank_import.preview.invoice_matching_disabled.help'|trans }}</div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light small">
+                    <tr>
+                        <th style="width: 2rem;">
+                            <input type="checkbox" class="form-check-input"
+                                   data-action="change->bank-import-preview#toggleAll"
+                                   data-bank-import-preview-target="selectAll"
+                                   title="{{ 'accounting.bank_import.preview.select_all'|trans }}">
+                        </th>
+                        <th class="col-status">{{ 'accounting.bank_import.preview.col.status'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.preview.col.date'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.preview.col.counterparty'|trans }}</th>
+                        <th>{{ 'accounting.bank_import.preview.col.purpose'|trans }}</th>
+                        <th class="text-end col-amount">{{ 'accounting.bank_import.preview.col.amount'|trans }}</th>
+                        <th class="col-account">{{ 'accounting.bank_import.preview.col.debit'|trans }}</th>
+                        <th class="col-account">{{ 'accounting.bank_import.preview.col.credit'|trans }}</th>
+                        <th class="col-tax">{{ 'accounting.bank_import.preview.col.tax_rate'|trans }}</th>
+                        <th class="col-remark">{{ 'accounting.bank_import.preview.col.remark'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for line in state.lines %}
+                    {% set readonly = line.isDuplicate %}
+                    <tr data-bank-import-preview-target="row"
+                        data-idx="{{ line.idx }}"
+                        data-status="{{ line.status }}"
+                        data-rule="{{ line.appliedRuleId ? '1' : '0' }}"
+                        data-invoice="{{ line.matchedInvoiceId ? '1' : '0' }}"
+                        class="{% if line.isDuplicate or line.isIgnored %}table-secondary text-muted{% endif %}">
+                        <td>
+                            <input type="checkbox" class="form-check-input"
+                                   data-action="change->bank-import-preview#rowSelectChange"
+                                   data-bank-import-preview-target="rowCheckbox"
+                                   {% if readonly %}disabled{% endif %}>
+                        </td>
+
+                        {# Status badges (re-rendered by JS when status changes) #}
+                        <td data-bank-import-preview-target="statusCell">
+                            {% include 'BookingJournal/BankImport/_status_badge.html.twig' with {'line': line} only %}
+                            {% if line.appliedRuleId %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1"
+                                      data-bs-toggle="tooltip"
+                                      title="{{ 'accounting.bank_import.rule.rule_applied.help'|trans }}">
+                                    <i class="fas fa-bolt"></i>
+                                </span>
+                            {% endif %}
+                            {% if line.splits is not empty %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"
+                                      data-bs-toggle="tooltip"
+                                      title="{{ 'accounting.bank_import.rule.split.help'|trans }}">
+                                    <i class="fas fa-code-branch"></i> {{ line.splits|length }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="small text-nowrap">{{ line.bookDate|date('d.m.Y') }}</td>
+
+                        <td class="small">
+                            <div>{{ line.counterpartyName ?: '—' }}</div>
+                            {% if line.counterpartyIban %}
+                                <div class="text-muted">{{ line.counterpartyIban }}</div>
+                            {% endif %}
+                        </td>
+
+                        <td class="small">
+                            <span class="d-inline-block text-truncate" style="max-width: 24rem;"
+                                  data-bs-toggle="tooltip" title="{{ line.purpose }}">
+                                {{ line.purpose }}
+                            </span>
+                            {% if line.matchedInvoiceNumber %}
+                                <div class="mt-1">
+                                    <span class="badge bg-primary"
+                                          data-bs-toggle="tooltip"
+                                          title="{{ 'accounting.bank_import.preview.matched_invoice'|trans }}">
+                                        <i class="fas fa-link"></i> {{ line.matchedInvoiceNumber }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-end text-nowrap fw-bold {% if line.amount|first == '-' %}text-danger{% else %}text-success{% endif %}">
+                            {{ line.amount|number_format(2, ',', '.') }} €
+                        </td>
+
+                        {# Debit account #}
+                        <td>
+                            <select class="form-select form-select-sm"
+                                    data-action="change->bank-import-preview#fieldChange"
+                                    data-field="debitAccountId"
+                                    {% if readonly %}disabled{% endif %}>
+                                <option value="">—</option>
+                                {% for account in accounts %}
+                                    <option value="{{ account.id }}"
+                                        {% if line.userDebitAccountId == account.id %}selected{% endif %}>
+                                        {{ account.label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+
+                        {# Credit account #}
+                        <td>
+                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty %}
+                                <div class="small text-muted"
+                                     data-bs-toggle="tooltip"
+                                     title="{{ 'accounting.bank_import.preview.invoice_accounts.help'|trans }}">
+                                    <i class="fas fa-receipt me-1"></i>{{ 'accounting.bank_import.preview.invoice_accounts.label'|trans }}
+                                </div>
+                            {% else %}
+                                <select class="form-select form-select-sm"
+                                        data-action="change->bank-import-preview#fieldChange"
+                                        data-field="creditAccountId"
+                                        {% if readonly %}disabled{% endif %}>
+                                    <option value="">—</option>
+                                    {% for account in accounts %}
+                                        <option value="{{ account.id }}"
+                                            {% if line.userCreditAccountId == account.id %}selected{% endif %}>
+                                            {{ account.label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </td>
+
+                        {# Tax rate #}
+                        <td>
+                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty %}
+                                <div class="small text-muted"
+                                     data-bs-toggle="tooltip"
+                                     title="{{ 'accounting.bank_import.preview.invoice_tax_rate.help'|trans }}">
+                                    <i class="fas fa-receipt me-1"></i>{{ 'accounting.bank_import.preview.invoice_tax_rate.label'|trans }}
+                                </div>
+                            {% else %}
+                                <select class="form-select form-select-sm"
+                                        data-action="change->bank-import-preview#fieldChange"
+                                        data-field="taxRateId"
+                                        {% if readonly %}disabled{% endif %}>
+                                    <option value="">—</option>
+                                    {% for rate in taxRates %}
+                                        <option value="{{ rate.id }}"
+                                            {% if line.userTaxRateId == rate.id %}selected{% endif %}>
+                                            {{ rate.name }} ({{ rate.rateFloat|number_format(2, ',', '.') }}%)
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </td>
+
+                        {# Remark + actions #}
+                        <td>
+                            <div class="d-flex gap-1 align-items-center">
+                                <input type="text" class="form-control form-control-sm"
+                                       value="{{ line.userRemark ?? '' }}"
+                                       placeholder="{{ 'accounting.bank_import.preview.remark_placeholder'|trans }}"
+                                       maxlength="255"
+                                       data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
+                                       data-field="remark"
+                                       {% if readonly %}disabled{% endif %}>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="{{ 'accounting.bank_import.split.title'|trans }}"
+                                        data-action="click->bank-import-preview#openSplit"
+                                        {% if readonly %}disabled{% endif %}>
+                                    <i class="fas fa-code-branch"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        title="{{ 'accounting.bank_import.rule.title'|trans }}"
+                                        data-action="click->bank-import-preview#openRule"
+                                        {% if readonly %}disabled{% endif %}>
+                                    <i class="fas fa-bolt"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm {% if line.isIgnored %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+                                        title="{{ 'accounting.bank_import.preview.toggle_ignore'|trans }}"
+                                        data-action="click->bank-import-preview#toggleIgnore"
+                                        data-bank-import-preview-target="ignoreButton"
+                                        {% if readonly %}disabled{% endif %}>
+                                    <i class="fas {% if line.isIgnored %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">
+                            {{ 'accounting.bank_import.preview.empty'|trans }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Commit bar — sticky, shows progress and the commit action. #}
+    <form method="post" class="d-flex justify-content-between align-items-center my-3 p-2 bg-light border rounded"
+          action="{{ path('bank_import.commit', {'sessionImportId': state.sessionImportId}) }}"
+          data-controller="confirm-submit"
+          data-confirm-submit-message-value="{{ 'accounting.bank_import.commit.confirm'|trans({'%count%': counts.ready})|e('html_attr') }}"
+          data-confirm-submit-confirm-label-value="{{ 'button.continue'|trans|e('html_attr') }}"
+          data-confirm-submit-cancel-label-value="{{ 'button.cancel'|trans|e('html_attr') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('bank_import_line_' ~ state.sessionImportId) }}">
+        <div class="small">
+            <strong>{{ counts.ready }}</strong> {{ 'accounting.bank_import.commit.summary.ready'|trans }}
+            · <strong>{{ counts.pending }}</strong> {{ 'accounting.bank_import.commit.summary.pending'|trans }}
+            · <strong>{{ counts.ignored }}</strong> {{ 'accounting.bank_import.commit.summary.ignored'|trans }}
+            · <strong>{{ counts.duplicate }}</strong> {{ 'accounting.bank_import.commit.summary.duplicate'|trans }}
+        </div>
+        <button type="submit" class="btn btn-success" {% if counts.ready == 0 %}disabled{% endif %}>
+            <i class="fas fa-check-double me-1"></i> {{ 'accounting.bank_import.commit.button'|trans }}
+        </button>
+    </form>
+
+    {# JSON snapshot of every line — Stimulus reads it when opening modals. #}
+    <script type="application/json" data-bank-import-preview-target="linesData">
+        {{ state.lines|json_encode|raw }}
+    </script>
+
+    {% include 'BookingJournal/BankImport/_split_modal.html.twig' with {'accounts': accounts, 'taxRates': taxRates} only %}
+    {% include 'BookingJournal/BankImport/_rule_modal.html.twig' with {'accounts': accounts, 'taxRates': taxRates} only %}
+</div>
+{% endblock %}

@@ -110,8 +110,8 @@ class BookingEntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->select('
-                SUM(CASE WHEN da.isBankAccount = true THEN e.amount ELSE 0 END)
-                - SUM(CASE WHEN ca.isBankAccount = true THEN e.amount ELSE 0 END) AS balance
+                SUM(CASE WHEN da.isBankAccount = true THEN ABS(e.amount) ELSE 0 END)
+                - SUM(CASE WHEN ca.isBankAccount = true THEN ABS(e.amount) ELSE 0 END) AS balance
             ')
             ->join('e.bookingBatch', 'b')
             ->leftJoin('e.debitAccount', 'da')
@@ -133,8 +133,8 @@ class BookingEntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->select('
-                SUM(CASE WHEN da.isBankAccount = true THEN e.amount ELSE 0 END)
-                - SUM(CASE WHEN ca.isBankAccount = true THEN e.amount ELSE 0 END) AS balance
+                SUM(CASE WHEN da.isBankAccount = true THEN ABS(e.amount) ELSE 0 END)
+                - SUM(CASE WHEN ca.isBankAccount = true THEN ABS(e.amount) ELSE 0 END) AS balance
             ')
             ->leftJoin('e.debitAccount', 'da')
             ->leftJoin('e.creditAccount', 'ca')
@@ -155,8 +155,8 @@ class BookingEntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->select('
-                SUM(CASE WHEN da.isCashAccount = true THEN e.amount ELSE 0 END)
-                - SUM(CASE WHEN ca.isCashAccount = true THEN e.amount ELSE 0 END) AS balance
+                SUM(CASE WHEN da.isCashAccount = true THEN ABS(e.amount) ELSE 0 END)
+                - SUM(CASE WHEN ca.isCashAccount = true THEN ABS(e.amount) ELSE 0 END) AS balance
             ')
             ->join('e.bookingBatch', 'b')
             ->leftJoin('e.debitAccount', 'da')
@@ -178,8 +178,8 @@ class BookingEntryRepository extends ServiceEntityRepository
     {
         $result = $this->createQueryBuilder('e')
             ->select('
-                SUM(CASE WHEN da.isCashAccount = true THEN e.amount ELSE 0 END)
-                - SUM(CASE WHEN ca.isCashAccount = true THEN e.amount ELSE 0 END) AS balance
+                SUM(CASE WHEN da.isCashAccount = true THEN ABS(e.amount) ELSE 0 END)
+                - SUM(CASE WHEN ca.isCashAccount = true THEN ABS(e.amount) ELSE 0 END) AS balance
             ')
             ->leftJoin('e.debitAccount', 'da')
             ->leftJoin('e.creditAccount', 'ca')
@@ -202,8 +202,8 @@ class BookingEntryRepository extends ServiceEntityRepository
     {
         $rows = $this->createQueryBuilder('e')
             ->select('b.month AS month, '
-                .'SUM(CASE WHEN da.isCashAccount = true THEN e.amount ELSE 0 END) '
-                .'- SUM(CASE WHEN ca.isCashAccount = true THEN e.amount ELSE 0 END) AS delta')
+                .'SUM(CASE WHEN da.isCashAccount = true THEN ABS(e.amount) ELSE 0 END) '
+                .'- SUM(CASE WHEN ca.isCashAccount = true THEN ABS(e.amount) ELSE 0 END) AS delta')
             ->join('e.bookingBatch', 'b')
             ->leftJoin('e.debitAccount', 'da')
             ->leftJoin('e.creditAccount', 'ca')
@@ -229,7 +229,7 @@ class BookingEntryRepository extends ServiceEntityRepository
     public function getCashOpeningForYear(int $year): float
     {
         $result = $this->createQueryBuilder('e')
-            ->select('SUM(e.amount) AS balance')
+            ->select('SUM(ABS(e.amount)) AS balance')
             ->join('e.bookingBatch', 'b')
             ->leftJoin('e.debitAccount', 'da')
             ->where('b.year = :year')

@@ -104,8 +104,8 @@
                     <tr>
                         <td>{{ entry.date|date('d.m.Y') }}</td>
                         <td>{{ '%04d'|format(entry.documentNumber) }}</td>
-                        <td class="text-end">{{ isIncome ? entry.amount|number_format(2, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ isExpense ? entry.amount|number_format(2, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ isIncome ? entry.amountFloat|abs|number_format(2, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ isExpense ? entry.amountFloat|abs|number_format(2, ',', '.') : '' }}</td>
                         <td>
                             {% if isIncome and entry.creditAccount %}
                                 {{ entry.creditAccount.label }}
@@ -172,8 +172,8 @@
                     <tr>
                         <td>{{ entry.date|date('d.m.Y') }}</td>
                         <td>{{ '%04d'|format(entry.documentNumber) }}</td>
-                        <td class="text-end">{{ isIncome ? entry.amount|number_format(2, ',', '.') : '' }}</td>
-                        <td class="text-end">{{ isExpense ? entry.amount|number_format(2, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ isIncome ? entry.amountFloat|abs|number_format(2, ',', '.') : '' }}</td>
+                        <td class="text-end">{{ isExpense ? entry.amountFloat|abs|number_format(2, ',', '.') : '' }}</td>
                         <td>
                             {% if isIncome and entry.creditAccount %}
                                 {{ entry.creditAccount.label }}
