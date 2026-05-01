@@ -34,7 +34,7 @@ class CalendarImportService
         private readonly CacheInterface $cache,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly ReservationService $reservationService,
+        private readonly ReservationRepository $reservationRepository,
     ) {
     }
 
@@ -220,7 +220,7 @@ class CalendarImportService
             return self::SYNC_SKIP_PAST;
         }
 
-        $reservation = $this->getReservationRepository()->findOneByRefUidAndImport($uid, $import);
+        $reservation = $this->reservationRepository->findOneByRefUidAndImport($uid, $import);
         if ($reservation instanceof Reservation) {
             return $this->updateExistingReservation($import, $reservation, $start, $end, $event);
         }
@@ -271,15 +271,7 @@ class CalendarImportService
             return $this->handleConflict($import, $reservation, $start, $end, $event, $conflicts, true);
         }
 
-        $reservation->setStartDate($this->toDate($start));
-        $reservation->setEndDate($this->toDate($end));
-        $reservation->setReservationOrigin($import->getReservationOrigin());
-        $this->reservationService->changeStatus($reservation, $import->getReservationStatus(), flush: false);
-        $reservation->setRemark($event['DESCRIPTION'] ?? null);
-        $reservation->setRefUid($event['UID']);
-        $reservation->setIsConflict(false);
-        $reservation->setIsConflictIgnored(false);
-        $reservation->setCalendarSyncImport($import);
+        $this->updateExistingImportedReservation($reservation, $start, $end, false);
         $this->em->flush();
 
         return self::SYNC_OK;
@@ -329,15 +321,11 @@ class CalendarImportService
                 $conflict->setIsConflictIgnored(false);
             }
             $reservation = $existing ?? $this->buildReservation($import, $start, $end, $event, false);
-            $reservation->setStartDate($this->toDate($start));
-            $reservation->setEndDate($this->toDate($end));
-            $reservation->setReservationOrigin($import->getReservationOrigin());
-            $this->reservationService->changeStatus($reservation, $import->getReservationStatus(), flush: false);
-            $reservation->setRemark($event['DESCRIPTION'] ?? null);
-            $reservation->setRefUid($event['UID']);
-            $reservation->setIsConflict(false);
-            $reservation->setIsConflictIgnored(false);
-            $reservation->setCalendarSyncImport($import);
+            if ($isUpdate) {
+                $this->updateExistingImportedReservation($reservation, $start, $end, false);
+            } else {
+                $this->applyImportedReservationData($import, $reservation, $start, $end, $event, false);
+            }
             if (!$isUpdate) {
                 $this->em->persist($reservation);
             }
@@ -352,15 +340,11 @@ class CalendarImportService
                 return self::SYNC_SKIP_CONFLICT;
             }
             $conflictReservation = $existing ?? $this->buildReservation($import, $start, $end, $event, true);
-            $conflictReservation->setStartDate($this->toDate($start));
-            $conflictReservation->setEndDate($this->toDate($end));
-            $conflictReservation->setReservationOrigin($import->getReservationOrigin());
-            $this->reservationService->changeStatus($conflictReservation, $import->getReservationStatus(), flush: false);
-            $conflictReservation->setRemark($event['DESCRIPTION'] ?? null);
-            $conflictReservation->setRefUid($event['UID']);
-            $conflictReservation->setIsConflict(true);
-            $conflictReservation->setIsConflictIgnored(false);
-            $conflictReservation->setCalendarSyncImport($import);
+            if ($isUpdate) {
+                $this->updateExistingImportedReservation($conflictReservation, $start, $end, true);
+            } else {
+                $this->applyImportedReservationData($import, $conflictReservation, $start, $end, $event, true);
+            }
             if (!$isUpdate) {
                 $this->em->persist($conflictReservation);
             }
@@ -370,6 +354,39 @@ class CalendarImportService
         }
 
         return self::SYNC_SKIP_CONFLICT;
+    }
+
+    /** Update only feed-owned fields on an existing imported reservation. */
+    private function updateExistingImportedReservation(
+        Reservation $reservation,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        bool $isConflict
+    ): void {
+        $reservation->setStartDate($this->toDate($start));
+        $reservation->setEndDate($this->toDate($end));
+        $reservation->setIsConflict($isConflict);
+        $reservation->setIsConflictIgnored(false);
+    }
+
+    /** Apply full import defaults to a newly created imported reservation. */
+    private function applyImportedReservationData(
+        CalendarSyncImport $import,
+        Reservation $reservation,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        array $event,
+        bool $isConflict
+    ): void {
+        $reservation->setStartDate($this->toDate($start));
+        $reservation->setEndDate($this->toDate($end));
+        $reservation->setReservationOrigin($import->getReservationOrigin());
+        $reservation->setReservationStatus($import->getReservationStatus());
+        $reservation->setRemark($event['DESCRIPTION'] ?? null);
+        $reservation->setRefUid($event['UID']);
+        $reservation->setIsConflict($isConflict);
+        $reservation->setIsConflictIgnored(false);
+        $reservation->setCalendarSyncImport($import);
     }
 
     /** Build a reservation entity from import data. */
@@ -404,7 +421,7 @@ class CalendarImportService
         \DateTimeImmutable $end,
         ?Reservation $current
     ): array {
-        $reservations = $this->getReservationRepository()->loadReservationsForApartmentWithoutStartEnd(
+        $reservations = $this->reservationRepository->loadReservationsForApartmentWithoutStartEnd(
             $this->toDate($start),
             $this->toDate($end),
             $import->getApartment()
@@ -425,7 +442,7 @@ class CalendarImportService
     /** Check whether a conflict for the given UID was intentionally ignored. */
     private function hasIgnoredConflict(CalendarSyncImport $import, string $refUid): bool
     {
-        $reservation = $this->getReservationRepository()->findOneByRefUidAndImport($refUid, $import);
+        $reservation = $this->reservationRepository->findOneByRefUidAndImport($refUid, $import);
         if (!$reservation instanceof Reservation) {
             return false;
         }
@@ -440,7 +457,7 @@ class CalendarImportService
             return false;
         }
 
-        $blocking = $this->getReservationRepository()->loadReservationsForApartmentWithoutStartEnd(
+        $blocking = $this->reservationRepository->loadReservationsForApartmentWithoutStartEnd(
             $reservation->getStartDate(),
             $reservation->getEndDate(),
             $reservation->getAppartment()
@@ -463,12 +480,4 @@ class CalendarImportService
         return new \DateTime($date->format('Y-m-d'));
     }
 
-    /** Resolve the reservation repository from the entity manager. */
-    private function getReservationRepository(): ReservationRepository
-    {
-        /** @var ReservationRepository $repository */
-        $repository = $this->em->getRepository(Reservation::class);
-
-        return $repository;
-    }
 }
