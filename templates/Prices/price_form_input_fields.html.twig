@@ -329,7 +329,6 @@
             </div>
         </div>
 
-        {% set taxRates = [] %}
         {% set isMiscPriceType = price.type != 2 %}
         {% set configuredTaxRates = taxRates|default([]) %}
         {% set hasTaxRates = configuredTaxRates|length > 0 %}
