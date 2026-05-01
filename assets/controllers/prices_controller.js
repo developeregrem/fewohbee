@@ -1,5 +1,10 @@
 import { Controller } from '@hotwired/stimulus';
-import { iniStartOrEndDate, whenBootstrapAndIconsReady } from '../js/utils.js';
+import {
+    disposeTooltips,
+    enableTooltips,
+    iniStartOrEndDate,
+    whenBootstrapAndIconsReady,
+} from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -20,6 +25,7 @@ export default class extends Controller {
         this.initState();
         this.observePeriodList();
         this.initPopovers();
+        this.initTooltips();
     }
 
     async initPopovers() {
@@ -30,10 +36,15 @@ export default class extends Controller {
         });
     }
 
+    async initTooltips() {
+        await enableTooltips(this.element);
+    }
+
     disconnect() {
         if (this.periodObserver) {
             this.periodObserver.disconnect();
         }
+        disposeTooltips(this.element);
     }
 
     beforeSubmitAction(event) {
