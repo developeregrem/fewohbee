@@ -330,6 +330,8 @@
         </div>
 
         {% set isMiscPriceType = price.type != 2 %}
+        {% set configuredTaxRates = taxRates|default([]) %}
+        {% set hasTaxRates = configuredTaxRates|length > 0 %}
         <div class="accordion-item" id="package-wrap-{{ price.id }}"{% if not isMiscPriceType %} style="display:none"{% endif %}>
             <h2 class="accordion-header" id="headingFour-{{ price.id }}">
                 <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#collapseFour-{{ price.id }}" aria-expanded="false" aria-controls="collapseFour-{{ price.id }}">
@@ -351,6 +353,11 @@
                         </div>
                     </div>
                     <div id="package-body-{{ price.id }}"{% if not price.isPackage %} class="d-none"{% endif %}>
+                        {% if not hasTaxRates %}
+                            <div class="alert alert-warning py-2 small mb-3" role="alert">
+                                <i class="fas fa-exclamation-triangle"></i> {{ 'price.package.taxrates.empty'|trans }}
+                            </div>
+                        {% endif %}
                         <div class="table-responsive">
                             <table class="table table-sm align-middle" id="package-components-{{ price.id }}">
                                 <thead>
@@ -385,7 +392,7 @@
                                         <td><input type="text" class="form-control form-control-sm" name="component-desc-{{ price.id }}[{{ rowKey }}]" value="{{ component.description }}"></td>
                                         <td>
                                             <select class="form-select form-select-sm" name="component-vat-{{ price.id }}[{{ rowKey }}]">
-                                                {% for taxRate in taxRates|default([]) %}
+                                                {% for taxRate in configuredTaxRates %}
                                                     <option value="{{ taxRate.rateFloat }}"{% if component.vat == taxRate.rateFloat %} selected{% endif %}>{{ taxRate.name }}</option>
                                                 {% endfor %}
                                             </select>
@@ -430,7 +437,7 @@
             <td><input type="text" class="form-control form-control-sm" name="component-desc-{{ price.id }}[__KEY__]" value=""></td>
             <td>
                 <select class="form-select form-select-sm" name="component-vat-{{ price.id }}[__KEY__]">
-                    {% for taxRate in taxRates|default([]) %}
+                    {% for taxRate in configuredTaxRates %}
                         <option value="{{ taxRate.rateFloat }}">{{ taxRate.name }}</option>
                     {% endfor %}
                 </select>

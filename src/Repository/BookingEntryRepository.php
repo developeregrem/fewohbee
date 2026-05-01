@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\AccountingAccount;
 use App\Entity\BookingBatch;
 use App\Entity\BookingEntry;
+use App\Entity\TaxRate;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
@@ -50,6 +52,26 @@ class BookingEntryRepository extends ServiceEntityRepository
         }
 
         return new Paginator($qb->getQuery(), false);
+    }
+
+    public function countByTaxRate(TaxRate $taxRate): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.taxRate = :taxRate')
+            ->setParameter('taxRate', $taxRate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countByAccount(AccountingAccount $account): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.debitAccount = :account OR e.creditAccount = :account')
+            ->setParameter('account', $account)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**

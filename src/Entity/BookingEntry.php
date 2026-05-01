@@ -37,15 +37,15 @@ class BookingEntry
     private string $amount = '0.00';
 
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'RESTRICT')]
     private ?AccountingAccount $debitAccount = null;
 
     #[ORM\ManyToOne(targetEntity: AccountingAccount::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'RESTRICT')]
     private ?AccountingAccount $creditAccount = null;
 
     #[ORM\ManyToOne(targetEntity: TaxRate::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'RESTRICT')]
     private ?TaxRate $taxRate = null;
 
     #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]

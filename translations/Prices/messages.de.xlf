@@ -274,6 +274,18 @@
                 <source>price.package.add_row</source>
                 <target>Komponente hinzufügen</target>
             </trans-unit>
+            <trans-unit id="price.package.taxrates.empty">
+                <source>price.package.taxrates.empty</source>
+                <target>Es sind keine Steuersätze konfiguriert. Konfigurieren Sie zuerst Steuersätze in den Buchungsjournal-Einstellungen, bevor Sie Paket-Komponenten anlegen.</target>
+            </trans-unit>
+            <trans-unit id="price.package.overview.badge">
+                <source>price.package.overview.badge</source>
+                <target>Paket (%count%)</target>
+            </trans-unit>
+            <trans-unit id="price.package.overview.tooltip">
+                <source>price.package.overview.tooltip</source>
+                <target>Enthält %count% Paket-Komponenten.</target>
+            </trans-unit>
             <trans-unit id="price.package.sum_preview">
                 <source>price.package.sum_preview</source>
                 <target>Summenvorschau</target>

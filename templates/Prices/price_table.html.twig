@@ -14,7 +14,17 @@
     {% for price in prices %}
     {% if currentPrice.roomCategory == price.roomCategory %}
     <tr{% if price.active == false %} class="text-secondary"{% endif %}>
-        <td>{{ price.description }}</td>
+        <td>
+            {{ price.description }}
+            {% if price.isPackage %}
+                {% set packageComponentCount = price.components|length %}
+                <span class="badge bg-light text-dark border ms-2 align-middle"
+                      data-bs-toggle="tooltip"
+                      title="{{ 'price.package.overview.tooltip'|trans({'%count%': packageComponentCount}) }}">
+                    <i class="fas fa-layer-group"></i> {{ 'price.package.overview.badge'|trans({'%count%': packageComponentCount}) }}
+                </span>
+            {% endif %}
+        </td>
         <td>
             {% if price.allPeriods %}
                 {{ 'price.abbreviation.alldays'|trans }}                            
