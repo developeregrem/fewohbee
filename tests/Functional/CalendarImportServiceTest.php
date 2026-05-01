@@ -10,6 +10,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Service\CalendarImportService;
+use App\Service\ReservationService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -175,7 +176,14 @@ final class CalendarImportServiceTest extends KernelTestCase
 
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
 
-        return new CalendarImportService($this->em, $httpClient, $cache, $translator, $eventDispatcher);
+        $reservationService = $this->createStub(ReservationService::class);
+        $reservationService->method('changeStatus')->willReturnCallback(
+            static function ($reservation, $status): void {
+                $reservation->setReservationStatus($status);
+            }
+        );
+
+        return new CalendarImportService($this->em, $httpClient, $cache, $translator, $eventDispatcher, $reservationService);
     }
 
     /** Persist a calendar import with required relations. */

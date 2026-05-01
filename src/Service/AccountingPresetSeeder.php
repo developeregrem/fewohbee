@@ -154,13 +154,13 @@ class AccountingPresetSeeder
             ['number' => '1000', 'nameKey' => 'preset.account.cash', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
             ['number' => '1200', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '1400', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '1450', 'nameKey' => 'preset.account.receivables_credit_card', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '1570', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '1730', 'nameKey' => 'preset.account.credit_card_settlement', 'type' => AccountingAccount::TYPE_LIABILITY],
+            ['number' => '1571', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1576', 'nameKey' => 'preset.account.input_tax_standard', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '1770', 'nameKey' => 'preset.account.vat_reduced', 'type' => AccountingAccount::TYPE_LIABILITY],
+            ['number' => '1770', 'nameKey' => 'preset.account.vat', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '1776', 'nameKey' => 'preset.account.vat_standard', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '1590', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '1717', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '1711', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
             ['number' => '1718', 'nameKey' => 'preset.account.advance_payments_19', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
             ['number' => '8300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
             ['number' => '8400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
@@ -171,7 +171,7 @@ class AccountingPresetSeeder
             ['number' => '4980', 'nameKey' => 'preset.account.other_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '4200', 'nameKey' => 'preset.account.premises', 'type' => AccountingAccount::TYPE_EXPENSE],
-            ['number' => '4360', 'nameKey' => 'preset.account.cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '4360', 'nameKey' => 'preset.account.insurance', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '9000', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
     }
@@ -184,13 +184,13 @@ class AccountingPresetSeeder
             ['number' => '1600', 'nameKey' => 'preset.account.cash', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
             ['number' => '1800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '1200', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '1210', 'nameKey' => 'preset.account.receivables_credit_card', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '1400', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '3610', 'nameKey' => 'preset.account.credit_card_settlement', 'type' => AccountingAccount::TYPE_LIABILITY],
+            ['number' => '1401', 'nameKey' => 'preset.account.input_tax_reduced', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '1406', 'nameKey' => 'preset.account.input_tax_standard', 'type' => AccountingAccount::TYPE_ASSET],
-            ['number' => '3800', 'nameKey' => 'preset.account.vat_reduced', 'type' => AccountingAccount::TYPE_LIABILITY],
+            ['number' => '3800', 'nameKey' => 'preset.account.vat', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '3806', 'nameKey' => 'preset.account.vat_standard', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '1590', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '3271', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
+            ['number' => '1370', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '3260', 'nameKey' => 'preset.account.advance_payments_7', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
             ['number' => '3272', 'nameKey' => 'preset.account.advance_payments_19', 'type' => AccountingAccount::TYPE_LIABILITY, 'isAuto' => true],
             ['number' => '4300', 'nameKey' => 'preset.account.revenue_accommodation', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
             ['number' => '4400', 'nameKey' => 'preset.account.revenue_standard', 'type' => AccountingAccount::TYPE_REVENUE, 'isAuto' => true],
@@ -199,7 +199,7 @@ class AccountingPresetSeeder
             ['number' => '5923', 'nameKey' => 'preset.account.reverse_charge_eu_19', 'type' => AccountingAccount::TYPE_EXPENSE, 'isAuto' => true, 'datevSachverhaltLuL' => 7, 'datevFunktionsergaenzungLuL' => 190],
             ['number' => '6815', 'nameKey' => 'preset.account.office_supplies', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6300', 'nameKey' => 'preset.account.other_operating_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
-            ['number' => '6310', 'nameKey' => 'preset.account.premises', 'type' => AccountingAccount::TYPE_EXPENSE],
+            ['number' => '6310', 'nameKey' => 'preset.account.rent_real_estate', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6330', 'nameKey' => 'preset.account.cleaning', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '9000', 'nameKey' => 'preset.account.opening_balance', 'type' => AccountingAccount::TYPE_LIABILITY, 'isOpening' => true],
         ];
@@ -213,6 +213,7 @@ class AccountingPresetSeeder
             ['number' => '2700', 'nameKey' => 'preset.account.cash_at', 'type' => AccountingAccount::TYPE_ASSET, 'isCash' => true],
             ['number' => '2800', 'nameKey' => 'preset.account.bank', 'type' => AccountingAccount::TYPE_ASSET, 'isBank' => true],
             ['number' => '2000', 'nameKey' => 'preset.account.receivables', 'type' => AccountingAccount::TYPE_ASSET],
+            ['number' => '2890', 'nameKey' => 'preset.account.credit_card_settlement', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '2500', 'nameKey' => 'preset.account.input_tax', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '3500', 'nameKey' => 'preset.account.vat', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '3790', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
@@ -239,8 +240,7 @@ class AccountingPresetSeeder
             ['number' => '1170', 'nameKey' => 'preset.account.input_tax', 'type' => AccountingAccount::TYPE_ASSET],
             ['number' => '2200', 'nameKey' => 'preset.account.vat_ch', 'type' => AccountingAccount::TYPE_LIABILITY],
             ['number' => '2030', 'nameKey' => 'preset.account.transit', 'type' => AccountingAccount::TYPE_LIABILITY],
-            ['number' => '3200', 'nameKey' => 'preset.account.revenue_accommodation_ch', 'type' => AccountingAccount::TYPE_REVENUE],
-            ['number' => '3400', 'nameKey' => 'preset.account.revenue_standard_ch', 'type' => AccountingAccount::TYPE_REVENUE],
+            ['number' => '3400', 'nameKey' => 'preset.account.service_revenue_ch', 'type' => AccountingAccount::TYPE_REVENUE],
             ['number' => '3000', 'nameKey' => 'preset.account.revenue_tax_free', 'type' => AccountingAccount::TYPE_REVENUE],
             ['number' => '6500', 'nameKey' => 'preset.account.office_supplies', 'type' => AccountingAccount::TYPE_EXPENSE],
             ['number' => '6000', 'nameKey' => 'preset.account.other_expenses', 'type' => AccountingAccount::TYPE_EXPENSE],
@@ -307,9 +307,9 @@ class AccountingPresetSeeder
     private function getWorkflowDefinitions(string $preset): array
     {
         return match ($preset) {
-            AccountingSettings::PRESET_SKR03 => $this->getWorkflows('skr03', '1000', '1200', '1450'),
-            AccountingSettings::PRESET_SKR04 => $this->getWorkflows('skr04', '1600', '1800', '1210'),
-            AccountingSettings::PRESET_EKR_AT => $this->getWorkflows('ekr_at', '2700', '2800', '2000'),
+            AccountingSettings::PRESET_SKR03 => $this->getWorkflows('skr03', '1000', '1200', '1730'),
+            AccountingSettings::PRESET_SKR04 => $this->getWorkflows('skr04', '1600', '1800', '3610'),
+            AccountingSettings::PRESET_EKR_AT => $this->getWorkflows('ekr_at', '2700', '2800', '2890'),
             AccountingSettings::PRESET_KMU_CH => $this->getWorkflows('kmu_ch', '1000', '1020', '1100'),
             default => [],
         };
@@ -399,8 +399,8 @@ class AccountingPresetSeeder
     {
         return [
             ['nameKey' => 'preset.taxrate.tax_free', 'rate' => 0.00, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3000'],
-            ['nameKey' => 'preset.taxrate.ch_2_6',   'rate' => 2.60, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
-            ['nameKey' => 'preset.taxrate.ch_3_8',   'rate' => 3.80, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3200'],
+            ['nameKey' => 'preset.taxrate.ch_2_6',   'rate' => 2.60, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3400'],
+            ['nameKey' => 'preset.taxrate.ch_3_8',   'rate' => 3.80, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => false, 'revenueAccountNumber' => '3400'],
             ['nameKey' => 'preset.taxrate.ch_8_1',   'rate' => 8.10, 'datevOutputBuKey' => null, 'datevInputBuKey' => null, 'isDefault' => true,  'revenueAccountNumber' => '3400'],
         ];
     }

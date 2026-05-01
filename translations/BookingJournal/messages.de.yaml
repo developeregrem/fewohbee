@@ -5,6 +5,7 @@ accounting.settings.back: Zurück zu Einstellungen
 accounting.settings.flash.saved: Einstellungen erfolgreich gespeichert.
 accounting.settings.flash.preset_invalid: Ungültige Voreinstellung ausgewählt.
 accounting.settings.flash.preset_loaded: "Voreinstellung %preset% geladen: %accounts% Konten, %taxRates% Steuersätze, %workflows% Workflows angelegt."
+accounting.settings.flash.preset_stale_account_refs: "Achtung: %count% Preise/Komponenten verweisen noch auf Erlöskonten aus einer anderen Voreinstellung. Bitte in der Preisverwaltung korrigieren."
 
 # Preset
 accounting.settings.preset.title: Kontenrahmen
@@ -30,6 +31,14 @@ accounting.settings.client_number.placeholder: z.B. 55003
 accounting.settings.fiscal_year_start: Wirtschaftsjahr-Beginn (Monat)
 accounting.settings.account_number_length: Sachkontenlänge
 accounting.settings.dictation_code: Diktatkürzel
+
+# Buchungstext-Labels
+accounting.settings.remark_labels.title: Buchungstext-Bezeichnungen
+accounting.settings.remark_labels.help: 'Optionale Bezeichnungen für die automatisch erzeugten Buchungstexte im Journal. Getrennt nach Hauptleistung (Zimmer-/Hauptpositionen) und sonstigen Leistungen. Beim Buchen werden gleiche Konten und Steuersätze je Gruppe zusammengefasst; die Bezeichnung wird zusammen mit dem Kontennamen als Buchungstext verwendet (z. B. <b>„Übernachtung – Erlöse 7 %"</b>). Bleiben die Felder leer, wird nur der Kontenname geschrieben.'
+accounting.settings.main_position_label: Hauptleistung
+accounting.settings.main_position_label.placeholder: "z.B. Übernachtung, Bootsmiete, Seminargebühr"
+accounting.settings.misc_position_label: Sonstige Leistungen
+accounting.settings.misc_position_label.placeholder: "z.B. Sonstige Leistungen, Zusatzleistungen"
 
 # Anfangsbestand (Eröffnungsbuchungen)
 accounting.opening_balance.title: Anfangsbestand
@@ -72,6 +81,7 @@ accounting.accounts.flash.created: Konto erfolgreich angelegt.
 accounting.accounts.flash.updated: Konto erfolgreich aktualisiert.
 accounting.accounts.flash.deleted: Konto erfolgreich gelöscht.
 accounting.accounts.flash.cannot_delete_system: Systemkonten können nicht gelöscht werden.
+accounting.accounts.flash.cannot_delete_in_use: "Dieses Konto kann nicht gelöscht werden, weil es noch in Buchungsjournal-Einträgen, Steuersätzen, Preisen oder Workflows verwendet wird. Entfernen Sie zuerst Konfigurationsverweise; in Journal-Buchungen verwendete Konten müssen erhalten bleiben."
 accounting.accounts.type.asset: Aktiv
 accounting.accounts.type.liability: Passiv
 accounting.accounts.type.revenue: Erlös
@@ -107,6 +117,7 @@ accounting.taxrates.delete.ask: Soll dieser Steuersatz wirklich gelöscht werden
 accounting.taxrates.flash.created: Steuersatz erfolgreich angelegt.
 accounting.taxrates.flash.updated: Steuersatz erfolgreich aktualisiert.
 accounting.taxrates.flash.deleted: Steuersatz erfolgreich gelöscht.
+accounting.taxrates.flash.cannot_delete_in_use: "Dieser Steuersatz kann nicht gelöscht werden, weil er bereits in Buchungsjournal-Einträgen verwendet wird. Nutzen Sie die Gültigkeitsfelder, damit er künftig nicht mehr verwendet wird."
 
 # Journal - Batches
 accounting.journal.batch.add: Monat hinzufügen
@@ -195,6 +206,7 @@ preset.account.cash_at: Kassa
 preset.account.bank: Bank
 preset.account.receivables: Forderungen aus Lieferungen und Leistungen
 preset.account.receivables_credit_card: Forderungen Kreditkartenabrechnung
+preset.account.credit_card_settlement: Kreditkartenabrechnung
 preset.account.input_tax: Vorsteuer
 preset.account.input_tax_reduced: Abziehbare Vorsteuer 7%
 preset.account.input_tax_standard: Abziehbare Vorsteuer 19%
@@ -203,12 +215,13 @@ preset.account.vat_reduced: Umsatzsteuer 7%
 preset.account.vat_standard: Umsatzsteuer 19%
 preset.account.vat_ch: Geschuldete MWST
 preset.account.transit: Durchlaufende Posten
-preset.account.revenue_accommodation: Erlöse 7% USt (Übernachtung)
+preset.account.revenue_accommodation: Erlöse 7% USt
 preset.account.revenue_accommodation_10: Erlöse Beherbergung 10%
 preset.account.revenue_accommodation_13: Erlöse Beherbergung 13%
 preset.account.revenue_accommodation_ch: Erlöse Beherbergung 3.8%
 preset.account.revenue_standard: Erlöse 19% USt
 preset.account.revenue_standard_ch: Erlöse 8.1% MWST
+preset.account.service_revenue_ch: Dienstleistungserlöse
 preset.account.revenue_20: Erlöse 20% USt
 preset.account.revenue_tax_free: Steuerfreie Erlöse
 preset.account.revenue_deductions: Erlösschmälerungen (Provisionen)
@@ -216,7 +229,9 @@ preset.account.office_supplies: Bürobedarf
 preset.account.other_expenses: Sonstige Aufwendungen
 preset.account.other_operating_expenses: Sonstige betriebliche Aufwendungen
 preset.account.premises: Raumkosten
+preset.account.rent_real_estate: Miete (unbewegliche Wirtschaftsgüter)
 preset.account.cleaning: Reinigung
+preset.account.insurance: Versicherungen
 preset.account.maintenance: Instandhaltung
 preset.account.maintenance_cleaning: Unterhalt/Reinigung
 preset.account.opening_balance: Saldenvorträge / Eröffnungsbilanz
@@ -241,7 +256,7 @@ preset.workflow.booking_cash.desc: "Erstellt automatisch eine Buchung (Soll: Kas
 preset.workflow.booking_transfer: "Buchung: Überweisung"
 preset.workflow.booking_transfer.desc: "Erstellt automatisch eine Buchung (Soll: Bank), wenn eine Rechnung per Überweisung bezahlt wird."
 preset.workflow.booking_card: "Buchung: Kartenzahlung"
-preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kreditkartenforderungen), wenn eine Rechnung per Karte bezahlt wird."
+preset.workflow.booking_card.desc: "Erstellt automatisch eine Buchung (Soll: Kreditkartenabrechnung), wenn eine Rechnung per Karte bezahlt wird."
 
 # Allgemein
 journal.action: Aktion

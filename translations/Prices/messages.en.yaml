@@ -15,6 +15,44 @@ price.category: Category
 price.collapsable.group.1.description: General
 price.collapsable.group.2.description: Seasonal information
 price.collapsable.group.3.description: Room specific
+price.collapsable.group.4.description: Package with multiple tax rates (optional)
+price.package.enable: Configure as package
+price.package.hint: >-
+  Split this price into components with different VAT rates (e.g. food 7%,
+  drinks 19%). Components are shown as separate invoice lines.
+price.package.col.description: Description
+price.package.col.vat: VAT
+price.package.col.allocation_type: Type
+price.package.col.value: Value
+price.package.col.remainder: Remainder
+price.package.col.revenue_account: Revenue account
+price.revenue_account: Revenue account
+price.revenue_account.default: Default (from tax rate)
+price.revenue_account.help: >-
+  Optional and only used in workflows. Specifies which revenue account this price posts to in the booking
+  journal. If empty, the default account of the tax rate is used (e.g. 8300 for
+  7%, 8400 for 19%). Useful when certain revenues (food, drinks, tourist tax)
+  should go to separate accounts.
+price.package.remainder.help: >-
+  Marks this component as the remainder. Its value is computed automatically
+  from what is left after all other components are subtracted from the total
+  price. Useful when mixing percent and fixed-amount components, or to
+  absorb rounding cents. Only one component per package may be marked as
+  remainder.
+price.package.add_row: Add component
+price.package.taxrates.empty: No tax rates are configured. Configure tax rates in the booking journal settings before creating package components.
+price.package.overview.badge: Package (%count%)
+price.package.overview.tooltip: Contains %count% package components.
+price.package.sum_preview: Sum preview
+price.package.allocation.percent: Percent
+price.package.allocation.amount: Amount
+price.package.error.description_required: Each package component requires a description.
+price.package.error.vat_negative: Package component VAT must not be negative.
+price.package.error.value_required: Each package component requires a value greater than zero (unless marked as remainder).
+price.package.error.multiple_remainder: Only one package component may be marked as remainder.
+price.package.error.sum_mismatch: The package components do not add up to the total price.
+price.package.error.percent_over_100: The percentage components exceed 100%.
+price.package.error.amount_over_total: The fixed-amount components exceed the total price.
 price.daysinweek: Validity days of the week
 price.delete.ask: Do you really want to delete this price?
 price.description: Description

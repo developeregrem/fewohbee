@@ -9,24 +9,35 @@ use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Service\ReservationService;
 use App\Workflow\Action\ChangeInvoiceStatusAction;
 use App\Workflow\Action\ChangePaymentMeansAction;
 use App\Workflow\Action\ChangeReservationStatusAction;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class WorkflowActionTest extends TestCase
 {
     private EntityManagerInterface $em;
     private TranslatorInterface $translator;
+    private EventDispatcherInterface $eventDispatcher;
+    private ReservationService $reservationService;
 
     protected function setUp(): void
     {
         $this->em = $this->createStub(EntityManagerInterface::class);
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->translator->method('trans')->willReturnArgument(0);
+        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->reservationService = $this->createStub(ReservationService::class);
+        $this->reservationService->method('changeStatus')->willReturnCallback(
+            static function (Reservation $reservation, ?ReservationStatus $status): void {
+                $reservation->setReservationStatus($status);
+            }
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -35,7 +46,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeInvoiceStatusSetsStatus(): void
     {
-        $action = new ChangeInvoiceStatusAction($this->em, $this->translator);
+        $action = new ChangeInvoiceStatusAction($this->em, $this->translator, $this->eventDispatcher);
 
         $invoice = new Invoice();
         $invoice->setNumber('R-2026-001');
@@ -48,7 +59,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeInvoiceStatusSkipsForInvalidStatus(): void
     {
-        $action = new ChangeInvoiceStatusAction($this->em, $this->translator);
+        $action = new ChangeInvoiceStatusAction($this->em, $this->translator, $this->eventDispatcher);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['status' => 999], new Invoice(), []);
@@ -56,7 +67,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeInvoiceStatusSkipsForMissingConfig(): void
     {
-        $action = new ChangeInvoiceStatusAction($this->em, $this->translator);
+        $action = new ChangeInvoiceStatusAction($this->em, $this->translator, $this->eventDispatcher);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute([], new Invoice(), []);
@@ -64,7 +75,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeInvoiceStatusSkipsForWrongEntity(): void
     {
-        $action = new ChangeInvoiceStatusAction($this->em, $this->translator);
+        $action = new ChangeInvoiceStatusAction($this->em, $this->translator, $this->eventDispatcher);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['status' => 2], new Reservation(), []);
@@ -72,7 +83,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeInvoiceStatusConfigSchemaHasAllStatuses(): void
     {
-        $action = new ChangeInvoiceStatusAction($this->em, $this->translator);
+        $action = new ChangeInvoiceStatusAction($this->em, $this->translator, $this->eventDispatcher);
         $schema = $action->getConfigSchema();
 
         self::assertCount(1, $schema);
@@ -148,7 +159,7 @@ final class WorkflowActionTest extends TestCase
 
         $reservation = new Reservation();
 
-        $action = new ChangeReservationStatusAction($em, $this->translator);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
         $result = $action->execute(['statusId' => 5], $reservation, []);
 
         self::assertSame($status, $reservation->getReservationStatus());
@@ -175,7 +186,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
         $result = $action->execute(['statusId' => 5], $invoice, []);
 
         self::assertSame($status, $res1->getReservationStatus());
@@ -192,7 +203,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 5], new Invoice(), []);
@@ -203,7 +214,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn(null);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 999], new Reservation(), []);
@@ -218,7 +229,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 5], new \stdClass(), []);
@@ -226,7 +237,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeReservationStatusConfigSchemaUsesReservationStatusSelect(): void
     {
-        $action = new ChangeReservationStatusAction($this->em, $this->translator);
+        $action = new ChangeReservationStatusAction($this->em, $this->translator, $this->reservationService);
         $schema = $action->getConfigSchema();
 
         self::assertCount(1, $schema);

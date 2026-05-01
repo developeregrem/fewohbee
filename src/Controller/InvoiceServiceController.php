@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\AccountingAccount;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -30,6 +31,7 @@ use App\Event\InvoiceStatusChangedEvent;
 use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\InvoiceService;
+use App\Service\PriceService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
@@ -459,7 +461,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{invoiceId}/new/miscellaneous', name: 'invoices.new.miscellaneous.position', methods: ['GET', 'POST'])]
-    public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, Request $request): Response
+    public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request): Response
     {
         $invoicePosition = new InvoicePosition();
         $form = $this->createForm(InvoiceMiscPositionType::class, $invoicePosition, [
@@ -468,30 +470,44 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
         $em = $doctrine->getManager();
 
+        $packagePriceId = $request->request->get('packagePriceId');
+        if ($form->isSubmitted() && $packagePriceId) {
+            $package = $em->getRepository(Price::class)->find($packagePriceId);
+            if ($package && $package->isPackage()) {
+                $amount = (int) $invoicePosition->getAmount();
+                if ($amount < 1) {
+                    $amount = 1;
+                }
+                $expanded = $ps->expandPackage(
+                    $package,
+                    (float) $package->getPrice(),
+                    $amount,
+                    (bool) $package->getIncludesVat(),
+                );
+                $positions = [];
+                foreach ($expanded as $component) {
+                    $pos = new InvoicePosition();
+                    $pos->setAmount($component['amount']);
+                    $pos->setDescription($package->getDescription().' – '.$component['component']->getDescription());
+                    $pos->setPrice(number_format($component['unitPrice'], 2, '.', ''));
+                    $pos->setVat(number_format((float) $component['component']->getVat(), 2, '.', ''));
+                    $pos->setIncludesVat($component['includesVat']);
+                    $pos->setIsFlatPrice($package->getIsFlatPrice());
+                    $pos->setIsPerRoom($package->getIsPerRoom());
+                    $pos->setRevenueAccount($component['component']->getRevenueAccount() ?? $package->getRevenueAccount());
+                    $positions[] = $pos;
+                }
+
+                return $this->saveMiscPositions($positions, $invoiceId, $doctrine, $requestStack, $is);
+            }
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             // float values must be converted to string for later calculation steps in calculateSums()
             $invoicePosition->setPrice(number_format($invoicePosition->getPrice(), 2));
             $invoicePosition->setVat(number_format($invoicePosition->getVat(), 2));
 
-            // during invoice create process
-            if ('new' === $invoiceId) {
-                $is->saveNewMiscPosition($invoicePosition, $requestStack);
-
-                return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
-            } else { // during edit process
-                $em = $doctrine->getManager();
-                $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
-                $invoicePosition->setInvoice($invoice);
-
-                $em->persist($invoicePosition);
-                $em->flush();
-
-                $this->addFlash('success', 'invoice.flash.edit.success');
-
-                return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
-                    'id' => $invoiceId,
-                ]);
-            }
+            return $this->saveMiscPositions([$invoicePosition], $invoiceId, $doctrine, $requestStack, $is);
         }
 
         $prices = $em->getRepository(Price::class)->getActiveMiscellaneousPrices();
@@ -513,6 +529,34 @@ class InvoiceServiceController extends AbstractController
                 'form' => $form->createView(),
             ]
         );
+    }
+
+    /**
+     * @param InvoicePosition[] $positions
+     */
+    private function saveMiscPositions(array $positions, string $invoiceId, ManagerRegistry $doctrine,
+        RequestStack $requestStack, InvoiceService $is,
+    ): Response {
+        if ('new' === $invoiceId) {
+            foreach ($positions as $pos) {
+                $is->saveNewMiscPosition($pos, $requestStack);
+            }
+
+            return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
+        }
+
+        $em = $doctrine->getManager();
+        $invoice = $em->getRepository(Invoice::class)->find($invoiceId);
+        foreach ($positions as $pos) {
+            $pos->setInvoice($invoice);
+            $em->persist($pos);
+        }
+        $em->flush();
+        $this->addFlash('success', 'invoice.flash.edit.success');
+
+        return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
+            'id' => $invoiceId,
+        ]);
     }
 
     #[Route('/{invoiceId}/edit/miscellaneous/{id}/edit', name: 'invoices.edit.miscellaneous.position', methods: ['GET', 'POST'])]
@@ -672,11 +716,19 @@ class InvoiceServiceController extends AbstractController
 
             foreach ($newInvoicePositionsAppartmentsArray as $appartmentPosition) {
                 $appartmentPosition->setInvoice($invoice);
+                if (null !== ($ra = $appartmentPosition->getRevenueAccount())) {
+                    $appartmentPosition->setRevenueAccount($em->getReference(AccountingAccount::class, $ra->getId()));
+                }
                 $em->persist($appartmentPosition);
             }
 
             foreach ($newInvoicePositionsMiscellaneousArray as $miscellaneousPosition) {
                 $miscellaneousPosition->setInvoice($invoice);
+                // Position lives in session between requests → its revenueAccount is detached.
+                // Re-attach via a managed reference so persist() doesn't treat it as a new entity.
+                if (null !== ($ra = $miscellaneousPosition->getRevenueAccount())) {
+                    $miscellaneousPosition->setRevenueAccount($em->getReference(AccountingAccount::class, $ra->getId()));
+                }
                 $em->persist($miscellaneousPosition);
             }
 
@@ -712,11 +764,14 @@ class InvoiceServiceController extends AbstractController
         if ($csrf->validateCSRFToken($request)) {
             $invoice = $em->getRepository(Invoice::class)->find($id);
             $previousStatus = (int) $invoice->getStatus();
-            $invoice->setStatus($request->request->get('invoice-status'));
+            $newStatus = (int) $request->request->get('invoice-status');
+            $invoice->setStatus($newStatus);
             $em->persist($invoice);
             $em->flush();
 
-            $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
+            if ($previousStatus !== $newStatus) {
+                $eventDispatcher->dispatch(new InvoiceStatusChangedEvent($invoice, $previousStatus));
+            }
         }
 
         return new Response('');

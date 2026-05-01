@@ -11,7 +11,7 @@
     <tbody>
         {% for appartment in positionsApartment %}
             <tr>
-                <td>{{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
+                <td>{{ appartment.number }} - {{ appartment.description }} ({{ 'invoice.appartment.persons'|trans({'%count%': appartment.persons }) }})
                     <br/>{{ appartment.startDate|date('d.m.Y') }}
                     - {{ appartment.endDate|date('d.m.Y') }}</td>
                 <td class="text-end">{{ appartment.amount }}</td>

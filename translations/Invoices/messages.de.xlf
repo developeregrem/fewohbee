@@ -470,6 +470,10 @@
                 <source>SEPA_DIRECT_DEBIT</source>
                 <target>SEPA-Lastschrift</target>
             </trans-unit>
+            <trans-unit id="invoice.misc.package.hint">
+                <source>invoice.misc.package.hint</source>
+                <target>Dieses Paket wird beim Speichern in mehrere Positionen aufgeteilt.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

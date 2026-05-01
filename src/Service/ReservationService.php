@@ -20,11 +20,13 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
+use App\Event\ReservationStatusChangedEvent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ReservationService
 {
@@ -33,8 +35,22 @@ class ReservationService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly RequestStack $requestStack,
-        private readonly InvoiceService $is
+        private readonly InvoiceService $is,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
+    }
+
+    public function changeStatus(Reservation $reservation, ?ReservationStatus $newStatus, bool $flush = true): void
+    {
+        $previous = $reservation->getReservationStatus();
+        if ($previous === $newStatus) {
+            return;
+        }
+        $reservation->setReservationStatus($newStatus);
+        if ($flush) {
+            $this->em->flush();
+        }
+        $this->eventDispatcher->dispatch(new ReservationStatusChangedEvent($reservation, $previous));
     }
 
     public function resetSelectedReservations(): void
@@ -300,7 +316,7 @@ class ReservationService
         }
         $reservation->setAppartment($apartment);
         $reservation->setAppartment($apartment);
-        $reservation->setReservationStatus($reservationStatus);
+        $this->changeStatus($reservation, $reservationStatus, flush: false);
 
         $this->em->persist($reservation);
         $this->em->flush();
