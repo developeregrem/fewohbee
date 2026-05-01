@@ -81,6 +81,7 @@ accounting.accounts.flash.created: Konto erfolgreich angelegt.
 accounting.accounts.flash.updated: Konto erfolgreich aktualisiert.
 accounting.accounts.flash.deleted: Konto erfolgreich gelöscht.
 accounting.accounts.flash.cannot_delete_system: Systemkonten können nicht gelöscht werden.
+accounting.accounts.flash.cannot_delete_in_use: "Dieses Konto kann nicht gelöscht werden, weil es noch in Buchungsjournal-Einträgen, Steuersätzen, Preisen oder Workflows verwendet wird. Entfernen Sie zuerst Konfigurationsverweise; in Journal-Buchungen verwendete Konten müssen erhalten bleiben."
 accounting.accounts.type.asset: Aktiv
 accounting.accounts.type.liability: Passiv
 accounting.accounts.type.revenue: Erlös
@@ -116,6 +117,7 @@ accounting.taxrates.delete.ask: Soll dieser Steuersatz wirklich gelöscht werden
 accounting.taxrates.flash.created: Steuersatz erfolgreich angelegt.
 accounting.taxrates.flash.updated: Steuersatz erfolgreich aktualisiert.
 accounting.taxrates.flash.deleted: Steuersatz erfolgreich gelöscht.
+accounting.taxrates.flash.cannot_delete_in_use: "Dieser Steuersatz kann nicht gelöscht werden, weil er bereits in Buchungsjournal-Einträgen verwendet wird. Nutzen Sie die Gültigkeitsfelder, damit er künftig nicht mehr verwendet wird."
 
 # Journal - Batches
 accounting.journal.batch.add: Monat hinzufügen

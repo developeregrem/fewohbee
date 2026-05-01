@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\AccountingAccount;
 use App\Entity\Workflow;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -30,6 +31,27 @@ class WorkflowRepository extends ServiceEntityRepository
     public function findBySystemCode(string $systemCode): ?Workflow
     {
         return $this->findOneBy(['systemCode' => $systemCode]);
+    }
+
+    public function countCreateBookingEntryAccountReferences(AccountingAccount $account): int
+    {
+        $accountId = $account->getId();
+        if (null === $accountId) {
+            return 0;
+        }
+
+        $references = 0;
+        foreach ($this->findBy(['actionType' => 'create_booking_entry']) as $workflow) {
+            $config = $workflow->getActionConfig();
+            $debitAccountId = (int) ($config['debitAccountId'] ?? 0);
+            $fallbackCreditAccountId = (int) ($config['fallbackCreditAccountId'] ?? 0);
+
+            if ($debitAccountId === $accountId || $fallbackCreditAccountId === $accountId) {
+                ++$references;
+            }
+        }
+
+        return $references;
     }
 
     /** @return Workflow[] */

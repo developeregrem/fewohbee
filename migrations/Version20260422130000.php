@@ -54,6 +54,19 @@ final class Version20260422130000 extends AbstractMigration
         $this->addSql('ALTER TABLE accounting_settings
             ADD main_position_label VARCHAR(60) DEFAULT NULL,
             ADD misc_position_label VARCHAR(60) DEFAULT NULL');
+
+        // Prevent deleting tax rates and accounting accounts from clearing references on booking journal entries.
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_debit');
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_credit');
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_taxrate');
+
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_debit FOREIGN KEY (debit_account_id) REFERENCES accounting_accounts (id)');
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_credit FOREIGN KEY (credit_account_id) REFERENCES accounting_accounts (id)');
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_taxrate FOREIGN KEY (tax_rate_id) REFERENCES tax_rates (id)');
+        
     }
 
     public function down(Schema $schema): void
@@ -77,6 +90,17 @@ final class Version20260422130000 extends AbstractMigration
         $this->addSql('ALTER TABLE price_components DROP FOREIGN KEY FK_PRICE_COMPONENTS_REVENUE_ACCOUNT');
         $this->addSql('ALTER TABLE price_components DROP FOREIGN KEY FK_PRICE_COMPONENTS_PRICE');
         $this->addSql('DROP TABLE price_components');
+
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_debit');
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_credit');
+        $this->addSql('ALTER TABLE booking_entries DROP FOREIGN KEY FK_be_taxrate');
+
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_debit FOREIGN KEY (debit_account_id) REFERENCES accounting_accounts (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_credit FOREIGN KEY (credit_account_id) REFERENCES accounting_accounts (id) ON DELETE SET NULL');
+        $this->addSql('ALTER TABLE booking_entries
+            ADD CONSTRAINT FK_be_taxrate FOREIGN KEY (tax_rate_id) REFERENCES tax_rates (id) ON DELETE SET NULL');
     }
 
     public function isTransactional(): bool
