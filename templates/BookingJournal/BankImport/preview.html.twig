@@ -38,6 +38,7 @@
      data-bank-import-preview-update-failed-message-value="{{ 'accounting.bank_import.preview.update_failed'|trans|e('html_attr') }}"
      data-bank-import-preview-save-failed-message-value="{{ 'accounting.bank_import.preview.save_failed'|trans|e('html_attr') }}"
      data-bank-import-preview-error-prefix-value="{{ 'accounting.bank_import.preview.error_prefix'|trans|e('html_attr') }}"
+     data-bank-import-preview-commit-confirm-template-value="{{ 'accounting.bank_import.commit.confirm'|trans({'%count%': '%count%'})|e('html_attr') }}"
      data-bank-import-preview-split-remainder-label-value="{{ 'accounting.bank_import.split.delta.remainder'|trans|e('html_attr') }}"
      data-bank-import-preview-split-too-much-label-value="{{ 'accounting.bank_import.split.delta.too_much'|trans|e('html_attr') }}"
      data-bank-import-preview-split-open-label-value="{{ 'accounting.bank_import.split.delta.open'|trans|e('html_attr') }}"
@@ -361,17 +362,20 @@
     <form method="post" class="d-flex justify-content-between align-items-center my-3 p-2 bg-light border rounded"
           action="{{ path('bank_import.commit', {'sessionImportId': state.sessionImportId}) }}"
           data-controller="confirm-submit"
+          data-bank-import-preview-target="commitForm"
           data-confirm-submit-message-value="{{ 'accounting.bank_import.commit.confirm'|trans({'%count%': counts.ready})|e('html_attr') }}"
           data-confirm-submit-confirm-label-value="{{ 'button.continue'|trans|e('html_attr') }}"
           data-confirm-submit-cancel-label-value="{{ 'button.cancel'|trans|e('html_attr') }}">
         <input type="hidden" name="_token" value="{{ csrf_token('bank_import_line_' ~ state.sessionImportId) }}">
         <div class="small">
-            <strong>{{ counts.ready }}</strong> {{ 'accounting.bank_import.commit.summary.ready'|trans }}
-            · <strong>{{ counts.pending }}</strong> {{ 'accounting.bank_import.commit.summary.pending'|trans }}
-            · <strong>{{ counts.ignored }}</strong> {{ 'accounting.bank_import.commit.summary.ignored'|trans }}
-            · <strong>{{ counts.duplicate }}</strong> {{ 'accounting.bank_import.commit.summary.duplicate'|trans }}
+            <strong data-bank-import-preview-target="commitReadyCount">{{ counts.ready }}</strong> {{ 'accounting.bank_import.commit.summary.ready'|trans }}
+            · <strong data-bank-import-preview-target="commitPendingCount">{{ counts.pending }}</strong> {{ 'accounting.bank_import.commit.summary.pending'|trans }}
+            · <strong data-bank-import-preview-target="commitIgnoredCount">{{ counts.ignored }}</strong> {{ 'accounting.bank_import.commit.summary.ignored'|trans }}
+            · <strong data-bank-import-preview-target="commitDuplicateCount">{{ counts.duplicate }}</strong> {{ 'accounting.bank_import.commit.summary.duplicate'|trans }}
         </div>
-        <button type="submit" class="btn btn-success" {% if counts.ready == 0 %}disabled{% endif %}>
+        <button type="submit" class="btn btn-success"
+                data-bank-import-preview-target="commitButton"
+                {% if counts.ready == 0 %}disabled{% endif %}>
             <i class="fas fa-check-double me-1"></i> {{ 'accounting.bank_import.commit.button'|trans }}
         </button>
     </form>

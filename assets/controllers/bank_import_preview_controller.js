@@ -21,6 +21,12 @@ export default class extends Controller {
         'bulkAccountSelect',
         'statusCell',
         'ignoreButton',
+        'commitForm',
+        'commitButton',
+        'commitReadyCount',
+        'commitPendingCount',
+        'commitIgnoredCount',
+        'commitDuplicateCount',
         // Split modal
         'splitModal',
         'splitTotal',
@@ -67,6 +73,7 @@ export default class extends Controller {
         updateFailedMessage: String,
         saveFailedMessage: String,
         errorPrefix: String,
+        commitConfirmTemplate: String,
         splitRemainderLabel: String,
         splitTooMuchLabel: String,
         splitOpenLabel: String,
@@ -287,7 +294,10 @@ export default class extends Controller {
             this._refreshStatusBadge(row, payload.status);
             this._refreshIgnoreButton(row, payload.status === 'ignored');
         }
-        if (payload?.counts) this._refreshFilterCounts(payload.counts);
+        if (payload?.counts) {
+            this._refreshFilterCounts(payload.counts);
+            this._refreshCommitBar(payload.counts);
+        }
         // Re-evaluate visibility under the active filter (e.g. row that just
         // moved to "ready" should disappear from the "pending" filter).
         this._applyFilter();
@@ -309,8 +319,8 @@ export default class extends Controller {
 
         first.className = cls;
         first.setAttribute('title', title);
-        const inner = first.querySelector('i');
-        if (inner) inner.className = 'fas ' + icon;
+        first.innerHTML = `<i class="fas ${icon}"></i>`;
+        window.FontAwesome?.dom?.i2svg?.({ node: first });
         // Refresh tooltip.
         const tooltip = window.bootstrap?.Tooltip?.getInstance(first);
         if (tooltip) tooltip.setContent({ '.tooltip-inner': title });
@@ -332,6 +342,19 @@ export default class extends Controller {
             const badge = chip.querySelector('.badge');
             if (badge) badge.textContent = counts[filter];
         });
+    }
+
+    _refreshCommitBar(counts) {
+        if (this.hasCommitReadyCountTarget) this.commitReadyCountTarget.textContent = counts.ready ?? 0;
+        if (this.hasCommitPendingCountTarget) this.commitPendingCountTarget.textContent = counts.pending ?? 0;
+        if (this.hasCommitIgnoredCountTarget) this.commitIgnoredCountTarget.textContent = counts.ignored ?? 0;
+        if (this.hasCommitDuplicateCountTarget) this.commitDuplicateCountTarget.textContent = counts.duplicate ?? 0;
+        if (this.hasCommitButtonTarget) this.commitButtonTarget.disabled = (counts.ready ?? 0) === 0;
+        if (this.hasCommitFormTarget && this.hasCommitConfirmTemplateValue) {
+            this.commitFormTarget.dataset.confirmSubmitMessageValue = this._formatText(this.commitConfirmTemplateValue, {
+                '%count%': counts.ready ?? 0,
+            });
+        }
     }
 
     _flashSaved(row) {
