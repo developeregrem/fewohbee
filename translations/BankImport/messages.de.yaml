@@ -133,6 +133,7 @@ accounting:
         Teile diese Buchung in mehrere Teilbuchungen auf — z. B. wenn der
         Verwendungszweck mehrere Posten enthält (Zinsen, Provision, Entgelte).
       original_amount: Betrag der Bankzeile
+      purpose: Verwendungszweck
       assigned_sum: Summe der Aufteilung
       add_row: Weitere Aufteilung hinzufügen
       mode:
@@ -163,6 +164,7 @@ accounting:
       validation:
         condition_required: Mindestens eine Bedingung wählen.
         name_required: Name angeben.
+        split_marker_required: Für dynamische Splitbeträge muss ein Marker angegeben werden.
       section:
         conditions: Wann soll die Regel greifen?
         action: Was soll passieren?
@@ -178,8 +180,22 @@ accounting:
         out: Ausgang
       rule_applied:
         help: Eine Regel hat diese Zeile automatisch befüllt.
+      warning:
+        line: 'Zeile %line%: %message%'
+        split_marker_missing: 'Splitbetrag für Marker "%marker%" wurde im Verwendungszweck nicht gefunden.'
       split:
         help: Aufgeteilt auf mehrere Buchungen.
+      split_source:
+        help: |
+          Für wiederkehrende Splits werden Beträge aus dem aktuellen Verwendungszweck gelesen.
+          Wähle je Teilbetrag einen Marker direkt vor dem Betrag oder markiere ihn als Restbetrag.
+        current_amount: Beispielbetrag
+        source: Betragsquelle
+        purpose_marker: Aus Verwendungszweck
+        marker: Marker vor Betrag
+        found: 'Gefunden: %amount%'
+        missing: Kein Betrag gefunden
+        remainder_preview: Wird als Restbetrag berechnet.
       count:
         total: gesamt
         pending: offen
@@ -217,6 +233,7 @@ accounting:
       action:
         ignore: Ignorieren
         split: Aufteilen (%count% Teile)
+        split_marker: 'nach „%marker%"'
         enable: Aktivieren
         disable: Deaktivieren
       field:

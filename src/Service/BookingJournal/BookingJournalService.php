@@ -18,6 +18,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class BookingJournalService
 {
+    /** @var array<string, BookingBatch> */
+    private array $batchCache = [];
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly BookingBatchRepository $batchRepo,
@@ -34,10 +37,15 @@ class BookingJournalService
      */
     public function getOrCreateBatch(int $year, int $month): BookingBatch
     {
+        $cacheKey = sprintf('%04d-%02d', $year, $month);
+        if (isset($this->batchCache[$cacheKey])) {
+            return $this->batchCache[$cacheKey];
+        }
+
         $batch = $this->batchRepo->findByYearAndMonth($year, $month);
 
         if (null !== $batch) {
-            return $batch;
+            return $this->batchCache[$cacheKey] = $batch;
         }
 
         $batch = new BookingBatch();
@@ -46,7 +54,7 @@ class BookingJournalService
 
         $this->em->persist($batch);
 
-        return $batch;
+        return $this->batchCache[$cacheKey] = $batch;
     }
 
     /**

@@ -52,7 +52,9 @@
             {% set taxRate = taxRatesById[split.taxRateId|default(0)] ?? null %}
             <div class="small mt-1">
                 <span class="text-muted">#{{ loop.index }}</span>
-                {% if split.amount is defined %}
+                {% if split.amountSource|default(null) == 'purpose_marker' %}
+                    <code>{{ 'accounting.bank_import.rules.action.split_marker'|trans({'%marker%': split.marker|default('')}) }}</code>
+                {% elseif split.amount is defined %}
                     <code>{{ split.amount|number_format(2, ',', '.') }}</code>
                 {% elseif split.percent is defined %}
                     <code>{{ split.percent|number_format(2, ',', '.') }}%</code>

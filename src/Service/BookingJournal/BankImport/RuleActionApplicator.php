@@ -16,6 +16,10 @@ use App\Entity\BankImportRule;
  *  - "split":  break the line's amount into multiple parts, each with its
  *              own debit/credit accounts and remark.
  *
+ * Split rows may define either a fixed amount, a percentage, a remainder, or
+ * a dynamic amountSource="purpose_marker" plus marker text. Dynamic marker
+ * amounts are read from the current line's purpose text on every import.
+ *
  * Remark templates support a tiny placeholder language (no Twig, no eval):
  *   {counterparty} {purpose} {date} {invoiceNumber}
  */
@@ -98,7 +102,15 @@ final class RuleActionApplicator
                 continue;
             }
 
-            if (isset($piece['amount'])) {
+            if ('purpose_marker' === ($piece['amountSource'] ?? null)) {
+                $marker = trim((string) ($piece['marker'] ?? ''));
+                $share = $this->extractAmountAfterMarker((string) ($line['purpose'] ?? ''), $marker);
+                if (null === $share) {
+                    $this->markSplitRulePending($line, $marker);
+
+                    return;
+                }
+            } elseif (isset($piece['amount'])) {
                 $share = round((float) $piece['amount'], 2);
             } elseif (isset($piece['percent'])) {
                 $share = round($totalAmount * ((float) $piece['percent'] / 100.0), 2);
@@ -128,7 +140,90 @@ final class RuleActionApplicator
         }
 
         $line['splits'] = $splits;
+        unset($line['ruleWarning']);
         $line['status'] = ImportState::LINE_STATUS_READY;
+    }
+
+    /**
+     * Reads the next decimal amount after a marker in free bank-purpose text.
+     * Supports German and English separators, e.g. "12,30", "12.30",
+     * "1.234,56", "1,234.56", integer amounts like "1790 Euro",
+     * and an optional trailing minus sign.
+     */
+    private function extractAmountAfterMarker(string $purpose, string $marker): ?float
+    {
+        if ('' === trim($purpose) || '' === $marker) {
+            return null;
+        }
+
+        $offset = stripos($purpose, $marker);
+        if (false === $offset) {
+            return null;
+        }
+
+        $tail = substr($purpose, $offset + strlen($marker));
+        if (false === $tail || '' === $tail) {
+            return null;
+        }
+
+        $amountPattern = '/(?<![\d.,])(?:([+-]?(?:\d{1,3}(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2}))\s*-?(?![.,]\d)|([+-]?(?:\d{1,3}(?:[.,]\d{3})+|\d+))\s*-?(?=\s*(?:€|EUR\b|Euro\b|,|;|$))(?![.,]\d))/iu';
+        if (1 !== preg_match($amountPattern, $tail, $matches)) {
+            return null;
+        }
+
+        return $this->normalizeExtractedAmount($matches[1] ?: $matches[2]);
+    }
+
+    private function normalizeExtractedAmount(string $raw): ?float
+    {
+        $value = trim($raw);
+        if ('' === $value) {
+            return null;
+        }
+
+        $value = preg_replace('/[^\d,.\-+]/', '', $value) ?? '';
+        if ('' === $value || '-' === $value || '+' === $value) {
+            return null;
+        }
+
+        $lastComma = strrpos($value, ',');
+        $lastDot = strrpos($value, '.');
+        if (false !== $lastComma || false !== $lastDot) {
+            $separator = false !== $lastComma && false !== $lastDot
+                ? ($lastComma > $lastDot ? ',' : '.')
+                : (false !== $lastComma ? ',' : '.');
+            $separatorPos = strrpos($value, $separator);
+            $digitsAfterSeparator = false === $separatorPos ? 0 : strlen($value) - $separatorPos - 1;
+            $isThousandsOnly = 3 === $digitsAfterSeparator
+                && 1 === substr_count($value, $separator)
+                && 1 === preg_match('/^[+-]?\d{1,3}[.,]\d{3}$/', $value);
+
+            if ($isThousandsOnly) {
+                $value = str_replace($separator, '', $value);
+            } else {
+                $decimal = false !== $lastComma && false !== $lastDot
+                    ? ($lastComma > $lastDot ? ',' : '.')
+                    : $separator;
+                $thousands = ',' === $decimal ? '.' : ',';
+                $value = str_replace($thousands, '', $value);
+                $value = str_replace($decimal, '.', $value);
+            }
+        }
+
+        return round(abs((float) $value), 2);
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function markSplitRulePending(array &$line, string $marker): void
+    {
+        $line['splits'] = [];
+        $line['status'] = ImportState::LINE_STATUS_PENDING;
+        $line['ruleWarning'] = [
+            'key' => 'accounting.bank_import.rule.warning.split_marker_missing',
+            'params' => ['%marker%' => $marker],
+        ];
     }
 
     /**

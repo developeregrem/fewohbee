@@ -115,6 +115,117 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame('-30.00', $line['splits'][1]['amount']);
     }
 
+    public function testSplitActionExtractsGermanMarkerAmountsAndRemainder(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Zinsen', 'debitAccountId' => 100, 'creditAccountId' => 200, 'remarkTemplate' => 'Zinsen'],
+                ['amountSource' => 'purpose_marker', 'marker' => 'Kreditprovision', 'debitAccountId' => 101, 'creditAccountId' => 200, 'remarkTemplate' => 'Provision'],
+                ['remainder' => true, 'debitAccountId' => 102, 'creditAccountId' => 200, 'remarkTemplate' => 'Entgelte'],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-41.50',
+            'purpose' => 'Information zur Abrechnung Zinsen fuer Kredit 12,30- Kreditprovision 4,20- Entgelte vom 23.04.2026 25,00-',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(3, $line['splits']);
+        self::assertSame('-12.30', $line['splits'][0]['amount']);
+        self::assertSame('-4.20', $line['splits'][1]['amount']);
+        self::assertSame('-25.00', $line['splits'][2]['amount']);
+        self::assertSame('Entgelte', $line['splits'][2]['remark']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testSplitActionExtractsEnglishThousandsMarkerAmount(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Gebuehr', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '1234.56',
+            'purpose' => 'Settlement Gebuehr 1,234.56 payout',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(1, $line['splits']);
+        self::assertSame('1234.56', $line['splits'][0]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testSplitActionExtractsIntegerMarkerAmountsWithCurrencyAndCommaSeparator(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Miete', 'debitAccountId' => 100, 'creditAccountId' => 200],
+                ['amountSource' => 'purpose_marker', 'marker' => 'Nebenkosten', 'debitAccountId' => 101, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-2260.00',
+            'purpose' => 'Miete 1790 Euro, Nebenkosten 470, Nachname',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(2, $line['splits']);
+        self::assertSame('-1790.00', $line['splits'][0]['amount']);
+        self::assertSame('-470.00', $line['splits'][1]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testDynamicSplitActionPreservesIncomingDirection(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Auszahlung', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '230.00',
+            'purpose' => 'Auszahlung 230,00 April',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame('230.00', $line['splits'][0]['amount']);
+    }
+
+    public function testSplitActionKeepsLinePendingWhenMarkerAmountIsMissing(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Zinsen', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-41.50',
+            'purpose' => 'Information zur Abrechnung Entgelte 41,50-',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame([], $line['splits']);
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame('accounting.bank_import.rule.warning.split_marker_missing', $line['ruleWarning']['key']);
+        self::assertSame(['%marker%' => 'Zinsen'], $line['ruleWarning']['params']);
+    }
+
     public function testSplitActionPreservesIncomingDirection(): void
     {
         $rule = $this->createRule([

@@ -43,7 +43,11 @@
      data-bank-import-preview-split-open-label-value="{{ 'accounting.bank_import.split.delta.open'|trans|e('html_attr') }}"
      data-bank-import-preview-rule-default-name-value="{{ 'accounting.bank_import.rule.default_name'|trans|e('html_attr') }}"
      data-bank-import-preview-rule-condition-required-message-value="{{ 'accounting.bank_import.rule.validation.condition_required'|trans|e('html_attr') }}"
-     data-bank-import-preview-rule-name-required-message-value="{{ 'accounting.bank_import.rule.validation.name_required'|trans|e('html_attr') }}">
+     data-bank-import-preview-rule-name-required-message-value="{{ 'accounting.bank_import.rule.validation.name_required'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-split-found-label-value="{{ 'accounting.bank_import.rule.split_source.found'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-split-missing-label-value="{{ 'accounting.bank_import.rule.split_source.missing'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-split-remainder-label-value="{{ 'accounting.bank_import.rule.split_source.remainder_preview'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-split-marker-required-message-value="{{ 'accounting.bank_import.rule.validation.split_marker_required'|trans|e('html_attr') }}">
     <div class="row mb-2">
         <div class="col">
             <ul class="pagination me-auto">
@@ -239,7 +243,7 @@
                         </td>
 
                         <td class="text-end text-nowrap fw-bold {% if line.amount|first == '-' %}text-danger{% else %}text-success{% endif %}">
-                            {{ line.amount|number_format(2, ',', '.') }} €
+                            {{ line.amount|number_format(2, ',', '.') }} {{ currency_symbol }}
                         </td>
 
                         {# Debit account #}

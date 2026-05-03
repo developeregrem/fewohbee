@@ -73,7 +73,7 @@ class BankImportRule
     /**
      * Action to perform when all conditions match.
      * Mode "assign": { mode: "assign", debitAccountId: int|null, creditAccountId: int|null, taxRateId: int|null, remarkTemplate: string|null }
-     * Mode "split":  { mode: "split", splits: [{ amount: float|null, percent: float|null, remainder: bool, debitAccountId: int, creditAccountId: int, taxRateId: int|null, remarkTemplate: string|null }] }
+     * Mode "split":  { mode: "split", splits: [{ amount: float|null, percent: float|null, remainder: bool, amountSource: "purpose_marker"|null, marker: string|null, debitAccountId: int, creditAccountId: int, taxRateId: int|null, remarkTemplate: string|null }] }
      * Mode "ignore": { mode: "ignore" }
      *
      * @var array<string, mixed>
