@@ -269,7 +269,7 @@ accounting:
         deleted: Rule deleted.
 
     profile:
-      title: CSV profiles for bank statements
+      title: CSV profiles
       subtitle: |
         For each bank, describe what its CSV export looks like — columns,
         date and number format. These profiles are picked when uploading.

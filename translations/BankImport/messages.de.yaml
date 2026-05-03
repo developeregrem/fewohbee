@@ -270,7 +270,7 @@ accounting:
         deleted: Regel gelöscht.
 
     profile:
-      title: CSV-Profile für Kontoauszüge
+      title: CSV-Profile
       subtitle: |
         Definiere für jede Bank, wie deren CSV-Export aussieht – Spalten,
         Datums- und Zahlenformat. Diese Profile werden beim Hochladen ausgewählt.
