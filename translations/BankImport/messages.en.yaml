@@ -133,6 +133,7 @@ accounting:
         Split this transaction into multiple bookings — e.g. when the purpose
         contains multiple items (interest, fees, charges).
       original_amount: Bank line amount
+      purpose: Purpose
       assigned_sum: Assigned sum
       add_row: Add another split
       mode:
@@ -163,6 +164,7 @@ accounting:
       validation:
         condition_required: Choose at least one condition.
         name_required: Enter a name.
+        split_marker_required: Dynamic split amounts require a marker.
       section:
         conditions: When should the rule fire?
         action: What should happen?
@@ -178,8 +180,22 @@ accounting:
         out: Outgoing
       rule_applied:
         help: A rule auto-filled this line.
+      warning:
+        line: 'Line %line%: %message%'
+        split_marker_missing: 'Split amount for marker "%marker%" was not found in the purpose text.'
       split:
         help: Split into multiple bookings.
+      split_source:
+        help: |
+          For recurring splits, amounts are read from the current purpose text.
+          Choose a marker immediately before each amount, or mark a split as the remainder.
+        current_amount: Example amount
+        source: Amount source
+        purpose_marker: From purpose
+        marker: Marker before amount
+        found: 'Found: %amount%'
+        missing: No amount found
+        remainder_preview: Calculated as the remainder.
       count:
         total: total
         pending: pending
@@ -216,6 +232,7 @@ accounting:
       action:
         ignore: Ignore
         split: Split (%count% parts)
+        split_marker: 'after "%marker%"'
         enable: Enable
         disable: Disable
       field:

@@ -167,6 +167,11 @@ final class GenericCsvParser implements ParserInterface
             ]));
         }
 
+        if ((int) $date->format('Y') < 100 && 1 === preg_match('/(\d{2})\D*$/', $raw, $matches)) {
+            $year = (int) $matches[1];
+            $date = $date->setDate(2000 + $year, (int) $date->format('n'), (int) $date->format('j'));
+        }
+
         return $date;
     }
 

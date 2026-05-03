@@ -24,6 +24,7 @@ export default class extends Controller {
         // Split modal
         'splitModal',
         'splitTotal',
+        'splitPurpose',
         'splitAssigned',
         'splitDelta',
         'splitRows',
@@ -43,6 +44,10 @@ export default class extends Controller {
         'ruleCredit',
         'ruleTaxRate',
         'ruleRemark',
+        'ruleAssignSection',
+        'ruleSplitSection',
+        'ruleSplitRows',
+        'ruleSplitRowTemplate',
         'rulePriority',
         'ruleScope',
         'linesData',
@@ -68,6 +73,10 @@ export default class extends Controller {
         ruleDefaultName: String,
         ruleConditionRequiredMessage: String,
         ruleNameRequiredMessage: String,
+        ruleSplitFoundLabel: String,
+        ruleSplitMissingLabel: String,
+        ruleSplitRemainderLabel: String,
+        ruleSplitMarkerRequiredMessage: String,
     };
 
     connect() {
@@ -342,6 +351,7 @@ export default class extends Controller {
 
         this.activeIdx = idx;
         this.splitTotalTarget.textContent = this._formatAmount(line.amount);
+        this.splitPurposeTarget.textContent = line.purpose || '—';
         this.splitRowsTarget.innerHTML = '';
 
         if (Array.isArray(line.splits) && line.splits.length > 0) {
@@ -469,7 +479,7 @@ export default class extends Controller {
             input.disabled = mode === 'remainder';
             if (mode === 'remainder') input.value = '';
         }
-        if (unit) unit.textContent = mode === 'percent' ? '%' : (mode === 'remainder' ? '↻' : '€');
+        if (unit) unit.textContent = mode === 'percent' ? '%' : (mode === 'remainder' ? '↻' : this.currencySymbolValue);
     }
 
     _splitRecalc() {
@@ -566,6 +576,7 @@ export default class extends Controller {
         this.ruleRemarkTarget.value = line.userRemark || '';
         this.rulePriorityTarget.value = '50';
         this.ruleScopeTarget.checked = true;
+        this._populateRuleSplitAction(line);
 
         this._showModal(this.ruleModalTarget);
     }
@@ -599,20 +610,32 @@ export default class extends Controller {
         body.set('name', name);
         conditionFields.forEach((f) => body.append('conditionFields[]', f));
         body.set('purposeContains', this.ruleCondPurposeValueTarget.value.trim());
-        // If the line has splits, persist them as a split-action rule —
-        // otherwise a plain assign rule. Modes (amount/percent/remainder)
-        // come straight from the split modal so "Rest"/"%"-cases survive.
+        // If the line has splits, persist dynamic marker/remainder split rules.
         const line = this._lineByIdx(this.activeIdx);
         const lineSplits = Array.isArray(line?.splits) ? line.splits : [];
         if (lineSplits.length > 0) {
             body.set('actionMode', 'split');
-            lineSplits.forEach((s, i) => {
-                body.append(`splits[${i}][amount]`, String(Math.abs(parseFloat(s.amount || 0))));
-                body.append(`splits[${i}][debitAccountId]`, s.debitAccountId ?? '');
-                body.append(`splits[${i}][creditAccountId]`, s.creditAccountId ?? '');
-                body.append(`splits[${i}][taxRateId]`, s.taxRateId ?? '');
-                body.append(`splits[${i}][remark]`, s.remark ?? '');
-            });
+            const splitRows = Array.from(this.ruleSplitRowsTarget.querySelectorAll('.rule-split-row'));
+            for (const [i, rowEl] of splitRows.entries()) {
+                const source = rowEl.querySelector('.rule-split-source')?.value || 'purpose_marker';
+                const marker = (rowEl.querySelector('.rule-split-marker')?.value || '').trim();
+                if (source === 'purpose_marker' && marker === '') {
+                    // eslint-disable-next-line no-alert
+                    alert(this.ruleSplitMarkerRequiredMessageValue);
+                    return;
+                }
+
+                if (source === 'remainder') {
+                    body.append(`splits[${i}][remainder]`, '1');
+                } else {
+                    body.append(`splits[${i}][amountSource]`, 'purpose_marker');
+                    body.append(`splits[${i}][marker]`, marker);
+                }
+                body.append(`splits[${i}][debitAccountId]`, rowEl.querySelector('.rule-split-debit')?.value || '');
+                body.append(`splits[${i}][creditAccountId]`, rowEl.querySelector('.rule-split-credit')?.value || '');
+                body.append(`splits[${i}][taxRateId]`, rowEl.querySelector('.rule-split-tax-rate')?.value || '');
+                body.append(`splits[${i}][remark]`, rowEl.querySelector('.rule-split-remark')?.value || '');
+            }
         } else {
             body.set('actionMode', 'assign');
             body.set('debitAccountId', this.ruleDebitTarget.value);
@@ -641,6 +664,149 @@ export default class extends Controller {
             // eslint-disable-next-line no-alert
             alert(this.saveFailedMessageValue);
         }
+    }
+
+    _populateRuleSplitAction(line) {
+        const splits = Array.isArray(line?.splits) ? line.splits : [];
+        if (splits.length === 0) {
+            if (this.hasRuleAssignSectionTarget) this.ruleAssignSectionTarget.hidden = false;
+            if (this.hasRuleSplitSectionTarget) this.ruleSplitSectionTarget.hidden = true;
+            if (this.hasRuleSplitRowsTarget) this.ruleSplitRowsTarget.innerHTML = '';
+            return;
+        }
+
+        if (this.hasRuleAssignSectionTarget) this.ruleAssignSectionTarget.hidden = true;
+        if (this.hasRuleSplitSectionTarget) this.ruleSplitSectionTarget.hidden = false;
+        this.ruleSplitRowsTarget.innerHTML = '';
+        splits.forEach((split, idx) => this._addRuleSplitRow(split, line, idx));
+    }
+
+    _addRuleSplitRow(split, line, idx) {
+        const tpl = this.ruleSplitRowTemplateTarget.content.firstElementChild.cloneNode(true);
+        const amount = Math.abs(parseFloat(split.amount || '0')) || 0;
+        const currentAmount = tpl.querySelector('.rule-split-current-amount');
+        if (currentAmount) currentAmount.textContent = this._formatAmountValue(amount);
+
+        const marker = this._guessMarkerForAmount(line.purpose || '', amount);
+        const sourceSel = tpl.querySelector('.rule-split-source');
+        const markerInput = tpl.querySelector('.rule-split-marker');
+        const isLast = idx === (Array.isArray(line.splits) ? line.splits.length - 1 : idx);
+        if (sourceSel) sourceSel.value = marker === '' && isLast ? 'remainder' : 'purpose_marker';
+        if (markerInput) markerInput.value = marker;
+
+        const debitSel = tpl.querySelector('.rule-split-debit');
+        if (debitSel && split.debitAccountId) debitSel.value = String(split.debitAccountId);
+        const creditSel = tpl.querySelector('.rule-split-credit');
+        if (creditSel && split.creditAccountId) creditSel.value = String(split.creditAccountId);
+        const taxRateSel = tpl.querySelector('.rule-split-tax-rate');
+        if (taxRateSel && split.taxRateId) taxRateSel.value = String(split.taxRateId);
+        const remarkInput = tpl.querySelector('.rule-split-remark');
+        if (remarkInput) remarkInput.value = split.remark ?? '';
+
+        this.ruleSplitRowsTarget.appendChild(tpl);
+        this._refreshRuleSplitRow(tpl);
+    }
+
+    ruleSplitSourceChange(event) {
+        this._refreshRuleSplitRow(event.currentTarget.closest('.rule-split-row'));
+    }
+
+    ruleSplitMarkerInput(event) {
+        this._refreshRuleSplitRow(event.currentTarget.closest('.rule-split-row'));
+    }
+
+    _refreshRuleSplitRow(rowEl) {
+        if (!rowEl) return;
+        const source = rowEl.querySelector('.rule-split-source')?.value || 'purpose_marker';
+        const markerInput = rowEl.querySelector('.rule-split-marker');
+        const preview = rowEl.querySelector('.rule-split-preview');
+        if (source === 'remainder') {
+            if (markerInput) markerInput.disabled = true;
+            if (preview) {
+                preview.className = 'small rule-split-preview text-muted';
+                preview.textContent = this.ruleSplitRemainderLabelValue;
+            }
+            return;
+        }
+
+        if (markerInput) markerInput.disabled = false;
+        const marker = (markerInput?.value || '').trim();
+        const purpose = (this._lineByIdx(this.activeIdx) || {}).purpose || '';
+        const found = this._extractAmountAfterMarker(purpose, marker);
+        if (!preview) return;
+        if (found === null) {
+            preview.className = 'small rule-split-preview text-warning';
+            preview.textContent = this.ruleSplitMissingLabelValue;
+            return;
+        }
+
+        preview.className = 'small rule-split-preview text-success';
+        preview.textContent = this._formatText(this.ruleSplitFoundLabelValue, {
+            '%amount%': this._formatAmountValue(found),
+        });
+    }
+
+    _guessMarkerForAmount(purpose, amount) {
+        if (!purpose || amount <= 0) return '';
+        const matches = this._amountMatches(purpose);
+        const match = matches.find((candidate) => Math.abs(candidate.amount - amount) < 0.005);
+        if (!match) return '';
+
+        const before = purpose.slice(0, match.index).replace(/\s+/g, ' ').trim();
+        if (before === '') return '';
+        const afterPreviousAmount = before.replace(/^.*(?:\d{1,3}(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2}|\d{1,3}(?:[.,]\d{3})+|\d+)\s*-?\s*/u, '').trim();
+        const words = (afterPreviousAmount || before).split(/\s+/).filter(Boolean);
+        return words.slice(-4).join(' ').replace(/[:\-–]+$/u, '').trim();
+    }
+
+    _extractAmountAfterMarker(purpose, marker) {
+        if (!purpose || !marker) return null;
+        const idx = purpose.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase());
+        if (idx < 0) return null;
+        const tail = purpose.slice(idx + marker.length);
+        const matches = this._amountMatches(tail);
+        return matches.length > 0 ? matches[0].amount : null;
+    }
+
+    _amountMatches(text) {
+        const regex = /(^|[^\d.,])(?:([+-]?(?:\d{1,3}(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2}))\s*-?(?![.,]\d)|([+-]?(?:\d{1,3}(?:[.,]\d{3})+|\d+))\s*-?(?=\s*(?:€|EUR\b|Euro\b|,|;|$))(?![.,]\d))/giu;
+        const matches = [];
+        for (const match of text.matchAll(regex)) {
+            const amount = this._parseLooseAmount(match[2] || match[3]);
+            if (amount !== null) {
+                matches.push({ index: (match.index || 0) + (match[1]?.length || 0), amount });
+            }
+        }
+        return matches;
+    }
+
+    _parseLooseAmount(raw) {
+        let value = String(raw || '').replace(/[^\d,.\-+]/g, '');
+        if (value === '' || value === '-' || value === '+') return null;
+        const lastComma = value.lastIndexOf(',');
+        const lastDot = value.lastIndexOf('.');
+        if (lastComma >= 0 || lastDot >= 0) {
+            const separator = lastComma >= 0 && lastDot >= 0
+                ? (lastComma > lastDot ? ',' : '.')
+                : (lastComma >= 0 ? ',' : '.');
+            const separatorPos = value.lastIndexOf(separator);
+            const digitsAfterSeparator = separatorPos < 0 ? 0 : value.length - separatorPos - 1;
+            const isThousandsOnly = digitsAfterSeparator === 3
+                && value.split(separator).length === 2
+                && /^[+-]?\d{1,3}[.,]\d{3}$/u.test(value);
+
+            if (isThousandsOnly) {
+                value = value.split(separator).join('');
+            } else {
+                const decimal = lastComma >= 0 && lastDot >= 0
+                    ? (lastComma > lastDot ? ',' : '.')
+                    : separator;
+                const thousands = decimal === ',' ? '.' : ',';
+                value = value.split(thousands).join('').replace(decimal, '.');
+            }
+        }
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? null : Math.abs(parsed);
     }
 
     // ── Modal helpers ─────────────────────────────────────────────────

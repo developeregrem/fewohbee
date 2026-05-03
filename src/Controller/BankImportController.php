@@ -541,17 +541,45 @@ class BankImportController extends AbstractController
                 if (!is_array($piece)) {
                     continue;
                 }
-                $absAmount = abs((float) ($piece['amount'] ?? 0));
-                if ($absAmount <= 0) {
-                    continue;
-                }
-                $splits[] = [
-                    'amount' => round($absAmount, 2),
+
+                $base = [
                     'debitAccountId' => $this->normalizeAccountId($piece['debitAccountId'] ?? null),
                     'creditAccountId' => $this->normalizeAccountId($piece['creditAccountId'] ?? null),
                     'taxRateId' => $this->normalizeTaxRateId($piece['taxRateId'] ?? null),
                     'remarkTemplate' => $this->cleanRemark($piece['remark'] ?? null),
                 ];
+
+                if ('purpose_marker' === (string) ($piece['amountSource'] ?? '')) {
+                    $marker = trim((string) ($piece['marker'] ?? ''));
+                    if ('' === $marker) {
+                        continue;
+                    }
+
+                    $splits[] = $base + [
+                        'amountSource' => 'purpose_marker',
+                        'marker' => mb_substr($marker, 0, 120),
+                    ];
+                    continue;
+                }
+
+                if ($this->truthy($piece['remainder'] ?? false)) {
+                    $splits[] = $base + ['remainder' => true];
+                    continue;
+                }
+
+                if (isset($piece['percent'])) {
+                    $percent = abs((float) $piece['percent']);
+                    if ($percent > 0) {
+                        $splits[] = $base + ['percent' => round($percent, 4)];
+                    }
+                    continue;
+                }
+
+                $absAmount = abs((float) ($piece['amount'] ?? 0));
+                if ($absAmount <= 0) {
+                    continue;
+                }
+                $splits[] = $base + ['amount' => round($absAmount, 2)];
             }
 
             return ['mode' => BankImportRule::ACTION_MODE_SPLIT, 'splits' => $splits];
@@ -574,6 +602,11 @@ class BankImportController extends AbstractController
         $value = trim((string) $value);
 
         return '' === $value ? null : mb_substr($value, 0, 255);
+    }
+
+    private function truthy(mixed $value): bool
+    {
+        return true === $value || 1 === $value || in_array((string) $value, ['1', 'true', 'on', 'yes'], true);
     }
 
     /**

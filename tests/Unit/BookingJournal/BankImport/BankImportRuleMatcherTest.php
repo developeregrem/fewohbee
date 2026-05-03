@@ -13,6 +13,7 @@ use App\Service\BookingJournal\BankImport\RuleActionApplicator;
 use App\Service\BookingJournal\BankImport\RuleConditionEvaluator;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AllowMockObjectsWithoutExpectations]
 final class BankImportRuleMatcherTest extends TestCase
@@ -120,6 +121,31 @@ final class BankImportRuleMatcherTest extends TestCase
         self::assertSame(ImportState::LINE_STATUS_IGNORED, $state->lines[0]['status']);
     }
 
+    public function testRuleWarningsAreTranslatedWithLineNumber(): void
+    {
+        $rule = $this->createRule(1, 50, [
+            ['field' => BankImportRule::CONDITION_FIELD_PURPOSE,
+             'operator' => BankImportRule::CONDITION_OP_CONTAINS,
+             'value' => 'Entgelte'],
+        ], [
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_marker', 'marker' => 'Zinsen'],
+            ],
+        ]);
+
+        $matcher = $this->createMatcher([$rule]);
+        $state = $this->createStateWithLines([
+            ['purpose' => 'Entgelte 41,50-', 'amount' => '-41.50'],
+        ]);
+
+        $matcher->annotate($state, $this->createBankAccount());
+
+        self::assertSame([
+            'Zeile 1: Splitbetrag fuer Marker "Zinsen" wurde im Verwendungszweck nicht gefunden.',
+        ], $state->warnings);
+    }
+
     /**
      * @param list<BankImportRule> $rules
      */
@@ -132,7 +158,24 @@ final class BankImportRuleMatcherTest extends TestCase
             $repo,
             new RuleConditionEvaluator(),
             new RuleActionApplicator(),
+            $this->translator(),
         );
+    }
+
+    private function translator(): TranslatorInterface
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $parameters = []): string {
+            $catalogue = [
+                'accounting.bank_import.rule.warning.line' => 'Zeile %line%: %message%',
+                'accounting.bank_import.rule.warning.split_marker_missing' => 'Splitbetrag fuer Marker "%marker%" wurde im Verwendungszweck nicht gefunden.',
+            ];
+            $message = $catalogue[$id] ?? $id;
+
+            return strtr($message, array_map('strval', $parameters));
+        });
+
+        return $translator;
     }
 
     /**

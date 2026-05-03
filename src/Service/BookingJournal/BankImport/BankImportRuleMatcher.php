@@ -8,6 +8,7 @@ use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\AccountingAccount;
 use App\Entity\BankImportRule;
 use App\Repository\BankImportRuleRepository;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Walks the user's rule templates against every statement line in the draft
@@ -23,6 +24,7 @@ final class BankImportRuleMatcher
         private readonly BankImportRuleRepository $ruleRepo,
         private readonly RuleConditionEvaluator $evaluator,
         private readonly RuleActionApplicator $applicator,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -44,6 +46,15 @@ final class BankImportRuleMatcher
                 }
 
                 $this->applicator->apply($rule, $line);
+                if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
+                    $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
+                        '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
+                        '%message%' => $this->formatRuleWarning($line['ruleWarning']),
+                    ]);
+                    if (!in_array($warning, $state->warnings, true)) {
+                        $state->warnings[] = $warning;
+                    }
+                }
                 break; // first matching rule wins.
             }
         }
@@ -65,5 +76,31 @@ final class BankImportRuleMatcher
         }
 
         return true;
+    }
+
+    /**
+     * @param mixed $warning
+     */
+    private function hasRuleWarning(mixed $warning): bool
+    {
+        if (is_array($warning)) {
+            return isset($warning['key']) && '' !== (string) $warning['key'];
+        }
+
+        return null !== $warning && '' !== (string) $warning;
+    }
+
+    /**
+     * @param mixed $warning
+     */
+    private function formatRuleWarning(mixed $warning): string
+    {
+        if (is_array($warning) && isset($warning['key'])) {
+            $params = $warning['params'] ?? [];
+
+            return $this->translator->trans((string) $warning['key'], is_array($params) ? $params : []);
+        }
+
+        return (string) $warning;
     }
 }

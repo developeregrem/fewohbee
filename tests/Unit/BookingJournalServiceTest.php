@@ -80,6 +80,26 @@ final class BookingJournalServiceTest extends TestCase
         self::assertTrue(true);
     }
 
+    public function testGetOrCreateBatchReusesNewUnflushedBatch(): void
+    {
+        $batchRepo = $this->createStub(BookingBatchRepository::class);
+        $batchRepo->method('findByYearAndMonth')->willReturn(null);
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())
+            ->method('persist')
+            ->with(self::isInstanceOf(BookingBatch::class));
+
+        $service = $this->createService(em: $em, batchRepo: $batchRepo);
+
+        $first = $service->getOrCreateBatch(2026, 3);
+        $second = $service->getOrCreateBatch(2026, 3);
+
+        self::assertSame($first, $second);
+        self::assertSame(2026, $first->getYear());
+        self::assertSame(3, $first->getMonth());
+    }
+
     public function testAssignBatchByEntryDateMovesEntryToMatchingBatch(): void
     {
         $oldBatch = (new BookingBatch())->setYear(2026)->setMonth(4);

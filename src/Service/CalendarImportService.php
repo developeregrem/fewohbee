@@ -403,6 +403,7 @@ class CalendarImportService
         $reservation->setEndDate($this->toDate($end));
         $reservation->setPersons(1);
         $reservation->setReservationOrigin($import->getReservationOrigin());
+        // no chagteStatus event triggered as it is a new entity
         $reservation->setReservationStatus($import->getReservationStatus());
         $reservation->setRemark($event['DESCRIPTION'] ?? null);
         $reservation->setRefUid($event['UID']);
