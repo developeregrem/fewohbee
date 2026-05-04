@@ -337,7 +337,9 @@ accounting:
           (0-basiert) an — sonst leer lassen.
         columns: Spalten-Zuordnung
         columns.help: |
-          Pro Feld die 0-basierte Spaltennummer aus deiner CSV eintragen.
+          Pro Feld den Spaltenbuchstaben (A, B, C …) eintragen, wie ihn
+          deine Tabellenkalkulation (z. B. Excel oder LibreOffice Calc)
+          anzeigt — alternativ die 0-basierte Spaltennummer (0, 1, 2 …).
           Pflicht sind Buchungsdatum und Betrag (oder Soll-/Haben-Spalten,
           falls deine Bank getrennte Spalten benutzt). Felder leer lassen,
           wenn die Spalte nicht existiert.
@@ -359,6 +361,7 @@ accounting:
           dann die eigentlichen Buchungen.
 
       col:
+        invalid: Bitte einen Spaltenbuchstaben (A, B, …) oder eine Spaltennummer (0, 1, …) eingeben.
         group:
           required: Pflichtfelder
           separate: Bei getrennten Soll-/Haben-Spalten

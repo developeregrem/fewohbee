@@ -336,7 +336,9 @@ accounting:
           (0-based) — otherwise leave them empty.
         columns: Column mapping
         columns.help: |
-          For each field, enter the 0-based column index in your CSV.
+          For each field, enter the column letter (A, B, C …) as shown
+          by your spreadsheet program (e.g. Excel or LibreOffice Calc),
+          or alternatively the 0-based column index (0, 1, 2 …).
           Book date and amount (or debit/credit columns, if your bank uses
           separate columns) are required. Leave fields blank when the
           column does not exist.
@@ -358,6 +360,7 @@ accounting:
           transactions.
 
       col:
+        invalid: Please enter a column letter (A, B, …) or a column number (0, 1, …).
         group:
           required: Required
           separate: Only if your bank uses separate debit/credit columns
