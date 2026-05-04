@@ -25,4 +25,11 @@ interface ParserInterface
      * mapping, locale, etc.). Other parsers may ignore it.
      */
     public function parse(\SplFileInfo $file, ?BankCsvProfile $profile): ParseResult;
+
+    /**
+     * Whether this format may be uploaded as multiple files at once that get
+     * merged into a single ParseResult. CSV is single-file-per-upload, ISO
+     * 20022 camt typically arrives as one file per booking day.
+     */
+    public function supportsMultipleFiles(): bool;
 }

@@ -27,6 +27,10 @@ accounting:
     parser:
       warning:
         row_skipped: 'Zeile %line% übersprungen: %message%'
+        entry_skipped: 'Eintrag in %file% übersprungen: %message%'
+        camt_non_booked_skipped: '%count% nicht gebuchte camt.052-Einträge in %file% wurden übersprungen.'
+        camt_unknown_version: 'camt-Version in %file% konnte nicht aus dem Namespace gelesen werden — Import erfolgt best-effort.'
+        camt_newer_version: 'camt.%type%.001.%version% ist neuer als die getesteten Versionen — Import erfolgt best-effort.'
       error:
         profile_required: Für den generischen CSV-Parser wird ein CSV-Profil benötigt.
         file_read_failed: 'Konnte Datei nicht lesen: %path%'
@@ -37,6 +41,14 @@ accounting:
         required_separate_columns: Profil mit separaten Spalten benötigt "amountDebit" und "amountCredit".
         format_not_registered: 'Kein Parser für Format "%format%" registriert. Verfügbar: %available%'
         none_available: keine
+        camt_invalid_xml: XML-Datei konnte nicht gelesen werden.
+        camt_unsupported_message: Nur camt.052 und camt.053 werden unterstützt.
+        camt_no_statements: Die camt-Datei enthält keine Konto-Reports oder Kontoauszüge.
+        camt_version_too_old: 'camt.%type%.001.%version% wird nicht unterstützt; bitte Version 08 oder neuer exportieren.'
+        camt_multiple_accounts: Die ausgewählten camt-Dateien enthalten unterschiedliche Konto-IBANs.
+        camt_missing_date: Buchungsdatum/Valutadatum fehlt.
+        camt_missing_amount: Betrag fehlt.
+        camt_missing_direction: Soll/Haben-Kennzeichen fehlt.
 
     upload:
       title: Neuen Kontoauszug hochladen
@@ -47,14 +59,19 @@ accounting:
         Auf dieses Sachkonto werden die Buchungen gegengebucht. Bei Eingängen
         wird es automatisch als Soll-Konto vorausgefüllt, bei Ausgängen als
         Haben-Konto. Du musst dann nur noch die jeweils andere Seite zuordnen.
-      csv_profile: CSV-Profil
-      csv_profile.placeholder: Bitte wählen…
-      file: CSV-Datei
-      file.invalid_type: Bitte eine CSV-Datei hochladen.
+      format: Format
+      format.placeholder: Bitte wählen…
+      format.camt: 'XML: camt.052/053 ab v08'
+      format.csv_profile: 'CSV: %profile%'
+      file: Kontoauszugsdatei(en)
+      file.invalid_type: Bitte CSV- oder XML-Datei(en) hochladen.
+      multiple_files_name: '%count% XML-Dateien'
       flash:
         invalid: Eingabe unvollständig — bitte alle Felder prüfen.
-        parse_failed: 'CSV konnte nicht eingelesen werden: %message%'
-        no_lines: Die Datei enthielt keine erkennbaren Buchungszeilen — passt das gewählte Profil zur Datei?
+        csv_profile_missing: Das gewählte CSV-Profil wurde nicht gefunden.
+        csv_requires_single_file: Für CSV-Importe bitte genau eine Datei hochladen.
+        parse_failed: 'Datei konnte nicht eingelesen werden: %message%'
+        no_lines: Die Datei enthielt keine erkennbaren Buchungszeilen — passt das gewählte Format zur Datei?
         iban_mismatch: 'Achtung: IBAN in der Datei (%file%) weicht vom hinterlegten Bankkonto (%account%) ab.'
 
     preview:

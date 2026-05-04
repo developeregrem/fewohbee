@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\AccountingAccount;
-use App\Entity\BankCsvProfile;
 use App\Repository\AccountingAccountRepository;
-use App\Repository\BankCsvProfileRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotNull;
 
@@ -38,28 +37,29 @@ class BankStatementUploadType extends AbstractType
                 'query_builder' => fn (AccountingAccountRepository $repo) => $repo->createBankAccountsQueryBuilder($activePreset),
                 'constraints' => [new NotNull()],
             ])
-            ->add('csvProfile', EntityType::class, [
-                'class' => BankCsvProfile::class,
-                'label' => 'accounting.bank_import.upload.csv_profile',
-                'placeholder' => 'accounting.bank_import.upload.csv_profile.placeholder',
-                'choice_label' => 'name',
-                'query_builder' => static fn (BankCsvProfileRepository $repo) => $repo->createOrderedQueryBuilder(),
+            ->add('format', BankImportFormatType::class, [
+                'label' => 'accounting.bank_import.upload.format',
                 'constraints' => [new NotNull()],
             ])
             ->add('file', FileType::class, [
                 'label' => 'accounting.bank_import.upload.file',
                 'mapped' => false,
+                'multiple' => true,
                 'constraints' => [
-                    new File(
-                        maxSize: '5M',
-                        mimeTypes: [
-                            'text/csv',
-                            'text/plain',
-                            'application/csv',
-                            'application/vnd.ms-excel',
-                        ],
-                        mimeTypesMessage: 'accounting.bank_import.upload.file.invalid_type',
-                    ),
+                    new All([
+                        new File(
+                            maxSize: '5M',
+                            mimeTypes: [
+                                'text/csv',
+                                'text/plain',
+                                'text/xml',
+                                'application/csv',
+                                'application/xml',
+                                'application/vnd.ms-excel',
+                            ],
+                            mimeTypesMessage: 'accounting.bank_import.upload.file.invalid_type',
+                        ),
+                    ]),
                 ],
             ]);
     }

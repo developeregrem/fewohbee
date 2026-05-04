@@ -33,6 +33,11 @@ final class GenericCsvParser implements ParserInterface
         return self::FORMAT_KEY;
     }
 
+    public function supportsMultipleFiles(): bool
+    {
+        return false;
+    }
+
     public function parse(\SplFileInfo $file, ?BankCsvProfile $profile): ParseResult
     {
         if (null === $profile) {
