@@ -112,29 +112,29 @@
                     <div class="text-muted small fw-semibold mt-2 mb-1 text-uppercase" style="letter-spacing:.04em">
                         {{ 'accounting.bank_import.profile.col.group.required'|trans }}
                     </div>
-                    {{ ui.field(form.col_bookDate, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_amount, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_bookDate, {'width': '5rem'}) }}
+                    {{ ui.field(form.col_amount, {"width": "5rem"}) }}
 
                     <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
                         {{ 'accounting.bank_import.profile.col.group.separate'|trans }}
                     </div>
-                    {{ ui.field(form.col_amountDebit, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_amountCredit, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_amountDebit, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_amountCredit, {"width": "5rem"}) }}
 
                     <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
                         {{ 'accounting.bank_import.profile.col.group.context'|trans }}
                     </div>
-                    {{ ui.field(form.col_valueDate, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_purpose, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_counterpartyName, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_counterpartyIban, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_valueDate, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_purpose, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_counterpartyName, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_counterpartyIban, {"width": "5rem"}) }}
 
                     <div class="text-muted small fw-semibold mt-3 mb-1 text-uppercase" style="letter-spacing:.04em">
                         {{ 'accounting.bank_import.profile.col.group.optional'|trans }}
                     </div>
-                    {{ ui.field(form.col_endToEndId, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_mandateReference, {'width': '4rem'}) }}
-                    {{ ui.field(form.col_creditorId, {'width': '4rem'}) }}
+                    {{ ui.field(form.col_endToEndId, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_mandateReference, {"width": "5rem"}) }}
+                    {{ ui.field(form.col_creditorId, {"width": "5rem"}) }}
                 </div>
             </div>
 
@@ -165,7 +165,7 @@
 <span class="text-muted">Z 3:</span> <em>(leer)</em>
 <span class="text-muted">Z 4:</span> "Buchungsdatum";"Wertstellung";"Status";"Zahler";"Empfänger";"Zweck";"Typ";"IBAN";"Betrag";…
 <span class="text-muted">Z 5:</span> "<span class="bg-success bg-opacity-25">31.03.26</span>";"<span class="bg-success bg-opacity-25">31.03.26</span>";"Gebucht";"ISSUER";"<span class="bg-primary bg-opacity-25">Company XYZ</span>";"<span class="bg-primary bg-opacity-25">VISA Debitkartenumsatz</span>";"Ausgang";"<span class="bg-primary bg-opacity-25">DE45…</span>";"<span class="bg-danger bg-opacity-25">-41,98</span>";…
-<span class="text-muted">    </span>  <span class="text-muted">↑0</span>          <span class="text-muted">↑1</span>           <span class="text-muted">↑2</span>        <span class="text-muted">↑3</span>      <span class="text-muted">↑4</span>            <span class="text-muted">↑5</span>                  <span class="text-muted">↑6</span>       <span class="text-muted">↑7</span>     <span class="text-muted">↑8</span></pre>
+<span class="text-muted">    </span>  <span class="text-muted">↑A</span>          <span class="text-muted">↑B</span>           <span class="text-muted">↑C</span>        <span class="text-muted">↑D</span>      <span class="text-muted">↑E</span>                <span class="text-muted">↑F</span>                   <span class="text-muted">↑G</span>       <span class="text-muted">↑H</span>       <span class="text-muted">↑I</span></pre>
                     </div>
 
                     <dl class="mb-0">
@@ -190,7 +190,7 @@
                             {{ 'accounting.bank_import.profile.example.dates'|trans }}
                         </dt>
                         <dd class="small text-muted mb-2">
-                            <code>col_bookDate</code> = 0, <code>col_valueDate</code> = 1
+                            <code>col_bookDate</code> = A, <code>col_valueDate</code> = B
                         </dd>
 
                         <dt class="small">
@@ -198,8 +198,8 @@
                             {{ 'accounting.bank_import.profile.example.context'|trans }}
                         </dt>
                         <dd class="small text-muted mb-2">
-                            <code>col_counterpartyName</code> = 4, <code>col_purpose</code> = 5,<br>
-                            <code>col_counterpartyIban</code> = 7
+                            <code>col_counterpartyName</code> = E, <code>col_purpose</code> = F,<br>
+                            <code>col_counterpartyIban</code> = H
                         </dd>
 
                         <dt class="small">
@@ -207,7 +207,7 @@
                             {{ 'accounting.bank_import.profile.example.amount'|trans }}
                         </dt>
                         <dd class="small text-muted mb-2">
-                            <code>col_amount</code> = 8 ({{ 'accounting.bank_import.profile.example.signed_hint'|trans }})
+                            <code>col_amount</code> = I ({{ 'accounting.bank_import.profile.example.signed_hint'|trans }})
                         </dd>
 
                         <dt class="small">{{ 'accounting.bank_import.profile.example.header_skip'|trans }}</dt>

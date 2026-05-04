@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\BankCsvProfile;
+use App\Form\Type\CsvColumnType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -113,11 +114,11 @@ class BankCsvProfileType extends AbstractType
         // Synthetic per-field column index inputs that are mapped to the JSON
         // columnMap field on submission.
         foreach (self::COLUMN_FIELDS as $key => $label) {
-            $builder->add('col_'.$key, IntegerType::class, [
+            $builder->add('col_'.$key, CsvColumnType::class, [
                 'label' => $label,
                 'required' => false,
                 'mapped' => false,
-                'attr' => ['min' => 0, 'max' => 100, 'class' => 'form-control-sm'],
+                'attr' => ['class' => 'form-control-sm', 'maxlength' => 4, 'autocomplete' => 'off'],
             ]);
         }
 
