@@ -18,6 +18,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Field\FileFormField;
+use Symfony\Component\DomCrawler\Form;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class BankImportControllerTest extends WebTestCase
@@ -51,8 +54,8 @@ final class BankImportControllerTest extends WebTestCase
 
         $form = $crawler->filter('form')->form();
         $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[csvProfile]']->select((string) $profile->getId());
-        $form['bank_statement_upload[file]']->upload(self::FIXTURE_DIR.'/'.$fixtureName);
+        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/'.$fixtureName);
 
         $client->submit($form);
 
@@ -111,8 +114,8 @@ final class BankImportControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/journal/bank-import');
         $form = $crawler->filter('form')->form();
         $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
-        $form['bank_statement_upload[csvProfile]']->select((string) $profile->getId());
-        $form['bank_statement_upload[file]']->upload(self::FIXTURE_DIR.'/postbank-girokonto-anonymized.csv');
+        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/postbank-girokonto-anonymized.csv');
         $client->submit($form);
 
         preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
@@ -157,6 +160,55 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('-15.00', $recurringLine['splits'][0]['amount']);
         self::assertSame('-5.00', $recurringLine['splits'][1]['amount']);
         self::assertSame('-30.00', $recurringLine['splits'][2]['amount']);
+    }
+
+    public function testUploadBuildsPreviewFromMultipleCamtXmlFiles(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $bankAccount = $this->createBankAccount('DE00SPARKASSETEST0001');
+
+        $crawler = $client->request('GET', '/journal/bank-import');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form')->form();
+        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
+        $form['bank_statement_upload[format]']->select('iso20022_camt');
+
+        $client->request('POST', '/journal/bank-import/upload', $form->getPhpValues(), [
+            'bank_statement_upload' => [
+                'file' => [
+                    new UploadedFile(self::FIXTURE_DIR.'/camt052-booked-day1.xml', 'camt052-booked-day1.xml', 'text/xml', null, true),
+                    new UploadedFile(self::FIXTURE_DIR.'/camt052-booked-day2.xml', 'camt052-booked-day2.xml', 'text/xml', null, true),
+                ],
+            ],
+        ]);
+
+        self::assertResponseRedirects();
+        $location = (string) $client->getResponse()->headers->get('Location');
+        self::assertMatchesRegularExpression('#/journal/bank-import/([0-9a-f-]{36})$#', $location);
+        preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', $location, $matches);
+        $sessionImportId = $matches[1];
+
+        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        self::assertSame((int) $bankAccount->getId(), $state->bankAccountId);
+        self::assertSame('iso20022_camt', $state->fileFormat);
+        self::assertNull($state->bankCsvProfileId);
+        self::assertSame('DE00SPARKASSETEST0001', $state->sourceIban);
+        self::assertSame('2026-04-09', $state->periodFrom);
+        self::assertSame('2026-04-10', $state->periodTo);
+        self::assertCount(3, $state->lines);
+
+        $income = $this->findLineByPurpose($state, 'Invoice 2026-0101');
+        self::assertNotNull($income);
+        self::assertSame('518.00', $income['amount']);
+        self::assertSame('Example Guest GmbH', $income['counterpartyName']);
+
+        $outgoing = $this->findLineByPurpose($state, 'Monthly subscription');
+        self::assertNotNull($outgoing);
+        self::assertSame('-25.00', $outgoing['amount']);
+        self::assertSame('Example Subscription AG', $outgoing['counterpartyName']);
     }
 
     /**
@@ -385,6 +437,17 @@ final class BankImportControllerTest extends WebTestCase
         self::assertArrayHasKey($sessionImportId, $drafts);
 
         return ImportState::fromArray($drafts[$sessionImportId]);
+    }
+
+    private function uploadStatementFile(Form $form, string $path): void
+    {
+        $field = $form['bank_statement_upload[file]'];
+        if (is_array($field)) {
+            $field = reset($field);
+        }
+
+        self::assertInstanceOf(FileFormField::class, $field);
+        $field->upload($path);
     }
 
     private function getEntityManager(): EntityManagerInterface
