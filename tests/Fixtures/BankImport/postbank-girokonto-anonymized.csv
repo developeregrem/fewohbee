@@ -1,0 +1,17 @@
+﻿Umsätze
+Konto;Filial-/Kontonummer;IBAN;Währung
+Postbank Giro plus;209 7051840 00;DE00POSTBANKTEST0001;EUR
+
+1.4.2025 - 26.4.2026
+Letzter Kontostand;;;;1.526,02;EUR
+Vorgemerkte und noch nicht gebuchte Umsätze sind nicht Bestandteil dieser Übersicht.
+Buchungstag;Wert;Umsatzart;Begünstigter / Auftraggeber;Verwendungszweck;IBAN / Kontonummer;BIC;Kundenreferenz;Mandatsreferenz;Gläubiger ID;Fremde Gebühren;Betrag;Abweichender Empfänger;Anzahl der Aufträge;Anzahl der Schecks;Soll;Haben;Währung
+19.4.2026;19.4.2026;Kartenzahlung;MUSTERHANDEL XYZ;MUSTERHANDEL XYZ KARTENZAHLUNG 17-04-2026T14:53:03 Folgenr. 01 Verfalld. 1226;PB-CP-001;;PB-2026-000001;177671;CREDITOR-101;;-5,50;;;;-5,50;;EUR
+22.4.2026;22.4.2026;SEPA-Gutschrift;Booking Beispiel BV;BOOKING BEISPIEL BV SAMMELAUSZAHLUNG APRIL 2026 3 BUCHUNGEN KOMMISSION 199,33 GEBUEHR 7,45;PB-CP-002;BIC-PB-002;BOOK-APR-2026-0001;;;;812,34;;;;;812,34;EUR
+23.4.2026;23.4.2026;Entgeltabrechnung;POSTBANK;Information zur Abrechnung Zinsen fuer Kredit 12,30- Kreditprovision 4,20- Entgelte vom 23.04.2026 25,00-;PB-OWN-001;BIC-PB-OWN;ABR-2026-04;;;;-41,50;;;;-41,50;;EUR
+23.4.2026;23.4.2026;Entgeltabrechnung;POSTBANK;Information zur Abrechnung Zinsen fuer Kredit 15,00- Kreditprovision 5,00- Entgelte vom 23.04.2026 30,00-;PB-OWN-001;BIC-PB-OWN;ABR-2026-04-B;;;;-50,00;;;;-50,00;;EUR
+24.4.2026;24.4.2026;Lastschrift;POSTBANK DARLEHEN;Darl.-Leistung 987654 Zinsen 180,00 Rate April 2026;PB-CP-003;BIC-PB-003;DARL-987654-2026-04;;;;-1000,00;;;;-1000,00;;EUR
+25.4.2026;25.4.2026;SEPA-Lastschrift;STADTWERKE MUSTERSTADT;Monatsabrechnung 04/2026 Grundpreis 29,00 Arbeitspreis 90,00;PB-CP-004;BIC-PB-004;SW-2026-04;;;;-119,00;;;;-119,00;;EUR
+25.4.2026;25.4.2026;SEPA-Gutschrift;MAX MUSTERMANN;Rechnung 2026-0101 Aufenthalt April 2026;PB-CP-005;BIC-PB-005;RG-2026-0101;;;;585,00;;;;;585,00;EUR
+26.4.2026;26.4.2026;SEPA-Gutschrift;ERIKA BEISPIEL;Rechnung 2026-0102 Kurzaufenthalt April 2026;PB-CP-006;BIC-PB-006;RG-2026-0102;;;;230,00;;;;;230,00;EUR
+Kontostand;26.4.2026;;;1.520,52;EUR
