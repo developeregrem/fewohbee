@@ -21,6 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Event\ReservationStatusChangedEvent;
+use App\Repository\GuestCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,7 +38,82 @@ class ReservationService
         private readonly RequestStack $requestStack,
         private readonly InvoiceService $is,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly GuestCategoryRepository $guestCategoryRepository,
     ) {
+    }
+
+    /**
+     * Apply a guest-counts map to the reservation and recompute persons
+     * as the sum of categories flagged isCountedInOccupancy.
+     *
+     * @param array<int, int> $counts
+     */
+    public function applyGuestCounts(Reservation $reservation, array $counts): void
+    {
+        $reservation->setGuestCounts($counts);
+        $reservation->setPersons($this->computePersonsFromCounts($counts));
+    }
+
+    /**
+     * Sum of counts for categories with isCountedInOccupancy=true.
+     *
+     * @param array<int, int> $counts
+     */
+    public function computePersonsFromCounts(array $counts): int
+    {
+        if ([] === $counts) {
+            return 0;
+        }
+        $categories = $this->guestCategoryRepository->findBy(['id' => array_keys($counts)]);
+        $sum = 0;
+        foreach ($categories as $category) {
+            if ($category->isCountedInOccupancy()) {
+                $sum += (int) ($counts[(int) $category->getId()] ?? 0);
+            }
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Returns the total number of guests in the reservation that match
+     * the given boolean flag accessor on the GuestCategory entity.
+     *
+     * @param 'isAdult'|'isCountedInOccupancy' $flag
+     */
+    public function getCountByFlag(Reservation $reservation, string $flag): int
+    {
+        $counts = $reservation->getGuestCounts();
+        if ([] === $counts) {
+            return 0;
+        }
+        $categories = $this->guestCategoryRepository->findBy(['id' => array_keys($counts)]);
+        $sum = 0;
+        foreach ($categories as $category) {
+            $matches = match ($flag) {
+                'isAdult' => $category->isAdult(),
+                'isCountedInOccupancy' => $category->isCountedInOccupancy(),
+                default => false,
+            };
+            if ($matches) {
+                $sum += (int) ($counts[(int) $category->getId()] ?? 0);
+            }
+        }
+
+        return $sum;
+    }
+
+    /**
+     * Validates the "at least one adult" rule. Returns true if the booking
+     * is allowed (has at least one adult OR adultRuleOverride is set).
+     */
+    public function isAdultRuleSatisfied(Reservation $reservation): bool
+    {
+        if ($reservation->isAdultRuleOverride()) {
+            return true;
+        }
+
+        return $this->getCountByFlag($reservation, 'isAdult') >= 1;
     }
 
     public function changeStatus(Reservation $reservation, ?ReservationStatus $newStatus, bool $flush = true): void

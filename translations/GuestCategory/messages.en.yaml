@@ -1,0 +1,73 @@
+guest_category:
+  title: "Guest categories"
+  description: "Manage guest categories (e.g. adults, children, non-liable guests)"
+  add: "Add guest category"
+  delete:
+    ask: "Are you sure you want to delete this guest category?"
+  system:
+    locked: "System categories cannot be deleted."
+  persons_total: "Persons total (occupancy)"
+
+  flag:
+    adult: "Adult"
+    occupancy: "occupies room bed"
+    no_occupancy: "does not occupy a room bed"
+
+  warning:
+    no_adult: "This booking contains no adult guest. Enable the override below to save anyway."
+
+  field:
+    name: "Name"
+    acronym: "Acronym"
+    acronym.help: "Short label, e.g. ADT, C6-16, INF."
+    statistical_group: "Group"
+    statistical_group.help: "Defines how this category is evaluated. Categories in the \"Adult\" group satisfy the check that a booking normally needs at least one adult guest."
+    is_counted_in_occupancy: "Counts as an occupied room bed"
+    is_counted_in_occupancy.help: "Enable this when guests in this category occupy a bed in the room. This count is subtracted from the available beds. Disable it, for example, for infants in a cot."
+    min_age: "Min age"
+    max_age: "Max age"
+    sort_order: "Sort order"
+    active: "Active"
+    subsidiaries: "Available in properties"
+    subsidiaries.help: "Leave empty = globally available."
+    adult_rule_override: "Allow this booking without an adult guest"
+
+  statistical_group:
+    adult: "Adult"
+    child: "Child"
+    infant: "Infant"
+    other: "Other"
+
+  col:
+    name: "Name"
+    acronym: "Acronym"
+    statistical_group: "Group"
+    flags: "Flags"
+    age: "Age"
+    active: "Active"
+    action: "Action"
+    count: "Count"
+
+  flash:
+    create:
+      success: "Guest category created."
+    edit:
+      success: "Guest category saved."
+    delete:
+      success: "Guest category deleted."
+      error:
+        system: "System categories cannot be deleted."
+
+  default:
+    adult:
+      name: "Adults"
+      acronym: "ADT"
+    child:
+      name: "Child 6–17"
+      acronym: "C6-17"
+    infant:
+      name: "Infant 0–5"
+      acronym: "INF"
+    exempt:
+      name: "Non-liable guests"
+      acronym: "NL"

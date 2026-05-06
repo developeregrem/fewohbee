@@ -116,4 +116,9 @@ final class Version20260424190000 extends AbstractMigration
         $this->addSql('DROP INDEX idx_booking_entry_split_group ON booking_entries');
         $this->addSql('ALTER TABLE booking_entries DROP COLUMN split_group_uuid');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

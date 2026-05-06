@@ -16,6 +16,7 @@ namespace App\Command;
 use App\DataFixtures\ReservationFixtures;
 use App\DataFixtures\SettingsFixtures;
 use App\DataFixtures\TemplatesFixtures;
+use App\Service\GuestCategorySeeder;
 use App\Workflow\WorkflowSeeder;
 use App\Entity\Customer;
 use App\Entity\Role;
@@ -49,6 +50,7 @@ class FirstRunCommand extends Command
         private readonly SettingsFixtures $settingsFixtures,
         private readonly ReservationFixtures $reservationFixtures,
         private readonly WorkflowSeeder $workflowSeeder,
+        private readonly GuestCategorySeeder $guestCategorySeeder,
     ) {
         parent::__construct();
     }
@@ -187,6 +189,9 @@ class FirstRunCommand extends Command
 
             $this->workflowSeeder->seedExampleWorkflows();
             $io->note('Example workflows created.');
+
+            $this->guestCategorySeeder->seedDefaults();
+            $io->note('Default guest categories prepared.');
         }
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');

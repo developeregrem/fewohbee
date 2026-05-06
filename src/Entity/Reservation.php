@@ -78,6 +78,26 @@ class Reservation
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTime $departureTime = null;
 
+    /**
+     * Map of guest counts per GuestCategory id: {guestCategoryId: count}.
+     * Authoritative source for the personal composition of a reservation.
+     * `persons` is the derived sum of categories with isCountedInOccupancy=true.
+     *
+     * @var array<int, int>
+     */
+    #[ORM\Column(name: 'guest_counts', type: 'json')]
+    private array $guestCounts = [];
+
+    #[ORM\Column(name: 'kurtaxe_waived', type: 'boolean')]
+    private bool $kurtaxeWaived = false;
+
+    /**
+     * Explicit override that disables the "at least one adult" validation
+     * for this booking (e.g. youth groups travelling without supervision).
+     */
+    #[ORM\Column(name: 'adult_rule_override', type: 'boolean')]
+    private bool $adultRuleOverride = false;
+
     public function __construct()
     {
         $this->reservationDate = new \DateTime('now');
@@ -485,6 +505,56 @@ class Reservation
     public function setDepartureTime(?\DateTime $departureTime): static
     {
         $this->departureTime = $departureTime;
+
+        return $this;
+    }
+
+    /** @return array<int, int> */
+    public function getGuestCounts(): array
+    {
+        return $this->guestCounts;
+    }
+
+    /** @param array<int, int> $guestCounts */
+    public function setGuestCounts(array $guestCounts): self
+    {
+        $normalized = [];
+        foreach ($guestCounts as $catId => $count) {
+            $count = (int) $count;
+            if ($count > 0) {
+                $normalized[(int) $catId] = $count;
+            }
+        }
+        $this->guestCounts = $normalized;
+
+        return $this;
+    }
+
+    public function getCountForCategory(int $guestCategoryId): int
+    {
+        return (int) ($this->guestCounts[$guestCategoryId] ?? 0);
+    }
+
+    public function isKurtaxeWaived(): bool
+    {
+        return $this->kurtaxeWaived;
+    }
+
+    public function setKurtaxeWaived(bool $kurtaxeWaived): self
+    {
+        $this->kurtaxeWaived = $kurtaxeWaived;
+
+        return $this;
+    }
+
+    public function isAdultRuleOverride(): bool
+    {
+        return $this->adultRuleOverride;
+    }
+
+    public function setAdultRuleOverride(bool $adultRuleOverride): self
+    {
+        $this->adultRuleOverride = $adultRuleOverride;
 
         return $this;
     }

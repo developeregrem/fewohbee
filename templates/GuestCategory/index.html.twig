@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'guest_category.title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'guest_category.description'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="settings">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-secondary"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('guest_category_new') }}"
+                    data-title="{{ 'guest_category.add'|trans }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'guest_category.add'|trans }}</button>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'guest_category.col.name'|trans }}</th>
+                    <th>{{ 'guest_category.col.acronym'|trans }}</th>
+                    <th>{{ 'guest_category.col.statistical_group'|trans }}</th>
+                    <th>{{ 'guest_category.col.age'|trans }}</th>
+                    <th>{{ 'guest_category.col.active'|trans }}</th>
+                    <th>{{ 'guest_category.col.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for category in guest_categories %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td>{{ category.acronym }}</td>
+                        <td>{{ ('guest_category.statistical_group.' ~ category.statisticalGroup.value)|trans }}</td>
+                        <td>
+                            {{ category.minAge is null ? '–' : category.minAge }}
+                            –
+                            {{ category.maxAge is null ? '∞' : category.maxAge }}
+                        </td>
+                        <td>
+                            {% if category.active %}
+                                <i class="fas fa-check text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times text-muted"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <i class="fas fa-info-circle"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
+                                   data-title="{{ 'button.details'|trans }}"></i></a>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <i class="fas fa-edit"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
+                                   data-title="{{ 'button.edit'|trans }}"
+                                   data-enable-edit="true"></i></a>
+                                {% set id = category.id %}
+                                {% set targetUrl = path('guest_category_delete', {'id': category.id}) %}
+                                {% use "common/delete_popover.html.twig" %}
+                                <a href="#" title="{{ 'button.delete'|trans }}">
+                                    <i class="fas fa-trash-alt"
+                                       data-popover="delete"
+                                       data-title="{{ 'guest_category.delete.ask'|trans }}"
+                                       data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{#
+    Reusable partial: per-category guest count inputs with live persons total.
+
+    Required variables:
+      categories     iterable of GuestCategory entities (active, ordered)
+      counts         map {categoryId: count} (Reservation.guestCounts)
+      personsTotal   current persons sum (int) — used for initial display only
+      adultRuleOverride  bool — current Reservation.adultRuleOverride
+      fieldNames     map with keys: 'counts', 'persons', 'override'
+                     defines the form field names posted to the backend
+#}
+{% set fieldNames = fieldNames|default({
+    counts:   'guestCounts',
+    persons:  'persons',
+    override: 'adultRuleOverride',
+}) %}
+
+<div data-controller="guest-counts" class="guest-counts">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>{{ 'guest_category.col.name'|trans }}</th>
+                <th class="text-end" style="width:8rem">{{ 'guest_category.col.count'|trans }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>
+                        <strong>{{ category.name }}</strong>
+                        <small class="text-muted ms-2">({{ category.acronym }})</small>
+                        {% if not category.isCountedInOccupancy %}
+                            <span class="badge bg-light text-dark ms-2">
+                                {{ 'guest_category.flag.no_occupancy'|trans }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <input type="number"
+                               min="0"
+                               class="form-control form-control-sm text-end"
+                               data-guest-counts-target="input"
+                               data-action="input->guest-counts#inputAction change->guest-counts#inputAction"
+                               data-category-id="{{ category.id }}"
+                               data-counted-in-occupancy="{{ category.isCountedInOccupancy ? '1' : '0' }}"
+                               data-is-adult="{{ category.isAdult ? '1' : '0' }}"
+                               value="{{ counts[category.id]|default(0) }}">
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th class="text-end">{{ 'guest_category.persons_total'|trans }}</th>
+                <th class="text-end">
+                    <span data-guest-counts-target="personsDisplay">{{ personsTotal|default(0) }}</span>
+                </th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="alert alert-warning d-none" data-guest-counts-target="adultWarning">
+        {{ 'guest_category.warning.no_adult'|trans }}
+    </div>
+
+    <div class="form-check">
+        <input type="checkbox"
+               class="form-check-input"
+               id="adult-rule-override"
+               name="{{ fieldNames.override }}"
+               value="1"
+               {% if adultRuleOverride|default(false) %}checked{% endif %}
+               data-guest-counts-target="overrideToggle"
+               data-action="change->guest-counts#overrideAction">
+        <label class="form-check-label" for="adult-rule-override">
+            {{ 'guest_category.field.adult_rule_override'|trans }}
+        </label>
+    </div>
+
+    <input type="hidden"
+           name="{{ fieldNames.counts }}"
+           data-guest-counts-target="hiddenJson"
+           value="{{ counts|json_encode }}">
+    <input type="hidden"
+           name="{{ fieldNames.persons }}"
+           data-guest-counts-target="personsInput"
+           value="{{ personsTotal|default(0) }}">
+</div>
