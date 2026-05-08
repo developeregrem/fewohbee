@@ -371,23 +371,40 @@
             <div class="col">
                 <h4 class="pb-2">{{ 'reservation.prices.misc'|trans }}</h4>
             </div>
-        </div>    
-        <div id="reservation-price-misc-options" class="row justify-content-start">    
+        </div>
+        <div id="reservation-price-misc-options" class="row justify-content-start">
         {% set reservationPrices =  attribute(reservations, 0).prices %}
         {% for price in miscPrices %}
             <div class="col-md-4">
-                <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">                                   
+                <form id="update-misc-price-{{ price.id }}" action="{{ path('reservations.update.misc.price', {'reservationId': reservationId, 'id': price.id}) }}">
                     <div class="form-check form-switch">
-                        <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}" 
+                        <input type="checkbox" class="form-check-input" id="customCheck{{ loop.index }}" data-id="{{ price.id }}"
                                data-reservation-id="{{ reservationId }}" {% if existsById(reservationPrices, price) %} checked{% endif %}>
                         <label class="form-check-label" for="customCheck{{ loop.index }}">{{ price.description }}</label>
-                    </div>                
+                    </div>
                     <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-misc-price') }}"/>
                 </form>
             </div>
-        {% endfor %}            
+        {% endfor %}
+        {% if hasActiveTouristTax|default(false) %}
+            <div class="w-100"><hr class="my-3"></div>
+            <div class="col-md-4">
+                <form id="update-kurtaxe-waived" action="{{ path('reservations.update.kurtaxe.waived', {'reservationId': reservationId}) }}">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="kurtaxe-waived-toggle"
+                               data-reservation-id="{{ reservationId }}"
+                               {% if attribute(reservations, 0).kurtaxeWaived %} checked{% endif %}>
+                        <label class="form-check-label" for="kurtaxe-waived-toggle"
+                               title="{{ 'reservation.kurtaxe.waived.help'|trans }}">
+                            {{ 'reservation.kurtaxe.waived'|trans }}
+                        </label>
+                    </div>
+                    <input type="hidden" name="_token" value="{{ csrf_token('reservation-update-kurtaxe-waived') }}"/>
+                </form>
+            </div>
+        {% endif %}
         </div>
-        <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">        
+        <input id="_csrf_token" name="_csrf_token" value="{{ token }}" type="hidden">
         
         <div class="row mt-4">
             <div class="col fs-5 fw-bold ">{{ 'invoice.price.total'|trans }}: {{ brutto|number_format(2, ',', '.') }}</div>
@@ -403,6 +420,15 @@
             </div>
         </div>
             
+        {% if hasActiveTouristTax|default(false) %}
+            <div class="row mt-4">
+                <div class="col">
+                    <h5>{{ 'invoice.tourist_tax.heading'|trans }}</h5>
+                    {% include 'Invoices/invoice_table_tourist_tax_preview_positions.html.twig' %}
+                </div>
+            </div>
+        {% endif %}
+
         <div class="row mt-4">
             <div class="col">
                 <h5>{{ 'invoice.miscellaneous'|trans }}</h5>

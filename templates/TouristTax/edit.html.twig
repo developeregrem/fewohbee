@@ -1,0 +1,32 @@
+{{ form_start(form, {'attr': {
+    'id':'tt-form-'~tax.id,
+    'data-controller':'settings',
+    'data-action':'submit->settings#submitFormAction',
+    'data-url': path('tourist_tax_edit', {'id': tax.id})
+} }) }}
+    <div class="modal-body ps-5 pe-5">
+        <div id="flash-message-overlay"></div>
+        <div class="row" id="edit-button-area">
+            <div class="col">
+                <h4 class="pb-2">
+                    <small>
+                    <a href="#"
+                       data-action="click->settings#enableEditAction"
+                       data-fieldset-selector="#tt-form-fieldset-{{ tax.id }}"
+                       data-save-selector="#tt-submit-{{ tax.id }}"
+                       data-edit-area-selector="#edit-button-area"
+                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
+                            <i class="fas fa-edit"></i></a>
+                    </small>
+                </h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">{{ include('TouristTax/_form.html.twig') }}</div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <input type="submit" value="{{ 'button.save'|trans }}" id="tt-submit-{{ tax.id }}" class="btn btn-primary d-none"/>
+    </div>
+{{ form_end(form) }}

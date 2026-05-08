@@ -1,5 +1,5 @@
 {#
-    Reusable partial: per-category guest count inputs with live persons total.
+    Reusable partial: per-category guest count steppers with live persons total.
 
     Required variables:
       categories     iterable of GuestCategory entities (active, ordered)
@@ -8,6 +8,8 @@
       adultRuleOverride  bool — current Reservation.adultRuleOverride
       fieldNames     map with keys: 'counts', 'persons', 'override'
                      defines the form field names posted to the backend
+      maxOccupancy   optional int — hard cap for the sum of categories with
+                     isCountedInOccupancy=true (typically appartment.bedsmax)
 #}
 {% set fieldNames = fieldNames|default({
     counts:   'guestCounts',
@@ -15,66 +17,74 @@
     override: 'adultRuleOverride',
 }) %}
 
-<div data-controller="guest-counts" class="guest-counts">
-    <table class="table table-sm align-middle">
-        <thead>
-            <tr>
-                <th>{{ 'guest_category.col.name'|trans }}</th>
-                <th class="text-end" style="width:8rem">{{ 'guest_category.col.count'|trans }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for category in categories %}
-                <tr>
-                    <td>
-                        <strong>{{ category.name }}</strong>
-                        <small class="text-muted ms-2">({{ category.acronym }})</small>
-                        {% if not category.isCountedInOccupancy %}
-                            <span class="badge bg-light text-dark ms-2">
-                                {{ 'guest_category.flag.no_occupancy'|trans }}
-                            </span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        <input type="number"
-                               min="0"
-                               class="form-control form-control-sm text-end"
-                               data-guest-counts-target="input"
-                               data-action="input->guest-counts#inputAction change->guest-counts#inputAction"
-                               data-category-id="{{ category.id }}"
-                               data-counted-in-occupancy="{{ category.isCountedInOccupancy ? '1' : '0' }}"
-                               data-is-adult="{{ category.isAdult ? '1' : '0' }}"
-                               value="{{ counts[category.id]|default(0) }}">
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <th class="text-end">{{ 'guest_category.persons_total'|trans }}</th>
-                <th class="text-end">
-                    <span data-guest-counts-target="personsDisplay">{{ personsTotal|default(0) }}</span>
-                </th>
-            </tr>
-        </tfoot>
-    </table>
+<div data-controller="guest-counts"
+     class="guest-counts"
+     {% if maxOccupancy is defined and maxOccupancy %}data-guest-counts-max-value="{{ maxOccupancy }}"{% endif %}>
+    <ul class="list-group list-group-flush guest-counts-list mb-2">
+        {% for category in categories %}
+            <li class="list-group-item d-flex align-items-center justify-content-between px-0 py-2 border-0 border-bottom">
+                <div class="me-3">
+                    <span class="fw-semibold">{{ category.name }}</span>
+                    {#<small class="text-muted ms-2">{{ category.acronym }}</small>#}
+                    {% if not category.isCountedInOccupancy %}
+                        <small class="text-muted ms-2">· {{ 'guest_category.flag.no_occupancy'|trans }}</small>
+                    {% endif %}
+                </div>
+                <div class="input-group input-group-sm" style="width: 8rem">
+                    <button type="button" class="btn btn-link btn-sm"
+                            data-action="click->guest-counts#decrement"
+                            data-category-id="{{ category.id }}"
+                            tabindex="-1"
+                            aria-label="−"><i class="fa-solid fa-minus"></i></button>
+                    <input type="number"
+                           min="0"
+                           class="form-control text-center"
+                           data-guest-counts-target="input"
+                           data-action="input->guest-counts#inputAction change->guest-counts#inputAction"
+                           data-category-id="{{ category.id }}"
+                           data-counted-in-occupancy="{{ category.isCountedInOccupancy ? '1' : '0' }}"
+                           data-is-adult="{{ category.isAdult ? '1' : '0' }}"
+                           value="{{ counts[category.id]|default(0) }}">
+                    <button type="button" class="btn btn-link btn-sm"
+                            data-action="click->guest-counts#increment"
+                            data-category-id="{{ category.id }}"
+                            tabindex="-1"
+                            aria-label="+"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
 
-    <div class="alert alert-warning d-none" data-guest-counts-target="adultWarning">
-        {{ 'guest_category.warning.no_adult'|trans }}
+    <div class="d-flex justify-content-between align-items-center small">
+        <span class="text-muted">
+            {{ 'guest_category.persons_total'|trans }}:
+            <span class="fw-semibold text-body" data-guest-counts-target="personsDisplay">{{ personsTotal|default(0) }}</span>
+            {% if maxOccupancy is defined and maxOccupancy %}
+                <span class="text-muted"> / {{ maxOccupancy }}</span>
+            {% endif %}
+        </span>
+        <span class="text-danger d-none" data-guest-counts-target="overWarning">
+            {{ 'guest_category.warning.over_capacity'|trans }}
+        </span>
     </div>
 
-    <div class="form-check">
-        <input type="checkbox"
-               class="form-check-input"
-               id="adult-rule-override"
-               name="{{ fieldNames.override }}"
-               value="1"
-               {% if adultRuleOverride|default(false) %}checked{% endif %}
-               data-guest-counts-target="overrideToggle"
-               data-action="change->guest-counts#overrideAction">
-        <label class="form-check-label" for="adult-rule-override">
-            {{ 'guest_category.field.adult_rule_override'|trans }}
-        </label>
+    <div class="d-none mt-2" data-guest-counts-target="overrideContainer">
+        <div class="alert alert-warning py-2 mb-2 small" data-guest-counts-target="adultWarning">
+            {{ 'guest_category.warning.no_adult'|trans }}
+        </div>
+        <div class="form-check small">
+            <input type="checkbox"
+                   class="form-check-input"
+                   id="adult-rule-override"
+                   name="{{ fieldNames.override }}"
+                   value="1"
+                   {% if adultRuleOverride|default(false) %}checked{% endif %}
+                   data-guest-counts-target="overrideToggle"
+                   data-action="change->guest-counts#overrideAction">
+            <label class="form-check-label" for="adult-rule-override">
+                {{ 'guest_category.field.adult_rule_override'|trans }}
+            </label>
+        </div>
     </div>
 
     <input type="hidden"

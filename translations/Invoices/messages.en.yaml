@@ -121,3 +121,8 @@ CREDIT_CARD_PAYMENT: Credit card payment
 SEPA_CREDIT_TRANSFER: SEPA bank transfer
 SEPA_DIRECT_DEBIT: SEPA direct debit
 invoice.misc.package.hint: This package will be split into multiple lines on save.
+invoice.tourist_tax.heading: Tourist tax
+invoice.tourist_tax.position: '%tax% — %category% (%nights% × %count%)'
+invoice.tourist_tax.position.nights: '{0} %count% nights|{1} %count% night|]1,Inf] %count% nights'
+invoice.tourist_tax.position.persons: '{0} %count% people|{1} %count% person|]1,Inf] %count% people'
+invoice.tourist_tax.no_positions: No tourist tax lines were calculated for this booking.

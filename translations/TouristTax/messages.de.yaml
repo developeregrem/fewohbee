@@ -1,0 +1,66 @@
+tourist_tax:
+  title: "Kurtaxe / Tourist tax"
+  description: "Versionierbare Kurtaxen-Definitionen pro Niederlassung mit Tarif je Gastkategorie."
+  add: "Kurtaxe hinzufügen"
+  empty: "Noch keine Kurtaxen-Definitionen vorhanden."
+  delete:
+    ask: "Diese Kurtaxen-Definition wirklich löschen?"
+  subsidiaries:
+    global: "Alle Niederlassungen"
+
+  field:
+    name: "Bezeichnung"
+    tax_rate: "Steuersatz"
+    tax_rate.help: "Anzeige nur mit aktivem Kontenrahmen-Preset oder ohne Preset."
+    revenue_account: "Erlöskonto"
+    revenue_account.help: >-
+      Optional. Erlöskonto, auf das Kurtaxen-Umsätze im Buchungsjournal gebucht werden.
+      Sollte ein eigenes Konto getrennt von Übernachtungserlösen sein, damit Kurtaxen
+      separat ausgewertet und an die Gemeinde abgerechnet werden können.<br><br>
+      Ist das Feld leer, wird das Standard-Erlöskonto des hinterlegten Steuersatzes verwendet.
+    includes_vat: "Brutto (inkl. Umsatzsteuer)"
+    includes_vat.help: "Wenn aktiv, wird der Tarif als Bruttobetrag interpretiert."
+    applies_only_to_adult: "Nur für Erwachsene fällig"
+    applies_only_to_adult.help: "Verhalten z. B. der CH-Beherbergungsabgabe — Kinder/Babys werden nicht berechnet."
+    valid_from: "Gültig ab"
+    valid_to: "Gültig bis"
+    sort_order: "Sortierreihenfolge"
+    active: "Aktiv"
+    subsidiaries: "Gültig für Niederlassung"
+    subsidiaries.help: "Leer lassen = global. Niederlassungs-spezifische Kurtaxen sind sichtbar, sobald die Niederlassung mindestens einmal verknüpft ist."
+    rates: "Tarife je Gastkategorie"
+
+  rates:
+    heading: "Tarife je Gastkategorie"
+    help: "Trage je Gastkategorie den Übernachtungstarif ein. Ein Tarif von 0 mit gesetzter Berichtsgruppe markiert befreite Gruppen. Beträge in der eingestellten Währung (%symbol%)."
+    add: "Tarif hinzufügen"
+    empty: "Keine Tarife"
+
+  rate:
+    field:
+      category: "Gastkategorie"
+      price_per_night: "Tarif je Nacht"
+      report_group: "Berichtsgruppe"
+      report_group.help: "Optional. Z. B. \"non_liable\", \"adults\", \"children_6_16\" — frei wählbares Label für statistische Auswertungen."
+
+  col:
+    name: "Bezeichnung"
+    subsidiaries: "Niederlassung"
+    validity: "Gültigkeit"
+    applies_only_to_adult: "Nur Erwachsene"
+    rates: "Tarife"
+    active: "Aktiv"
+    action: "Aktion"
+
+  flash:
+    create:
+      success: "Kurtaxen-Definition wurde erstellt."
+    edit:
+      success: "Kurtaxen-Definition wurde gespeichert."
+    delete:
+      success: "Kurtaxen-Definition wurde gelöscht."
+
+# CH-Beherbergungsabgabe-Beispiel (kein Auto-Seed):
+#   name: "Beherbergungsabgabe"
+#   appliesOnlyToAdult: true
+#   rate (Erwachsene): 1.00

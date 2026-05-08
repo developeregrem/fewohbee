@@ -1,0 +1,61 @@
+tourist_tax:
+  title: "Tourist tax"
+  description: "Versionable tourist tax definitions per property with per-guest-category rates."
+  add: "Add tourist tax"
+  empty: "No tourist tax definitions yet."
+  delete:
+    ask: "Really delete this tourist tax definition?"
+  subsidiaries:
+    global: "All properties"
+
+  field:
+    name: "Name"
+    tax_rate: "Tax rate"
+    tax_rate.help: "Only shown for the active chart preset or for entries without preset."
+    revenue_account: "Revenue account"
+    revenue_account.help: >-
+      Optional. Account for tourist-tax revenue in the booking journal.
+      Should be a dedicated account separate from accommodation revenue so tourist
+      taxes can be reported and remitted to the municipality on their own.<br><br>
+      Leave empty to fall back to the default revenue account of the chosen tax rate.
+    includes_vat: "Gross (incl. VAT)"
+    includes_vat.help: "If enabled, the rate is treated as a gross amount."
+    applies_only_to_adult: "Only adults are liable"
+    applies_only_to_adult.help: "E.g. Swiss accommodation levy behaviour — children/infants are excluded."
+    valid_from: "Valid from"
+    valid_to: "Valid to"
+    sort_order: "Sort order"
+    active: "Active"
+    subsidiaries: "Available in properties"
+    subsidiaries.help: "Leave empty = global. Property-scoped taxes show up as soon as at least one property is linked."
+    rates: "Rates per guest category"
+
+  rates:
+    heading: "Rates per guest category"
+    help: "Enter the per-night rate for each guest category. A 0 rate with a report group marks exempt groups. Amounts in the configured currency (%symbol%)."
+    add: "Add rate"
+    empty: "No rates"
+
+  rate:
+    field:
+      category: "Guest category"
+      price_per_night: "Rate per night"
+      report_group: "Report group"
+      report_group.help: "Optional. E.g. \"non_liable\", \"adults\", \"children_6_16\" — free-form label for statistical reports."
+
+  col:
+    name: "Name"
+    subsidiaries: "Property"
+    validity: "Validity"
+    applies_only_to_adult: "Adults only"
+    rates: "Rates"
+    active: "Active"
+    action: "Action"
+
+  flash:
+    create:
+      success: "Tourist tax definition created."
+    edit:
+      success: "Tourist tax definition saved."
+    delete:
+      success: "Tourist tax definition deleted."

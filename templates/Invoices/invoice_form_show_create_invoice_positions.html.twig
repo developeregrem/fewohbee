@@ -50,6 +50,15 @@
             </div>
         </div>
 
+        {% if positionsMiscellaneous|filter(p => p.positionGroup == 'tourist_tax')|length > 0 %}
+        <div class="row mt-4">
+            <div class="col">
+                <h4>{{ 'invoice.tourist_tax.heading'|trans }}</h4>
+                {% include 'Invoices/invoice_table_tourist_tax_positions.html.twig' with {'mode': 'edit'} %}
+            </div>
+        </div>
+        {% endif %}
+
         <div class="row mt-4">
             <div class="col">
                 <p>

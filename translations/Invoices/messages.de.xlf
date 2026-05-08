@@ -474,6 +474,26 @@
                 <source>invoice.misc.package.hint</source>
                 <target>Dieses Paket wird beim Speichern in mehrere Positionen aufgeteilt.</target>
             </trans-unit>
+            <trans-unit id="invoice.tourist_tax.heading">
+                <source>invoice.tourist_tax.heading</source>
+                <target>Kurtaxe</target>
+            </trans-unit>
+            <trans-unit id="invoice.tourist_tax.position">
+                <source>invoice.tourist_tax.position</source>
+                <target>%tax% — %category% (%nights% × %count%)</target>
+            </trans-unit>
+            <trans-unit id="invoice.tourist_tax.position.nights">
+                <source>invoice.tourist_tax.position.nights</source>
+                <target>{0} %count% Nächte|{1} %count% Nacht|]1,Inf] %count% Nächte</target>
+            </trans-unit>
+            <trans-unit id="invoice.tourist_tax.position.persons">
+                <source>invoice.tourist_tax.position.persons</source>
+                <target>{0} %count% Personen|{1} %count% Person|]1,Inf] %count% Personen</target>
+            </trans-unit>
+            <trans-unit id="invoice.tourist_tax.no_positions">
+                <source>invoice.tourist_tax.no_positions</source>
+                <target>Für diese Buchung wurden keine Kurtaxe-Positionen berechnet.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

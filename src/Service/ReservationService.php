@@ -307,7 +307,22 @@ class ReservationService
             $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
             $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
             $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
-            $reservation->setPersons((int) $reservationInformation->getPersons());
+            $reservation->setAdultRuleOverride($reservationInformation->isAdultRuleOverride());
+            $reservation->setKurtaxeWaived($reservationInformation->isKurtaxeWaived());
+
+            $counts = $reservationInformation->getGuestCounts();
+            if ([] !== $counts) {
+                $this->applyGuestCounts($reservation, $counts);
+            } else {
+                // Fallback: legacy persons-only path → bucket into the default adult category
+                $persons = (int) $reservationInformation->getPersons();
+                $defaultAdult = $this->guestCategoryRepository->findDefaultAdult();
+                if ($persons > 0 && null !== $defaultAdult) {
+                    $this->applyGuestCounts($reservation, [(int) $defaultAdult->getId() => $persons]);
+                } else {
+                    $reservation->setPersons($persons);
+                }
+            }
 
             if (isset($customer)) {
                 $reservation->setBooker($customer);
@@ -365,13 +380,14 @@ class ReservationService
     public function updateReservation(Request $request, Reservation $reservation): bool
     {
         $apartmentId = $request->request->get('aid');
-        $persons = (int) $request->request->get('persons');
         $status = $request->request->get('status');
         $start = new \DateTime($request->request->get('from'));
         $end = new \DateTime($request->request->get('end'));
-        $dateInterval = date_diff($start, $end);
-        // number of days
-        $interval = $dateInterval->format('%a');
+
+        $guestCountsRaw = $request->request->get('guestCounts', '{}');
+        $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+        $adultRuleOverride = (bool) $request->request->get('adultRuleOverride', false);
+        $kurtaxeWaived = (bool) $request->request->get('kurtaxeWaived', false);
 
         $apartment = $this->em->getRepository(Appartment::class)->find($apartmentId);
         $reservationStatus = $this->em->getRepository(ReservationStatus::class)->find($status);
@@ -382,15 +398,34 @@ class ReservationService
             $end = $tmp;
         }
 
+        // Apply guest counts (or fall back to legacy persons-only path)
+        $reservation->setAdultRuleOverride($adultRuleOverride);
+        $reservation->setKurtaxeWaived($kurtaxeWaived);
+        if ([] !== $guestCounts) {
+            $this->applyGuestCounts($reservation, $guestCounts);
+        } else {
+            $persons = (int) $request->request->get('persons', 0);
+            $defaultAdult = $this->guestCategoryRepository->findDefaultAdult();
+            if ($persons > 0 && null !== $defaultAdult) {
+                $this->applyGuestCounts($reservation, [(int) $defaultAdult->getId() => $persons]);
+            } else {
+                $reservation->setPersons($persons);
+            }
+        }
+
+        // Hard "at least one adult" validation
+        if (!$this->isAdultRuleSatisfied($reservation)) {
+            return false;
+        }
+
+        $persons = $reservation->getPersons();
         $available = $this->isApartmentAvailable($start, $end, $apartment, $persons, $reservation);
 
         // update reservation if no other stands in conflict
         if ($available) {
             $reservation->setStartDate($start);
             $reservation->setEndDate($end);
-            $reservation->setPersons($persons);
         }
-        $reservation->setAppartment($apartment);
         $reservation->setAppartment($apartment);
         $this->changeStatus($reservation, $reservationStatus, flush: false);
 

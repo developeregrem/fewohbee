@@ -406,6 +406,14 @@
                 <source>reservation.import.booker.missing</source>
                 <target>Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.</target>
             </trans-unit>
+            <trans-unit id="reservation.kurtaxe.waived">
+                <source>reservation.kurtaxe.waived</source>
+                <target>Kurtaxe entfallen lassen</target>
+            </trans-unit>
+            <trans-unit id="reservation.kurtaxe.waived.help">
+                <source>reservation.kurtaxe.waived.help</source>
+                <target>Aktivieren, wenn diese Buchung von der Kurtaxe ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

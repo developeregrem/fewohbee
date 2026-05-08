@@ -107,3 +107,5 @@ reservation.review.table.todo: To do
 reservation.review.table.actions: Actions
 reservation.review.todo: Add a guest and confirm the number of persons.
 reservation.import.booker.missing: No guest is assigned yet. Please add a guest and adjust the number of persons if needed.
+reservation.kurtaxe.waived: Waive tourist tax
+reservation.kurtaxe.waived.help: Enable if this booking is exempt from tourist tax (e.g. business stay with exemption).

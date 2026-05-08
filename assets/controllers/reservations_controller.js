@@ -1851,7 +1851,19 @@ export default class extends Controller {
 
     editUpdateReservation(appartmentId) {
         const reservationId = $('#reservation-id').val() || appartmentId;
-        const options = 'status=' + $('#appartment-' + appartmentId).find('#status :selected').val() + '&persons=' + $('#appartment-' + appartmentId).find('#persons :selected').val();
+        const optsContainer = $('#appartment-options-' + appartmentId);
+        const status = optsContainer.find('select[name="status"]').val() ?? '';
+        const guestCounts = optsContainer.find('input[name="guestCounts"]').val() ?? '{}';
+        const persons = optsContainer.find('input[name="persons"]').val() ?? '0';
+        const overrideEl = optsContainer.find('input[name="adultRuleOverride"]')[0];
+        const params = new URLSearchParams();
+        params.append('status', status);
+        params.append('guestCounts', guestCounts);
+        params.append('persons', persons);
+        if (overrideEl && overrideEl.checked) {
+            params.append('adultRuleOverride', '1');
+        }
+        const options = params.toString();
         const targetForm = document.getElementById('reservation-period');
         const url = targetForm ? targetForm.dataset.target : null;
         if (!url) {
@@ -1946,7 +1958,7 @@ export default class extends Controller {
             method: 'POST',
             loader: false,
             data: httpSerializeForm(form),
-            onSuccess: 
+            onSuccess:
                 () => this.getReservation(reservationId == 'new' ? reservationId : window.lastClickedReservationUrl, 'prices', false)
         });
         return false;

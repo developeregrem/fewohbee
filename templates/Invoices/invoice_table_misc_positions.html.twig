@@ -11,7 +11,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for key,position in positionsMiscellaneous %}
+        {% for key,position in positionsMiscellaneous|filter(p => p.positionGroup != 'tourist_tax') %}
             <tr>
                 <td>{{ position.description }}</td>
                 <td>{{ position.amount }}</td>

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\TouristTaxBreakdown;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
@@ -34,8 +35,13 @@ use App\Service\AppSettingsService;
 
 class InvoiceService
 {
-    public function __construct(private readonly EntityManagerInterface $em, private readonly PriceService $ps, private readonly TranslatorInterface $translator, private readonly AppSettingsService $appSettingsService)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly PriceService $ps,
+        private readonly TranslatorInterface $translator,
+        private readonly AppSettingsService $appSettingsService,
+        private readonly ?TouristTaxService $touristTaxService = null,
+    ) {
     }
 
     /**
@@ -418,6 +424,13 @@ class InvoiceService
     {
         $tmpMiscArr = $this->computeMiscPriceAggregates($reservations, $useExistingPrices);
         $this->makeMiscPositions($tmpMiscArr, $requestStack);
+
+        // Tourist-tax positions live in the same session collection but are
+        // tagged with positionGroup="tourist_tax" so templates can render them
+        // in a separate block.
+        foreach ($this->buildTouristTaxPositions($reservations) as $touristTaxPosition) {
+            $this->saveNewMiscPosition($touristTaxPosition, $requestStack);
+        }
     }
 
     /**
@@ -430,6 +443,63 @@ class InvoiceService
         $tmpMiscArr = $this->computeMiscPriceAggregates($reservations, $useExistingPrices);
 
         return $this->createMiscPositionsFromAggregates($tmpMiscArr);
+    }
+
+    /**
+     * Build tourist-tax invoice positions for the given reservations. One
+     * position per (TouristTax × GuestCategory) breakdown row, marked with
+     * positionGroup="tourist_tax" so templates can render them in a separate
+     * block. Returns an empty array when no TouristTaxService is configured
+     * or no active tax matches.
+     *
+     * @param Reservation[] $reservations
+     *
+     * @return InvoicePosition[]
+     */
+    public function buildTouristTaxPositions(array $reservations): array
+    {
+        if (null === $this->touristTaxService) {
+            return [];
+        }
+
+        $positions = [];
+        foreach ($reservations as $reservation) {
+            if (!$reservation instanceof Reservation) {
+                continue;
+            }
+            foreach ($this->touristTaxService->calculateForReservation($reservation) as $row) {
+                $positions[] = $this->makeTouristTaxPosition($row);
+            }
+        }
+
+        return $positions;
+    }
+
+    private function makeTouristTaxPosition(TouristTaxBreakdown $row): InvoicePosition
+    {
+        $description = $this->translator->trans('invoice.tourist_tax.position', [
+            '%tax%' => $row->taxName,
+            '%category%' => $row->categoryName,
+            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
+                '%count%' => $row->nights,
+            ]),
+            '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
+                '%count%' => $row->count,
+            ]),
+        ]);
+
+        $position = new InvoicePosition();
+        $position->setAmount($row->nights * $row->count);
+        $position->setDescription($description);
+        $position->setPrice(number_format($row->pricePerNight, 2, '.', ''));
+        $position->setVat(null !== $row->taxRate ? $row->taxRate->getRateFloat() : 0.0);
+        $position->setIncludesVat($row->includesVat);
+        $position->setIsFlatPrice(false);
+        $position->setIsPerRoom(false);
+        $position->setRevenueAccount($row->revenueAccount);
+        $position->setPositionGroup('tourist_tax');
+
+        return $position;
     }
 
     /**
@@ -672,6 +742,7 @@ class InvoiceService
             $position->setIsFlatPrice($price->getIsFlatPrice());
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($price->getRevenueAccount());
+            $position->setPositionGroup('misc');
             $positions[] = $position;
         }
 
@@ -706,6 +777,7 @@ class InvoiceService
             $position->setIsFlatPrice($price->getIsFlatPrice());
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($component['component']->getRevenueAccount() ?? $price->getRevenueAccount());
+            $position->setPositionGroup('misc');
             $positions[] = $position;
         }
 

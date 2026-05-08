@@ -17,6 +17,7 @@ use App\Entity\Appartment;
 use App\Entity\Correspondence;
 use App\Entity\Customer;
 use App\Entity\Enum\IDCardType;
+use App\Entity\GuestCategory;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
@@ -33,6 +34,7 @@ use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
+use App\Service\TouristTaxService;
 use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
@@ -300,6 +302,7 @@ class ReservationServiceController extends AbstractController
         }
 
         $reservations = $rs->createReservationsFromReservationInformationArray($newReservationsInformationArray);
+        $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
         return $this->render('Reservations/reservation_form_select_period_and_appartment.html.twig', [
             'objects' => $objects,
@@ -307,6 +310,7 @@ class ReservationServiceController extends AbstractController
             'objectHasAppartments' => $objectHasAppartments,
             'reservations' => $reservations,
             'reservationStatus' => $reservationStatus,
+            'guestCategories' => $guestCategories,
         ]);
     }
 
@@ -331,10 +335,12 @@ class ReservationServiceController extends AbstractController
 
         $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
+        $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
         return $this->render('Reservations/reservation_form_show_available_appartments.html.twig', [
             'appartments' => $apartments,
             'reservationStatus' => $reservationStatus,
+            'guestCategories' => $guestCategories,
         ]);
     }
 
@@ -359,10 +365,12 @@ class ReservationServiceController extends AbstractController
 
         $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
+        $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', [
             'appartments' => $apartments,
             'reservationStatus' => $reservationStatus,
+            'guestCategories' => $guestCategories,
         ]);
     }
 
@@ -380,13 +388,19 @@ class ReservationServiceController extends AbstractController
             if ($from > $end) {
                 [$from, $end] = [$end, $from];
             }
-            $newReservationsInformationArray[] = new ReservationObject(
+            $reservationObject = new ReservationObject(
                 $request->request->get('appartmentid'),
                 $from,
                 $end,
                 $request->request->get('status'),
-                $request->request->get('persons')
+                (int) $request->request->get('persons', 0)
             );
+            $guestCountsRaw = $request->request->get('guestCounts', '{}');
+            $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+            $reservationObject->setGuestCounts($guestCounts);
+            $reservationObject->setAdultRuleOverride((bool) $request->request->get('adultRuleOverride', false));
+            $reservationObject->setKurtaxeWaived((bool) $request->request->get('kurtaxeWaived', false));
+            $newReservationsInformationArray[] = $reservationObject;
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
         }
 
@@ -504,7 +518,12 @@ class ReservationServiceController extends AbstractController
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         $newReservationInformation = $newReservationsInformationArray[$request->request->get('appartmentid')];
-        $newReservationInformation->setPersons($request->request->get('persons'));
+        $guestCountsRaw = $request->request->get('guestCounts', '{}');
+        $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+        $newReservationInformation->setGuestCounts($guestCounts);
+        $newReservationInformation->setPersons((int) $request->request->get('persons', 0));
+        $newReservationInformation->setAdultRuleOverride((bool) $request->request->get('adultRuleOverride', false));
+        $newReservationInformation->setKurtaxeWaived((bool) $request->request->get('kurtaxeWaived', false));
         $newReservationInformation->setReservationStatus($request->request->get('status'));
 
         $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
@@ -615,7 +634,7 @@ class ReservationServiceController extends AbstractController
      * Creates a preview of the new reservation, where the user can add additional guests to the reservation.
      */
     #[Route('/reservation/new/preview', name: 'reservations.create.preview', methods: ['POST'])]
-    public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, Request $request)
+    public function previewNewReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $rs, PriceService $ps, TouristTaxService $touristTaxService, Request $request)
     {
         $em = $doctrine->getManager();
         $tab = $request->request->get('tab', 'booker');
@@ -704,6 +723,9 @@ class ReservationServiceController extends AbstractController
             'netto' => $netto,
             'apartmentTotal' => $apartmentTotal,
             'miscTotal' => $miscTotal,
+            'hasActiveTouristTax' => count($reservations) > 0
+                ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
+                : false,
         ]);
     }
 
@@ -778,7 +800,7 @@ class ReservationServiceController extends AbstractController
      * Gets an already existing reservation and shows it.
      */
     #[Route('/get/{id}', name: 'reservations.get.reservation', methods: ['GET'])]
-    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request, Reservation $reservation): Response
+    public function getReservationAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, PriceService $ps, TouristTaxService $touristTaxService, Request $request, Reservation $reservation): Response
     {
         $tab = $request->query->get('tab', 'booker');
         $em = $doctrine->getManager();
@@ -827,6 +849,7 @@ class ReservationServiceController extends AbstractController
             'netto' => $netto,
             'apartmentTotal' => $apartmentTotal,
             'miscTotal' => $miscTotal,
+            'hasActiveTouristTax' => $touristTaxService->hasActiveTaxForSubsidiary($reservation->getAppartment()?->getObject()),
         ]);
     }
 
@@ -848,6 +871,7 @@ class ReservationServiceController extends AbstractController
         $requestStack->getSession()->set('reservationInCreation', []);
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
         return $this->render('Reservations/reservation_form_edit.html.twig', [
             'objects' => $objects,
@@ -856,6 +880,7 @@ class ReservationServiceController extends AbstractController
             'error' => $error,
             'origins' => $origins,
             'reservationStatus' => $reservationStatus,
+            'guestCategories' => $guestCategories,
         ]);
     }
 
@@ -1267,6 +1292,39 @@ class ReservationServiceController extends AbstractController
             'attachments' => $attachments,
             'emailDraft' => $emailDraft,
         ]);
+    }
+
+    #[Route(path: '/{reservationId}/edit/kurtaxe-waived/toggle', name: 'reservations.update.kurtaxe.waived', methods: ['POST'])]
+    public function toggleKurtaxeWaivedForReservation($reservationId, ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('reservation-update-kurtaxe-waived', $request->request->get('_token'))) {
+            return new Response('', Response::HTTP_FORBIDDEN);
+        }
+
+        if ('new' === $reservationId) {
+            // In-creation flow: flip kurtaxeWaived on every ReservationObject in the session.
+            $array = $requestStack->getSession()->get('reservationInCreation', []);
+            foreach ($array as $info) {
+                if ($info instanceof ReservationObject) {
+                    $info->setKurtaxeWaived(!$info->isKurtaxeWaived());
+                }
+            }
+            $requestStack->getSession()->set('reservationInCreation', $array);
+
+            return new Response('', Response::HTTP_OK);
+        }
+
+        $em = $doctrine->getManager();
+        /* @var $reservation Reservation */
+        $reservation = $em->getRepository(Reservation::class)->find($reservationId);
+        if (null === $reservation) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+        $reservation->setKurtaxeWaived(!$reservation->isKurtaxeWaived());
+        $em->persist($reservation);
+        $em->flush();
+
+        return new Response('', Response::HTTP_OK);
     }
 
     #[Route(path: '/{reservationId}/edit/prices/{id}/update', name: 'reservations.update.misc.price', methods: ['POST'])]

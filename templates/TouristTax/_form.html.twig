@@ -1,0 +1,57 @@
+<fieldset id="tt-form-fieldset-{{ tax.id }}" {% if tax.id != null %} disabled {% endif %}>
+    <div class="row">
+        <div class="col-md-6">{{ form_row(form.name) }}</div>
+        <div class="col-md-6">{{ form_row(form.sortOrder) }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">{{ form_row(form.validFrom) }}</div>
+        <div class="col-md-6">{{ form_row(form.validTo) }}</div>
+    </div>
+    {% set revenueAccountLabel %}{{ 'tourist_tax.field.revenue_account'|trans }} <span class="text-muted ms-1" style="cursor: help;" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true" data-bs-content="{{ 'tourist_tax.field.revenue_account.help'|trans|e('html_attr') }}"><i class="fas fa-info-circle"></i></span>{% endset %}
+    <div class="row">
+        <div class="col-md-6">{{ form_row(form.taxRate) }}</div>
+        <div class="col-md-6">{{ form_row(form.revenueAccount, { 'label': revenueAccountLabel|trim, 'label_html': true }) }}</div>
+    </div>
+    <div class="row">
+        <div class="col">
+            {{ form_row(form.includesVat) }}
+            {{ form_row(form.appliesOnlyToAdult) }}
+            {{ form_row(form.active) }}
+        </div>
+    </div>
+    {{ form_row(form.subsidiaries) }}
+
+    <hr>
+    <h5>{{ 'tourist_tax.rates.heading'|trans }}</h5>
+    <p class="text-muted small mb-2">{{ 'tourist_tax.rates.help'|trans({ '%symbol%': currency_symbol }) }}</p>
+
+    {% set ratePrototype %}{{ include('TouristTax/_rate_row.html.twig', { rateForm: form.rates.vars.prototype }) }}{% endset %}
+    <div data-controller="collection"
+         data-collection-prototype-value="{{ ratePrototype|e('html_attr') }}"
+         data-collection-index-value="{{ form.rates|length }}">
+        <table class="table table-sm align-middle mb-2">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">{{ 'tourist_tax.rate.field.category'|trans }}</th>
+                    <th style="width: 25%;">{{ 'tourist_tax.rate.field.price_per_night'|trans }}</th>
+                    <th style="width: 30%;">
+                        {{ 'tourist_tax.rate.field.report_group'|trans }}
+                        <span class="text-muted ms-1" style="cursor: help;" tabindex="0"
+                              data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                              data-bs-trigger="hover focus" data-bs-html="true"
+                              data-bs-content="{{ 'tourist_tax.rate.field.report_group.help'|trans }}"><i class="fas fa-info-circle"></i></span>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody data-collection-target="entries">
+                {% for rateForm in form.rates %}
+                    {{ include('TouristTax/_rate_row.html.twig') }}
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="collection#add">
+            <i class="fas fa-plus"></i> {{ 'tourist_tax.rates.add'|trans }}
+        </button>
+    </div>
+</fieldset>
