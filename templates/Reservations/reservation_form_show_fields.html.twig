@@ -420,6 +420,15 @@
             </div>
         </div>
             
+        {% if positionsMiscellaneous|filter(p => p.positionGroup == 'apartment_modifier')|length > 0 %}
+            <div class="row mt-4">
+                <div class="col">
+                    <h5>{{ 'invoice.apartment_modifier.heading'|trans }}</h5>
+                    {% include 'Invoices/invoice_table_apartment_modifier_preview_positions.html.twig' %}
+                </div>
+            </div>
+        {% endif %}
+
         {% if hasActiveTouristTax|default(false) %}
             <div class="row mt-4">
                 <div class="col">

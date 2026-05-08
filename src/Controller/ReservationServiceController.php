@@ -677,7 +677,7 @@ class ReservationServiceController extends AbstractController
             }
         }
 
-        $miscPricePositions = $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
+        $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
         $pricesInCreation = $requestStack->getSession()->get('reservatioInCreationPrices', []);
 
         $requestStack->getSession()->set('invoicePositionsAppartments', []);
@@ -690,6 +690,10 @@ class ReservationServiceController extends AbstractController
             }
         }
         $apartmentPricePositions = $requestStack->getSession()->get('invoicePositionsAppartments');
+        // Re-read after prefillAppartmentPositions so the snapshot includes
+        // apartment-modifier positions that the apartment-pricing pipeline
+        // has just appended to the misc session collection.
+        $miscPricePositions = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
 
         $vatSums = [];
         $brutto = 0;

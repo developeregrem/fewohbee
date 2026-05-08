@@ -118,6 +118,21 @@ final class Version20260505120000 extends AbstractMigration
 
         // invoice integration: invoice_positions.position_group marker
         $this->addSql('ALTER TABLE invoice_positions ADD position_group VARCHAR(32) DEFAULT NULL');
+
+        // pricing modifier layer: guest_category_modifiers (subsidiary scope inherited from category)
+        $this->addSql('CREATE TABLE guest_category_modifiers (
+            id          INT AUTO_INCREMENT NOT NULL,
+            category_id INT NOT NULL,
+            type        VARCHAR(32) NOT NULL,
+            value       NUMERIC(10, 2) NOT NULL,
+            valid_from  DATE DEFAULT NULL,
+            valid_to    DATE DEFAULT NULL,
+            active      TINYINT(1) NOT NULL DEFAULT 1,
+            sort_order  INT NOT NULL DEFAULT 0,
+            INDEX IDX_gcm_category (category_id),
+            CONSTRAINT FK_gcm_category FOREIGN KEY (category_id) REFERENCES guest_categories (id) ON DELETE CASCADE,
+            PRIMARY KEY (id)
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
     }
 
     public function down(Schema $schema): void
@@ -142,6 +157,9 @@ final class Version20260505120000 extends AbstractMigration
         $this->addSql('DROP TABLE tourist_taxes');
 
         $this->addSql('ALTER TABLE invoice_positions DROP COLUMN position_group');
+
+        $this->addSql('ALTER TABLE guest_category_modifiers DROP FOREIGN KEY FK_gcm_category');
+        $this->addSql('DROP TABLE guest_category_modifiers');
     }
 
     public function isTransactional(): bool

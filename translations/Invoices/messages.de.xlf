@@ -478,6 +478,30 @@
                 <source>invoice.tourist_tax.heading</source>
                 <target>Kurtaxe</target>
             </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.heading">
+                <source>invoice.apartment_modifier.heading</source>
+                <target>Aufschläge / Ermäßigungen</target>
+            </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.position">
+                <source>invoice.apartment_modifier.position</source>
+                <target>%category% — %modifier% (%nights% × %count%)</target>
+            </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.label.surcharge_absolute">
+                <source>invoice.apartment_modifier.label.surcharge_absolute</source>
+                <target>Aufschlag %value%</target>
+            </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.label.discount_percent">
+                <source>invoice.apartment_modifier.label.discount_percent</source>
+                <target>Rabatt %value%%</target>
+            </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.label.flat_rate">
+                <source>invoice.apartment_modifier.label.flat_rate</source>
+                <target>Pauschalpreis %value%</target>
+            </trans-unit>
+            <trans-unit id="invoice.apartment_modifier.label.free">
+                <source>invoice.apartment_modifier.label.free</source>
+                <target>Kostenlos</target>
+            </trans-unit>
             <trans-unit id="invoice.tourist_tax.position">
                 <source>invoice.tourist_tax.position</source>
                 <target>%tax% — %category% (%nights% × %count%)</target>

@@ -1,0 +1,32 @@
+{% set modifierPositions = positionsMiscellaneous|filter(p => p.positionGroup == 'apartment_modifier') %}
+{% if modifierPositions|length > 0 %}
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>
+                <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
+                <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+                <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set modifierTotal = 0 %}
+            {% for position in modifierPositions %}
+                <tr>
+                    <td>{{ position.description }}</td>
+                    <td class="text-end">{{ position.amount }}</td>
+                    <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
+                    <td class="text-end">
+                        {% if is_decimal_place_0(position.vat) %}{{ position.vat|number_format(0, ',', '.') }}{% else %}{{ position.vat|number_format(2, ',', '.') }}{% endif %}
+                    </td>
+                    <td class="text-end">{{ position.totalPrice }}</td>
+                </tr>
+                {% set modifierTotal = modifierTotal + position.totalPriceRaw %}
+            {% endfor %}
+            <tr>
+                <th colspan="5" class="text-end">{{ modifierTotal|number_format(2, ',', '.') }}</th>
+            </tr>
+        </tbody>
+    </table>
+{% endif %}

@@ -225,10 +225,16 @@ class BookingJournalService
             $vatKey = $vatKeyOf($pos->getVat());
             $effective = $resolveCreditAccount($pos->getRevenueAccount(), $vatKey);
             $accountId = $effective?->getId() ?? 0;
-            if (!isset($groups['misc'][$vatKey][$accountId])) {
-                $groups['misc'][$vatKey][$accountId] = ['brutto' => 0.0, 'account' => $effective];
+            // Apartment-modifier deltas (per-category surcharges/discounts on
+            // the room rate) book against the apartment scope so they net out
+            // with the room revenue line — otherwise the journal would carry
+            // a separate "Sonstige" entry with a negative amount, which is
+            // not how hoteliers usually represent rate adjustments.
+            $scope = 'apartment_modifier' === $pos->getPositionGroup() ? 'apartment' : 'misc';
+            if (!isset($groups[$scope][$vatKey][$accountId])) {
+                $groups[$scope][$vatKey][$accountId] = ['brutto' => 0.0, 'account' => $effective];
             }
-            $groups['misc'][$vatKey][$accountId]['brutto'] += $bruttoAmount;
+            $groups[$scope][$vatKey][$accountId]['brutto'] += $bruttoAmount;
         }
 
         $settings = $this->settingsService->getSettings();

@@ -105,6 +105,47 @@
             </tr>
             </tbody>
         </table>
+        {% set apartmentModifierPositions = invoice.positions|filter(p => p.positionGroup == 'apartment_modifier') %}
+        {% if apartmentModifierPositions|length > 0 %}
+            <table class="table table-hover mt-4">
+                <thead>
+                <tr>
+                    <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>
+                    <th class="text-end">{{ 'invoice.position.amount'|trans }}</th>
+                    <th class="text-end">{{ 'invoice.price.single'|trans }}</th>
+                    <th class="text-end">{{ 'invoice.vat'|trans }}</th>
+                    <th class="text-end">{{ 'invoice.price.total'|trans }}</th>
+                    <th class="invoice-edit-field d-none text-end">{{ 'invoice.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% set apartmentModifierTotal = 0 %}
+                {% for position in apartmentModifierPositions %}
+                    <tr>
+                        <td>{{ position.description }}</td>
+                        <td class="text-end">{{ position.amount }}</td>
+                        <td class="text-end">{{ position.price|number_format(2, ',', '.') }}</td>
+                        <td class="text-end">
+                            {% if is_decimal_place_0(position.vat) %}{{ position.vat|number_format(0, ',', '.') }}{% else %}{{ position.vat|number_format(2, ',', '.') }}{% endif %}
+                        </td>
+                        <td class="text-end">{{ position.totalPrice }}</td>
+                        <td class="invoice-edit-field d-none text-end">
+                            <a href="#" title="{{ 'button.edit'|trans }}">
+                                <i data-action="click->invoices#openModalAction" data-url="{{ path('invoices.edit.miscellaneous.position', {'invoiceId': invoice.id, 'id': position.id}) }}" class="fas fa-edit"></i></a>
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i data-action="click->invoices#removeMiscPositionEditAction" data-url="{{ path('invoices.delete.miscellaneous.invoice.position') }}" data-index="{{ position.id }}"
+                                    class="fas fa-trash-alt"></i></a>
+                        </td>
+                    </tr>
+                    {% set apartmentModifierTotal = apartmentModifierTotal + position.totalPriceRaw %}
+                {% endfor %}
+                <tr>
+                    <th colspan="6" class="text-end">{{ apartmentModifierTotal|number_format(2, ',', '.') }}</th>
+                </tr>
+                </tbody>
+            </table>
+        {% endif %}
+
         {% set touristTaxPositions = invoice.positions|filter(p => p.positionGroup == 'tourist_tax') %}
         {% if touristTaxPositions|length > 0 %}
             <table class="table table-hover mt-4">
@@ -159,7 +200,7 @@
             </thead>
             <tbody>
             {% set miscOnlyTotal = 0 %}
-            {% for position in invoice.positions|filter(p => p.positionGroup != 'tourist_tax') %}
+            {% for position in invoice.positions|filter(p => p.positionGroup != 'tourist_tax' and p.positionGroup != 'apartment_modifier') %}
                 <tr>
                     <td>{{ position.description }}</td>
                     <td class="text-end">{{ position.amount }}</td>

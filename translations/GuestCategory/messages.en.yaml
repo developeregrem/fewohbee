@@ -15,6 +15,7 @@ guest_category:
 
   warning:
     no_adult: "This booking contains no adult guest. Enable the override below to save anyway."
+    over_capacity: "Room bed capacity reached."
 
   field:
     name: "Name"
@@ -71,3 +72,45 @@ guest_category:
     exempt:
       name: "Non-liable guests"
       acronym: "NL"
+
+guest_category_modifier:
+  title: "Per-category surcharges / discounts"
+  description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price."
+  add: "Add modifier"
+  empty: "No modifiers configured yet — nightly rates apply unchanged for every category."
+  delete:
+    ask: "Really delete this modifier?"
+
+  type:
+    surcharge_absolute: "Surcharge (amount)"
+    discount_percent: "Discount (%)"
+    flat_rate: "Flat rate per night"
+    free: "Free"
+
+  field:
+    category: "Guest category"
+    category.help: "Only categories on which a modifier can take effect are listed: no adult categories (they are the base rate) and only categories that count toward room occupancy. Non-occupancy guests (e.g. infants in a cot) are not billed by the apartment line."
+    type: "Modifier type"
+    type.help: "Surcharge adds an amount to the adult rate. Discount subtracts a percentage. Flat rate replaces the adult rate. Free = 0.00."
+    value: "Value"
+    value.help: "Amount in the configured currency for surcharge/flat rate, percentage for discount. Ignored for \"Free\"."
+    valid_from: "Valid from"
+    valid_to: "Valid to"
+    sort_order: "Sort order"
+    active: "Active"
+
+  col:
+    category: "Guest category"
+    type: "Type"
+    value: "Value"
+    validity: "Validity"
+    active: "Active"
+    action: "Action"
+
+  flash:
+    create:
+      success: "Modifier created."
+    edit:
+      success: "Modifier saved."
+    delete:
+      success: "Modifier deleted."

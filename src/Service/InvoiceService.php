@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\TouristTaxBreakdown;
+use App\Entity\Enum\ModifierType;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
@@ -345,6 +346,14 @@ class InvoiceService
         foreach ($this->buildAppartmentPositions($reservation) as $position) {
             $this->saveNewAppartmentPosition($position, $requestStack);
         }
+
+        // Modifier delta lines (per non-adult category surcharges/discounts)
+        // belong to apartment pricing — but technically they are
+        // InvoicePosition entities, so they share the misc session collection
+        // (templates split them out via positionGroup="apartment_modifier").
+        foreach ($this->buildApartmentModifierPositions([$reservation]) as $modPosition) {
+            $this->saveNewMiscPosition($modPosition, $requestStack);
+        }
     }
 
     /**
@@ -427,7 +436,9 @@ class InvoiceService
 
         // Tourist-tax positions live in the same session collection but are
         // tagged with positionGroup="tourist_tax" so templates can render them
-        // in a separate block.
+        // in a separate block. Apartment-modifier positions are seeded from
+        // prefillAppartmentPositions instead — they belong to apartment
+        // pricing, not to misc services.
         foreach ($this->buildTouristTaxPositions($reservations) as $touristTaxPosition) {
             $this->saveNewMiscPosition($touristTaxPosition, $requestStack);
         }
@@ -473,6 +484,131 @@ class InvoiceService
         }
 
         return $positions;
+    }
+
+    /**
+     * Build apartment-rate modifier delta positions per non-adult category.
+     * The base apartment line keeps billing the full persons × adult-rate; for
+     * each per-night breakdown line that carries a modifier we emit one
+     * aggregated InvoicePosition with the *delta* against the adult rate
+     * (negative for discounts/free, positive for surcharges).
+     *
+     * Skips reservations / nights priced per flat-rate or per-room — those
+     * have no per-person base rate against which a delta could meaningfully
+     * be computed.
+     *
+     * @param Reservation[] $reservations
+     *
+     * @return InvoicePosition[]
+     */
+    public function buildApartmentModifierPositions(array $reservations): array
+    {
+        $positions = [];
+        foreach ($reservations as $reservation) {
+            if (!$reservation instanceof Reservation) {
+                continue;
+            }
+
+            // Aggregate per (modifierId, categoryId) across nights. Each entry
+            // tracks: total nights, count (constant across nights for a single
+            // reservation since guestCounts doesn't vary), the unit delta and
+            // metadata copied from the base price.
+            //
+            // Modifiers only apply when:
+            //  * the apartment is priced per-head (not flat-rate / per-room).
+            //    Per-room rates are paid as a single fee for the whole room
+            //    regardless of occupancy — emitting a per-category delta would
+            //    be semantically incorrect (the category was never priced in).
+            //  * the category counts toward room occupancy. Non-occupancy
+            //    categories (e.g. infants in a cot) are not part of `persons`
+            //    and therefore never billed by the apartment line; emitting a
+            //    delta would subtract a charge that was never added.
+            $aggregates = [];
+            foreach ($this->ps->getPriceBreakdownForReservation($reservation) as $breakdown) {
+                $base = $breakdown->basePrice;
+                if (null === $base || $base->getIsFlatPrice() || $base->getIsPerRoom()) {
+                    continue;
+                }
+                $basePerHead = (float) $base->getPrice();
+
+                foreach ($breakdown->lines as $line) {
+                    if (null === $line->modifier) {
+                        continue;
+                    }
+                    if (!$line->category->isCountedInOccupancy()) {
+                        continue;
+                    }
+                    $delta = $line->unitPrice - $basePerHead;
+                    if (0.0 === round($delta, 2)) {
+                        continue;
+                    }
+                    $key = $line->modifier->getId().':'.$line->category->getId();
+                    if (!isset($aggregates[$key])) {
+                        $aggregates[$key] = [
+                            'modifier' => $line->modifier,
+                            'category' => $line->category,
+                            'count' => $line->count,
+                            'nights' => 0,
+                            'unitDelta' => $delta,
+                            'vat' => $base->getVat(),
+                            'includesVat' => (bool) $base->getIncludesVat(),
+                            'revenueAccount' => $base->getRevenueAccount(),
+                        ];
+                    }
+                    ++$aggregates[$key]['nights'];
+                }
+            }
+
+            foreach ($aggregates as $a) {
+                $positions[] = $this->makeApartmentModifierPosition($a);
+            }
+        }
+dump($positions);
+        return $positions;
+    }
+
+    /**
+     * @param array{modifier: \App\Entity\GuestCategoryModifier, category: \App\Entity\GuestCategory, count: int, nights: int, unitDelta: float, vat: float, includesVat: bool, revenueAccount: ?\App\Entity\AccountingAccount} $a
+     */
+    private function makeApartmentModifierPosition(array $a): InvoicePosition
+    {
+        $modifierLabel = $this->describeModifier($a['modifier']);
+        $description = $this->translator->trans('invoice.apartment_modifier.position', [
+            '%category%' => $a['category']->getName(),
+            '%modifier%' => $modifierLabel,
+            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
+                '%count%' => $a['nights'],
+            ]),
+            '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
+                '%count%' => $a['count'],
+            ]),
+        ]);
+
+        $position = new InvoicePosition();
+        $position->setAmount($a['nights'] * $a['count']);
+        $position->setDescription($description);
+        $position->setPrice(number_format($a['unitDelta'], 2, '.', ''));
+        $position->setVat($a['vat']);
+        $position->setIncludesVat($a['includesVat']);
+        $position->setIsFlatPrice(false);
+        $position->setIsPerRoom(false);
+        $position->setRevenueAccount($a['revenueAccount']);
+        $position->setPositionGroup('apartment_modifier');
+
+        return $position;
+    }
+
+    private function describeModifier(\App\Entity\GuestCategoryModifier $modifier): string
+    {
+        $value = $modifier->getValueAsFloat();
+        $key = 'invoice.apartment_modifier.label.'.$modifier->getType()->value;
+
+        return match ($modifier->getType()) {
+            ModifierType::DISCOUNT_PERCENT => $this->translator->trans($key, ['%value%' => number_format($value, 0, ',', '.')]),
+            ModifierType::SURCHARGE_ABSOLUTE,
+            ModifierType::FLAT_RATE => $this->translator->trans($key, ['%value%' => number_format($value, 2, ',', '.')]),
+            ModifierType::FREE => $this->translator->trans($key),
+        };
     }
 
     private function makeTouristTaxPosition(TouristTaxBreakdown $row): InvoicePosition

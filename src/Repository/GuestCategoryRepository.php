@@ -40,6 +40,32 @@ class GuestCategoryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Active categories that are eligible for an apartment-rate modifier.
+     * Excludes:
+     *  - the ADULT statistical group: it is the unmodified base reference
+     *    (PriceService skips it).
+     *  - categories with isCountedInOccupancy=false: they are not part of
+     *    `persons` and therefore never billed by the apartment line — a
+     *    modifier on them would never take effect (InvoiceService skips it).
+     *
+     * @return GuestCategory[]
+     */
+    public function findActiveNonAdultOrdered(): array
+    {
+        return $this->createQueryBuilder('gc')
+            ->where('gc.active = :active')
+            ->andWhere('gc.statisticalGroup <> :adult')
+            ->andWhere('gc.isCountedInOccupancy = :counted')
+            ->setParameter('active', true)
+            ->setParameter('adult', GuestStatisticalGroup::ADULT->value)
+            ->setParameter('counted', true)
+            ->orderBy('gc.sortOrder', 'ASC')
+            ->addOrderBy('gc.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Returns active categories available for the given subsidiary.
      * Categories without any subsidiary mapping are considered globally available.
      *

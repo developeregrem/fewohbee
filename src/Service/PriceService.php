@@ -13,14 +13,21 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\PriceBreakdown;
+use App\Dto\PriceBreakdownLine;
 use App\Entity\AccountingAccount;
+use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PriceComponentAllocationType;
+use App\Entity\GuestCategory;
+use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
 use App\Entity\PriceComponent;
 use App\Entity\PricePeriod;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Repository\GuestCategoryModifierRepository;
+use App\Repository\GuestCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,8 +37,11 @@ class PriceService
 {
     private $em;
 
-    public function __construct(EntityManagerInterface $em)
-    {
+    public function __construct(
+        EntityManagerInterface $em,
+        private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
+        private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
+    ) {
         $this->em = $em;
     }
 
@@ -417,9 +427,8 @@ class PriceService
     /**
      * Returns a list of conflicting prices.
      *
-     * @return Doctrine\Common\Collections\ArrayCollection
      */
-    public function findConflictingPrices(Price $price)
+    public function findConflictingPrices(Price $price): ArrayCollection
     {
         $prices = [];
         // find conflicts when no season is given
@@ -494,6 +503,94 @@ class PriceService
         }
 
         return $result;
+    }
+
+    /**
+     * Builds a per-night PriceBreakdown for the apartment price (type=2),
+     * applying GuestCategoryModifiers per non-ADULT category from
+     * Reservation.guestCounts. ADULT counts use the unmodified base price.
+     *
+     * @return PriceBreakdown[] keyed by day index (0..nights-1)
+     */
+    public function getPriceBreakdownForReservation(Reservation $reservation): array
+    {
+        $pricesPerDay = $this->getPricesForReservationDays($reservation, 2);
+        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        $guestCounts = $reservation->getGuestCounts();
+
+        $categories = [];
+        if (null !== $this->guestCategoryRepository) {
+            foreach ($this->guestCategoryRepository->findAll() as $gc) {
+                $categories[$gc->getId()] = $gc;
+            }
+        }
+
+        $result = [];
+        $curDate = clone $reservation->getStartDate();
+        for ($i = 0; $i < $days; ++$i) {
+            $night = (clone $curDate)->add(new \DateInterval('P'.$i.'D'));
+            $price = $pricesPerDay[$i][0] ?? null;
+            $breakdown = new PriceBreakdown($night, $price);
+
+            if (null === $price || empty($guestCounts)) {
+                $result[$i] = $breakdown;
+                continue;
+            }
+
+            $basePerHead = (float) $price->getPrice();
+            $modifiers = null !== $this->modifierRepository
+                ? $this->modifierRepository->findActiveOn($night)
+                : [];
+
+            foreach ($guestCounts as $catId => $count) {
+                $count = (int) $count;
+                if ($count <= 0) {
+                    continue;
+                }
+                $category = $categories[$catId] ?? null;
+                if (null === $category) {
+                    continue;
+                }
+
+                $modifier = $this->pickModifier($modifiers, $category);
+                $unit = $this->applyModifier($basePerHead, $modifier, $category);
+                $breakdown->addLine(new PriceBreakdownLine($category, $count, $unit, $modifier));
+            }
+
+            $result[$i] = $breakdown;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param GuestCategoryModifier[] $modifiers
+     */
+    private function pickModifier(array $modifiers, GuestCategory $category): ?GuestCategoryModifier
+    {
+        foreach ($modifiers as $mod) {
+            if ($mod->getCategory()?->getId() === $category->getId()) {
+                return $mod;
+            }
+        }
+
+        return null;
+    }
+
+    private function applyModifier(float $base, ?GuestCategoryModifier $modifier, GuestCategory $category): float
+    {
+        // ADULT category never uses a modifier — it is the base reference.
+        if (null === $modifier || $category->isAdult()) {
+            return $base;
+        }
+        $value = $modifier->getValueAsFloat();
+
+        return match ($modifier->getType()) {
+            ModifierType::SURCHARGE_ABSOLUTE => $base + $value,
+            ModifierType::DISCOUNT_PERCENT => max(0.0, $base * (1.0 - $value / 100.0)),
+            ModifierType::FLAT_RATE => $value,
+            ModifierType::FREE => 0.0,
+        };
     }
 
     /**
