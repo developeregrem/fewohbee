@@ -563,7 +563,7 @@ class InvoiceService
                 $positions[] = $this->makeApartmentModifierPosition($a);
             }
         }
-dump($positions);
+
         return $positions;
     }
 

@@ -16,6 +16,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
+use App\Repository\GuestCategoryRepository;
 use App\Event\OnlineBookingCreatedEvent;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +38,8 @@ class PublicBookingService
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PublicPricingService $pricingService,
+        private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
+        private readonly ?TouristTaxService $touristTaxService = null,
     ) {
     }
 
@@ -55,9 +58,10 @@ class PublicBookingService
         array $occupancySelection,
         Request $request,
         array $selectedExtras = [],
+        array $guestCounts = [],
     ): array {
         $config = $this->configService->getConfig();
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config);
+        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
         if ([] === $selection && [] !== $occupancySelection) {
@@ -69,11 +73,14 @@ class PublicBookingService
         }
         $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
         $roomReservations = $this->buildTransientReservationsWithExplicitPersons($assignedRoomsWithPersons, $dateFrom, $dateTo);
+        $this->distributeGuestCounts($roomReservations, $guestCounts);
         $pricing = $this->calculateRoomTotal($roomReservations);
 
         // Load bookable extras using any available room as sample
         $extras = $this->loadBookableExtras($availability, $dateFrom, $dateTo, $persons, $roomsCount);
         $extrasResult = $this->calculateExtrasTotal($extras, $selectedExtras);
+
+        $grandTotal = $pricing['roomTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
 
         return [
             'availability' => $availability,
@@ -82,13 +89,16 @@ class PublicBookingService
             'roomTotalFormatted' => $pricing['roomTotalFormatted'],
             'roomPriceBreakdown' => $pricing['roomPriceBreakdown'],
             'roomReservations' => $roomReservations,
+            'touristTaxTotal' => $pricing['touristTaxTotal'],
+            'touristTaxTotalFormatted' => $pricing['touristTaxTotalFormatted'],
+            'touristTaxLines' => $pricing['touristTaxLines'],
             'extras' => $extras,
             'selectedExtras' => $selectedExtras,
             'extrasTotal' => $extrasResult['extrasTotal'],
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'extrasBreakdown' => $extrasResult['extrasBreakdown'],
-            'grandTotal' => $pricing['roomTotal'] + $extrasResult['extrasTotal'],
-            'grandTotalFormatted' => number_format($pricing['roomTotal'] + $extrasResult['extrasTotal'], 2, ',', '.'),
+            'grandTotal' => $grandTotal,
+            'grandTotalFormatted' => number_format($grandTotal, 2, ',', '.'),
         ];
     }
 
@@ -109,16 +119,18 @@ class PublicBookingService
         array $booker,
         Request $request,
         array $selectedExtras = [],
+        array $guestCounts = [],
     ): array {
         $config = $this->configService->getConfig();
         $this->assertConfigReady($config);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config);
+        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
         $this->validateOccupancySelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
 
         $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
         $reservations = $this->buildTransientReservationsWithExplicitPersons($assignedRoomsWithPersons, $dateFrom, $dateTo);
+        $this->distributeGuestCounts($reservations, $guestCounts);
 
         // Validate and resolve selected extras
         $extraPrices = $this->resolveAndValidateExtras($selectedExtras, $availability, $dateFrom, $dateTo, $persons, $roomsCount);
@@ -472,18 +484,118 @@ class PublicBookingService
     }
 
     /**
+     * Distribute the wizard's per-category counts onto the (already
+     * persons-distributed) transient reservations.
+     *
+     * Single-room: full guestCounts go to the only reservation.
+     * Multi-room: greedy distribution — guarantees ≥1 adult per room (when
+     * adults available), then fills each room up to its `persons` capacity
+     * by walking through ADULT, then non-ADULT occupancy categories. Any
+     * non-occupancy categories (e.g. infants) are attached to the first
+     * reservation. This is a heuristic, not a user-controlled split.
+     *
+     * @param Reservation[]    $reservations
+     * @param array<int, int>  $guestCounts category-id => count
+     */
+    private function distributeGuestCounts(array $reservations, array $guestCounts): void
+    {
+        if ([] === $reservations || [] === $guestCounts || null === $this->guestCategoryRepository) {
+            return;
+        }
+
+        $categories = [];
+        foreach ($this->guestCategoryRepository->findAll() as $gc) {
+            $categories[$gc->getId()] = $gc;
+        }
+
+        // Single-room shortcut: full counts on the single reservation.
+        if (1 === count($reservations)) {
+            $reservations[0]->setGuestCounts($guestCounts);
+
+            return;
+        }
+
+        // Multi-room: build buckets by occupancy semantics.
+        $adultIds = [];
+        $otherOccupancyIds = [];
+        $nonOccupancyIds = [];
+        foreach ($guestCounts as $catId => $count) {
+            $cat = $categories[$catId] ?? null;
+            if (null === $cat || $count <= 0) {
+                continue;
+            }
+            if (!$cat->isCountedInOccupancy()) {
+                $nonOccupancyIds[] = $catId;
+                continue;
+            }
+            if ($cat->isAdult()) {
+                $adultIds[] = $catId;
+            } else {
+                $otherOccupancyIds[] = $catId;
+            }
+        }
+
+        $remaining = $guestCounts;
+        $perRoomCounts = array_fill(0, count($reservations), []);
+
+        // Pass 1: guarantee 1 adult per room (when adults available).
+        foreach ($reservations as $idx => $_) {
+            foreach ($adultIds as $catId) {
+                if (($remaining[$catId] ?? 0) > 0) {
+                    $perRoomCounts[$idx][$catId] = ($perRoomCounts[$idx][$catId] ?? 0) + 1;
+                    --$remaining[$catId];
+                    break;
+                }
+            }
+        }
+
+        // Pass 2: fill each room up to its persons capacity, drawing first
+        // from remaining adults, then from other occupancy categories.
+        foreach ($reservations as $idx => $reservation) {
+            $capacity = $reservation->getPersons();
+            $taken = array_sum($perRoomCounts[$idx]);
+            foreach ([...$adultIds, ...$otherOccupancyIds] as $catId) {
+                while ($taken < $capacity && ($remaining[$catId] ?? 0) > 0) {
+                    $perRoomCounts[$idx][$catId] = ($perRoomCounts[$idx][$catId] ?? 0) + 1;
+                    --$remaining[$catId];
+                    ++$taken;
+                }
+            }
+        }
+
+        // Pass 3: non-occupancy categories — all remaining attach to room 1.
+        foreach ($nonOccupancyIds as $catId) {
+            if (($remaining[$catId] ?? 0) > 0) {
+                $perRoomCounts[0][$catId] = ($perRoomCounts[0][$catId] ?? 0) + $remaining[$catId];
+                $remaining[$catId] = 0;
+            }
+        }
+
+        foreach ($reservations as $idx => $reservation) {
+            if ([] !== $perRoomCounts[$idx]) {
+                $reservation->setGuestCounts($perRoomCounts[$idx]);
+            }
+        }
+    }
+
+    /**
      * Calculate the room-only total using session-free apartment position building.
+     * Includes apartment-modifier delta lines and tourist-tax positions when
+     * configured — both come from the apartment-pricing pipeline.
      *
      * @param Reservation[] $reservations
-     * @return array{roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
+     * @return array{roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, touristTaxTotal: float, touristTaxTotalFormatted: string, touristTaxLines: array<int, array{label: string, total: float, totalFormatted: string}>}
      */
     private function calculateRoomTotal(array $reservations): array
     {
         $apartmentTotal = 0.0;
         $breakdown = [];
+        $touristTaxTotal = 0.0;
+        $touristTaxLines = [];
 
         foreach ($reservations as $reservation) {
             $positions = $this->invoiceService->buildAppartmentPositions($reservation);
+            $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
 
             $vatSums = [];
             $brutto = 0.0;
@@ -492,13 +604,16 @@ class PublicBookingService
             $miscTotal = 0.0;
             $this->invoiceService->calculateSums(
                 new ArrayCollection($positions),
-                new ArrayCollection(),
+                new ArrayCollection($modifierPositions),
                 $vatSums,
                 $brutto,
                 $netto,
                 $singleTotal,
                 $miscTotal
             );
+            // Modifier deltas net into apartment total — semantically they're
+            // adjustments to the room rate (same scope as the journal routing).
+            $singleTotal += $miscTotal;
 
             $label = $this->buildReservationTypeLabel($reservation);
             if (!isset($breakdown[$label])) {
@@ -512,6 +627,20 @@ class PublicBookingService
             $breakdown[$label]['quantity']++;
             $breakdown[$label]['total'] += $singleTotal;
             $apartmentTotal += $singleTotal;
+
+            // Tourist-tax breakdown stays a separate line on the preview so
+            // the guest sees the levy distinctly from the room rate.
+            if (null !== $this->touristTaxService) {
+                foreach ($this->touristTaxService->calculateForReservation($reservation) as $row) {
+                    $rowTotal = $row->total();
+                    $touristTaxTotal += $rowTotal;
+                    $touristTaxLines[] = [
+                        'label' => $row->taxName.' — '.$row->categoryName,
+                        'total' => $rowTotal,
+                        'totalFormatted' => number_format($rowTotal, 2, ',', '.'),
+                    ];
+                }
+            }
         }
 
         $formattedBreakdown = array_map(static function (array $row): array {
@@ -524,6 +653,9 @@ class PublicBookingService
             'roomTotal' => $apartmentTotal,
             'roomTotalFormatted' => number_format($apartmentTotal, 2, ',', '.'),
             'roomPriceBreakdown' => $formattedBreakdown,
+            'touristTaxTotal' => $touristTaxTotal,
+            'touristTaxTotalFormatted' => number_format($touristTaxTotal, 2, ',', '.'),
+            'touristTaxLines' => $touristTaxLines,
         ];
     }
 

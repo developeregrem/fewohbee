@@ -53,6 +53,7 @@
                             {% endif %}
                         </td>
                         <td>
+                            
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                 <i class="fas fa-info-circle"
                                    data-action="click->settings#openModalAction"
@@ -64,6 +65,7 @@
                                    data-url="{{ path('guest_category_edit', {'id': category.id}) }}"
                                    data-title="{{ 'button.edit'|trans }}"
                                    data-enable-edit="true"></i></a>
+                            {% if category.systemCode != 'default_adult'%}
                                 {% set id = category.id %}
                                 {% set targetUrl = path('guest_category_delete', {'id': category.id}) %}
                                 {% use "common/delete_popover.html.twig" %}
@@ -72,6 +74,11 @@
                                        data-popover="delete"
                                        data-title="{{ 'guest_category.delete.ask'|trans }}"
                                        data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            {% else %}
+                                <span class="text-muted ms-1" title="{{ 'status.system.locked'|trans }}">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

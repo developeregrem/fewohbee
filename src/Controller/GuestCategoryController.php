@@ -74,6 +74,12 @@ class GuestCategoryController extends AbstractController
     public function delete(ManagerRegistry $doctrine, Request $request, GuestCategory $category): Response
     {
         if ($this->isCsrfTokenValid('delete'.$category->getId(), $request->request->get('_token'))) {
+            // prevent deletion of default adult category
+            if ($category->isSystem() && $category->getSystemCode() === 'default_adult') {
+                $this->addFlash('warning', 'status.flash.delete.error.system');
+
+                return new Response('', Response::HTTP_NO_CONTENT);
+            }
             $em = $doctrine->getManager();
             $em->remove($category);
             $em->flush();

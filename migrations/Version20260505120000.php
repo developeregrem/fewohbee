@@ -57,10 +57,7 @@ final class Version20260505120000 extends AbstractMigration
         $this->addSql("INSERT INTO guest_categories
             (name, acronym, min_age, max_age, is_counted_in_occupancy, statistical_group, sort_order, active, system_code)
             VALUES
-            ('Erwachsene',              'ERW',   18,   NULL, 1, 'adult',  10, 1, 'default_adult'),
-            ('Kind 6-17',               'K6-17', 6,    17,   1, 'child',  20, 1, 'default_child'),
-            ('Kleinkind 0-5',           'BABY',  0,    5,    0, 'infant', 30, 1, 'default_infant'),
-            ('Nichtpflichtige Personen','NP',    NULL, NULL, 1, 'other',  40, 1, 'default_exempt')");
+            ('Erwachsene',              'ERW',   18,   NULL, 1, 'adult',  10, 1, 'default_adult')");
 
         // Backfill existing reservations into the default-adult bucket so
         // guest_counts is the authoritative source from now on.

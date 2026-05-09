@@ -9,6 +9,8 @@ use App\Service\OnlineBookingConfigService;
 use App\Service\OnlineBookingRestrictionService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
+use App\Repository\GuestCategoryRepository;
+use App\Service\GuestCategoryAgeMapper;
 use Symfony\Component\Intl\Countries;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +27,8 @@ class PublicBookingController extends AbstractController
         OnlineBookingConfigService $configService,
         PublicBookingAbuseProtectionService $abuseProtectionService,
         OnlineBookingRestrictionService $restrictionService,
+        GuestCategoryRepository $guestCategoryRepository,
+        GuestCategoryAgeMapper $ageMapper,
     ): Response
     {
         $config = $configService->getConfig();
@@ -41,10 +45,18 @@ class PublicBookingController extends AbstractController
             }
         }
 
+        // Public-Mode: OTHER-Statistik-Kategorien sind ein Backend-Konzept
+        // (Statistik-Berichte) und gehören nicht in die Endkunden-UI.
+        $guestCategories = array_values(array_filter(
+            $guestCategoryRepository->findActiveOrdered(),
+            static fn ($c) => 'other' !== $c->getStatisticalGroup()->value,
+        ));
+
         $view = [
             'embed' => $embed,
             'config' => $config,
             'countries' => $countries,
+            'guestCategories' => $guestCategories,
             'errorMessage' => $error,
             'successMessage' => $successMessage,
             'minArrivalDate' => (new \DateTimeImmutable('tomorrow'))->format('Y-m-d'),
@@ -57,6 +69,11 @@ class PublicBookingController extends AbstractController
                 'dateTo' => (string) $request->request->get('dateTo', ''),
                 'persons' => (int) $request->request->get('persons', 1),
                 'roomsCount' => (int) $request->request->get('roomsCount', 1),
+                'adults' => max(1, (int) $request->request->get('adults', 1)),
+                'childAges' => array_values(array_filter(
+                    (array) $request->request->all('childAges'),
+                    static fn ($v) => is_numeric($v),
+                )),
             ],
             'availability' => [],
             'selectedQty' => [],
@@ -80,6 +97,9 @@ class PublicBookingController extends AbstractController
             'extrasTotalFormatted' => null,
             'grandTotalFormatted' => null,
             'extrasBreakdown' => [],
+            'touristTaxLines' => [],
+            'touristTaxTotalFormatted' => null,
+            'touristTaxTotal' => 0.0,
             'bookingResult' => null,
         ];
 
@@ -103,6 +123,20 @@ class PublicBookingController extends AbstractController
             }
 
             [$dateFrom, $dateTo, $persons, $roomsCount] = $this->parseSearchInput($request);
+            $guestCounts = $this->resolveGuestCounts($request, $ageMapper);
+            // Derive persons from the guestCounts when the wizard supplied them
+            // — `persons` request field may still carry the legacy fallback.
+            if ([] !== $guestCounts) {
+                $derived = 0;
+                foreach ($guestCategoryRepository->findActiveOrdered() as $cat) {
+                    if ($cat->isCountedInOccupancy()) {
+                        $derived += $guestCounts[(int) $cat->getId()] ?? 0;
+                    }
+                }
+                if ($derived > 0) {
+                    $persons = $derived;
+                }
+            }
 
             $maxDeparture = $restrictionService->getMaxDepartureDate();
             if (null !== $maxDeparture && $dateTo > $maxDeparture) {
@@ -110,14 +144,14 @@ class PublicBookingController extends AbstractController
             }
 
             if ('availability' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request, [], $guestCounts);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 2;
                 $view['availability'] = $preview['availability'];
                 $view['extras'] = $preview['extras'];
                 $view['formState'] = $abuseProtectionService->createFormState(false);
             } elseif ('preview' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection, $guestCounts);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 3;
                 $view['availability'] = $preview['availability'];
@@ -129,6 +163,9 @@ class PublicBookingController extends AbstractController
                 $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
                 $view['extrasBreakdown'] = $preview['extrasBreakdown'];
                 $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
+                $view['touristTaxLines'] = $preview['touristTaxLines'];
+                $view['touristTaxTotalFormatted'] = $preview['touristTaxTotalFormatted'];
+                $view['touristTaxTotal'] = $preview['touristTaxTotal'];
                 $view['formState'] = $abuseProtectionService->createFormState(true);
             } elseif ('submit' === $intent) {
                 $result = $publicBookingService->createBooking(
@@ -140,6 +177,7 @@ class PublicBookingController extends AbstractController
                     $this->extractBookerInput($request, $defaultCountry),
                     $request,
                     $extrasSelection,
+                    $guestCounts,
                 );
 
                 $view['step'] = 4;
@@ -167,7 +205,7 @@ class PublicBookingController extends AbstractController
                 try {
                     $selectedForPreview = 'submit' === $intent ? $occupancySelection : [];
                     $selectedExtrasForPreview = 'submit' === $intent ? $extrasSelection : [];
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview);
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview, $guestCounts ?? []);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
                     $view['extras'] = $fallbackPreview['extras'] ?? [];
@@ -232,6 +270,69 @@ class PublicBookingController extends AbstractController
         }
 
         return [$dateFrom, $dateTo, $persons, $roomsCount];
+    }
+
+    /**
+     * Resolves the wizard's per-category counts into a `{categoryId: count}` map.
+     *
+     * Preferred input: `adults` (int) + `childAges[]`
+     * (array of int ages). The age mapper looks up each child's age against
+     * the configured GuestCategory ranges. This keeps the public UI to two
+     * inputs even when the hotelier has many child tiers.
+     *
+     * Fallback input: `guestCounts` JSON keyed directly by category id —
+     * used by API clients or non-browser submissions.
+     *
+     * @return array<int, int>
+     */
+    private function resolveGuestCounts(Request $request, GuestCategoryAgeMapper $ageMapper): array
+    {
+        $adultsRaw = $request->request->get('adults');
+        $childAgesRaw = $request->request->all('childAges');
+        if (null !== $adultsRaw || (is_array($childAgesRaw) && [] !== $childAgesRaw)) {
+            $adults = max(0, (int) $adultsRaw);
+            $childAges = [];
+            if (is_array($childAgesRaw)) {
+                foreach ($childAgesRaw as $age) {
+                    $age = (int) $age;
+                    if ($age >= 0 && $age <= 120) {
+                        $childAges[] = $age;
+                    }
+                }
+            }
+
+            return $ageMapper->map($adults, $childAges);
+        }
+
+        return $this->parseGuestCounts($request);
+    }
+
+    /**
+     * Legacy fallback: directly parse a `guestCounts` JSON field
+     * (`{categoryId: count}`) from the request.
+     *
+     * @return array<int, int>
+     */
+    private function parseGuestCounts(Request $request): array
+    {
+        $raw = $request->request->get('guestCounts');
+        if (!is_string($raw) || '' === $raw) {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $normalized = [];
+        foreach ($decoded as $catId => $count) {
+            $catId = (int) $catId;
+            $count = (int) $count;
+            if ($catId > 0 && $count > 0) {
+                $normalized[$catId] = $count;
+            }
+        }
+
+        return $normalized;
     }
 
     /**
