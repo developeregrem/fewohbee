@@ -44,7 +44,8 @@ final class GenericCsvParser implements ParserInterface
             throw new \InvalidArgumentException($this->trans('accounting.bank_import.parser.error.profile_required'));
         }
 
-        $rows = $this->readAllRows($file, $profile);
+        $warnings = [];
+        $rows = $this->readAllRows($file, $profile, $warnings);
 
         $sourceIban = $this->extractIban($rows, $profile);
         [$periodFrom, $periodTo] = $this->extractPeriod($rows, $profile);
@@ -54,8 +55,6 @@ final class GenericCsvParser implements ParserInterface
         $this->assertRequiredColumns($columnMap, $profile->getDirectionMode());
 
         $lines = [];
-        $warnings = [];
-
         for ($i = $dataStart, $n = count($rows); $i < $n; ++$i) {
             $row = $rows[$i];
             if ($this->isEmptyRow($row)) {
@@ -83,9 +82,11 @@ final class GenericCsvParser implements ParserInterface
     }
 
     /**
+     * @param list<string> $warnings
+     *
      * @return list<list<string>>
      */
-    private function readAllRows(\SplFileInfo $file, BankCsvProfile $profile): array
+    private function readAllRows(\SplFileInfo $file, BankCsvProfile $profile, array &$warnings): array
     {
         $path = $file->getPathname();
         $content = file_get_contents($path);
@@ -96,11 +97,29 @@ final class GenericCsvParser implements ParserInterface
         }
 
         $encoding = $profile->getEncoding();
-        if ('UTF-8' !== strtoupper($encoding)) {
+        if ('UTF-8' === strtoupper($encoding)) {
+            if (!mb_check_encoding($content, 'UTF-8')) {
+                $detected = $this->detectSourceEncoding($content);
+                $warnings[] = $this->trans('accounting.bank_import.parser.warning.encoding_mismatch', [
+                    '%encoding%' => $encoding,
+                    '%detected%' => $detected,
+                ]);
+                $content = mb_convert_encoding($content, 'UTF-8', $detected);
+            }
+        } else {
             $converted = @mb_convert_encoding($content, 'UTF-8', $encoding);
             if (false !== $converted) {
                 $content = $converted;
             }
+        }
+
+        if (!mb_check_encoding($content, 'UTF-8')) {
+            $detected = $this->detectSourceEncoding($content);
+            $warnings[] = $this->trans('accounting.bank_import.parser.warning.encoding_mismatch', [
+                '%encoding%' => $encoding,
+                '%detected%' => $detected,
+            ]);
+            $content = mb_convert_encoding($content, 'UTF-8', $detected);
         }
 
         // Strip UTF-8 BOM if present.
@@ -122,6 +141,13 @@ final class GenericCsvParser implements ParserInterface
         fclose($stream);
 
         return $rows;
+    }
+
+    private function detectSourceEncoding(string $content): string
+    {
+        $detected = mb_detect_encoding($content, ['UTF-8', 'ISO-8859-15', 'Windows-1252', 'ISO-8859-1'], true);
+
+        return is_string($detected) && '' !== $detected ? $detected : 'ISO-8859-15';
     }
 
     /**

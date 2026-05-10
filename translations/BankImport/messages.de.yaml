@@ -31,6 +31,7 @@ accounting:
         camt_non_booked_skipped: '%count% nicht gebuchte camt.052-Einträge in %file% wurden übersprungen.'
         camt_unknown_version: 'camt-Version in %file% konnte nicht aus dem Namespace gelesen werden — Import erfolgt best-effort.'
         camt_newer_version: 'camt.%type%.001.%version% ist neuer als die getesteten Versionen — Import erfolgt best-effort.'
+        encoding_mismatch: 'Die Datei ist nicht valide %encoding%, obwohl diese Codierung im CSV-Profil gewählt ist. Erkannte Codierung: %detected%. Die Vorschau wurde nach UTF-8 konvertiert; bitte korrigiere das CSV-Profil.'
       error:
         profile_required: Für den generischen CSV-Parser wird ein CSV-Profil benötigt.
         file_read_failed: 'Konnte Datei nicht lesen: %path%'

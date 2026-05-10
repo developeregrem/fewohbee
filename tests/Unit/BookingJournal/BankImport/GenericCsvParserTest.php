@@ -209,6 +209,44 @@ CSV;
         self::assertSame('250.00', $result->lines[1]->amount);
     }
 
+    public function testWarnsAndConvertsWhenUtf8ProfileReceivesLatinEncodedCsv(): void
+    {
+        $csv = <<<CSV
+Datum;Betrag;Zweck
+30.04.26;-666,60;Für Leistung
+CSV;
+
+        $tmp = tmpfile();
+        $meta = stream_get_meta_data($tmp);
+        fwrite($tmp, mb_convert_encoding($csv, 'ISO-8859-15', 'UTF-8'));
+
+        $profile = (new BankCsvProfile())
+            ->setName('Wrong encoding')
+            ->setDelimiter(';')
+            ->setEnclosure('"')
+            ->setEncoding('UTF-8')
+            ->setHeaderSkip(0)
+            ->setHasHeaderRow(true)
+            ->setColumnMap([
+                'bookDate' => 0,
+                'amount'   => 1,
+                'purpose'  => 2,
+            ])
+            ->setDateFormat('d.m.y')
+            ->setAmountDecimalSeparator(',')
+            ->setAmountThousandsSeparator(null)
+            ->setDirectionMode(BankCsvProfile::DIRECTION_SIGNED);
+
+        $result = (new GenericCsvParser())->parse(new \SplFileInfo($meta['uri']), $profile);
+
+        self::assertSame(['accounting.bank_import.parser.warning.encoding_mismatch'], $result->warnings);
+        self::assertCount(1, $result->lines);
+        self::assertSame('Für Leistung', $result->lines[0]->purpose);
+        self::assertSame('-666.60', $result->lines[0]->amount);
+        self::assertTrue(mb_check_encoding($result->lines[0]->purpose, 'UTF-8'));
+        self::assertIsString(json_encode(['purpose' => $result->lines[0]->purpose], JSON_THROW_ON_ERROR));
+    }
+
     public function testTwoDigitBankYearWithFullYearProfileIsNormalizedToCurrentCentury(): void
     {
         $csv = <<<CSV
