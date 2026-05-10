@@ -100,6 +100,8 @@ class PublicBookingController extends AbstractController
             'touristTaxLines' => [],
             'touristTaxTotalFormatted' => null,
             'touristTaxTotal' => 0.0,
+            'mixOccupancyTotal' => 0,
+            'nonOccupancyIcons' => [],
             'bookingResult' => null,
         ];
 
@@ -126,16 +128,35 @@ class PublicBookingController extends AbstractController
             $guestCounts = $this->resolveGuestCounts($request, $ageMapper);
             // Derive persons from the guestCounts when the wizard supplied them
             // — `persons` request field may still carry the legacy fallback.
+            // At the same time collect the non-occupancy entries (e.g. infants
+            // in a cot) so the wizard can show them as "+ baby"-icons next to
+            // the room's bed icons in step 2 — otherwise the guest is unsure
+            // whether the room actually accommodates their party.
             if ([] !== $guestCounts) {
                 $derived = 0;
+                $view['nonOccupancyIcons'] = [];
                 foreach ($guestCategoryRepository->findActiveOrdered() as $cat) {
+                    $count = (int) ($guestCounts[(int) $cat->getId()] ?? 0);
+                    if (0 === $count) {
+                        continue;
+                    }
                     if ($cat->isCountedInOccupancy()) {
-                        $derived += $guestCounts[(int) $cat->getId()] ?? 0;
+                        $derived += $count;
+                    } else {
+                        $icon = match ($cat->getStatisticalGroup()->value) {
+                            'infant' => 'fa-baby',
+                            'child' => 'fa-child',
+                            default => 'fa-user-tag',
+                        };
+                        for ($i = 0; $i < $count; ++$i) {
+                            $view['nonOccupancyIcons'][] = ['icon' => $icon, 'label' => $cat->getName()];
+                        }
                     }
                 }
                 if ($derived > 0) {
                     $persons = $derived;
                 }
+                $view['mixOccupancyTotal'] = $persons;
             }
 
             $maxDeparture = $restrictionService->getMaxDepartureDate();

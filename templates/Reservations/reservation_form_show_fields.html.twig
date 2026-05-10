@@ -98,7 +98,7 @@
 
         <table class="table">
             <tr>
-                <th>{{ 'appartment.number'|trans }}</th>
+                <th>{{ 'appartment.number.short'|trans }}</th>
                 <th>{{ 'appartment.description'|trans }}</th>
                 <th>{{ 'reservation.persons'|trans }}</th>
                 <th>{{ 'reservation.status'|trans }}</th>
@@ -109,7 +109,25 @@
                 <tr>
                     <td>{{ reservation.appartment.number }}</td>
                     <td>{{ reservation.appartment.description }}</td>
-                    <td>{{ reservation.persons }}</td>
+                    <td>
+                        {{ reservation.persons }}
+                        {% set counts = reservation.guestCounts %}
+                        {% if counts is not empty and guestCategoriesById|default({}) is not empty %}
+                            {# Iterate categories (already in sortOrder) so the breakdown
+                               renders in the same order regardless of the JSON key order
+                               in guestCounts. #}
+                            {% set parts = [] %}
+                            {% for catId, cat in guestCategoriesById %}
+                                {% set count = counts[catId]|default(0) %}
+                                {% if count > 0 %}
+                                    {% set parts = parts|merge([count ~ '×' ~ cat.acronym]) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if parts is not empty %}
+                                <span class="text-muted small">({{ parts|join(', ') }})</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
                     <td>{{ reservation.reservationStatus.name }}</td>
                     <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                     <td>{{ reservation.enddate|date('d.m.Y') }}</td>

@@ -28,7 +28,7 @@ class GuestCategorySeeder
 
     public function seedDefaults(): void
     {
-        $t = fn (string $key): string => $this->translator->trans($key, [], 'GuestCategory');
+        $t = fn (string $key): string => $this->translator->trans($key);
 
         $this->createOrUpdate(
             systemCode: 'default_adult',

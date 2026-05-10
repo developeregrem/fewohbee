@@ -235,6 +235,12 @@
                                                         <div class="d-flex align-items-center gap-2 flex-grow-1">
                                                             <span title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}" style="letter-spacing:.1em">
                                                                 {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
+                                                                {% if mixOccupancyTotal|default(0) == option.persons and nonOccupancyIcons|default([])|length > 0 %}
+                                                                    <span class="ms-1 text-muted">
+                                                                        +
+                                                                        {% for ico in nonOccupancyIcons %}<i class="fa-solid {{ ico.icon }} fhb-occupancy-icon" title="{{ ico.label }}"></i>{% endfor %}
+                                                                    </span>
+                                                                {% endif %}
                                                             </span>
                                                             <span class="fw-semibold ms-auto me-2">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
                                                         </div>

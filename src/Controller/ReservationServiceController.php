@@ -679,6 +679,12 @@ class ReservationServiceController extends AbstractController
 
         $rs->getMiscPricesInCreation($is, $reservations, $ps, $requestStack);
         $pricesInCreation = $requestStack->getSession()->get('reservatioInCreationPrices', []);
+        $guestCategoriesById = [];
+        $gCategories = $em->getRepository(GuestCategory::class)->findBy([], ['sortOrder' => 'ASC', 'id' => 'ASC']);
+        foreach ($gCategories as $gc) {
+            echo $gc->getId();
+            $guestCategoriesById[$gc->getId()] = $gc;
+        }
 
         $requestStack->getSession()->set('invoicePositionsAppartments', []);
         foreach ($reservations as $reservation) {
@@ -730,6 +736,7 @@ class ReservationServiceController extends AbstractController
             'hasActiveTouristTax' => count($reservations) > 0
                 ? $touristTaxService->hasActiveTaxForSubsidiary($reservations[0]->getAppartment()?->getObject())
                 : false,
+            'guestCategoriesById' => $guestCategoriesById ?? [],
         ]);
     }
 
@@ -812,6 +819,11 @@ class ReservationServiceController extends AbstractController
         $correspondences = $reservation->getCorrespondences();
 
         $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $guestCategoriesById = [];
+        $gCategories = $em->getRepository(GuestCategory::class)->findBy([], ['sortOrder' => 'ASC', 'id' => 'ASC']);
+        foreach ($gCategories as $gc) {
+            $guestCategoriesById[$gc->getId()] = $gc;
+        }
 
         $requestStack->getSession()->set('invoicePositionsMiscellaneous', new ArrayCollection());
         $is->prefillMiscPositionsWithReservations([$reservation], $requestStack, true);
@@ -854,6 +866,7 @@ class ReservationServiceController extends AbstractController
             'apartmentTotal' => $apartmentTotal,
             'miscTotal' => $miscTotal,
             'hasActiveTouristTax' => $touristTaxService->hasActiveTaxForSubsidiary($reservation->getAppartment()?->getObject()),
+            'guestCategoriesById' => $guestCategoriesById,
         ]);
     }
 

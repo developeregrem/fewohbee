@@ -10,6 +10,10 @@
                 <source>appartment.number</source>
                 <target>Zimmernummer</target>
             </trans-unit>
+            <trans-unit id="appartment.number.short">
+                <source>appartment.number.short</source>
+                <target>Nr.</target>
+            </trans-unit>
             <trans-unit id="appartment.bedsmin">
                 <source>appartment.bedsmin</source>
                 <target>normale Belegung</target>
