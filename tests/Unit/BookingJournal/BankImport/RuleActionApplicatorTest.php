@@ -71,6 +71,97 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame('RG 2026-0042 (2026-03-15)', $line['userRemark']);
     }
 
+    public function testInvoiceNumberMarkerExtractionRunsBeforeTemplateRendering(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+            'debitAccountId' => 42,
+            'creditAccountId' => 17,
+            'remarkTemplate' => 'Lieferantenrechnung {invoiceNumber}',
+            'invoiceNumberExtraction' => ['mode' => 'marker', 'marker' => 'Rechnung'],
+        ]);
+
+        $line = $this->emptyLine([
+            'purpose' => 'Strom Abschlag Rechnung RE-2024-047 vom 12.03.2024',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame('RE-2024-047', $line['userInvoiceNumber']);
+        self::assertSame('Lieferantenrechnung RE-2024-047', $line['userRemark']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testInvoiceNumberRegexExtractionUsesFirstCaptureGroup(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+            'invoiceNumberExtraction' => ['mode' => 'regex', 'pattern' => '/Invoice\s+(RE-\d{4}-\d{3})/i'],
+        ]);
+
+        $line = $this->emptyLine([
+            'purpose' => 'Supplier Invoice RE-2024-047 paid',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame('RE-2024-047', $line['userInvoiceNumber']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testInvoiceNumberRegexExtractionFallsBackToFullMatch(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+            'invoiceNumberExtraction' => ['mode' => 'regex', 'pattern' => 'RE-\d{4}-\d{4}'],
+        ]);
+
+        $line = $this->emptyLine([
+            'purpose' => 'RGN RE-1234-5678 Information zur Abrechnung Zinsen',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame('RE-1234-5678', $line['userInvoiceNumber']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testInvoiceNumberMarkerExtractionKeepsLinePendingWhenMissing(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+            'debitAccountId' => 42,
+            'creditAccountId' => 17,
+            'invoiceNumberExtraction' => ['mode' => 'marker', 'marker' => 'Rechnung'],
+        ]);
+
+        $line = $this->emptyLine(['purpose' => 'Strom Abschlag ohne Nummer']);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame('accounting.bank_import.rule.warning.invoice_marker_missing', $line['ruleWarning']['key']);
+        self::assertSame(['%marker%' => 'Rechnung'], $line['ruleWarning']['params']);
+        self::assertNull($line['userDebitAccountId']);
+    }
+
+    public function testInvoiceNumberRegexExtractionKeepsLinePendingWhenRegexIsInvalid(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+            'debitAccountId' => 42,
+            'creditAccountId' => 17,
+            'invoiceNumberExtraction' => ['mode' => 'regex', 'pattern' => '/Rechnung ([A-Z0-9-/'],
+        ]);
+
+        $line = $this->emptyLine(['purpose' => 'Rechnung RE-2024-047']);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame('accounting.bank_import.rule.warning.invoice_regex_invalid', $line['ruleWarning']['key']);
+    }
+
     public function testSplitActionSplitsByFixedAmountsAndRemainder(): void
     {
         $rule = $this->createRule([
@@ -296,6 +387,7 @@ final class RuleActionApplicatorTest extends TestCase
             'userCreditAccountId' => null,
             'userTaxRateId' => null,
             'userRemark' => null,
+            'userInvoiceNumber' => null,
             'appliedRuleId' => null,
             'splits' => [],
         ], $overrides);

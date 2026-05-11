@@ -21,6 +21,7 @@
     .bi-preview .col-status  { width: 7.5rem; }
     .bi-preview .col-amount  { width: 7rem; }
     .bi-preview .col-tax     { width: 10rem; }
+    .bi-preview .col-invoice { width: 9rem; }
 </style>
 <div class="container-fluid bi-preview"
      data-controller="bank-import-preview"
@@ -48,6 +49,8 @@
      data-bank-import-preview-rule-split-found-label-value="{{ 'accounting.bank_import.rule.split_source.found'|trans|e('html_attr') }}"
      data-bank-import-preview-rule-split-missing-label-value="{{ 'accounting.bank_import.rule.split_source.missing'|trans|e('html_attr') }}"
      data-bank-import-preview-rule-split-remainder-label-value="{{ 'accounting.bank_import.rule.split_source.remainder_preview'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-invoice-found-label-value="{{ 'accounting.bank_import.rule.invoice_extraction.found'|trans|e('html_attr') }}"
+     data-bank-import-preview-rule-invoice-missing-label-value="{{ 'accounting.bank_import.rule.invoice_extraction.missing'|trans|e('html_attr') }}"
      data-bank-import-preview-rule-split-marker-required-message-value="{{ 'accounting.bank_import.rule.validation.split_marker_required'|trans|e('html_attr') }}">
     <div class="row mb-2">
         <div class="col">
@@ -177,6 +180,7 @@
                         <th>{{ 'accounting.bank_import.preview.col.counterparty'|trans }}</th>
                         <th>{{ 'accounting.bank_import.preview.col.purpose'|trans }}</th>
                         <th class="text-end col-amount">{{ 'accounting.bank_import.preview.col.amount'|trans }}</th>
+                        <th class="col-invoice">{{ 'accounting.bank_import.preview.col.invoice_number'|trans }}</th>
                         <th class="col-account">{{ 'accounting.bank_import.preview.col.debit'|trans }}</th>
                         <th class="col-account">{{ 'accounting.bank_import.preview.col.credit'|trans }}</th>
                         <th class="col-tax">{{ 'accounting.bank_import.preview.col.tax_rate'|trans }}</th>
@@ -190,7 +194,7 @@
                         data-idx="{{ line.idx }}"
                         data-status="{{ line.status }}"
                         data-rule="{{ line.appliedRuleId ? '1' : '0' }}"
-                        data-invoice="{{ line.matchedInvoiceId ? '1' : '0' }}"
+                        data-invoice="{{ line.matchedInvoiceId or (line.userInvoiceNumber|default(null)) ? '1' : '0' }}"
                         class="{% if line.isDuplicate or line.isIgnored %}table-secondary text-muted{% endif %}">
                         <td>
                             <input type="checkbox" class="form-check-input"
@@ -247,6 +251,16 @@
                             {{ line.amount|number_format(2, ',', '.') }} {{ currency_symbol }}
                         </td>
 
+                        <td>
+                            <input type="text" class="form-control form-control-sm"
+                                   value="{{ line.userInvoiceNumber ?? '' }}"
+                                   placeholder="{{ 'accounting.bank_import.preview.invoice_number_placeholder'|trans }}"
+                                   maxlength="50"
+                                   data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
+                                   data-field="invoiceNumber"
+                                   {% if readonly %}disabled{% endif %}>
+                        </td>
+
                         {# Debit account #}
                         <td>
                             <select class="form-select form-select-sm"
@@ -265,7 +279,7 @@
 
                         {# Credit account #}
                         <td>
-                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty %}
+                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty and not (line.userInvoiceNumber|default(null)) %}
                                 <div class="small text-muted"
                                      data-bs-toggle="tooltip"
                                      title="{{ 'accounting.bank_import.preview.invoice_accounts.help'|trans }}">
@@ -289,7 +303,7 @@
 
                         {# Tax rate #}
                         <td>
-                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty %}
+                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty and not (line.userInvoiceNumber|default(null)) %}
                                 <div class="small text-muted"
                                      data-bs-toggle="tooltip"
                                      title="{{ 'accounting.bank_import.preview.invoice_tax_rate.help'|trans }}">
@@ -348,7 +362,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">
+                        <td colspan="11" class="text-center text-muted py-4">
                             {{ 'accounting.bank_import.preview.empty'|trans }}
                         </td>
                     </tr>

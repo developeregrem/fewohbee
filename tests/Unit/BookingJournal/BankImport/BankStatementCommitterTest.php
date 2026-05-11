@@ -164,6 +164,58 @@ final class BankStatementCommitterTest extends TestCase
         self::assertSame(0, $result['redated']);
     }
 
+    public function testManualInvoiceNumberSuppressesInternalInvoiceSpecialHandling(): void
+    {
+        $bankAccount = $this->makeAccount(1200, '1200', 'Bank');
+        $revenue = $this->makeAccount(8400, '8400', 'Erlöse');
+        $existing = (new BookingEntry())
+            ->setAmount('585.00')
+            ->setInvoiceId(42);
+        $manualEntry = new BookingEntry();
+        $state = $this->createState([
+            'amount' => '585.00',
+            'valueDate' => '2026-04-25',
+            'matchedInvoiceId' => 42,
+            'matchedInvoiceNumber' => 'APP-42',
+            'matchedInvoiceAmountMatches' => true,
+            'userInvoiceNumber' => 'SUP-2024-047',
+            'status' => ImportState::LINE_STATUS_READY,
+            'userDebitAccountId' => 1200,
+            'userCreditAccountId' => 8400,
+        ]);
+
+        $journal = $this->createMock(BookingJournalService::class);
+        $journal->expects(self::never())->method('updateEntryDate');
+        $journal->expects(self::never())->method('createEntriesFromInvoice');
+        $journal->expects(self::once())->method('recalculateDocumentNumbersForYears')->with(2026);
+        $journal->expects(self::once())
+            ->method('createEntryFromStatement')
+            ->with(
+                self::callback(static fn (\DateTimeInterface $date): bool => '2026-04-25' === $date->format('Y-m-d')),
+                '585.00',
+                $bankAccount,
+                $revenue,
+                null,
+                'SUP-2024-047',
+                null,
+                null,
+                null,
+            )
+            ->willReturn($manualEntry);
+
+        $committer = $this->createCommitter(
+            journal: $journal,
+            entryRepo: $this->entryRepo([$existing]),
+            invoiceRepo: $this->invoiceRepo(null),
+            accountRepo: $this->accountRepo([$bankAccount, $revenue]),
+        );
+
+        $result = $committer->commit($state, $bankAccount);
+
+        self::assertSame(1, $result['committed']);
+        self::assertSame(0, $result['redated']);
+    }
+
     public function testOutgoingStatementLineCreatesPositiveJournalAmount(): void
     {
         $bankAccount = $this->makeAccount(1200, '1200', 'Bank');
@@ -250,6 +302,59 @@ final class BankStatementCommitterTest extends TestCase
 
         self::assertSame(1, $result['committed']);
         self::assertSame(['30.00', '70.00'], $seenAmounts);
+    }
+
+    public function testManualInvoiceNumberIsCopiedToEverySplitEntry(): void
+    {
+        $bankAccount = $this->makeAccount(1200, '1200', 'Bank');
+        $expense = $this->makeAccount(6000, '6000', 'Aufwand');
+        $state = $this->createState([
+            'amount' => '-100.00',
+            'valueDate' => '2026-04-25',
+            'userInvoiceNumber' => 'RE-2024-047',
+            'status' => ImportState::LINE_STATUS_READY,
+            'splits' => [
+                ['amount' => '-30.00', 'debitAccountId' => 6000, 'creditAccountId' => 1200],
+                ['amount' => '-70.00', 'debitAccountId' => 6000, 'creditAccountId' => 1200],
+            ],
+        ]);
+
+        $seenInvoiceNumbers = [];
+        $seenInvoiceIds = [];
+        $journal = $this->createMock(BookingJournalService::class);
+        $journal->expects(self::once())->method('recalculateDocumentNumbersForYears')->with(2026);
+        $journal->expects(self::exactly(2))
+            ->method('createEntryFromStatement')
+            ->willReturnCallback(function (
+                \DateTimeInterface $date,
+                string $amount,
+                ?AccountingAccount $debitAccount,
+                ?AccountingAccount $creditAccount,
+                ?string $remark,
+                ?string $invoiceNumber,
+                ?int $invoiceId,
+            ) use (&$seenInvoiceNumbers, &$seenInvoiceIds, $expense, $bankAccount): BookingEntry {
+                self::assertSame('2026-04-25', $date->format('Y-m-d'));
+                self::assertSame($expense, $debitAccount);
+                self::assertSame($bankAccount, $creditAccount);
+                $seenInvoiceNumbers[] = $invoiceNumber;
+                $seenInvoiceIds[] = $invoiceId;
+
+                return new BookingEntry();
+            });
+
+        $committer = $this->createCommitter(
+            journal: $journal,
+            entryRepo: $this->entryRepo([]),
+            invoiceRepo: $this->invoiceRepo(null),
+            accountRepo: $this->accountRepo([$bankAccount, $expense]),
+        );
+
+        $result = $committer->commit($state, $bankAccount);
+
+        self::assertSame(1, $result['committed']);
+        self::assertSame(['RE-2024-047', 'RE-2024-047'], $seenInvoiceNumbers);
+        self::assertSame([null, null], $seenInvoiceIds);
     }
 
 
@@ -341,6 +446,7 @@ final class BankStatementCommitterTest extends TestCase
             'userCreditAccountId' => null,
             'userTaxRateId' => null,
             'userRemark' => null,
+            'userInvoiceNumber' => null,
             'appliedRuleId' => null,
             'matchedInvoiceId' => null,
             'matchedInvoiceNumber' => null,

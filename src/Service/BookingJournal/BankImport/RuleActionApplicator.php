@@ -20,6 +20,10 @@ use App\Entity\BankImportRule;
  * a dynamic amountSource="purpose_marker" plus marker text. Dynamic marker
  * amounts are read from the current line's purpose text on every import.
  *
+ * Rule actions may also extract one external invoice/document number from the
+ * purpose text. That number is line-wide, including split bookings, and is
+ * intentionally separate from the application's internal InvoiceMatcher.
+ *
  * Remark templates support a tiny placeholder language (no Twig, no eval):
  *   {counterparty} {purpose} {date} {invoiceNumber}
  */
@@ -33,7 +37,12 @@ final class RuleActionApplicator
         $action = $rule->getAction();
         $line['appliedRuleId'] = $rule->getId();
 
-        switch ($action['mode'] ?? BankImportRule::ACTION_MODE_IGNORE) {
+        $mode = $action['mode'] ?? BankImportRule::ACTION_MODE_IGNORE;
+        if (BankImportRule::ACTION_MODE_IGNORE !== $mode && !$this->applyInvoiceNumberExtraction($action, $line)) {
+            return;
+        }
+
+        switch ($mode) {
             case BankImportRule::ACTION_MODE_IGNORE:
                 $line['isIgnored'] = true;
                 $line['status'] = ImportState::LINE_STATUS_IGNORED;
@@ -71,6 +80,7 @@ final class RuleActionApplicator
         }
 
         $line['status'] = ImportState::LINE_STATUS_READY;
+        unset($line['ruleWarning']);
     }
 
     /**
@@ -174,6 +184,141 @@ final class RuleActionApplicator
         return $this->normalizeExtractedAmount($matches[1] ?: $matches[2]);
     }
 
+    /**
+     * @param array<string, mixed> $action
+     * @param array<string, mixed> $line
+     */
+    private function applyInvoiceNumberExtraction(array $action, array &$line): bool
+    {
+        $config = $action['invoiceNumberExtraction'] ?? null;
+        if (!is_array($config)) {
+            return true;
+        }
+
+        $mode = (string) ($config['mode'] ?? 'none');
+        if ('none' === $mode || '' === $mode) {
+            return true;
+        }
+
+        $purpose = (string) ($line['purpose'] ?? '');
+        if ('marker' === $mode) {
+            $marker = trim((string) ($config['marker'] ?? ''));
+            $invoiceNumber = $this->extractInvoiceNumberAfterMarker($purpose, $marker);
+            if (null === $invoiceNumber) {
+                $this->markInvoiceNumberRulePending(
+                    $line,
+                    'accounting.bank_import.rule.warning.invoice_marker_missing',
+                    ['%marker%' => $marker],
+                );
+
+                return false;
+            }
+
+            $line['userInvoiceNumber'] = $invoiceNumber;
+
+            return true;
+        }
+
+        if ('regex' === $mode) {
+            $pattern = trim((string) ($config['pattern'] ?? ''));
+            $invoiceNumber = $this->extractInvoiceNumberByRegex($purpose, $pattern);
+            if (false === $invoiceNumber) {
+                $this->markInvoiceNumberRulePending(
+                    $line,
+                    'accounting.bank_import.rule.warning.invoice_regex_invalid',
+                    ['%pattern%' => $pattern],
+                );
+
+                return false;
+            }
+            if (null === $invoiceNumber) {
+                $this->markInvoiceNumberRulePending(
+                    $line,
+                    'accounting.bank_import.rule.warning.invoice_regex_missing',
+                    ['%pattern%' => $pattern],
+                );
+
+                return false;
+            }
+
+            $line['userInvoiceNumber'] = $invoiceNumber;
+
+            return true;
+        }
+
+        return true;
+    }
+
+    private function extractInvoiceNumberAfterMarker(string $purpose, string $marker): ?string
+    {
+        if ('' === trim($purpose) || '' === $marker) {
+            return null;
+        }
+
+        $offset = stripos($purpose, $marker);
+        if (false === $offset) {
+            return null;
+        }
+
+        $tail = substr($purpose, $offset + strlen($marker));
+        if (false === $tail || '' === $tail) {
+            return null;
+        }
+
+        $pattern = '/^\s*(?:(?:nr\.?|nummer|no\.?|#)\s*)?[:\-#\s]*([[:alnum:]][[:alnum:].\/_-]{1,49})/iu';
+        if (1 !== preg_match($pattern, $tail, $matches)) {
+            return null;
+        }
+
+        return $this->cleanInvoiceNumber($matches[1] ?? null);
+    }
+
+    /**
+     * @return string|null|false false means invalid regex, null means no match
+     */
+    private function extractInvoiceNumberByRegex(string $purpose, string $pattern): string|null|false
+    {
+        $regex = $this->normalizeUserRegex($pattern);
+        if (null === $regex) {
+            return false;
+        }
+
+        $result = @preg_match($regex, $purpose, $matches);
+        if (false === $result) {
+            return false;
+        }
+        if (0 === $result) {
+            return null;
+        }
+
+        return $this->cleanInvoiceNumber($matches[1] ?? $matches[0] ?? null) ?? false;
+    }
+
+    private function normalizeUserRegex(string $pattern): ?string
+    {
+        if ('' === $pattern) {
+            return null;
+        }
+
+        if (1 === preg_match('/^([\/#~]).+\1([imsxueADSUXJ]*)$/', $pattern)) {
+            return $pattern;
+        }
+
+        return '/'.str_replace('/', '\\/', $pattern).'/iu';
+    }
+
+    private function cleanInvoiceNumber(mixed $value): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        $value = trim($value, " \t\n\r\0\x0B.,;:");
+
+        return '' === $value ? null : mb_substr($value, 0, 50);
+    }
+
     private function normalizeExtractedAmount(string $raw): ?float
     {
         $value = trim($raw);
@@ -228,6 +373,20 @@ final class RuleActionApplicator
 
     /**
      * @param array<string, mixed> $line
+     * @param array<string, string> $params
+     */
+    private function markInvoiceNumberRulePending(array &$line, string $key, array $params): void
+    {
+        $line['splits'] = [];
+        $line['status'] = ImportState::LINE_STATUS_PENDING;
+        $line['ruleWarning'] = [
+            'key' => $key,
+            'params' => $params,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $line
      */
     private function renderTemplate(?string $template, array $line): ?string
     {
@@ -239,7 +398,7 @@ final class RuleActionApplicator
             '{counterparty}'   => (string) ($line['counterpartyName'] ?? ''),
             '{purpose}'        => (string) ($line['purpose'] ?? ''),
             '{date}'           => (string) ($line['valueDate'] ?? $line['bookDate'] ?? ''),
-            '{invoiceNumber}'  => (string) ($line['matchedInvoiceNumber'] ?? ''),
+            '{invoiceNumber}'  => (string) (($line['userInvoiceNumber'] ?? null) ?: ($line['matchedInvoiceNumber'] ?? '')),
         ]);
     }
 }

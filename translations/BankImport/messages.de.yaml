@@ -106,10 +106,12 @@ accounting:
         counterparty: Gegenpartei
         purpose: Verwendungszweck
         amount: Betrag
+        invoice_number: Beleg-Nr.
         debit: Soll-Konto
         credit: Haben-Konto
         tax_rate: Steuersatz
         remark: Bemerkung
+      invoice_number_placeholder: Beleg-Nr.
       duplicate:
         help: Bereits in einem früheren Import übernommen.
       ignored:
@@ -201,8 +203,25 @@ accounting:
       warning:
         line: 'Zeile %line%: %message%'
         split_marker_missing: 'Splitbetrag für Marker "%marker%" wurde im Verwendungszweck nicht gefunden.'
+        invoice_marker_missing: 'Beleg-Nr. für Marker "%marker%" wurde im Verwendungszweck nicht gefunden.'
+        invoice_regex_missing: 'Beleg-Nr. wurde mit Regex "%pattern%" nicht gefunden.'
+        invoice_regex_invalid: 'Regex für Beleg-Nr. ist ungültig: "%pattern%".'
       split:
         help: Aufgeteilt auf mehrere Buchungen.
+      invoice_extraction:
+        label: Beleg-Nr. erkennen
+        help: |
+          Optional: Liest eine externe Lieferanten-, Beleg- oder Rechnungsnummer aus dem Verwendungszweck.
+        mode:
+          none: Nicht automatisch
+          marker: Marker vor Beleg-Nr.
+          regex: Regex
+        marker:
+          placeholder: z.B. Rechnung
+        regex:
+          placeholder: z.B. Rechnung\s+([A-Z0-9-]+)
+        found: 'Gefunden: %number%'
+        missing: Keine Beleg-Nr. gefunden
       split_source:
         help: |
           Für wiederkehrende Splits werden Beträge aus dem aktuellen Verwendungszweck gelesen.

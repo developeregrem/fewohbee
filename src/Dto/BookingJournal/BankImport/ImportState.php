@@ -40,10 +40,12 @@ final class ImportState
         }
 
         $hasSplits = !empty($line['splits']);
+        $hasManualInvoiceNumber = '' !== trim((string) ($line['userInvoiceNumber'] ?? ''));
         $hasInvoiceAutoMatch = null !== ($line['matchedInvoiceId'] ?? null)
             && true === ($line['matchedInvoiceAmountMatches'] ?? false)
             && ((float) ($line['amount'] ?? 0)) >= 0.0
-            && null !== ($line['userDebitAccountId'] ?? null);
+            && null !== ($line['userDebitAccountId'] ?? null)
+            && !$hasManualInvoiceNumber;
         $hasAccounts = null !== ($line['userDebitAccountId'] ?? null)
                     && null !== ($line['userCreditAccountId'] ?? null);
 
@@ -181,6 +183,7 @@ final class ImportState
                 'userCreditAccountId' => null,
                 'userTaxRateId'    => null,
                 'userRemark'       => null,
+                'userInvoiceNumber' => null,
                 'appliedRuleId'    => null,
                 'matchedInvoiceId' => null,
                 'matchedInvoiceNumber' => null,

@@ -116,8 +116,18 @@ export default class extends Controller {
         if (!this.popover) {
             return;
         }
-        this.popover.hide();
-        this.popover.dispose();
+
+        const popover = this.popover;
         this.popover = null;
+        const anchor = popover._element;
+        if (!anchor) {
+            popover.dispose();
+            return;
+        }
+
+        anchor.addEventListener('hidden.bs.popover', () => {
+            popover.dispose();
+        }, { once: true });
+        popover.hide();
     }
 }

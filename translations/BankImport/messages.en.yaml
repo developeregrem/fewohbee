@@ -106,10 +106,12 @@ accounting:
         counterparty: Counterparty
         purpose: Purpose
         amount: Amount
+        invoice_number: Doc no.
         debit: Debit account
         credit: Credit account
         tax_rate: Tax rate
         remark: Remark
+      invoice_number_placeholder: Doc no.
       duplicate:
         help: Already committed in a previous import.
       ignored:
@@ -201,8 +203,25 @@ accounting:
       warning:
         line: 'Line %line%: %message%'
         split_marker_missing: 'Split amount for marker "%marker%" was not found in the purpose text.'
+        invoice_marker_missing: 'Document number for marker "%marker%" was not found in the purpose text.'
+        invoice_regex_missing: 'Document number was not found with regex "%pattern%".'
+        invoice_regex_invalid: 'Document number regex is invalid: "%pattern%".'
       split:
         help: Split into multiple bookings.
+      invoice_extraction:
+        label: Detect doc no.
+        help: |
+          Optional: Reads an external supplier/document/invoice number from the purpose text.
+        mode:
+          none: Do not detect
+          marker: Marker before doc no.
+          regex: Regex
+        marker:
+          placeholder: e.g. Invoice
+        regex:
+          placeholder: e.g. Invoice\s+([A-Z0-9-]+)
+        found: 'Found: %number%'
+        missing: No doc no. found
       split_source:
         help: |
           For recurring splits, amounts are read from the current purpose text.

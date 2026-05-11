@@ -97,4 +97,16 @@
             {% endif %}
         </div>
     {% endif %}
+    {% set invoiceExtraction = action.invoiceNumberExtraction|default({'mode': 'none'}) %}
+    {% if invoiceExtraction.mode|default('none') == 'marker' %}
+        <div class="small mt-1">
+            <span class="text-muted">{{ 'accounting.bank_import.rule.invoice_extraction.label'|trans }}:</span>
+            <code>{{ 'accounting.bank_import.rule.invoice_extraction.mode.marker'|trans }} "{{ invoiceExtraction.marker|default('') }}"</code>
+        </div>
+    {% elseif invoiceExtraction.mode|default('none') == 'regex' %}
+        <div class="small mt-1">
+            <span class="text-muted">{{ 'accounting.bank_import.rule.invoice_extraction.label'|trans }}:</span>
+            <code>{{ invoiceExtraction.pattern|default('') }}</code>
+        </div>
+    {% endif %}
 {% endmacro %}

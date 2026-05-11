@@ -162,6 +162,37 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('-30.00', $recurringLine['splits'][2]['amount']);
     }
 
+    public function testManualInvoiceNumberCanBeEditedInPreviewDraft(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $bankAccount = $this->createBankAccount('DE00DKBTESTKONTO0001');
+        $profile = $this->createCsvProfile('dkb');
+
+        $crawler = $client->request('GET', '/journal/bank-import');
+        $form = $crawler->filter('form')->form();
+        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
+        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
+        $client->submit($form);
+
+        preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
+        $sessionImportId = $matches[1];
+        $preview = $client->followRedirect();
+        $token = (string) $preview->filter('[data-bank-import-preview-csrf-value]')->attr('data-bank-import-preview-csrf-value');
+
+        $client->request('POST', sprintf('/journal/bank-import/%s/line/0', $sessionImportId), [
+            '_token' => $token,
+            'field' => 'invoiceNumber',
+            'value' => 'RE-2024-047',
+        ], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        self::assertResponseIsSuccessful();
+
+        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        self::assertSame('RE-2024-047', $state->lines[0]['userInvoiceNumber']);
+    }
+
     public function testUploadBuildsPreviewFromMultipleCamtXmlFiles(): void
     {
         $client = static::createClient();

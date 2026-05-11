@@ -97,11 +97,12 @@ final class BankStatementCommitter
 
                 // Re-date existing workflow entries when this line maps to a
                 // known invoice that has already been booked.
-                $existing = null !== ($line['matchedInvoiceId'] ?? null)
+                $hasExternalInvoiceNumber = null !== $this->manualInvoiceNumber($line);
+                $existing = !$hasExternalInvoiceNumber && null !== ($line['matchedInvoiceId'] ?? null)
                     ? $this->entryRepo->findBy(['invoiceId' => (int) $line['matchedInvoiceId']])
                     : [];
 
-                if (null !== ($line['matchedInvoiceId'] ?? null) && [] === ($line['splits'] ?? [])) {
+                if (!$hasExternalInvoiceNumber && null !== ($line['matchedInvoiceId'] ?? null) && [] === ($line['splits'] ?? [])) {
                     if ([] !== $existing && true === ($line['matchedInvoiceAmountMatches'] ?? false)) {
                         $this->updateExistingInvoiceEntries($existing, $line, $valueDate, $bankAccount);
                         $fingerprint->setBookingEntry($existing[0]);
@@ -199,8 +200,9 @@ final class BankStatementCommitter
      */
     private function createEntries(array $line, \DateTimeImmutable $valueDate, array $accounts, array $taxRates): array
     {
-        $invoiceId = $line['matchedInvoiceId'] ?? null;
-        $invoiceNumber = $line['matchedInvoiceNumber'] ?? null;
+        $manualInvoiceNumber = $this->manualInvoiceNumber($line);
+        $invoiceId = null !== $manualInvoiceNumber ? null : ($line['matchedInvoiceId'] ?? null);
+        $invoiceNumber = $manualInvoiceNumber ?? ($line['matchedInvoiceNumber'] ?? null);
 
         $splits = $line['splits'] ?? [];
         if (!is_array($splits) || [] === $splits) {
@@ -236,6 +238,16 @@ final class BankStatementCommitter
         }
 
         return $created;
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function manualInvoiceNumber(array $line): ?string
+    {
+        $value = trim((string) ($line['userInvoiceNumber'] ?? ''));
+
+        return '' === $value ? null : mb_substr($value, 0, 50);
     }
 
     private function journalAmount(mixed $amount): string

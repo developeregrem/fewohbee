@@ -54,6 +54,12 @@ export default class extends Controller {
         'ruleSplitSection',
         'ruleSplitRows',
         'ruleSplitRowTemplate',
+        'ruleInvoiceExtractionMode',
+        'ruleInvoiceExtractionMarkerGroup',
+        'ruleInvoiceExtractionMarker',
+        'ruleInvoiceExtractionRegexGroup',
+        'ruleInvoiceExtractionRegex',
+        'ruleInvoiceExtractionPreview',
         'rulePriority',
         'ruleScope',
         'linesData',
@@ -83,6 +89,8 @@ export default class extends Controller {
         ruleSplitFoundLabel: String,
         ruleSplitMissingLabel: String,
         ruleSplitRemainderLabel: String,
+        ruleInvoiceFoundLabel: String,
+        ruleInvoiceMissingLabel: String,
         ruleSplitMarkerRequiredMessage: String,
     };
 
@@ -247,7 +255,12 @@ export default class extends Controller {
             });
             if (!res.ok) throw new Error('http ' + res.status);
             const json = await res.json();
+            this._updateLineSnapshot(idx, field, value);
             this._applyServerState(row, idx, json);
+            if (field === 'invoiceNumber') {
+                window.location.reload();
+                return;
+            }
             this._flashSaved(row);
         } catch (e) {
             row.classList.add('table-danger');
@@ -289,6 +302,10 @@ export default class extends Controller {
     _applyServerState(row, idx, payload) {
         if (payload?.status) {
             row.dataset.status = payload.status;
+            const line = this._lineByIdx(idx);
+            if (line) {
+                row.dataset.invoice = (line.matchedInvoiceId || line.userInvoiceNumber) ? '1' : '0';
+            }
             row.classList.toggle('table-secondary', payload.status === 'ignored' || payload.status === 'duplicate');
             row.classList.toggle('text-muted', payload.status === 'ignored' || payload.status === 'duplicate');
             this._refreshStatusBadge(row, payload.status);
@@ -301,6 +318,39 @@ export default class extends Controller {
         // Re-evaluate visibility under the active filter (e.g. row that just
         // moved to "ready" should disappear from the "pending" filter).
         this._applyFilter();
+    }
+
+    _updateLineSnapshot(idx, field, value) {
+        const line = this._lineByIdx(idx);
+        if (!line) return;
+
+        const idOrNull = (raw) => {
+            const parsed = parseInt(raw, 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+        };
+
+        switch (field) {
+            case 'debitAccountId':
+                line.userDebitAccountId = idOrNull(value);
+                break;
+            case 'creditAccountId':
+                line.userCreditAccountId = idOrNull(value);
+                break;
+            case 'taxRateId':
+                line.userTaxRateId = idOrNull(value);
+                break;
+            case 'remark':
+                line.userRemark = String(value || '').trim() || null;
+                break;
+            case 'invoiceNumber':
+                line.userInvoiceNumber = String(value || '').trim().slice(0, 50) || null;
+                break;
+            case 'isIgnored':
+                line.isIgnored = String(value) === '1';
+                break;
+            default:
+                break;
+        }
     }
 
     _refreshStatusBadge(row, status) {
@@ -599,6 +649,7 @@ export default class extends Controller {
         this.ruleRemarkTarget.value = line.userRemark || '';
         this.rulePriorityTarget.value = '50';
         this.ruleScopeTarget.checked = true;
+        this._populateRuleInvoiceExtraction(line);
         this._populateRuleSplitAction(line);
 
         this._showModal(this.ruleModalTarget);
@@ -666,6 +717,7 @@ export default class extends Controller {
             body.set('taxRateId', this.ruleTaxRateTarget.value);
             body.set('remarkTemplate', this.ruleRemarkTarget.value);
         }
+        this._appendInvoiceExtractionToRuleBody(body);
         body.set('priority', this.rulePriorityTarget.value || '50');
         body.set('scopeToBankAccount', this.ruleScopeTarget.checked ? '1' : '0');
 
@@ -686,6 +738,66 @@ export default class extends Controller {
         } catch {
             // eslint-disable-next-line no-alert
             alert(this.saveFailedMessageValue);
+        }
+    }
+
+    _populateRuleInvoiceExtraction(line) {
+        if (!this.hasRuleInvoiceExtractionModeTarget) return;
+
+        const invoiceNumber = String(line?.userInvoiceNumber || '').trim();
+        const marker = invoiceNumber ? this._guessMarkerForText(line?.purpose || '', invoiceNumber) : '';
+        this.ruleInvoiceExtractionModeTarget.value = invoiceNumber ? 'marker' : 'none';
+        this.ruleInvoiceExtractionMarkerTarget.value = marker;
+        this.ruleInvoiceExtractionRegexTarget.value = '';
+        this._refreshRuleInvoiceExtraction();
+    }
+
+    ruleInvoiceExtractionModeChange() {
+        this._refreshRuleInvoiceExtraction();
+    }
+
+    ruleInvoiceExtractionInput() {
+        this._refreshRuleInvoiceExtraction();
+    }
+
+    _refreshRuleInvoiceExtraction() {
+        if (!this.hasRuleInvoiceExtractionModeTarget) return;
+
+        const mode = this.ruleInvoiceExtractionModeTarget.value || 'none';
+        this.ruleInvoiceExtractionMarkerGroupTarget.hidden = mode !== 'marker';
+        this.ruleInvoiceExtractionRegexGroupTarget.hidden = mode !== 'regex';
+
+        const preview = this.ruleInvoiceExtractionPreviewTarget;
+        if (mode === 'none') {
+            preview.className = 'small text-muted';
+            preview.textContent = '';
+            return;
+        }
+
+        const purpose = (this._lineByIdx(this.activeIdx) || {}).purpose || '';
+        const found = mode === 'marker'
+            ? this._extractInvoiceNumberAfterMarker(purpose, this.ruleInvoiceExtractionMarkerTarget.value.trim())
+            : this._extractInvoiceNumberByRegex(purpose, this.ruleInvoiceExtractionRegexTarget.value.trim());
+
+        if (!found) {
+            preview.className = 'small text-warning';
+            preview.textContent = this.ruleInvoiceMissingLabelValue;
+            return;
+        }
+
+        preview.className = 'small text-success';
+        preview.textContent = this._formatText(this.ruleInvoiceFoundLabelValue, { '%number%': found });
+    }
+
+    _appendInvoiceExtractionToRuleBody(body) {
+        if (!this.hasRuleInvoiceExtractionModeTarget) return;
+
+        const mode = this.ruleInvoiceExtractionModeTarget.value || 'none';
+        body.set('invoiceExtractionMode', mode);
+        if (mode === 'marker') {
+            body.set('invoiceExtractionMarker', this.ruleInvoiceExtractionMarkerTarget.value.trim());
+        } else if (mode === 'regex') {
+            body.set('invoiceExtractionRegex', this.ruleInvoiceExtractionRegexTarget.value.trim());
         }
     }
 
@@ -780,6 +892,50 @@ export default class extends Controller {
         const afterPreviousAmount = before.replace(/^.*(?:\d{1,3}(?:[.,]\d{3})+[.,]\d{2}|\d+[.,]\d{2}|\d{1,3}(?:[.,]\d{3})+|\d+)\s*-?\s*/u, '').trim();
         const words = (afterPreviousAmount || before).split(/\s+/).filter(Boolean);
         return words.slice(-4).join(' ').replace(/[:\-–]+$/u, '').trim();
+    }
+
+    _guessMarkerForText(purpose, needle) {
+        if (!purpose || !needle) return '';
+        const idx = purpose.toLocaleLowerCase().indexOf(needle.toLocaleLowerCase());
+        if (idx < 0) return '';
+
+        const before = purpose.slice(0, idx).replace(/\s+/g, ' ').trim();
+        if (before === '') return '';
+        const words = before.split(/\s+/).filter(Boolean);
+
+        return words.slice(-4).join(' ').replace(/[:\-–#]+$/u, '').trim();
+    }
+
+    _extractInvoiceNumberAfterMarker(purpose, marker) {
+        if (!purpose || !marker) return null;
+        const idx = purpose.toLocaleLowerCase().indexOf(marker.toLocaleLowerCase());
+        if (idx < 0) return null;
+        const tail = purpose.slice(idx + marker.length);
+        const match = tail.match(/^\s*(?:(?:nr\.?|nummer|no\.?|#)\s*)?[:\-#\s]*([\p{L}\p{N}][\p{L}\p{N}.\/_-]{1,49})/u);
+        return match ? this._cleanInvoiceNumber(match[1]) : null;
+    }
+
+    _extractInvoiceNumberByRegex(purpose, pattern) {
+        if (!purpose || !pattern) return null;
+        let regex;
+        try {
+            const delimited = pattern.match(/^\/(.+)\/([gimsuy]*)$/u);
+            if (delimited) {
+                regex = new RegExp(delimited[1], delimited[2].replace('g', ''));
+            } else {
+                regex = new RegExp(pattern, 'iu');
+            }
+        } catch {
+            return null;
+        }
+
+        const match = purpose.match(regex);
+        return match ? this._cleanInvoiceNumber(match[1] || match[0]) : null;
+    }
+
+    _cleanInvoiceNumber(value) {
+        const cleaned = String(value || '').trim().replace(/^[.,;:]+|[.,;:]+$/gu, '');
+        return cleaned ? cleaned.slice(0, 50) : null;
     }
 
     _extractAmountAfterMarker(purpose, marker) {

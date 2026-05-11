@@ -266,6 +266,9 @@ class BankImportController extends AbstractController
                 $remark = trim((string) $value);
                 $line['userRemark'] = '' === $remark ? null : mb_substr($remark, 0, 255);
                 break;
+            case 'invoiceNumber':
+                $line['userInvoiceNumber'] = $this->cleanInvoiceNumber($value);
+                break;
             case 'isIgnored':
                 $line['isIgnored'] = (bool) ((int) $value);
                 break;
@@ -625,7 +628,11 @@ class BankImportController extends AbstractController
                 $splits[] = $base + ['amount' => round($absAmount, 2)];
             }
 
-            return ['mode' => BankImportRule::ACTION_MODE_SPLIT, 'splits' => $splits];
+            return [
+                'mode' => BankImportRule::ACTION_MODE_SPLIT,
+                'splits' => $splits,
+                'invoiceNumberExtraction' => $this->buildInvoiceNumberExtractionFromRequest($request),
+            ];
         }
 
         return [
@@ -634,7 +641,33 @@ class BankImportController extends AbstractController
             'creditAccountId' => $this->normalizeAccountId($request->request->get('creditAccountId')),
             'taxRateId' => $this->normalizeTaxRateId($request->request->get('taxRateId')),
             'remarkTemplate' => $this->cleanRemark($request->request->get('remarkTemplate')),
+            'invoiceNumberExtraction' => $this->buildInvoiceNumberExtractionFromRequest($request),
         ];
+    }
+
+    /**
+     * @return array{mode: string, marker?: string, pattern?: string}
+     */
+    private function buildInvoiceNumberExtractionFromRequest(Request $request): array
+    {
+        $mode = (string) $request->request->get('invoiceExtractionMode', 'none');
+        if ('marker' === $mode) {
+            $marker = trim((string) $request->request->get('invoiceExtractionMarker', ''));
+
+            return '' === $marker
+                ? ['mode' => 'none']
+                : ['mode' => 'marker', 'marker' => mb_substr($marker, 0, 120)];
+        }
+
+        if ('regex' === $mode) {
+            $pattern = trim((string) $request->request->get('invoiceExtractionRegex', ''));
+
+            return '' === $pattern
+                ? ['mode' => 'none']
+                : ['mode' => 'regex', 'pattern' => mb_substr($pattern, 0, 255)];
+        }
+
+        return ['mode' => 'none'];
     }
 
     private function cleanRemark(mixed $value): ?string
@@ -645,6 +678,17 @@ class BankImportController extends AbstractController
         $value = trim((string) $value);
 
         return '' === $value ? null : mb_substr($value, 0, 255);
+    }
+
+    private function cleanInvoiceNumber(mixed $value): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return '' === $value ? null : mb_substr($value, 0, 50);
     }
 
     private function truthy(mixed $value): bool
