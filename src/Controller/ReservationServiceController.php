@@ -109,10 +109,21 @@ class ReservationServiceController extends AbstractController
     /**
      * Triggered by the buttons to switch reservation view table/yearly.
      */
-    #[Route('/view/{show}', name: 'start.toggle.view', methods: ['GET'])]
-    public function indexActionToggle(RequestStack $requestStack, string $show): Response
+    #[Route('/view/{show}/{apartmentId}', name: 'start.toggle.view', defaults: ['apartmentId' => null], requirements: ['show' => 'table|yearly', 'apartmentId' => '\\d+'], methods: ['GET'])]
+    public function indexActionToggle(RequestStack $requestStack, Request $request, string $show, ?int $apartmentId = null): Response
     {
         if ('yearly' === $show) {
+            if (null === $apartmentId) {
+                $apartmentFromQuery = $request->query->get('apartment');
+                if (null !== $apartmentFromQuery && ctype_digit((string) $apartmentFromQuery)) {
+                    $apartmentId = (int) $apartmentFromQuery;
+                }
+            }
+
+            if (null !== $apartmentId) {
+                $requestStack->getSession()->set('reservation-overview-apartment', $apartmentId);
+            }
+
             $requestStack->getSession()->set('reservation-overview', 'yearly');
         } else {
             $requestStack->getSession()->set('reservation-overview', 'table');
