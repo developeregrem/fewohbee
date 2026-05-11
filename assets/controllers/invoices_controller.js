@@ -61,6 +61,7 @@ export default class extends Controller {
             onComplete: () => {
                 enableDeletePopover();
                 this.syncFlatPricePerRoomStates();
+                this.syncApartmentDescriptions();
                 const templateSelect = target?.querySelector('#template');
                 if (templateSelect) {
                     const storedTemplateId = getLocalStorageItem('invoice-template-id');
@@ -85,6 +86,7 @@ export default class extends Controller {
             target,
             onComplete: () => {
                 this.syncFlatPricePerRoomStates();
+                this.syncApartmentDescriptions();
                 if (edit) {
                     this.toggleInvoiceEditFields();
                 }
@@ -301,6 +303,14 @@ export default class extends Controller {
             const flat = document.querySelector(flatSelector);
             const perRoom = document.querySelector(perRoomSelector);
             this.applyFlatPriceState(flat, perRoom);
+        });
+    }
+
+    // The `change` handler doesn't fire when only one candidate exists and is auto-selected.
+    syncApartmentDescriptions() {
+        const selects = document.querySelectorAll('select[data-action*="fillApartmentDescriptionAction"]');
+        selects.forEach((select) => {
+            select.dispatchEvent(new Event('change'));
         });
     }
 
