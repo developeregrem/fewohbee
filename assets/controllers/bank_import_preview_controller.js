@@ -19,6 +19,7 @@ export default class extends Controller {
         'bulkBar',
         'bulkCount',
         'bulkAccountSelect',
+        'sortHeader',
         'statusCell',
         'ignoreButton',
         'commitForm',
@@ -104,6 +105,12 @@ export default class extends Controller {
         enableTooltips(this.element);
         this.activeFilter = 'all';
         this.activeIdx = null;
+        this.activeSortKey = null;
+        this.activeSortDirection = 'asc';
+        this._collator = new Intl.Collator(
+            this.localeValue || document.documentElement.lang || undefined,
+            { numeric: true, sensitivity: 'base' },
+        );
         this._lines = this._loadLineSnapshot();
         this._refreshBulkBar();
     }
@@ -135,9 +142,9 @@ export default class extends Controller {
         const field = input.dataset.field;
         if (idx === undefined || !field) return;
 
-        // Remark fires on both change + blur; debounce identical values.
-        if (field === 'remark' && input.dataset.lastSent === input.value) return;
-        if (field === 'remark') input.dataset.lastSent = input.value;
+        // Text inputs fire on both change + blur; debounce identical values.
+        if ((field === 'remark' || field === 'invoiceNumber') && input.dataset.lastSent === input.value) return;
+        if (field === 'remark' || field === 'invoiceNumber') input.dataset.lastSent = input.value;
 
         this._sendUpdate(row, idx, field, input.value);
     }
@@ -186,6 +193,110 @@ export default class extends Controller {
             }
 
             row.hidden = !visible;
+        });
+    }
+
+    // ── Sorting ───────────────────────────────────────────────────────
+
+    sortTable(event) {
+        const header = event.currentTarget.closest('th[data-sort-key]');
+        const tbody = this.rowTargets[0]?.parentElement;
+        if (!header || !tbody) return;
+
+        const key = header.dataset.sortKey;
+        const type = header.dataset.sortType || 'text';
+        const direction = this.activeSortKey === key && this.activeSortDirection === 'asc' ? 'desc' : 'asc';
+        const modifier = direction === 'asc' ? 1 : -1;
+
+        const rows = [...this.rowTargets].sort((a, b) => {
+            const valueA = this._sortValue(a, key, type);
+            const valueB = this._sortValue(b, key, type);
+            const compared = this._compareSortValues(valueA, valueB, type);
+            if (compared !== 0) return compared * modifier;
+
+            return this._originalRowIndex(a) - this._originalRowIndex(b);
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+        this.activeSortKey = key;
+        this.activeSortDirection = direction;
+        this._refreshSortHeaders(header, direction);
+    }
+
+    _sortValue(row, key, type) {
+        const line = this._lineByIdx(row.dataset.idx);
+        switch (key) {
+            case 'status':
+                return row.dataset.status || line?.status || '';
+            case 'date':
+                return line?.bookDate || '';
+            case 'counterparty':
+                return [line?.counterpartyName, line?.counterpartyIban].filter(Boolean).join(' ');
+            case 'purpose':
+                return line?.purpose || '';
+            case 'amount':
+                return parseFloat(line?.amount ?? '0') || 0;
+            case 'invoice':
+                return this._fieldSortText(row, 'invoiceNumber') || line?.matchedInvoiceNumber || '';
+            case 'debit':
+                return this._fieldSortText(row, 'debitAccountId') || this._cellSortText(row, 7);
+            case 'credit':
+                return this._fieldSortText(row, 'creditAccountId') || this._cellSortText(row, 8);
+            case 'tax':
+                return this._fieldSortText(row, 'taxRateId') || this._cellSortText(row, 9);
+            case 'remark':
+                return this._fieldSortText(row, 'remark');
+            default:
+                return type === 'number' ? 0 : '';
+        }
+    }
+
+    _compareSortValues(valueA, valueB, type) {
+        if (type === 'number') {
+            return valueA - valueB;
+        }
+
+        if (type === 'date') {
+            return String(valueA).localeCompare(String(valueB));
+        }
+
+        if (type === 'status') {
+            const order = { pending: 0, ready: 1, duplicate: 2, ignored: 3 };
+            return (order[valueA] ?? 99) - (order[valueB] ?? 99);
+        }
+
+        return this._collator.compare(String(valueA || '').trim(), String(valueB || '').trim());
+    }
+
+    _fieldSortText(row, field) {
+        const fieldEl = row.querySelector(`[data-field="${field}"]`);
+        if (!fieldEl) return '';
+
+        if (fieldEl instanceof HTMLSelectElement) {
+            return fieldEl.selectedOptions[0]?.textContent || '';
+        }
+
+        return fieldEl.value ?? fieldEl.textContent ?? '';
+    }
+
+    _cellSortText(row, index) {
+        return row.cells[index]?.textContent || '';
+    }
+
+    _originalRowIndex(row) {
+        const idx = parseInt(row.dataset.idx, 10);
+        return Number.isFinite(idx) ? idx : 0;
+    }
+
+    _refreshSortHeaders(activeHeader, direction) {
+        this.sortHeaderTargets.forEach((header) => {
+            const isActive = header === activeHeader;
+            header.setAttribute('aria-sort', isActive ? (direction === 'asc' ? 'ascending' : 'descending') : 'none');
+
+            const icon = header.querySelector('.sort-icon');
+            if (!icon) return;
+            icon.innerHTML = `<i class="fas ${isActive ? (direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort'}" aria-hidden="true"></i>`;
+            window.FontAwesome?.dom?.i2svg?.({ node: icon });
         });
     }
 
@@ -255,9 +366,10 @@ export default class extends Controller {
             });
             if (!res.ok) throw new Error('http ' + res.status);
             const json = await res.json();
+            const reloadAfterSave = field === 'invoiceNumber' && this._invoiceNumberChangeNeedsReload(idx);
             this._updateLineSnapshot(idx, field, value);
             this._applyServerState(row, idx, json);
-            if (field === 'invoiceNumber') {
+            if (reloadAfterSave) {
                 window.location.reload();
                 return;
             }
@@ -297,6 +409,15 @@ export default class extends Controller {
 
     _updateUrl(idx) {
         return this.lineUrlPrefixValue + encodeURIComponent(idx);
+    }
+
+    _invoiceNumberChangeNeedsReload(idx) {
+        const line = this._lineByIdx(idx);
+        return Boolean(
+            line?.matchedInvoiceId
+            && line.matchedInvoiceAmountMatches
+            && (!Array.isArray(line.splits) || line.splits.length === 0),
+        );
     }
 
     _applyServerState(row, idx, payload) {

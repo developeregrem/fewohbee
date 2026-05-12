@@ -93,11 +93,31 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame(ImportState::LINE_STATUS_READY, $invoiceLine['status']);
         self::assertSame((int) $bankAccount->getId(), $invoiceLine['userDebitAccountId']);
 
-        $client->followRedirect();
+        $preview = $client->followRedirect();
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h4', $fixtureName);
         self::assertStringContainsString('2026-0101', (string) $client->getResponse()->getContent());
+        self::assertCount(10, $preview->filter('th[data-bank-import-preview-target~="sortHeader"]'));
+        self::assertCount(10, $preview->filter('th[data-bank-import-preview-target~="sortHeader"] button[data-action="click->bank-import-preview#sortTable"]'));
+        foreach ([
+            'status' => 'status',
+            'date' => 'date',
+            'counterparty' => 'text',
+            'purpose' => 'text',
+            'amount' => 'number',
+            'invoice' => 'text',
+            'debit' => 'text',
+            'credit' => 'text',
+            'tax' => 'text',
+            'remark' => 'text',
+        ] as $key => $type) {
+            self::assertCount(1, $preview->filter(sprintf(
+                'th[data-bank-import-preview-target~="sortHeader"][data-sort-key="%s"][data-sort-type="%s"][aria-sort="none"]',
+                $key,
+                $type,
+            )));
+        }
     }
 
     public function testSavedSplitRuleUsesPurposeMarkersForRecurringLines(): void
