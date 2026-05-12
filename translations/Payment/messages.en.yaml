@@ -1,0 +1,14 @@
+payment:
+    provider:
+        payactive: Payactive
+    status:
+        pending: Pending
+        initiated: Initiated
+        settled: Settled
+        failed: Failed
+        cancelled: Cancelled
+        refunded: Refunded
+    error:
+        no_active_provider: No active payment provider is configured.
+        provider_unavailable: The payment provider is currently unreachable.
+        invalid_signature: Invalid webhook signature.

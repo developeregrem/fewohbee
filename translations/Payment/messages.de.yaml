@@ -1,0 +1,14 @@
+payment:
+    provider:
+        payactive: Payactive
+    status:
+        pending: Ausstehend
+        initiated: Initiiert
+        settled: Bezahlt
+        failed: Fehlgeschlagen
+        cancelled: Abgebrochen
+        refunded: Erstattet
+    error:
+        no_active_provider: Es ist kein aktiver Bezahldienstleister konfiguriert.
+        provider_unavailable: Der Bezahldienstleister ist derzeit nicht erreichbar.
+        invalid_signature: Ungültige Webhook-Signatur.

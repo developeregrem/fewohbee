@@ -1,0 +1,11 @@
+{
+    "event_type": "payment.settled",
+    "event_time": "2026-05-11T12:12:23.189114Z",
+    "event_data": {
+        "amount": 47.6,
+        "purpose": "Buchung 12345",
+        "payment_id": "d6d8d863-d46c-4044-9ff3-68cd67142abd",
+        "payment_method": "ONLINE_PAYMENT"
+    },
+    "metadata": null
+}

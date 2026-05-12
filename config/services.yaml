@@ -43,6 +43,10 @@ services:
             tags: ['app.workflow.action']
         App\Service\BookingJournal\BankImport\Parser\ParserInterface:
             tags: ['app.bank_import.parser']
+        App\Payment\Provider\PaymentProviderInterface:
+            tags: ['app.payment.provider']
+        App\Payment\Webhook\WebhookHandlerInterface:
+            tags: ['app.payment.webhook_handler']
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -111,3 +115,21 @@ services:
     App\Workflow\Action\WorkflowActionRegistry:
         arguments:
             $actions: !tagged_iterator app.workflow.action
+
+    App\Payment\Provider\PaymentProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator app.payment.provider
+            $activeProviderId: '%env(PAYMENT_PROVIDER)%'
+
+    App\Payment\Webhook\WebhookHandlerRegistry:
+        arguments:
+            $handlers: !tagged_iterator app.payment.webhook_handler
+
+    App\Payment\Adapter\Payactive\PayactiveClient:
+        arguments:
+            $apiKey: '%env(PAYACTIVE_API_KEY)%'
+            $baseUrl: '%env(PAYACTIVE_API_BASE_URL)%'
+
+    App\Payment\Adapter\Payactive\PayactiveWebhookHandler:
+        arguments:
+            $signingSecret: '%env(PAYACTIVE_WEBHOOK_SECRET)%'
