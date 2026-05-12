@@ -31,6 +31,7 @@ final class Version20260511120000 extends AbstractMigration
             intent                VARCHAR(20) NOT NULL,
             purpose               VARCHAR(255) NOT NULL,
             metadata              JSON DEFAULT NULL,
+            kind                  VARCHAR(50) DEFAULT NULL,
             created_at            DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
             updated_at            DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
             INDEX idx_pt_provider_payment (provider_id, provider_payment_id),
@@ -43,5 +44,10 @@ final class Version20260511120000 extends AbstractMigration
     public function down(Schema $schema): void
     {
         $this->addSql('DROP TABLE payment_transactions');
+    }
+
+    public function isTransactional(): bool
+    {
+        return false;
     }
 }

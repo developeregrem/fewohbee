@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Payment\Enum\PaymentIntent;
+use App\Payment\Enum\PaymentKind;
 use App\Payment\Enum\PaymentStatus;
 use App\Repository\PaymentTransactionRepository;
 use Doctrine\DBAL\Types\Types;
@@ -46,6 +47,14 @@ class PaymentTransaction
     #[ORM\Column(type: Types::STRING, length: 255)]
     private string $purpose;
 
+    /**
+     * Caller-provided classification — see PaymentKind. The Payment core does
+     * not interpret this field; it exists so application layers (booking,
+     * accounting) can group multiple transactions per booking.
+     */
+    #[ORM\Column(type: Types::STRING, length: 50, nullable: true, enumType: PaymentKind::class)]
+    private ?PaymentKind $kind = null;
+
     /** @var array<string, mixed>|null */
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $metadata = null;
@@ -65,6 +74,7 @@ class PaymentTransaction
         string $purpose,
         PaymentIntent $intent,
         PaymentStatus $status = PaymentStatus::PENDING,
+        ?PaymentKind $kind = null,
     ) {
         $this->providerId = $providerId;
         $this->providerPaymentId = $providerPaymentId;
@@ -74,6 +84,7 @@ class PaymentTransaction
         $this->purpose = $purpose;
         $this->intent = $intent;
         $this->status = $status;
+        $this->kind = $kind;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -131,6 +142,11 @@ class PaymentTransaction
     public function getPurpose(): string
     {
         return $this->purpose;
+    }
+
+    public function getKind(): ?PaymentKind
+    {
+        return $this->kind;
     }
 
     /** @return array<string, mixed>|null */

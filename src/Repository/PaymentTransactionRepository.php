@@ -28,6 +28,12 @@ class PaymentTransactionRepository extends ServiceEntityRepository
     }
 
     /** @return PaymentTransaction[] */
+    public function findByExternalReference(string $externalReference): array
+    {
+        return $this->findBy(['externalReference' => $externalReference], ['createdAt' => 'ASC']);
+    }
+
+    /** @return PaymentTransaction[] */
     public function findPending(int $limit = 200): array
     {
         return $this->createQueryBuilder('p')

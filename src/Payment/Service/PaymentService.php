@@ -57,6 +57,7 @@ class PaymentService
             purpose: $request->purpose,
             intent: $request->intent,
             status: PaymentStatus::PENDING,
+            kind: $request->kind,
         );
 
         if (null !== $request->returnUrl) {

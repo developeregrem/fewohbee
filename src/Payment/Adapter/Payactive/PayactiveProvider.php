@@ -26,6 +26,16 @@ class PayactiveProvider implements PaymentProviderInterface
 {
     public const ID = 'payactive';
 
+    /**
+     * Payment methods we exclude even when the Payactive account has them
+     * enabled. Cards need a separate contract with a card acquirer per
+     * hotelier — out of scope for now.
+     */
+    private const EXCLUDED_PAYMENT_METHODS = ['CREDIT_CARD'];
+
+    /** @var list<string>|null in-memory cache of available payment methods for this request */
+    private ?array $cachedPaymentMethods = null;
+
     public function __construct(
         private readonly PayactiveClient $client,
     ) {
@@ -50,15 +60,16 @@ class PayactiveProvider implements PaymentProviderInterface
 
     public function createPayment(CreatePaymentRequest $request): PaymentInitiation
     {
-        $customerId = $this->client->createCustomer([
-            'emailAddress' => $request->customerEmail,
-            'firstName' => $request->customerFirstName,
-            'lastName' => $request->customerLastName,
-            'type' => 'PERSON',
-            'paymentMethod' => 'ONLINE_PAYMENT',
-            'invitationType' => 'LINK',
-            'externalRef' => $request->externalReference,
-        ]);
+        $customerId = $this->client->findCustomerIdByEmail($request->customerEmail)
+            ?? $this->client->createCustomer([
+                'emailAddress' => $request->customerEmail,
+                'firstName' => $request->customerFirstName,
+                'lastName' => $request->customerLastName,
+                'type' => 'PERSON',
+                'paymentMethod' => 'ONLINE_PAYMENT',
+                'invitationType' => 'LINK',
+                'externalRef' => $request->externalReference,
+            ]);
 
         $paymentId = $this->client->createPayment([
             'paymentType' => 'PAYMENT_REQUEST',
@@ -67,7 +78,7 @@ class PayactiveProvider implements PaymentProviderInterface
             'currency' => $request->currency,
             'purpose' => $request->purpose,
             'externalReference' => $request->externalReference,
-            'paymentMethod' => ['ONLINE_PAYMENT'],
+            'paymentMethod' => $this->resolvePaymentMethods(),
             'paymentNotifications' => 'EMAIL',
         ]);
 
@@ -77,6 +88,26 @@ class PayactiveProvider implements PaymentProviderInterface
             providerPaymentId: $paymentId,
             redirectUrl: $redirectUrl,
         );
+    }
+
+    /**
+     * Determine which payment methods to offer the guest. Pulls the live list
+     * from the Payactive account settings, drops the ones we explicitly
+     * exclude (cards), and falls back to ONLINE_PAYMENT if the API returned
+     * an unexpectedly empty list — guarantees the call always has at least
+     * one method.
+     *
+     * @return list<string>
+     */
+    private function resolvePaymentMethods(): array
+    {
+        if (null === $this->cachedPaymentMethods) {
+            $available = $this->client->getAvailablePaymentMethods();
+            $filtered = array_values(array_diff($available, self::EXCLUDED_PAYMENT_METHODS));
+            $this->cachedPaymentMethods = [] === $filtered ? ['ONLINE_PAYMENT'] : $filtered;
+        }
+
+        return $this->cachedPaymentMethods;
     }
 
     public function fetchPaymentStatus(string $providerPaymentId): PaymentStatusSnapshot

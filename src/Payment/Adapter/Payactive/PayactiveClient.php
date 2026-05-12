@@ -79,6 +79,74 @@ class PayactiveClient
     }
 
     /**
+     * Raw GET — useful for probing endpoints not (yet) wrapped by a dedicated method.
+     *
+     * @return array<string, mixed>
+     */
+    public function get(string $path): array
+    {
+        return $this->requestJson('GET', '/'.ltrim($path, '/'));
+    }
+
+    /**
+     * Returns the customer id whose `emailAddress` exactly matches the given email,
+     * or null if no such customer exists yet.
+     */
+    public function findCustomerIdByEmail(string $email): ?string
+    {
+        $data = $this->requestJson('GET', '/customers/search?'.http_build_query([
+            'search' => $email,
+            'size' => 25,
+        ]));
+
+        $customers = $data['_embedded']['customers'] ?? [];
+        if (!is_array($customers)) {
+            return null;
+        }
+
+        foreach ($customers as $customer) {
+            if (!is_array($customer)) {
+                continue;
+            }
+            $candidateEmail = $customer['emailAddress'] ?? null;
+            $candidateId = $customer['id'] ?? null;
+            if (is_string($candidateEmail) && is_string($candidateId)
+                && 0 === strcasecmp($candidateEmail, $email)) {
+                return $candidateId;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Fetch the account's enabled payment methods from the (undocumented but stable)
+     * payment-settings endpoint. Returns only methods where `available === true`.
+     *
+     * @return list<string> e.g. ["ONLINE_PAYMENT", "DIRECT_DEBIT", "MANUAL_PAYMENT"]
+     */
+    public function getAvailablePaymentMethods(): array
+    {
+        $data = $this->requestJson('GET', '/payment-settings/available-payment-methods');
+
+        $methods = [];
+        // Endpoint returns a bare JSON array, which Symfony's toArray exposes as
+        // a list at the top level (numeric keys).
+        foreach ($data as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $available = $entry['available'] ?? false;
+            $name = $entry['paymentMethod'] ?? null;
+            if (true === $available && is_string($name) && '' !== $name) {
+                $methods[] = $name;
+            }
+        }
+
+        return $methods;
+    }
+
+    /**
      * @param array<string, mixed>|null $body
      *
      * @return array<string, mixed>
