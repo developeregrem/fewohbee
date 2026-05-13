@@ -7,6 +7,7 @@ namespace App\Tests\Functional;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\AccountingAccount;
 use App\Entity\BankCsvProfile;
+use App\Entity\BankImportRule;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -124,6 +125,7 @@ final class BankImportControllerTest extends WebTestCase
     {
         $client = static::createClient();
         $client->loginUser($this->createCashJournalUser());
+        $this->removeBankImportRules(['Postbank Entgeltabrechnung dynamisch']);
 
         $bankAccount = $this->createBankAccount('DE00POSTBANKTEST0001');
         $profile = $this->createCsvProfile('postbank');
@@ -171,6 +173,9 @@ final class BankImportControllerTest extends WebTestCase
             ],
         ], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
         self::assertResponseIsSuccessful();
+        $ruleResponse = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($ruleResponse);
+        self::assertArrayHasKey('ruleId', $ruleResponse);
 
         $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
         $recurringLine = $state->lines[$this->findLineIndexByPurpose($state, 'Zinsen fuer Kredit 15,00-') ?? -1] ?? null;
@@ -180,6 +185,24 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('-15.00', $recurringLine['splits'][0]['amount']);
         self::assertSame('-5.00', $recurringLine['splits'][1]['amount']);
         self::assertSame('-30.00', $recurringLine['splits'][2]['amount']);
+
+        $em = $this->getEntityManager();
+        $rule = $em->getRepository(BankImportRule::class)->find((int) $ruleResponse['ruleId']);
+        self::assertNotNull($rule);
+        $em->remove($rule);
+        $em->flush();
+
+        $client->request('POST', sprintf('/journal/bank-import/%s/rules/reapply', $sessionImportId), [
+            '_token' => $token,
+        ]);
+        self::assertResponseRedirects(sprintf('/journal/bank-import/%s', $sessionImportId));
+
+        $state = $this->loadDraftFromSession($client->getRequest()->getSession(), $sessionImportId);
+        $recurringLine = $state->lines[$this->findLineIndexByPurpose($state, 'Zinsen fuer Kredit 15,00-') ?? -1] ?? null;
+        self::assertNotNull($recurringLine);
+        self::assertNull($recurringLine['appliedRuleId']);
+        self::assertSame([], $recurringLine['splits']);
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $recurringLine['status']);
     }
 
     public function testManualInvoiceNumberCanBeEditedInPreviewDraft(): void
@@ -452,6 +475,19 @@ final class BankImportControllerTest extends WebTestCase
                 $em->remove($position);
             }
             $em->remove($invoice);
+        }
+
+        $em->flush();
+    }
+
+    /**
+     * @param list<string> $names
+     */
+    private function removeBankImportRules(array $names): void
+    {
+        $em = $this->getEntityManager();
+        foreach ($em->getRepository(BankImportRule::class)->findBy(['name' => $names]) as $rule) {
+            $em->remove($rule);
         }
 
         $em->flush();

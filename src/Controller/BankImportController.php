@@ -453,6 +453,46 @@ class BankImportController extends AbstractController
         ]);
     }
 
+    #[Route('/{sessionImportId}/rules/reapply', name: 'bank_import.rules.reapply_preview', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
+    public function reapplyRules(
+        string $sessionImportId,
+        Request $request,
+        BankImportDraftSession $drafts,
+        AccountingAccountRepository $accountRepo,
+        BankImportRuleMatcher $ruleMatcher,
+        TranslatorInterface $translator,
+    ): Response {
+        if (!$this->isCsrfTokenValid('bank_import_line_'.$sessionImportId, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+        }
+
+        $state = $drafts->load($sessionImportId);
+        if (null === $state) {
+            $this->addFlash('warning', 'accounting.bank_import.draft.not_found');
+
+            return $this->redirectToRoute('bank_import.index');
+        }
+
+        $bankAccount = $accountRepo->find($state->bankAccountId);
+        if (null === $bankAccount) {
+            $drafts->discard($sessionImportId);
+            $this->addFlash('danger', 'accounting.bank_import.draft.account_missing');
+
+            return $this->redirectToRoute('bank_import.index');
+        }
+
+        $touched = $ruleMatcher->reapplyPreviouslyAppliedRules($state, $bankAccount);
+        $drafts->save($state);
+
+        $this->addFlash('success', $translator->trans('accounting.bank_import.preview.reapply_rules.flash.done', [
+            '%count%' => $touched,
+        ]));
+
+        return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+    }
+
     #[Route('/{sessionImportId}/commit', name: 'bank_import.commit', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
     public function commit(
         string $sessionImportId,

@@ -134,6 +134,11 @@ accounting:
         message: 'Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchte Import(e), die den Zeitraum %from% bis %to% überschneiden: %imports%%more%'
         import: '%from%–%to% (gebucht am %committedAt%, %committed% Zeilen übernommen)'
         more: ' und %count% weitere'
+      reapply_rules:
+        button: Regeln neu anwenden
+        confirm: Regelzuordnungen in dieser Vorschau werden zurückgesetzt und mit den aktuell aktiven Regeln neu bewertet. Duplikate, ignorierte Zeilen und manuell bearbeitete Zeilen ohne Regel bleiben unverändert. Fortfahren?
+        flash:
+          done: '%count% regelbefüllte Zeilen wurden neu bewertet.'
 
     commit:
       button: Jetzt buchen

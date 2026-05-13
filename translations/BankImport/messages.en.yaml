@@ -134,6 +134,11 @@ accounting:
         message: 'Warning: This bank account already has %count% committed import(s) overlapping %from% to %to%: %imports%%more%'
         import: '%from%-%to% (committed at %committedAt%, %committed% lines posted)'
         more: ' and %count% more'
+      reapply_rules:
+        button: Reapply rules
+        confirm: Rule-filled rows in this preview will be reset and evaluated against the currently active rules. Duplicates, ignored rows, and manually edited rows without a rule stay unchanged. Continue?
+        flash:
+          done: '%count% rule-filled rows were re-evaluated.'
 
     commit:
       button: Commit now

@@ -102,7 +102,18 @@
                 {% if state.sourceIban %}· {{ state.sourceIban }}{% endif %}
             </p>
         </div>
-        <div class="col-auto">
+        <div class="col-auto d-flex gap-2">
+            <form method="post"
+                  action="{{ path('bank_import.rules.reapply_preview', {'sessionImportId': state.sessionImportId}) }}"
+                  data-controller="confirm-submit"
+                  data-confirm-submit-message-value="{{ 'accounting.bank_import.preview.reapply_rules.confirm'|trans|e('html_attr') }}"
+                  data-confirm-submit-confirm-label-value="{{ 'button.continue'|trans|e('html_attr') }}"
+                  data-confirm-submit-cancel-label-value="{{ 'button.cancel'|trans|e('html_attr') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('bank_import_line_' ~ state.sessionImportId) }}">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-sync-alt"></i> {{ 'accounting.bank_import.preview.reapply_rules.button'|trans }}
+                </button>
+            </form>
             {% set id = state.sessionImportId %}
             {% set targetUrl = path('bank_import.discard', {'sessionImportId': state.sessionImportId}) %}
             {% use "common/delete_popover.html.twig" %}

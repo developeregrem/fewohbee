@@ -36,7 +36,7 @@ final class BankImportRuleMatcher
         }
 
         foreach ($state->lines as &$line) {
-            if (true === ($line['isDuplicate'] ?? false)) {
+            if (true === ($line['isDuplicate'] ?? false) || true === ($line['isIgnored'] ?? false)) {
                 continue;
             }
 
@@ -59,6 +59,48 @@ final class BankImportRuleMatcher
             }
         }
         unset($line);
+    }
+
+    public function reapplyPreviouslyAppliedRules(ImportState $state, AccountingAccount $bankAccount): int
+    {
+        $rules = $this->ruleRepo->findActiveForAccount($bankAccount);
+        $this->dropRuleWarnings($state);
+
+        $touched = 0;
+        foreach ($state->lines as &$line) {
+            if (null === ($line['appliedRuleId'] ?? null)) {
+                continue;
+            }
+            if (true === ($line['isDuplicate'] ?? false) || true === ($line['isIgnored'] ?? false)) {
+                continue;
+            }
+
+            $this->resetRuleManagedFields($line, $bankAccount);
+            ++$touched;
+
+            foreach ($rules as $rule) {
+                if (!$this->ruleMatches($rule, $line)) {
+                    continue;
+                }
+
+                $this->applicator->apply($rule, $line);
+                if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
+                    $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
+                        '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
+                        '%message%' => $this->formatRuleWarning($line['ruleWarning']),
+                    ]);
+                    if (!in_array($warning, $state->warnings, true)) {
+                        $state->warnings[] = $warning;
+                    }
+                }
+                break;
+            }
+
+            $line['status'] = ImportState::deriveLineStatus($line);
+        }
+        unset($line);
+
+        return $touched;
     }
 
     /**
@@ -102,5 +144,36 @@ final class BankImportRuleMatcher
         }
 
         return (string) $warning;
+    }
+
+    private function dropRuleWarnings(ImportState $state): void
+    {
+        $state->warnings = array_values(array_filter(
+            $state->warnings,
+            static fn (mixed $warning): bool => !is_string($warning)
+                || 1 !== preg_match('/^(Zeile|Line) \d+:/u', $warning),
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function resetRuleManagedFields(array &$line, AccountingAccount $bankAccount): void
+    {
+        $bankAccountId = (int) $bankAccount->getId();
+        $line['appliedRuleId'] = null;
+        $line['splits'] = [];
+        $line['userTaxRateId'] = null;
+        $line['userRemark'] = null;
+        $line['userInvoiceNumber'] = null;
+        unset($line['ruleWarning']);
+
+        if (((float) ($line['amount'] ?? 0)) >= 0.0) {
+            $line['userDebitAccountId'] = $bankAccountId;
+            $line['userCreditAccountId'] = null;
+        } else {
+            $line['userDebitAccountId'] = null;
+            $line['userCreditAccountId'] = $bankAccountId;
+        }
     }
 }
