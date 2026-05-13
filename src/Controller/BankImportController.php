@@ -242,7 +242,9 @@ class BankImportController extends AbstractController
             throw BankImportEditException::lineNotFound();
         }
 
-        if (true === ($state->lines[$idx]['isDuplicate'] ?? false)) {
+        if (true === ($state->lines[$idx]['isDuplicate'] ?? false)
+            && true !== ($state->lines[$idx]['forceImportDuplicate'] ?? false)
+        ) {
             // Duplicates are read-only — silently ignore the change.
             return new JsonResponse(['status' => $state->lines[$idx]['status']]);
         }
@@ -298,7 +300,9 @@ class BankImportController extends AbstractController
             throw BankImportEditException::lineNotFound();
         }
 
-        if (true === ($state->lines[$idx]['isDuplicate'] ?? false)) {
+        if (true === ($state->lines[$idx]['isDuplicate'] ?? false)
+            && true !== ($state->lines[$idx]['forceImportDuplicate'] ?? false)
+        ) {
             throw BankImportEditException::lineReadonly();
         }
 
@@ -400,6 +404,59 @@ class BankImportController extends AbstractController
         ]);
     }
 
+    #[Route('/{sessionImportId}/line/{idx}/force-duplicate', name: 'bank_import.line.force_duplicate', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}', 'idx' => '\d+'])]
+    public function forceDuplicateLine(
+        string $sessionImportId,
+        int $idx,
+        Request $request,
+        #[ImportDraft] ImportState $state,
+        BankImportDraftSession $drafts,
+        AccountingAccountRepository $accountRepo,
+        BankImportRuleMatcher $ruleMatcher,
+    ): Response {
+        if (!isset($state->lines[$idx])) {
+            throw BankImportEditException::lineNotFound();
+        }
+
+        $bankAccount = $accountRepo->find($state->bankAccountId);
+        if (null === $bankAccount) {
+            if (!$request->isXmlHttpRequest()) {
+                $this->addFlash('danger', 'accounting.bank_import.draft.account_missing');
+
+                return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+            }
+
+            return new JsonResponse(['error' => 'account_missing'], Response::HTTP_NOT_FOUND);
+        }
+
+        $line = &$state->lines[$idx];
+        if (true !== ($line['isDuplicate'] ?? false)) {
+            unset($line);
+
+            if (!$request->isXmlHttpRequest()) {
+                return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+            }
+
+            return new JsonResponse(['error' => 'not_duplicate'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $line['forceImportDuplicate'] = true;
+        $line['status'] = ImportState::deriveLineStatus($line);
+        unset($line);
+        $ruleMatcher->annotateLine($state, $idx, $bankAccount);
+
+        $drafts->save($state);
+
+        if (!$request->isXmlHttpRequest()) {
+            return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+        }
+
+        return new JsonResponse([
+            'status' => $state->lines[$idx]['status'],
+            'counts' => $state->countByStatus(),
+        ]);
+    }
+
     #[Route('/{sessionImportId}/bulk', name: 'bank_import.bulk', methods: ['POST'], requirements: ['sessionImportId' => '[0-9a-f-]{36}'])]
     public function bulkAction(
         Request $request,
@@ -415,7 +472,9 @@ class BankImportController extends AbstractController
             if (!isset($state->lines[$idx])) {
                 continue;
             }
-            if (true === ($state->lines[$idx]['isDuplicate'] ?? false)) {
+            if (true === ($state->lines[$idx]['isDuplicate'] ?? false)
+                && true !== ($state->lines[$idx]['forceImportDuplicate'] ?? false)
+            ) {
                 continue;
             }
 

@@ -15,7 +15,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * and applies the first matching rule (priority DESC, short-circuit on first
  * match — exactly like the Workflow engine).
  *
- * Lines that are already duplicates or have been explicitly ignored are
+ * Lines that are protected duplicates or have been explicitly ignored are
  * skipped so we never overwrite stronger signals.
  */
 final class BankImportRuleMatcher
@@ -36,29 +36,33 @@ final class BankImportRuleMatcher
         }
 
         foreach ($state->lines as &$line) {
-            if (true === ($line['isDuplicate'] ?? false) || true === ($line['isIgnored'] ?? false)) {
+            if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
                 continue;
             }
 
-            foreach ($rules as $rule) {
-                if (!$this->ruleMatches($rule, $line)) {
-                    continue;
-                }
-
-                $this->applicator->apply($rule, $line);
-                if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
-                    $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
-                        '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
-                        '%message%' => $this->formatRuleWarning($line['ruleWarning']),
-                    ]);
-                    if (!in_array($warning, $state->warnings, true)) {
-                        $state->warnings[] = $warning;
-                    }
-                }
-                break; // first matching rule wins.
-            }
+            $this->applyFirstMatchingRule($line, $rules, $state);
         }
         unset($line);
+    }
+
+    public function annotateLine(ImportState $state, int $idx, AccountingAccount $bankAccount): bool
+    {
+        if (!isset($state->lines[$idx])) {
+            return false;
+        }
+
+        $line = &$state->lines[$idx];
+        if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
+            unset($line);
+
+            return false;
+        }
+
+        $rules = $this->ruleRepo->findActiveForAccount($bankAccount);
+        $matched = $this->applyFirstMatchingRule($line, $rules, $state);
+        unset($line);
+
+        return $matched;
     }
 
     public function reapplyPreviouslyAppliedRules(ImportState $state, AccountingAccount $bankAccount): int
@@ -71,7 +75,7 @@ final class BankImportRuleMatcher
             if (null === ($line['appliedRuleId'] ?? null)) {
                 continue;
             }
-            if (true === ($line['isDuplicate'] ?? false) || true === ($line['isIgnored'] ?? false)) {
+            if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
                 continue;
             }
 
@@ -118,6 +122,43 @@ final class BankImportRuleMatcher
         }
 
         return true;
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function isProtectedDuplicate(array $line): bool
+    {
+        return true === ($line['isDuplicate'] ?? false)
+            && true !== ($line['forceImportDuplicate'] ?? false);
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     * @param list<BankImportRule> $rules
+     */
+    private function applyFirstMatchingRule(array &$line, array $rules, ImportState $state): bool
+    {
+        foreach ($rules as $rule) {
+            if (!$this->ruleMatches($rule, $line)) {
+                continue;
+            }
+
+            $this->applicator->apply($rule, $line);
+            if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
+                $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
+                    '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
+                    '%message%' => $this->formatRuleWarning($line['ruleWarning']),
+                ]);
+                if (!in_array($warning, $state->warnings, true)) {
+                    $state->warnings[] = $warning;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

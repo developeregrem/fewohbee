@@ -11,6 +11,7 @@ use App\Entity\BankStatementImport;
 use App\Entity\BookingEntry;
 use App\Entity\User;
 use App\Repository\AccountingAccountRepository;
+use App\Repository\BankImportFingerprintRepository;
 use App\Repository\BookingEntryRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\TaxRateRepository;
@@ -40,6 +41,7 @@ final class BankStatementCommitter
         private readonly BookingJournalService $journal,
         private readonly BookingEntryRepository $entryRepo,
         private readonly AccountingAccountRepository $accountRepo,
+        private readonly BankImportFingerprintRepository $fingerprintRepo,
         private readonly InvoiceRepository $invoiceRepo,
         private readonly TaxRateRepository $taxRateRepo,
         private readonly BankImportDraftSession $drafts,
@@ -72,13 +74,18 @@ final class BankStatementCommitter
             $statementEntryYears = [];
 
             foreach ($state->lines as $line) {
-                if (true === ($line['isDuplicate'] ?? false)) {
+                $isForcedDuplicate = true === ($line['isDuplicate'] ?? false)
+                    && true === ($line['forceImportDuplicate'] ?? false);
+                if (true === ($line['isDuplicate'] ?? false) && !$isForcedDuplicate) {
                     ++$duplicates;
                     continue;
                 }
 
                 $hash = (string) ($line['fingerprint'] ?? '');
-                $fingerprint = new BankImportFingerprint($bankAccount, $hash);
+                $fingerprint = $isForcedDuplicate
+                    ? $this->fingerprintRepo->findByHash($bankAccount, $hash)
+                    : null;
+                $fingerprint ??= new BankImportFingerprint($bankAccount, $hash);
                 $fingerprint->setStatementImport($audit);
 
                 if (true === ($line['isIgnored'] ?? false)) {

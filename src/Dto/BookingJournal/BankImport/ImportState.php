@@ -31,7 +31,7 @@ final class ImportState
      */
     public static function deriveLineStatus(array $line): string
     {
-        if (true === ($line['isDuplicate'] ?? false)) {
+        if (true === ($line['isDuplicate'] ?? false) && true !== ($line['forceImportDuplicate'] ?? false)) {
             return self::LINE_STATUS_DUPLICATE;
         }
 
@@ -179,6 +179,7 @@ final class ImportState
                 'status'           => self::LINE_STATUS_PENDING,
                 'isIgnored'        => false,
                 'isDuplicate'      => false,
+                'forceImportDuplicate' => false,
                 'userDebitAccountId'  => null,
                 'userCreditAccountId' => null,
                 'userTaxRateId'    => null,

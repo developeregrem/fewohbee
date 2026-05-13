@@ -84,6 +84,9 @@ accounting:
       select_all: Alle sichtbaren Zeilen auswählen
       update_failed: Aktualisierung fehlgeschlagen.
       save_failed: Speichern fehlgeschlagen.
+      force_duplicate: Trotzdem übernehmen
+      force_duplicate_help: Diese Duplikat-Zeile bewusst erneut übernehmen.
+      force_duplicate_confirm: Diese Bankzeile wurde bereits importiert. Sie wird beim Buchen erneut übernommen.
       error_prefix: 'Fehler: %message%'
       filter:
         all: Alle
@@ -114,6 +117,8 @@ accounting:
       invoice_number_placeholder: Beleg-Nr.
       duplicate:
         help: Bereits in einem früheren Import übernommen.
+      duplicate_forced:
+        help: Diese Duplikat-Zeile wurde bewusst zur erneuten Übernahme markiert.
       ignored:
         help: Vom Import ausgeschlossen.
       ready:

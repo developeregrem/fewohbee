@@ -89,6 +89,49 @@ final class BankImportRuleMatcherTest extends TestCase
         self::assertNull($state->lines[0]['appliedRuleId']);
     }
 
+    public function testForcedDuplicatesCanReceiveRules(): void
+    {
+        $rule = $this->createRule(1, 50, [
+            ['field' => BankImportRule::CONDITION_FIELD_COUNTERPARTY_NAME,
+             'operator' => BankImportRule::CONDITION_OP_CONTAINS,
+             'value' => 'PayPal'],
+        ], ['mode' => BankImportRule::ACTION_MODE_ASSIGN, 'debitAccountId' => 500]);
+
+        $matcher = $this->createMatcher([$rule]);
+        $state = $this->createStateWithLines([
+            ['counterpartyName' => 'PayPal', 'amount' => '-19.99', 'isDuplicate' => true,
+             'forceImportDuplicate' => true, 'status' => ImportState::LINE_STATUS_PENDING],
+        ]);
+
+        $matcher->annotate($state, $this->createBankAccount());
+
+        self::assertSame(1, $state->lines[0]['appliedRuleId']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $state->lines[0]['status']);
+    }
+
+    public function testAnnotateLineAppliesRuleOnlyToRequestedLine(): void
+    {
+        $rule = $this->createRule(1, 50, [
+            ['field' => BankImportRule::CONDITION_FIELD_COUNTERPARTY_NAME,
+             'operator' => BankImportRule::CONDITION_OP_CONTAINS,
+             'value' => 'PayPal'],
+        ], ['mode' => BankImportRule::ACTION_MODE_ASSIGN, 'debitAccountId' => 500]);
+
+        $matcher = $this->createMatcher([$rule]);
+        $state = $this->createStateWithLines([
+            ['counterpartyName' => 'PayPal One', 'amount' => '-19.99'],
+            ['counterpartyName' => 'PayPal Two', 'amount' => '-29.99'],
+        ]);
+
+        $matched = $matcher->annotateLine($state, 1, $this->createBankAccount());
+
+        self::assertTrue($matched);
+        self::assertNull($state->lines[0]['appliedRuleId']);
+        self::assertSame(1, $state->lines[1]['appliedRuleId']);
+        self::assertSame(500, $state->lines[1]['userDebitAccountId']);
+    }
+
+
     public function testEmptyRulesNoEffect(): void
     {
         $matcher = $this->createMatcher([]);
@@ -228,6 +271,7 @@ final class BankImportRuleMatcherTest extends TestCase
                 'status' => ImportState::LINE_STATUS_PENDING,
                 'isIgnored' => false,
                 'isDuplicate' => false,
+                'forceImportDuplicate' => false,
                 'userDebitAccountId' => null,
                 'userCreditAccountId' => null,
                 'userTaxRateId' => null,

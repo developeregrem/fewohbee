@@ -1,5 +1,10 @@
 {# Renders the leading status badge for one statement line. #}
-{% if line.isDuplicate %}
+{% if line.isDuplicate and line.forceImportDuplicate|default(false) %}
+    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" data-bs-toggle="tooltip"
+          title="{{ 'accounting.bank_import.preview.duplicate_forced.help'|trans }}">
+        <i class="fas fa-clone"></i>
+    </span>
+{% elseif line.isDuplicate %}
     <span class="badge bg-info text-dark" data-bs-toggle="tooltip"
           title="{{ 'accounting.bank_import.preview.duplicate.help'|trans }}">
         <i class="fas fa-clone"></i>

@@ -236,6 +236,75 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('RE-2024-047', $state->lines[0]['userInvoiceNumber']);
     }
 
+    public function testDuplicateLineCanBeForcedInPreviewDraft(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $bankAccount = $this->createBankAccount('DE00DKBTESTKONTO0001');
+        $profile = $this->createCsvProfile('dkb');
+
+        $crawler = $client->request('GET', '/journal/bank-import');
+        $form = $crawler->filter('form')->form();
+        $form['bank_statement_upload[bankAccount]']->select((string) $bankAccount->getId());
+        $form['bank_statement_upload[format]']->select('csv:'.$profile->getId());
+        $this->uploadStatementFile($form, self::FIXTURE_DIR.'/dkb-girokonto-anonymized.csv');
+        $client->submit($form);
+
+        preg_match('#/journal/bank-import/([0-9a-f-]{36})$#', (string) $client->getResponse()->headers->get('Location'), $matches);
+        $sessionImportId = $matches[1];
+        $preview = $client->followRedirect();
+        $session = $client->getRequest()->getSession();
+        $token = (string) $preview->filter('[data-bank-import-preview-csrf-value]')->attr('data-bank-import-preview-csrf-value');
+        $expenseAccount = $this->createExpenseAccount('Force Duplicate Rule Aufwand');
+        $em = $this->getEntityManager();
+        $bankAccount = $em->find(AccountingAccount::class, $bankAccount->getId());
+        self::assertInstanceOf(AccountingAccount::class, $bankAccount);
+        $rule = (new BankImportRule())
+            ->setName('Force Duplicate Rule')
+            ->setPriority(90)
+            ->setIsEnabled(true)
+            ->setBankAccount($bankAccount)
+            ->setConditions([
+                [
+                    'field' => BankImportRule::CONDITION_FIELD_COUNTERPARTY_NAME,
+                    'operator' => BankImportRule::CONDITION_OP_CONTAINS,
+                    'value' => 'FORCE-DUPLICATE-TEST',
+                ],
+            ])
+            ->setAction([
+                'mode' => BankImportRule::ACTION_MODE_ASSIGN,
+                'debitAccountId' => $expenseAccount->getId(),
+            ]);
+        $em->persist($rule);
+        $em->flush();
+
+        $state = $this->loadDraftFromSession($session, $sessionImportId);
+        $state->lines[0]['isDuplicate'] = true;
+        $state->lines[0]['forceImportDuplicate'] = false;
+        $state->lines[0]['status'] = ImportState::LINE_STATUS_DUPLICATE;
+        $state->lines[0]['counterpartyName'] = 'FORCE-DUPLICATE-TEST';
+        $drafts = $session->get(BankImportDraftSession::SESSION_KEY, []);
+        $drafts[$sessionImportId] = $state->toArray();
+        $session->set(BankImportDraftSession::SESSION_KEY, $drafts);
+        $session->save();
+
+        $client->request('POST', sprintf('/journal/bank-import/%s/line/0/force-duplicate', $sessionImportId), [
+            '_token' => $token,
+        ], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        self::assertResponseIsSuccessful();
+
+        $response = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertIsArray($response);
+        self::assertSame(ImportState::LINE_STATUS_READY, $response['status']);
+
+        $state = $this->loadDraftFromSession($session, $sessionImportId);
+        self::assertTrue($state->lines[0]['forceImportDuplicate']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $state->lines[0]['status']);
+        self::assertSame($rule->getId(), $state->lines[0]['appliedRuleId']);
+        self::assertSame($expenseAccount->getId(), $state->lines[0]['userDebitAccountId']);
+    }
+
     public function testUploadBuildsPreviewFromMultipleCamtXmlFiles(): void
     {
         $client = static::createClient();

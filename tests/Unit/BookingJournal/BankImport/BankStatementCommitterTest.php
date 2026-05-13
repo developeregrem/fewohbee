@@ -6,10 +6,12 @@ namespace App\Tests\Unit\BookingJournal\BankImport;
 
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\AccountingAccount;
+use App\Entity\BankImportFingerprint;
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
 use App\Entity\TaxRate;
 use App\Repository\AccountingAccountRepository;
+use App\Repository\BankImportFingerprintRepository;
 use App\Repository\BookingEntryRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\TaxRateRepository;
@@ -357,6 +359,83 @@ final class BankStatementCommitterTest extends TestCase
         self::assertSame([null, null], $seenInvoiceIds);
     }
 
+    public function testDuplicateLineIsSkippedUnlessUserForcesImport(): void
+    {
+        $bankAccount = $this->makeAccount(1200, '1200', 'Bank');
+        $expense = $this->makeAccount(6000, '6000', 'Aufwand');
+        $state = $this->createState([
+            'amount' => '-50.00',
+            'status' => ImportState::LINE_STATUS_DUPLICATE,
+            'isDuplicate' => true,
+            'userDebitAccountId' => 6000,
+            'userCreditAccountId' => 1200,
+        ]);
+
+        $journal = $this->createMock(BookingJournalService::class);
+        $journal->expects(self::never())->method('createEntryFromStatement');
+        $journal->expects(self::never())->method('recalculateDocumentNumbersForYears');
+
+        $committer = $this->createCommitter(
+            journal: $journal,
+            entryRepo: $this->entryRepo([]),
+            invoiceRepo: $this->invoiceRepo(null),
+            accountRepo: $this->accountRepo([$bankAccount, $expense]),
+        );
+
+        $result = $committer->commit($state, $bankAccount);
+
+        self::assertSame(0, $result['committed']);
+        self::assertSame(1, $result['duplicates']);
+    }
+
+    public function testForcedDuplicateLineReusesExistingFingerprintAndCreatesEntry(): void
+    {
+        $bankAccount = $this->makeAccount(1200, '1200', 'Bank');
+        $expense = $this->makeAccount(6000, '6000', 'Aufwand');
+        $fingerprint = new BankImportFingerprint($bankAccount, str_repeat('a', 64));
+        $manualEntry = new BookingEntry();
+        $state = $this->createState([
+            'amount' => '-50.00',
+            'valueDate' => '2026-04-25',
+            'status' => ImportState::LINE_STATUS_READY,
+            'isDuplicate' => true,
+            'forceImportDuplicate' => true,
+            'userDebitAccountId' => 6000,
+            'userCreditAccountId' => 1200,
+        ]);
+
+        $journal = $this->createMock(BookingJournalService::class);
+        $journal->expects(self::once())->method('recalculateDocumentNumbersForYears')->with(2026);
+        $journal->expects(self::once())
+            ->method('createEntryFromStatement')
+            ->with(
+                self::callback(static fn (\DateTimeInterface $date): bool => '2026-04-25' === $date->format('Y-m-d')),
+                '50.00',
+                $expense,
+                $bankAccount,
+                null,
+                null,
+                null,
+                null,
+                null,
+            )
+            ->willReturn($manualEntry);
+
+        $committer = $this->createCommitter(
+            journal: $journal,
+            entryRepo: $this->entryRepo([]),
+            invoiceRepo: $this->invoiceRepo(null),
+            accountRepo: $this->accountRepo([$bankAccount, $expense]),
+            fingerprintRepo: $this->fingerprintRepo($fingerprint),
+        );
+
+        $result = $committer->commit($state, $bankAccount);
+
+        self::assertSame(1, $result['committed']);
+        self::assertSame(0, $result['duplicates']);
+        self::assertSame($manualEntry, $fingerprint->getBookingEntry());
+    }
+
 
     /**
      * @param list<BookingEntry> $existing
@@ -394,6 +473,7 @@ final class BankStatementCommitterTest extends TestCase
         InvoiceRepository $invoiceRepo,
         AccountingAccountRepository $accountRepo,
         ?TaxRateRepository $taxRateRepo = null,
+        ?BankImportFingerprintRepository $fingerprintRepo = null,
     ): BankStatementCommitter {
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects(self::once())->method('beginTransaction');
@@ -405,6 +485,7 @@ final class BankStatementCommitterTest extends TestCase
             $journal,
             $entryRepo,
             $accountRepo,
+            $fingerprintRepo ?? $this->fingerprintRepo(null),
             $invoiceRepo,
             $taxRateRepo ?? $this->taxRateRepo([]),
             new BankImportDraftSession($this->requestStack()),
@@ -442,6 +523,7 @@ final class BankStatementCommitterTest extends TestCase
             'status' => ImportState::LINE_STATUS_PENDING,
             'isIgnored' => false,
             'isDuplicate' => false,
+            'forceImportDuplicate' => false,
             'userDebitAccountId' => null,
             'userCreditAccountId' => null,
             'userTaxRateId' => null,
@@ -493,6 +575,14 @@ final class BankStatementCommitterTest extends TestCase
     {
         $repo = $this->createMock(TaxRateRepository::class);
         $repo->method('findAll')->willReturn($taxRates);
+
+        return $repo;
+    }
+
+    private function fingerprintRepo(?BankImportFingerprint $fingerprint): BankImportFingerprintRepository
+    {
+        $repo = $this->createMock(BankImportFingerprintRepository::class);
+        $repo->method('findByHash')->willReturn($fingerprint);
 
         return $repo;
     }

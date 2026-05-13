@@ -317,13 +317,15 @@
                 </thead>
                 <tbody>
                 {% for line in state.lines %}
-                    {% set readonly = line.isDuplicate %}
+                    {% set forceDuplicate = line.forceImportDuplicate|default(false) %}
+                    {% set readonly = line.isDuplicate and not forceDuplicate %}
                     <tr data-bank-import-preview-target="row"
                         data-idx="{{ line.idx }}"
                         data-status="{{ line.status }}"
+                        data-duplicate="{{ line.isDuplicate ? '1' : '' }}"
                         data-rule="{{ line.appliedRuleId ? '1' : '0' }}"
                         data-invoice="{{ line.matchedInvoiceId or (line.userInvoiceNumber|default(null)) ? '1' : '0' }}"
-                        class="{% if line.isDuplicate or line.isIgnored %}table-secondary text-muted{% endif %}">
+                        class="{% if readonly or line.isIgnored %}table-secondary text-muted{% endif %}">
                         <td>
                             <input type="checkbox" class="form-check-input"
                                    data-action="change->bank-import-preview#rowSelectChange"
@@ -463,28 +465,42 @@
                                        data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
                                        data-field="remark"
                                        {% if readonly %}disabled{% endif %}>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-secondary"
-                                        title="{{ 'accounting.bank_import.split.title'|trans }}"
-                                        data-action="click->bank-import-preview#openSplit"
-                                        {% if readonly %}disabled{% endif %}>
-                                    <i class="fas fa-code-branch"></i>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-secondary"
-                                        title="{{ 'accounting.bank_import.rule.title'|trans }}"
-                                        data-action="click->bank-import-preview#openRule"
-                                        {% if readonly %}disabled{% endif %}>
-                                    <i class="fas fa-bolt"></i>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-sm {% if line.isIgnored %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
-                                        title="{{ 'accounting.bank_import.preview.toggle_ignore'|trans }}"
-                                        data-action="click->bank-import-preview#toggleIgnore"
-                                        data-bank-import-preview-target="ignoreButton"
-                                        {% if readonly %}disabled{% endif %}>
-                                    <i class="fas {% if line.isIgnored %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
-                                </button>
+                                {% if readonly %}
+                                    <form method="post"
+                                          action="{{ path('bank_import.line.force_duplicate', {'sessionImportId': state.sessionImportId, 'idx': line.idx}) }}"
+                                          class="d-inline"
+                                          data-controller="confirm-submit"
+                                          data-confirm-submit-message-value="{{ 'accounting.bank_import.preview.force_duplicate_confirm'|trans|e('html_attr') }}"
+                                          data-confirm-submit-confirm-label-value="{{ 'button.continue'|trans|e('html_attr') }}"
+                                          data-confirm-submit-cancel-label-value="{{ 'button.cancel'|trans|e('html_attr') }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('bank_import_line_' ~ state.sessionImportId) }}">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-warning"
+                                                title="{{ 'accounting.bank_import.preview.force_duplicate_help'|trans }}">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="{{ 'accounting.bank_import.split.title'|trans }}"
+                                            data-action="click->bank-import-preview#openSplit">
+                                        <i class="fas fa-code-branch"></i>
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="{{ 'accounting.bank_import.rule.title'|trans }}"
+                                            data-action="click->bank-import-preview#openRule">
+                                        <i class="fas fa-bolt"></i>
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm {% if line.isIgnored %}btn-secondary{% else %}btn-outline-secondary{% endif %}"
+                                            title="{{ 'accounting.bank_import.preview.toggle_ignore'|trans }}"
+                                            data-action="click->bank-import-preview#toggleIgnore"
+                                            data-bank-import-preview-target="ignoreButton">
+                                        <i class="fas {% if line.isIgnored %}fa-eye-slash{% else %}fa-eye{% endif %}"></i>
+                                    </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
