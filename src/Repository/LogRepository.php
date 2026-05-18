@@ -22,4 +22,14 @@ class LogRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Log::class);
     }
+
+    public function purgeOlderThan(\DateTimeImmutable $before): int
+    {
+        return $this->createQueryBuilder('l')
+            ->delete()
+            ->where('l.date < :before')
+            ->setParameter('before', $before)
+            ->getQuery()
+            ->execute();
+    }
 }
