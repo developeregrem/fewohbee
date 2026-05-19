@@ -195,6 +195,7 @@ accounting:
         condition_required: Mindestens eine Bedingung wählen.
         name_required: Name angeben.
         split_marker_required: Für dynamische Splitbeträge muss ein Marker angegeben werden.
+        split_regex_required: Für dynamische Splitbeträge per Regex muss ein Regex angegeben werden.
       section:
         conditions: Wann soll die Regel greifen?
         action: Was soll passieren?
@@ -213,6 +214,8 @@ accounting:
       warning:
         line: 'Zeile %line%: %message%'
         split_marker_missing: 'Splitbetrag für Marker "%marker%" wurde im Verwendungszweck nicht gefunden.'
+        split_regex_missing: 'Splitbetrag wurde mit Regex "%pattern%" nicht gefunden.'
+        split_regex_invalid: 'Regex für Splitbetrag ist ungültig: "%pattern%".'
         invoice_marker_missing: 'Beleg-Nr. für Marker "%marker%" wurde im Verwendungszweck nicht gefunden.'
         invoice_regex_missing: 'Beleg-Nr. wurde mit Regex "%pattern%" nicht gefunden.'
         invoice_regex_invalid: 'Regex für Beleg-Nr. ist ungültig: "%pattern%".'
@@ -237,11 +240,14 @@ accounting:
           Für wiederkehrende Splits werden Beträge aus dem aktuellen Verwendungszweck gelesen.
           Wähle je Teilbetrag einen Marker direkt vor dem Betrag oder markiere ihn als Restbetrag.
         current_amount: Beispielbetrag
-        source: Betragsquelle
-        purpose_marker: Aus Verwendungszweck
+        source: Erkennung
+        purpose_marker: Marker vor Betrag
+        purpose_regex: Regex
         marker: Marker vor Betrag
+        pattern: Marker / Regex
         found: 'Gefunden: %amount%'
         missing: Kein Betrag gefunden
+        invalid: Regex ungültig
         remainder_preview: Wird als Restbetrag berechnet.
       count:
         total: gesamt

@@ -707,6 +707,19 @@ class BankImportController extends AbstractController
                     continue;
                 }
 
+                if ('purpose_regex' === (string) ($piece['amountSource'] ?? '')) {
+                    $pattern = trim((string) ($piece['pattern'] ?? ''));
+                    if ('' === $pattern) {
+                        continue;
+                    }
+
+                    $splits[] = $base + [
+                        'amountSource' => 'purpose_regex',
+                        'pattern' => mb_substr($pattern, 0, 120),
+                    ];
+                    continue;
+                }
+
                 if ($this->truthy($piece['remainder'] ?? false)) {
                     $splits[] = $base + ['remainder' => true];
                     continue;

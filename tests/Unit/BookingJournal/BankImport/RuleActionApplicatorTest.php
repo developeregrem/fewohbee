@@ -253,6 +253,90 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
     }
 
+    public function testSplitActionExtractsRegexAmount(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => 'Zinsen\\s+([\\d,]+)-', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-12.30',
+            'purpose' => 'Information zur Abrechnung Zinsen 12,30- Entgelte',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(1, $line['splits']);
+        self::assertSame('-12.30', $line['splits'][0]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testSplitActionExtractsIntegerRegexAmount(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => '\\d{4}', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-2026.00',
+            'purpose' => 'BOOKING.COM BV SAMMELAUSZAHLUNG APRIL 2026 3 BUCHUNGEN KOMMISSION 199,33 GEBUEHR 7,45',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(1, $line['splits']);
+        self::assertSame('-2026.00', $line['splits'][0]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testSplitActionExtractsIntegerRegexCaptureAmount(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => '([0-9]+ )', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-2026.00',
+            'purpose' => 'BOOKING.COM BV SAMMELAUSZAHLUNG APRIL 2026 3 BUCHUNGEN KOMMISSION 199,33 GEBUEHR 7,45',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(1, $line['splits']);
+        self::assertSame('-2026.00', $line['splits'][0]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
+    public function testSplitActionUsesFirstParseableRegexCaptureAmount(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => '(APRIL)\\s+(\\d{4})', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-2026.00',
+            'purpose' => 'BOOKING.COM BV SAMMELAUSZAHLUNG APRIL 2026 3 BUCHUNGEN KOMMISSION 199,33 GEBUEHR 7,45',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertCount(1, $line['splits']);
+        self::assertSame('-2026.00', $line['splits'][0]['amount']);
+        self::assertSame(ImportState::LINE_STATUS_READY, $line['status']);
+    }
+
     public function testSplitActionExtractsIntegerMarkerAmountsWithCurrencyAndCommaSeparator(): void
     {
         $rule = $this->createRule([
@@ -315,6 +399,50 @@ final class RuleActionApplicatorTest extends TestCase
         self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
         self::assertSame('accounting.bank_import.rule.warning.split_marker_missing', $line['ruleWarning']['key']);
         self::assertSame(['%marker%' => 'Zinsen'], $line['ruleWarning']['params']);
+    }
+
+    public function testSplitActionKeepsLinePendingWhenRegexAmountIsMissing(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => 'Zinsen\\s+([\\d,]+)-', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-41.50',
+            'purpose' => 'Information zur Abrechnung Entgelte 41,50-',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame([], $line['splits']);
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame('accounting.bank_import.rule.warning.split_regex_missing', $line['ruleWarning']['key']);
+        self::assertSame(['%pattern%' => 'Zinsen\\s+([\\d,]+)-'], $line['ruleWarning']['params']);
+    }
+
+    public function testSplitActionKeepsLinePendingWhenRegexIsInvalid(): void
+    {
+        $rule = $this->createRule([
+            'mode' => BankImportRule::ACTION_MODE_SPLIT,
+            'splits' => [
+                ['amountSource' => 'purpose_regex', 'pattern' => 'Zinsen\\s+([\\d,]+-', 'debitAccountId' => 100, 'creditAccountId' => 200],
+            ],
+        ]);
+
+        $line = $this->emptyLine([
+            'amount' => '-41.50',
+            'purpose' => 'Information zur Abrechnung Zinsen 12,30-',
+        ]);
+
+        $this->applicator->apply($rule, $line);
+
+        self::assertSame([], $line['splits']);
+        self::assertSame(ImportState::LINE_STATUS_PENDING, $line['status']);
+        self::assertSame('accounting.bank_import.rule.warning.split_regex_invalid', $line['ruleWarning']['key']);
+        self::assertSame(['%pattern%' => 'Zinsen\\s+([\\d,]+-'], $line['ruleWarning']['params']);
     }
 
     public function testSplitActionPreservesIncomingDirection(): void

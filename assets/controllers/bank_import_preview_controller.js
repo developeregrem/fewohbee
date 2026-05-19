@@ -93,6 +93,8 @@ export default class extends Controller {
         ruleInvoiceFoundLabel: String,
         ruleInvoiceMissingLabel: String,
         ruleSplitMarkerRequiredMessage: String,
+        ruleSplitRegexRequiredMessage: String,
+        ruleSplitInvalidLabel: String,
     };
 
     connect() {
@@ -813,18 +815,26 @@ export default class extends Controller {
             const splitRows = Array.from(this.ruleSplitRowsTarget.querySelectorAll('.rule-split-row'));
             for (const [i, rowEl] of splitRows.entries()) {
                 const source = rowEl.querySelector('.rule-split-source')?.value || 'purpose_marker';
-                const marker = (rowEl.querySelector('.rule-split-marker')?.value || '').trim();
-                if (source === 'purpose_marker' && marker === '') {
+                const pattern = (rowEl.querySelector('.rule-split-marker')?.value || '').trim();
+                if (source === 'purpose_marker' && pattern === '') {
                     // eslint-disable-next-line no-alert
                     alert(this.ruleSplitMarkerRequiredMessageValue);
+                    return;
+                }
+                if (source === 'purpose_regex' && pattern === '') {
+                    // eslint-disable-next-line no-alert
+                    alert(this.ruleSplitRegexRequiredMessageValue);
                     return;
                 }
 
                 if (source === 'remainder') {
                     body.append(`splits[${i}][remainder]`, '1');
+                } else if (source === 'purpose_regex') {
+                    body.append(`splits[${i}][amountSource]`, 'purpose_regex');
+                    body.append(`splits[${i}][pattern]`, pattern);
                 } else {
                     body.append(`splits[${i}][amountSource]`, 'purpose_marker');
-                    body.append(`splits[${i}][marker]`, marker);
+                    body.append(`splits[${i}][marker]`, pattern);
                 }
                 body.append(`splits[${i}][debitAccountId]`, rowEl.querySelector('.rule-split-debit')?.value || '');
                 body.append(`splits[${i}][creditAccountId]`, rowEl.querySelector('.rule-split-credit')?.value || '');
@@ -974,10 +984,10 @@ export default class extends Controller {
     _refreshRuleSplitRow(rowEl) {
         if (!rowEl) return;
         const source = rowEl.querySelector('.rule-split-source')?.value || 'purpose_marker';
-        const markerInput = rowEl.querySelector('.rule-split-marker');
+        const patternInput = rowEl.querySelector('.rule-split-marker');
         const preview = rowEl.querySelector('.rule-split-preview');
         if (source === 'remainder') {
-            if (markerInput) markerInput.disabled = true;
+            if (patternInput) patternInput.disabled = true;
             if (preview) {
                 preview.className = 'small rule-split-preview text-muted';
                 preview.textContent = this.ruleSplitRemainderLabelValue;
@@ -985,11 +995,18 @@ export default class extends Controller {
             return;
         }
 
-        if (markerInput) markerInput.disabled = false;
-        const marker = (markerInput?.value || '').trim();
+        if (patternInput) patternInput.disabled = false;
+        const pattern = (patternInput?.value || '').trim();
         const purpose = (this._lineByIdx(this.activeIdx) || {}).purpose || '';
-        const found = this._extractAmountAfterMarker(purpose, marker);
+        const found = source === 'purpose_regex'
+            ? this._extractAmountByRegex(purpose, pattern)
+            : this._extractAmountAfterMarker(purpose, pattern);
         if (!preview) return;
+        if (found === false) {
+            preview.className = 'small rule-split-preview text-warning';
+            preview.textContent = this.ruleSplitInvalidLabelValue;
+            return;
+        }
         if (found === null) {
             preview.className = 'small rule-split-preview text-warning';
             preview.textContent = this.ruleSplitMissingLabelValue;
@@ -1066,6 +1083,31 @@ export default class extends Controller {
         const tail = purpose.slice(idx + marker.length);
         const matches = this._amountMatches(tail);
         return matches.length > 0 ? matches[0].amount : null;
+    }
+
+    _extractAmountByRegex(purpose, pattern) {
+        if (!purpose || !pattern) return null;
+        let regex;
+        try {
+            const delimited = pattern.match(/^\/(.+)\/([gimsuy]*)$/u);
+            if (delimited) {
+                regex = new RegExp(delimited[1], delimited[2].replace('g', ''));
+            } else {
+                regex = new RegExp(pattern, 'iu');
+            }
+        } catch {
+            return false;
+        }
+
+        const match = purpose.match(regex);
+        if (!match) return null;
+
+        for (const capture of match.slice(1)) {
+            const parsed = this._parseLooseAmount(capture);
+            if (parsed !== null) return parsed;
+        }
+
+        return this._parseLooseAmount(match[0]);
     }
 
     _amountMatches(text) {

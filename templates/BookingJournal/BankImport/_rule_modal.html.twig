@@ -205,11 +205,12 @@
                 <select class="form-select form-select-sm rule-split-source"
                         data-action="change->bank-import-preview#ruleSplitSourceChange">
                     <option value="purpose_marker">{{ 'accounting.bank_import.rule.split_source.purpose_marker'|trans }}</option>
+                    <option value="purpose_regex">{{ 'accounting.bank_import.rule.split_source.purpose_regex'|trans }}</option>
                     <option value="remainder">{{ 'accounting.bank_import.split.mode.remainder'|trans }}</option>
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.split_source.marker'|trans }}</label>
+                <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.split_source.pattern'|trans }}</label>
                 <input type="text" class="form-control form-control-sm rule-split-marker"
                        maxlength="120"
                        data-action="input->bank-import-preview#ruleSplitMarkerInput">

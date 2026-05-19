@@ -195,6 +195,7 @@ accounting:
         condition_required: Choose at least one condition.
         name_required: Enter a name.
         split_marker_required: Dynamic split amounts require a marker.
+        split_regex_required: Dynamic split amounts via regex require a regex.
       section:
         conditions: When should the rule fire?
         action: What should happen?
@@ -213,6 +214,8 @@ accounting:
       warning:
         line: 'Line %line%: %message%'
         split_marker_missing: 'Split amount for marker "%marker%" was not found in the purpose text.'
+        split_regex_missing: 'Split amount was not found with regex "%pattern%".'
+        split_regex_invalid: 'Split amount regex is invalid: "%pattern%".'
         invoice_marker_missing: 'Document number for marker "%marker%" was not found in the purpose text.'
         invoice_regex_missing: 'Document number was not found with regex "%pattern%".'
         invoice_regex_invalid: 'Document number regex is invalid: "%pattern%".'
@@ -237,11 +240,14 @@ accounting:
           For recurring splits, amounts are read from the current purpose text.
           Choose a marker immediately before each amount, or mark a split as the remainder.
         current_amount: Example amount
-        source: Amount source
-        purpose_marker: From purpose
+        source: Detection
+        purpose_marker: Marker before amount
+        purpose_regex: Regex
         marker: Marker before amount
+        pattern: Marker / regex
         found: 'Found: %amount%'
         missing: No amount found
+        invalid: Invalid regex
         remainder_preview: Calculated as the remainder.
       count:
         total: total

@@ -168,7 +168,7 @@ final class BankImportControllerTest extends WebTestCase
             'scopeToBankAccount' => '1',
             'splits' => [
                 ['amountSource' => 'purpose_marker', 'marker' => 'Zinsen', 'debitAccountId' => $interestAccount->getId(), 'creditAccountId' => $bankAccount->getId(), 'remark' => 'Zinsen'],
-                ['amountSource' => 'purpose_marker', 'marker' => 'Kreditprovision', 'debitAccountId' => $commissionAccount->getId(), 'creditAccountId' => $bankAccount->getId(), 'remark' => 'Provision'],
+                ['amountSource' => 'purpose_regex', 'pattern' => 'Kreditprovision\\s+([\\d,]+)-', 'debitAccountId' => $commissionAccount->getId(), 'creditAccountId' => $bankAccount->getId(), 'remark' => 'Provision'],
                 ['remainder' => '1', 'debitAccountId' => $feeAccount->getId(), 'creditAccountId' => $bankAccount->getId(), 'remark' => 'Entgelte'],
             ],
         ], [], ['HTTP_X-Requested-With' => 'XMLHttpRequest']);

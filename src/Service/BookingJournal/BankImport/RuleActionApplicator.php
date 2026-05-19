@@ -17,8 +17,8 @@ use App\Entity\BankImportRule;
  *              own debit/credit accounts and remark.
  *
  * Split rows may define either a fixed amount, a percentage, a remainder, or
- * a dynamic amountSource="purpose_marker" plus marker text. Dynamic marker
- * amounts are read from the current line's purpose text on every import.
+ * a dynamic amountSource="purpose_marker"/"purpose_regex". Dynamic amounts
+ * are read from the current line's purpose text on every import.
  *
  * Rule actions may also extract one external invoice/document number from the
  * purpose text. That number is line-wide, including split bookings, and is
@@ -116,7 +116,32 @@ final class RuleActionApplicator
                 $marker = trim((string) ($piece['marker'] ?? ''));
                 $share = $this->extractAmountAfterMarker((string) ($line['purpose'] ?? ''), $marker);
                 if (null === $share) {
-                    $this->markSplitRulePending($line, $marker);
+                    $this->markSplitRulePending(
+                        $line,
+                        'accounting.bank_import.rule.warning.split_marker_missing',
+                        ['%marker%' => $marker],
+                    );
+
+                    return;
+                }
+            } elseif ('purpose_regex' === ($piece['amountSource'] ?? null)) {
+                $pattern = trim((string) ($piece['pattern'] ?? ''));
+                $share = $this->extractAmountByRegex((string) ($line['purpose'] ?? ''), $pattern);
+                if (false === $share) {
+                    $this->markSplitRulePending(
+                        $line,
+                        'accounting.bank_import.rule.warning.split_regex_invalid',
+                        ['%pattern%' => $pattern],
+                    );
+
+                    return;
+                }
+                if (null === $share) {
+                    $this->markSplitRulePending(
+                        $line,
+                        'accounting.bank_import.rule.warning.split_regex_missing',
+                        ['%pattern%' => $pattern],
+                    );
 
                     return;
                 }
@@ -182,6 +207,38 @@ final class RuleActionApplicator
         }
 
         return $this->normalizeExtractedAmount($matches[1] ?: $matches[2]);
+    }
+
+    /**
+     * @return float|null|false false means invalid regex, null means no match
+     */
+    private function extractAmountByRegex(string $purpose, string $pattern): float|null|false
+    {
+        $regex = $this->normalizeUserRegex($pattern);
+        if (null === $regex) {
+            return false;
+        }
+
+        $result = @preg_match($regex, $purpose, $matches);
+        if (false === $result) {
+            return false;
+        }
+        if (0 === $result) {
+            return null;
+        }
+
+        foreach (array_slice($matches, 1) as $capture) {
+            if (!is_string($capture)) {
+                continue;
+            }
+
+            $amount = $this->normalizeExtractedAmount($capture);
+            if (null !== $amount) {
+                return $amount;
+            }
+        }
+
+        return $this->normalizeExtractedAmount((string) ($matches[0] ?? ''));
     }
 
     /**
@@ -361,13 +418,13 @@ final class RuleActionApplicator
     /**
      * @param array<string, mixed> $line
      */
-    private function markSplitRulePending(array &$line, string $marker): void
+    private function markSplitRulePending(array &$line, string $key, array $params): void
     {
         $line['splits'] = [];
         $line['status'] = ImportState::LINE_STATUS_PENDING;
         $line['ruleWarning'] = [
-            'key' => 'accounting.bank_import.rule.warning.split_marker_missing',
-            'params' => ['%marker%' => $marker],
+            'key' => $key,
+            'params' => $params,
         ];
     }
 
