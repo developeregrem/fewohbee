@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-/**
- * Behavioural tests for the audit-log listener. These exercise the real
- * Doctrine flush cycle (no mocks) so they catch listener-wiring regressions,
- * not just internal logic.
- */
+/** Real Doctrine flush cycle, no mocks — catches listener-wiring regressions, not just internal logic. */
 final class EntityChangeLogListenerTest extends KernelTestCase
 {
     private EntityManagerInterface $em;
@@ -135,6 +132,56 @@ final class EntityChangeLogListenerTest extends KernelTestCase
         // restore original to keep test fixtures stable for subsequent tests
         $user->setFirstname($originalFirstname);
         $this->em->flush();
+    }
+
+    public function testNullToEmptyStringTransitionsAreNotLogged(): void
+    {
+        $customer = $this->newCustomer('Noise', 'Filter');
+        $this->em->persist($customer);
+        $this->em->flush();
+        $this->conn->executeStatement('DELETE FROM logging');
+
+        $customer->setRemark('');
+        $customer->setRemark('   ');
+        $this->em->flush();
+
+        self::assertCount(0, $this->fetchLog(),
+            'null↔"" (and whitespace-only) transitions must be filtered so spurious form-save diffs do not pollute the audit log.');
+    }
+
+    public function testReviewerReportedCustomerAddressesNoOpsAreSuppressed(): void
+    {
+        $address = new CustomerAddresses();
+        $address->setType('billing');
+        $this->em->persist($address);
+        $this->em->flush();
+        $this->conn->executeStatement('DELETE FROM logging');
+
+        $address->setBuyerVatId('');
+        $address->setBuyerReference('');
+        $address->setCustomerIBAN('');
+        $this->em->flush();
+
+        self::assertCount(0, $this->fetchLog(),
+            'The exact null→"" diff the reviewer reported on CustomerAddresses must be filtered to zero log rows.');
+    }
+
+    public function testRealValueChangesAreStillLoggedAlongsideNullToEmptyNoOps(): void
+    {
+        $customer = $this->newCustomer('Mixed', 'Diff');
+        $this->em->persist($customer);
+        $this->em->flush();
+        $this->conn->executeStatement('DELETE FROM logging');
+
+        $customer->setRemark('');
+        $customer->setFirstname('Changed');
+        $this->em->flush();
+
+        $rows = $this->fetchLog();
+        self::assertCount(1, $rows);
+        $changes = $this->decode($rows[0]['changes']);
+        self::assertSame(['firstname' => ['Mixed', 'Changed']], $changes,
+            'Only the real field change survives; the null→"" remark transition is scrubbed.');
     }
 
     public function testLastActionOnlyUpdateProducesNoLogRow(): void

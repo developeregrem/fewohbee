@@ -15,6 +15,7 @@ use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -22,12 +23,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 #[AsDoctrineListener(event: Events::postFlush)]
 final class EntityChangeLogListener
 {
-    /**
-     * Entities whose lifecycle MUST NOT produce log rows.
-     * - Log itself, to prevent infinite recursion when we flush our own writes
-     * - WorkflowLog has its own audit table
-     * - MonthlyStatsSnapshot is a request-by-request cache that would flood the log.
-     */
+    /** Recursion guard (Log itself), separate audit tables, and request-only caches. */
     private const IGNORED_ENTITIES = [
         Log::class,
         WorkflowLog::class,
@@ -36,9 +32,10 @@ final class EntityChangeLogListener
 
     private const SENSITIVE_FIELD_NEEDLES = [
         'password', 'salt', 'token', 'secret', 'apikey', 'privatekey',
+        'iban', 'vatid', 'card', 'cvv',
     ];
 
-    /** LastActionSubscriber writes this on every request via the background EM; filter defensively. */
+    /** LastActionSubscriber writes this on every request; filter defensively. */
     private const NOISY_FIELDS = ['lastAction'];
 
     private const MAX_STRING_LENGTH = 1000;
@@ -50,6 +47,7 @@ final class EntityChangeLogListener
         private readonly ManagerRegistry $registry,
         private readonly Security $security,
         private readonly RequestStack $requestStack,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -126,10 +124,7 @@ final class EntityChangeLogListener
         $ip = $this->requestStack->getCurrentRequest()?->getClientIp();
         $now = new \DateTimeImmutable();
 
-        // Write Log rows through the `background` EM (same pattern as
-        // LastActionSubscriber): keeps audit writes isolated from the main flush
-        // cycle so they cannot trigger this listener again or accidentally pick
-        // up unrelated dirty entities.
+        // background EM isolates audit writes from the primary flush so they cannot recurse or pick up unrelated dirty entities.
         try {
             $logEm = $this->registry->getManager('background');
             if (!$logEm instanceof EntityManagerInterface || !$logEm->isOpen()) {
@@ -154,9 +149,12 @@ final class EntityChangeLogListener
                 $logEm->persist($log);
             }
             $logEm->flush();
-            $logEm->clear();
-        } catch (\Throwable) {
-            // best-effort: never block the request for audit-log writes.
+        } catch (\Throwable $e) {
+            // Best-effort: log but never block the request on audit-write failures.
+            $this->logger->error('Failed to persist audit log rows: {message}', [
+                'message' => $e->getMessage(),
+                'exception' => $e,
+            ]);
         }
     }
 
@@ -187,7 +185,37 @@ final class EntityChangeLogListener
             unset($changes[$field]);
         }
 
+        foreach ($changes as $field => [$old, $new]) {
+            if ($this->isEffectivelyUnchanged($old, $new)) {
+                unset($changes[$field]);
+            }
+        }
+
         return $changes;
+    }
+
+    // Forms send "" where the column is NULL; 0/false/"0" do not normalize to null so genuine changes still log.
+    private function isEffectivelyUnchanged(mixed $old, mixed $new): bool
+    {
+        return $this->normalizeEmpty($old) === $this->normalizeEmpty($new);
+    }
+
+    private function normalizeEmpty(mixed $value): mixed
+    {
+        if (null === $value) {
+            return null;
+        }
+        if (is_string($value) && '' === trim($value)) {
+            return null;
+        }
+        if (is_array($value) && [] === $value) {
+            return null;
+        }
+        if ($value instanceof \Countable && 0 === count($value)) {
+            return null;
+        }
+
+        return $value;
     }
 
     private function getEntityId(object $entity, EntityManagerInterface $em): ?string
