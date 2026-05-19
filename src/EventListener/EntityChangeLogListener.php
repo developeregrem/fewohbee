@@ -194,10 +194,14 @@ final class EntityChangeLogListener
         return $changes;
     }
 
-    // Forms send "" where the column is NULL; 0/false/"0" do not normalize to null so genuine changes still log.
+    // Drops null↔"" form noise and decimal-string ↔ typed-float rehydration mismatches.
     private function isEffectivelyUnchanged(mixed $old, mixed $new): bool
     {
-        return $this->normalizeEmpty($old) === $this->normalizeEmpty($new);
+        if ($this->normalizeEmpty($old) === $this->normalizeEmpty($new)) {
+            return true;
+        }
+
+        return is_numeric($old) && is_numeric($new) && (float) $old === (float) $new;
     }
 
     private function normalizeEmpty(mixed $value): mixed

@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\Price;
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -164,6 +165,29 @@ final class EntityChangeLogListenerTest extends KernelTestCase
 
         self::assertCount(0, $this->fetchLog(),
             'The exact null→"" diff the reviewer reported on CustomerAddresses must be filtered to zero log rows.');
+    }
+
+    public function testDecimalStringVsFloatRehydrationDoesNotLog(): void
+    {
+        $price = new Price();
+        $price->setPrice('100.00');
+        $price->setVat(19.0);
+        $price->setDescription('Audit-log no-op probe');
+        $price->setType(1);
+        $price->setIsPerRoom(false);
+        $price->setIsDefaultActiveInReservationCreation(false);
+        $price->setIsBookableOnline(false);
+        $this->em->persist($price);
+        $this->em->flush();
+        $priceId = $price->getId();
+        $this->em->clear();
+        $this->conn->executeStatement('DELETE FROM logging');
+
+        $this->em->find(Price::class, $priceId);
+        $this->em->flush();
+
+        self::assertCount(0, $this->fetchLog(),
+            'Decimal columns hydrate as "19.00" but float-typed properties hold 19.0; that strict !== mismatch must not produce log rows.');
     }
 
     public function testRealValueChangesAreStillLoggedAlongsideNullToEmptyNoOps(): void
