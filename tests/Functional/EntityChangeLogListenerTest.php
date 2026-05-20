@@ -113,6 +113,23 @@ final class EntityChangeLogListenerTest extends KernelTestCase
         $this->em->flush();
     }
 
+    public function testCustomerIdNumberIsRedacted(): void
+    {
+        $customer = $this->newCustomer('IdNumber', 'Redact');
+        $customer->setIDNumber('AB-9999-SECRET');
+        $this->em->persist($customer);
+        $this->em->flush();
+
+        $rows = $this->fetchLog();
+        self::assertCount(1, $rows);
+        $changes = $this->decode($rows[0]['changes']);
+        self::assertArrayHasKey('IDNumber', $changes,
+            'IDNumber (Ausweisnummer) is PII and must still appear in the diff so the field-change itself is auditable.');
+        self::assertSame(['***redacted***', '***redacted***'], $changes['IDNumber']);
+        self::assertStringNotContainsString('AB-9999-SECRET', $rows[0]['changes'],
+            'The raw ID card number must never be persisted in the audit log.');
+    }
+
     public function testLastActionUpdatesAreFilteredOutOfTheDiff(): void
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['username' => 'test-admin']);

@@ -32,7 +32,7 @@ final class EntityChangeLogListener
 
     private const SENSITIVE_FIELD_NEEDLES = [
         'password', 'salt', 'token', 'secret', 'apikey', 'privatekey',
-        'iban', 'vatid', 'card', 'cvv',
+        'iban', 'vatid', 'card', 'cvv', 'idnumber',
     ];
 
     /** LastActionSubscriber writes this on every request; filter defensively. */
