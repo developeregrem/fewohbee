@@ -41,7 +41,7 @@
         "symfony/web-link": "8.0.*",
         "symfony/yaml": "8.0.*",
         "symfonycasts/reset-password-bundle": "^1.18",
-        "web-auth/webauthn-lib": "5.3.x-dev"
+        "web-auth/webauthn-lib": "5.3.*"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.4",
