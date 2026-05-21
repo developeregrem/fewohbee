@@ -29,6 +29,20 @@ tourist_tax:
     subsidiaries: "Available in properties"
     subsidiaries.help: "Leave empty = global. Property-scoped taxes show up as soon as at least one property is linked."
     rates: "Rates per guest category"
+    calculation_mode: "Calculation"
+    calculation_mode.help: "Flat mode uses the per-category table below. Percentage modes apply to the apartment overnight price and ignore the table."
+    percentage_rate: "Percentage"
+    percentage_rate.help: "Share of the overnight price, e.g. 5.00 for 5%."
+    percentage_base: "Base"
+    percentage_base.help: "Net or gross overnight price as the calculation base (follow the municipal regulation)."
+
+  calculation_mode:
+    per_night_flat: "Flat per person and night (e.g. tourist tax)"
+    percent_per_room: "Percent of overnight price (e.g. Berlin, Dresden, Cologne)"
+
+  percentage_base:
+    net: "Net overnight price"
+    gross: "Gross overnight price"
 
   rates:
     heading: "Rates per guest category"

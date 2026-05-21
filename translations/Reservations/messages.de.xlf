@@ -408,11 +408,11 @@
             </trans-unit>
             <trans-unit id="reservation.kurtaxe.waived">
                 <source>reservation.kurtaxe.waived</source>
-                <target>Kurtaxe entfallen lassen</target>
+                <target>Beherbergungsabgaben entfallen lassen</target>
             </trans-unit>
             <trans-unit id="reservation.kurtaxe.waived.help">
                 <source>reservation.kurtaxe.waived.help</source>
-                <target>Aktivieren, wenn diese Buchung von der Kurtaxe ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).</target>
+                <target>Aktivieren, wenn diese Buchung von Beherbergungsabgaben (Kurtaxe, Stadtsteuer) ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).</target>
             </trans-unit>
         </body>
     </file>

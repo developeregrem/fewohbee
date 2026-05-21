@@ -1,10 +1,10 @@
 tourist_tax:
-  title: "Kurtaxe / Tourist tax"
-  description: "Versionierbare Kurtaxen-Definitionen pro Niederlassung mit Tarif je Gastkategorie."
-  add: "Kurtaxe hinzufügen"
-  empty: "Noch keine Kurtaxen-Definitionen vorhanden."
+  title: "Beherbergungsabgaben"
+  description: "Versionierbare Definitionen für Kurtaxe, Stadtsteuer und ähnliche Abgaben pro Niederlassung. Pauschal je Person und Nacht oder prozentual vom Übernachtungspreis."
+  add: "Beherbergungsabgabe hinzufügen"
+  empty: "Noch keine Beherbergungsabgaben definiert."
   delete:
-    ask: "Diese Kurtaxen-Definition wirklich löschen?"
+    ask: "Diese Definition wirklich löschen?"
   subsidiaries:
     global: "Alle Niederlassungen"
 
@@ -14,21 +14,35 @@ tourist_tax:
     tax_rate.help: "Anzeige nur mit aktivem Kontenrahmen-Preset oder ohne Preset."
     revenue_account: "Erlöskonto"
     revenue_account.help: >-
-      Optional. Erlöskonto, auf das Kurtaxen-Umsätze im Buchungsjournal gebucht werden.
-      Sollte ein eigenes Konto getrennt von Übernachtungserlösen sein, damit Kurtaxen
+      Optional. Erlöskonto, auf das Umsätze aus Beherbergungsabgaben im Buchungsjournal gebucht werden.
+      Sollte ein eigenes Konto getrennt von Übernachtungserlösen sein, damit Abgaben
       separat ausgewertet und an die Gemeinde abgerechnet werden können.<br><br>
       Ist das Feld leer, wird das Standard-Erlöskonto des hinterlegten Steuersatzes verwendet.
     includes_vat: "Brutto (inkl. Umsatzsteuer)"
     includes_vat.help: "Wenn aktiv, wird der Tarif als Bruttobetrag interpretiert."
     applies_only_to_adult: "Nur für Erwachsene fällig"
-    applies_only_to_adult.help: "Verhalten z. B. der CH-Beherbergungsabgabe — Kinder/Babys werden nicht berechnet."
+    applies_only_to_adult.help: "Verhalten z. B. der CH-Beherbergungsabgabe oder der Berliner City Tax — Kinder/Babys werden nicht berechnet."
     valid_from: "Gültig ab"
     valid_to: "Gültig bis"
     sort_order: "Sortierreihenfolge"
     active: "Aktiv"
     subsidiaries: "Gültig für Niederlassung"
-    subsidiaries.help: "Leer lassen = global. Niederlassungs-spezifische Kurtaxen sind sichtbar, sobald die Niederlassung mindestens einmal verknüpft ist."
+    subsidiaries.help: "Leer lassen = global. Niederlassungs-spezifische Abgaben sind sichtbar, sobald die Niederlassung mindestens einmal verknüpft ist."
     rates: "Tarife je Gastkategorie"
+    calculation_mode: "Berechnung"
+    calculation_mode.help: "Pauschal-Modus berechnet je Gastkategorie aus der Tabelle unten. Prozent-Modi beziehen sich auf den Apartment-Preis und nutzen die Tabelle nicht."
+    percentage_rate: "Prozentsatz"
+    percentage_rate.help: "Anteil vom Übernachtungspreis, z. B. 5,00 für 5 %."
+    percentage_base: "Bezugsgröße"
+    percentage_base.help: "Netto- oder Bruttoübernachtungspreis als Berechnungsgrundlage (gemäß kommunaler Vorschrift)."
+
+  calculation_mode:
+    per_night_flat: "Pauschal pro Person und Nacht (z. B. Kurtaxe, Frankfurt)"
+    percent_per_room: "Prozent vom Übernachtungspreis (z. B. Berlin, Dresden, Köln)"
+
+  percentage_base:
+    net: "Netto-Übernachtungspreis"
+    gross: "Brutto-Übernachtungspreis"
 
   rates:
     heading: "Tarife je Gastkategorie"
@@ -54,13 +68,26 @@ tourist_tax:
 
   flash:
     create:
-      success: "Kurtaxen-Definition wurde erstellt."
+      success: "Definition wurde erstellt."
     edit:
-      success: "Kurtaxen-Definition wurde gespeichert."
+      success: "Definition wurde gespeichert."
     delete:
-      success: "Kurtaxen-Definition wurde gelöscht."
+      success: "Definition wurde gelöscht."
 
 # CH-Beherbergungsabgabe-Beispiel (kein Auto-Seed):
 #   name: "Beherbergungsabgabe"
 #   appliesOnlyToAdult: true
-#   rate (Erwachsene): 1.00
+#   calculationMode: PER_NIGHT_FLAT, rate (Erwachsene): 1.00
+#
+# Dresden Beherbergungssteuer:
+#   name: "Beherbergungssteuer Dresden"
+#   calculationMode: PERCENT_PER_ROOM
+#   percentageRate: 6.00
+#   percentageBase: NET
+#
+# Berlin City Tax:
+#   name: "Übernachtungsteuer Berlin"
+#   calculationMode: PERCENT_PER_PERSON
+#   percentageRate: 5.00
+#   percentageBase: GROSS
+#   appliesOnlyToAdult: true

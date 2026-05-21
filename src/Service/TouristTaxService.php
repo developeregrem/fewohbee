@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\TouristTaxBreakdown;
+use App\Entity\Enum\PercentageBase;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
 use App\Entity\TouristTax;
@@ -17,6 +19,7 @@ class TouristTaxService
     public function __construct(
         private readonly TouristTaxRepository $touristTaxRepository,
         private readonly GuestCategoryRepository $guestCategoryRepository,
+        private readonly ?PriceService $priceService = null,
     ) {
     }
 
@@ -36,15 +39,6 @@ class TouristTaxService
         }
         $totalNights = max(1, (int) $start->diff($end)->format('%a'));
 
-        $guestCounts = $reservation->getGuestCounts();
-        if (empty($guestCounts)) {
-            return [];
-        }
-
-        // Each overnight is attributed to its arrival day (= the night that
-        // starts on date X). The last day of the reservation is the checkout
-        // day, no overnight there. Per-night validity check below means a tax
-        // that ends mid-stay only counts the nights it actually covers.
         $lastNightDate = (clone $start)->modify('+'.($totalNights - 1).' days');
         $subsidiary = $reservation->getAppartment()?->getObject();
         $taxes = $this->touristTaxRepository->findActiveForSubsidiaryInRange($subsidiary, $start, $lastNightDate);
@@ -52,46 +46,15 @@ class TouristTaxService
             return [];
         }
 
-        $categories = [];
-        foreach ($this->guestCategoryRepository->findAll() as $gc) {
-            $categories[$gc->getId()] = $gc;
-        }
-
-        // Aggregate nights per (taxId, categoryId) so each combination yields
-        // one breakdown row with the actual covered-nights count.
-        $aggregates = [];
-        for ($i = 0; $i < $totalNights; ++$i) {
-            $night = (clone $start)->modify('+'.$i.' days');
-            foreach ($taxes as $tax) {
-                if (!$tax->isValidOn($night)) {
-                    continue;
-                }
-                foreach ($tax->getRates() as $rate) {
-                    $catId = $rate->getGuestCategory()?->getId();
-                    if (null === $catId) {
-                        continue;
-                    }
-                    $count = (int) ($guestCounts[$catId] ?? 0);
-                    if ($count <= 0) {
-                        continue;
-                    }
-                    $category = $categories[$catId] ?? $rate->getGuestCategory();
-                    if ($tax->isAppliesOnlyToAdult() && !$category?->isAdult()) {
-                        continue;
-                    }
-
-                    $key = $tax->getId().':'.$catId;
-                    if (!isset($aggregates[$key])) {
-                        $aggregates[$key] = ['tax' => $tax, 'rate' => $rate, 'count' => $count, 'nights' => 0];
-                    }
-                    ++$aggregates[$key]['nights'];
-                }
-            }
-        }
-
         $result = [];
-        foreach ($aggregates as $a) {
-            $result[] = $this->makeBreakdown($a['tax'], $a['rate'], $a['nights'], $a['count']);
+        foreach ($taxes as $tax) {
+            $rows = match ($tax->getCalculationMode()) {
+                TaxCalculationMode::PER_NIGHT_FLAT => $this->calculateFlatPerNight($tax, $reservation, $start, $totalNights),
+                TaxCalculationMode::PERCENT_PER_ROOM => $this->calculatePercentPerRoom($tax, $reservation, $start, $totalNights),
+            };
+            foreach ($rows as $row) {
+                $result[] = $row;
+            }
         }
 
         return $result;
@@ -102,7 +65,113 @@ class TouristTaxService
         return $this->touristTaxRepository->hasActiveForSubsidiary($subsidiary);
     }
 
-    private function makeBreakdown(TouristTax $tax, TouristTaxRate $rate, int $nights, int $count): TouristTaxBreakdown
+    /**
+     * @return TouristTaxBreakdown[]
+     */
+    private function calculateFlatPerNight(TouristTax $tax, Reservation $reservation, \DateTimeInterface $start, int $totalNights): array
+    {
+        $guestCounts = $reservation->getGuestCounts();
+        if (empty($guestCounts)) {
+            return [];
+        }
+
+        $categories = [];
+        foreach ($this->guestCategoryRepository->findAll() as $gc) {
+            $categories[$gc->getId()] = $gc;
+        }
+
+        $aggregates = [];
+        for ($i = 0; $i < $totalNights; ++$i) {
+            $night = (clone $start)->modify('+'.$i.' days');
+            if (!$tax->isValidOn($night)) {
+                continue;
+            }
+            foreach ($tax->getRates() as $rate) {
+                $catId = $rate->getGuestCategory()?->getId();
+                if (null === $catId) {
+                    continue;
+                }
+                $count = (int) ($guestCounts[$catId] ?? 0);
+                if ($count <= 0) {
+                    continue;
+                }
+                $category = $categories[$catId] ?? $rate->getGuestCategory();
+                if ($tax->isAppliesOnlyToAdult() && !$category?->isAdult()) {
+                    continue;
+                }
+
+                $key = $catId;
+                if (!isset($aggregates[$key])) {
+                    $aggregates[$key] = ['rate' => $rate, 'count' => $count, 'nights' => 0];
+                }
+                ++$aggregates[$key]['nights'];
+            }
+        }
+
+        $rows = [];
+        foreach ($aggregates as $a) {
+            $rows[] = $this->makeFlatBreakdown($tax, $a['rate'], $a['nights'], $a['count']);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return TouristTaxBreakdown[]
+     */
+    private function calculatePercentPerRoom(TouristTax $tax, Reservation $reservation, \DateTimeInterface $start, int $totalNights): array
+    {
+        $percent = $tax->getPercentageRateFloat();
+        $base = $tax->getPercentageBase();
+        if (null === $percent || $percent <= 0.0 || null === $base || null === $this->priceService) {
+            return [];
+        }
+
+        $apartmentTotals = $this->priceService->getApartmentTotalsPerNight($reservation, $base);
+
+        $coveredNights = 0;
+        $apartmentSum = 0.0;
+        for ($i = 0; $i < $totalNights; ++$i) {
+            $night = (clone $start)->modify('+'.$i.' days');
+            if (!$tax->isValidOn($night)) {
+                continue;
+            }
+            $key = $night->format('Y-m-d');
+            if (!isset($apartmentTotals[$key])) {
+                continue;
+            }
+            $apartmentSum += $apartmentTotals[$key];
+            ++$coveredNights;
+        }
+
+        if ($coveredNights === 0 || $apartmentSum <= 0.0) {
+            return [];
+        }
+
+        $total = $apartmentSum * $percent / 100.0;
+
+        return [
+            new TouristTaxBreakdown(
+                taxId: (int) $tax->getId(),
+                taxName: $tax->getName(),
+                categoryId: 0,
+                categoryName: '',
+                pricePerNight: 0.0,
+                nights: $coveredNights,
+                count: 1,
+                reportGroup: null,
+                taxRate: $tax->getTaxRate(),
+                revenueAccount: $tax->getRevenueAccount(),
+                includesVat: $tax->isIncludesVat(),
+                calculationMode: TaxCalculationMode::PERCENT_PER_ROOM,
+                percentageRate: $percent,
+                apartmentBase: round($apartmentSum, 2),
+                precomputedTotal: round($total, 2),
+            ),
+        ];
+    }
+
+    private function makeFlatBreakdown(TouristTax $tax, TouristTaxRate $rate, int $nights, int $count): TouristTaxBreakdown
     {
         $category = $rate->getGuestCategory();
 
@@ -118,6 +187,7 @@ class TouristTaxService
             taxRate: $tax->getTaxRate(),
             revenueAccount: $tax->getRevenueAccount(),
             includesVat: $tax->isIncludesVat(),
+            calculationMode: TaxCalculationMode::PER_NIGHT_FLAT,
         );
     }
 }

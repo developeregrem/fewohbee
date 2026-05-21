@@ -59,9 +59,19 @@ templates.editor.invoice.number.desc: Invoice number
 templates.editor.lastname: Last Name
 templates.editor.misc.positions: Miscellaneous positions
 templates.editor.misc.positions.desc: >-
-  Inserts a table with all miscellaneous positions. If there are multiple
-  positions, all are listed. Only one position can be seen in the preview, but
-  all of them will be present during export.
+  Inserts a table with all miscellaneous positions (excluding tourist-tax and
+  apartment-modifier positions, which have their own snippets). If there are
+  multiple positions, all are listed. Only one position can be seen in the
+  preview, but all of them will be present during export.
+templates.editor.apartment_modifier.positions: Surcharge / discount positions
+templates.editor.apartment_modifier.positions.desc: >-
+  Inserts a table with all apartment surcharge / discount positions (e.g.
+  last-minute discounts, pet fees). The table is only rendered when such
+  positions exist on the invoice.
+templates.editor.tourist_tax.positions: Tourist tax positions
+templates.editor.tourist_tax.positions.desc: >-
+  Inserts a table with all tourist-tax / accommodation-tax positions. The
+  table is only rendered when such positions exist on the invoice.
 templates.editor.misc.total: Total price of all other items
 templates.editor.misc.total.desc: Returns the total price of all other items.
 templates.editor.netto: Total net

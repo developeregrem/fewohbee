@@ -796,7 +796,23 @@
             </trans-unit>
             <trans-unit id="templates.editor.misc.positions.desc">
                 <source>templates.editor.misc.positions.desc</source>
-                <target>Fügt eine Tabelle mit allen Sonstigepositionen ein. Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
+                <target>Fügt eine Tabelle mit allen sonstigen Positionen ein (ausgenommen Beherbergungsabgabe und Aufschläge/Ermäßigungen, für die es eigene Snippets gibt). Wenn mehrere Positionen existieren, werden alle aufgelistet. In der Vorschau ist nur eine Zeile zu sehen, beim Export werden alle vorhanden sein.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.apartment_modifier.positions">
+                <source>templates.editor.apartment_modifier.positions</source>
+                <target>Liste der Aufschläge / Ermäßigungen</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.apartment_modifier.positions.desc">
+                <source>templates.editor.apartment_modifier.positions.desc</source>
+                <target>Fügt eine Tabelle mit allen Aufschlag- und Ermäßigungspositionen ein (z.B. Last-Minute-Rabatt, Haustiergebühr). Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tourist_tax.positions">
+                <source>templates.editor.tourist_tax.positions</source>
+                <target>Liste der Beherbergungsabgabe</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.tourist_tax.positions.desc">
+                <source>templates.editor.tourist_tax.positions.desc</source>
+                <target>Fügt eine Tabelle mit allen Beherbergungsabgabe-/Kurtaxe-Positionen ein. Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.</target>
             </trans-unit>
             <trans-unit id="templates.notfound">
                 <source>templates.notfound</source>

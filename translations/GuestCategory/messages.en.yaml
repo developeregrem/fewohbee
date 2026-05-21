@@ -7,6 +7,8 @@ guest_category:
   system:
     locked: "System categories cannot be deleted."
   persons_total: "Persons total (occupancy)"
+  not_in_room_price: "Not included in room price"
+  not_in_room_price.help: "Guests in this category do not count toward room occupancy and are not part of the apartment price — they are automatically excluded from the overnight charge. A price modifier (e.g. \"free\") is neither needed nor effective here."
 
   flag:
     adult: "Adult"

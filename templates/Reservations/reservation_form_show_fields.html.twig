@@ -406,7 +406,7 @@
         {% endfor %}
         {% if hasActiveTouristTax|default(false) %}
             <div class="w-100"><hr class="my-3"></div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <form id="update-kurtaxe-waived" action="{{ path('reservations.update.kurtaxe.waived', {'reservationId': reservationId}) }}">
                     <div class="form-check form-switch">
                         <input type="checkbox" class="form-check-input" id="kurtaxe-waived-toggle"

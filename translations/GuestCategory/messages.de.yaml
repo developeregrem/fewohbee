@@ -7,6 +7,8 @@ guest_category:
   system:
     locked: "Systemkategorien können nicht gelöscht werden."
   persons_total: "Personen gesamt (Belegung)"
+  not_in_room_price: "Im Zimmerpreis nicht enthalten"
+  not_in_room_price.help: 'Gäste dieser Kategorie zählen nicht zur Zimmerbelegung und werden vom Apartmentpreis nicht erfasst — sie sind dadurch automatisch im Übernachtungspreis nicht enthalten. Eine Preisanpassung (z. B. „kostenlos") ist hier weder nötig noch wirksam.'
 
   flag:
     adult: "Erwachsen"

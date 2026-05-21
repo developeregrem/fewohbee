@@ -303,6 +303,10 @@ class ReservationServiceController extends AbstractController
 
         $reservations = $rs->createReservationsFromReservationInformationArray($newReservationsInformationArray);
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
+        $guestCategoriesById = [];
+        foreach ($guestCategories as $guestCategory) {
+            $guestCategoriesById[$guestCategory->getId()] = $guestCategory;
+        }
 
         return $this->render('Reservations/reservation_form_select_period_and_appartment.html.twig', [
             'objects' => $objects,
@@ -311,6 +315,7 @@ class ReservationServiceController extends AbstractController
             'reservations' => $reservations,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
+            'guestCategoriesById' => $guestCategoriesById,
         ]);
     }
 
@@ -366,11 +371,20 @@ class ReservationServiceController extends AbstractController
         $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
+        $guestCountsRaw = $request->request->get('guestCounts', '{}');
+        $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+        $reservation = [
+            'guestCounts' => $guestCounts,
+            'persons' => (int) $request->request->get('persons', 0),
+            'adultRuleOverride' => (bool) $request->request->get('adultRuleOverride', false),
+            'reservationStatus' => ['id' => (int) $request->request->get('status', 0)],
+        ];
 
         return $this->render('Reservations/reservation_form_edit_show_available_appartments.html.twig', [
             'appartments' => $apartments,
             'reservationStatus' => $reservationStatus,
             'guestCategories' => $guestCategories,
+            'reservation' => $reservation,
         ]);
     }
 
@@ -682,7 +696,6 @@ class ReservationServiceController extends AbstractController
         $guestCategoriesById = [];
         $gCategories = $em->getRepository(GuestCategory::class)->findBy([], ['sortOrder' => 'ASC', 'id' => 'ASC']);
         foreach ($gCategories as $gc) {
-            echo $gc->getId();
             $guestCategoriesById[$gc->getId()] = $gc;
         }
 

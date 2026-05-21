@@ -384,7 +384,7 @@
             </trans-unit>
             <trans-unit id="nav.tourist_tax">
                 <source>nav.tourist_tax</source>
-                <target>Kurtaxe</target>
+                <target>Beherbergungsabgaben</target>
             </trans-unit>
             <trans-unit id="copy.text">
                 <source>copy.text</source>

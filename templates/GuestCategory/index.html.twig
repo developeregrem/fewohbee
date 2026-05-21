@@ -37,7 +37,16 @@
                 <tbody>
                 {% for category in guest_categories %}
                     <tr>
-                        <td>{{ category.name }}</td>
+                        <td>
+                            {{ category.name }}
+                            {% if not category.isCountedInOccupancy %}
+                                <span class="badge bg-light text-secondary border ms-2"
+                                      data-bs-toggle="tooltip"
+                                      title="{{ 'guest_category.not_in_room_price.help'|trans }}">
+                                    {{ 'guest_category.not_in_room_price'|trans }}
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>{{ category.acronym }}</td>
                         <td>{{ ('guest_category.statistical_group.' ~ category.statisticalGroup.value)|trans }}</td>
                         <td>

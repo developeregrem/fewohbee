@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\AccountingAccount;
+use App\Entity\Enum\PercentageBase;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Subsidiary;
 use App\Entity\TaxRate;
 use App\Entity\TouristTax;
@@ -15,7 +17,9 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -31,6 +35,26 @@ class TouristTaxType extends AbstractType
             ->add('name', TextType::class, [
                 'label' => 'tourist_tax.field.name',
                 'empty_data' => '',
+            ])
+            ->add('calculationMode', EnumType::class, [
+                'class' => TaxCalculationMode::class,
+                'choice_label' => fn (TaxCalculationMode $m) => 'tourist_tax.calculation_mode.'.$m->value,
+                'label' => 'tourist_tax.field.calculation_mode',
+                'help' => 'tourist_tax.field.calculation_mode.help',
+            ])
+            ->add('percentageRate', NumberType::class, [
+                'label' => 'tourist_tax.field.percentage_rate',
+                'help' => 'tourist_tax.field.percentage_rate.help',
+                'scale' => 2,
+                'required' => false,
+            ])
+            ->add('percentageBase', EnumType::class, [
+                'class' => PercentageBase::class,
+                'choice_label' => fn (PercentageBase $b) => 'tourist_tax.percentage_base.'.$b->value,
+                'label' => 'tourist_tax.field.percentage_base',
+                'help' => 'tourist_tax.field.percentage_base.help',
+                'required' => false,
+                'placeholder' => '-',
             ])
             ->add('taxRate', EntityType::class, [
                 'class' => TaxRate::class,
@@ -56,7 +80,6 @@ class TouristTaxType extends AbstractType
             ])
             ->add('appliesOnlyToAdult', CheckboxType::class, [
                 'label' => 'tourist_tax.field.applies_only_to_adult',
-                'help' => 'tourist_tax.field.applies_only_to_adult.help',
                 'required' => false,
             ])
             ->add('validFrom', DateType::class, [

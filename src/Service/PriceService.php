@@ -17,6 +17,7 @@ use App\Dto\PriceBreakdown;
 use App\Dto\PriceBreakdownLine;
 use App\Entity\AccountingAccount;
 use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\PriceComponentAllocationType;
 use App\Entity\GuestCategory;
 use App\Entity\GuestCategoryModifier;
@@ -561,6 +562,73 @@ class PriceService
         }
 
         return $result;
+    }
+
+    /**
+     * Apartment total per night (after modifier deltas), expressed in the
+     * requested net/gross flavor. Used as the bemessungsgrundlage for
+     * percentage-based tourist taxes (Dresden/Berlin city tax models).
+     *
+     * Per-head pricing: sum(count × unit_with_modifier) per night.
+     * Flat-price / per-room: basePrice once per night (occupancy-independent).
+     *
+     * @return array<string, float> keyed by Y-m-d, value = apartment total in the requested base
+     */
+    public function getApartmentTotalsPerNight(Reservation $reservation, PercentageBase $target): array
+    {
+        $breakdowns = $this->getPriceBreakdownForReservation($reservation);
+        $result = [];
+        foreach ($breakdowns as $breakdown) {
+            $price = $breakdown->basePrice;
+            if (null === $price) {
+                continue;
+            }
+            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
+                $stored = (float) $price->getPrice();
+            } else {
+                // Mirror the apartment invoice row: numberOfPersons × per-head,
+                // then apply modifier deltas (only for occupancy-counted, non-adult
+                // categories — same rule as buildApartmentModifierPositions). This
+                // makes the city-tax base match the effective apartment total
+                // visible on the invoice (room row + modifier row).
+                $perHead = (float) $price->getPrice();
+                $numPersons = (int) $price->getNumberOfPersons();
+                $stored = $perHead * $numPersons;
+                foreach ($breakdown->lines as $line) {
+                    if (null === $line->modifier) {
+                        continue;
+                    }
+                    if (!$line->category->isCountedInOccupancy()) {
+                        continue;
+                    }
+                    if ($line->category->isAdult()) {
+                        continue;
+                    }
+                    $delta = ($line->unitPrice - $perHead) * $line->count;
+                    $stored += $delta;
+                }
+            }
+            $vat = null !== $price->getVat() ? (float) $price->getVat() : 0.0;
+            $storedIncludesVat = (bool) $price->getIncludesVat();
+
+            $value = $this->convertNetGross($stored, $vat, $storedIncludesVat, $target);
+            $result[$breakdown->night->format('Y-m-d')] = $value;
+        }
+
+        return $result;
+    }
+
+    private function convertNetGross(float $stored, float $vatPercent, bool $storedIncludesVat, PercentageBase $target): float
+    {
+        if ($vatPercent <= 0.0) {
+            return $stored;
+        }
+        $factor = 1.0 + $vatPercent / 100.0;
+        if ($target === PercentageBase::NET) {
+            return $storedIncludesVat ? $stored / $factor : $stored;
+        }
+
+        return $storedIncludesVat ? $stored : $stored * $factor;
     }
 
     /**

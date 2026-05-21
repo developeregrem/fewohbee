@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PercentageBase;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Repository\TouristTaxRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -52,6 +54,15 @@ class TouristTax
 
     #[ORM\Column(name: 'sort_order', type: 'integer')]
     private int $sortOrder = 0;
+
+    #[ORM\Column(name: 'calculation_mode', type: 'string', length: 32, enumType: TaxCalculationMode::class, options: ['default' => 'per_night_flat'])]
+    private TaxCalculationMode $calculationMode = TaxCalculationMode::PER_NIGHT_FLAT;
+
+    #[ORM\Column(name: 'percentage_rate', type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $percentageRate = null;
+
+    #[ORM\Column(name: 'percentage_base', type: 'string', length: 16, nullable: true, enumType: PercentageBase::class)]
+    private ?PercentageBase $percentageBase = null;
 
     /** @var Collection<int, TouristTaxRate> */
     #[ORM\OneToMany(mappedBy: 'touristTax', targetEntity: TouristTaxRate::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
@@ -221,6 +232,52 @@ class TouristTax
                 $r->setTouristTax(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCalculationMode(): TaxCalculationMode
+    {
+        return $this->calculationMode;
+    }
+
+    public function setCalculationMode(TaxCalculationMode $m): self
+    {
+        $this->calculationMode = $m;
+
+        return $this;
+    }
+
+    public function isPercentageMode(): bool
+    {
+        return $this->calculationMode->isPercentage();
+    }
+
+    public function getPercentageRate(): ?string
+    {
+        return $this->percentageRate;
+    }
+
+    public function setPercentageRate(?string $v): self
+    {
+        $this->percentageRate = $v;
+
+        return $this;
+    }
+
+    public function getPercentageRateFloat(): ?float
+    {
+        return null === $this->percentageRate ? null : (float) $this->percentageRate;
+    }
+
+    public function getPercentageBase(): ?PercentageBase
+    {
+        return $this->percentageBase;
+    }
+
+    public function setPercentageBase(?PercentageBase $b): self
+    {
+        $this->percentageBase = $b;
 
         return $this;
     }

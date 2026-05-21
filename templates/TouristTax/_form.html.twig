@@ -1,7 +1,18 @@
-<fieldset id="tt-form-fieldset-{{ tax.id }}" {% if tax.id != null %} disabled {% endif %}>
+<fieldset id="tt-form-fieldset-{{ tax.id }}" {% if tax.id != null %} disabled {% endif %}
+          data-controller="tourist-tax-mode"
+          data-tourist-tax-mode-flat-value="per_night_flat">
     <div class="row">
         <div class="col-md-6">{{ form_row(form.name) }}</div>
         <div class="col-md-6">{{ form_row(form.sortOrder) }}</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {{ form_row(form.calculationMode, { attr: { 'data-tourist-tax-mode-target': 'select', 'data-action': 'tourist-tax-mode#update' } }) }}
+        </div>
+    </div>
+    <div class="row" data-tourist-tax-mode-target="percentFields">
+        <div class="col-md-6">{{ form_row(form.percentageRate) }}</div>
+        <div class="col-md-6">{{ form_row(form.percentageBase) }}</div>
     </div>
     <div class="row">
         <div class="col-md-6">{{ form_row(form.validFrom) }}</div>
@@ -15,18 +26,20 @@
     <div class="row">
         <div class="col">
             {{ form_row(form.includesVat) }}
-            {{ form_row(form.appliesOnlyToAdult) }}
+            <div data-tourist-tax-mode-target="adultOnlyWrapper">{{ form_row(form.appliesOnlyToAdult) }}</div>
             {{ form_row(form.active) }}
         </div>
     </div>
     {{ form_row(form.subsidiaries) }}
 
-    <hr>
-    <h5>{{ 'tourist_tax.rates.heading'|trans }}</h5>
-    <p class="text-muted small mb-2">{{ 'tourist_tax.rates.help'|trans({ '%symbol%': currency_symbol }) }}</p>
+    <hr data-tourist-tax-mode-target="ratesSection">
+    <div data-tourist-tax-mode-target="ratesSection">
+        <h5>{{ 'tourist_tax.rates.heading'|trans }}</h5>
+        <p class="text-muted small mb-2">{{ 'tourist_tax.rates.help'|trans({ '%symbol%': currency_symbol }) }}</p>
+    </div>
 
     {% set ratePrototype %}{{ include('TouristTax/_rate_row.html.twig', { rateForm: form.rates.vars.prototype }) }}{% endset %}
-    <div data-controller="collection"
+    <div data-tourist-tax-mode-target="ratesSection" data-controller="collection"
          data-collection-prototype-value="{{ ratePrototype|e('html_attr') }}"
          data-collection-index-value="{{ form.rates|length }}">
         <table class="table table-sm align-middle mb-2">

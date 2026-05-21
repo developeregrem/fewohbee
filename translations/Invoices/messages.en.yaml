@@ -129,6 +129,7 @@ invoice.apartment_modifier.label.discount_percent: 'Discount %value%%'
 invoice.apartment_modifier.label.flat_rate: 'Flat rate %value%'
 invoice.apartment_modifier.label.free: Free
 invoice.tourist_tax.position: '%tax% — %category% (%nights% × %count%)'
+invoice.tourist_tax.position.percent_per_room: '%tax% (%percent% %% of overnight price, %nights%)'
 invoice.tourist_tax.position.nights: '{0} %count% nights|{1} %count% night|]1,Inf] %count% nights'
 invoice.tourist_tax.position.persons: '{0} %count% people|{1} %count% person|]1,Inf] %count% people'
 invoice.tourist_tax.no_positions: No tourist tax lines were calculated for this booking.

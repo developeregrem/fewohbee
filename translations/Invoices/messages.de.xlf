@@ -476,7 +476,7 @@
             </trans-unit>
             <trans-unit id="invoice.tourist_tax.heading">
                 <source>invoice.tourist_tax.heading</source>
-                <target>Kurtaxe</target>
+                <target>Beherbergungsabgaben</target>
             </trans-unit>
             <trans-unit id="invoice.apartment_modifier.heading">
                 <source>invoice.apartment_modifier.heading</source>
@@ -506,6 +506,10 @@
                 <source>invoice.tourist_tax.position</source>
                 <target>%tax% — %category% (%nights% × %count%)</target>
             </trans-unit>
+            <trans-unit id="invoice.tourist_tax.position.percent_per_room">
+                <source>invoice.tourist_tax.position.percent_per_room</source>
+                <target>%tax% (%percent% % vom Übernachtungspreis, %nights%)</target>
+            </trans-unit>
             <trans-unit id="invoice.tourist_tax.position.nights">
                 <source>invoice.tourist_tax.position.nights</source>
                 <target>{0} %count% Nächte|{1} %count% Nacht|]1,Inf] %count% Nächte</target>
@@ -516,7 +520,7 @@
             </trans-unit>
             <trans-unit id="invoice.tourist_tax.no_positions">
                 <source>invoice.tourist_tax.no_positions</source>
-                <target>Für diese Buchung wurden keine Kurtaxe-Positionen berechnet.</target>
+                <target>Für diese Buchung wurden keine Beherbergungsabgaben berechnet.</target>
             </trans-unit>
         </body>
     </file>

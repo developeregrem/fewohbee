@@ -15,6 +15,7 @@ namespace App\Service;
 
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
@@ -613,27 +614,44 @@ class InvoiceService
 
     private function makeTouristTaxPosition(TouristTaxBreakdown $row): InvoicePosition
     {
-        $description = $this->translator->trans('invoice.tourist_tax.position', [
-            '%tax%' => $row->taxName,
-            '%category%' => $row->categoryName,
-            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
-                '%count%' => $row->nights,
-            ]),
-            '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
-                '%count%' => $row->count,
-            ]),
-        ]);
-
         $position = new InvoicePosition();
-        $position->setAmount($row->nights * $row->count);
-        $position->setDescription($description);
-        $position->setPrice(number_format($row->pricePerNight, 2, '.', ''));
         $position->setVat(null !== $row->taxRate ? $row->taxRate->getRateFloat() : 0.0);
         $position->setIncludesVat($row->includesVat);
         $position->setIsFlatPrice(false);
         $position->setIsPerRoom(false);
         $position->setRevenueAccount($row->revenueAccount);
         $position->setPositionGroup('tourist_tax');
+
+        if (TaxCalculationMode::PER_NIGHT_FLAT === $row->calculationMode) {
+            $description = $this->translator->trans('invoice.tourist_tax.position', [
+                '%tax%' => $row->taxName,
+                '%category%' => $row->categoryName,
+                '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
+                    '%count%' => $row->nights,
+                ]),
+                '%count%' => $this->translator->trans('invoice.tourist_tax.position.persons', [
+                    '%count%' => $row->count,
+                ]),
+            ]);
+            $position->setDescription($description);
+            $position->setAmount($row->nights * $row->count);
+            $position->setPrice(number_format($row->pricePerNight, 2, '.', ''));
+
+            return $position;
+        }
+
+        // PERCENT_PER_ROOM: amount = 1, price = total. Avoids rounding artifacts
+        // from dividing the total over nights when apartment prices vary per night.
+        $description = $this->translator->trans('invoice.tourist_tax.position.percent_per_room', [
+            '%tax%' => $row->taxName,
+            '%percent%' => number_format((float) ($row->percentageRate ?? 0.0), 2, ',', '.'),
+            '%nights%' => $this->translator->trans('invoice.tourist_tax.position.nights', [
+                '%count%' => $row->nights,
+            ]),
+        ]);
+        $position->setDescription($description);
+        $position->setAmount(1);
+        $position->setPrice(number_format($row->total(), 2, '.', ''));
 
         return $position;
     }
