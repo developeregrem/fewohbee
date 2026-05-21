@@ -870,7 +870,7 @@ class TemplatesService
             return null;
         }
 
-        $value = trim($matches[2]);
+        $value = trim(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
         return '' === $value ? null : $value;
     }

@@ -1824,7 +1824,26 @@ export default class extends Controller {
     }
 
     restoreContentFromVisual(content) {
-        return this.decodeStyleBlocksFromVisual(this.decodeTemplateCommentsFromVisual(content));
+        const decoded = this.decodeStyleBlocksFromVisual(this.decodeTemplateCommentsFromVisual(content));
+        return this.normalizeTemplateControlAttributeEntities(decoded);
+    }
+
+    normalizeTemplateControlAttributeEntities(content) {
+        if (!content) {
+            return '';
+        }
+
+        return content.replace(
+            /\b(data-repeat|data-repeat-as|data-repeat-key|data-if)=(["'])(.*?)\2/gi,
+            (match, attributeName, quote, value) => `${attributeName}=${quote}${this.decodeTemplateControlAttributeValue(value)}${quote}`
+        );
+    }
+
+    decodeTemplateControlAttributeValue(value) {
+        return (value || '')
+            .replace(/&gt;/gi, '>')
+            .replace(/&lt;/gi, '<')
+            .replace(/&amp;/gi, '&');
     }
 
     normalizeLegacyDocumentHtml(content) {

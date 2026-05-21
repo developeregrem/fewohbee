@@ -59,6 +59,42 @@ final class TemplatesServiceTest extends TestCase
         self::assertStringNotContainsString('data-repeat-key=', $output);
     }
 
+    public function testRenderTemplateStringDecodesEncodedArrowInDataRepeatExpression(): void
+    {
+        $service = $this->createService();
+
+        $output = $service->renderTemplateString(
+            '<table><tbody><tr data-repeat="invoice.positions|filter(p =&gt; p.positionGroup == \'apartment_modifier\')" data-repeat-as="position"><td>[[ position.description ]]</td></tr></tbody></table>',
+            [
+                'invoice' => [
+                    'positions' => [
+                        ['description' => 'Keep', 'positionGroup' => 'apartment_modifier'],
+                        ['description' => 'Skip', 'positionGroup' => 'tourist_tax'],
+                    ],
+                ],
+            ]
+        );
+
+        self::assertStringContainsString('<td>Keep</td>', $output);
+        self::assertStringNotContainsString('<td>Skip</td>', $output);
+        self::assertStringNotContainsString('&gt;', $output);
+    }
+
+    public function testRenderTemplateStringDecodesEncodedGreaterThanInDataRepeatExpression(): void
+    {
+        $service = $this->createService();
+
+        $output = $service->renderTemplateString(
+            '<p><span data-repeat="vats|filter((v, k) =&gt; k &gt; 0)" data-repeat-key="key" data-repeat-as="value">[[ key ]]=[[ value ]];</span></p>',
+            ['vats' => [0 => 'zero', 7 => 'seven', 19 => 'nineteen']]
+        );
+
+        self::assertStringNotContainsString('0=zero;', $output);
+        self::assertStringContainsString('7=seven;', $output);
+        self::assertStringContainsString('19=nineteen;', $output);
+        self::assertStringNotContainsString('&gt;', $output);
+    }
+
     public function testRenderTemplateStringConvertsDataIfBlocks(): void
     {
         $service = $this->createService();
