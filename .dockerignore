@@ -13,6 +13,7 @@ var/
 node_modules/
 public/assets/
 public/bundles/
+assets/vendor/
 
 # Local env / secrets (never bake into image)
 .env

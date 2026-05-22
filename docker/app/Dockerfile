@@ -84,6 +84,7 @@ RUN TZ=UTC \
     USE_REDIS_CACHE=true \
     sh -c 'composer dump-autoload --no-dev --optimize --classmap-authoritative \
         && php bin/console cache:warmup --no-interaction \
+        && php bin/console importmap:install --no-interaction \
         && php bin/console asset-map:compile --no-interaction' \
     && rm -rf tests docker .github .git .dockerignore \
     && chown -R 82:82 var public/assets
