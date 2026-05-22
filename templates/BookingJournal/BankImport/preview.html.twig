@@ -116,6 +116,9 @@
                     <i class="fas fa-sync-alt"></i> {{ 'accounting.bank_import.preview.reapply_rules.button'|trans }}
                 </button>
             </form>
+            <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-bolt"></i> {{ 'accounting.bank_import.rules.title'|trans }}
+            </a>
             {% set id = state.sessionImportId %}
             {% set targetUrl = path('bank_import.discard', {'sessionImportId': state.sessionImportId}) %}
             {% use "common/delete_popover.html.twig" %}
@@ -321,6 +324,7 @@
                 {% for line in state.lines %}
                     {% set forceDuplicate = line.forceImportDuplicate|default(false) %}
                     {% set readonly = line.isDuplicate and not forceDuplicate %}
+                    {% set invoiceManaged = line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty and not (line.userInvoiceNumber|default(null)) %}
                     <tr data-bank-import-preview-target="row"
                         data-idx="{{ line.idx }}"
                         data-status="{{ line.status }}"
@@ -384,12 +388,14 @@
                         </td>
 
                         <td>
+                            {% set displayedInvoiceNumber = line.userInvoiceNumber ?? line.matchedInvoiceNumber ?? '' %}
                             <input type="text" class="form-control form-control-sm"
-                                   value="{{ line.userInvoiceNumber ?? '' }}"
+                                   value="{{ displayedInvoiceNumber }}"
                                    placeholder="{{ 'accounting.bank_import.preview.invoice_number_placeholder'|trans }}"
                                    maxlength="50"
                                    data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
                                    data-field="invoiceNumber"
+                                   data-last-sent="{{ displayedInvoiceNumber }}"
                                    {% if readonly %}disabled{% endif %}>
                         </td>
 
@@ -411,7 +417,7 @@
 
                         {# Credit account #}
                         <td>
-                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty and not (line.userInvoiceNumber|default(null)) %}
+                            {% if invoiceManaged %}
                                 <div class="small text-muted"
                                      data-bs-toggle="tooltip"
                                      title="{{ 'accounting.bank_import.preview.invoice_accounts.help'|trans }}">
@@ -435,7 +441,7 @@
 
                         {# Tax rate #}
                         <td>
-                            {% if line.matchedInvoiceId and line.matchedInvoiceAmountMatches and line.splits is empty and not (line.userInvoiceNumber|default(null)) %}
+                            {% if invoiceManaged %}
                                 <div class="small text-muted"
                                      data-bs-toggle="tooltip"
                                      title="{{ 'accounting.bank_import.preview.invoice_tax_rate.help'|trans }}">
@@ -460,13 +466,21 @@
                         {# Remark + actions #}
                         <td>
                             <div class="d-flex gap-1 align-items-center">
-                                <input type="text" class="form-control form-control-sm"
-                                       value="{{ line.userRemark ?? '' }}"
-                                       placeholder="{{ 'accounting.bank_import.preview.remark_placeholder'|trans }}"
-                                       maxlength="255"
-                                       data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
-                                       data-field="remark"
-                                       {% if readonly %}disabled{% endif %}>
+                                {% if invoiceManaged %}
+                                    <div class="small text-muted flex-grow-1"
+                                         data-bs-toggle="tooltip"
+                                         title="{{ 'accounting.bank_import.preview.invoice_remark.help'|trans }}">
+                                        <i class="fas fa-receipt me-1"></i>{{ 'accounting.bank_import.preview.invoice_remark.label'|trans }}
+                                    </div>
+                                {% else %}
+                                    <input type="text" class="form-control form-control-sm"
+                                           value="{{ line.userRemark ?? '' }}"
+                                           placeholder="{{ 'accounting.bank_import.preview.remark_placeholder'|trans }}"
+                                           maxlength="255"
+                                           data-action="change->bank-import-preview#fieldChange blur->bank-import-preview#fieldChange"
+                                           data-field="remark"
+                                           {% if readonly %}disabled{% endif %}>
+                                {% endif %}
                                 {% if readonly %}
                                     <form method="post"
                                           action="{{ path('bank_import.line.force_duplicate', {'sessionImportId': state.sessionImportId, 'idx': line.idx}) }}"

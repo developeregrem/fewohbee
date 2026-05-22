@@ -47,6 +47,7 @@ export default class extends Controller {
         'ruleCondDirectionValue',
         'ruleCondPurpose',
         'ruleCondPurposeValue',
+        'rulePurpose',
         'ruleDebit',
         'ruleCredit',
         'ruleTaxRate',
@@ -742,6 +743,9 @@ export default class extends Controller {
         if (!line) return;
 
         this.activeIdx = idx;
+        if (this.hasRulePurposeTarget) {
+            this.rulePurposeTarget.textContent = line.purpose || '—';
+        }
 
         // Suggest a sensible default name.
         this.ruleNameTarget.value = (line.counterpartyName || this.ruleDefaultNameValue).slice(0, 80);

@@ -135,6 +135,9 @@ accounting:
       invoice_tax_rate:
         label: from invoice
         help: Tax rates are taken from the invoice positions.
+      invoice_remark:
+        label: from invoice
+        help: The remark is taken from the generated invoice booking.
       overlap_warning:
         message: 'Warning: This bank account already has %count% committed import(s) overlapping %from% to %to%: %imports%%more%'
         import: '%from%-%to% (committed at %committedAt%, %committed% lines posted)'

@@ -125,7 +125,7 @@ final class BankStatementCommitter
                             $invoice,
                             $bankAccount,
                             null,
-                            $line['userRemark'] ?? null,
+                            null,
                             $valueDate,
                             BookingEntry::SOURCE_MANUAL,
                         );

@@ -13,6 +13,12 @@
                 <p class="small text-muted mb-3">{{ 'accounting.bank_import.rule.intro'|trans }}</p>
 
                 <div class="mb-3">
+                    <div class="small text-muted">{{ 'accounting.bank_import.split.purpose'|trans }}</div>
+                    <div class="small border rounded bg-light p-2 text-break"
+                         data-bank-import-preview-target="rulePurpose">—</div>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label small fw-semibold">{{ 'accounting.bank_import.rule.name'|trans }}</label>
                     <input type="text" class="form-control form-control-sm"
                            maxlength="150"

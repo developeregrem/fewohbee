@@ -42,6 +42,7 @@ final class BankStatementCommitterTest extends TestCase
             'matchedInvoiceAmountMatches' => true,
             'status' => ImportState::LINE_STATUS_READY,
             'userDebitAccountId' => 1200,
+            'userRemark' => 'Wird bei interner Rechnung ignoriert',
         ]);
 
         $journal = $this->createMock(BookingJournalService::class);

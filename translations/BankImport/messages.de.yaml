@@ -135,6 +135,9 @@ accounting:
       invoice_tax_rate:
         label: aus Rechnung
         help: Die Steuersätze werden aus den Rechnungspositionen übernommen.
+      invoice_remark:
+        label: aus Rechnung
+        help: Die Bemerkung wird aus der erzeugten Rechnungsbuchung übernommen.
       overlap_warning:
         message: 'Achtung: Für dieses Bankkonto gibt es bereits %count% gebuchte Import(e), die den Zeitraum %from% bis %to% überschneiden: %imports%%more%'
         import: '%from%–%to% (gebucht am %committedAt%, %committed% Zeilen übernommen)'

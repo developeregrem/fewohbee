@@ -90,6 +90,7 @@ final class BankImportControllerTest extends WebTestCase
         self::assertNotNull($invoiceLine);
         self::assertSame($invoice->getId(), $invoiceLine['matchedInvoiceId']);
         self::assertSame('2026-0101', $invoiceLine['matchedInvoiceNumber']);
+        self::assertNull($invoiceLine['userInvoiceNumber']);
         self::assertTrue($invoiceLine['matchedInvoiceAmountMatches']);
         self::assertSame(ImportState::LINE_STATUS_READY, $invoiceLine['status']);
         self::assertSame((int) $bankAccount->getId(), $invoiceLine['userDebitAccountId']);
@@ -99,6 +100,7 @@ final class BankImportControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h4', $fixtureName);
         self::assertStringContainsString('2026-0101', (string) $client->getResponse()->getContent());
+        self::assertCount(1, $preview->filter('input[data-field="invoiceNumber"][value="2026-0101"][data-last-sent="2026-0101"]'));
         self::assertCount(10, $preview->filter('th[data-bank-import-preview-target~="sortHeader"]'));
         self::assertCount(10, $preview->filter('th[data-bank-import-preview-target~="sortHeader"] button[data-action="click->bank-import-preview#sortTable"]'));
         foreach ([
