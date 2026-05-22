@@ -16,6 +16,11 @@ parameters:
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
     default_frame_ancestors: ''
     frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
+    # fallback parameters
+    # define the redis host
+    env(REDIS_HOST): 'redis'
+    # define the used redix index
+    env(REDIS_IDX): '1'
 
 services:
     # default configuration for services in *this* file
