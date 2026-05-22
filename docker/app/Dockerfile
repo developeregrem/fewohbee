@@ -113,7 +113,8 @@ ENV APP_ENV=dev \
 COPY --from=vendor-debug /var/www/html/vendor ./vendor
 COPY --chown=82:82 . ./
 
-RUN composer dump-autoload \
+RUN TZ=UTC composer dump-autoload \
+    && mkdir -p var/cache var/log \
     && chown -R 82:82 var
 
 COPY docker/app/phpfpm-entrypoint.sh /entrypoint.sh
