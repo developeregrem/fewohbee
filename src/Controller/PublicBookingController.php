@@ -59,7 +59,7 @@ class PublicBookingController extends AbstractController
             'guestCategories' => $guestCategories,
             'errorMessage' => $error,
             'successMessage' => $successMessage,
-            'minArrivalDate' => (new \DateTimeImmutable('tomorrow'))->format('Y-m-d'),
+            'minArrivalDate' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
             'maxDepartureDate' => $restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
             'formState' => $abuseProtectionService->createFormState(false),
@@ -280,7 +280,7 @@ class PublicBookingController extends AbstractController
 
         $persons = max(1, (int) $request->request->get('persons', 1));
         $roomsCount = max(1, (int) $request->request->get('roomsCount', 1));
-        $minArrivalDate = new \DateTimeImmutable('tomorrow');
+        $minArrivalDate = new \DateTimeImmutable('today');
 
         if ($dateFrom > $dateTo) {
             throw new PublicBookingException('online_booking.error.departure_after_arrival');
