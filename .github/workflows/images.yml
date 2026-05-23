@@ -112,7 +112,27 @@ jobs:
 
       - name: Resolve phpfpm tag for COPY --from
         id: phpfpm-tag
-        run: echo "tag=sha-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+        # Use GITHUB_SHA directly — same source docker/metadata-action uses for
+        # its type=sha tag. Truncated to 7 chars to match the default short form.
+        run: echo "tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for phpfpm image to appear in GHCR
+        # build-push-action returns once the manifest list is pushed, but
+        # GHCR sometimes lags a few seconds before the tag becomes resolvable
+        # for downstream pulls. Poll the manifest with retries.
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/fewohbee-phpfpm:${{ steps.phpfpm-tag.outputs.tag }}
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if docker buildx imagetools inspect "$IMAGE" >/dev/null 2>&1; then
+              echo "phpfpm image $IMAGE is available."
+              exit 0
+            fi
+            echo "Attempt $i: $IMAGE not yet available, sleeping 5s ..."
+            sleep 5
+          done
+          echo "Giving up: phpfpm image $IMAGE not found in registry after 50s."
+          exit 1
 
       - name: Extract metadata
         id: meta
