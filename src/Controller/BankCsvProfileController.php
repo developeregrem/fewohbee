@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Entity\BankCsvProfile;
 use App\Form\BankCsvProfileType;
-use App\Repository\BankCsvProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,11 +18,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class BankCsvProfileController extends AbstractController
 {
     #[Route('', name: 'bank_import.profiles.index', methods: ['GET'])]
-    public function index(BankCsvProfileRepository $repo): Response
+    public function index(): Response
     {
-        return $this->render('BookingJournal/BankImport/profiles_index.html.twig', [
-            'profiles' => $repo->findAllOrdered(),
-        ]);
+        return $this->redirectToSettings();
+    }
+
+    private function redirectToSettings(): Response
+    {
+        return $this->redirect($this->generateUrl('bank_import.settings', ['tab' => 'tab-profiles']));
     }
 
     #[Route('/new', name: 'bank_import.profiles.new', methods: ['GET'])]
@@ -49,7 +51,7 @@ class BankCsvProfileController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'accounting.bank_import.profile.flash.created');
 
-            return $this->redirectToRoute('bank_import.profiles.index');
+            return $this->redirectToSettings();
         }
 
         return $this->renderProfileForm($form, $profile, isNew: true);
@@ -75,7 +77,7 @@ class BankCsvProfileController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'accounting.bank_import.profile.flash.updated');
 
-            return $this->redirectToRoute('bank_import.profiles.index');
+            return $this->redirectToSettings();
         }
 
         return $this->renderProfileForm($form, $profile, isNew: false);

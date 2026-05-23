@@ -29,18 +29,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class BankImportRuleController extends AbstractController
 {
     #[Route('', name: 'bank_import.rules.index', methods: ['GET'])]
-    public function index(BankImportRuleRepository $ruleRepo, AccountingAccountRepository $accountRepo, TaxRateRepository $taxRateRepo): Response
+    public function index(): Response
     {
-        $accountsById = [];
-        foreach ($accountRepo->findAll() as $account) {
-            $accountsById[(int) $account->getId()] = $account;
-        }
+        return $this->redirectToSettings();
+    }
 
-        return $this->render('BookingJournal/BankImport/rules_index.html.twig', [
-            'rules' => $ruleRepo->findAllOrdered(),
-            'accountsById' => $accountsById,
-            'taxRatesById' => $this->mapTaxRatesById($taxRateRepo),
-        ]);
+    private function redirectToSettings(): Response
+    {
+        return $this->redirect($this->generateUrl('bank_import.settings', ['tab' => 'tab-rules']));
     }
 
     #[Route('/{id}/edit', name: 'bank_import.rules.edit', methods: ['GET'])]
@@ -68,7 +64,7 @@ class BankImportRuleController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'accounting.bank_import.rules.flash.updated');
 
-            return $this->redirectToRoute('bank_import.rules.index');
+            return $this->redirectToSettings();
         }
 
         return $this->render('BookingJournal/BankImport/rule_form.html.twig', [
@@ -85,13 +81,13 @@ class BankImportRuleController extends AbstractController
         if (!$this->isCsrfTokenValid('toggle'.$rule->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
 
-            return $this->redirectToRoute('bank_import.rules.index');
+            return $this->redirectToSettings();
         }
 
         $rule->setIsEnabled(!$rule->isEnabled());
         $em->flush();
 
-        return $this->redirectToRoute('bank_import.rules.index');
+        return $this->redirectToSettings();
     }
 
     #[Route('/{id}/delete', name: 'bank_import.rules.delete', methods: ['DELETE'])]

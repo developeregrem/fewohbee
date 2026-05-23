@@ -116,7 +116,7 @@
                     <i class="fas fa-sync-alt"></i> {{ 'accounting.bank_import.preview.reapply_rules.button'|trans }}
                 </button>
             </form>
-            <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ path('bank_import.settings', {'tab': 'tab-rules'}) }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-bolt"></i> {{ 'accounting.bank_import.rules.title'|trans }}
             </a>
             {% set id = state.sessionImportId %}

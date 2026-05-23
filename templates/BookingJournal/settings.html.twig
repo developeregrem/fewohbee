@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" data-controller="journal-settings">
+<div class="container" data-controller="journal-settings tab-persistence">
     <div class="row">
         <div class="col">
             <ul class="pagination me-auto">
@@ -341,26 +341,5 @@
         </div>
     </div>
 
-    {# ── Reflect active tab in URL (?tab=…) ───────────────────── #}
-    <script>
-        (function () {
-            function init() {
-                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (t) {
-                    t.addEventListener('shown.bs.tab', function (e) {
-                        const id = (e.target.dataset.bsTarget || '').replace(/^#/, '');
-                        if (!id) return;
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('tab', id);
-                        history.replaceState(null, '', url.toString());
-                    });
-                });
-            }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
-        })();
-    </script>
 </div>
 {% endblock %}

@@ -9,7 +9,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+{% set activeTab = activeTab|default('tab-rules') %}
+<div class="container"
+     data-controller="bank-import-profiles bank-import tab-persistence"
+     data-bank-import-profiles-form-load-failed-value="{{ 'accounting.bank_import.profile.form_load_failed'|trans|e('html_attr') }}">
     <div class="row mb-2">
         <div class="col">
             <ul class="pagination me-auto">
@@ -29,31 +32,63 @@
 
     {% include 'feedback.html.twig' %}
 
-    <div class="card mb-4">
-        <div class="card-header d-flex align-items-center">
-            <h5 class="mb-0">{{ 'accounting.settings.invoice_number_samples.title'|trans }}</h5>
-            <span class="ms-2 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
-                  title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
-                <i class="fas fa-circle-question"></i>
-            </span>
+    {# ── Tab navigation ────────────────────────────────────────── #}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        {% for tab in [
+            {'id': 'tab-rules', 'label': 'accounting.bank_import.rules.title'},
+            {'id': 'tab-profiles', 'label': 'accounting.bank_import.profile.title'},
+            {'id': 'tab-invoice-matching', 'label': 'accounting.settings.invoice_number_samples.title'},
+        ] %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link{% if activeTab == tab.id %} active{% endif %}" type="button" role="tab"
+                        data-bs-toggle="tab" data-bs-target="#{{ tab.id }}">
+                    {{ tab.label|trans }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="tab-content">
+        {# ── Tab: Regeln ──────────────────────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-rules' %} show active{% endif %}" id="tab-rules" role="tabpanel">
+            {% include 'BookingJournal/BankImport/_rules_table.html.twig' %}
         </div>
-        <div class="card-body">
-            <p class="form-text mb-3">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
 
-            {{ form_start(form) }}
-                <div class="row g-2">
-                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample1) }}</div>
-                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample2) }}</div>
-                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample3) }}</div>
-                </div>
+        {# ── Tab: CSV-Profile ─────────────────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-profiles' %} show active{% endif %}" id="tab-profiles" role="tabpanel">
+            {% include 'BookingJournal/BankImport/_profiles_table.html.twig' %}
+        </div>
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> {{ 'button.save'|trans }}
-                    </button>
+        {# ── Tab: Rechnungsnummern erkennen ───────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-invoice-matching' %} show active{% endif %}" id="tab-invoice-matching" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0">{{ 'accounting.settings.invoice_number_samples.title'|trans }}</h5>
+                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
+                        <i class="fas fa-circle-question"></i>
+                    </span>
                 </div>
-            {{ form_end(form) }}
+                <div class="card-body">
+                    <p class="form-text mb-3">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
+
+                    {{ form_start(form) }}
+                        <div class="row g-2">
+                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample1) }}</div>
+                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample2) }}</div>
+                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample3) }}</div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {{ 'button.save'|trans }}
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
