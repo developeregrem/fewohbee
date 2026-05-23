@@ -19,8 +19,15 @@
         <div class="col-md-6">{{ form_row(form.validTo) }}</div>
     </div>
     {% set revenueAccountLabel %}{{ 'tourist_tax.field.revenue_account'|trans }} <span class="text-muted ms-1" style="cursor: help;" tabindex="0" data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="hover focus" data-bs-html="true" data-bs-content="{{ 'tourist_tax.field.revenue_account.help'|trans|e('html_attr') }}"><i class="fas fa-info-circle"></i></span>{% endset %}
+    {% set taxRateHelp %}<a href="{{ path('journal.settings.index', {'_fragment': 'tab-tax-rates'}) }}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> {{ 'accounting.taxrates.manage_link'|trans }}</a>{% endset %}
     <div class="row">
-        <div class="col-md-6">{{ form_row(form.taxRate) }}</div>
+        <div class="col-md-6">
+            {% if is_granted('ROLE_CASHJOURNAL') %}
+                {{ form_row(form.taxRate, { 'help': taxRateHelp, 'help_html': true }) }}
+            {% else %}
+                {{ form_row(form.taxRate) }}
+            {% endif %}
+        </div>
         <div class="col-md-6">{{ form_row(form.revenueAccount, { 'label': revenueAccountLabel|trim, 'label_html': true }) }}</div>
     </div>
     <div class="row">

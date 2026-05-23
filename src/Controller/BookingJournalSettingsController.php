@@ -29,6 +29,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[IsGranted('ROLE_CASHJOURNAL')]
 class BookingJournalSettingsController extends AbstractController
 {
+    private const VALID_TABS = ['tab-preset', 'tab-accounts', 'tab-tax-rates', 'tab-datev', 'tab-remark-labels'];
+
+    private function redirectToTab(string $tab): Response
+    {
+        $tab = in_array($tab, self::VALID_TABS, true) ? $tab : 'tab-preset';
+
+        return $this->redirect($this->generateUrl('journal.settings.index', ['tab' => $tab]));
+    }
+
     #[Route('', name: 'journal.settings.index', methods: ['GET', 'POST'])]
     public function index(
         Request $request,
@@ -47,10 +56,14 @@ class BookingJournalSettingsController extends AbstractController
             $settingsService->saveSettings($settings);
             $this->addFlash('success', 'accounting.settings.flash.saved');
 
-            return $this->redirectToRoute('journal.settings.index');
+            $tab = (string) $request->request->get('_save_tab', 'tab-datev');
+
+            return $this->redirectToTab($tab);
         }
 
         $activePreset = $settings->getChartPreset();
+        $requestedTab = (string) $request->query->get('tab', 'tab-preset');
+        $activeTab = in_array($requestedTab, self::VALID_TABS, true) ? $requestedTab : 'tab-preset';
 
         return $this->render('BookingJournal/settings.html.twig', [
             'settings' => $settings,
@@ -58,6 +71,7 @@ class BookingJournalSettingsController extends AbstractController
             'accounts' => $accountRepo->findAllOrdered($activePreset),
             'taxRates' => $taxRateRepo->findAllOrdered($activePreset),
             'presets' => AccountingSettings::VALID_PRESETS,
+            'activeTab' => $activeTab,
         ]);
     }
 
@@ -104,7 +118,7 @@ class BookingJournalSettingsController extends AbstractController
             ]));
         }
 
-        return $this->redirectToRoute('journal.settings.index');
+        return $this->redirectToTab('tab-preset');
     }
 
     // ── Accounts CRUD ────────────────────────────────────────────────
@@ -137,7 +151,7 @@ class BookingJournalSettingsController extends AbstractController
 
             $this->addFlash('success', 'accounting.accounts.flash.created');
 
-            return $this->redirectToRoute('journal.settings.index');
+            return $this->redirectToTab('tab-accounts');
         }
 
         return $this->renderAccountForm($form);
@@ -170,7 +184,7 @@ class BookingJournalSettingsController extends AbstractController
 
             $this->addFlash('success', 'accounting.accounts.flash.updated');
 
-            return $this->redirectToRoute('journal.settings.index');
+            return $this->redirectToTab('tab-accounts');
         }
 
         return $this->renderAccountForm($form);
@@ -239,7 +253,7 @@ class BookingJournalSettingsController extends AbstractController
 
             $this->addFlash('success', 'accounting.taxrates.flash.created');
 
-            return $this->redirectToRoute('journal.settings.index');
+            return $this->redirectToTab('tab-tax-rates');
         }
 
         return $this->renderTaxRateForm($form);
@@ -269,7 +283,7 @@ class BookingJournalSettingsController extends AbstractController
 
             $this->addFlash('success', 'accounting.taxrates.flash.updated');
 
-            return $this->redirectToRoute('journal.settings.index');
+            return $this->redirectToTab('tab-tax-rates');
         }
 
         return $this->renderTaxRateForm($form);

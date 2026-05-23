@@ -358,6 +358,13 @@
                                 <i class="fas fa-exclamation-triangle"></i> {{ 'price.package.taxrates.empty'|trans }}
                             </div>
                         {% endif %}
+                        {% if is_granted('ROLE_CASHJOURNAL') %}
+                            <div class="form-text mb-2">
+                                <a href="{{ path('journal.settings.index', {'_fragment': 'tab-tax-rates'}) }}" target="_blank" rel="noopener">
+                                    <i class="fas fa-external-link-alt"></i> {{ 'accounting.taxrates.manage_link'|trans }}
+                                </a>
+                            </div>
+                        {% endif %}
                         <div class="table-responsive">
                             <table class="table table-sm align-middle" id="package-components-{{ price.id }}">
                                 <thead>

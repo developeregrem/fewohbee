@@ -422,3 +422,9 @@ accounting:
         updated: Profile updated.
         deleted: Profile deleted.
       form_load_failed: Could not load the form.
+
+    settings:
+      title: Bank import settings
+      subtitle: Configure how invoice numbers are detected from the remittance text during import.
+      flash:
+        saved: Settings saved successfully.

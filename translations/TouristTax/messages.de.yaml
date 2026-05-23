@@ -37,8 +37,8 @@ tourist_tax:
     percentage_base.help: "Netto- oder Bruttoübernachtungspreis als Berechnungsgrundlage (gemäß kommunaler Vorschrift)."
 
   calculation_mode:
-    per_night_flat: "Pauschal pro Person und Nacht (z. B. Kurtaxe, Frankfurt)"
-    percent_per_room: "Prozent vom Übernachtungspreis (z. B. Berlin, Dresden, Köln)"
+    per_night_flat: "Pauschal pro Person und Nacht (z. B. Kurtaxe)"
+    percent_per_room: "Prozent vom Übernachtungspreis (z. B. City Tax)"
 
   percentage_base:
     net: "Netto-Übernachtungspreis"

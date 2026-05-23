@@ -34,6 +34,7 @@ accounting.settings.dictation_code: Dictation Code
 
 # Booking journal remark labels
 accounting.settings.remark_labels.title: Booking remark labels
+accounting.settings.remark_labels.intro: "These labels are only used by workflow actions (e.g. automatic booking entries on invoice payment)."
 accounting.settings.remark_labels.help: 'Optional labels for the automatic booking-journal remark. Split by main service (room/main positions) and miscellaneous services. Same account + VAT are grouped per section; the label is combined with the account name as remark (e.g. <b>"Accommodation – Revenue 7%"</b>). When empty, only the account name is written.'
 accounting.settings.main_position_label: Main service
 accounting.settings.main_position_label.placeholder: "e.g. Accommodation, Boat rental, Seminar fee"
@@ -96,6 +97,7 @@ accounting.accounts.type.revenue: Revenue
 accounting.accounts.type.expense: Expense
 
 # Tax Rates
+accounting.taxrates.manage_link: Manage tax rates
 accounting.taxrates.title: Tax Rates
 accounting.taxrates.help: "Manage the VAT rates for bookings. The DATEV BU key is required for the export."
 accounting.taxrates.add: Add Tax Rate

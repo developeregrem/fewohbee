@@ -38,7 +38,7 @@ tourist_tax:
 
   calculation_mode:
     per_night_flat: "Flat per person and night (e.g. tourist tax)"
-    percent_per_room: "Percent of overnight price (e.g. Berlin, Dresden, Cologne)"
+    percent_per_room: "Percent of overnight price (e.g. city tax)"
 
   percentage_base:
     net: "Net overnight price"

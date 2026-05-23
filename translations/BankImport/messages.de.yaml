@@ -423,3 +423,9 @@ accounting:
         updated: Profil aktualisiert.
         deleted: Profil gelöscht.
       form_load_failed: Formular konnte nicht geladen werden.
+
+    settings:
+      title: Bank-Import Einstellungen
+      subtitle: Konfiguriere, wie Rechnungsnummern beim Import aus dem Verwendungszweck erkannt werden.
+      flash:
+        saved: Einstellungen erfolgreich gespeichert.

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.bank_import.settings.title'|trans }}
+{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">{{ 'accounting.bank_import.settings.title'|trans }}</h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.settings.subtitle'|trans }}</p>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    <div class="card mb-4">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">{{ 'accounting.settings.invoice_number_samples.title'|trans }}</h5>
+            <span class="ms-2 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+                  title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
+                <i class="fas fa-circle-question"></i>
+            </span>
+        </div>
+        <div class="card-body">
+            <p class="form-text mb-3">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
+
+            {{ form_start(form) }}
+                <div class="row g-2">
+                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample1) }}</div>
+                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample2) }}</div>
+                    <div class="col-md-4">{{ form_row(form.invoiceNumberSample3) }}</div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ 'button.save'|trans }}
+                    </button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

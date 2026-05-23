@@ -34,6 +34,7 @@ accounting.settings.dictation_code: Diktatkürzel
 
 # Buchungstext-Labels
 accounting.settings.remark_labels.title: Buchungstext-Bezeichnungen
+accounting.settings.remark_labels.intro: "Diese Bezeichnungen werden ausschließlich von Workflow-Aktionen (z. B. automatische Buchungen bei Rechnungszahlung) verwendet."
 accounting.settings.remark_labels.help: 'Optionale Bezeichnungen für die automatisch erzeugten Buchungstexte im Journal. Getrennt nach Hauptleistung (Zimmer-/Hauptpositionen) und sonstigen Leistungen. Beim Buchen werden gleiche Konten und Steuersätze je Gruppe zusammengefasst; die Bezeichnung wird zusammen mit dem Kontennamen als Buchungstext verwendet (z. B. <b>„Übernachtung – Erlöse 7 %"</b>). Bleiben die Felder leer, wird nur der Kontenname geschrieben.'
 accounting.settings.main_position_label: Hauptleistung
 accounting.settings.main_position_label.placeholder: "z.B. Übernachtung, Bootsmiete, Seminargebühr"
@@ -96,6 +97,7 @@ accounting.accounts.type.revenue: Erlös
 accounting.accounts.type.expense: Aufwand
 
 # Steuersätze
+accounting.taxrates.manage_link: Steuersätze verwalten
 accounting.taxrates.title: Steuersätze
 accounting.taxrates.help: "Pflegen Sie die Umsatzsteuersätze für die Buchungen. Der DATEV BU-Schlüssel wird beim Export benötigt."
 accounting.taxrates.add: Steuersatz hinzufügen

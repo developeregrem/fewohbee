@@ -4,6 +4,10 @@
     {{ parent() }} - {{ 'accounting.settings.title'|trans }}
 {% endblock %}
 
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="journal-settings">
     <div class="row">
@@ -18,274 +22,312 @@
 
     {% include 'feedback.html.twig' %}
 
-    {# ── Preset ────────────────────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header d-flex align-items-center">
-            <h5 class="mb-0">{{ 'accounting.settings.preset.title'|trans }}</h5>
-            <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.preset.help'|trans }}">
-                <i class="fas fa-circle-question"></i>
-            </span>
+    {% set activeTab = activeTab|default('tab-preset') %}
+
+    {# ── Tab navigation ────────────────────────────────────────── #}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        {% for tab in [
+            {'id': 'tab-preset', 'label': 'accounting.settings.preset.title'},
+            {'id': 'tab-accounts', 'label': 'accounting.accounts.title'},
+            {'id': 'tab-tax-rates', 'label': 'accounting.taxrates.title'},
+            {'id': 'tab-datev', 'label': 'accounting.settings.datev.title'},
+            {'id': 'tab-remark-labels', 'label': 'accounting.settings.remark_labels.title'},
+        ] %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link{% if activeTab == tab.id %} active{% endif %}" type="button" role="tab"
+                        data-bs-toggle="tab" data-bs-target="#{{ tab.id }}">
+                    {{ tab.label|trans }}
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <style>
+        /* Bootstrap's `.tab-content > .tab-pane` only targets direct children;
+           the settings form wraps the DATEV and remark-label panes, so we
+           re-apply the hidden state to nested panes. */
+        #settingsTabsContent .tab-pane:not(.show) { display: none; }
+    </style>
+
+    <div class="tab-content" id="settingsTabsContent">
+        {# ── Tab: Kontenrahmen / Preset ──────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-preset' %} show active{% endif %}" id="tab-preset" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0">{{ 'accounting.settings.preset.title'|trans }}</h5>
+                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.preset.help'|trans }}">
+                        <i class="fas fa-circle-question"></i>
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('journal.settings.preset.load') }}">
+                        <div class="row align-items-end">
+                            <div class="col-md-6">
+                                <label for="preset" class="form-label">{{ 'accounting.settings.preset.label'|trans }}</label>
+                                <select id="preset" name="preset" class="form-select">
+                                    {% for preset in presets %}
+                                        <option value="{{ preset }}" {% if settings.chartPreset == preset %}selected{% endif %}>
+                                            {{ ('accounting.settings.preset.' ~ preset)|trans }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-2 mt-md-0">
+                                <button type="submit" class="btn btn-secondary">
+                                    <i class="fas fa-download"></i> {{ 'accounting.settings.preset.load'|trans }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="seedWorkflows" name="seedWorkflows" value="1">
+                            <label class="form-check-label" for="seedWorkflows">
+                                {{ 'accounting.settings.preset.seed_workflows'|trans }}
+                            </label>
+                            <div class="form-text">{{ 'accounting.settings.preset.seed_workflows_help'|trans }}</div>
+                        </div>
+                        {% if settings.chartPreset %}
+                            <p class="text-muted mt-2 mb-0">
+                                {{ 'accounting.settings.preset.current'|trans({'%preset%': settings.chartPreset|upper}) }}
+                            </p>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <form method="post" action="{{ path('journal.settings.preset.load') }}">
-                <div class="row align-items-end">
-                    <div class="col-md-6">
-                        <label for="preset" class="form-label">{{ 'accounting.settings.preset.label'|trans }}</label>
-                        <select id="preset" name="preset" class="form-select">
-                            {% for preset in presets %}
-                                <option value="{{ preset }}" {% if settings.chartPreset == preset %}selected{% endif %}>
-                                    {{ ('accounting.settings.preset.' ~ preset)|trans }}
-                                </option>
-                            {% endfor %}
-                        </select>
+
+        {# ── Tab: Konten ──────────────────────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-accounts' %} show active{% endif %}" id="tab-accounts" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0">{{ 'accounting.accounts.title'|trans }}</h5>
+                        <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.accounts.help'|trans }}">
+                            <i class="fas fa-circle-question"></i>
+                        </span>
                     </div>
-                    <div class="col-md-6 mt-2 mt-md-0">
-                        <button type="submit" class="btn btn-secondary">
-                            <i class="fas fa-download"></i> {{ 'accounting.settings.preset.load'|trans }}
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-action="click->journal-settings#openOffcanvas"
+                            data-url="{{ path('journal.settings.accounts.new') }}"
+                            data-offcanvas-title="{{ 'accounting.accounts.add'|trans }}">
+                        <i class="fas fa-plus"></i> {{ 'accounting.accounts.add'|trans }}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th>{{ 'accounting.accounts.number'|trans }}</th>
+                                <th>{{ 'accounting.accounts.name'|trans }}</th>
+                                <th class="d-none d-md-table-cell">{{ 'accounting.accounts.type'|trans }}</th>
+                                <th>{{ 'accounting.accounts.system_role'|trans }}</th>
+                                <th>{{ 'journal.action'|trans }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for account in accounts %}
+                                <tr>
+                                    <td>{{ account.accountNumber }}</td>
+                                    <td>{{ account.name }}</td>
+                                    <td class="d-none d-md-table-cell">{{ ('accounting.accounts.type.' ~ account.type)|trans }}</td>
+                                    <td>
+                                        {% if account.cashAccount %}
+                                            <span class="badge bg-success">{{ 'accounting.accounts.cash'|trans }}</span>
+                                        {% endif %}
+                                        {% if account.bankAccount %}
+                                            <span class="badge bg-info text-dark">{{ 'accounting.accounts.bank'|trans }}</span>
+                                        {% endif %}
+                                        {% if account.openingBalanceAccount %}
+                                            <span class="badge bg-secondary">{{ 'accounting.accounts.opening_balance'|trans }}</span>
+                                        {% endif %}
+                                        {% if account.autoAccount %}
+                                            <span class="badge bg-warning text-dark" title="{{ 'accounting.accounts.is_auto.help'|trans }}">{{ 'accounting.accounts.is_auto.badge'|trans }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                                data-action="click->journal-settings#openOffcanvas"
+                                                data-url="{{ path('journal.settings.accounts.edit', {'id': account.id}) }}"
+                                                data-offcanvas-title="{{ 'accounting.accounts.edit'|trans }}"
+                                                title="{{ 'button.edit'|trans }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% if not account.systemDefault %}
+                                            {% set id = account.id %}
+                                            {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
+                                            {% use "common/delete_popover.html.twig" %}
+                                            <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                                    title="{{ 'button.delete'|trans }}"
+                                                    data-popover="delete"
+                                                    data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
+                                                    data-bs-content='{{ block('deletePopoverContent') }}'>
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        {% else %}
+                                            <span class="text-muted ms-2" title="{{ 'accounting.accounts.system_locked'|trans }}">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="5" class="text-center text-muted">{{ 'accounting.accounts.empty'|trans }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Tab: Steuersätze ─────────────────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-tax-rates' %} show active{% endif %}" id="tab-tax-rates" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <h5 class="mb-0">{{ 'accounting.taxrates.title'|trans }}</h5>
+                        <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.taxrates.help'|trans }}">
+                            <i class="fas fa-circle-question"></i>
+                        </span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                            data-action="click->journal-settings#openOffcanvas"
+                            data-url="{{ path('journal.settings.taxrates.new') }}"
+                            data-offcanvas-title="{{ 'accounting.taxrates.add'|trans }}">
+                        <i class="fas fa-plus"></i> {{ 'accounting.taxrates.add'|trans }}
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover mb-0">
+                            <thead>
+                            <tr>
+                                <th>{{ 'accounting.taxrates.name_header'|trans }}</th>
+                                <th>{{ 'accounting.taxrates.rate'|trans }}</th>
+                                <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.revenue_account'|trans }}</th>
+                                <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.bukey_short'|trans }}</th>
+                                <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.valid'|trans }}</th>
+                                <th>{{ 'journal.action'|trans }}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for rate in taxRates %}
+                                <tr>
+                                    <td>
+                                        {{ rate.name }}
+                                        {% if rate.default %}<span class="badge bg-primary">{{ 'accounting.taxrates.default'|trans }}</span>{% endif %}
+                                    </td>
+                                    <td>{{ rate.rate|number_format(2, ',', '.') }}%</td>
+                                    <td class="d-none d-md-table-cell">
+                                        {% if rate.revenueAccount %}
+                                            {{ rate.revenueAccount.accountNumber }} – {{ rate.revenueAccount.name }}
+                                        {% else %}
+                                            <span class="text-muted">–</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        {% set o = rate.datevOutputBuKey %}
+                                        {% set i = rate.datevInputBuKey %}
+                                        {% if o or i %}
+                                            {{ 'accounting.taxrates.bukey.output_abbr'|trans }} {{ o ?: '–' }}
+                                            /
+                                            {{ 'accounting.taxrates.bukey.input_abbr'|trans }} {{ i ?: '–' }}
+                                        {% else %}
+                                            –
+                                        {% endif %}
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        {% if rate.validFrom or rate.validTo %}
+                                            {{ rate.validFrom ? rate.validFrom|date('d.m.Y') : '...' }}
+                                            –
+                                            {{ rate.validTo ? rate.validTo|date('d.m.Y') : '...' }}
+                                        {% else %}
+                                            {{ 'accounting.taxrates.always_valid'|trans }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                                data-action="click->journal-settings#openOffcanvas"
+                                                data-url="{{ path('journal.settings.taxrates.edit', {'id': rate.id}) }}"
+                                                data-offcanvas-title="{{ 'accounting.taxrates.edit'|trans }}"
+                                                title="{{ 'button.edit'|trans }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% set id = rate.id %}
+                                        {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
+                                        {% use "common/delete_popover.html.twig" %}
+                                        <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                                title="{{ 'button.delete'|trans }}"
+                                                data-popover="delete"
+                                                data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
+                                                data-bs-content='{{ block('deletePopoverContent') }}'>
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="6" class="text-center text-muted">{{ 'accounting.taxrates.empty'|trans }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Settings form spans DATEV + Buchungstext tabs ────── #}
+        {{ form_start(settingsForm) }}
+
+        {# ── Tab: DATEV-Export ────────────────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-datev' %} show active{% endif %}" id="tab-datev" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0">{{ 'accounting.settings.datev.title'|trans }}</h5>
+                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.datev.help'|trans }}">
+                        <i class="fas fa-circle-question"></i>
+                    </span>
+                </div>
+                <div class="card-body">
+                    {{ form_row(settingsForm.advisorNumber) }}
+                    {{ form_row(settingsForm.clientNumber) }}
+                    {{ form_row(settingsForm.fiscalYearStart) }}
+                    {{ form_row(settingsForm.accountNumberLength) }}
+                    {{ form_row(settingsForm.dictationCode) }}
+
+                    <div class="d-grid">
+                        <button type="submit" name="_save_tab" value="tab-datev" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ 'button.save'|trans }}
                         </button>
                     </div>
                 </div>
-                <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" id="seedWorkflows" name="seedWorkflows" value="1">
-                    <label class="form-check-label" for="seedWorkflows">
-                        {{ 'accounting.settings.preset.seed_workflows'|trans }}
-                    </label>
-                    <div class="form-text">{{ 'accounting.settings.preset.seed_workflows_help'|trans }}</div>
-                </div>
-                {% if settings.chartPreset %}
-                    <p class="text-muted mt-2 mb-0">
-                        {{ 'accounting.settings.preset.current'|trans({'%preset%': settings.chartPreset|upper}) }}
-                    </p>
-                {% endif %}
-            </form>
-        </div>
-    </div>
-
-    {# ── Accounts ──────────────────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <h5 class="mb-0">{{ 'accounting.accounts.title'|trans }}</h5>
-                <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.accounts.help'|trans }}">
-                    <i class="fas fa-circle-question"></i>
-                </span>
-            </div>
-            <button type="button" class="btn btn-secondary btn-sm"
-                    data-action="click->journal-settings#openOffcanvas"
-                    data-url="{{ path('journal.settings.accounts.new') }}"
-                    data-offcanvas-title="{{ 'accounting.accounts.add'|trans }}">
-                <i class="fas fa-plus"></i> {{ 'accounting.accounts.add'|trans }}
-            </button>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover mb-0">
-                    <thead>
-                    <tr>
-                        <th>{{ 'accounting.accounts.number'|trans }}</th>
-                        <th>{{ 'accounting.accounts.name'|trans }}</th>
-                        <th class="d-none d-md-table-cell">{{ 'accounting.accounts.type'|trans }}</th>
-                        <th>{{ 'accounting.accounts.system_role'|trans }}</th>
-                        <th>{{ 'journal.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for account in accounts %}
-                        <tr>
-                            <td>{{ account.accountNumber }}</td>
-                            <td>{{ account.name }}</td>
-                            <td class="d-none d-md-table-cell">{{ ('accounting.accounts.type.' ~ account.type)|trans }}</td>
-                            <td>
-                                {% if account.cashAccount %}
-                                    <span class="badge bg-success">{{ 'accounting.accounts.cash'|trans }}</span>
-                                {% endif %}
-                                {% if account.bankAccount %}
-                                    <span class="badge bg-info text-dark">{{ 'accounting.accounts.bank'|trans }}</span>
-                                {% endif %}
-                                {% if account.openingBalanceAccount %}
-                                    <span class="badge bg-secondary">{{ 'accounting.accounts.opening_balance'|trans }}</span>
-                                {% endif %}
-                                {% if account.autoAccount %}
-                                    <span class="badge bg-warning text-dark" title="{{ 'accounting.accounts.is_auto.help'|trans }}">{{ 'accounting.accounts.is_auto.badge'|trans }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                        data-action="click->journal-settings#openOffcanvas"
-                                        data-url="{{ path('journal.settings.accounts.edit', {'id': account.id}) }}"
-                                        data-offcanvas-title="{{ 'accounting.accounts.edit'|trans }}"
-                                        title="{{ 'button.edit'|trans }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                {% if not account.systemDefault %}
-                                    {% set id = account.id %}
-                                    {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
-                                    {% use "common/delete_popover.html.twig" %}
-                                    <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                            title="{{ 'button.delete'|trans }}"
-                                            data-popover="delete"
-                                            data-title="{{ 'accounting.accounts.delete.ask'|trans }}"
-                                            data-bs-content='{{ block('deletePopoverContent') }}'>
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                {% else %}
-                                    <span class="text-muted ms-2" title="{{ 'accounting.accounts.system_locked'|trans }}">
-                                        <i class="fas fa-lock"></i>
-                                    </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="5" class="text-center text-muted">{{ 'accounting.accounts.empty'|trans }}</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </div>
-    </div>
 
-    {# ── Tax Rates ─────────────────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <h5 class="mb-0">{{ 'accounting.taxrates.title'|trans }}</h5>
-                <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.taxrates.help'|trans }}">
-                    <i class="fas fa-circle-question"></i>
-                </span>
-            </div>
-            <button type="button" class="btn btn-secondary btn-sm"
-                    data-action="click->journal-settings#openOffcanvas"
-                    data-url="{{ path('journal.settings.taxrates.new') }}"
-                    data-offcanvas-title="{{ 'accounting.taxrates.add'|trans }}">
-                <i class="fas fa-plus"></i> {{ 'accounting.taxrates.add'|trans }}
-            </button>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover mb-0">
-                    <thead>
-                    <tr>
-                        <th>{{ 'accounting.taxrates.name_header'|trans }}</th>
-                        <th>{{ 'accounting.taxrates.rate'|trans }}</th>
-                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.revenue_account'|trans }}</th>
-                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.bukey_short'|trans }}</th>
-                        <th class="d-none d-md-table-cell">{{ 'accounting.taxrates.valid'|trans }}</th>
-                        <th>{{ 'journal.action'|trans }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for rate in taxRates %}
-                        <tr>
-                            <td>
-                                {{ rate.name }}
-                                {% if rate.default %}<span class="badge bg-primary">{{ 'accounting.taxrates.default'|trans }}</span>{% endif %}
-                            </td>
-                            <td>{{ rate.rate|number_format(2, ',', '.') }}%</td>
-                            <td class="d-none d-md-table-cell">
-                                {% if rate.revenueAccount %}
-                                    {{ rate.revenueAccount.accountNumber }} – {{ rate.revenueAccount.name }}
-                                {% else %}
-                                    <span class="text-muted">–</span>
-                                {% endif %}
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                {% set o = rate.datevOutputBuKey %}
-                                {% set i = rate.datevInputBuKey %}
-                                {% if o or i %}
-                                    {{ 'accounting.taxrates.bukey.output_abbr'|trans }} {{ o ?: '–' }}
-                                    /
-                                    {{ 'accounting.taxrates.bukey.input_abbr'|trans }} {{ i ?: '–' }}
-                                {% else %}
-                                    –
-                                {% endif %}
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                {% if rate.validFrom or rate.validTo %}
-                                    {{ rate.validFrom ? rate.validFrom|date('d.m.Y') : '...' }}
-                                    –
-                                    {{ rate.validTo ? rate.validTo|date('d.m.Y') : '...' }}
-                                {% else %}
-                                    {{ 'accounting.taxrates.always_valid'|trans }}
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                        data-action="click->journal-settings#openOffcanvas"
-                                        data-url="{{ path('journal.settings.taxrates.edit', {'id': rate.id}) }}"
-                                        data-offcanvas-title="{{ 'accounting.taxrates.edit'|trans }}"
-                                        title="{{ 'button.edit'|trans }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                {% set id = rate.id %}
-                                {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
-                                {% use "common/delete_popover.html.twig" %}
-                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
-                                        title="{{ 'button.delete'|trans }}"
-                                        data-popover="delete"
-                                        data-title="{{ 'accounting.taxrates.delete.ask'|trans }}"
-                                        data-bs-content='{{ block('deletePopoverContent') }}'>
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr><td colspan="6" class="text-center text-muted">{{ 'accounting.taxrates.empty'|trans }}</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    {# ── DATEV Export Settings ─────────────────────────────────── #}
-    <div class="card mb-4">
-        <div class="card-header d-flex align-items-center">
-            <h5 class="mb-0">{{ 'accounting.settings.datev.title'|trans }}</h5>
-            <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ 'accounting.settings.datev.help'|trans }}">
-                <i class="fas fa-circle-question"></i>
-            </span>
-        </div>
-        <div class="card-body">
-            {{ form_start(settingsForm) }}
-                {{ form_row(settingsForm.advisorNumber) }}
-                {{ form_row(settingsForm.clientNumber) }}
-                {{ form_row(settingsForm.fiscalYearStart) }}
-                {{ form_row(settingsForm.accountNumberLength) }}
-                {{ form_row(settingsForm.dictationCode) }}
-
-                <hr>
-                <h6 class="mb-3">
-                    {{ 'accounting.settings.remark_labels.title'|trans }}
-                    <span class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+        {# ── Tab: Buchungstext-Vorlagen ───────────────────────── #}
+        <div class="tab-pane fade{% if activeTab == 'tab-remark-labels' %} show active{% endif %}" id="tab-remark-labels" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="mb-0">{{ 'accounting.settings.remark_labels.title'|trans }}</h5>
+                    <span class="ms-2 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
                           title="{{ 'accounting.settings.remark_labels.help'|trans }}">
                         <i class="fas fa-circle-question"></i>
                     </span>
-                </h6>
-                {{ form_row(settingsForm.mainPositionLabel) }}
-                {{ form_row(settingsForm.miscPositionLabel) }}
-
-                <hr>
-                <h6 class="mb-1">
-                    {{ 'accounting.settings.invoice_number_samples.title'|trans }}
-                    <span class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
-                        <i class="fas fa-circle-question"></i>
-                    </span>
-                </h6>
-                <p class="form-text mb-2">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
-                <div class="row g-2">
-                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample1) }}</div>
-                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample2) }}</div>
-                    <div class="col-md-4">{{ form_row(settingsForm.invoiceNumberSample3) }}</div>
                 </div>
+                <div class="card-body">
+                    <p class="form-text mb-3">{{ 'accounting.settings.remark_labels.intro'|trans }}</p>
+                    {{ form_row(settingsForm.mainPositionLabel) }}
+                    {{ form_row(settingsForm.miscPositionLabel) }}
 
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> {{ 'button.save'|trans }}
-                    </button>
+                    <div class="d-grid">
+                        <button type="submit" name="_save_tab" value="tab-remark-labels" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ 'button.save'|trans }}
+                        </button>
+                    </div>
                 </div>
-            {{ form_end(settingsForm) }}
+            </div>
         </div>
+
+        {{ form_end(settingsForm) }}
     </div>
 
     {# ── Offcanvas for forms ──────────────────────────────────── #}
@@ -298,5 +340,27 @@
         <div class="offcanvas-body" data-journal-settings-target="offcanvasBody">
         </div>
     </div>
+
+    {# ── Reflect active tab in URL (?tab=…) ───────────────────── #}
+    <script>
+        (function () {
+            function init() {
+                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (t) {
+                    t.addEventListener('shown.bs.tab', function (e) {
+                        const id = (e.target.dataset.bsTarget || '').replace(/^#/, '');
+                        if (!id) return;
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', id);
+                        history.replaceState(null, '', url.toString());
+                    });
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </div>
 {% endblock %}
