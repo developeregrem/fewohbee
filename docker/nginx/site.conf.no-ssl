@@ -25,10 +25,13 @@ server {
 }
 
 server {
-    # this vhost is for internal connections only (e.g. mpdf fetches images from here, see env WEB_HOST)
+    # this vhost is for internal connections only (e.g. mpdf fetches images from
+    # here via WEB_HOST, and the docker healthcheck calls /health/live here for
+    # consistency with the SSL setup).
     listen 8080;
 
     root /var/www/html/public;
 
     include /etc/nginx/conf.d/server_name.active;
+    include /etc/nginx/conf.d/site-enabled-https/*;
 }

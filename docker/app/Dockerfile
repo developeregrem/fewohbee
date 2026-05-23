@@ -66,22 +66,23 @@ RUN --mount=type=cache,target=/root/.composer/cache \
 ############################
 FROM base AS app-prod
 
+# These ENVs are baked into the image and define its identity. Deployments
+# should pick the right image tag (prod vs -debug) rather than override these
+# at runtime — overrides cause cache/vendor mismatches (prod-warmed container
+# trying to load dev-only bundles, etc).
 ENV APP_ENV=prod \
-    APP_DEBUG=0
+    APP_DEBUG=0 \
+    USE_REDIS_CACHE=true
 
 COPY --from=vendor-prod /var/www/html/vendor ./vendor
 COPY --chown=82:82 . ./
 
 # Build-time dummies kept inline so they do NOT persist into the image.
 # Runtime TZ/DATABASE_URL/REDIS_HOST come from the deployment.
-# USE_REDIS_CACHE=true is the dockerized default — image is warmed for the
-# Redis cache adapter. Deployments running without Redis (dev) trigger a
-# cache:clear via the entrypoint when APP_ENV=dev.
 RUN TZ=UTC \
     DATABASE_URL="mysql://build:build@127.0.0.1:3306/build?serverVersion=10.11" \
     REDIS_HOST=127.0.0.1 \
     REDIS_IDX=1 \
-    USE_REDIS_CACHE=true \
     sh -c 'composer dump-autoload --no-dev --optimize --classmap-authoritative \
         && php bin/console cache:warmup --no-interaction \
         && php bin/console importmap:install --no-interaction \
@@ -107,8 +108,10 @@ CMD ["php-fpm"]
 ############################
 FROM base AS phpfpm-debug
 
+# Same as app-prod: image identity, not user-overridable in normal deployments.
 ENV APP_ENV=dev \
-    APP_DEBUG=1
+    APP_DEBUG=1 \
+    USE_REDIS_CACHE=false
 
 COPY --from=vendor-debug /var/www/html/vendor ./vendor
 COPY --chown=82:82 . ./
