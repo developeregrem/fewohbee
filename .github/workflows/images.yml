@@ -112,9 +112,24 @@ jobs:
 
       - name: Resolve phpfpm tag for COPY --from
         id: phpfpm-tag
-        # Use GITHUB_SHA directly — same source docker/metadata-action uses for
-        # its type=sha tag. Truncated to 7 chars to match the default short form.
-        run: echo "tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+        # Use a tag we KNOW metadata-action emits for the phpfpm-prod build:
+        #   - v* tag push  -> bare semver (4.8.0)
+        #   - branch push  -> branch-<name> (slashes/dots sanitized to '-')
+        #   - PR / other   -> sha-<short> as last resort
+        env:
+          REF: ${{ github.ref }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [[ "$REF" == refs/tags/v* ]]; then
+            TAG="${REF#refs/tags/v}"
+          elif [[ "$REF" == refs/heads/* ]]; then
+            TAG="branch-${BRANCH//[\/.]/-}"
+          else
+            TAG="sha-${SHA:0:7}"
+          fi
+          echo "Resolved phpfpm tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Wait for phpfpm image to appear in GHCR
         # build-push-action returns once the manifest list is pushed, but
