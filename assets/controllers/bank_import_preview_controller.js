@@ -555,8 +555,8 @@ export default class extends Controller {
             line.splits.forEach((split) => this._addSplitRow(split));
         } else {
             // Seed with two empty rows so the user has something to fill in.
-            this._addSplitRow();
-            this._addSplitRow();
+            this._addSplitRow(this._defaultSplitPrefill());
+            this._addSplitRow(this._defaultSplitPrefill());
         }
 
         this._splitRecalc();
@@ -564,7 +564,7 @@ export default class extends Controller {
     }
 
     splitAddRow() {
-        this._addSplitRow();
+        this._addSplitRow(this._defaultSplitPrefill());
         this._splitRecalc();
     }
 
@@ -646,7 +646,7 @@ export default class extends Controller {
             if (modeSel) modeSel.value = mode;
             if (valueInput) {
                 if (mode === 'percent') valueInput.value = prefill.percent ?? '';
-                else if (mode === 'amount') valueInput.value = Math.abs(parseFloat(prefill.amount ?? 0)).toFixed(2);
+                else if (mode === 'amount' && prefill.amount !== undefined) valueInput.value = Math.abs(parseFloat(prefill.amount ?? 0)).toFixed(2);
                 else valueInput.value = '';
             }
             const debitSel = tpl.querySelector('.split-debit');
@@ -660,6 +660,17 @@ export default class extends Controller {
         }
         this.splitRowsTarget.appendChild(tpl);
         this._applyModeUI(tpl);
+    }
+
+    _defaultSplitPrefill() {
+        const line = this._lineByIdx(this.activeIdx);
+        if (!line) return null;
+
+        return {
+            debitAccountId: line.userDebitAccountId || null,
+            creditAccountId: line.userCreditAccountId || null,
+            taxRateId: line.userTaxRateId || null,
+        };
     }
 
     splitModeChange(event) {
