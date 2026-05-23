@@ -4,89 +4,148 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\LogAction;
+use App\Repository\LogRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: LogRepository::class)]
 #[ORM\Table(name: 'logging')]
+#[ORM\Index(name: 'idx_logging_date', columns: ['date'])]
+#[ORM\Index(name: 'idx_logging_entity', columns: ['entity_class', 'entity_id'])]
+#[ORM\Index(name: 'idx_logging_user', columns: ['user_id'])]
 class Log
 {
     #[ORM\Id]
+    #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $user_id;
-    #[ORM\Column(type: 'time')]
-    private $date;
-    #[ORM\Column(type: 'string', length: 255)]
-    private $action;
+    private ?int $id = null;
 
-    /**
-     * Set user_id.
-     *
-     * @param int $userId
-     *
-     * @return Log
-     */
-    public function setUserId($userId)
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?User $user = null;
+
+    #[ORM\Column(type: 'string', length: 180, nullable: true)]
+    private ?string $username = null;
+
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $date;
+
+    #[ORM\Column(name: 'entity_class', type: 'string', length: 255)]
+    private string $entityClass;
+
+    #[ORM\Column(name: 'entity_id', type: 'string', length: 64, nullable: true)]
+    private ?string $entityId = null;
+
+    #[ORM\Column(type: 'string', length: 16, enumType: LogAction::class)]
+    private LogAction $action;
+
+    /** @var array<string, mixed>|null */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $changes = null;
+
+    #[ORM\Column(name: 'ip_address', type: 'string', length: 45, nullable: true)]
+    private ?string $ipAddress = null;
+
+    public function getId(): ?int
     {
-        $this->user_id = $userId;
+        return $this->id;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
 
-    /**
-     * Get user_id.
-     *
-     * @return int
-     */
-    public function getUserId()
+    public function getUsername(): ?string
     {
-        return $this->user_id;
+        return $this->username;
     }
 
-    /**
-     * Set date.
-     *
-     * @param \DateTime $date
-     *
-     * @return Log
-     */
-    public function setDate($date)
+    public function setUsername(?string $username): self
+    {
+        $this->username = $username;
+
+        return $this;
+    }
+
+    public function getDate(): \DateTimeImmutable
+    {
+        return $this->date;
+    }
+
+    public function setDate(\DateTimeImmutable $date): self
     {
         $this->date = $date;
 
         return $this;
     }
 
-    /**
-     * Get date.
-     *
-     * @return \DateTime
-     */
-    public function getDate()
+    public function getEntityClass(): string
     {
-        return $this->date;
+        return $this->entityClass;
     }
 
-    /**
-     * Set action.
-     *
-     * @param string $action
-     *
-     * @return Log
-     */
-    public function setAction($action)
+    public function setEntityClass(string $entityClass): self
+    {
+        $this->entityClass = $entityClass;
+
+        return $this;
+    }
+
+    public function getEntityId(): ?string
+    {
+        return $this->entityId;
+    }
+
+    public function setEntityId(?string $entityId): self
+    {
+        $this->entityId = $entityId;
+
+        return $this;
+    }
+
+    public function getAction(): LogAction
+    {
+        return $this->action;
+    }
+
+    public function setAction(LogAction $action): self
     {
         $this->action = $action;
 
         return $this;
     }
 
-    /**
-     * Get action.
-     *
-     * @return string
-     */
-    public function getAction()
+    /** @return array<string, mixed>|null */
+    public function getChanges(): ?array
     {
-        return $this->action;
+        return $this->changes;
+    }
+
+    /** @param array<string, mixed>|null $changes */
+    public function setChanges(?array $changes): self
+    {
+        $this->changes = $changes;
+
+        return $this;
+    }
+
+    public function getIpAddress(): ?string
+    {
+        return $this->ipAddress;
+    }
+
+    public function setIpAddress(?string $ipAddress): self
+    {
+        $this->ipAddress = $ipAddress;
+
+        return $this;
     }
 }
