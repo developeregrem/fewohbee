@@ -261,7 +261,8 @@
                                         <div class="list-group">
                                             {% for extra in extras %}
                                                 {% set extraFieldName = 'extra_' ~ extra.id %}
-                                                {% set selectedQtyVal = selectedExtras[extra.id]|default(0) %}
+                                                {% set isMandatoryExtra = extra.isMandatory|default(false) %}
+                                                {% set selectedQtyVal = selectedExtras[extra.id]|default(isMandatoryExtra ? 1 : 0) %}
                                                 {% set needsQuantity = extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
                                                 <div class="list-group-item d-flex align-items-center justify-content-between gap-2 py-2">
                                                     <div class="flex-grow-1">
@@ -280,11 +281,19 @@
                                                             </span>
                                                         </div>
                                                     </div>
+                                                    {% if isMandatoryExtra %}
+                                                        {# Hidden input überträgt den Wert auch bei disabled UI-Element. #}
+                                                        <input type="hidden" name="{{ extraFieldName }}" value="{{ needsQuantity ? selectedQtyVal : 1 }}">
+                                                    {% endif %}
                                                     {% if needsQuantity %}
                                                         <div style="width:70px;flex-shrink:0">
-                                                            <select class="form-select form-select-sm" name="{{ extraFieldName }}"
+                                                            <select class="form-select form-select-sm"
+                                                                    {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
+                                                                    {% if isMandatoryExtra %}disabled{% endif %}
                                                                     onwheel="this.blur()">
-                                                                <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
+                                                                {% if not isMandatoryExtra %}
+                                                                    <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
+                                                                {% endif %}
                                                                 {% for q in 1..extra.maxQuantity %}
                                                                     <option value="{{ q }}" {% if selectedQtyVal == q %}selected{% endif %}>{{ q }}</option>
                                                                 {% endfor %}
@@ -293,8 +302,11 @@
                                                     {% else %}
                                                         <div class="form-check form-switch mb-0 ms-2">
                                                             <input class="form-check-input" type="checkbox" role="switch"
-                                                                   id="{{ extraFieldName }}" name="{{ extraFieldName }}" value="1"
-                                                                   {% if selectedQtyVal > 0 %}checked{% endif %}>
+                                                                   id="{{ extraFieldName }}"
+                                                                   {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
+                                                                   value="1"
+                                                                   {% if selectedQtyVal > 0 or isMandatoryExtra %}checked{% endif %}
+                                                                   {% if isMandatoryExtra %}disabled{% endif %}>
                                                         </div>
                                                     {% endif %}
                                                 </div>
@@ -475,7 +487,7 @@
                                             </div>
                                         {% endif %}
 
-                                        {# Tourist tax breakdown — eigene Rubrik, dezent abgegrenzt #}
+                                        {# Tourist tax breakdown — eigene Rubrik #}
                                         {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
                                             <div class="mb-2 border-top pt-2">
                                                 <div class="small fw-semibold mb-1">{{ 'invoice.tourist_tax.heading'|trans }}</div>

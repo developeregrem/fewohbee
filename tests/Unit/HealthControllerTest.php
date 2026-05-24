@@ -39,7 +39,7 @@ final class HealthControllerTest extends TestCase
 
     public function testReadyReturns503WhenDbThrows(): void
     {
-        $db = $this->createMock(Connection::class);
+        $db = $this->createStub(Connection::class);
         $db->method('executeQuery')->willThrowException(new \RuntimeException('boom'));
 
         $controller = $this->controllerWithContainer(useRedisCache: false);

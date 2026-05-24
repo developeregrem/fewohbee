@@ -162,21 +162,10 @@ class PriceService
             $price->setIncludesVat(false);
         }
 
-        if (null != $request->request->get('isFlatPrice-'.$id)) {
-            $price->setIsFlatPrice(true);
-        } else {
-            $price->setIsFlatPrice(false);
-        }
-
-        if (null != $request->request->get('isPerRoom-'.$id)) {
-            $price->setIsPerRoom(true);
-        } else {
-            $price->setIsPerRoom(false);
-        }
-
-        if ($price->getIsFlatPrice()) {
-            $price->setIsPerRoom(false);
-        }
+        // Berechnungsart als Radio (flat | per_room | per_person)
+        $calcType = (string) $request->request->get('calculation-type-'.$id, 'per_person');
+        $price->setIsFlatPrice('flat' === $calcType);
+        $price->setIsPerRoom('per_room' === $calcType);
 
         if (1 == $price->getType() && null != $request->request->get('isDefaultActiveInReservationCreation-'.$id)) {
             $price->setIsDefaultActiveInReservationCreation(true);
@@ -184,11 +173,14 @@ class PriceService
             $price->setIsDefaultActiveInReservationCreation(false);
         }
 
-        if (1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id)) {
-            $price->setIsBookableOnline(true);
-        } else {
-            $price->setIsBookableOnline(false);
+        $mandatoryOnline = 1 == $price->getType() && null != $request->request->get('isMandatoryOnline-'.$id);
+        $bookableOnline = 1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id);
+        // Pflicht impliziert online verfügbar — auch wenn der Switch im UI gesperrt war.
+        if ($mandatoryOnline) {
+            $bookableOnline = true;
         }
+        $price->setIsBookableOnline($bookableOnline);
+        $price->setIsMandatoryOnline($mandatoryOnline);
 
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));

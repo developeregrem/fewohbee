@@ -74,10 +74,16 @@ export default class extends Controller {
         }
     }
 
-    flatPriceChangeAction(event) {
+    bookableOnlineChangeAction(event) {
         const checkbox = event.currentTarget;
         const priceId = checkbox.dataset.priceId || this.getPriceId();
-        this.applyFlatPriceState(checkbox.checked, priceId);
+        this.applyBookableOnlineState(checkbox.checked, priceId);
+    }
+
+    mandatoryOnlineChangeAction(event) {
+        const checkbox = event.currentTarget;
+        const priceId = checkbox.dataset.priceId || this.getPriceId();
+        this.applyMandatoryOnlineState(checkbox.checked, priceId);
     }
 
     dayCheckboxChangeAction(event) {
@@ -137,9 +143,9 @@ export default class extends Controller {
             this.applyStartEndState(allPeriods.checked, priceId);
         }
 
-        const isFlatPrice = this.element.querySelector(`#isFlatPrice-${priceId}`);
-        if (isFlatPrice) {
-            this.applyFlatPriceState(isFlatPrice.checked, priceId);
+        const mandatoryOnline = this.element.querySelector(`#isMandatoryOnline-${priceId}`);
+        if (mandatoryOnline) {
+            this.applyMandatoryOnlineState(mandatoryOnline.checked, priceId);
         }
     }
 
@@ -153,7 +159,7 @@ export default class extends Controller {
         const isAppartment = parseInt(value, 10) === 2;
         const defaultActiveWrapper = this.element.querySelector(`#default-active-in-reservation-creation-wrap-${priceId}`);
         const defaultActiveCheckbox = this.element.querySelector(`#isDefaultActiveInReservationCreation-${priceId}`);
-        const isPerRoomCheckbox = this.element.querySelector(`#isPerRoom-${priceId}`);
+        const perRoomRadio = this.element.querySelector(`#calc-per-room-${priceId}`);
         const isMisc = !isAppartment;
 
         if (fieldset) {
@@ -191,6 +197,19 @@ export default class extends Controller {
         if (bookableOnlineCheckbox) {
             bookableOnlineCheckbox.disabled = !isMisc;
         }
+        const mandatoryOnlineWrapper = this.element.querySelector(`#mandatory-online-wrap-${priceId}`);
+        const mandatoryOnlineCheckbox = this.element.querySelector(`#isMandatoryOnline-${priceId}`);
+        if (mandatoryOnlineWrapper) {
+            mandatoryOnlineWrapper.classList.toggle('d-none', !isMisc);
+        }
+        if (mandatoryOnlineCheckbox) {
+            if (!isMisc) {
+                mandatoryOnlineCheckbox.checked = false;
+                mandatoryOnlineCheckbox.disabled = true;
+            } else {
+                this.applyMandatoryOnlineState(mandatoryOnlineCheckbox.checked, priceId);
+            }
+        }
         const packageWrapper = this.element.querySelector(`#package-wrap-${priceId}`);
         if (packageWrapper) {
             packageWrapper.style.display = isMisc ? '' : 'none';
@@ -205,8 +224,8 @@ export default class extends Controller {
                 }
             }
         }
-        if (priceId === 'new' && isAppartment && isPerRoomCheckbox && !isPerRoomCheckbox.disabled) {
-            isPerRoomCheckbox.checked = true;
+        if (priceId === 'new' && isAppartment && perRoomRadio && !perRoomRadio.disabled) {
+            perRoomRadio.checked = true;
         }
     }
 
@@ -217,15 +236,26 @@ export default class extends Controller {
         if (end) end.disabled = allPeriodsChecked;
     }
 
-    applyFlatPriceState(isFlatPriceChecked, priceId) {
-        const isPerRoom = this.element.querySelector(`#isPerRoom-${priceId}`);
-        if (!isPerRoom) return;
-
-        if (isFlatPriceChecked) {
-            isPerRoom.checked = false;
-            isPerRoom.disabled = true;
+    applyBookableOnlineState(bookableChecked, priceId) {
+        const mandatory = this.element.querySelector(`#isMandatoryOnline-${priceId}`);
+        if (!mandatory) return;
+        if (!bookableChecked) {
+            mandatory.checked = false;
+            mandatory.disabled = true;
         } else {
-            isPerRoom.disabled = false;
+            mandatory.disabled = false;
+        }
+    }
+
+    applyMandatoryOnlineState(mandatoryChecked, priceId) {
+        const bookable = this.element.querySelector(`#isBookableOnline-${priceId}`);
+        if (!bookable) return;
+        if (mandatoryChecked) {
+            // Pflicht impliziert online verfügbar — Switch erzwingen und sperren.
+            bookable.checked = true;
+            bookable.disabled = true;
+        } else {
+            bookable.disabled = false;
         }
     }
 

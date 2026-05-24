@@ -635,7 +635,7 @@ class PublicBookingService
                     $rowTotal = $row->total();
                     $touristTaxTotal += $rowTotal;
                     $touristTaxLines[] = [
-                        'label' => $row->taxName.' — '.$row->categoryName,
+                        'label' => $row->taxName.(strlen($row->categoryName) > 0 ? ' — ' . $row->categoryName : ''),
                         'total' => $rowTotal,
                         'totalFormatted' => number_format($rowTotal, 2, ',', '.'),
                     ];
@@ -978,14 +978,18 @@ class PublicBookingService
      */
     private function resolveAndValidateExtras(array $selectedExtras, array $availability, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, int $persons, int $roomsCount): array
     {
-        if ([] === $selectedExtras) {
-            return [];
-        }
-
         $extras = $this->loadBookableExtras($availability, $dateFrom, $dateTo, $persons, $roomsCount);
         $extrasById = [];
         foreach ($extras as $extra) {
             $extrasById[$extra['id']] = $extra;
+            // Pflicht-Posten serverseitig erzwingen — egal was im POST stand.
+            if (!empty($extra['isMandatory'])) {
+                $selectedExtras[$extra['id']] = max(1, (int) ($selectedExtras[$extra['id']] ?? 0));
+            }
+        }
+
+        if ([] === $selectedExtras) {
+            return [];
         }
 
         $result = [];

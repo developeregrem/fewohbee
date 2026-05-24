@@ -70,6 +70,8 @@ class Price
     private bool $isDefaultActiveInReservationCreation;
     #[ORM\Column(type: 'boolean')]
     private bool $isBookableOnline;
+    #[ORM\Column(type: 'boolean')]
+    private bool $isMandatoryOnline;
     #[ORM\OneToMany(targetEntity: 'App\Entity\PriceComponent', mappedBy: 'price', orphanRemoval: true, cascade: ['persist'])]
     #[ORM\OrderBy(['sortOrder' => 'ASC', 'id' => 'ASC'])]
     private Collection $components;
@@ -91,6 +93,7 @@ class Price
         $this->isPerRoom = false;
         $this->isDefaultActiveInReservationCreation = true;
         $this->isBookableOnline = false;
+        $this->isMandatoryOnline = false;
     }
 
     public function getId()
@@ -423,6 +426,18 @@ class Price
     public function setIsBookableOnline(bool $isBookableOnline): self
     {
         $this->isBookableOnline = $isBookableOnline;
+
+        return $this;
+    }
+
+    public function getIsMandatoryOnline(): bool
+    {
+        return $this->isMandatoryOnline;
+    }
+
+    public function setIsMandatoryOnline(bool $isMandatoryOnline): self
+    {
+        $this->isMandatoryOnline = $isMandatoryOnline;
 
         return $this;
     }

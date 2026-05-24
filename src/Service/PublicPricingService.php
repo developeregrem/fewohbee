@@ -121,7 +121,7 @@ class PublicPricingService
     /**
      * Retrieve all bookable-online extras with calculated total prices for the given stay.
      *
-     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int}>
+     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool}>
      */
     public function getBookableExtras(
         Appartment $sampleRoom,
@@ -201,6 +201,7 @@ class PublicPricingService
                 'pricePerUnit' => $pricePerUnit,
                 'pricePerUnitFormatted' => number_format($pricePerUnit, 2, ',', '.'),
                 'maxQuantity' => $maxQuantity,
+                'isMandatory' => $price->getIsMandatoryOnline(),
             ];
         }
 
