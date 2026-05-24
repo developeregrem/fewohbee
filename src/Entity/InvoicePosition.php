@@ -39,6 +39,16 @@ class InvoicePosition
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?AccountingAccount $revenueAccount = null;
 
+    /**
+     * Visual / semantic grouping marker on the invoice. Values:
+     *   - null         → legacy / unspecified
+     *   - "apartment"  → overnight stay positions
+     *   - "tourist_tax"→ tourist-tax block (separate sub-table)
+     *   - "misc"       → ancillary services
+     */
+    #[ORM\Column(name: 'position_group', type: 'string', length: 32, nullable: true)]
+    private ?string $positionGroup = null;
+
     public function __construct()
     {
         $this->isFlatPrice = false;
@@ -175,6 +185,18 @@ class InvoicePosition
     public function setRevenueAccount(?AccountingAccount $revenueAccount): self
     {
         $this->revenueAccount = $revenueAccount;
+
+        return $this;
+    }
+
+    public function getPositionGroup(): ?string
+    {
+        return $this->positionGroup;
+    }
+
+    public function setPositionGroup(?string $positionGroup): self
+    {
+        $this->positionGroup = $positionGroup;
 
         return $this;
     }

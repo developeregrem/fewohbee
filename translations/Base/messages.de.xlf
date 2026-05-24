@@ -378,6 +378,14 @@
                 <source>nav.status</source>
                 <target>Reservierungsstatus</target>
             </trans-unit>
+            <trans-unit id="nav.guest_category">
+                <source>nav.guest_category</source>
+                <target>Gastkategorien</target>
+            </trans-unit>
+            <trans-unit id="nav.tourist_tax">
+                <source>nav.tourist_tax</source>
+                <target>Beherbergungsabgaben</target>
+            </trans-unit>
             <trans-unit id="copy.text">
                 <source>copy.text</source>
                 <target>Kopieren</target>

@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { request as httpRequest, serializeForm as httpSerializeForm } from '../js/http.js';
-import { setModalTitle, enableDeletePopover } from '../js/utils.js';
+import { setModalTitle, enableDeletePopover, enableTooltips, enablePopovers } from '../js/utils.js';
 
 export default class extends Controller {
     connect() {
@@ -31,6 +31,8 @@ export default class extends Controller {
                 if (enableEdit) {
                     this.enableEditFromModal();
                 }
+                enableTooltips(this.modalContent);
+                enablePopovers(this.modalContent);
             },
         });
     }

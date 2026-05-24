@@ -1,0 +1,45 @@
+# VCS / IDE
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.DS_Store
+nbproject/
+
+# Build / runtime artifacts (regenerated in image build)
+vendor/
+var/
+node_modules/
+public/assets/
+public/bundles/
+assets/vendor/
+
+# Local env / secrets (never bake into image)
+.env
+.env.local
+.env.*.local
+.env.dev
+.env.test
+
+# Test artifacts
+.phpunit
+.phpunit.result.cache
+.phpunit.cache/
+phpunit.xml
+
+# User uploads (mounted at runtime, never bake)
+public/resources/images/export/
+public/resources/images/room-categories/
+
+# Tooling
+.php-cs-fixer.php
+.php-cs-fixer.cache
+phpstan.neon
+tools/
+
+# Docker context itself (Dockerfiles under docker/ are needed)
+.dockerignore
+
+# CI
+.github/

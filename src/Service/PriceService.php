@@ -13,14 +13,22 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\PriceBreakdown;
+use App\Dto\PriceBreakdownLine;
 use App\Entity\AccountingAccount;
+use App\Entity\Enum\ModifierType;
+use App\Entity\Enum\PercentageBase;
 use App\Entity\Enum\PriceComponentAllocationType;
+use App\Entity\GuestCategory;
+use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
 use App\Entity\PriceComponent;
 use App\Entity\PricePeriod;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Repository\GuestCategoryModifierRepository;
+use App\Repository\GuestCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,8 +38,11 @@ class PriceService
 {
     private $em;
 
-    public function __construct(EntityManagerInterface $em)
-    {
+    public function __construct(
+        EntityManagerInterface $em,
+        private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
+        private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
+    ) {
         $this->em = $em;
     }
 
@@ -151,21 +162,10 @@ class PriceService
             $price->setIncludesVat(false);
         }
 
-        if (null != $request->request->get('isFlatPrice-'.$id)) {
-            $price->setIsFlatPrice(true);
-        } else {
-            $price->setIsFlatPrice(false);
-        }
-
-        if (null != $request->request->get('isPerRoom-'.$id)) {
-            $price->setIsPerRoom(true);
-        } else {
-            $price->setIsPerRoom(false);
-        }
-
-        if ($price->getIsFlatPrice()) {
-            $price->setIsPerRoom(false);
-        }
+        // Berechnungsart als Radio (flat | per_room | per_person)
+        $calcType = (string) $request->request->get('calculation-type-'.$id, 'per_person');
+        $price->setIsFlatPrice('flat' === $calcType);
+        $price->setIsPerRoom('per_room' === $calcType);
 
         if (1 == $price->getType() && null != $request->request->get('isDefaultActiveInReservationCreation-'.$id)) {
             $price->setIsDefaultActiveInReservationCreation(true);
@@ -173,11 +173,14 @@ class PriceService
             $price->setIsDefaultActiveInReservationCreation(false);
         }
 
-        if (1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id)) {
-            $price->setIsBookableOnline(true);
-        } else {
-            $price->setIsBookableOnline(false);
+        $mandatoryOnline = 1 == $price->getType() && null != $request->request->get('isMandatoryOnline-'.$id);
+        $bookableOnline = 1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id);
+        // Pflicht impliziert online verfügbar — auch wenn der Switch im UI gesperrt war.
+        if ($mandatoryOnline) {
+            $bookableOnline = true;
         }
+        $price->setIsBookableOnline($bookableOnline);
+        $price->setIsMandatoryOnline($mandatoryOnline);
 
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
@@ -417,9 +420,8 @@ class PriceService
     /**
      * Returns a list of conflicting prices.
      *
-     * @return Doctrine\Common\Collections\ArrayCollection
      */
-    public function findConflictingPrices(Price $price)
+    public function findConflictingPrices(Price $price): ArrayCollection
     {
         $prices = [];
         // find conflicts when no season is given
@@ -494,6 +496,161 @@ class PriceService
         }
 
         return $result;
+    }
+
+    /**
+     * Builds a per-night PriceBreakdown for the apartment price (type=2),
+     * applying GuestCategoryModifiers per non-ADULT category from
+     * Reservation.guestCounts. ADULT counts use the unmodified base price.
+     *
+     * @return PriceBreakdown[] keyed by day index (0..nights-1)
+     */
+    public function getPriceBreakdownForReservation(Reservation $reservation): array
+    {
+        $pricesPerDay = $this->getPricesForReservationDays($reservation, 2);
+        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        $guestCounts = $reservation->getGuestCounts();
+
+        $categories = [];
+        if (null !== $this->guestCategoryRepository) {
+            foreach ($this->guestCategoryRepository->findAll() as $gc) {
+                $categories[$gc->getId()] = $gc;
+            }
+        }
+
+        $result = [];
+        $curDate = clone $reservation->getStartDate();
+        for ($i = 0; $i < $days; ++$i) {
+            $night = (clone $curDate)->add(new \DateInterval('P'.$i.'D'));
+            $price = $pricesPerDay[$i][0] ?? null;
+            $breakdown = new PriceBreakdown($night, $price);
+
+            if (null === $price || empty($guestCounts)) {
+                $result[$i] = $breakdown;
+                continue;
+            }
+
+            $basePerHead = (float) $price->getPrice();
+            $modifiers = null !== $this->modifierRepository
+                ? $this->modifierRepository->findActiveOn($night)
+                : [];
+
+            foreach ($guestCounts as $catId => $count) {
+                $count = (int) $count;
+                if ($count <= 0) {
+                    continue;
+                }
+                $category = $categories[$catId] ?? null;
+                if (null === $category) {
+                    continue;
+                }
+
+                $modifier = $this->pickModifier($modifiers, $category);
+                $unit = $this->applyModifier($basePerHead, $modifier, $category);
+                $breakdown->addLine(new PriceBreakdownLine($category, $count, $unit, $modifier));
+            }
+
+            $result[$i] = $breakdown;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Apartment total per night (after modifier deltas), expressed in the
+     * requested net/gross flavor. Used as the bemessungsgrundlage for
+     * percentage-based tourist taxes (Dresden/Berlin city tax models).
+     *
+     * Per-head pricing: sum(count × unit_with_modifier) per night.
+     * Flat-price / per-room: basePrice once per night (occupancy-independent).
+     *
+     * @return array<string, float> keyed by Y-m-d, value = apartment total in the requested base
+     */
+    public function getApartmentTotalsPerNight(Reservation $reservation, PercentageBase $target): array
+    {
+        $breakdowns = $this->getPriceBreakdownForReservation($reservation);
+        $result = [];
+        foreach ($breakdowns as $breakdown) {
+            $price = $breakdown->basePrice;
+            if (null === $price) {
+                continue;
+            }
+            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
+                $stored = (float) $price->getPrice();
+            } else {
+                // Mirror the apartment invoice row: numberOfPersons × per-head,
+                // then apply modifier deltas (only for occupancy-counted, non-adult
+                // categories — same rule as buildApartmentModifierPositions). This
+                // makes the city-tax base match the effective apartment total
+                // visible on the invoice (room row + modifier row).
+                $perHead = (float) $price->getPrice();
+                $numPersons = (int) $price->getNumberOfPersons();
+                $stored = $perHead * $numPersons;
+                foreach ($breakdown->lines as $line) {
+                    if (null === $line->modifier) {
+                        continue;
+                    }
+                    if (!$line->category->isCountedInOccupancy()) {
+                        continue;
+                    }
+                    if ($line->category->isAdult()) {
+                        continue;
+                    }
+                    $delta = ($line->unitPrice - $perHead) * $line->count;
+                    $stored += $delta;
+                }
+            }
+            $vat = null !== $price->getVat() ? (float) $price->getVat() : 0.0;
+            $storedIncludesVat = (bool) $price->getIncludesVat();
+
+            $value = $this->convertNetGross($stored, $vat, $storedIncludesVat, $target);
+            $result[$breakdown->night->format('Y-m-d')] = $value;
+        }
+
+        return $result;
+    }
+
+    private function convertNetGross(float $stored, float $vatPercent, bool $storedIncludesVat, PercentageBase $target): float
+    {
+        if ($vatPercent <= 0.0) {
+            return $stored;
+        }
+        $factor = 1.0 + $vatPercent / 100.0;
+        if ($target === PercentageBase::NET) {
+            return $storedIncludesVat ? $stored / $factor : $stored;
+        }
+
+        return $storedIncludesVat ? $stored : $stored * $factor;
+    }
+
+    /**
+     * @param GuestCategoryModifier[] $modifiers
+     */
+    private function pickModifier(array $modifiers, GuestCategory $category): ?GuestCategoryModifier
+    {
+        foreach ($modifiers as $mod) {
+            if ($mod->getCategory()?->getId() === $category->getId()) {
+                return $mod;
+            }
+        }
+
+        return null;
+    }
+
+    private function applyModifier(float $base, ?GuestCategoryModifier $modifier, GuestCategory $category): float
+    {
+        // ADULT category never uses a modifier — it is the base reference.
+        if (null === $modifier || $category->isAdult()) {
+            return $base;
+        }
+        $value = $modifier->getValueAsFloat();
+
+        return match ($modifier->getType()) {
+            ModifierType::SURCHARGE_ABSOLUTE => $base + $value,
+            ModifierType::DISCOUNT_PERCENT => max(0.0, $base * (1.0 - $value / 100.0)),
+            ModifierType::FLAT_RATE => $value,
+            ModifierType::FREE => 0.0,
+        };
     }
 
     /**

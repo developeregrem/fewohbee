@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Controller\PublicBookingController;
+use App\Exception\PublicBookingException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -22,6 +23,19 @@ final class PublicBookingControllerOccupancyParsingTest extends TestCase
     {
         $controller = new PublicBookingController();
         $method = new \ReflectionMethod(PublicBookingController::class, 'extractOccupancySelection');
+
+        return $method->invoke($controller, $request);
+    }
+
+    /**
+     * Use reflection to test the private parseSearchInput method directly.
+     *
+     * @return array{0:\DateTimeImmutable,1:\DateTimeImmutable,2:int,3:int}
+     */
+    private function callParseSearchInput(Request $request): array
+    {
+        $controller = new PublicBookingController();
+        $method = new \ReflectionMethod(PublicBookingController::class, 'parseSearchInput');
 
         return $method->invoke($controller, $request);
     }
@@ -99,5 +113,43 @@ final class PublicBookingControllerOccupancyParsingTest extends TestCase
         self::assertSame([
             'category:1' => [2 => 1],
         ], $result);
+    }
+
+    /** Same-day arrivals should be accepted by the public booking validation. */
+    public function testAllowsSameDayArrival(): void
+    {
+        $today = new \DateTimeImmutable('today');
+        $tomorrow = new \DateTimeImmutable('tomorrow');
+        $request = new Request([], [
+            'dateFrom' => $today->format('Y-m-d'),
+            'dateTo' => $tomorrow->format('Y-m-d'),
+            'persons' => '2',
+            'roomsCount' => '1',
+        ]);
+
+        [$dateFrom, $dateTo, $persons, $roomsCount] = $this->callParseSearchInput($request);
+
+        self::assertSame($today->format('Y-m-d'), $dateFrom->format('Y-m-d'));
+        self::assertSame($tomorrow->format('Y-m-d'), $dateTo->format('Y-m-d'));
+        self::assertSame(2, $persons);
+        self::assertSame(1, $roomsCount);
+    }
+
+    /** Past arrivals should still be rejected. */
+    public function testRejectsPastArrival(): void
+    {
+        $yesterday = new \DateTimeImmutable('yesterday');
+        $tomorrow = new \DateTimeImmutable('tomorrow');
+        $request = new Request([], [
+            'dateFrom' => $yesterday->format('Y-m-d'),
+            'dateTo' => $tomorrow->format('Y-m-d'),
+            'persons' => '1',
+            'roomsCount' => '1',
+        ]);
+
+        $this->expectException(PublicBookingException::class);
+        $this->expectExceptionMessage('online_booking.error.arrival_must_be_future');
+
+        $this->callParseSearchInput($request);
     }
 }

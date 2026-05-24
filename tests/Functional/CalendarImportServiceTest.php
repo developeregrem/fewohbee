@@ -9,8 +9,8 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Repository\ReservationRepository;
 use App\Service\CalendarImportService;
-use App\Service\ReservationService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -57,7 +57,7 @@ final class CalendarImportServiceTest extends KernelTestCase
         self::assertSame($end->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
     }
 
-    /** Verify that an existing reservation is updated when the UID matches. */
+    /** Verify that an existing reservation keeps manually edited fields when the UID matches. */
     public function testImportUpdatesReservationWhenUidMatches(): void
     {
         $import = $this->createImport('https://example.test/ical/update', CalendarSyncImport::CONFLICT_MARK);
@@ -65,6 +65,12 @@ final class CalendarImportServiceTest extends KernelTestCase
         $oldStart = new \DateTime('+1 day');
         $oldEnd = new \DateTime('+2 days');
         $reservation = $this->createReservation($import, $uid, $oldStart, $oldEnd);
+        $manualOrigin = $this->createReservationOrigin('Manual Origin Update');
+        $manualStatus = $this->createReservationStatus('Manual Status Update');
+        $reservation->setReservationOrigin($manualOrigin);
+        $reservation->setReservationStatus($manualStatus);
+        $reservation->setRemark('Manual note');
+        $this->em->flush();
         $newStart = new \DateTimeImmutable('+3 days');
         $newEnd = new \DateTimeImmutable('+5 days');
         $service = $this->createServiceWithResponses([
@@ -76,8 +82,42 @@ final class CalendarImportServiceTest extends KernelTestCase
         $this->em->refresh($reservation);
         self::assertSame($newStart->format('Y-m-d'), $reservation->getStartDate()->format('Y-m-d'));
         self::assertSame($newEnd->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
-        self::assertSame('Updated description', $reservation->getRemark());
+        self::assertSame('Manual note', $reservation->getRemark());
+        self::assertSame($manualOrigin->getId(), $reservation->getReservationOrigin()->getId());
+        self::assertSame($manualStatus->getId(), $reservation->getReservationStatus()->getId());
         self::assertFalse($reservation->isConflict());
+    }
+
+    /** Verify that conflict updates also preserve manually edited fields. */
+    public function testImportMarksExistingReservationAsConflictWithoutOverwritingManualFields(): void
+    {
+        $import = $this->createImport('https://example.test/ical/update-conflict', CalendarSyncImport::CONFLICT_MARK);
+        $uid = 'uid-update-conflict-1';
+        $reservation = $this->createReservation($import, $uid, new \DateTime('+1 day'), new \DateTime('+2 days'));
+        $manualOrigin = $this->createReservationOrigin('Manual Origin Conflict');
+        $manualStatus = $this->createReservationStatus('Manual Status Conflict');
+        $reservation->setReservationOrigin($manualOrigin);
+        $reservation->setReservationStatus($manualStatus);
+        $reservation->setRemark('Manual conflict note');
+        $this->em->flush();
+
+        $this->createReservation($import, 'uid-blocking-conflict-1', new \DateTime('+3 days'), new \DateTime('+6 days'));
+        $newStart = new \DateTimeImmutable('+4 days');
+        $newEnd = new \DateTimeImmutable('+5 days');
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => $this->buildIcal($uid, $newStart, $newEnd, 'Updated conflict description'),
+        ]);
+
+        $service->syncImport($import);
+
+        $this->em->refresh($reservation);
+        self::assertSame($newStart->format('Y-m-d'), $reservation->getStartDate()->format('Y-m-d'));
+        self::assertSame($newEnd->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
+        self::assertSame('Manual conflict note', $reservation->getRemark());
+        self::assertSame($manualOrigin->getId(), $reservation->getReservationOrigin()->getId());
+        self::assertSame($manualStatus->getId(), $reservation->getReservationStatus()->getId());
+        self::assertTrue($reservation->isConflict());
+        self::assertFalse($reservation->isConflictIgnored());
     }
 
     /** Verify that the mark strategy creates a conflict reservation for overlaps. */
@@ -176,14 +216,14 @@ final class CalendarImportServiceTest extends KernelTestCase
 
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
 
-        $reservationService = $this->createStub(ReservationService::class);
-        $reservationService->method('changeStatus')->willReturnCallback(
-            static function ($reservation, $status): void {
-                $reservation->setReservationStatus($status);
-            }
+        return new CalendarImportService(
+            $this->em,
+            $httpClient,
+            $cache,
+            $translator,
+            $eventDispatcher,
+            $this->getReservationRepository()
         );
-
-        return new CalendarImportService($this->em, $httpClient, $cache, $translator, $eventDispatcher, $reservationService);
     }
 
     /** Persist a calendar import with required relations. */
@@ -201,6 +241,31 @@ final class CalendarImportServiceTest extends KernelTestCase
         $this->em->flush();
 
         return $import;
+    }
+
+    /** Persist a dedicated reservation origin for preservation checks. */
+    private function createReservationOrigin(string $name): ReservationOrigin
+    {
+        $origin = new ReservationOrigin();
+        $origin->setName($name);
+        $this->em->persist($origin);
+        $this->em->flush();
+
+        return $origin;
+    }
+
+    /** Persist a dedicated blocking reservation status for preservation checks. */
+    private function createReservationStatus(string $name): ReservationStatus
+    {
+        $status = new ReservationStatus();
+        $status->setName($name);
+        $status->setColor('#123456');
+        $status->setContrastColor('#ffffff');
+        $status->setIsBlocking(true);
+        $this->em->persist($status);
+        $this->em->flush();
+
+        return $status;
     }
 
     /** Persist a reservation that can be used as a conflict baseline. */
@@ -328,7 +393,7 @@ final class CalendarImportServiceTest extends KernelTestCase
     }
 
     /** Resolve the reservation repository for assertions. */
-    private function getReservationRepository(): \App\Repository\ReservationRepository
+    private function getReservationRepository(): ReservationRepository
     {
         /** @var \App\Repository\ReservationRepository $repository */
         $repository = $this->em->getRepository(Reservation::class);

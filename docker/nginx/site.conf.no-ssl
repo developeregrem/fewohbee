@@ -1,0 +1,37 @@
+server_tokens off;
+
+# Do not set X-Frame-Options for /book paths — embedding is controlled by the app via CSP frame-ancestors
+map $request_uri $x_frame_options {
+    ~^/book  "";
+    default  "SAMEORIGIN";
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    index index.html index.php;
+    client_max_body_size 10m;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+
+    root /var/www/html/public;
+
+    include /etc/nginx/conf.d/server_name.active;
+
+    include /etc/nginx/conf.d/snippets/header.snippet;
+
+    # app configs (PHP/FastCGI — reused from HTTPS setup)
+    include /etc/nginx/conf.d/site-enabled-https/*;
+}
+
+server {
+    # this vhost is for internal connections only (e.g. mpdf fetches images from
+    # here via WEB_HOST, and the docker healthcheck calls /health/live here for
+    # consistency with the SSL setup).
+    listen 8080;
+
+    root /var/www/html/public;
+
+    include /etc/nginx/conf.d/server_name.active;
+    include /etc/nginx/conf.d/site-enabled-https/*;
+}

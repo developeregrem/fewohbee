@@ -21,6 +21,10 @@ class ReservationObject
     private $reservationStatus;
     private $persons;
     private $customerId;
+    /** @var array<int, int> */
+    private array $guestCounts = [];
+    private bool $adultRuleOverride = false;
+    private bool $kurtaxeWaived = false;
 
     public function __construct($appartmentId, $start, $end, $status, $persons)
     {
@@ -74,5 +78,48 @@ class ReservationObject
     public function setPersons($persons): void
     {
         $this->persons = $persons;
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function getGuestCounts(): array
+    {
+        return $this->guestCounts;
+    }
+
+    /**
+     * @param array<int, int> $guestCounts
+     */
+    public function setGuestCounts(array $guestCounts): void
+    {
+        $normalized = [];
+        foreach ($guestCounts as $categoryId => $count) {
+            $count = (int) $count;
+            if ($count > 0) {
+                $normalized[(int) $categoryId] = $count;
+            }
+        }
+        $this->guestCounts = $normalized;
+    }
+
+    public function isAdultRuleOverride(): bool
+    {
+        return $this->adultRuleOverride;
+    }
+
+    public function setAdultRuleOverride(bool $adultRuleOverride): void
+    {
+        $this->adultRuleOverride = $adultRuleOverride;
+    }
+
+    public function isKurtaxeWaived(): bool
+    {
+        return $this->kurtaxeWaived;
+    }
+
+    public function setKurtaxeWaived(bool $kurtaxeWaived): void
+    {
+        $this->kurtaxeWaived = $kurtaxeWaived;
     }
 }

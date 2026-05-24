@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+{% import 'BookingJournal/BankImport/_rule_summary.html.twig' as ruleUi %}
+
+{% block title %}{{ parent() }} - {{ 'accounting.bank_import.rules.edit'|trans }}{% endblock %}
+
+{% block flashMessage %}
+    {% include 'BookingJournal/_flash_messages.html.twig' %}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="bank-import">
+    <div class="row mb-2">
+        <div class="col">
+            <ul class="pagination me-auto">
+                <li class="page-item">
+                    <a class="page-link" href="{{ path('bank_import.rules.index') }}">&larr; {{ 'button.back'|trans }}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h4 class="mb-0">{{ 'accounting.bank_import.rules.edit'|trans }}</h4>
+            <p class="text-muted small mb-0">{{ 'accounting.bank_import.rules.edit.help'|trans }}</p>
+        </div>
+    </div>
+
+    {% include 'feedback.html.twig' %}
+
+    <div class="row">
+        <div class="col-lg-7">
+            {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <strong>{{ 'accounting.bank_import.rules.section.basics'|trans }}</strong>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.description) }}
+                    {{ form_row(form.isEnabled) }}
+                    <div class="row g-3">
+                        <div class="col-md-4">{{ form_row(form.priority) }}</div>
+                        <div class="col-md-2 d-flex align-items-end"></div>
+                        <div class="col-md-6">{{ form_row(form.bankAccount) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mb-4">
+                <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary">
+                    {{ 'button.cancel'|trans }}
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+                </button>
+            </div>
+            {{ form_end(form) }}
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <strong>{{ 'accounting.bank_import.rules.section.conditions'|trans }}</strong>
+                </div>
+                <div class="card-body">
+                    {{ ruleUi.conditionsList(rule.conditions) }}
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <strong>{{ 'accounting.bank_import.rules.section.action'|trans }}</strong>
+                </div>
+                <div class="card-body">
+                    {{ ruleUi.actionSummary(rule.action, accountsById, taxRatesById) }}
+                </div>
+            </div>
+
+            <p class="text-muted small mb-0">
+                <i class="fas fa-info-circle me-1"></i>
+                {{ 'accounting.bank_import.rules.edit.recreate_hint'|trans }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

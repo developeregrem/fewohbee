@@ -14,10 +14,10 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\AccountingSettingsRepository;
 use App\Repository\BookingBatchRepository;
 use App\Repository\BookingEntryRepository;
-use App\Service\AccountingSettingsService;
-use App\Service\BookingJournalService;
+use App\Service\BookingJournal\AccountingSettingsService;
+use App\Service\BookingJournal\BookingJournalService;
 use App\Service\JournalExport\DatevExportService;
-use App\Service\OpeningBalanceService;
+use App\Service\BookingJournal\OpeningBalanceService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -118,6 +118,7 @@ class BookingJournalController extends AbstractController
     #[Route('/batch/{id}', name: 'journal.batch.entries', methods: ['GET'])]
     public function batchEntries(
         BookingBatch $batch,
+        BookingBatchRepository $batchRepo,
         BookingEntryRepository $entryRepo,
         BookingJournalService $journalService,
         EntityManagerInterface $em,
@@ -144,8 +145,14 @@ class BookingJournalController extends AbstractController
             $bankClosingBalance = $bankOpeningBalance + $entryRepo->getBankBatchDelta($batch);
         }
 
+        $batchDate = new \DateTimeImmutable(sprintf('%04d-%02d-01', $batch->getYear(), $batch->getMonth()));
+        $previousBatchDate = $batchDate->modify('-1 month');
+        $nextBatchDate = $batchDate->modify('+1 month');
+
         return $this->render('BookingJournal/entries.html.twig', [
             'batch' => $batch,
+            'previousBatch' => $batchRepo->findByYearAndMonth((int) $previousBatchDate->format('Y'), (int) $previousBatchDate->format('n')),
+            'nextBatch' => $batchRepo->findByYearAndMonth((int) $nextBatchDate->format('Y'), (int) $nextBatchDate->format('n')),
             'entries' => $entries,
             'bankOpeningBalance' => $bankOpeningBalance,
             'bankClosingBalance' => $bankClosingBalance,

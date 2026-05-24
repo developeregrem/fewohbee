@@ -224,6 +224,24 @@ class PriceRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find misc prices that are marked as mandatory for online booking.
+     *
+     * @return Price[]
+     */
+    public function findMandatoryOnlineExtras(Reservation $reservation): array
+    {
+        $q = $this->getFindBaseQuery($reservation)
+            ->andWhere('p.type = 1')
+            ->andWhere('p.isMandatoryOnline = true');
+
+        try {
+            return $q->getQuery()->getResult();
+        } catch (NoResultException $e) {
+            return [];
+        }
+    }
+
+    /**
      * Base Query to find prices for a reservation.
      *
      * @return \Doctrine\ORM\QueryBuilder

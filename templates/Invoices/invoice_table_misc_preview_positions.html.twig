@@ -9,7 +9,9 @@
         </tr>
     </thead>
     <tbody>
-        {% for position in positionsMiscellaneous %}
+        {% set miscOnly = positionsMiscellaneous|filter(p => p.positionGroup != 'tourist_tax' and p.positionGroup != 'apartment_modifier') %}
+        {% set miscOnlyTotal = 0 %}
+        {% for position in miscOnly %}
             <tr>
                 <td>{{ position.description }}</td>
                 <td class="text-end">{{ position.amount }}</td>
@@ -23,6 +25,7 @@
                 </td>
                 <td class="text-end">{{ position.totalPrice }}</td>
             </tr>
+            {% set miscOnlyTotal = miscOnlyTotal + position.totalPriceRaw %}
             {# check whether there are different prices used, e.g. one uses uses includes vat and one not #}
             {% if lastIncludesVat is not null and lastIncludesVat != position.includesVat %}
                 {% set vatWarning = true %}
@@ -30,7 +33,7 @@
             {% set lastIncludesVat = position.includesVat %}
         {% endfor %}
         <tr>
-            <th colspan="5" class="text-end">{{ miscTotal|number_format(2, ',', '.') }}</th>
+            <th colspan="5" class="text-end">{{ miscOnlyTotal|number_format(2, ',', '.') }}</th>
         </tr>
     </tbody>
 </table>

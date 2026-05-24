@@ -20,7 +20,7 @@ use App\Entity\Template;
 use App\Entity\TaxRate;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Repository\BookingBatchRepository;
-use App\Service\BookingJournalService;
+use App\Service\BookingJournal\BookingJournalService;
 
 /**
  * Preview provider for cash journal PDF templates.

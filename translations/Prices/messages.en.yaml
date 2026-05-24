@@ -72,6 +72,13 @@ price.isflatprice: flat rate
 price.perroom: per night (else per person)
 price.defaultactiveinreservationcreation: active by default in reservation creation
 price.bookableonline: Available for online booking
+price.mandatoryonline: Mandatory in online booking
+price.mandatoryonline.hint: The guest cannot deselect this item.
+price.visibility.label: Visibility & availability
+price.calculation_type.label: Calculation type
+price.calculation_type.flat: Flat price (per booking)
+price.calculation_type.per_person: Per night, per person
+price.calculation_type.per_room: Per night, per room
 price.minstay: Minimum nights
 price.miscellaneous: Other price
 price.monday: Monday

@@ -163,10 +163,10 @@ class RoomCategoryImageService
      */
     private function isValidImage(UploadedFile $file): bool
     {
-        $constraint = new Assert\Image([
-            'maxSize' => '10m',
-            'mimeTypes' => ['image/jpeg', 'image/png', 'image/webp'],
-        ]);
+        $constraint = new Assert\Image(
+            maxSize: '10m',
+            mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        );
 
         return 0 === $this->validator->validate($file, $constraint)->count();
     }

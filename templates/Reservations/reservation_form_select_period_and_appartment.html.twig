@@ -17,7 +17,7 @@
                 <table class="table" id="selectedAppartments">
                     <thead>
                     <tr>
-                        <th>{{ 'appartment.number'|trans }}</th>
+                        <th>{{ 'appartment.number.short'|trans }}</th>
                         <th>{{ 'appartment.description'|trans }}</th>
                         <th>{{ 'reservation.persons'|trans }}</th>
                         <th>{{ 'reservation.status'|trans }}</th>
@@ -31,7 +31,22 @@
                         <tr data-action="click->reservations#toggleAppartmentOptionsAction" data-appartment-id="{{ key }}">
                             <td>{{ reservation.appartment.number }}</td>
                             <td>{{ reservation.appartment.description }}</td>
-                            <td>{{ reservation.persons }}</td>
+                            <td>
+                                {{ reservation.persons }}
+                                {% set counts = reservation.guestCounts %}
+                                {% if counts is not empty and guestCategoriesById|default({}) is not empty %}
+                                    {% set parts = [] %}
+                                    {% for catId, cat in guestCategoriesById %}
+                                        {% set count = counts[catId]|default(0) %}
+                                        {% if count > 0 %}
+                                            {% set parts = parts|merge([count ~ '×' ~ cat.acronym]) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if parts is not empty %}
+                                        <span class="text-muted small">({{ parts|join(', ') }})</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
                             <td>{{ reservation.reservationStatus.name }}</td>
                             <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                             <td>{{ reservation.enddate|date('d.m.Y') }}</td>
@@ -47,12 +62,14 @@
                                 <form id="appartment-options-{{ key }}">
                                     <div class="row">
                                         {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' with {'appartment': reservation.appartment} %}
-                                        <div class="col-sm-3">                                        
+                                    </div>
+                                    <div class="row justify-content-end">
+                                        <div class="col-sm-3 text-end">                                        
                                             <button class="btn btn-secondary" type="button"
                                                 data-action="click->reservations#saveAppartmentOptionsAction"
                                                 data-appartment-id="{{ key }}">{{ 'button.save'|trans }}</button>
                                         </div>
-                                    </div>
+                                    </div>                                    
                                 </form>
                             </td>
                         </tr>

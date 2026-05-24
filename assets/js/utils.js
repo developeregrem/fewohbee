@@ -125,6 +125,20 @@ export function disposeTooltips(root = document) {
 }
 
 /**
+ * Initialize Bootstrap popovers on all generic `[data-bs-toggle="popover"]`
+ * elements within the given root. Skips delete-confirmation popovers (those
+ * are handled by enableDeletePopover with their own click semantics).
+ */
+export async function enablePopovers(root = document) {
+    const ready = await whenBootstrapAndIconsReady();
+    if (!ready) return [];
+    const rootEl = root?.querySelectorAll ? root : document;
+    return [...rootEl.querySelectorAll('[data-bs-toggle="popover"]')]
+        .filter((el) => el.dataset.popover !== 'delete')
+        .map((el) => window.bootstrap.Popover.getOrCreateInstance(el));
+}
+
+/**
  * Creates a confirmation popover (yes/no) when clicking on an element which has the
  * data-popover="delete" attribute assigned. Internally waits for Bootstrap and Font
  * Awesome to be ready, so callers do not need to worry about load timing.

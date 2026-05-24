@@ -1,0 +1,220 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service\BookingJournal\BankImport;
+
+use App\Dto\BookingJournal\BankImport\ImportState;
+use App\Entity\AccountingAccount;
+use App\Entity\BankImportRule;
+use App\Repository\BankImportRuleRepository;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+/**
+ * Walks the user's rule templates against every statement line in the draft
+ * and applies the first matching rule (priority DESC, short-circuit on first
+ * match — exactly like the Workflow engine).
+ *
+ * Lines that are protected duplicates or have been explicitly ignored are
+ * skipped so we never overwrite stronger signals.
+ */
+final class BankImportRuleMatcher
+{
+    public function __construct(
+        private readonly BankImportRuleRepository $ruleRepo,
+        private readonly RuleConditionEvaluator $evaluator,
+        private readonly RuleActionApplicator $applicator,
+        private readonly TranslatorInterface $translator,
+    ) {
+    }
+
+    public function annotate(ImportState $state, AccountingAccount $bankAccount): void
+    {
+        $rules = $this->ruleRepo->findActiveForAccount($bankAccount);
+        if ([] === $rules) {
+            return;
+        }
+
+        foreach ($state->lines as &$line) {
+            if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
+                continue;
+            }
+
+            $this->applyFirstMatchingRule($line, $rules, $state);
+        }
+        unset($line);
+    }
+
+    public function annotateLine(ImportState $state, int $idx, AccountingAccount $bankAccount): bool
+    {
+        if (!isset($state->lines[$idx])) {
+            return false;
+        }
+
+        $line = &$state->lines[$idx];
+        if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
+            unset($line);
+
+            return false;
+        }
+
+        $rules = $this->ruleRepo->findActiveForAccount($bankAccount);
+        $matched = $this->applyFirstMatchingRule($line, $rules, $state);
+        unset($line);
+
+        return $matched;
+    }
+
+    public function reapplyPreviouslyAppliedRules(ImportState $state, AccountingAccount $bankAccount): int
+    {
+        $rules = $this->ruleRepo->findActiveForAccount($bankAccount);
+        $this->dropRuleWarnings($state);
+
+        $touched = 0;
+        foreach ($state->lines as &$line) {
+            if (null === ($line['appliedRuleId'] ?? null)) {
+                continue;
+            }
+            if ($this->isProtectedDuplicate($line) || true === ($line['isIgnored'] ?? false)) {
+                continue;
+            }
+
+            $this->resetRuleManagedFields($line, $bankAccount);
+            ++$touched;
+
+            foreach ($rules as $rule) {
+                if (!$this->ruleMatches($rule, $line)) {
+                    continue;
+                }
+
+                $this->applicator->apply($rule, $line);
+                if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
+                    $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
+                        '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
+                        '%message%' => $this->formatRuleWarning($line['ruleWarning']),
+                    ]);
+                    if (!in_array($warning, $state->warnings, true)) {
+                        $state->warnings[] = $warning;
+                    }
+                }
+                break;
+            }
+
+            $line['status'] = ImportState::deriveLineStatus($line);
+        }
+        unset($line);
+
+        return $touched;
+    }
+
+    /**
+     * All conditions must match (AND logic). An empty rule matches everything —
+     * useful as a catch-all default at low priority.
+     *
+     * @param array<string, mixed> $line
+     */
+    private function ruleMatches(BankImportRule $rule, array $line): bool
+    {
+        foreach ($rule->getConditions() as $condition) {
+            if (!$this->evaluator->matches($condition, $line)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function isProtectedDuplicate(array $line): bool
+    {
+        return true === ($line['isDuplicate'] ?? false)
+            && true !== ($line['forceImportDuplicate'] ?? false);
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     * @param list<BankImportRule> $rules
+     */
+    private function applyFirstMatchingRule(array &$line, array $rules, ImportState $state): bool
+    {
+        foreach ($rules as $rule) {
+            if (!$this->ruleMatches($rule, $line)) {
+                continue;
+            }
+
+            $this->applicator->apply($rule, $line);
+            if ($this->hasRuleWarning($line['ruleWarning'] ?? null)) {
+                $warning = $this->translator->trans('accounting.bank_import.rule.warning.line', [
+                    '%line%' => ((int) ($line['idx'] ?? 0)) + 1,
+                    '%message%' => $this->formatRuleWarning($line['ruleWarning']),
+                ]);
+                if (!in_array($warning, $state->warnings, true)) {
+                    $state->warnings[] = $warning;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param mixed $warning
+     */
+    private function hasRuleWarning(mixed $warning): bool
+    {
+        if (is_array($warning)) {
+            return isset($warning['key']) && '' !== (string) $warning['key'];
+        }
+
+        return null !== $warning && '' !== (string) $warning;
+    }
+
+    /**
+     * @param mixed $warning
+     */
+    private function formatRuleWarning(mixed $warning): string
+    {
+        if (is_array($warning) && isset($warning['key'])) {
+            $params = $warning['params'] ?? [];
+
+            return $this->translator->trans((string) $warning['key'], is_array($params) ? $params : []);
+        }
+
+        return (string) $warning;
+    }
+
+    private function dropRuleWarnings(ImportState $state): void
+    {
+        $state->warnings = array_values(array_filter(
+            $state->warnings,
+            static fn (mixed $warning): bool => !is_string($warning)
+                || 1 !== preg_match('/^(Zeile|Line) \d+:/u', $warning),
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $line
+     */
+    private function resetRuleManagedFields(array &$line, AccountingAccount $bankAccount): void
+    {
+        $bankAccountId = (int) $bankAccount->getId();
+        $line['appliedRuleId'] = null;
+        $line['splits'] = [];
+        $line['userTaxRateId'] = null;
+        $line['userRemark'] = null;
+        $line['userInvoiceNumber'] = null;
+        unset($line['ruleWarning']);
+
+        if (((float) ($line['amount'] ?? 0)) >= 0.0) {
+            $line['userDebitAccountId'] = $bankAccountId;
+            $line['userCreditAccountId'] = null;
+        } else {
+            $line['userDebitAccountId'] = null;
+            $line['userCreditAccountId'] = $bankAccountId;
+        }
+    }
+}

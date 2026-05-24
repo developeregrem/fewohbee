@@ -67,23 +67,100 @@
                             </div>
 
                             {# ── Step 1: Search ── #}
-                            <div class="row g-2">
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label mb-1" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
-                                    <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
+                            {% set hasCategories = guestCategories|default([])|length > 0 %}
+                            {% set hasChildCategory = hasCategories and (guestCategories|filter(c => c.statisticalGroup.value != 'adult')|length > 0) %}
+                            {% set initialChildAges = search.childAges|default([]) %}
+                            {# Booking.com-Pattern: zwei Stepper (Erwachsene + Kinder), pro Kind ein Alters-Select.
+                               Server mappt das Alter via GuestCategoryAgeMapper auf die richtige Kategorie. #}
+
+                            <div{% if hasCategories %} data-pgc-root{% endif %}>
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
+                                        <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
+                                        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label mb-1" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
+                                        <input class="form-control" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
+                                    </div>
+
+                                    {% if hasCategories %}
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label mb-1" for="adults">{{ 'online_booking.public.guests.adults'|trans }}</label>
+                                            <input class="form-control" type="number" min="1" id="adults" name="adults"
+                                                   value="{{ search.adults|default(1) }}"
+                                                   data-pgc-target="adultsInput"
+                                                   data-pgc-min="1"
+                                                   onwheel="this.blur()">
+                                        </div>
+                                    {% else %}
+                                        <div class="col-6 col-md-3">
+                                            <label class="form-label mb-1" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
+                                            <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
+                                        </div>
+                                    {% endif %}
                                 </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label mb-1" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
-                                    <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label mb-1" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
-                                    <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label mb-1" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
-                                    <input class="form-control" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
-                                </div>
+
+                                {% if hasChildCategory %}
+                                    <div class="mt-2">
+                                        <a class="small d-inline-flex align-items-center text-decoration-none{% if initialChildAges|length == 0 %} collapsed{% endif %}"
+                                           data-bs-toggle="collapse" href="#publicChildren"
+                                           role="button" aria-expanded="{{ initialChildAges|length > 0 ? 'true' : 'false' }}" aria-controls="publicChildren">
+                                            <i class="fas fa-chevron-right me-2 small public-collapse-chevron"></i>
+                                            {{ 'online_booking.public.guests.add_children'|trans }}
+                                        </a>
+                                        <div class="collapse{% if initialChildAges|length > 0 %} show{% endif %}" id="publicChildren">
+                                            <div class="row g-2 mt-1 align-items-end">
+                                                <div class="col-6 col-md-3">
+                                                    <label class="form-label mb-1" for="children">{{ 'online_booking.public.guests.children'|trans }}</label>
+                                                    <input class="form-control" type="number" min="0" id="children" name="children"
+                                                           value="{{ initialChildAges|length }}"
+                                                           data-pgc-target="childrenInput"
+                                                           data-pgc-min="0"
+                                                           onwheel="this.blur()">
+                                                </div>
+                                                <div class="col-12 col-md-9">
+                                                    <div class="row g-2" data-pgc-target="childAges">
+                                                        {% for age in initialChildAges %}
+                                                            <div class="col-6 col-md-3" data-pgc-child-row>
+                                                                <label class="form-label mb-1 small">{{ 'online_booking.public.guests.age_label'|trans({'%n%': loop.index}) }}</label>
+                                                                <select class="form-select form-select-sm" name="childAges[]">
+                                                                    {% for a in 0..17 %}
+                                                                        <option value="{{ a }}"{% if a == age %} selected{% endif %}>{{ a }}</option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if hasCategories %}
+                                    <div class="alert alert-warning small py-2 mt-2 d-none" data-pgc-target="adultWarning">
+                                        {{ 'online_booking.public.guests.adult_required'|trans }}
+                                    </div>
+
+                                    {# Hidden persons input — synced by JS as adults + children for capacity filtering. #}
+                                    <input type="hidden" name="persons" value="{{ search.persons|default(1) }}" data-pgc-target="personsInput">
+                                    {# Inline template used by JS to clone new age-select rows. #}
+                                    <template data-pgc-target="childAgeTemplate">
+                                        <div class="col-6 col-md-3" data-pgc-child-row>
+                                            <label class="form-label mb-1 small" data-pgc-child-label>{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}</label>
+                                            <select class="form-select form-select-sm" name="childAges[]">
+                                                {% for a in 0..17 %}
+                                                    <option value="{{ a }}">{{ a }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </template>
+                                {% endif %}
                             </div>
 
                             <div class="mt-3 text-end">
@@ -158,6 +235,12 @@
                                                         <div class="d-flex align-items-center gap-2 flex-grow-1">
                                                             <span title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}" style="letter-spacing:.1em">
                                                                 {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
+                                                                {% if mixOccupancyTotal|default(0) == option.persons and nonOccupancyIcons|default([])|length > 0 %}
+                                                                    <span class="ms-1 text-muted">
+                                                                        +
+                                                                        {% for ico in nonOccupancyIcons %}<i class="fa-solid {{ ico.icon }} fhb-occupancy-icon" title="{{ ico.label }}"></i>{% endfor %}
+                                                                    </span>
+                                                                {% endif %}
                                                             </span>
                                                             <span class="fw-semibold ms-auto me-2">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
                                                         </div>
@@ -178,7 +261,8 @@
                                         <div class="list-group">
                                             {% for extra in extras %}
                                                 {% set extraFieldName = 'extra_' ~ extra.id %}
-                                                {% set selectedQtyVal = selectedExtras[extra.id]|default(0) %}
+                                                {% set isMandatoryExtra = extra.isMandatory|default(false) %}
+                                                {% set selectedQtyVal = selectedExtras[extra.id]|default(isMandatoryExtra ? 1 : 0) %}
                                                 {% set needsQuantity = extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
                                                 <div class="list-group-item d-flex align-items-center justify-content-between gap-2 py-2">
                                                     <div class="flex-grow-1">
@@ -197,11 +281,19 @@
                                                             </span>
                                                         </div>
                                                     </div>
+                                                    {% if isMandatoryExtra %}
+                                                        {# Hidden input überträgt den Wert auch bei disabled UI-Element. #}
+                                                        <input type="hidden" name="{{ extraFieldName }}" value="{{ needsQuantity ? selectedQtyVal : 1 }}">
+                                                    {% endif %}
                                                     {% if needsQuantity %}
                                                         <div style="width:70px;flex-shrink:0">
-                                                            <select class="form-select form-select-sm" name="{{ extraFieldName }}"
+                                                            <select class="form-select form-select-sm"
+                                                                    {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
+                                                                    {% if isMandatoryExtra %}disabled{% endif %}
                                                                     onwheel="this.blur()">
-                                                                <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
+                                                                {% if not isMandatoryExtra %}
+                                                                    <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
+                                                                {% endif %}
                                                                 {% for q in 1..extra.maxQuantity %}
                                                                     <option value="{{ q }}" {% if selectedQtyVal == q %}selected{% endif %}>{{ q }}</option>
                                                                 {% endfor %}
@@ -210,8 +302,11 @@
                                                     {% else %}
                                                         <div class="form-check form-switch mb-0 ms-2">
                                                             <input class="form-check-input" type="checkbox" role="switch"
-                                                                   id="{{ extraFieldName }}" name="{{ extraFieldName }}" value="1"
-                                                                   {% if selectedQtyVal > 0 %}checked{% endif %}>
+                                                                   id="{{ extraFieldName }}"
+                                                                   {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
+                                                                   value="1"
+                                                                   {% if selectedQtyVal > 0 or isMandatoryExtra %}checked{% endif %}
+                                                                   {% if isMandatoryExtra %}disabled{% endif %}>
                                                         </div>
                                                     {% endif %}
                                                 </div>
@@ -392,15 +487,36 @@
                                             </div>
                                         {% endif %}
 
-                                        {% if grandTotalFormatted and extrasBreakdown is not empty %}
+                                        {# Tourist tax breakdown — eigene Rubrik #}
+                                        {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
+                                            <div class="mb-2 border-top pt-2">
+                                                <div class="small fw-semibold mb-1">{{ 'invoice.tourist_tax.heading'|trans }}</div>
+                                                {% for taxRow in touristTaxLines %}
+                                                    <div class="d-flex justify-content-between align-items-center small{% if not loop.last %} mb-1{% endif %}">
+                                                        <span>{{ taxRow.label }}</span>
+                                                        <span>{{ taxRow.totalFormatted }} {{ currency_symbol }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+
+                                        {% if grandTotalFormatted and (extrasBreakdown is not empty or (touristTaxLines is defined and touristTaxLines|length > 0)) %}
                                             <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-1">
                                                 <span>{{ 'online_booking.public.room_total'|trans }}</span>
                                                 <span>{{ roomTotalFormatted }} {{ currency_symbol }}</span>
                                             </div>
-                                            <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-2">
-                                                <span>{{ 'online_booking.public.extras_total'|trans }}</span>
-                                                <span>{{ extrasTotalFormatted }} {{ currency_symbol }}</span>
-                                            </div>
+                                            {% if extrasBreakdown is not empty %}
+                                                <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-2">
+                                                    <span>{{ 'online_booking.public.extras_total'|trans }}</span>
+                                                    <span>{{ extrasTotalFormatted }} {{ currency_symbol }}</span>
+                                                </div>
+                                            {% endif %}
+                                            {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
+                                                <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-2">
+                                                    <span>{{ 'invoice.tourist_tax.heading'|trans }}</span>
+                                                    <span>{{ touristTaxTotalFormatted }} {{ currency_symbol }}</span>
+                                                </div>
+                                            {% endif %}
                                             <div class="d-flex justify-content-between align-items-center border-top pt-2">
                                                 <span>{{ 'online_booking.public.grand_total'|trans }}</span>
                                                 <strong class="text-primary">{{ grandTotalFormatted }} {{ currency_symbol }}</strong>
@@ -469,4 +585,64 @@
 })();
 </script>
 {% endif %}
+
+{# Public guest-counts wiring — Vanilla-JS, da auf der Public-Seite kein
+   Stimulus läuft. Verarbeitet zwei Standard-Number-Inputs (Erwachsene +
+   Kinder), rendert pro Kind einen Alters-Select via <template>-Klon, hält
+   das hidden persons-Feld synchron (für die Apartment-Capacity-Filterung)
+   und blockt Submit solange keine Erwachsenen ausgewählt sind. #}
+<script>
+(function () {
+    document.querySelectorAll('[data-pgc-root]').forEach(function (root) {
+        var adultsInput = root.querySelector('[data-pgc-target="adultsInput"]');
+        var childrenInput = root.querySelector('[data-pgc-target="childrenInput"]');
+        var personsInput = root.querySelector('[data-pgc-target="personsInput"]');
+        var childAgesContainer = root.querySelector('[data-pgc-target="childAges"]');
+        var childTemplate = root.querySelector('[data-pgc-target="childAgeTemplate"]');
+        var warning = root.querySelector('[data-pgc-target="adultWarning"]');
+        var form = root.closest('form');
+        var ageLabelTemplate = '{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}';
+
+        function clamp(input) {
+            var min = parseInt(input.dataset.pgcMin || '0', 10);
+            var v = Math.max(min, parseInt(input.value, 10) || min);
+            if (String(v) !== input.value) input.value = String(v);
+            return v;
+        }
+
+        function syncChildAgeRows(desired) {
+            if (!childAgesContainer || !childTemplate) return;
+            var rows = childAgesContainer.querySelectorAll('[data-pgc-child-row]');
+            for (var i = rows.length; i < desired; i++) {
+                var clone = childTemplate.content.firstElementChild.cloneNode(true);
+                var label = clone.querySelector('[data-pgc-child-label]');
+                if (label) label.textContent = ageLabelTemplate.replace('__N__', String(i + 1));
+                childAgesContainer.appendChild(clone);
+            }
+            var current = childAgesContainer.querySelectorAll('[data-pgc-child-row]');
+            for (var j = current.length - 1; j >= desired; j--) {
+                current[j].remove();
+            }
+        }
+
+        function recompute() {
+            var adults = clamp(adultsInput);
+            var children = childrenInput ? clamp(childrenInput) : 0;
+            syncChildAgeRows(children);
+            if (personsInput) personsInput.value = String(Math.max(1, adults + children));
+            var valid = adults > 0;
+            if (warning) warning.classList.toggle('d-none', valid);
+            if (form) {
+                form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (btn) {
+                    btn.disabled = !valid;
+                });
+            }
+        }
+
+        if (adultsInput) adultsInput.addEventListener('input', recompute);
+        if (childrenInput) childrenInput.addEventListener('input', recompute);
+        recompute();
+    });
+})();
+</script>
 {% endblock %}

@@ -11,6 +11,7 @@
               data-available-edit-url="{{ path('reservations.get.edit.available.appartments') }}"
               data-modify-appartment-options-url="{{ path('reservations.modify.appartment.options') }}"
               data-remove-appartment-url="{{ path('reservations.remove.appartment.from.reservation') }}">
+            <input id="reservation-id" type="hidden" value="{{ reservation.id }}" name="reservation-id"/>
             <div class="row">
                 <div class="col">
                     <input type="date" class="form-control" id="from" name="from"

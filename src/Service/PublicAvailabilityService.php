@@ -44,12 +44,19 @@ class PublicAvailabilityService
      *   occupancyAvailableCounts: array<int, int>
      * }>
      */
+    /**
+     * @param array<int, int> $guestCounts category-id => count from the wizard,
+     *   forwarded to per-occupancy pricing so the option that matches the
+     *   user's mix reflects modifier deltas (children's discount etc.) already
+     *   in step 2.
+     */
     public function getAvailability(
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
         int $persons,
         int $roomsCount,
-        ?OnlineBookingConfig $config = null
+        ?OnlineBookingConfig $config = null,
+        array $guestCounts = []
     ): array {
         if ($dateFrom > $dateTo || $persons < 1 || $roomsCount < 1 || $persons < $roomsCount) {
             return [];
@@ -148,6 +155,10 @@ class PublicAvailabilityService
                 $dateFrom,
                 $dateTo,
                 min((int) $row['maxGuests'], $persons),
+                $guestCounts,
+                // `$persons` is already the occupancy-counted total derived by
+                // the controller from the user's guestCounts mix.
+                $persons,
             );
 
             // Apply minimum occupancy restriction: remove occupancy options below threshold

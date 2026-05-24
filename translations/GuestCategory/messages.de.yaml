@@ -1,0 +1,118 @@
+guest_category:
+  title: "Gastkategorien"
+  description: "Verwaltung der Gastkategorien (z. B. Erwachsene, Kinder, nichtpflichtige Personen)"
+  add: "Gastkategorie hinzufügen"
+  delete:
+    ask: "Diese Gastkategorie wirklich löschen?"
+  system:
+    locked: "Systemkategorien können nicht gelöscht werden."
+  persons_total: "Personen gesamt (Belegung)"
+  not_in_room_price: "Im Zimmerpreis nicht enthalten"
+  not_in_room_price.help: 'Gäste dieser Kategorie zählen nicht zur Zimmerbelegung und werden vom Apartmentpreis nicht erfasst — sie sind dadurch automatisch im Übernachtungspreis nicht enthalten. Eine Preisanpassung (z. B. „kostenlos") ist hier weder nötig noch wirksam.'
+
+  flag:
+    adult: "Erwachsen"
+    occupancy: "belegt Zimmerbett"
+    no_occupancy: "belegt kein Zimmerbett"
+
+  warning:
+    no_adult: "Diese Buchung enthält keinen Erwachsenen. Aktiviere die Freigabe weiter unten, um trotzdem zu speichern."
+    over_capacity: "Maximale Bettenbelegung des Zimmers erreicht."
+
+  field:
+    name: "Bezeichnung"
+    acronym: "Kürzel"
+    acronym.help: "Kurze Abkürzung, z. B. ERW, K6-16, BABY."
+    statistical_group: "Gruppe"
+    statistical_group.help: "Legt fest, wie diese Kategorie ausgewertet wird. Kategorien mit Gruppe \"Erwachsen\" erfüllen die Prüfung, dass eine Buchung normalerweise mindestens einen Erwachsenen enthalten muss."
+    is_counted_in_occupancy: "Zählt als belegtes Zimmerbett"
+    is_counted_in_occupancy.help: "Aktivieren, wenn Gäste dieser Kategorie ein Bett des Zimmers belegen. Diese Anzahl wird von den freien Betten abgezogen. Deaktivieren z. B. für Babys im Babybett."
+    min_age: "Min. Alter"
+    max_age: "Max. Alter"
+    sort_order: "Sortierreihenfolge"
+    active: "Aktiv"
+    subsidiaries: "Gültig für Niederlassung"
+    subsidiaries.help: "Leer lassen = global verfügbar."
+    adult_rule_override: "Buchung ohne Erwachsenen-Begleitung freigeben"
+
+  statistical_group:
+    adult: "Erwachsen"
+    child: "Kind"
+    infant: "Kleinkind / Baby"
+    other: "Sonstige"
+
+  col:
+    name: "Bezeichnung"
+    acronym: "Kürzel"
+    statistical_group: "Gruppe"
+    flags: "Eigenschaften"
+    age: "Alter"
+    active: "Aktiv"
+    action: "Aktion"
+    count: "Anzahl"
+
+  flash:
+    create:
+      success: "Gastkategorie wurde erstellt."
+    edit:
+      success: "Gastkategorie wurde gespeichert."
+    delete:
+      success: "Gastkategorie wurde gelöscht."
+      error:
+        system: "Systemkategorien können nicht gelöscht werden."
+
+  default:
+    adult:
+      name: "Erwachsene"
+      acronym: "ERW"
+    child:
+      name: "Kind 6–17"
+      acronym: "K6-17"
+    infant:
+      name: "Kleinkind 0–5"
+      acronym: "BABY"
+    exempt:
+      name: "Nichtpflichtige Personen"
+      acronym: "NP"
+
+guest_category_modifier:
+  title: "Preisanpassungen je Gastkategorie"
+  description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif."
+  add: "Preisanpassung hinzufügen"
+  empty: "Noch keine Preisanpassungen angelegt — Übernachtungspreise gelten unverändert für alle Kategorien."
+  delete:
+    ask: "Diese Preisanpassung wirklich löschen?"
+
+  type:
+    surcharge_absolute: "Aufschlag (Betrag)"
+    discount_percent: "Rabatt (%)"
+    flat_rate: "Pauschalpreis je Nacht"
+    free: "Kostenlos"
+
+  field:
+    category: "Gastkategorie"
+    category.help: "Es werden nur Kategorien angezeigt, auf die ein Modifier wirken kann: keine Erwachsenen-Kategorien (Basistarif) und nur Kategorien, die zur Zimmerbelegung zählen. Nicht-belegende Gäste (z. B. Kleinkinder im Babybett) werden vom Apartmentpreis ohnehin nicht erfasst."
+    type: "Art der Anpassung"
+    type.help: "Aufschlag addiert einen Betrag zum Erwachsenenpreis. Rabatt zieht einen Prozentsatz ab. Pauschalpreis ersetzt den Erwachsenenpreis komplett. Kostenlos = 0,00."
+    value: "Wert"
+    value.help: "Betrag in der eingestellten Währung bei Aufschlag/Pauschalpreis, Prozentsatz bei Rabatt. Bei \"Kostenlos\" wird der Wert ignoriert."
+    valid_from: "Gültig ab"
+    valid_to: "Gültig bis"
+    sort_order: "Sortierreihenfolge"
+    active: "Aktiv"
+
+  col:
+    category: "Gastkategorie"
+    type: "Typ"
+    value: "Wert"
+    validity: "Gültigkeit"
+    active: "Aktiv"
+    action: "Aktion"
+
+  flash:
+    create:
+      success: "Preisanpassung wurde erstellt."
+    edit:
+      success: "Preisanpassung wurde gespeichert."
+    delete:
+      success: "Preisanpassung wurde gelöscht."

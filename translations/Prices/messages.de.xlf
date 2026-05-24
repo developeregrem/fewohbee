@@ -218,6 +218,34 @@
                 <source>price.bookableonline</source>
                 <target>Für Online-Buchung verfügbar</target>
             </trans-unit>
+            <trans-unit id="price.mandatoryonline">
+                <source>price.mandatoryonline</source>
+                <target>Pflicht bei Online-Buchung</target>
+            </trans-unit>
+            <trans-unit id="price.mandatoryonline.hint">
+                <source>price.mandatoryonline.hint</source>
+                <target>Der Gast kann diesen Posten nicht abwählen.</target>
+            </trans-unit>
+            <trans-unit id="price.visibility.label">
+                <source>price.visibility.label</source>
+                <target>Sichtbarkeit &amp; Verfügbarkeit</target>
+            </trans-unit>
+            <trans-unit id="price.calculation_type.label">
+                <source>price.calculation_type.label</source>
+                <target>Berechnungsart</target>
+            </trans-unit>
+            <trans-unit id="price.calculation_type.flat">
+                <source>price.calculation_type.flat</source>
+                <target>Pauschalpreis (pro Buchung)</target>
+            </trans-unit>
+            <trans-unit id="price.calculation_type.per_person">
+                <source>price.calculation_type.per_person</source>
+                <target>Pro Nacht, pro Person</target>
+            </trans-unit>
+            <trans-unit id="price.calculation_type.per_room">
+                <source>price.calculation_type.per_room</source>
+                <target>Pro Nacht, pro Zimmer</target>
+            </trans-unit>
             <trans-unit id="price.collapsable.group.4.description">
                 <source>price.collapsable.group.4.description</source>
                 <target>Paket mit mehreren Steuersätzen (optional)</target>

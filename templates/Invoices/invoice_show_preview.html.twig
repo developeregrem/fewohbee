@@ -30,7 +30,13 @@
             <div class="row mt-5">
                 {% include 'Invoices/invoice_table_apartment_preview_positions.html.twig' with {'mode': 'edit'} %}                
             </div>
-            <div class="row mt-5">
+            <div class="row mt-4">
+                {% include 'Invoices/invoice_table_apartment_modifier_preview_positions.html.twig' %}
+            </div>
+            <div class="row mt-4">
+                {% include 'Invoices/invoice_table_tourist_tax_preview_positions.html.twig' %}
+            </div>
+            <div class="row mt-4">
                 {% include 'Invoices/invoice_table_misc_preview_positions.html.twig' with {'mode': 'edit'} %}
             </div>
             <div class="row">

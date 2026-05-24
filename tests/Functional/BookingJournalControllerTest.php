@@ -64,7 +64,7 @@ final class BookingJournalControllerTest extends WebTestCase
             'preset' => AccountingSettings::PRESET_SKR03,
         ]);
 
-        self::assertResponseRedirects('/journal/settings');
+        self::assertResponseRedirects('/journal/settings?tab=tab-preset');
 
         $accounts = $this->getEntityManager()->getRepository(AccountingAccount::class)->findAll();
         $taxRates = $this->getEntityManager()->getRepository(TaxRate::class)->findAll();
@@ -92,7 +92,7 @@ final class BookingJournalControllerTest extends WebTestCase
             'seedWorkflows' => '1',
         ]);
 
-        self::assertResponseRedirects('/journal/settings');
+        self::assertResponseRedirects('/journal/settings?tab=tab-preset');
 
         $workflows = $this->getEntityManager()->getRepository(Workflow::class)
             ->findBy(['systemCode' => [
@@ -119,7 +119,7 @@ final class BookingJournalControllerTest extends WebTestCase
             'seedWorkflows' => '1',
         ]);
 
-        self::assertResponseRedirects('/journal/settings');
+        self::assertResponseRedirects('/journal/settings?tab=tab-preset');
 
         // Count should not double
         $workflows = $this->getEntityManager()->getRepository(Workflow::class)

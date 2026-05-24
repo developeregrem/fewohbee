@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.052.001.08">
+  <BkToCstmrAcctRpt>
+    <GrpHdr>
+      <MsgId>CAMT052-DAY1</MsgId>
+      <CreDtTm>2026-05-02T13:01:21+02:00</CreDtTm>
+    </GrpHdr>
+    <Rpt>
+      <Id>CAMT052-DAY1-RPT</Id>
+      <CreDtTm>2026-05-02T13:01:21+02:00</CreDtTm>
+      <Acct>
+        <Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id>
+        <Ccy>EUR</Ccy>
+      </Acct>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">1000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-08</Dt></Dt>
+      </Bal>
+      <Bal>
+        <Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp>
+        <Amt Ccy="EUR">1488.02</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt><Dt>2026-04-09</Dt></Dt>
+      </Bal>
+      <Ntry>
+        <Amt Ccy="EUR">518.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-04-09</Dt></BookgDt>
+        <ValDt><Dt>2026-04-09</Dt></ValDt>
+        <AcctSvcrRef>CAMT052-DAY1-001</AcctSvcrRef>
+        <BkTxCd/>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <EndToEndId>E2E-IN-001</EndToEndId>
+              <Prtry><Tp>FI-UMSATZ-ID</Tp><Ref>CAMT052-DAY1-001</Ref></Prtry>
+            </Refs>
+            <Amt Ccy="EUR">518.00</Amt>
+            <RltdPties>
+              <Dbtr><Pty><Nm>Example Guest GmbH</Nm></Pty></Dbtr>
+              <DbtrAcct><Id><IBAN>DE00GUEST000000000001</IBAN></Id></DbtrAcct>
+              <Cdtr><Pty><Nm>Fewohbee Test Account</Nm></Pty></Cdtr>
+              <CdtrAcct><Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id></CdtrAcct>
+            </RltdPties>
+            <RmtInf><Ustrd>Invoice 2026-0101</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>GUTSCHRIFT UEBERWEISUNG</AddtlNtryInf>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">29.98</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-04-09</Dt></BookgDt>
+        <ValDt><Dt>2026-04-09</Dt></ValDt>
+        <AcctSvcrRef>CAMT052-DAY1-002</AcctSvcrRef>
+        <BkTxCd/>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <EndToEndId>E2E-OUT-001</EndToEndId>
+              <Prtry><Tp>FI-UMSATZ-ID</Tp><Ref>CAMT052-DAY1-002</Ref></Prtry>
+            </Refs>
+            <Amt Ccy="EUR">29.98</Amt>
+            <RltdPties>
+              <Dbtr><Pty><Nm>Fewohbee Test Account</Nm></Pty></Dbtr>
+              <DbtrAcct><Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id></DbtrAcct>
+              <Cdtr><Pty><Nm>Office Supplies GmbH</Nm></Pty></Cdtr>
+              <CdtrAcct><Id><IBAN>DE00VENDOR0000000001</IBAN></Id></CdtrAcct>
+            </RltdPties>
+            <RmtInf><Ustrd>Paper and pens</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>KARTENZAHLUNG</AddtlNtryInf>
+      </Ntry>
+    </Rpt>
+  </BkToCstmrAcctRpt>
+</Document>

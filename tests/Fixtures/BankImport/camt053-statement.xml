@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+  <BkToCstmrStmt>
+    <GrpHdr><MsgId>CAMT053-STMT</MsgId><CreDtTm>2026-05-01T20:00:00+02:00</CreDtTm></GrpHdr>
+    <Stmt>
+      <Id>CAMT053-STMT-APRIL</Id>
+      <FrToDt>
+        <FrDtTm>2026-04-01T00:00:00+02:00</FrDtTm>
+        <ToDtTm>2026-04-30T23:59:59+02:00</ToDtTm>
+      </FrToDt>
+      <Acct><Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id><Ccy>EUR</Ccy></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">1463.02</Amt><CdtDbtInd>CRDT</CdtDbtInd><Dt><Dt>2026-04-30</Dt></Dt></Bal>
+      <Ntry>
+        <Amt Ccy="EUR">120.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-04-30</Dt></BookgDt>
+        <ValDt><Dt>2026-04-30</Dt></ValDt>
+        <AcctSvcrRef>CAMT053-001</AcctSvcrRef>
+        <BkTxCd/>
+        <NtryDtls>
+          <TxDtls>
+            <Refs><EndToEndId>E2E-STMT-001</EndToEndId></Refs>
+            <RltdPties>
+              <Dbtr><Pty><Nm>Statement Guest GmbH</Nm></Pty></Dbtr>
+              <DbtrAcct><Id><IBAN>DE00STATEMENTGUEST01</IBAN></Id></DbtrAcct>
+              <Cdtr><Pty><Nm>Fewohbee Test Account</Nm></Pty></Cdtr>
+              <CdtrAcct><Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id></CdtrAcct>
+            </RltdPties>
+            <RmtInf><Ustrd>Statement invoice 2026-0102</Ustrd></RmtInf>
+          </TxDtls>
+        </NtryDtls>
+        <AddtlNtryInf>GUTSCHRIFT</AddtlNtryInf>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

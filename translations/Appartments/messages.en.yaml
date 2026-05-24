@@ -23,6 +23,7 @@ appartment:
     edit:
       success: Room was successfully processed.
   number: Room Number
+  number.short: 'No.'
   object: Branch
 calendar:
   sync:

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.052.001.08">
+  <BkToCstmrAcctRpt>
+    <GrpHdr><MsgId>CAMT052-PENDING</MsgId><CreDtTm>2026-05-02T13:01:21+02:00</CreDtTm></GrpHdr>
+    <Rpt>
+      <Id>CAMT052-PENDING-RPT</Id>
+      <Acct><Id><IBAN>DE00SPARKASSETEST0001</IBAN></Id><Ccy>EUR</Ccy></Acct>
+      <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">1000.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><Dt><Dt>2026-04-11</Dt></Dt></Bal>
+      <Ntry>
+        <Amt Ccy="EUR">10.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Sts><Cd>BOOK</Cd></Sts>
+        <BookgDt><Dt>2026-04-11</Dt></BookgDt>
+        <ValDt><Dt>2026-04-11</Dt></ValDt>
+        <BkTxCd/>
+        <NtryDtls><TxDtls><Refs><EndToEndId>BOOKED-ONLY</EndToEndId></Refs><RltdPties><Dbtr><Pty><Nm>Booked Counterparty</Nm></Pty></Dbtr></RltdPties><RmtInf><Ustrd>Booked line</Ustrd></RmtInf></TxDtls></NtryDtls>
+      </Ntry>
+      <Ntry>
+        <Amt Ccy="EUR">99.00</Amt>
+        <CdtDbtInd>DBIT</CdtDbtInd>
+        <Sts><Cd>PDNG</Cd></Sts>
+        <BookgDt><Dt>2026-04-11</Dt></BookgDt>
+        <ValDt><Dt>2026-04-11</Dt></ValDt>
+        <BkTxCd/>
+      </Ntry>
+    </Rpt>
+  </BkToCstmrAcctRpt>
+</Document>

@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AccountingAccountRepository::class)]
 #[ORM\Table(name: 'accounting_accounts')]
+#[ORM\UniqueConstraint(name: 'uniq_account_per_preset', columns: ['account_number', 'chart_preset'])]
 #[UniqueEntity(fields: ['accountNumber', 'chartPreset'])]
 class AccountingAccount
 {
@@ -32,7 +33,7 @@ class AccountingAccount
     #[ORM\Column(type: Types::INTEGER)]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::STRING, length: 10, unique: true)]
+    #[ORM\Column(type: Types::STRING, length: 10)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 10)]
     private string $accountNumber = '';
@@ -52,6 +53,10 @@ class AccountingAccount
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isBankAccount = false;
+
+    #[ORM\Column(type: Types::STRING, length: 34, nullable: true)]
+    #[Assert\Length(max: 34)]
+    private ?string $iban = null;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $isOpeningBalanceAccount = false;
@@ -149,6 +154,18 @@ class AccountingAccount
     public function setIsBankAccount(bool $isBankAccount): self
     {
         $this->isBankAccount = $isBankAccount;
+
+        return $this;
+    }
+
+    public function getIban(): ?string
+    {
+        return $this->iban;
+    }
+
+    public function setIban(?string $iban): self
+    {
+        $this->iban = $iban ? str_replace(' ', '', strtoupper($iban)) : null;
 
         return $this;
     }

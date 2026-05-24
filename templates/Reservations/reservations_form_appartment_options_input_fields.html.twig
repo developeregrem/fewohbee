@@ -1,26 +1,27 @@
-
-    <div class="col-sm-3">
-        <select id="persons" name="persons" class="form-select">
-            {% for i in appartment.bedsmax..1 %}
-                <option value="{{ i }}"{% if reservation is defined and reservation.persons == i %} selected{% endif %}>
-                    {{ i }} {% if i == 1 %} {{ 'reservation.person'|trans }} {% else %} {{ 'reservation.persons'|trans }} {% endif %}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-sm-3">
-        <select id="status" name="status" class="form-select">
-            {# Determine the default status ID for new reservations is no system status #}
-            {% set defaultStatusId = null %}
-            {% if reservation is not defined %}
-                {% for status in reservationStatus %}
-                    {% if defaultStatusId is null and status.code is null %}
-                        {% set defaultStatusId = status.id %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+<div class="col-12 col-lg-8">
+    {% include 'GuestCategory/_guest_counts_table.html.twig' with {
+        categories: guestCategories|default([]),
+        counts: (reservation is defined and reservation is not null) ? reservation.guestCounts : {},
+        personsTotal: (reservation is defined and reservation is not null) ? reservation.persons : 0,
+        adultRuleOverride: (reservation is defined and reservation is not null) ? reservation.adultRuleOverride : false,
+        maxOccupancy: appartment.bedsmax|default(null),
+        fieldNames: {counts: 'guestCounts', persons: 'persons', override: 'adultRuleOverride'},
+    } only %}
+</div>
+<div class="col-12 col-lg-4">
+    <label for="status" class="form-label">{{ 'reservation.status'|trans }}</label>
+    <select id="status" name="status" class="form-select">
+        {# Determine the default status ID for new reservations is no system status #}
+        {% set defaultStatusId = null %}
+        {% if reservation is not defined or reservation is null %}
             {% for status in reservationStatus %}
-            <option value="{{ status.id }}"{% if reservation is defined and reservation.reservationStatus.id == status.id %} selected{% elseif reservation is not defined and defaultStatusId == status.id %} selected{% endif %}>{{ status.name }}</option>
+                {% if defaultStatusId is null and status.code is null %}
+                    {% set defaultStatusId = status.id %}
+                {% endif %}
             {% endfor %}
-        </select>
-    </div>
+        {% endif %}
+        {% for status in reservationStatus %}
+        <option value="{{ status.id }}"{% if reservation is defined and reservation is not null and reservation.reservationStatus.id == status.id %} selected{% elseif (reservation is not defined or reservation is null) and defaultStatusId == status.id %} selected{% endif %}>{{ status.name }}</option>
+        {% endfor %}
+    </select>
+</div>

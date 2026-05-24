@@ -13,7 +13,10 @@
 #}
 
 {% block deletePopoverContent %}
-<form id="entry-form-{{ id }}" action="{{ targetUrl }}">
+{# `id` is used for the CSRF token (must match `'delete' ~ entity.id` in the controller).
+   `formId` is optional and may differ when multiple delete-popovers live on the same page
+   to keep the rendered <form> DOM ids unique. Defaults to `id`. #}
+<form id="entry-form-{{ formId|default(id) }}" action="{{ targetUrl }}">
     {% if deletePopoverHint is defined and deletePopoverHint|length > 0 %}
         <p class="mb-2 small text-muted">{{ deletePopoverHint }}</p>
     {% endif %}

@@ -19,7 +19,7 @@ use App\Entity\PricePeriod;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Entity\TaxRate;
-use App\Service\AccountingSettingsService;
+use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
 use Doctrine\Persistence\ManagerRegistry;

@@ -27,6 +27,25 @@ class PublicPricingService
      * For a given room category, date range and max occupancy, compute the total stay price
      * for each valid number-of-persons (1..maxGuests) that has a matching price category.
      *
+     * When `guestCounts` is supplied (pattern from the public wizard) and its
+     * occupancy-counted total matches the option's persons count, the option is priced with
+     * the *actual* category mix — i.e. apartment-modifier deltas (children's discount etc.)
+     * are reflected in the displayed step-2 price, so the guest sees the same number in
+     * step 2 and step 3. Other occupancy options (1..maxGuests except the matching one) keep
+     * the legacy adult-only fallback because the wizard hasn't asked for those mixes.
+     *
+     * Tourist tax is intentionally **not** applied here — it is shown as a separate line at
+     * the end of the booking flow, not bundled into the room rate.
+     *
+     * @param array<int, int> $guestCounts        category-id => count from the wizard search step
+     * @param int             $mixOccupancyPersons sum of occupancy-counted entries in $guestCounts;
+     *                                             used to decide which occupancy option matches the
+     *                                             user's mix and should reflect the modifier-aware
+     *                                             price. The caller already knows this value
+     *                                             (controller derives it from `isCountedInOccupancy`)
+     *                                             — passing it here avoids re-injecting the
+     *                                             GuestCategoryRepository into this service.
+     *
      * @return array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
      *         Indexed by persons count. Only entries with a non-zero price are returned.
      */
@@ -36,6 +55,8 @@ class PublicPricingService
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
         int $maxGuests,
+        array $guestCounts = [],
+        int $mixOccupancyPersons = 0,
     ): array {
         $origin = $this->configService->getReservationOrigin();
         $options = [];
@@ -50,10 +71,20 @@ class PublicPricingService
                 $reservation->setReservationOrigin($origin);
             }
 
+            // Apply the user's actual mix only on the option that matches the
+            // occupancy-counted total of the mix. For other rows we keep the
+            // adult-only baseline so the table still reflects "what would N
+            // adults cost in this room".
+            if ($mixOccupancyPersons > 0 && $mixOccupancyPersons === $persons && [] !== $guestCounts) {
+                $reservation->setGuestCounts($guestCounts);
+            }
+
             $positions = $this->invoiceService->buildAppartmentPositions($reservation);
             if ([] === $positions) {
                 continue;
             }
+
+            $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
 
             $vatSums = [];
             $brutto = 0.0;
@@ -62,13 +93,16 @@ class PublicPricingService
             $miscTotal = 0.0;
             $this->invoiceService->calculateSums(
                 new ArrayCollection($positions),
-                new ArrayCollection(),
+                new ArrayCollection($modifierPositions),
                 $vatSums,
                 $brutto,
                 $netto,
                 $singleTotal,
                 $miscTotal,
             );
+            // Modifier deltas net into the room total (same scope as the
+            // booking-journal routing: apartment_modifier groups with apartment).
+            $singleTotal += $miscTotal;
 
             if ($singleTotal <= 0.0) {
                 continue;
@@ -87,7 +121,7 @@ class PublicPricingService
     /**
      * Retrieve all bookable-online extras with calculated total prices for the given stay.
      *
-     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int}>
+     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool}>
      */
     public function getBookableExtras(
         Appartment $sampleRoom,
@@ -167,6 +201,7 @@ class PublicPricingService
                 'pricePerUnit' => $pricePerUnit,
                 'pricePerUnitFormatted' => number_format($pricePerUnit, 2, ',', '.'),
                 'maxQuantity' => $maxQuantity,
+                'isMandatory' => $price->getIsMandatoryOnline(),
             ];
         }
 

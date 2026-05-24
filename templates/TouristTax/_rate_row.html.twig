@@ -1,0 +1,15 @@
+<tr class="collection-row">
+    <td>{{ form_widget(rateForm.guestCategory, { 'attr': { 'class': 'form-select form-select-sm' } }) }}</td>
+    <td>
+        <div class="input-group input-group-sm">
+            {{ form_widget(rateForm.pricePerNight, { 'attr': { 'class': 'form-control form-control-sm text-end' } }) }}
+            <span class="input-group-text">{{ currency_symbol }}</span>
+        </div>
+    </td>
+    <td>{{ form_widget(rateForm.reportGroup, { 'attr': { 'class': 'form-control form-control-sm' } }) }}</td>
+    <td class="text-end" style="width: 1%;">
+        <button type="button" class="btn btn-sm btn-outline-danger" data-action="collection#remove" title="{{ 'button.delete'|trans }}">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </td>
+</tr>

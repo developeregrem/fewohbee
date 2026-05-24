@@ -98,6 +98,91 @@ final class PublicPricingServiceTest extends TestCase
         self::assertSame('160,00', $options[3]['totalPriceFormatted']);
     }
 
+    /**
+     * When the wizard supplied a guestCounts mix that totals N persons, the
+     * matching occupancy option N should reflect the modifier delta (children
+     * discount etc.); other options stay at the adult-only baseline so the
+     * table still shows "what would N adults cost in this room".
+     */
+    public function testGetOccupancyPricesAppliesModifierOnlyForMatchingOption(): void
+    {
+        $category = new RoomCategory();
+        $room = new Appartment();
+        $room->setBedsMax(3);
+        $room->setRoomCategory($category);
+
+        $dateFrom = new \DateTimeImmutable('2026-06-01');
+        $dateTo = new \DateTimeImmutable('2026-06-03');
+
+        $invoiceService = $this->createStub(InvoiceService::class);
+        $invoiceService->method('buildAppartmentPositions')
+            ->willReturnCallback(function (\App\Entity\Reservation $r): array {
+                $position = $this->createStub(InvoiceAppartment::class);
+                $position->method('getIsFlatPrice')->willReturn(false);
+                $position->method('getAmount')->willReturn(2 * $r->getPersons()); // 2 nights × persons
+                $position->method('getPrice')->willReturn(50.0);
+                $position->method('getVat')->willReturn(7.0);
+                $position->method('getIncludesVat')->willReturn(true);
+
+                return [$position];
+            });
+
+        // Modifier returns one negative delta line (2 nights × 1 child × −25),
+        // but only when the reservation actually carries the matching guestCounts mix.
+        $invoiceService->method('buildApartmentModifierPositions')
+            ->willReturnCallback(function (array $reservations): array {
+                $r = $reservations[0];
+                if ([] === $r->getGuestCounts()) {
+                    return [];
+                }
+                $pos = $this->createStub(\App\Entity\InvoicePosition::class);
+                $pos->method('getIsFlatPrice')->willReturn(false);
+                $pos->method('getAmount')->willReturn(2);
+                $pos->method('getPrice')->willReturn(-25.0);
+                $pos->method('getVat')->willReturn(7.0);
+                $pos->method('getIncludesVat')->willReturn(true);
+
+                return [$pos];
+            });
+
+        $invoiceService->method('calculateSums')
+            ->willReturnCallback(function (
+                $apps,
+                $poss,
+                array &$vats,
+                float &$brutto,
+                float &$netto,
+                float &$appartmentTotal,
+                float &$miscTotal
+            ): void {
+                $appartmentTotal = 0.0;
+                foreach ($apps as $app) {
+                    $appartmentTotal += $app->getIsFlatPrice() ? $app->getPrice() : $app->getAmount() * $app->getPrice();
+                }
+                $miscTotal = 0.0;
+                foreach ($poss as $p) {
+                    $miscTotal += $p->getIsFlatPrice() ? $p->getPrice() : $p->getAmount() * $p->getPrice();
+                }
+            });
+
+        $configService = $this->createStub(OnlineBookingConfigService::class);
+        $configService->method('getReservationOrigin')->willReturn(null);
+
+        // User picked 2 adults + 1 child = 3 persons total (all occupancy-counted).
+        $guestCounts = [1 => 2, 2 => 1];
+        $mixOccupancyPersons = 3;
+
+        $service = $this->createService($invoiceService, $configService);
+        $options = $service->getOccupancyPrices($category, $room, $dateFrom, $dateTo, 3, $guestCounts, $mixOccupancyPersons);
+
+        // Option 1 (no mix match) → adult-only: 2 nights × 1 person × 50 = 100
+        self::assertSame(100.0, $options[1]['totalPrice']);
+        // Option 2 (no mix match) → adult-only: 2 × 2 × 50 = 200
+        self::assertSame(200.0, $options[2]['totalPrice']);
+        // Option 3 (matches mix) → 2 × 3 × 50 = 300, minus modifier 2 × −25 = −50 → 250
+        self::assertSame(250.0, $options[3]['totalPrice']);
+    }
+
     /** When no occupancy level has a price, an empty array is returned. */
     public function testGetOccupancyPricesReturnsEmptyWhenNoPrices(): void
     {

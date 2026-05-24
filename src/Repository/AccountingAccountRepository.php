@@ -153,6 +153,12 @@ class AccountingAccountRepository extends ServiceEntityRepository
         return $qb;
     }
 
+    public function createBankAccountsQueryBuilder(?string $preset = null): QueryBuilder
+    {
+        return $this->createOrderedQueryBuilder($preset)
+            ->andWhere('a.isBankAccount = true');
+    }
+
     public function createNonCashQueryBuilder(?string $preset = null): QueryBuilder
     {
         $qb = $this->createQueryBuilder('a')
