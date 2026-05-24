@@ -13,6 +13,7 @@ return static function (ContainerConfigurator $container): void {
         $redisHost = $_SERVER['REDIS_HOST'] ?? 'redis';
         $redisIdx = $_SERVER['REDIS_IDX'] ?? '1';
         $cache['app'] = 'cache.adapter.redis';
+        $cache['system'] = 'cache.adapter.redis';
         $cache['default_redis_provider'] = sprintf('redis://%s/%s', $redisHost, $redisIdx);
     }
 

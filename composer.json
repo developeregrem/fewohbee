@@ -106,7 +106,7 @@
     },
     "extra": {
         "runtime": {
-            "prod_envs": ["prod", "redis"]
+            "prod_envs": ["prod"]
         },
         "symfony": {
             "allow-contrib": false,

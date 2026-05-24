@@ -29,7 +29,7 @@ when@test:
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
 
-when@prod: &monolog_prod
+when@prod:
     monolog:
         handlers:
             main:
@@ -51,6 +51,3 @@ when@prod: &monolog_prod
                 type: stream
                 channels: [deprecation]
                 path: php://stderr
-              
-# use same config as in prod
-when@redis: *monolog_prod
