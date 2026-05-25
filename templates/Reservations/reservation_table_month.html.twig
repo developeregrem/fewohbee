@@ -111,8 +111,8 @@
         {% set todayCss = isToday ? ' reservation-table-today' : '' %}
         <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}{{ todayCss }}"
             style="width: {{ 100 / 7}}%" data-day="{{ tmpDate|date("Y-m-d")  }}">
-            <div class="d-flex w-100 h-100 position-relative">
-                {% if isToday %}<div class="reservation-table-today-overlay position-absolute top-0 start-0 w-100 h-100"></div>{% endif %}
+            {% if isToday %}<div class="reservation-table-today-overlay position-absolute top-0 start-0 w-100 h-100"></div>{% endif %}
+            <div class="d-flex w-100 h-100">
                 {{ tdContent|raw }}
             </div>
             <div class="reservation-yearly-day{% if isToday %} fw-bold{% endif %}">{{ tmpDate|date('d') }}</div>
