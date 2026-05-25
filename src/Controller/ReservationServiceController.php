@@ -82,6 +82,8 @@ class ReservationServiceController extends AbstractController
         $selectedApartmentId = $requestStack->getSession()->get('reservation-overview-apartment', $firstApartmentId);
 
         $show = $requestStack->getSession()->get('reservation-overview', 'table');
+        $hasExplicitYearlyApartmentRequested = (bool) $requestStack->getSession()->get('reservation-overview-explicit-yearly-apartment-requested', false);
+        $requestStack->getSession()->remove('reservation-overview-explicit-yearly-apartment-requested');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
@@ -99,6 +101,7 @@ class ReservationServiceController extends AbstractController
             'selectedCountry' => 'DE',
             'selectedSubdivision' => 'all',
             'show' => $show,
+            'hasExplicitYearlyApartmentRequested' => $hasExplicitYearlyApartmentRequested,
             'showCanceled' => $showCanceled,
             'showFirstSteps' => (0 == $firstApartmentId),
             'conflictCount' => $alertCount,
@@ -113,12 +116,15 @@ class ReservationServiceController extends AbstractController
     public function indexActionToggle(RequestStack $requestStack, Request $request, string $show, ?int $apartmentId = null): Response
     {
         if ('yearly' === $show) {
+            $hasExplicitYearlyApartmentRequested = null !== $apartmentId;
             if (null !== $apartmentId) {
                 $requestStack->getSession()->set('reservation-overview-apartment', $apartmentId);
             }
 
+            $requestStack->getSession()->set('reservation-overview-explicit-yearly-apartment-requested', $hasExplicitYearlyApartmentRequested);
             $requestStack->getSession()->set('reservation-overview', 'yearly');
         } else {
+            $requestStack->getSession()->remove('reservation-overview-explicit-yearly-apartment-requested');
             $requestStack->getSession()->set('reservation-overview', 'table');
         }
 

@@ -47,6 +47,7 @@
     <form id="table-filter" role="form"
           data-reservations-table-url="{{ path('reservations.get.table') }}"
           data-reservations-table-settings-url="{{ path('reservations.table.settings') }}"
+                    data-reservations-explicit-yearly-apartment-requested="{{ hasExplicitYearlyApartmentRequested ? 'true' : 'false' }}"
           data-action="submit->reservations#getNewTableAction">
         <div class="row">
             {% if show == 'table' %}
