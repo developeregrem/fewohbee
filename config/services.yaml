@@ -7,8 +7,6 @@ parameters:
     returnPath: '%env(RETURN_PATH)%'
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
-    uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    roomCategoryImageDirectory: '%kernel.project_dir%/public/resources/images/room-categories'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
     version: '4.8.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
@@ -21,6 +19,14 @@ parameters:
     env(REDIS_HOST): 'redis'
     # define the used redix index
     env(REDIS_IDX): '1'
+    # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
+    env(STORAGE_ADAPTER): 'local'
+    env(STORAGE_S3_ENDPOINT): ''
+    env(STORAGE_S3_REGION): ''
+    env(STORAGE_S3_BUCKET): ''
+    env(STORAGE_S3_KEY): ''
+    env(STORAGE_S3_SECRET): ''
+    env(STORAGE_S3_PUBLIC_URL): ''
 
 services:
     # default configuration for services in *this* file
@@ -73,15 +79,36 @@ services:
         arguments:
             - '%webHost%'
             
+    # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally
+    # wires storages that reference this id). Works with any S3-compatible provider
+    # (Hetzner Object Storage, MinIO, R2, Wasabi, AWS) via the configured endpoint.
+    storage.s3_client:
+        class: Aws\S3\S3Client
+        arguments:
+            - endpoint: '%env(STORAGE_S3_ENDPOINT)%'
+              region: '%env(STORAGE_S3_REGION)%'
+              version: 'latest'
+              use_path_style_endpoint: true
+              credentials:
+                  key: '%env(STORAGE_S3_KEY)%'
+                  secret: '%env(STORAGE_S3_SECRET)%'
+
+    App\Service\Storage\ImageUrlGenerator:
+        arguments:
+            $adapter: '%env(STORAGE_ADAPTER)%'
+            $s3PublicUrl: '%env(STORAGE_S3_PUBLIC_URL)%'
+            $localExportPrefix: '%publicUploadDirectory%'
+            $localRoomCategoryPrefix: '%roomCategoryImagePublicDirectory%'
+
     App\Service\FileUploader:
         arguments:
-            $publicDirectory: '%publicUploadDirectory%'
-            $targetDirectory: '%uploadDirectory%'
+            $storage: '@images.export.storage'
+            $urlGenerator: '@App\Service\Storage\ImageUrlGenerator'
 
     App\Service\RoomCategoryImageService:
         arguments:
-            $imageDirectory: '%roomCategoryImageDirectory%'
-            $imagePublicDirectory: '%roomCategoryImagePublicDirectory%'
+            $storage: '@images.roomcat.storage'
+            $urlGenerator: '@App\Service\Storage\ImageUrlGenerator'
 
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:

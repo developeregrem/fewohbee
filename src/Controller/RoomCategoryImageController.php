@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -24,7 +23,6 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 class RoomCategoryImageController extends AbstractController
 {
     public function __construct(
-        private readonly RequestStack $requestStack,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
     ) {
     }
@@ -145,15 +143,14 @@ class RoomCategoryImageController extends AbstractController
      */
     private function serializeImage(RoomCategoryImage $image, RoomCategoryImageService $imageService): array
     {
-        $basePath = rtrim($this->requestStack->getCurrentRequest()?->getBasePath() ?? '', '/');
         $categoryId = $image->getRoomCategory()->getId();
         $imageId = $image->getId();
 
         return [
             'id' => $imageId,
             'filename' => $image->getFilename(),
-            'thumbnailUrl' => $basePath . $imageService->getPublicUrl($image, 'thumb'),
-            'mediumUrl' => $basePath . $imageService->getPublicUrl($image, 'medium'),
+            'thumbnailUrl' => $imageService->getPublicUrl($image, 'thumb'),
+            'mediumUrl' => $imageService->getPublicUrl($image, 'medium'),
             'sortOrder' => $image->getSortOrder(),
             'isPrimary' => $image->isPrimary(),
             'deleteUrl' => $this->generateUrl('room_category_image_delete', [

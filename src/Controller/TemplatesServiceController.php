@@ -471,10 +471,8 @@ class TemplatesServiceController extends AbstractController
             return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $path = rtrim($request->getBasePath(), '/').'/'.$fos->getPublicDirectory().'/'.$name;
-
         return $this->json([
-            'location' => $path,
+            'location' => $fos->getPublicUrl($name),
         ]);
     }
 }

@@ -181,7 +181,7 @@
                                     <div class="card mb-3">
                                         {# Hero image (primary image of this room category) #}
                                         {% if row.primaryImage is defined and row.primaryImage %}
-                                            <img src="{{ app.request.basepath }}{{ row.primaryImage.mediumUrl }}"
+                                            <img src="{{ row.primaryImage.mediumUrl }}"
                                                  alt="{{ row.typeLabel }}"
                                                  class="card-img-top"
                                                  style="max-height:200px;object-fit:cover"
@@ -334,7 +334,7 @@
                                                             <div class="carousel-inner">
                                                                 {% for img in row.images %}
                                                                     <div class="carousel-item {{ loop.first ? 'active' : '' }}">
-                                                                        <img src="{{ app.request.basepath }}{{ img.mediumUrl }}" class="d-block w-100" alt="">
+                                                                        <img src="{{ img.mediumUrl }}" class="d-block w-100" alt="">
                                                                     </div>
                                                                 {% endfor %}
                                                             </div>
