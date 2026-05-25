@@ -616,6 +616,10 @@ body {
     background-color: var(--feb-weekend-bg) !important;
 }
 
+#reservation-table tbody td.reservation-table-today {
+    background-color: rgba(13, 110, 253, 0.08) !important;
+}
+
 
 /* remove bottom border of tr for multiple reservations of one apartment (select tr where the next tr has border-top-0 class) */
 #reservation-table tr:has( + .border-top-0) {
