@@ -113,6 +113,7 @@ class OperationsReportController extends AbstractController
         $reportData = $reportService->buildReportData($startDate, $endDate, $subsidiary, $selectedOccupancyTypes);
         $reportData['filters']['template'] = $template;
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
+        $reportData['filters']['locale'] = $request->getLocale();
 
         $templateOutput = $templatesService->renderTemplate($templateId, $reportData);
 

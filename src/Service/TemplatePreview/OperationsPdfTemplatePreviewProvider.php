@@ -19,6 +19,7 @@ use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
 use App\Service\OperationsReportService;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Preview provider for operations report PDF templates.
@@ -29,7 +30,8 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
         private readonly EntityManagerInterface $em,
         private readonly OperationsReportService $operationsReportService,
         private readonly OperationsFilterService $filterService,
-        private readonly HousekeepingViewService $housekeepingViewService
+        private readonly HousekeepingViewService $housekeepingViewService,
+        private readonly RequestStack $requestStack,
     ) {
     }
 
@@ -75,6 +77,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
 
         $reportData = $this->operationsReportService->buildReportData($start, $end, $subsidiary, $occupancyTypes);
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
+        $reportData['filters']['locale'] = $this->requestStack->getCurrentRequest()?->getLocale() ?? \Locale::getDefault();
 
         return $this->buildRenderParams($template, $reportData);
     }

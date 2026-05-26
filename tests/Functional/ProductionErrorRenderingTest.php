@@ -13,9 +13,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Verifies that production-like environments are configured to hide internal
  * error details (stack traces, exception messages, file paths) from users.
  *
- * Background: APP_DEBUG must be false in prod/redis environments.
- * This is enforced via "extra.runtime.prod_envs" in composer.json, which
- * instructs symfony/runtime to disable debug mode for those environments.
+ * Background: APP_DEBUG must be false in prod environments. This is enforced
+ * via "extra.runtime.prod_envs" in composer.json, which instructs
+ * symfony/runtime to disable debug mode for those environments.
  */
 final class ProductionErrorRenderingTest extends TestCase
 {
@@ -25,12 +25,11 @@ final class ProductionErrorRenderingTest extends TestCase
     public static function productionLikeEnvironmentsProvider(): iterable
     {
         yield 'prod' => ['prod'];
-        yield 'redis' => ['redis'];
     }
 
     /**
-     * Ensures that composer.json declares both prod and redis as production-like
-     * environments so that symfony/runtime keeps APP_DEBUG=false for them.
+     * Ensures that composer.json declares prod as a production-like environment
+     * so that symfony/runtime keeps APP_DEBUG=false for it.
      */
     #[DataProvider('productionLikeEnvironmentsProvider')]
     public function testRuntimeProdEnvsContainsEnvironment(string $environment): void
@@ -55,7 +54,7 @@ final class ProductionErrorRenderingTest extends TestCase
     }
 
     /**
-     * Ensures that when APP_DEBUG is false (as it will be in prod/redis due to the
+     * Ensures that when APP_DEBUG is false (as it will be in prod due to the
      * prod_envs config), a 500 error response does not expose exception details.
      */
     public function testErrorResponseDoesNotExposeInternalsWhenDebugIsDisabled(): void

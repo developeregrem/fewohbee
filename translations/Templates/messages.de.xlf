@@ -674,6 +674,10 @@
                 <source>templates.operations.management_monthly_summary</source>
                 <target>Monatsreport Kennzahlen</target>
             </trans-unit>
+            <trans-unit id="templates.operations.tourist_tax_monthly">
+                <source>templates.operations.tourist_tax_monthly</source>
+                <target>Monatsabrechnung Beherbergungsabgaben</target>
+            </trans-unit>
             <trans-unit id="templates.operations.import.title">
                 <source>templates.operations.import.title</source>
                 <target>Keine Vorlagen für Betriebsberichte vorhanden.</target>
