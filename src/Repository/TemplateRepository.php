@@ -44,11 +44,13 @@ class TemplateRepository extends EntityRepository
             }
             $q->setParameter('name'.$i, $names[$i]);
         }
-        $q = $q->getQuery();
+
+        // Präfix-Filter
+        $q->andWhere('t.hidden = false');
 
         $templates = null;
         try {
-            $templates = $q->getResult();
+            $templates = $q->getQuery()->getResult();
         } catch (NoResultException $e) {
         }
 
