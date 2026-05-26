@@ -122,8 +122,7 @@ class OperationsReportController extends AbstractController
             $templateOutput,
             'Operations-Report-'.$startDate->format('Y-m-d'),
             $template,
-            false,
-            $isPreview ? 'I' : null
+            true
         );
 
         $response = new Response($pdfOutput);
