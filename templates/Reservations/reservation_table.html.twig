@@ -117,7 +117,14 @@
                     <td class="text-center room-info"
                         data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right"
                         data-bs-content="{{ roomInfo }}" data-bs-trigger="hover"
-                    >{{ row.apartment.number }}{% if row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 %} ({{ row.apartment.roomCategory.acronym }}){% endif %}</td>
+                    >
+                        <a href="{{ path('start.toggle.view', {
+                            show: 'yearly',
+                            apartmentId: row.apartment.id
+                        }) }}" title="{{ 'reservation.table.view.yearly'|trans }}">
+                            {{ row.apartment.number }}{% if row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 %} ({{ row.apartment.roomCategory.acronym }}){% endif %}
+                        </a>
+                    </td>
                 {% endif %}
 
                 {# ── Cells ── #}
