@@ -158,9 +158,9 @@
                 <source>operations.frontdesk.filter.reservations</source>
                 <target>Reservierungen</target>
             </trans-unit>
-            <trans-unit id="operations.frontdesk.filter.includeCanceled">
-                <source>operations.frontdesk.filter.includeCanceled</source>
-                <target>Stornierte/No-Show</target>
+            <trans-unit id="operations.filter.reservationStatus">
+                <source>operations.filter.reservationStatus</source>
+                <target>Reservierungsstatus</target>
             </trans-unit>
             <trans-unit id="operations.frontdesk.arrivals">
                 <source>operations.frontdesk.arrivals</source>

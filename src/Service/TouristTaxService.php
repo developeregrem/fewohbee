@@ -73,10 +73,18 @@ class TouristTaxService
         ?\DateTimeInterface $rangeStart,
         ?\DateTimeInterface $rangeEnd,
     ): bool {
-        if (null !== $rangeStart && $night < $rangeStart) {
+        if (null === $rangeStart && null === $rangeEnd) {
+            return true;
+        }
+        // Compare on Y-m-d only — reservation dates come from Doctrine in the app's local timezone
+        // while range dates may carry a different timezone (e.g. UTC from filter parsing). A pure
+        // timestamp compare would push a "01.06 00:00 Berlin" night below a "01.06 00:00 UTC"
+        // rangeStart by the 2h offset, silently dropping the first night of the month.
+        $nightKey = $night->format('Y-m-d');
+        if (null !== $rangeStart && $nightKey < $rangeStart->format('Y-m-d')) {
             return false;
         }
-        if (null !== $rangeEnd && $night > $rangeEnd) {
+        if (null !== $rangeEnd && $nightKey > $rangeEnd->format('Y-m-d')) {
             return false;
         }
 

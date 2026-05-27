@@ -36,14 +36,16 @@ class OperationsReportService
      * Build report data for the selected filters.
      *
      * @param string[] $occupancyTypes
+     * @param int[]    $statusIds
      */
     public function buildReportData(
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
-        array $occupancyTypes
+        array $occupancyTypes,
+        array $statusIds = []
     ): array {
-        $rangeView = $this->housekeepingViewService->buildRangeView($start, $end, $subsidiary, $occupancyTypes);
+        $rangeView = $this->housekeepingViewService->buildRangeView($start, $end, $subsidiary, $occupancyTypes, 'blocking', $statusIds);
 
         return [
             'filters' => [
@@ -51,6 +53,7 @@ class OperationsReportService
                 'end' => $end,
                 'subsidiary' => $subsidiary,
                 'occupancyTypes' => $occupancyTypes,
+                'statusIds' => $statusIds,
             ],
             'rangeView' => $rangeView,
             'dayViews' => $rangeView['dayViews'],
@@ -72,6 +75,7 @@ class OperationsReportService
             $start = $filters['start'] ?? null;
             $end = $filters['end'] ?? null;
             $subsidiary = $filters['subsidiary'] ?? null;
+            $statusIds = is_array($filters['statusIds'] ?? null) ? $filters['statusIds'] : [];
             $locale = (string) ($filters['locale'] ?? \Locale::getDefault());
             $hasRange = $start instanceof \DateTimeImmutable && $end instanceof \DateTimeImmutable;
 
@@ -79,10 +83,10 @@ class OperationsReportService
                 $param['statistics']['countryNames'] = Countries::getNames($locale);
             }
             if ($hasRange && $this->shouldIncludeStatistics($template, $param)) {
-                $param['statistics'] = $this->buildStatisticsPayload($start, $end, $subsidiary, $locale);
+                $param['statistics'] = $this->buildStatisticsPayload($start, $end, $subsidiary, $locale, $statusIds);
             }
             if ($hasRange && $this->shouldIncludeTouristTax($template, $param)) {
-                $param['touristTax'] = $this->buildTouristTaxPayload($start, $end, $subsidiary);
+                $param['touristTax'] = $this->buildTouristTaxPayload($start, $end, $subsidiary, $statusIds);
             }
 
             return $param;
@@ -122,10 +126,14 @@ class OperationsReportService
      * pipeline) and aggregates them per (tax × reportGroup or categoryId) so the report template
      * can render rows dynamically without hard-coding category names or tariffs.
      */
+    /**
+     * @param int[] $statusIds
+     */
     private function buildTouristTaxPayload(
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
+        array $statusIds = [],
     ): array {
         $categories = $this->guestCategoryRepository->findActiveForSubsidiary($subsidiary);
         $categoryMeta = [];
@@ -153,7 +161,7 @@ class OperationsReportService
                 (int) $monthStart->format('n'),
                 (int) $monthStart->format('Y'),
                 $objectId,
-                null,
+                $statusIds,
             );
 
             $monthlyAggregates[] = [
@@ -339,11 +347,15 @@ class OperationsReportService
     /**
      * Build statistics payload using monthly snapshot metrics for the date range.
      */
+    /**
+     * @param int[] $statusIds
+     */
     private function buildStatisticsPayload(
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
         string $locale,
+        array $statusIds = [],
     ): array {
         $cursor = $start->modify('first day of this month');
         $endMonth = $end->modify('first day of this month');
@@ -353,10 +365,14 @@ class OperationsReportService
             $month = (int) $cursor->format('n');
             $year = (int) $cursor->format('Y');
             $payload = $this->monthlyStatsService->buildMetrics($month, $year, $subsidiary);
+            $metrics = $payload['metrics'];
+            if (!empty($statusIds)) {
+                $metrics = $this->monthlyStatsService->filterMetricsByStatus($metrics, $statusIds);
+            }
             $months[] = [
                 'year' => $year,
                 'month' => $month,
-                'metrics' => $payload['metrics'],
+                'metrics' => $metrics,
                 'warnings' => $payload['warnings'],
             ];
             $cursor = $cursor->modify('first day of next month');

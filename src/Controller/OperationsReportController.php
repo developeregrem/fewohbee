@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Service\HousekeepingViewService;
@@ -39,6 +40,7 @@ class OperationsReportController extends AbstractController
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaries = $em->getRepository(Subsidiary::class)->findAll();
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
         $selectedSubsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
 
@@ -46,6 +48,10 @@ class OperationsReportController extends AbstractController
         $endDate = $filterService->resolveEndDate($request->query->get('end'), $startDate);
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $housekeepingViewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
+        $selectedStatusIds = $housekeepingViewService->normalizeReservationStatusIds(
+            $queryParams['statuses'] ?? null,
+            $reservationStatuses
+        );
 
         $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
         $templateId = $templatesService->getTemplateId($doctrine, $requestStack, 'TEMPLATE_OPERATIONS_PDF', 'operations-template-id');
@@ -60,6 +66,8 @@ class OperationsReportController extends AbstractController
             'occupancyTypes' => $housekeepingViewService->getAllowedOccupancyTypes(),
             'selectedOccupancyTypes' => $selectedOccupancyTypes,
             'occupancyLabels' => $housekeepingViewService->getOccupancyLabels(),
+            'reservationStatuses' => $reservationStatuses,
+            'selectedStatusIds' => $selectedStatusIds,
             'templates' => $templates,
             'templateId' => $selectedTemplateId,
         ];
@@ -93,6 +101,11 @@ class OperationsReportController extends AbstractController
         $endDate = $filterService->resolveEndDate($request->query->get('end'), $startDate);
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $housekeepingViewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
+        $selectedStatusIds = $housekeepingViewService->normalizeReservationStatusIds(
+            $queryParams['statuses'] ?? null,
+            $reservationStatuses
+        );
 
         $templateId = (int) $request->query->get('templateId', 0);
         if (0 === $templateId) {
@@ -110,7 +123,7 @@ class OperationsReportController extends AbstractController
 
         $requestStack->getSession()->set('operations-template-id', $templateId);
 
-        $reportData = $reportService->buildReportData($startDate, $endDate, $subsidiary, $selectedOccupancyTypes);
+        $reportData = $reportService->buildReportData($startDate, $endDate, $subsidiary, $selectedOccupancyTypes, $selectedStatusIds);
         $reportData['filters']['template'] = $template;
         $reportData['filters']['subsidiaryId'] = $subsidiaryId;
         $reportData['filters']['locale'] = $request->getLocale();

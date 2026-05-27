@@ -112,7 +112,8 @@ class ReservationRepository extends ServiceEntityRepository
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
-        string $statusMode = 'blocking'
+        string $statusMode = 'blocking',
+        ?array $statusIds = null
     ): array {
         $qb = $this->createQueryBuilder('r')
             ->addSelect('a', 'booker', 'customer')
@@ -133,7 +134,11 @@ class ReservationRepository extends ServiceEntityRepository
                 ->setParameter('subsidiary', $subsidiary->getId());
         }
 
-        $this->applyBlockingStatusFilter($qb, 'r', $statusMode);
+        if (null !== $statusIds) {
+            $this->applyReservationStatusFilter($qb, $statusIds, 'r');
+        } else {
+            $this->applyBlockingStatusFilter($qb, 'r', $statusMode);
+        }
 
         return $qb->getQuery()->getResult();
     }
