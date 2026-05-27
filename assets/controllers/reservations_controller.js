@@ -134,7 +134,11 @@ export default class extends Controller {
         }
         this.getLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.getLocalTableSetting('holidayCountry', 'reservations-table-holidaycountry');
-        this.getLocalTableSetting('apartment', 'reservations-apartment', 'int');
+        // Use stored apartment filter only if no explicit apartment was requested
+        const isExplicitYearlyApartmentRequested = this.tableFilter.dataset.reservationsExplicitYearlyApartmentRequested === 'true';
+        if (!isExplicitYearlyApartmentRequested) {
+            this.getLocalTableSetting('apartment', 'reservations-apartment', 'int');
+        }
         this.loadTableSettings(this.tableSettingsUrl, true);
     }
 
