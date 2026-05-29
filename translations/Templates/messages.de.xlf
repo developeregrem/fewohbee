@@ -534,6 +534,10 @@
                 <source>templates.params.orientation.landscape</source>
                 <target>Querformat (L)</target>
             </trans-unit>
+            <trans-unit id="templates.params.format">
+               <source>templates.params.format</source>
+               <target>Seitenformat</target>
+	    </trans-unit>
             <trans-unit id="templates.params.margin_top">
                 <source>templates.params.margin_top</source>
                 <target>Oberer Rand (mm)</target>
