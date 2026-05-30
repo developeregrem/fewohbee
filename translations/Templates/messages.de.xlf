@@ -850,6 +850,10 @@
                 <source>templates.journal.name</source>
                 <target>Buchungsjournal</target>
             </trans-unit>
+            <trans-unit id="TEMPLATE_NEWSLETTER_EMAIL">
+                <source>TEMPLATE_NEWSLETTER_EMAIL</source>
+                <target>E-Mail Newsletter</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

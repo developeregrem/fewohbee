@@ -47,24 +47,48 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <select id="snapshotMonth" name="snapshotMonth" class="form-select"
-                                    data-statistics-target="snapshotMonth"
-                                    data-action="change->statistics#drawSnapshotAction">
-                                {% set currentMonth = 'now'|date('n') %}
-                                {% for month in monthList %}
-                                    <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                {% endfor %}
-                            </select>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-link link-dark"
+                                        onclick="stepSelect('snapshotMonth', -1, 'snapshotYear', {{ minYear }}, {{ maxYear }})"
+                                        title="{{ 'statistics.tourism.prev_month'|trans }}">
+                                    <i class="fas fa-chevron-left fa-xs"></i>
+                                </button>
+                                <select id="snapshotMonth" name="snapshotMonth" class="form-select"
+                                        data-statistics-target="snapshotMonth"
+                                        data-action="change->statistics#drawSnapshotAction">
+                                    {% set currentMonth = 'now'|date('n') %}
+                                    {% for month in monthList %}
+                                        <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-link link-dark"
+                                        onclick="stepSelect('snapshotMonth', 1, 'snapshotYear', {{ minYear }}, {{ maxYear }})"
+                                        title="{{ 'statistics.tourism.next_month'|trans }}">
+                                    <i class="fas fa-chevron-right fa-xs"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <select id="snapshotYear" name="snapshotYear" class="form-select"
-                                    data-statistics-target="snapshotYear"
-                                    data-action="change->statistics#drawSnapshotAction">
-                                {% set currentYear = 'now'|date('Y') %}
-                                {% for i in minYear..maxYear %}
-                                    <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                {% endfor %}
-                            </select>
+                            <div class="input-group">
+                                <button type="button" class="btn btn-link link-dark"
+                                        onclick="stepYear(-1, {{ minYear }})"
+                                        title="{{ 'statistics.tourism.prev_year'|trans }}">
+                                    <i class="fas fa-chevron-left fa-xs"></i>
+                                </button>
+                                <select id="snapshotYear" name="snapshotYear" class="form-select"
+                                        data-statistics-target="snapshotYear"
+                                        data-action="change->statistics#drawSnapshotAction">
+                                    {% set currentYear = 'now'|date('Y') %}
+                                    {% for i in minYear..maxYear %}
+                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-link link-dark"
+                                        onclick="stepYear(1, {{ maxYear }})"
+                                        title="{{ 'statistics.tourism.next_year'|trans }}">
+                                    <i class="fas fa-chevron-right fa-xs"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -205,4 +229,44 @@
 {% block javascripts %}
     {{ parent() }}
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
+    <script>
+    /**
+     * Schaltet Monat um und wechselt bei Überlauf automatisch das Jahr.
+     * stepSelect('snapshotMonth', +1/-1, 'snapshotYear', minYear, maxYear)
+     */
+    function stepSelect(monthId, direction, yearId, minYear, maxYear) {
+        const monthSel = document.getElementById(monthId);
+        const yearSel  = document.getElementById(yearId);
+        let month = parseInt(monthSel.value, 10) + direction;
+        let year  = parseInt(yearSel.value, 10);
+
+        if (month < 1) {
+            if (year <= minYear) return;   // Untergrenze: nicht weiter
+            month = 12;
+            year--;
+        } else if (month > 12) {
+            if (year >= maxYear) return;   // Obergrenze: nicht weiter
+            month = 1;
+            year++;
+        }
+
+        monthSel.value = month;
+        yearSel.value  = year;
+        monthSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    /**
+     * Schaltet nur das Jahr um.
+     */
+    function stepYear(direction, limit) {
+        const yearSel = document.getElementById('snapshotYear');
+        let year = parseInt(yearSel.value, 10) + direction;
+
+        if (direction < 0 && year < limit) return;
+        if (direction > 0 && year > limit) return;
+
+        yearSel.value = year;
+        yearSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    </script>
 {% endblock %}
