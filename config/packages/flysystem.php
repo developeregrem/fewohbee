@@ -62,11 +62,24 @@ return static function (ContainerConfigurator $container): void {
             'images.export.adapter' => [
                 'local' => [
                     'location' => '%kernel.project_dir%/public/resources/images/export',
+                    // Uploads are public assets served directly by the web server,
+                    // which may run as a different OS user than PHP-FPM (e.g. in the
+                    // Kubernetes nginx+php-fpm pod). Force world-readable modes so the
+                    // web server can read them; the default 'private' visibility would
+                    // write 0600/0700 and yield 404s.
+                    'permissions' => [
+                        'file' => ['public' => 0644, 'private' => 0644],
+                        'dir' => ['public' => 0755, 'private' => 0755],
+                    ],
                 ],
             ],
             'images.roomcat.adapter' => [
                 'local' => [
                     'location' => '%kernel.project_dir%/public/resources/images/room-categories',
+                    'permissions' => [
+                        'file' => ['public' => 0644, 'private' => 0644],
+                        'dir' => ['public' => 0755, 'private' => 0755],
+                    ],
                 ],
             ],
         ],
