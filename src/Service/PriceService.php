@@ -182,13 +182,18 @@ class PriceService
         $price->setIsBookableOnline($bookableOnline);
         $price->setIsMandatoryOnline($mandatoryOnline);
 
+        // Both price types share one category field. Empty => no category: required for apartment
+        // prices, "applies to all" (backwards compatible) for misc prices.
+        $categoryId = $request->request->get('category-'.$id);
+        $category = (null !== $categoryId && '' !== $categoryId)
+            ? $this->em->getRepository(RoomCategory::class)->find($categoryId)
+            : null;
+        $price->setRoomCategory($category);
+
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
             $price->setMinStay($request->request->get('min-stay-'.$id));
-            $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get('category-'.$id));
-            $price->setRoomCategory($category);
         } else {
-            $price->setRoomCategory(null);
             $price->setNumberOfPersons(null);
             $price->setMinStay(null);
         }

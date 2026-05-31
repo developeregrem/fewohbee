@@ -186,6 +186,14 @@
                 <source>price.category</source>
                 <target>Zimmerkategorie</target>
             </trans-unit>
+            <trans-unit id="price.category.all">
+                <source>price.category.all</source>
+                <target>Alle Kategorien</target>
+            </trans-unit>
+            <trans-unit id="price.category.misc.hint">
+                <source>price.category.misc.hint</source>
+                <target>Optional: Diesen Preis auf eine einzelne Zimmerkategorie beschränken. Bei "Alle Kategorien" gilt er für jede Reservierung.</target>
+            </trans-unit>
             <trans-unit id="price.breakfast">
                 <source>price.breakfast</source>
                 <target>Frühstück</target>

@@ -81,6 +81,18 @@
                     </div>
                     {% set isMiscPriceType = price.type != 2 %}
                     {% set calcType = price.isFlatPrice ? 'flat' : (price.isPerRoom ? 'per_room' : 'per_person') %}
+                    <div class="row">
+                        <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.category'|trans }}{% if not isMiscPriceType %} *{% endif %}</label>
+                        <div class="col-sm-8">
+                            <select id="category-{{ price.id }}" name="category-{{ price.id }}" class="form-select"{% if not isMiscPriceType %} required{% endif %}>
+                                <option value="" id="category-all-{{ price.id }}"{% if not isMiscPriceType %} disabled hidden{% endif %}>{{ 'price.category.all'|trans }}</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}"{% if price.roomCategory != null and category.id == price.roomCategory.id %} selected{% endif %}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text{% if not isMiscPriceType %} d-none{% endif %}" id="category-hint-{{ price.id }}"><i class="fas fa-info-circle"></i> {{ 'price.category.misc.hint'|trans }}</div>
+                        </div>
+                    </div>
                     <div class="row mt-4">
                         <label class="col-sm-4 col-form-label text-end fw-semibold">{{ 'price.calculation_type.label'|trans }}</label>
                         <div class="col-sm-8">
@@ -303,21 +315,6 @@
                         <div class="col-sm-8">
                             <input type="text" id="number-of-persons" class="form-control"
                                    name="number-of-persons-{{ price.id }}" value="{{ price.numberofpersons }}">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'appartment.category'|trans }}</label>
-
-                        <div class="col-sm">
-                            <select name="category-{{ price.id }}" class="form-select">
-                                {% for category in categories %}
-                                    {% if price.id != "new" and price.roomCategory != null and category.id == price.roomCategory.id %}
-                                        <option value="{{ category.id }}" selected>{{ category.name }}</option>
-                                    {% else %}
-                                        <option value="{{ category.id }}">{{ category.name }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
                         </div>
                     </div>
                     <div class="row">
