@@ -76,9 +76,19 @@ class PublicBookingService
         $this->distributeGuestCounts($roomReservations, $guestCounts);
         $pricing = $this->calculateRoomTotal($roomReservations);
 
-        // Load bookable extras using any available room as sample
+        // Extras catalogue for the selection UI (spans every available category).
         $extras = $this->loadBookableExtras($availability, $dateFrom, $dateTo, $persons, $roomsCount);
-        $extrasResult = $this->calculateExtrasTotal($extras, $selectedExtras);
+        // Resolve concrete quantities/totals from the chosen rooms (empty until a room is selected).
+        $composition = $this->buildExtrasComposition($assignedRoomsWithPersons);
+        $resolvedExtras = $this->pricingService->resolveExtras(
+            $composition['buckets'],
+            $dateFrom,
+            $dateTo,
+            $composition['totalPersons'],
+            $composition['totalRooms'],
+            $selectedExtras,
+        );
+        $extrasResult = $this->summarizeExtras($resolvedExtras);
 
         $grandTotal = $pricing['roomTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
 
@@ -132,8 +142,17 @@ class PublicBookingService
         $reservations = $this->buildTransientReservationsWithExplicitPersons($assignedRoomsWithPersons, $dateFrom, $dateTo);
         $this->distributeGuestCounts($reservations, $guestCounts);
 
-        // Validate and resolve selected extras
-        $extraPrices = $this->resolveAndValidateExtras($selectedExtras, $availability, $dateFrom, $dateTo, $persons, $roomsCount);
+        // Resolve selected extras against the concrete booked composition. Category-bound extras
+        // get their quantity from the booked rooms of that category; mandatory ones are forced on.
+        $composition = $this->buildExtrasComposition($assignedRoomsWithPersons);
+        $resolvedExtras = $this->pricingService->resolveExtras(
+            $composition['buckets'],
+            $dateFrom,
+            $dateTo,
+            $composition['totalPersons'],
+            $composition['totalRooms'],
+            $selectedExtras,
+        );
 
         $status = OnlineBookingConfig::BOOKING_MODE_BOOKING === $config->getBookingMode()
             ? $this->configService->getBookingStatus($config)
@@ -153,7 +172,7 @@ class PublicBookingService
         $publicComment = self::sanitize($booker['comment'] ?? '', 2000);
 
         $bookingGroupUuid = Uuid::v4();
-        foreach ($reservations as $resIndex => $reservation) {
+        foreach ($reservations as $reservation) {
             $reservation->setReservationOrigin($origin);
             $reservation->setReservationStatus($status);
             $reservation->setBooker($customer);
@@ -162,30 +181,18 @@ class PublicBookingService
             if ('' !== $publicComment) {
                 $reservation->setRemark($publicComment);
             }
+        }
 
-            // Add extras: per_person_night goes to all reservations,
-            // per_room_night/flat distributed by quantity (qty=1 → first reservation only, etc.)
-            foreach ($extraPrices as $extraEntry) {
-                $price = $extraEntry['price'];
-                $qty = $extraEntry['quantity'];
-                if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
-                    // Add to the first $qty reservations only
-                    if ($resIndex < $qty) {
-                        $reservation->addPrice($price);
-                    }
-                } else {
-                    // per_person: add to all reservations
-                    $reservation->addPrice($price);
-                }
-            }
+        // Attach extras to the matching reservations (category-aware, calc-type-aware).
+        $this->attachExtrasToReservations($reservations, $resolvedExtras);
 
+        foreach ($reservations as $reservation) {
             $this->em->persist($reservation);
         }
         $this->em->flush();
 
         $pricing = $this->calculateRoomTotal($reservations);
-        $extras = $this->loadBookableExtras($availability, $dateFrom, $dateTo, $persons, $roomsCount);
-        $extrasResult = $this->calculateExtrasTotal($extras, $selectedExtras);
+        $extrasResult = $this->summarizeExtras($resolvedExtras);
 
         $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
         $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
@@ -910,56 +917,96 @@ class PublicBookingService
     }
 
     /**
-     * Load bookable extras using the first available room as a sample for price lookups.
+     * Build the extras catalogue for the room-selection step, using one representative room per
+     * available category so that category-bound extras of every offered category are surfaced.
      *
      * @param array<int, array{typeKey: string, roomIds: int[]}> $availability
-     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int}>
+     * @return array<int, array<string, mixed>>
      */
     private function loadBookableExtras(array $availability, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, int $persons, int $roomsCount): array
     {
-        // Find any available room to use as sample for misc price lookups
-        $sampleRoom = null;
+        $samples = [];
         foreach ($availability as $row) {
-            if (!empty($row['roomIds'])) {
-                $sampleRoom = $this->appartmentRepository->find($row['roomIds'][0]);
-                if (null !== $sampleRoom) {
-                    break;
-                }
+            if (empty($row['roomIds'])) {
+                continue;
             }
+            $sampleRoom = $this->appartmentRepository->find($row['roomIds'][0]);
+            if (null === $sampleRoom) {
+                continue;
+            }
+            $category = $sampleRoom->getRoomCategory();
+            $samples[] = [
+                'categoryId' => $category?->getId(),
+                'categoryName' => $category?->getName(),
+                'sampleRoom' => $sampleRoom,
+            ];
         }
 
-        if (null === $sampleRoom) {
+        if ([] === $samples) {
             return [];
         }
-  
-        return $this->pricingService->getBookableExtras($sampleRoom, $dateFrom, $dateTo, $persons, $roomsCount);
+
+        return $this->pricingService->catalogExtras($samples, $dateFrom, $dateTo, $persons, $roomsCount);
     }
 
     /**
-     * Calculate the total price of selected extras considering quantities.
+     * Group the booked rooms by room category for category-aware extra resolution.
      *
-     * @param array<int, array{id: int, description: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int}> $extras
-     * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array{extrasTotal: float, extrasTotalFormatted: string, extrasBreakdown: array}
+     * @param array<int, array{room: Appartment, persons: int}> $assignedRoomsWithPersons
+     * @return array{buckets: array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment, roomCount: int, persons: int}>, totalRooms: int, totalPersons: int}
      */
-    private function calculateExtrasTotal(array $extras, array $selectedExtras): array
+    private function buildExtrasComposition(array $assignedRoomsWithPersons): array
+    {
+        $buckets = [];
+        $totalRooms = 0;
+        $totalPersons = 0;
+
+        foreach ($assignedRoomsWithPersons as $entry) {
+            $room = $entry['room'];
+            $persons = (int) $entry['persons'];
+            $category = $room->getRoomCategory();
+            $key = null !== $category ? 'c'.$category->getId() : 'null';
+
+            if (!isset($buckets[$key])) {
+                $buckets[$key] = [
+                    'categoryId' => $category?->getId(),
+                    'categoryName' => $category?->getName(),
+                    'sampleRoom' => $room,
+                    'roomCount' => 0,
+                    'persons' => 0,
+                ];
+            }
+            ++$buckets[$key]['roomCount'];
+            $buckets[$key]['persons'] += $persons;
+            ++$totalRooms;
+            $totalPersons += $persons;
+        }
+
+        return ['buckets' => array_values($buckets), 'totalRooms' => $totalRooms, 'totalPersons' => $totalPersons];
+    }
+
+    /**
+     * Aggregate resolved extras into a total + breakdown for display.
+     *
+     * @param array<int, array<string, mixed>> $resolved Output of PublicPricingService::resolveExtras()
+     * @return array{extrasTotal: float, extrasTotalFormatted: string, extrasBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
+     */
+    private function summarizeExtras(array $resolved): array
     {
         $extrasTotal = 0.0;
         $breakdown = [];
 
-        foreach ($extras as $extra) {
-            $qty = $selectedExtras[$extra['id']] ?? 0;
-            if ($qty < 1) {
-                continue;
+        foreach ($resolved as $extra) {
+            $label = $extra['description'];
+            if (null !== $extra['categoryName']) {
+                $label .= ' ('.$extra['categoryName'].')';
             }
-            $qty = min($qty, $extra['maxQuantity']);
-            $total = $extra['pricePerUnit'] * $qty;
-            $extrasTotal += $total;
+            $extrasTotal += $extra['lineTotal'];
             $breakdown[] = [
-                'label' => $extra['description'],
-                'quantity' => $qty,
-                'total' => $total,
-                'totalFormatted' => number_format($total, 2, ',', '.'),
+                'label' => $label,
+                'quantity' => $extra['quantity'],
+                'total' => $extra['lineTotal'],
+                'totalFormatted' => $extra['lineTotalFormatted'],
             ];
         }
 
@@ -971,43 +1018,38 @@ class PublicBookingService
     }
 
     /**
-     * Validate selected extras and return Price entities with quantities.
+     * Attach resolved extras to the right reservations, respecting room category and calculation type.
      *
-     * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array<int, array{price: Price, quantity: int}> Validated extras with clamped quantities
+     * @param Reservation[] $reservations
+     * @param array<int, array<string, mixed>> $resolved
      */
-    private function resolveAndValidateExtras(array $selectedExtras, array $availability, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, int $persons, int $roomsCount): array
+    private function attachExtrasToReservations(array $reservations, array $resolved): void
     {
-        $extras = $this->loadBookableExtras($availability, $dateFrom, $dateTo, $persons, $roomsCount);
-        $extrasById = [];
-        foreach ($extras as $extra) {
-            $extrasById[$extra['id']] = $extra;
-            // Pflicht-Posten serverseitig erzwingen — egal was im POST stand.
-            if (!empty($extra['isMandatory'])) {
-                $selectedExtras[$extra['id']] = max(1, (int) ($selectedExtras[$extra['id']] ?? 0));
+        foreach ($reservations as $resIndex => $reservation) {
+            $resCategoryId = $reservation->getAppartment()?->getRoomCategory()?->getId();
+            foreach ($resolved as $extra) {
+                /** @var Price $price */
+                $price = $extra['price'];
+                $categoryId = $extra['categoryId'];
+
+                if (null === $categoryId) {
+                    // Global extra: per_person to all reservations, flat/per_room to the first $qty.
+                    if ('per_person_night' === $extra['calculationType']) {
+                        $reservation->addPrice($price);
+                    } elseif ($resIndex < $extra['quantity']) {
+                        $reservation->addPrice($price);
+                    }
+                    continue;
+                }
+
+                // Category-bound: attach to every reservation of the matching category. The misc-price
+                // billing then yields the right multiplicity (flat → once per room, per_room → per
+                // room-night, per_person → per person-night).
+                if ($resCategoryId === $categoryId) {
+                    $reservation->addPrice($price);
+                }
             }
         }
-
-        if ([] === $selectedExtras) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($selectedExtras as $priceId => $qty) {
-            $priceId = (int) $priceId;
-            $qty = max(1, (int) $qty);
-            if (!isset($extrasById[$priceId])) {
-                throw new PublicBookingException('online_booking.error.extra_not_bookable_online');
-            }
-            $price = $this->em->getRepository(Price::class)->find($priceId);
-            if (!$price instanceof Price || !$price->getIsBookableOnline()) {
-                throw new PublicBookingException('online_booking.error.extra_not_bookable_online');
-            }
-            $qty = min($qty, $extrasById[$priceId]['maxQuantity']);
-            $result[] = ['price' => $price, 'quantity' => $qty];
-        }
-
-        return $result;
     }
 
     /**
