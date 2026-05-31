@@ -459,7 +459,7 @@ class InvoiceService
 
     /**
      * Build tourist-tax invoice positions for the given reservations. One
-     * position per (TouristTax × GuestCategory) breakdown row, marked with
+     * position per aggregated (TouristTax × GuestCategory × rate) breakdown, marked with
      * positionGroup="tourist_tax" so templates can render them in a separate
      * block. Returns an empty array when no TouristTaxService is configured
      * or no active tax matches.
@@ -474,17 +474,90 @@ class InvoiceService
             return [];
         }
 
-        $positions = [];
+        $aggregates = [];
         foreach ($reservations as $reservation) {
             if (!$reservation instanceof Reservation) {
                 continue;
             }
             foreach ($this->touristTaxService->calculateForReservation($reservation) as $row) {
-                $positions[] = $this->makeTouristTaxPosition($row);
+                $key = $this->touristTaxAggregateKey($row);
+                if (!isset($aggregates[$key])) {
+                    $aggregates[$key] = $row;
+                    continue;
+                }
+                $aggregates[$key] = $this->mergeTouristTaxBreakdowns($aggregates[$key], $row);
             }
         }
 
-        return $positions;
+        return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row), array_values($aggregates));
+    }
+
+    private function touristTaxAggregateKey(TouristTaxBreakdown $row): string
+    {
+        return implode('|', [
+            $row->calculationMode->value,
+            $row->taxId,
+            $row->categoryId,
+            number_format($row->pricePerNight, 6, '.', ''),
+            $row->nights,
+            null === $row->percentageRate ? '' : number_format($row->percentageRate, 6, '.', ''),
+            $this->entityKey($row->taxRate),
+            $this->entityKey($row->revenueAccount),
+            $row->includesVat ? '1' : '0',
+            (string) $row->reportGroup,
+        ]);
+    }
+
+    private function mergeTouristTaxBreakdowns(TouristTaxBreakdown $left, TouristTaxBreakdown $right): TouristTaxBreakdown
+    {
+        if (TaxCalculationMode::PER_NIGHT_FLAT === $left->calculationMode) {
+            return new TouristTaxBreakdown(
+                taxId: $left->taxId,
+                taxName: $left->taxName,
+                categoryId: $left->categoryId,
+                categoryName: $left->categoryName,
+                pricePerNight: $left->pricePerNight,
+                nights: $left->nights,
+                count: $left->count + $right->count,
+                reportGroup: $left->reportGroup,
+                taxRate: $left->taxRate,
+                revenueAccount: $left->revenueAccount,
+                includesVat: $left->includesVat,
+                calculationMode: $left->calculationMode,
+            );
+        }
+
+        return new TouristTaxBreakdown(
+            taxId: $left->taxId,
+            taxName: $left->taxName,
+            categoryId: $left->categoryId,
+            categoryName: $left->categoryName,
+            pricePerNight: $left->pricePerNight,
+            nights: $left->nights,
+            count: 1,
+            reportGroup: $left->reportGroup,
+            taxRate: $left->taxRate,
+            revenueAccount: $left->revenueAccount,
+            includesVat: $left->includesVat,
+            calculationMode: $left->calculationMode,
+            percentageRate: $left->percentageRate,
+            apartmentBase: null === $left->apartmentBase && null === $right->apartmentBase
+                ? null
+                : (float) ($left->apartmentBase ?? 0.0) + (float) ($right->apartmentBase ?? 0.0),
+            precomputedTotal: $left->total() + $right->total(),
+        );
+    }
+
+    private function entityKey(?object $entity): string
+    {
+        if (null === $entity) {
+            return 'none';
+        }
+        if (method_exists($entity, 'getId') && null !== $entity->getId()) {
+            return $entity::class.':'.$entity->getId();
+        }
+
+        return $entity::class.':object:'.spl_object_id($entity);
     }
 
     /**

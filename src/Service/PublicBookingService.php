@@ -641,11 +641,14 @@ class PublicBookingService
                 foreach ($this->touristTaxService->calculateForReservation($reservation) as $row) {
                     $rowTotal = $row->total();
                     $touristTaxTotal += $rowTotal;
-                    $touristTaxLines[] = [
-                        'label' => $row->taxName.(strlen($row->categoryName) > 0 ? ' — ' . $row->categoryName : ''),
-                        'total' => $rowTotal,
-                        'totalFormatted' => number_format($rowTotal, 2, ',', '.'),
-                    ];
+                    $lineKey = $this->touristTaxPreviewLineKey($row);
+                    if (!isset($touristTaxLines[$lineKey])) {
+                        $touristTaxLines[$lineKey] = [
+                            'label' => $row->taxName.(strlen($row->categoryName) > 0 ? ' — ' . $row->categoryName : ''),
+                            'total' => 0.0,
+                        ];
+                    }
+                    $touristTaxLines[$lineKey]['total'] += $rowTotal;
                 }
             }
         }
@@ -655,6 +658,11 @@ class PublicBookingService
 
             return $row;
         }, array_values($breakdown));
+        $formattedTouristTaxLines = array_map(static function (array $row): array {
+            $row['totalFormatted'] = number_format((float) $row['total'], 2, ',', '.');
+
+            return $row;
+        }, array_values($touristTaxLines));
 
         return [
             'roomTotal' => $apartmentTotal,
@@ -662,8 +670,21 @@ class PublicBookingService
             'roomPriceBreakdown' => $formattedBreakdown,
             'touristTaxTotal' => $touristTaxTotal,
             'touristTaxTotalFormatted' => number_format($touristTaxTotal, 2, ',', '.'),
-            'touristTaxLines' => $touristTaxLines,
+            'touristTaxLines' => $formattedTouristTaxLines,
         ];
+    }
+
+    private function touristTaxPreviewLineKey(\App\Dto\TouristTaxBreakdown $row): string
+    {
+        return implode('|', [
+            $row->calculationMode->value,
+            $row->taxId,
+            $row->taxName,
+            $row->categoryId,
+            $row->categoryName,
+            number_format($row->pricePerNight, 6, '.', ''),
+            null === $row->percentageRate ? '' : number_format($row->percentageRate, 6, '.', ''),
+        ]);
     }
 
     /** Build a readable room type label for price breakdown rows. */
