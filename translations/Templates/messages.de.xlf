@@ -562,6 +562,14 @@
                 <source>templates.default</source>
                 <target>Standardvorlage für Typ</target>
             </trans-unit>
+	    <trans-unit id="templates.hidden">
+                <source>templates.hidden</source>
+                <target>Eingebettete Vorlage</target>
+            </trans-unit>
+            <trans-unit id="templates.hidden.tooltip">
+                <source>templates.hidden.tooltip</source>
+                <target>Aktiv: Vorlage erscheint nicht in der Vorlagenauswahl.</target>
+            </trans-unit>
             <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>
                 <target>Empfänger</target>

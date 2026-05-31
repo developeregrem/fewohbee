@@ -36,6 +36,8 @@ templates.correspondence.delete.ok: Entry successfully deleted.
 templates.correspondence.name: Name
 templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
+templates.hidden: Embedded template
+templates.hidden.tooltip: "Active: Template does not appear in the templateselection."
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template
