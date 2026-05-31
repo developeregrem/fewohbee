@@ -10,11 +10,18 @@ parameters:
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
     version: '4.8.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
+    mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
     default_mailcopy: 'true'
+    default_mail_enabled: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
     default_frame_ancestors: ''
     frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
     # fallback parameters
+    # legacy mail env defaults; new installations configure these in the UI
+    env(FROM_MAIL): ''
+    env(FROM_NAME): ''
+    env(RETURN_PATH): ''
+    env(MAILER_DSN): 'null://null'
     # define the redis host
     env(REDIS_HOST): 'redis'
     # define the used redix index
@@ -66,14 +73,19 @@ services:
     # please note that last definitions always *replace* previous ones    
     App\Service\MailService:
         arguments:
-            - '%fromMail%'
-            - '%fromName%'
-            - '%returnPath%'
-            - '%mailCopy%'
+            $mailEnabled: '%mailEnabled%'
+
+    App\Service\SmtpPasswordCrypto:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
     
     App\Service\AppSettingsService:
         arguments:
             $fromMail: '%fromMail%'
+            $fromName: '%fromName%'
+            $returnPath: '%returnPath%'
+            $mailCopy: '%mailCopy%'
+            $mailerDsn: '%env(MAILER_DSN)%'
 
     App\Service\TemplatesService:
         arguments:

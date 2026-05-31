@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\AppSettings;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\HtmlToTextConverter\DefaultHtmlToTextConverter;
@@ -21,51 +21,65 @@ use Symfony\Component\Mime\HtmlToTextConverter\DefaultHtmlToTextConverter;
 class MailService
 {
     private readonly DefaultHtmlToTextConverter $htmlToTextConverter;
-    private $fromMail;
-    private $fromName;
-    private $mailer;
-    private $mailCopy;
-    private $returnPath;
 
-    public function __construct(string $fromMail, string $fromName, string $returnPath, string $mailCopy, MailerInterface $mailer)
-    {
+    public function __construct(
+        private readonly AppSettingsService $appSettingsService,
+        private readonly MailTransportFactory $mailTransportFactory,
+        private readonly bool $mailEnabled
+    ) {
         $this->htmlToTextConverter = new DefaultHtmlToTextConverter();
-        $this->fromMail = $fromMail;
-        $this->fromName = $fromName;
-        $this->mailer = $mailer;
-        $this->returnPath = $returnPath;
-        $this->mailCopy = $mailCopy;
+    }
+
+    public function isMailEnabled(): bool
+    {
+        return $this->mailEnabled;
     }
 
     public function sendTemplatedMail(string $to, string $subject, string $template, array $parameter = []): void
     {
+        if (!$this->mailEnabled) {
+            return;
+        }
+
+        $settings = $this->appSettingsService->getSettings();
+        $fromMail = $this->appSettingsService->getEffectiveMailFromEmail($settings);
+        if (null === $fromMail || '' === trim($fromMail)) {
+            return;
+        }
+
         $email = new TemplatedEmail()
-            ->from(new Address($this->fromMail, $this->fromName))
+            ->from(new Address($fromMail, $this->appSettingsService->getEffectiveMailFromName($settings)))
             ->to($to)
             ->subject($subject)
             ->htmlTemplate($template)
             ->context($parameter)
         ;
-        $this->mailer->send($email);
+
+        $this->applyEnvelopeSettings($email, $settings, $fromMail);
+        $this->mailTransportFactory->createMailer($settings)->send($email);
     }
 
     public function sendHTMLMail(string $to, string $subject, string $body, array $attachments = []): void
     {
+        if (!$this->mailEnabled) {
+            return;
+        }
+
+        $settings = $this->appSettingsService->getSettings();
+        $fromMail = $this->appSettingsService->getEffectiveMailFromEmail($settings);
+        if (null === $fromMail || '' === trim($fromMail)) {
+            return;
+        }
+
         $email = new Email()
-            ->from(new Address($this->fromMail, $this->fromName))
+            ->from(new Address($fromMail, $this->appSettingsService->getEffectiveMailFromName($settings)))
             ->to(new Address($to))
             ->subject($subject)
             ->html($body)
             ->text($this->htmlToTextConverter->convert($body, 'utf-8'))
         ;
 
-        if ('' !== trim($this->returnPath)) {
-            $email->returnPath(new Address($this->returnPath));
-        }
-
-        if ('true' == $this->mailCopy) {
-            $email->bcc(new Address($this->fromMail));
-        }
+        $this->applyEnvelopeSettings($email, $settings, $fromMail);
 
         /* @var $attachment \App\Entity\MailAttachment */
         foreach ($attachments as $attachment) {
@@ -75,6 +89,18 @@ class MailService
                 $attachment->getContentType()
             );
         }
-        $this->mailer->send($email);
+        $this->mailTransportFactory->createMailer($settings)->send($email);
+    }
+
+    private function applyEnvelopeSettings(Email $email, AppSettings $settings, string $fromMail): void
+    {
+        $returnPath = $this->appSettingsService->getEffectiveMailReturnPath($settings);
+        if (null !== $returnPath && '' !== trim($returnPath)) {
+            $email->returnPath(new Address($returnPath));
+        }
+
+        if ($this->appSettingsService->isEffectiveMailCopyEnabled($settings)) {
+            $email->bcc(new Address($fromMail));
+        }
     }
 }
