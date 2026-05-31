@@ -38,6 +38,10 @@
                         <input type="checkbox" class="form-check-input" name="default-{{ template.id }}" id="default-{{ template.id }}" {% if template.isDefault %}checked{% endif %}>
                         <label for="default-{{ template.id }}" class="form-check-label small">{{ 'templates.default'|trans }}</label>
                     </div>
+                    <div class="form-check form-switch form-check-inline m-0 ms-2">
+                    <input type="checkbox" class="form-check-input" name="hidden-{{ template.id }}" id="hidden-{{ template.id }}" {% if not isNew|default(false) and template.isHidden %}checked{% endif %}>
+                    <label for="hidden-{{ template.id }}" class="form-check-label small" data-bs-toggle="tooltip" title="{{ 'templates.hidden.tooltip'|trans }}">{{ 'templates.hidden'|trans }}</label>
+                    </div>
                     <div class="ms-auto d-flex align-items-center gap-1">
                         <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-template-editor-target="pdfParamsPanel" data-bs-toggle="offcanvas" data-bs-target="#pdfParamsOffcanvas-{{ template.id }}" title="{{ 'templates.params'|trans }}">
                             <i class="fas fa-gear" aria-hidden="true"></i>

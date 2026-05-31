@@ -85,8 +85,8 @@ class TemplatesService
             $template->setIsDefault(true);
         } else {
             $template->setIsDefault(false);
-        }
-
+        }        
+        $template->setHidden($request->request->has('hidden-'.$id));
         return $template;
     }
 
