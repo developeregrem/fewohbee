@@ -582,4 +582,46 @@ export default class extends Controller {
             body: params.toString(),
         });
     }
+
+    // ----- Month/Year navigation -----
+    stepMonthAction(event) {
+        const direction = parseInt(event.params.direction, 10);
+        const monthTargetName = event.params.monthTarget;
+        const yearTargetName  = event.params.yearTarget;
+        const minYear = parseInt(event.params.minYear, 10);
+        const maxYear = parseInt(event.params.maxYear, 10);
+
+        const monthSel = this[`${monthTargetName}Target`];
+        const yearSel  = this[`${yearTargetName}Target`];
+        let month = parseInt(monthSel.value, 10) + direction;
+        let year  = parseInt(yearSel.value, 10);
+
+        if (month < 1) {
+            if (year <= minYear) return;
+            month = 12; year--;
+        } else if (month > 12) {
+            if (year >= maxYear) return;
+            month = 1; year++;
+        }
+
+        monthSel.value = month;
+        yearSel.value  = year;
+        monthSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    stepYearAction(event) {
+        const direction  = parseInt(event.params.direction, 10);
+        const targetName = event.params.yearTarget;
+        const minYear    = parseInt(event.params.minYear, 10);
+        const maxYear    = parseInt(event.params.maxYear, 10);
+
+        const sel  = this[`${targetName}Target`];
+        let year   = parseInt(sel.value, 10) + direction;
+
+        if (direction < 0 && year < minYear) return;
+        if (direction > 0 && year > maxYear) return;
+
+        sel.value = year;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 }
