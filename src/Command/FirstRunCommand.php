@@ -180,6 +180,9 @@ class FirstRunCommand extends Command
         $this->templatesFixtures->load($this->em);
         $io->note('Base templates loaded.');
 
+        $this->guestCategorySeeder->seedDefaults();
+        $io->note('Default guest categories prepared.');
+
         $loadSampleData = $input->getOption('load-sample-data')
             || ($input->isInteractive() && $io->confirm('Load sample data (rooms, prices, reservations, invoices)?', false));
         if ($loadSampleData) {
@@ -189,9 +192,6 @@ class FirstRunCommand extends Command
 
             $this->workflowSeeder->seedExampleWorkflows();
             $io->note('Example workflows created.');
-
-            $this->guestCategorySeeder->seedDefaults();
-            $io->note('Default guest categories prepared.');
         }
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');
