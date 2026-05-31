@@ -48,47 +48,55 @@
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
-                            <div class="row justify-content-md-center">
-                                <div class="col-md-3">
-                                    <select id="monthlyStart" name="monthtlyStart" class="form-select"
-                                            data-statistics-target="monthlyStart"
-                                            data-action="change->statistics#drawMonthlyUtilizationAction">
-                                        {% set currentMonth = 'now'|date('n') %}
-                                        {% for month in monthList %}
-                                            <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                        {% endfor %}
-                                    </select>
+                            <div class="row g-2 align-items-center justify-content-md-center flex-wrap">
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-link px-1" onclick="stepSelect('monthlyStart', -1, 'monthlyStartYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="monthlyStart" name="monthlyStart" class="form-select" style="width: 6em"
+                                                data-statistics-target="monthlyStart"
+                                                data-action="change->statistics#drawMonthlyUtilizationAction">
+                                            {% set currentMonth = 'now'|date('n') %}
+                                            {% for month in monthList %}
+                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link px-1" onclick="stepSelect('monthlyStart', 1, 'monthlyStartYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(-1, 'monthlyStartYear', {{ minYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="monthlyStartYear" name="monthlyStartYear" class="form-select" style="width: 4em"
+                                                data-statistics-target="monthlyStartYear"
+                                                data-action="change->statistics#drawMonthlyUtilizationAction">
+                                            {% set currentYear = 'now'|date('Y') %}
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(1, 'monthlyStartYear', {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                    </div>
                                 </div>
-                                <div class="col-md-2">
-                                    <select id="monthlyStartYear" name="monthtlyStartYear" class="form-select"
-                                            data-statistics-target="monthlyStartYear"
-                                            data-action="change->statistics#drawMonthlyUtilizationAction">
-                                        {% set currentYear = 'now'|date('Y') %}
-                                        {% for i in minYear..maxYear %}
-                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-1 col-form-label text-center">
-                                    -
-                                </div>
-                                <div class="col-md-3">
-                                    <select id="monthlyEnd" name="monthtlyEnd" class="form-select"
-                                            data-statistics-target="monthlyEnd"
-                                            data-action="change->statistics#drawMonthlyUtilizationAction">
-                                        {% for month in monthList %}
-                                            <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <select id="monthlyEndYear" name="monthtlyEndYear" class="form-select"
-                                            data-statistics-target="monthlyEndYear"
-                                            data-action="change->statistics#drawMonthlyUtilizationAction">
-                                        {% for i in minYear..maxYear %}
-                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                        {% endfor %}
-                                    </select>
+                                <div class="col-auto col-form-label">-</div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-link px-1" onclick="stepSelect('monthlyEnd', -1, 'monthlyEndYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="monthlyEnd" name="monthlyEnd" class="form-select" style="width: 6em"
+                                                data-statistics-target="monthlyEnd"
+                                                data-action="change->statistics#drawMonthlyUtilizationAction">
+                                            {% set currentMonth = 'now'|date('n') %}
+                                            {% for month in monthList %}
+                                                <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link px-1" onclick="stepSelect('monthlyEnd', 1, 'monthlyEndYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(-1, 'monthlyEndYear', {{ minYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="monthlyEndYear" name="monthlyEndYear" class="form-select" style="width: 4em"
+                                                data-statistics-target="monthlyEndYear"
+                                                data-action="change->statistics#drawMonthlyUtilizationAction">
+                                            {% set currentYear = 'now'|date('Y') %}
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(1, 'monthlyEndYear', {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -109,27 +117,35 @@
                     </div>
                     <div class="card-footer pt-0">
                         <form role="form">
-                            <div class="row justify-content-md-center">
-                                <div class="col-md-2">
-                                    <select id="yearlyStartYear" name="yearlyStartYear" class="form-select"
-                                            data-statistics-target="yearlyStartYear"
-                                            data-action="change->statistics#drawYearlyUtilizationAction">
-                                        {% for i in minYear..maxYear %}
-                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                        {% endfor %}
-                                    </select>
+                            <div class="row g-2 align-items-center justify-content-md-center flex-wrap">
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(-1, 'yearlyStartYear', {{ minYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="yearlyStartYear" name="yearlyStartYear" class="form-select" style="width: 4em"
+                                                data-statistics-target="yearlyStartYear"
+                                                data-action="change->statistics#drawYearlyUtilizationAction">
+                                            {% set currentYear = 'now'|date('Y') %}
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(1, 'yearlyStartYear', {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                    </div>
                                 </div>
-                                <div class="col-md-1 col-form-label text-center">
-                                    -
-                                </div>
-                                <div class="col-md-2">
-                                    <select id="yearlyEndYear" name="yearlyEndYear" class="form-select"
-                                            data-statistics-target="yearlyEndYear"
-                                            data-action="change->statistics#drawYearlyUtilizationAction">
-                                        {% for i in minYear..maxYear %}
-                                            <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                        {% endfor %}
-                                    </select>
+                                <div class="col-auto col-form-label">-</div>
+                                <div class="col-auto">
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(-1, 'yearlyEndYear', {{ minYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                        <select id="yearlyEndYear" name="yearlyEndYear" class="form-select" style="width: 4em"
+                                                data-statistics-target="yearlyEndYear"
+                                                data-action="change->statistics#drawYearlyUtilizationAction">
+                                            {% set currentYear = 'now'|date('Y') %}
+                                            {% for i in minYear..maxYear %}
+                                                <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-link p-0" onclick="stepYear(1, 'yearlyEndYear', {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -158,4 +174,25 @@
 {% block javascripts %}
     {{ parent() }}
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
+    <script>
+    function stepSelect(monthId, direction, yearId, minYear, maxYear) {
+        const monthSel = document.getElementById(monthId);
+        const yearSel  = document.getElementById(yearId);
+        let month = parseInt(monthSel.value, 10) + direction;
+        let year  = parseInt(yearSel.value, 10);
+        if (month < 1) { if (year <= minYear) return; month = 12; year--; }
+        else if (month > 12) { if (year >= maxYear) return; month = 1; year++; }
+        monthSel.value = month;
+        yearSel.value  = year;
+        monthSel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function stepYear(direction, selectId, limit) {
+        const sel = document.getElementById(selectId);
+        let year = parseInt(sel.value, 10) + direction;
+        if (direction < 0 && year < limit) return;
+        if (direction > 0 && year > limit) return;
+        sel.value = year;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    </script>
 {% endblock %}
