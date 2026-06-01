@@ -21,9 +21,7 @@ class ChangePasswordFormType extends AbstractType
                 'type' => PasswordType::class,
                 'first_options' => [
                     'constraints' => [
-                        new NotBlank([
-                            'message' => 'form.password.notblank',
-                        ]),
+                        new NotBlank(message: 'form.password.notblank'),
                         new Length(
                             min: 8,
                             minMessage: 'form.password.min',
