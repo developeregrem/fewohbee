@@ -34,6 +34,18 @@ class RoomCategory
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $otaRoomTypeCode = null;
 
+    /**
+     * Minimum number of full-fare guests for this room type before guest-category
+     * price modifiers (child discounts etc.) take effect. The first N occupants are
+     * always charged the regular per-head rate; modifiers only apply to guests beyond
+     * this threshold. Adults always count as full-fare guests and fill these slots
+     * first; remaining slots are filled by the lowest-discount (lowest sortOrder)
+     * non-adult categories. 0 = no minimum (modifiers apply from the first guest).
+     */
+    #[ORM\Column(name: 'min_full_payers', type: 'integer', options: ['default' => 0])]
+    #[Assert\GreaterThanOrEqual(0)]
+    private int $minFullPayers = 0;
+
     /** Assigned amenities (e.g. WiFi, parking) — displayed as icons on the public booking page */
     #[ORM\ManyToMany(targetEntity: Amenity::class, inversedBy: 'roomCategories')]
     #[ORM\JoinTable(name: 'room_category_amenity')]
@@ -66,6 +78,18 @@ class RoomCategory
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getMinFullPayers(): int
+    {
+        return $this->minFullPayers;
+    }
+
+    public function setMinFullPayers(int $minFullPayers): self
+    {
+        $this->minFullPayers = max(0, $minFullPayers);
 
         return $this;
     }
