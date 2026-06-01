@@ -193,6 +193,59 @@ final class PublicBookingGuestCountsTest extends TestCase
         self::assertStringContainsString('Kurtaxe', $result['touristTaxLines'][0]['label']);
     }
 
+    public function testTouristTaxLinesAreAggregatedAcrossMultipleRooms(): void
+    {
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT, true);
+
+        $touristTaxService = $this->createStub(TouristTaxService::class);
+        $touristTaxService->method('calculateForReservation')->willReturnCallback(
+            function (Reservation $r) {
+                if ($r->getCountForCategory(1) <= 0) {
+                    return [];
+                }
+
+                return [new \App\Dto\TouristTaxBreakdown(
+                    taxId: 1, taxName: 'Kurtaxe', categoryId: 1, categoryName: 'Erwachsene',
+                    pricePerNight: 3.0, nights: 2, count: 1,
+                    reportGroup: null, taxRate: null, revenueAccount: null, includesVat: false,
+                )];
+            }
+        );
+
+        $service = $this->makeService([$adult], touristTaxService: $touristTaxService);
+
+        $availability = [[
+            'typeKey' => 'category:1',
+            'typeLabel' => 'Single',
+            'typeDescription' => null,
+            'maxGuests' => 1,
+            'availableCount' => 2,
+            'roomIds' => [101, 102],
+            'subsidiaryIds' => [1],
+            'occupancyOptions' => [1 => ['persons' => 1, 'totalPrice' => 0.0, 'totalPriceFormatted' => '0,00']],
+        ]];
+
+        $this->availabilityServiceMock($service, $availability);
+        $this->roomMock($service, [101, 102]);
+
+        $result = $service->buildSelectionPreview(
+            new \DateTimeImmutable('2026-06-01'),
+            new \DateTimeImmutable('2026-06-03'),
+            2,
+            2,
+            ['category:1' => [1 => 2]],
+            new Request(),
+            [],
+            [1 => 2],
+        );
+
+        self::assertSame(12.0, $result['touristTaxTotal']);
+        self::assertCount(1, $result['touristTaxLines']);
+        self::assertSame('Kurtaxe — Erwachsene', $result['touristTaxLines'][0]['label']);
+        self::assertSame(12.0, $result['touristTaxLines'][0]['total']);
+        self::assertSame('12,00', $result['touristTaxLines'][0]['totalFormatted']);
+    }
+
     /**
      * @param GuestCategory[] $categories
      * @param Reservation[]&array<int,Reservation> $reservationCapture

@@ -24,6 +24,8 @@ class Template
     private $params;
     #[ORM\Column(type: 'boolean', nullable: false)]
     private $isDefault;
+    #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => false])]
+    private bool $hidden = false;
     #[ORM\ManyToOne(targetEntity: 'TemplateType', inversedBy: 'templates')]
     private $templateType;
     #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'template')]
@@ -190,5 +192,16 @@ class Template
     public function getIsDefault(): bool
     {
         return $this->isDefault;
+    }
+    
+    public function setHidden(bool $hidden): static
+    {
+        $this->hidden = $hidden;
+        return $this;
+    }
+
+    public function isHidden(): bool
+    {
+        return $this->hidden;
     }
 }

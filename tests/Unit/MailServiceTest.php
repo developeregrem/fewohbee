@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\AppSettings;
+use App\Service\AppSettingsService;
 use App\Service\MailService;
+use App\Service\MailTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -13,9 +16,17 @@ use Symfony\Component\Mime\RawMessage;
 
 final class MailServiceTest extends TestCase
 {
-    public function testSendHtmlMailAddsPlainTextAndReturnPath(): void
+    public function testSendHtmlMailUsesDbSettingsAndAddsPlainTextReturnPathAndCopy(): void
     {
+        $settings = new AppSettings();
         $captured = null;
+
+        $appSettingsService = $this->createMock(AppSettingsService::class);
+        $appSettingsService->method('getSettings')->willReturn($settings);
+        $appSettingsService->method('getEffectiveMailFromEmail')->with($settings)->willReturn('info@fewohbee.de');
+        $appSettingsService->method('getEffectiveMailFromName')->with($settings)->willReturn('FewohBee Test');
+        $appSettingsService->method('getEffectiveMailReturnPath')->with($settings)->willReturn('bounce@fewohbee.de');
+        $appSettingsService->method('isEffectiveMailCopyEnabled')->with($settings)->willReturn(true);
 
         $mailer = $this->createMock(MailerInterface::class);
         $mailer
@@ -27,62 +38,46 @@ final class MailServiceTest extends TestCase
                 return $message instanceof Email;
             }));
 
-        $service = new MailService(
-            'info@fewohbee.de',
-            'FewohBee Test',
-            'bounce@fewohbee.de',
-            'false',
-            $mailer
-        );
+        $transportFactory = $this->createMock(MailTransportFactory::class);
+        $transportFactory->expects($this->once())->method('createMailer')->with($settings)->willReturn($mailer);
 
-        $service->sendHTMLMail(
-            'guest@example.com',
-            'Rechnung',
-            '<p>Hallo<br>Welt</p><table><tr><td>Position</td></tr></table>'
-        );
+        $service = new MailService($appSettingsService, $transportFactory, true);
+        $service->sendHTMLMail('guest@example.com', 'Rechnung', '<p>Hallo<br>Welt</p>');
 
         self::assertInstanceOf(Email::class, $captured);
         self::assertSame('Rechnung', $captured->getSubject());
-        self::assertStringContainsString('<p>Hallo', $captured->getHtmlBody() ?? '');
-        self::assertNotNull($captured->getTextBody());
+        self::assertEquals([new Address('info@fewohbee.de', 'FewohBee Test')], $captured->getFrom());
+        self::assertEquals([new Address('guest@example.com')], $captured->getTo());
+        self::assertEquals([new Address('info@fewohbee.de')], $captured->getBcc());
+        self::assertSame('bounce@fewohbee.de', $captured->getReturnPath()?->getAddress());
         self::assertStringContainsString('Hallo', $captured->getTextBody() ?? '');
         self::assertStringContainsString('Welt', $captured->getTextBody() ?? '');
-        self::assertSame('bounce@fewohbee.de', $captured->getReturnPath()?->getAddress());
     }
 
-    public function testSendHtmlMailOmitsReturnPathWhenEmpty(): void
+    public function testSendHtmlMailSkipsTransportWhenMailIsDisabled(): void
     {
-        $captured = null;
+        $appSettingsService = $this->createMock(AppSettingsService::class);
+        $appSettingsService->expects($this->never())->method('getSettings');
 
-        $mailer = $this->createMock(MailerInterface::class);
-        $mailer
-            ->expects($this->once())
-            ->method('send')
-            ->with($this->callback(function (RawMessage $message) use (&$captured): bool {
-                $captured = $message;
+        $transportFactory = $this->createMock(MailTransportFactory::class);
+        $transportFactory->expects($this->never())->method('createMailer');
 
-                return $message instanceof Email;
-            }));
+        $service = new MailService($appSettingsService, $transportFactory, false);
+        $service->sendHTMLMail('guest@example.com', 'Test', '<p>Body</p>');
+    }
 
-        $service = new MailService(
-            'info@fewohbee.de',
-            'FewohBee Test',
-            '',
-            'false',
-            $mailer
-        );
+    public function testSendHtmlMailSkipsTransportWhenSenderIsNotConfigured(): void
+    {
+        $settings = new AppSettings();
 
-        $service->sendHTMLMail(
-            'guest@example.com',
-            'Test',
-            '<p>Nur Inhalt</p>'
-        );
+        $appSettingsService = $this->createMock(AppSettingsService::class);
+        $appSettingsService->expects($this->once())->method('getSettings')->willReturn($settings);
+        $appSettingsService->expects($this->once())->method('getEffectiveMailFromEmail')->with($settings)->willReturn(null);
 
-        self::assertInstanceOf(Email::class, $captured);
-        self::assertNull($captured->getReturnPath());
-        self::assertEquals(
-            [new Address('guest@example.com')],
-            $captured->getTo()
-        );
+        $transportFactory = $this->createMock(MailTransportFactory::class);
+        $transportFactory->expects($this->never())->method('createMailer');
+
+        $service = new MailService($appSettingsService, $transportFactory, true);
+        $service->sendHTMLMail('guest@example.com', 'Test', '<p>Body</p>');
     }
 }

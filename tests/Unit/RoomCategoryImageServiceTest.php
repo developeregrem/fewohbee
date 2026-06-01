@@ -7,110 +7,115 @@ namespace App\Tests\Unit;
 use App\Entity\RoomCategory;
 use App\Entity\RoomCategoryImage;
 use App\Service\RoomCategoryImageService;
+use App\Service\Storage\ImageUrlGenerator;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\Filesystem;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * Tests for the RoomCategoryImageService, specifically URL generation
- * and delete-all-for-category logic (without touching the filesystem).
+ * Tests for the RoomCategoryImageService — URL generation (delegated to ImageUrlGenerator)
+ * and delete operations against an in-memory Flysystem storage.
  */
 final class RoomCategoryImageServiceTest extends TestCase
 {
-    /** Verify that getPublicUrl generates correct paths for each variant. */
-    public function testGetPublicUrlGeneratesCorrectPaths(): void
+    public function testGetPublicUrlDelegatesToUrlGenerator(): void
     {
-        $service = $this->createService();
+        $service = $this->createService(new InMemoryFilesystemAdapter());
         $image = $this->createImageWithCategory(42, 'photo-abc123.jpg');
 
-        self::assertSame(
-            '/resources/images/room-categories/42/thumb_photo-abc123.jpg',
-            $service->getPublicUrl($image, 'thumb')
-        );
-        self::assertSame(
-            '/resources/images/room-categories/42/medium_photo-abc123.jpg',
-            $service->getPublicUrl($image, 'medium')
-        );
-        self::assertSame(
-            '/resources/images/room-categories/42/photo-abc123.jpg',
-            $service->getPublicUrl($image, 'original')
-        );
+        self::assertSame('/resources/images/room-categories/42/thumb_photo-abc123.jpg', $service->getPublicUrl($image, 'thumb'));
+        self::assertSame('/resources/images/room-categories/42/medium_photo-abc123.jpg', $service->getPublicUrl($image, 'medium'));
+        self::assertSame('/resources/images/room-categories/42/photo-abc123.jpg', $service->getPublicUrl($image, 'original'));
     }
 
-    /** Verify that the default variant is 'medium'. */
     public function testGetPublicUrlDefaultsToMedium(): void
     {
-        $service = $this->createService();
+        $service = $this->createService(new InMemoryFilesystemAdapter());
         $image = $this->createImageWithCategory(7, 'test.jpg');
-
-        self::assertSame(
-            '/resources/images/room-categories/7/medium_test.jpg',
-            $service->getPublicUrl($image)
-        );
+        self::assertSame('/resources/images/room-categories/7/medium_test.jpg', $service->getPublicUrl($image));
     }
 
-    /** Verify that deleteAllForCategory handles non-existent directory gracefully. */
-    public function testDeleteAllForCategoryHandlesNonExistentDirectory(): void
+    public function testDeleteAllForCategoryHandlesEmptyStorage(): void
     {
-        $em = $this->createStub(EntityManagerInterface::class);
-        $validator = $this->createStub(ValidatorInterface::class);
-
-        $service = new RoomCategoryImageService(
-            '/tmp/nonexistent-' . uniqid(),
-            'resources/images/room-categories',
-            $validator,
-            $em,
-        );
-
+        $service = $this->createService(new InMemoryFilesystemAdapter());
         $category = $this->createRoomCategoryWithId(99);
 
-        // Should not throw — gracefully handles missing directory
         $service->deleteAllForCategory($category);
         self::assertTrue(true);
     }
 
-    /** Verify that deleteAllForCategory removes files and directory. */
-    public function testDeleteAllForCategoryRemovesFilesAndDirectory(): void
+    public function testDeleteAllForCategoryRemovesAllFilesInCategoryDir(): void
     {
-        $tempDir = sys_get_temp_dir() . '/fewohbee-test-' . uniqid();
-        $categoryDir = $tempDir . '/5';
-        mkdir($categoryDir, 0775, true);
+        $adapter = new InMemoryFilesystemAdapter();
+        $fs = new Filesystem($adapter);
+        $fs->write('5/photo.jpg', 'fake-jpg');
+        $fs->write('5/thumb_photo.jpg', 'fake-thumb');
+        $fs->write('5/medium_photo.jpg', 'fake-medium');
+        $fs->write('6/other.jpg', 'untouched');
 
-        // Create test files
-        file_put_contents($categoryDir . '/photo.jpg', 'fake-jpg');
-        file_put_contents($categoryDir . '/thumb_photo.jpg', 'fake-thumb');
-        file_put_contents($categoryDir . '/medium_photo.jpg', 'fake-medium');
+        $service = $this->createService($adapter);
+        $service->deleteAllForCategory($this->createRoomCategoryWithId(5));
 
-        $em = $this->createStub(EntityManagerInterface::class);
-        $validator = $this->createStub(ValidatorInterface::class);
+        self::assertFalse($fs->fileExists('5/photo.jpg'));
+        self::assertFalse($fs->fileExists('5/thumb_photo.jpg'));
+        self::assertFalse($fs->fileExists('5/medium_photo.jpg'));
+        self::assertTrue($fs->fileExists('6/other.jpg'));
+    }
+
+    public function testDeleteRemovesAllThreeVariants(): void
+    {
+        $adapter = new InMemoryFilesystemAdapter();
+        $fs = new Filesystem($adapter);
+        $fs->write('5/photo.jpg', 'fake');
+        $fs->write('5/medium_photo.jpg', 'fake');
+        $fs->write('5/thumb_photo.jpg', 'fake');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('remove');
+        $em->expects(self::once())->method('flush');
 
         $service = new RoomCategoryImageService(
-            $tempDir,
-            'resources/images/room-categories',
-            $validator,
+            new Filesystem($adapter),
+            $this->createUrlGenerator(),
+            $this->createStub(ValidatorInterface::class),
             $em,
         );
 
-        $category = $this->createRoomCategoryWithId(5);
-        $service->deleteAllForCategory($category);
+        $image = $this->createImageWithCategory(5, 'photo.jpg');
+        $service->delete($image);
 
-        self::assertDirectoryDoesNotExist($categoryDir);
+        self::assertFalse($fs->fileExists('5/photo.jpg'));
+        self::assertFalse($fs->fileExists('5/medium_photo.jpg'));
+        self::assertFalse($fs->fileExists('5/thumb_photo.jpg'));
     }
 
-    private function createService(): RoomCategoryImageService
+    private function createService(InMemoryFilesystemAdapter $adapter): RoomCategoryImageService
     {
         return new RoomCategoryImageService(
-            '/var/www/public/resources/images/room-categories',
-            'resources/images/room-categories',
+            new Filesystem($adapter),
+            $this->createUrlGenerator(),
             $this->createStub(ValidatorInterface::class),
             $this->createStub(EntityManagerInterface::class),
+        );
+    }
+
+    private function createUrlGenerator(): ImageUrlGenerator
+    {
+        return new ImageUrlGenerator(
+            'local',
+            '',
+            'resources/images/export',
+            'resources/images/room-categories',
+            new RequestStack(),
         );
     }
 
     private function createImageWithCategory(int $categoryId, string $filename): RoomCategoryImage
     {
         $category = $this->createRoomCategoryWithId($categoryId);
-
         $image = new RoomCategoryImage();
         $image->setRoomCategory($category);
         $image->setFilename($filename);
@@ -118,9 +123,6 @@ final class RoomCategoryImageServiceTest extends TestCase
         return $image;
     }
 
-    /**
-     * Creates a RoomCategory with a specific ID set via reflection.
-     */
     private function createRoomCategoryWithId(int $id): RoomCategory
     {
         $category = new RoomCategory();

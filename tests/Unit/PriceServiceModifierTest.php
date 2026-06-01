@@ -10,6 +10,7 @@ use App\Entity\GuestCategory;
 use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Service\PriceService;
@@ -124,6 +125,70 @@ final class PriceServiceModifierTest extends TestCase
         self::assertSame(120.0, $night->total());
     }
 
+    public function testMinFullPayersKeepsChildAtFullFareBelowThreshold(): void
+    {
+        // 1 adult + 1 child, room requires 2 full-fare guests. The child fills the
+        // remaining full-fare slot and is billed at the base rate despite a FREE
+        // modifier — the room stays at 2 × base.
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
+
+        $reservation = $this->makeReservation([1 => 1, 2 => 1]);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+
+        $night = $service->getPriceBreakdownForReservation($reservation)[0];
+        self::assertSame(200.0, $night->total());
+        foreach ($night->lines as $line) {
+            self::assertSame(100.0, $line->unitPrice);
+            self::assertNull($line->modifier);
+        }
+    }
+
+    public function testMinFullPayersAppliesModifierAboveThreshold(): void
+    {
+        // 2 adults fill both full-fare slots, so the child gets its FREE modifier.
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
+
+        $reservation = $this->makeReservation([1 => 2, 2 => 1]);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+
+        $night = $service->getPriceBreakdownForReservation($reservation)[0];
+        self::assertSame(200.0, $night->total());
+        $childLine = $night->lines[1];
+        self::assertSame(0.0, $childLine->unitPrice);
+        self::assertSame($modifier, $childLine->modifier);
+    }
+
+    public function testMinFullPayersSplitsCategoryAcrossThreshold(): void
+    {
+        // 1 adult + 2 children, room requires 2 full-fare guests: one child fills
+        // the remaining slot at full fare, the second child is discounted (free).
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
+
+        $reservation = $this->makeReservation([1 => 1, 2 => 2]);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+
+        $night = $service->getPriceBreakdownForReservation($reservation)[0];
+        // adult(100) + child full-fare(100) + child free(0) = 200
+        self::assertSame(200.0, $night->total());
+        self::assertCount(3, $night->lines);
+
+        $fullFareChild = $night->lines[1];
+        self::assertSame(1, $fullFareChild->count);
+        self::assertSame(100.0, $fullFareChild->unitPrice);
+        self::assertNull($fullFareChild->modifier);
+
+        $discountedChild = $night->lines[2];
+        self::assertSame(1, $discountedChild->count);
+        self::assertSame(0.0, $discountedChild->unitPrice);
+        self::assertSame($modifier, $discountedChild->modifier);
+    }
+
     public function testEmptyGuestCountsProducesNoLines(): void
     {
         $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
@@ -209,12 +274,18 @@ final class PriceServiceModifierTest extends TestCase
         return $m;
     }
 
-    private function makePrice(string $value): Price
+    private function makePrice(string $value, int $minFullPayers = 0): Price
     {
         $p = new Price();
         $p->setPrice($value);
         $p->setVat(7.0);
         $p->setDescription('apt');
+
+        if ($minFullPayers > 0) {
+            $rc = new RoomCategory();
+            $rc->setMinFullPayers($minFullPayers);
+            $p->setRoomCategory($rc);
+        }
 
         return $p;
     }

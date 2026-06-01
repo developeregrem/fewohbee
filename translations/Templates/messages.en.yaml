@@ -21,6 +21,7 @@ templates.operations.housekeeping_week: Housekeeping week view
 templates.operations.frontdesk_checklist: Frontdesk checklist
 templates.operations.meals_checklist: Meals checklist
 templates.operations.management_monthly_summary: Monthly management summary
+templates.operations.tourist_tax_monthly: Monthly tourist tax report
 templates.operations.import.title: No templates for operations reports.
 templates.operations.import.text: You can import the default report templates now.
 templates.operations.import.button: Import templates
@@ -36,6 +37,8 @@ templates.correspondence.delete.ok: Entry successfully deleted.
 templates.correspondence.name: Name
 templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
+templates.hidden: Embedded template
+templates.hidden.tooltip: "Active: Template does not appear in the templateselection."
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template

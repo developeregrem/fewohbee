@@ -26,8 +26,11 @@ class TouristTaxService
     /**
      * @return TouristTaxBreakdown[]
      */
-    public function calculateForReservation(Reservation $reservation): array
-    {
+    public function calculateForReservation(
+        Reservation $reservation,
+        ?\DateTimeInterface $rangeStart = null,
+        ?\DateTimeInterface $rangeEnd = null,
+    ): array {
         if ($reservation->isKurtaxeWaived()) {
             return [];
         }
@@ -49,8 +52,8 @@ class TouristTaxService
         $result = [];
         foreach ($taxes as $tax) {
             $rows = match ($tax->getCalculationMode()) {
-                TaxCalculationMode::PER_NIGHT_FLAT => $this->calculateFlatPerNight($tax, $reservation, $start, $totalNights),
-                TaxCalculationMode::PERCENT_PER_ROOM => $this->calculatePercentPerRoom($tax, $reservation, $start, $totalNights),
+                TaxCalculationMode::PER_NIGHT_FLAT => $this->calculateFlatPerNight($tax, $reservation, $start, $totalNights, $rangeStart, $rangeEnd),
+                TaxCalculationMode::PERCENT_PER_ROOM => $this->calculatePercentPerRoom($tax, $reservation, $start, $totalNights, $rangeStart, $rangeEnd),
             };
             foreach ($rows as $row) {
                 $result[] = $row;
@@ -65,11 +68,40 @@ class TouristTaxService
         return $this->touristTaxRepository->hasActiveForSubsidiary($subsidiary);
     }
 
+    private function nightInRange(
+        \DateTimeInterface $night,
+        ?\DateTimeInterface $rangeStart,
+        ?\DateTimeInterface $rangeEnd,
+    ): bool {
+        if (null === $rangeStart && null === $rangeEnd) {
+            return true;
+        }
+        // Compare on Y-m-d only — reservation dates come from Doctrine in the app's local timezone
+        // while range dates may carry a different timezone (e.g. UTC from filter parsing). A pure
+        // timestamp compare would push a "01.06 00:00 Berlin" night below a "01.06 00:00 UTC"
+        // rangeStart by the 2h offset, silently dropping the first night of the month.
+        $nightKey = $night->format('Y-m-d');
+        if (null !== $rangeStart && $nightKey < $rangeStart->format('Y-m-d')) {
+            return false;
+        }
+        if (null !== $rangeEnd && $nightKey > $rangeEnd->format('Y-m-d')) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * @return TouristTaxBreakdown[]
      */
-    private function calculateFlatPerNight(TouristTax $tax, Reservation $reservation, \DateTimeInterface $start, int $totalNights): array
-    {
+    private function calculateFlatPerNight(
+        TouristTax $tax,
+        Reservation $reservation,
+        \DateTimeInterface $start,
+        int $totalNights,
+        ?\DateTimeInterface $rangeStart = null,
+        ?\DateTimeInterface $rangeEnd = null,
+    ): array {
         $guestCounts = $reservation->getGuestCounts();
         if (empty($guestCounts)) {
             return [];
@@ -84,6 +116,9 @@ class TouristTaxService
         for ($i = 0; $i < $totalNights; ++$i) {
             $night = (clone $start)->modify('+'.$i.' days');
             if (!$tax->isValidOn($night)) {
+                continue;
+            }
+            if (!$this->nightInRange($night, $rangeStart, $rangeEnd)) {
                 continue;
             }
             foreach ($tax->getRates() as $rate) {
@@ -119,8 +154,14 @@ class TouristTaxService
     /**
      * @return TouristTaxBreakdown[]
      */
-    private function calculatePercentPerRoom(TouristTax $tax, Reservation $reservation, \DateTimeInterface $start, int $totalNights): array
-    {
+    private function calculatePercentPerRoom(
+        TouristTax $tax,
+        Reservation $reservation,
+        \DateTimeInterface $start,
+        int $totalNights,
+        ?\DateTimeInterface $rangeStart = null,
+        ?\DateTimeInterface $rangeEnd = null,
+    ): array {
         $percent = $tax->getPercentageRateFloat();
         $base = $tax->getPercentageBase();
         if (null === $percent || $percent <= 0.0 || null === $base || null === $this->priceService) {
@@ -134,6 +175,9 @@ class TouristTaxService
         for ($i = 0; $i < $totalNights; ++$i) {
             $night = (clone $start)->modify('+'.$i.' days');
             if (!$tax->isValidOn($night)) {
+                continue;
+            }
+            if (!$this->nightInRange($night, $rangeStart, $rangeEnd)) {
                 continue;
             }
             $key = $night->format('Y-m-d');

@@ -12,6 +12,8 @@ price.appartment: Room
 price.appartment.hint: 'Only to be filled in if type: room price selected.'
 price.breakfast: Breakfast
 price.category: Category
+price.category.all: All categories
+price.category.misc.hint: 'Optional: restrict this price to a single room category. Leave on "All categories" to apply it to every reservation.'
 price.collapsable.group.1.description: General
 price.collapsable.group.2.description: Seasonal information
 price.collapsable.group.3.description: Room specific

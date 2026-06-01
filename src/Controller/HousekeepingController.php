@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Appartment;
+use App\Entity\ReservationStatus;
 use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Entity\User;
@@ -39,23 +40,28 @@ class HousekeepingController extends AbstractController
     ): Response {
         $em = $doctrine->getManager();
         $subsidiaries = $em->getRepository(Subsidiary::class)->findAll();
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
         $selectedSubsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
         $selectedDate = $filterService->resolveDate($request->query->get('date'));
         $view = $request->query->get('view', 'day');
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
+        $selectedStatusIds = $viewService->normalizeReservationStatusIds(
+            $queryParams['statuses'] ?? null,
+            $reservationStatuses
+        );
 
         $dayView = null;
         $weekView = null;
         if ('week' === $view) {
             $weekStart = $filterService->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
-            $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $selectedSubsidiary);
+            $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $selectedSubsidiary, 'all', $selectedStatusIds);
             $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
         } else {
             $view = 'day';
-            $dayView = $viewService->buildDayView($selectedDate, $selectedSubsidiary);
+            $dayView = $viewService->buildDayView($selectedDate, $selectedSubsidiary, 'all', $selectedStatusIds);
             $dayView = $viewService->filterDayViewByOccupancy($dayView, $selectedOccupancyTypes);
         }
 
@@ -89,6 +95,8 @@ class HousekeepingController extends AbstractController
             'occupancyClasses' => $this->getOccupancyClasses(),
             'occupancyTypes' => $viewService->getAllowedOccupancyTypes(),
             'selectedOccupancyTypes' => $selectedOccupancyTypes,
+            'reservationStatuses' => $reservationStatuses,
+            'selectedStatusIds' => $selectedStatusIds,
         ];
 
         // AJAX request: return only content partial
@@ -161,24 +169,29 @@ class HousekeepingController extends AbstractController
         OperationsFilterService $filterService
     ): Response {
         $em = $doctrine->getManager();
+        $reservationStatuses = $em->getRepository(ReservationStatus::class)->findAll();
         $subsidiaryId = (string) $request->query->get('subsidiary', 'all');
         $subsidiary = $filterService->resolveSubsidiary($em, $subsidiaryId);
         $selectedDate = $filterService->resolveDate($request->query->get('date'));
         $range = (string) $request->query->get('range', 'day');
         $queryParams = $request->query->all();
         $selectedOccupancyTypes = $viewService->normalizeOccupancyTypes($queryParams['occupancyTypes'] ?? null);
+        $selectedStatusIds = $viewService->normalizeReservationStatusIds(
+            $queryParams['statuses'] ?? null,
+            $reservationStatuses
+        );
         $locale = $request->getLocale();
 
         if ('week' === $range) {
             $weekStart = $filterService->resolveWeekStart($selectedDate);
             $weekEnd = $weekStart->modify('+6 days');
-            $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $subsidiary);
+            $weekView = $viewService->buildWeekView($weekStart, $weekEnd, $subsidiary, 'all', $selectedStatusIds);
             $weekView = $viewService->filterWeekViewByOccupancy($weekView, $selectedOccupancyTypes);
 
             return $exportService->buildWeekCsvResponse($weekView, $subsidiaryId, $locale);
         }
 
-        $dayView = $viewService->buildDayView($selectedDate, $subsidiary);
+        $dayView = $viewService->buildDayView($selectedDate, $subsidiary, 'all', $selectedStatusIds);
         $dayView = $viewService->filterDayViewByOccupancy($dayView, $selectedOccupancyTypes);
 
         return $exportService->buildDayCsvResponse($dayView, $subsidiaryId, $locale);

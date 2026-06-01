@@ -135,7 +135,8 @@ jobs:
           if [[ "$REF" == refs/tags/v* ]]; then
             TAG="${REF#refs/tags/v}"
           elif [[ "$REF" == refs/heads/* ]]; then
-            TAG="branch-${BRANCH//[\/.]/-}"
+            # metadata-action only sanitizes slashes (dots stay as-is).
+            TAG="branch-${BRANCH//\//-}"
           else
             TAG="sha-${SHA:0:7}"
           fi

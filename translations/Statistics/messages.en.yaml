@@ -41,6 +41,12 @@ statistics:
     arrivals_by_state: Arrivals by state/province
     overnights_by_state: Overnights by state/province
     no_state_data: No state data available. Please populate the PostalCodeData table to enable state-level statistics. See <a href="https://github.com/developeregrem/fewohbee/wiki/City-Lookup" target="_blank">instructions</a>.
+    guest_category: Guest category
+    overnights_by_guest_category: Overnights by guest category
+    by_country_and_category_table: 'Overnights: country × guest category'
+    no_category_data: No guest category data available.
+    total: Total
+    last_calculated: 'Last calculated:'
   snapshot:
     warning:
       persons_mismatch: Persons count differs from guest count; please verify the reservation completeness.

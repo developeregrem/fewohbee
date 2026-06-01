@@ -169,6 +169,7 @@ online_booking:
     per_person_night: "per person/night"
     per_room_night: "per room/night"
     flat_price: "one-time"
+    per_room_suffix: "per room"
     extras_total: "Extras total"
     grand_total: "Total price"
     submit_booking: "Book now"

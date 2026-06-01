@@ -181,7 +181,7 @@
                                     <div class="card mb-3">
                                         {# Hero image (primary image of this room category) #}
                                         {% if row.primaryImage is defined and row.primaryImage %}
-                                            <img src="{{ app.request.basepath }}{{ row.primaryImage.mediumUrl }}"
+                                            <img src="{{ row.primaryImage.mediumUrl }}"
                                                  alt="{{ row.typeLabel }}"
                                                  class="card-img-top"
                                                  style="max-height:200px;object-fit:cover"
@@ -262,11 +262,17 @@
                                             {% for extra in extras %}
                                                 {% set extraFieldName = 'extra_' ~ extra.id %}
                                                 {% set isMandatoryExtra = extra.isMandatory|default(false) %}
+                                                {% set isAutoQuantity = extra.autoQuantity|default(false) %}
                                                 {% set selectedQtyVal = selectedExtras[extra.id]|default(isMandatoryExtra ? 1 : 0) %}
-                                                {% set needsQuantity = extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
+                                                {% set needsQuantity = not isAutoQuantity and extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
                                                 <div class="list-group-item d-flex align-items-center justify-content-between gap-2 py-2">
                                                     <div class="flex-grow-1">
-                                                        <div class="fw-semibold small">{{ extra.description }}</div>
+                                                        <div class="fw-semibold small">
+                                                            {{ extra.description }}
+                                                            {% if isAutoQuantity and extra.categoryName %}
+                                                                <span class="badge bg-light text-dark border fw-normal ms-1">{{ extra.categoryName }}</span>
+                                                            {% endif %}
+                                                        </div>
                                                         <div class="small text-body-secondary">
                                                             {{ extra.unitPriceFormatted }}&nbsp;{{ currency_symbol }}
                                                             {% if extra.calculationType == 'per_person_night' %}
@@ -274,11 +280,13 @@
                                                             {% elseif extra.calculationType == 'per_room_night' %}
                                                                 {{ 'online_booking.public.per_room_night'|trans }}
                                                             {% else %}
-                                                                {{ 'online_booking.public.flat_price'|trans }}
+                                                                {{ 'online_booking.public.flat_price'|trans }}{% if isAutoQuantity %} {{ 'online_booking.public.per_room_suffix'|trans }}{% endif %}
                                                             {% endif %}
-                                                            <span class="ms-1 text-body-secondary">
-                                                                (= {{ extra.pricePerUnitFormatted }}&nbsp;{{ currency_symbol }})
-                                                            </span>
+                                                            {% if not isAutoQuantity %}
+                                                                <span class="ms-1 text-body-secondary">
+                                                                    (= {{ extra.pricePerUnitFormatted }}&nbsp;{{ currency_symbol }})
+                                                                </span>
+                                                            {% endif %}
                                                         </div>
                                                     </div>
                                                     {% if isMandatoryExtra %}
@@ -334,7 +342,7 @@
                                                             <div class="carousel-inner">
                                                                 {% for img in row.images %}
                                                                     <div class="carousel-item {{ loop.first ? 'active' : '' }}">
-                                                                        <img src="{{ app.request.basepath }}{{ img.mediumUrl }}" class="d-block w-100" alt="">
+                                                                        <img src="{{ img.mediumUrl }}" class="d-block w-100" alt="">
                                                                     </div>
                                                                 {% endfor %}
                                                             </div>

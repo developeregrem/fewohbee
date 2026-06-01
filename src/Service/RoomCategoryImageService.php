@@ -6,14 +6,22 @@ namespace App\Service;
 
 use App\Entity\RoomCategory;
 use App\Entity\RoomCategoryImage;
+use App\Service\Storage\ImageUrlGenerator;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Handles upload, resize (3 variants), deletion, and URL generation
- * for room category images. Uses PHP GD for image processing.
+ * for room category images. Uses PHP GD for image processing and Flysystem
+ * for storage (local filesystem or S3-compatible object storage).
+ *
+ * Image variants are stored under "{categoryId}/{prefix}{filename}" within the
+ * configured storage. GD requires real file paths, so uploads are processed via
+ * the system temp directory before each variant is streamed into storage.
  */
 class RoomCategoryImageService
 {
@@ -23,8 +31,8 @@ class RoomCategoryImageService
     private const VARIANT_ORIGINAL = 1920;
 
     public function __construct(
-        private readonly string $imageDirectory,
-        private readonly string $imagePublicDirectory,
+        private readonly FilesystemOperator $storage,
+        private readonly ImageUrlGenerator $urlGenerator,
         private readonly ValidatorInterface $validator,
         private readonly EntityManagerInterface $em,
     ) {
@@ -53,28 +61,34 @@ class RoomCategoryImageService
         $extension = $file->guessExtension() ?: 'jpg';
         $baseFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
 
-        $categoryDir = $this->getCategoryDirectory($roomCategory);
-        if (!is_dir($categoryDir)) {
-            mkdir($categoryDir, 0775, true);
-        }
+        $categoryId = $roomCategory->getId();
 
-        // Move the original upload to a temp location for processing
-        $tempPath = $categoryDir . '/' . 'upload_' . $baseFilename;
-        $file->move($categoryDir, 'upload_' . $baseFilename);
+        // GD requires real file paths — work in sys temp, then stream into storage.
+        $tempDir = sys_get_temp_dir() . '/fewohbee-rcimg-' . uniqid();
+        mkdir($tempDir, 0775, true);
 
-        // Load once, fix orientation, then write all variants from the corrected source
-        $source = $this->loadAndOrient($tempPath);
-        $mime = $this->detectMime($tempPath);
+        try {
+            $sourcePath = $tempDir . '/source.' . $extension;
+            $file->move($tempDir, basename($sourcePath));
 
-        $this->saveVariant($source, $categoryDir . '/' . $baseFilename, self::VARIANT_ORIGINAL, $mime);
-        $this->saveVariant($source, $categoryDir . '/medium_' . $baseFilename, self::VARIANT_MEDIUM, $mime);
-        $this->saveVariant($source, $categoryDir . '/thumb_' . $baseFilename, self::VARIANT_THUMB, $mime);
+            $source = $this->loadAndOrient($sourcePath);
+            $mime = $this->detectMime($sourcePath);
 
-        unset($source);
+            foreach (
+                [
+                    ['', self::VARIANT_ORIGINAL],
+                    ['medium_', self::VARIANT_MEDIUM],
+                    ['thumb_', self::VARIANT_THUMB],
+                ] as [$prefix, $maxWidth]
+            ) {
+                $variantTemp = $tempDir . '/' . $prefix . $baseFilename;
+                $this->saveVariant($source, $variantTemp, $maxWidth, $mime);
+                $this->writeToStorage($categoryId . '/' . $prefix . $baseFilename, $variantTemp);
+            }
 
-        // Remove the temporary upload
-        if (file_exists($tempPath)) {
-            unlink($tempPath);
+            unset($source);
+        } finally {
+            $this->cleanupTempDir($tempDir);
         }
 
         // Determine sort order (append at end)
@@ -102,17 +116,21 @@ class RoomCategoryImageService
     }
 
     /**
-     * Deletes a single image entity and all its file variants from disk.
+     * Deletes a single image entity and all its file variants from storage.
      */
     public function delete(RoomCategoryImage $image): void
     {
-        $categoryDir = $this->getCategoryDirectory($image->getRoomCategory());
+        $categoryId = $image->getRoomCategory()->getId();
         $filename = $image->getFilename();
 
         foreach ([$filename, 'medium_' . $filename, 'thumb_' . $filename] as $variant) {
-            $path = $categoryDir . '/' . $variant;
-            if (file_exists($path)) {
-                unlink($path);
+            $path = $categoryId . '/' . $variant;
+            try {
+                if ($this->storage->fileExists($path)) {
+                    $this->storage->delete($path);
+                }
+            } catch (FilesystemException) {
+                // Best-effort cleanup; ignore storage errors so the DB entity is still removed.
             }
         }
 
@@ -121,22 +139,19 @@ class RoomCategoryImageService
     }
 
     /**
-     * Deletes all images for a room category including files on disk.
+     * Deletes all images for a room category including files in storage.
      * Call this before removing a RoomCategory entity.
      */
     public function deleteAllForCategory(RoomCategory $roomCategory): void
     {
-        $categoryDir = $this->getCategoryDirectory($roomCategory);
+        $categoryId = (string) $roomCategory->getId();
 
-        // Remove all files in the category directory
-        if (is_dir($categoryDir)) {
-            $files = glob($categoryDir . '/*');
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
+        try {
+            if ($this->storage->directoryExists($categoryId)) {
+                $this->storage->deleteDirectory($categoryId);
             }
-            rmdir($categoryDir);
+        } catch (FilesystemException) {
+            // Best-effort cleanup; entity removal is handled by the caller.
         }
     }
 
@@ -147,15 +162,11 @@ class RoomCategoryImageService
      */
     public function getPublicUrl(RoomCategoryImage $image, string $variant = 'medium'): string
     {
-        $prefix = match ($variant) {
-            'thumb' => 'thumb_',
-            'medium' => 'medium_',
-            default => '',
-        };
-
-        $categoryId = $image->getRoomCategory()->getId();
-
-        return '/' . $this->imagePublicDirectory . '/' . $categoryId . '/' . $prefix . $image->getFilename();
+        return $this->urlGenerator->roomCategoryUrl(
+            $image->getRoomCategory()->getId(),
+            $image->getFilename(),
+            $variant,
+        );
     }
 
     /**
@@ -254,6 +265,24 @@ class RoomCategoryImageService
         }
     }
 
+    /** Streams a local temp file into the configured storage. */
+    private function writeToStorage(string $key, string $localPath): void
+    {
+        $stream = fopen($localPath, 'rb');
+        if (false === $stream) {
+            throw new \RuntimeException('Cannot read variant temp file: ' . $localPath);
+        }
+        try {
+            $this->storage->writeStream($key, $stream);
+        } catch (FilesystemException $e) {
+            throw new \RuntimeException('Failed to write image to storage: ' . $e->getMessage(), previous: $e);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+    }
+
     /** Returns the MIME type of an image file. */
     private function detectMime(string $path): string
     {
@@ -265,11 +294,16 @@ class RoomCategoryImageService
         return $info['mime'];
     }
 
-    /**
-     * Returns the filesystem directory path for a room category's images.
-     */
-    private function getCategoryDirectory(RoomCategory $roomCategory): string
+    private function cleanupTempDir(string $tempDir): void
     {
-        return $this->imageDirectory . '/' . $roomCategory->getId();
+        if (!is_dir($tempDir)) {
+            return;
+        }
+        foreach (glob($tempDir . '/*') ?: [] as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+        @rmdir($tempDir);
     }
 }

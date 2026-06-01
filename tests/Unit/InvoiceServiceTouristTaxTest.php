@@ -7,6 +7,7 @@ namespace App\Tests\Unit;
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\AccountingAccount;
 use App\Entity\AppSettings;
+use App\Entity\Enum\TaxCalculationMode;
 use App\Entity\Reservation;
 use App\Entity\TaxRate;
 use App\Service\AppSettingsService;
@@ -74,6 +75,62 @@ final class InvoiceServiceTouristTaxTest extends TestCase
 
         self::assertTrue($positions[0]->getIncludesVat());
         self::assertSame($account, $positions[0]->getRevenueAccount());
+    }
+
+    public function testAggregatesSameFlatTaxAcrossReservations(): void
+    {
+        $r1 = new Reservation();
+        $r2 = new Reservation();
+
+        $touristTaxService = $this->createStub(TouristTaxService::class);
+        $touristTaxService->method('calculateForReservation')->willReturnCallback(
+            fn (Reservation $reservation): array => [
+                $this->makeBreakdown(1, 'Kurtaxe', 1, 'Erwachsene', 3.0, 2, 1),
+            ],
+        );
+
+        $service = $this->createService($touristTaxService);
+        $positions = $service->buildTouristTaxPositions([$r1, $r2]);
+
+        self::assertCount(1, $positions);
+        self::assertSame(4, $positions[0]->getAmount());
+        self::assertSame('3.00', $positions[0]->getPrice());
+        self::assertSame('tourist_tax', $positions[0]->getPositionGroup());
+    }
+
+    public function testAggregatesSamePercentTaxAcrossReservations(): void
+    {
+        $r1 = new Reservation();
+        $r2 = new Reservation();
+
+        $touristTaxService = $this->createStub(TouristTaxService::class);
+        $touristTaxService->method('calculateForReservation')->willReturnCallback(
+            function (Reservation $reservation) use ($r1): array {
+                return [
+                    $this->makeBreakdown(
+                        taxId: 2,
+                        taxName: 'City Tax',
+                        categoryId: 0,
+                        categoryName: '',
+                        pricePerNight: 0.0,
+                        nights: 2,
+                        count: 1,
+                        calculationMode: TaxCalculationMode::PERCENT_PER_ROOM,
+                        percentageRate: 5.0,
+                        apartmentBase: $reservation === $r1 ? 60.0 : 90.0,
+                        precomputedTotal: $reservation === $r1 ? 3.0 : 4.5,
+                    ),
+                ];
+            },
+        );
+
+        $service = $this->createService($touristTaxService);
+        $positions = $service->buildTouristTaxPositions([$r1, $r2]);
+
+        self::assertCount(1, $positions);
+        self::assertSame(1, $positions[0]->getAmount());
+        self::assertSame('7.50', $positions[0]->getPrice());
+        self::assertSame('tourist_tax', $positions[0]->getPositionGroup());
     }
 
     public function testTouristTaxDescriptionUsesSingularAndPluralLabels(): void
@@ -144,6 +201,10 @@ final class InvoiceServiceTouristTaxTest extends TestCase
         ?TaxRate $taxRate = null,
         ?AccountingAccount $revenueAccount = null,
         bool $includesVat = false,
+        TaxCalculationMode $calculationMode = TaxCalculationMode::PER_NIGHT_FLAT,
+        ?float $percentageRate = null,
+        ?float $apartmentBase = null,
+        ?float $precomputedTotal = null,
     ): TouristTaxBreakdown {
         return new TouristTaxBreakdown(
             taxId: $taxId,
@@ -157,6 +218,10 @@ final class InvoiceServiceTouristTaxTest extends TestCase
             taxRate: $taxRate,
             revenueAccount: $revenueAccount,
             includesVat: $includesVat,
+            calculationMode: $calculationMode,
+            percentageRate: $percentageRate,
+            apartmentBase: $apartmentBase,
+            precomputedTotal: $precomputedTotal,
         );
     }
 

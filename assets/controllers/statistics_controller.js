@@ -32,6 +32,13 @@ export default class extends Controller {
         'arrivalsChartHeader',
         'overnightsChartHeader',
         'noStateDataHint',
+        'snapshotByGuestCategoryBody',
+        'snapshotByGuestCategoryChart',
+        'noCategoryDataHint',
+        'snapshotCountryCategoryHead',
+        'snapshotCountryCategoryBody',
+        'noCountryCategoryDataHint',
+        'snapshotUpdatedAt',
     ];
 
     static values = {
@@ -55,6 +62,11 @@ export default class extends Controller {
         arrivalsByStateLabel: String,
         overnightsByStateLabel: String,
         noStateDataLabel: String,
+        guestCategoryLabel: String,
+        overnightsByGuestCategoryLabel: String,
+        noCategoryDataLabel: String,
+        totalLabel: String,
+        lastCalculatedLabel: String,
     };
 
     connect() {
@@ -337,10 +349,32 @@ export default class extends Controller {
         const countryNames = data.countryNames || {};
         this.lastTourismData = (data.metrics && data.metrics.tourism) ? data.metrics.tourism : {};
         this.lastCountryNames = countryNames;
+        this.lastGuestCategories = data.guestCategories || {};
 
         this.updateSnapshotSummary(data.metrics || {});
         this.updateSnapshotWarnings(data.warnings || []);
+        this.updateSnapshotUpdatedAt(data.updatedAt || null);
         this.renderTourismView();
+    }
+
+    updateSnapshotUpdatedAt(updatedAtIso) {
+        if (!this.hasSnapshotUpdatedAtTarget) return;
+        if (!updatedAtIso) {
+            this.snapshotUpdatedAtTarget.textContent = '';
+            return;
+        }
+        const date = new Date(updatedAtIso);
+        if (Number.isNaN(date.getTime())) {
+            this.snapshotUpdatedAtTarget.textContent = '';
+            return;
+        }
+        const locale = document.documentElement.lang || 'de-DE';
+        const formatted = date.toLocaleString(locale, {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit',
+        });
+        const label = this.lastCalculatedLabelValue || 'Last calculated:';
+        this.snapshotUpdatedAtTarget.textContent = `${label} ${formatted}`;
     }
 
     get isStateView() {
@@ -354,9 +388,13 @@ export default class extends Controller {
     renderTourismView() {
         const tourism = this.lastTourismData || {};
         const countryNames = this.lastCountryNames || {};
+        const guestCategories = this.lastGuestCategories || {};
         this.updateHeaders();
         this.updateSnapshotByCountryTable(tourism, countryNames);
         this.drawSnapshotCharts(tourism, countryNames);
+        this.updateSnapshotByGuestCategoryTable(tourism, guestCategories);
+        this.drawSnapshotByGuestCategoryChart(tourism, guestCategories);
+        this.updateSnapshotByCountryAndCategoryTable(tourism, countryNames, guestCategories);
     }
 
     updateHeaders() {
@@ -562,6 +600,151 @@ export default class extends Controller {
         if (!code) return '';
         const upper = code.toUpperCase();
         return countryNames[upper] || countryNames[code] || code;
+    }
+
+    categoryLabel(catId, guestCategories) {
+        return guestCategories[String(catId)] || `#${catId}`;
+    }
+
+    updateSnapshotByGuestCategoryTable(tourism, guestCategories) {
+        if (!this.hasSnapshotByGuestCategoryBodyTarget) return;
+        const byCategory = tourism.overnights_by_guest_category || {};
+        const entries = Object.entries(byCategory)
+            .map(([catId, nights]) => ({ id: catId, label: this.categoryLabel(catId, guestCategories), value: Number(nights) || 0 }))
+            .sort((a, b) => b.value - a.value);
+
+        this.snapshotByGuestCategoryBodyTarget.innerHTML = '';
+        entries.forEach((entry) => {
+            const tr = document.createElement('tr');
+            const tdName = document.createElement('td');
+            const tdValue = document.createElement('td');
+            tdName.textContent = entry.label;
+            tdValue.className = 'text-end';
+            tdValue.textContent = entry.value.toLocaleString();
+            tr.appendChild(tdName);
+            tr.appendChild(tdValue);
+            this.snapshotByGuestCategoryBodyTarget.appendChild(tr);
+        });
+
+        if (this.hasNoCategoryDataHintTarget) {
+            this.noCategoryDataHintTarget.classList.toggle('d-none', entries.length > 0);
+        }
+    }
+
+    async drawSnapshotByGuestCategoryChart(tourism, guestCategories) {
+        if (!this.hasSnapshotByGuestCategoryChartTarget) return;
+        if (!(await this.waitForChart())) return;
+        const byCategory = tourism.overnights_by_guest_category || {};
+        const entries = Object.entries(byCategory)
+            .map(([catId, nights]) => ({ label: this.categoryLabel(catId, guestCategories), value: Number(nights) || 0 }))
+            .sort((a, b) => b.value - a.value);
+
+        const canvas = this.snapshotByGuestCategoryChartTarget;
+        const existing = window.Chart.getChart(canvas);
+        if (existing) existing.destroy();
+        new window.Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: entries.map((e) => e.label),
+                datasets: [{
+                    label: this.overnightsByGuestCategoryLabelValue || 'Overnights',
+                    data: entries.map((e) => e.value),
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+            },
+        });
+    }
+
+    updateSnapshotByCountryAndCategoryTable(tourism, countryNames, guestCategories) {
+        if (!this.hasSnapshotCountryCategoryHeadTarget || !this.hasSnapshotCountryCategoryBodyTarget) return;
+        const matrix = tourism.overnights_by_country_and_category || {};
+        const countryCodes = Object.keys(matrix).sort();
+        const categoryIds = Object.keys(tourism.overnights_by_guest_category || {});
+
+        this.snapshotCountryCategoryHeadTarget.innerHTML = '';
+        this.snapshotCountryCategoryBodyTarget.innerHTML = '';
+
+        if (countryCodes.length === 0 || categoryIds.length === 0) {
+            if (this.hasNoCountryCategoryDataHintTarget) {
+                this.noCountryCategoryDataHintTarget.classList.remove('d-none');
+            }
+            return;
+        }
+        if (this.hasNoCountryCategoryDataHintTarget) {
+            this.noCountryCategoryDataHintTarget.classList.add('d-none');
+        }
+
+        // Header
+        const headerRow = document.createElement('tr');
+        const thCountry = document.createElement('th');
+        thCountry.textContent = this.countryLabelValue || 'Country';
+        headerRow.appendChild(thCountry);
+        categoryIds.forEach((catId) => {
+            const th = document.createElement('th');
+            th.className = 'text-end';
+            th.textContent = this.categoryLabel(catId, guestCategories);
+            headerRow.appendChild(th);
+        });
+        const thTotal = document.createElement('th');
+        thTotal.className = 'text-end';
+        thTotal.textContent = this.totalLabelValue || 'Total';
+        headerRow.appendChild(thTotal);
+        this.snapshotCountryCategoryHeadTarget.appendChild(headerRow);
+
+        // Body
+        const columnTotals = new Array(categoryIds.length).fill(0);
+        let grandTotal = 0;
+        countryCodes.forEach((countryCode) => {
+            const tr = document.createElement('tr');
+            const tdCountry = document.createElement('td');
+            tdCountry.textContent = this.mapCountryLabel(countryCode, countryNames);
+            tr.appendChild(tdCountry);
+            let rowTotal = 0;
+            categoryIds.forEach((catId, idx) => {
+                const value = Number(matrix[countryCode]?.[catId] ?? 0);
+                rowTotal += value;
+                columnTotals[idx] += value;
+                const td = document.createElement('td');
+                td.className = 'text-end';
+                td.textContent = this.formatCategoryNumber(value);
+                tr.appendChild(td);
+            });
+            grandTotal += rowTotal;
+            const tdRowTotal = document.createElement('td');
+            tdRowTotal.className = 'text-end fw-semibold';
+            tdRowTotal.textContent = this.formatCategoryNumber(rowTotal);
+            tr.appendChild(tdRowTotal);
+            this.snapshotCountryCategoryBodyTarget.appendChild(tr);
+        });
+
+        // Footer row with column totals
+        const footRow = document.createElement('tr');
+        footRow.className = 'fw-semibold table-light';
+        const tdFootLabel = document.createElement('td');
+        tdFootLabel.textContent = this.totalLabelValue || 'Total';
+        footRow.appendChild(tdFootLabel);
+        columnTotals.forEach((total) => {
+            const td = document.createElement('td');
+            td.className = 'text-end';
+            td.textContent = this.formatCategoryNumber(total);
+            footRow.appendChild(td);
+        });
+        const tdGrand = document.createElement('td');
+        tdGrand.className = 'text-end';
+        tdGrand.textContent = this.formatCategoryNumber(grandTotal);
+        footRow.appendChild(tdGrand);
+        this.snapshotCountryCategoryBodyTarget.appendChild(footRow);
+    }
+
+    formatCategoryNumber(value) {
+        // Country×Category buckets carry fractional shares due to proportional split across customers.
+        const rounded = Math.round(value * 100) / 100;
+        if (Number.isInteger(rounded)) return rounded.toLocaleString();
+        return rounded.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     async toggleWarningIgnore(warning, ignored) {

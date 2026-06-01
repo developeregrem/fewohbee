@@ -55,7 +55,7 @@ tourist_tax:
       category: "Gastkategorie"
       price_per_night: "Tarif je Nacht"
       report_group: "Berichtsgruppe"
-      report_group.help: "Optional. Z. B. \"non_liable\", \"adults\", \"children_6_16\" — frei wählbares Label für statistische Auswertungen."
+      report_group.help: "Optional. Frei wählbarer Text (z. B. \"Erwachsene\", \"Kinder 6–16\", \"Nichtpflichtige Personen\"), der im offiziellen Monatsbericht als Zeilen-Bezeichnung erscheint. Mehrere Tarife mit demselben Berichtsgruppen-Text werden im Bericht zu einer Zeile zusammengefasst — praktisch z. B. um Studenten, Soldaten und unentgeltliche Übernachtungen unter \"Nichtpflichtige Personen\" zu bündeln. Leer = der Kategoriename wird verwendet."
 
   col:
     name: "Bezeichnung"

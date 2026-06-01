@@ -85,8 +85,8 @@ class TemplatesService
             $template->setIsDefault(true);
         } else {
             $template->setIsDefault(false);
-        }
-
+        }        
+        $template->setHidden($request->request->has('hidden-'.$id));
         return $template;
     }
 
@@ -238,6 +238,10 @@ class TemplatesService
             [
                 'file' => 'report_management_monthly_summary.html.twig',
                 'name' => 'templates.operations.management_monthly_summary',
+            ],
+            [
+                'file' => 'report_tourist_tax_monthly.html.twig',
+                'name' => 'templates.operations.tourist_tax_monthly',
             ],
         ];
     }

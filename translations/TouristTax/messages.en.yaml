@@ -55,7 +55,7 @@ tourist_tax:
       category: "Guest category"
       price_per_night: "Rate per night"
       report_group: "Report group"
-      report_group.help: "Optional. E.g. \"non_liable\", \"adults\", \"children_6_16\" — free-form label for statistical reports."
+      report_group.help: "Optional. Free-form label (e.g. \"Adults\", \"Children 6–16\", \"Exempt persons\") used as the row name in the official monthly report. Rates sharing the same report-group text are merged into a single report row — handy for grouping students, soldiers and complimentary stays under a single \"Exempt persons\" row. Leave blank to use the category name."
 
   col:
     name: "Name"

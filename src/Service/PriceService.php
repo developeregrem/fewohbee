@@ -182,13 +182,18 @@ class PriceService
         $price->setIsBookableOnline($bookableOnline);
         $price->setIsMandatoryOnline($mandatoryOnline);
 
+        // Both price types share one category field. Empty => no category: required for apartment
+        // prices, "applies to all" (backwards compatible) for misc prices.
+        $categoryId = $request->request->get('category-'.$id);
+        $category = (null !== $categoryId && '' !== $categoryId)
+            ? $this->em->getRepository(RoomCategory::class)->find($categoryId)
+            : null;
+        $price->setRoomCategory($category);
+
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
             $price->setMinStay($request->request->get('min-stay-'.$id));
-            $category = $this->em->getRepository(RoomCategory::class)->find($request->request->get('category-'.$id));
-            $price->setRoomCategory($category);
         } else {
-            $price->setRoomCategory(null);
             $price->setNumberOfPersons(null);
             $price->setMinStay(null);
         }
@@ -535,6 +540,12 @@ class PriceService
                 ? $this->modifierRepository->findActiveOn($night)
                 : [];
 
+            // "Minimum full-fare guests" rule of the room type: the first N
+            // occupants always pay the regular per-head rate; modifiers only
+            // apply to guests beyond that threshold. Compute, per non-adult
+            // occupancy category, how many of its heads must stay at full fare.
+            $fullFarePerCategory = $this->computeFullFareSlots($guestCounts, $categories, $price);
+
             foreach ($guestCounts as $catId => $count) {
                 $count = (int) $count;
                 if ($count <= 0) {
@@ -546,8 +557,18 @@ class PriceService
                 }
 
                 $modifier = $this->pickModifier($modifiers, $category);
-                $unit = $this->applyModifier($basePerHead, $modifier, $category);
-                $breakdown->addLine(new PriceBreakdownLine($category, $count, $unit, $modifier));
+                $fullFare = $fullFarePerCategory[$catId] ?? 0;
+                $discounted = $count - $fullFare;
+
+                // Heads occupying a full-fare slot are billed at the base rate
+                // (no modifier); only the surplus heads receive the modifier.
+                if ($fullFare > 0) {
+                    $breakdown->addLine(new PriceBreakdownLine($category, $fullFare, $basePerHead, null));
+                }
+                if ($discounted > 0) {
+                    $unit = $this->applyModifier($basePerHead, $modifier, $category);
+                    $breakdown->addLine(new PriceBreakdownLine($category, $discounted, $unit, $modifier));
+                }
             }
 
             $result[$i] = $breakdown;
@@ -621,6 +642,73 @@ class PriceService
         }
 
         return $storedIncludesVat ? $stored : $stored * $factor;
+    }
+
+    /**
+     * Distributes the room type's "minimum full-fare guests" across the booked
+     * non-adult occupancy categories.
+     *
+     * Adults always pay full fare and consume slots first. Remaining slots are
+     * filled by the non-adult occupancy categories with the lowest sortOrder
+     * first (i.e. the categories the hotelier ranked highest — typically older
+     * children with the smallest discount), so the largest discounts survive for
+     * the surplus guests. Non-occupancy categories (e.g. infants in a cot) are
+     * not part of room occupancy and never consume a slot.
+     *
+     * @param array<int|string, int|string> $guestCounts {categoryId: count}
+     * @param array<int, GuestCategory>     $categories  {categoryId: GuestCategory}
+     *
+     * @return array<int, int> {categoryId: number of heads to keep at full fare}
+     */
+    private function computeFullFareSlots(array $guestCounts, array $categories, Price $price): array
+    {
+        $minFullPayers = $price->getRoomCategory()?->getMinFullPayers() ?? 0;
+        if ($minFullPayers <= 0) {
+            return [];
+        }
+
+        // Adults (counted in occupancy) fill full-fare slots first.
+        $adultHeads = 0;
+        $nonAdultCategories = [];
+        foreach ($guestCounts as $catId => $count) {
+            $count = (int) $count;
+            if ($count <= 0) {
+                continue;
+            }
+            $category = $categories[$catId] ?? null;
+            if (null === $category || !$category->isCountedInOccupancy()) {
+                continue;
+            }
+            if ($category->isAdult()) {
+                $adultHeads += $count;
+                continue;
+            }
+            $nonAdultCategories[(int) $catId] = ['count' => $count, 'category' => $category];
+        }
+
+        $remainingSlots = $minFullPayers - $adultHeads;
+        if ($remainingSlots <= 0) {
+            return [];
+        }
+
+        // Lowest sortOrder first; stable tie-break on id for determinism.
+        uasort(
+            $nonAdultCategories,
+            static fn (array $a, array $b): int => [$a['category']->getSortOrder(), $a['category']->getId()]
+                <=> [$b['category']->getSortOrder(), $b['category']->getId()]
+        );
+
+        $slots = [];
+        foreach ($nonAdultCategories as $catId => $entry) {
+            if ($remainingSlots <= 0) {
+                break;
+            }
+            $take = min($entry['count'], $remainingSlots);
+            $slots[$catId] = $take;
+            $remainingSlots -= $take;
+        }
+
+        return $slots;
     }
 
     /**

@@ -90,6 +90,8 @@ class MonthlyStatsService
             'overnights_by_country' => [],
             'arrivals_by_state' => [],
             'overnights_by_state' => [],
+            'overnights_by_guest_category' => [],
+            'overnights_by_country_and_category' => [],
         ];
         $originStats = [];
         $stays = 0;
@@ -114,6 +116,8 @@ class MonthlyStatsService
                         'overnights_by_country' => [],
                         'arrivals_by_state' => [],
                         'overnights_by_state' => [],
+                        'overnights_by_guest_category' => [],
+                        'overnights_by_country_and_category' => [],
                     ],
                     'utilization' => [
                         'stays' => 0,
@@ -126,7 +130,7 @@ class MonthlyStatsService
             $persons = $reservation->getPersons();
             $useBookerFallback = $persons !== $customerCount;
             if ($useBookerFallback) {
-                $reservationId = $reservation->getId();
+                $reservationId = (int) $reservation->getId();
                 if (!isset($warningsByReservation[$reservationId])) {
                     $appartment = $reservation->getAppartment();
                     $appartmentNumber = $appartment ? $appartment->getNumber() : null;
@@ -201,6 +205,62 @@ class MonthlyStatsService
                             if (null !== $state) {
                                 $tourism['overnights_by_state'][$state] =
                                     ($tourism['overnights_by_state'][$state] ?? 0) + $nights;
+                            }
+                        }
+                    }
+                }
+
+                // Guest-category buckets fed from Reservation.guestCounts (Paket-1-Migration backfilled all rows).
+                $guestCounts = $reservation->getGuestCounts();
+                foreach ($guestCounts as $categoryId => $count) {
+                    $catId = (int) $categoryId;
+                    $cnt = (int) $count;
+                    if ($cnt <= 0) {
+                        continue;
+                    }
+                    $catNights = $cnt * $nights;
+                    $byStatus[$statusKey]['tourism']['overnights_by_guest_category'][$catId] =
+                        ($byStatus[$statusKey]['tourism']['overnights_by_guest_category'][$catId] ?? 0) + $catNights;
+                    if ($isDefaultStatus) {
+                        $tourism['overnights_by_guest_category'][$catId] =
+                            ($tourism['overnights_by_guest_category'][$catId] ?? 0) + $catNights;
+                    }
+                }
+
+                if ($useBookerFallback) {
+                    $country = $this->resolveCountryForCustomer($reservation->getBooker());
+                    foreach ($guestCounts as $categoryId => $count) {
+                        $catId = (int) $categoryId;
+                        $cnt = (int) $count;
+                        if ($cnt <= 0) {
+                            continue;
+                        }
+                        $catNights = $cnt * $nights;
+                        $byStatus[$statusKey]['tourism']['overnights_by_country_and_category'][$country][$catId] =
+                            ($byStatus[$statusKey]['tourism']['overnights_by_country_and_category'][$country][$catId] ?? 0) + $catNights;
+                        if ($isDefaultStatus) {
+                            $tourism['overnights_by_country_and_category'][$country][$catId] =
+                                ($tourism['overnights_by_country_and_category'][$country][$catId] ?? 0) + $catNights;
+                        }
+                    }
+                } elseif ($customerCount > 0) {
+                    // Proportional distribution: GuestCategory is not pinned to a specific customer,
+                    // so the per-night counts are split evenly across the linked customers' countries.
+                    $share = 1.0 / $customerCount;
+                    foreach ($customers as $customer) {
+                        $country = $this->resolveCountryForCustomer($customer);
+                        foreach ($guestCounts as $categoryId => $count) {
+                            $catId = (int) $categoryId;
+                            $cnt = (int) $count;
+                            if ($cnt <= 0) {
+                                continue;
+                            }
+                            $contribution = $cnt * $nights * $share;
+                            $byStatus[$statusKey]['tourism']['overnights_by_country_and_category'][$country][$catId] =
+                                ($byStatus[$statusKey]['tourism']['overnights_by_country_and_category'][$country][$catId] ?? 0) + $contribution;
+                            if ($isDefaultStatus) {
+                                $tourism['overnights_by_country_and_category'][$country][$catId] =
+                                    ($tourism['overnights_by_country_and_category'][$country][$catId] ?? 0) + $contribution;
                             }
                         }
                     }
@@ -290,6 +350,12 @@ class MonthlyStatsService
             ksort($bucket['tourism']['overnights_by_country']);
             ksort($bucket['tourism']['arrivals_by_state']);
             ksort($bucket['tourism']['overnights_by_state']);
+            ksort($bucket['tourism']['overnights_by_guest_category']);
+            ksort($bucket['tourism']['overnights_by_country_and_category']);
+            foreach ($bucket['tourism']['overnights_by_country_and_category'] as &$byCat) {
+                ksort($byCat);
+            }
+            unset($byCat);
         }
         unset($bucket);
 
@@ -307,6 +373,12 @@ class MonthlyStatsService
         ksort($tourism['overnights_by_country']);
         ksort($tourism['arrivals_by_state']);
         ksort($tourism['overnights_by_state']);
+        ksort($tourism['overnights_by_guest_category']);
+        ksort($tourism['overnights_by_country_and_category']);
+        foreach ($tourism['overnights_by_country_and_category'] as &$byCat) {
+            ksort($byCat);
+        }
+        unset($byCat);
         ksort($originStats);
 
         $dailyUtilization = $this->buildDailyUtilization(
@@ -631,6 +703,8 @@ class MonthlyStatsService
             'overnights_by_country' => [],
             'arrivals_by_state' => [],
             'overnights_by_state' => [],
+            'overnights_by_guest_category' => [],
+            'overnights_by_country_and_category' => [],
         ];
         $stays = 0;
 
@@ -654,6 +728,16 @@ class MonthlyStatsService
             foreach (($bucket['tourism']['overnights_by_state'] ?? []) as $state => $count) {
                 $tourism['overnights_by_state'][$state] = ($tourism['overnights_by_state'][$state] ?? 0) + (int) $count;
             }
+            foreach (($bucket['tourism']['overnights_by_guest_category'] ?? []) as $catId => $count) {
+                $tourism['overnights_by_guest_category'][(int) $catId] =
+                    ($tourism['overnights_by_guest_category'][(int) $catId] ?? 0) + (int) $count;
+            }
+            foreach (($bucket['tourism']['overnights_by_country_and_category'] ?? []) as $country => $byCat) {
+                foreach ((array) $byCat as $catId => $count) {
+                    $tourism['overnights_by_country_and_category'][$country][(int) $catId] =
+                        ($tourism['overnights_by_country_and_category'][$country][(int) $catId] ?? 0) + (float) $count;
+                }
+            }
             $stays += (int) ($bucket['utilization']['stays'] ?? 0);
         }
 
@@ -661,6 +745,12 @@ class MonthlyStatsService
         ksort($tourism['overnights_by_country']);
         ksort($tourism['arrivals_by_state']);
         ksort($tourism['overnights_by_state']);
+        ksort($tourism['overnights_by_guest_category']);
+        ksort($tourism['overnights_by_country_and_category']);
+        foreach ($tourism['overnights_by_country_and_category'] as &$byCat) {
+            ksort($byCat);
+        }
+        unset($byCat);
 
         $utilization = [
             'stays' => $stays,
