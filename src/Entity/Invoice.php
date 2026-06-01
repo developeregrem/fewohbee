@@ -137,7 +137,7 @@ class Invoice
 
     public function getRemarkF()
     {
-        return nl2br($this->remark);
+        return nl2br($this->remark ?? '');
     }
 
     public function getPositions()
