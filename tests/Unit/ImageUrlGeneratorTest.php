@@ -41,7 +41,7 @@ final class ImageUrlGeneratorTest extends TestCase
         $request->server->set('PHP_SELF', '/myapp/index.php');
         $stack->push($request);
 
-        $gen = new ImageUrlGenerator('local', '', 'resources/images/export', 'resources/images/room-categories', $stack);
+        $gen = new ImageUrlGenerator('local', '', '', 'resources/images/export', 'resources/images/room-categories', $stack);
 
         self::assertSame('/myapp/resources/images/room-categories/3/medium_x.jpg', $gen->roomCategoryUrl(3, 'x.jpg'));
     }
@@ -66,11 +66,40 @@ final class ImageUrlGeneratorTest extends TestCase
         self::assertSame('https://bucket.example.com/export/a.jpg', $gen->exportUrl('a.jpg'));
     }
 
-    private function createGenerator(string $adapter, string $s3PublicUrl = ''): ImageUrlGenerator
+    public function testS3UrlsIncludePrefixWhenSet(): void
+    {
+        // Shared bucket with a per-tenant prefix (e.g. a UUID): the public URL must
+        // mirror the key prefix the S3 storages write under (flysystem.php).
+        $gen = $this->createGenerator('s3', 'https://bucket.fsn1.your-objectstorage.com', 'abc-uuid');
+
+        self::assertSame(
+            'https://bucket.fsn1.your-objectstorage.com/abc-uuid/export/upload.png',
+            $gen->exportUrl('upload.png')
+        );
+        self::assertSame(
+            'https://bucket.fsn1.your-objectstorage.com/abc-uuid/room-categories/42/medium_photo.jpg',
+            $gen->roomCategoryUrl(42, 'photo.jpg', 'medium')
+        );
+    }
+
+    public function testS3PrefixSurroundingSlashesAreNormalised(): void
+    {
+        $gen = $this->createGenerator('s3', 'https://bucket.example.com', '/abc-uuid/');
+        self::assertSame('https://bucket.example.com/abc-uuid/export/a.jpg', $gen->exportUrl('a.jpg'));
+    }
+
+    public function testEmptyS3PrefixWritesToBucketRoot(): void
+    {
+        $gen = $this->createGenerator('s3', 'https://bucket.example.com', '');
+        self::assertSame('https://bucket.example.com/export/a.jpg', $gen->exportUrl('a.jpg'));
+    }
+
+    private function createGenerator(string $adapter, string $s3PublicUrl = '', string $s3Prefix = ''): ImageUrlGenerator
     {
         return new ImageUrlGenerator(
             $adapter,
             $s3PublicUrl,
+            $s3Prefix,
             'resources/images/export',
             'resources/images/room-categories',
             new RequestStack(),

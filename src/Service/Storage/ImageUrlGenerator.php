@@ -22,6 +22,7 @@ final class ImageUrlGenerator
     public function __construct(
         private readonly string $adapter,
         private readonly string $s3PublicUrl,
+        private readonly string $s3Prefix,
         private readonly string $localExportPrefix,
         private readonly string $localRoomCategoryPrefix,
         private readonly RequestStack $requestStack,
@@ -67,6 +68,13 @@ final class ImageUrlGenerator
 
     private function s3Url(string $key): string
     {
+        // Mirror the per-tenant key prefix the S3 storages write under (see
+        // config/packages/flysystem.php). Empty prefix → bucket root.
+        $prefix = trim($this->s3Prefix, '/');
+        if ('' !== $prefix) {
+            $key = $prefix . '/' . $key;
+        }
+
         return rtrim($this->s3PublicUrl, '/') . '/' . $key;
     }
 

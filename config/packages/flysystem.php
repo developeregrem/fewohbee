@@ -25,20 +25,26 @@ return static function (ContainerConfigurator $container): void {
     if ('s3' === $adapter) {
         $bucket = $_SERVER['STORAGE_S3_BUCKET'] ?? '';
 
+        // Optional per-tenant key prefix for a shared bucket (e.g. a UUID). Empty
+        // → bucket root (single-tenant). Must stay in sync with ImageUrlGenerator,
+        // which prepends the same prefix when building public URLs.
+        $base = trim($_SERVER['STORAGE_S3_PREFIX'] ?? '', '/');
+        $keyPrefix = static fn (string $sub): string => '' === $base ? $sub : $base . '/' . $sub;
+
         $container->extension('oneup_flysystem', [
             'adapters' => [
                 'images.export.adapter' => [
                     'awss3v3' => [
                         'client' => 'storage.s3_client',
                         'bucket' => $bucket,
-                        'prefix' => 'export',
+                        'prefix' => $keyPrefix('export'),
                     ],
                 ],
                 'images.roomcat.adapter' => [
                     'awss3v3' => [
                         'client' => 'storage.s3_client',
                         'bucket' => $bucket,
-                        'prefix' => 'room-categories',
+                        'prefix' => $keyPrefix('room-categories'),
                     ],
                 ],
             ],

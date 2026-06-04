@@ -34,6 +34,9 @@ parameters:
     env(STORAGE_S3_KEY): ''
     env(STORAGE_S3_SECRET): ''
     env(STORAGE_S3_PUBLIC_URL): ''
+    # Optional key prefix inside the bucket, e.g. a per-tenant UUID for a shared
+    # SaaS bucket. Empty (default) = write to the bucket root (single-tenant).
+    env(STORAGE_S3_PREFIX): ''
 
 services:
     # default configuration for services in *this* file
@@ -113,6 +116,7 @@ services:
         arguments:
             $adapter: '%env(STORAGE_ADAPTER)%'
             $s3PublicUrl: '%env(STORAGE_S3_PUBLIC_URL)%'
+            $s3Prefix: '%env(STORAGE_S3_PREFIX)%'
             $localExportPrefix: '%publicUploadDirectory%'
             $localRoomCategoryPrefix: '%roomCategoryImagePublicDirectory%'
 
