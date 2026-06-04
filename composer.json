@@ -14,6 +14,7 @@
         "doctrine/orm": "^3.6",
         "horstoeko/zugferd": "^1.0",
         "mpdf/mpdf": "^8.2",
+        "symfony/apache-pack": "*",
         "symfony/asset": "8.0.*",
         "symfony/asset-mapper": "8.0.*",
         "symfony/console": "8.0.*",
