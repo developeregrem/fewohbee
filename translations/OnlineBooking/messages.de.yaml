@@ -57,6 +57,7 @@ online_booking:
     inquiry_status_required: "Ein Status für Anfragen ist erforderlich."
     booking_status_required: "Ein Status für Buchungen ist erforderlich."
     reservation_origin_required: "Bitte wählen Sie eine gültige Reservierungsherkunft für Onlinebuchungen aus."
+    embedding_origin_invalid: "Bitte gib eine vollständige Webadresse mit https:// ein. Ungültiger Eintrag: %origin%"
   settings:
     page_title: "Onlinebuchung"
     section_general: "Allgemein"
@@ -101,6 +102,8 @@ online_booking:
     save_hint: "Änderungen wirken sofort auf die öffentliche Buchungsseite."
     booking_horizon_months: "Buchungshorizont (Monate)"
     booking_horizon_months_help: "Für wie viele Monate in der Zukunft sind Online-Buchungen möglich? Leer = unbegrenzt."
+    allowed_embedding_origins: "Auf welchen Webseiten soll das Formular eingebettet werden?"
+    allowed_embedding_origins_help: "Trage jede Webseite in eine eigene Zeile ein, in die das Buchungsformular eingebettet werden soll. Wichtig: Varianten zählen einzeln, z.B. <code>https://www.meine-pension.de</code> und <code>https://meine-pension.de</code>. Wenn die Webseite auch über weitere Adressen erreichbar ist, müssen diese ebenfalls eingetragen werden. Leer lassen, wenn das Buchungsformular nur direkt aufgerufen wird."
     restriction_override_warning: "Es sind Sonderzeiträume für Beschränkungen konfiguriert, die alle in der Vergangenheit liegen. Sofern Zeiträume für zukünftige Buchungen berücksichtigt werden sollen, müssen diese angepasst werden."
     section_restrictions: "Beschränkungen pro Zimmerkategorie"
     section_restrictions_desc: "Mindestübernachtungen pro Buchung, max. Zimmeranzahl pro Kategorie sowie Mindestbelegung pro Zimmer, die für die Online-Buchung verfügbar gemacht werden dürfen."

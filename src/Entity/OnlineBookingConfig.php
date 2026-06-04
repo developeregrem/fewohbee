@@ -83,6 +83,9 @@ class OnlineBookingConfig
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $bookingHorizonMonths = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $allowedEmbeddingOrigins = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -315,6 +318,19 @@ class OnlineBookingConfig
         return $this;
     }
 
+    public function getAllowedEmbeddingOrigins(): ?string
+    {
+        return $this->allowedEmbeddingOrigins;
+    }
+
+    public function setAllowedEmbeddingOrigins(?string $allowedEmbeddingOrigins): self
+    {
+        $origins = $this->normalizeEmbeddingOrigins($allowedEmbeddingOrigins);
+        $this->allowedEmbeddingOrigins = [] === $origins ? null : implode("\n", $origins);
+
+        return $this;
+    }
+
     public function getUpdatedAt(): \DateTime
     {
         return $this->updatedAt;
@@ -325,5 +341,35 @@ class OnlineBookingConfig
         $this->updatedAt = $updatedAt;
 
         return $this;
+    }
+
+    /** @return string[] */
+    private function normalizeEmbeddingOrigins(?string $origins): array
+    {
+        $tokens = preg_split('/[\s,]+/', trim((string) $origins), -1, \PREG_SPLIT_NO_EMPTY);
+        if (false === $tokens) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($tokens as $token) {
+            $normalized[] = $this->normalizeEmbeddingOrigin($token);
+        }
+
+        return array_values(array_unique(array_filter($normalized)));
+    }
+
+    private function normalizeEmbeddingOrigin(string $origin): string
+    {
+        $parts = parse_url($origin);
+        if (false === $parts || !isset($parts['scheme'], $parts['host'])) {
+            return $origin;
+        }
+
+        $scheme = strtolower((string) $parts['scheme']);
+        $host = strtolower((string) $parts['host']);
+        $port = isset($parts['port']) ? ':'.(int) $parts['port'] : '';
+
+        return $scheme.'://'.$host.$port;
     }
 }

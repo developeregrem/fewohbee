@@ -19,7 +19,8 @@ class OnlineBookingConfigService
         private readonly EntityManagerInterface $em,
         private readonly OnlineBookingConfigRepository $repository,
         private readonly SubsidiaryRepository $subsidiaryRepository,
-        private readonly AppartmentRepository $appartmentRepository
+        private readonly AppartmentRepository $appartmentRepository,
+        private readonly string $legacyFrameAncestors = ''
     ) {
     }
 
@@ -28,10 +29,15 @@ class OnlineBookingConfigService
     {
         $config = $this->repository->findSingleton();
         if ($config instanceof OnlineBookingConfig) {
+            if ($this->applyLegacyEmbeddingOriginsIfEmpty($config)) {
+                $this->em->flush();
+            }
+
             return $config;
         }
 
         $config = new OnlineBookingConfig();
+        $this->applyLegacyEmbeddingOriginsIfEmpty($config);
         $this->em->persist($config);
         $this->em->flush();
 
@@ -43,6 +49,14 @@ class OnlineBookingConfigService
     {
         $this->em->persist($config);
         $this->em->flush();
+    }
+
+    public function getAllowedEmbeddingOriginsForCsp(?OnlineBookingConfig $config = null): string
+    {
+        $config ??= $this->getConfig();
+        $origins = preg_split('/[\s,]+/', trim((string) $config->getAllowedEmbeddingOrigins()), -1, \PREG_SPLIT_NO_EMPTY);
+
+        return false === $origins ? '' : implode(' ', array_values(array_unique($origins)));
     }
 
     /**
@@ -124,5 +138,16 @@ class OnlineBookingConfigService
         $id = $config->getReservationOriginId();
 
         return null === $id ? null : $this->em->getRepository(ReservationOrigin::class)->find($id);
+    }
+
+    private function applyLegacyEmbeddingOriginsIfEmpty(OnlineBookingConfig $config): bool
+    {
+        if (null !== $config->getAllowedEmbeddingOrigins() || '' === trim($this->legacyFrameAncestors)) {
+            return false;
+        }
+
+        $config->setAllowedEmbeddingOrigins($this->legacyFrameAncestors);
+
+        return null !== $config->getAllowedEmbeddingOrigins();
     }
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Service\OnlineBookingConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -23,11 +24,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 class EmbeddingSecuritySubscriber implements EventSubscriberInterface
 {
-    private readonly string $frameAncestors;
-
-    public function __construct(string $frameAncestors)
-    {
-        $this->frameAncestors = trim($frameAncestors);
+    public function __construct(
+        private readonly OnlineBookingConfigService $onlineBookingConfigService
+    ) {
     }
 
     public static function getSubscribedEvents(): array
@@ -55,8 +54,9 @@ class EmbeddingSecuritySubscriber implements EventSubscriberInterface
         $response->headers->remove('X-Frame-Options');
 
         $ancestors = "'self'";
-        if ('' !== $this->frameAncestors) {
-            $ancestors .= ' ' . $this->frameAncestors;
+        $allowedOrigins = $this->onlineBookingConfigService->getAllowedEmbeddingOriginsForCsp();
+        if ('' !== $allowedOrigins) {
+            $ancestors .= ' ' . $allowedOrigins;
         }
 
         $response->headers->set('Content-Security-Policy', "frame-ancestors {$ancestors}");

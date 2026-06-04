@@ -87,6 +87,10 @@ services:
             $mailCopy: '%mailCopy%'
             $mailerDsn: '%env(MAILER_DSN)%'
 
+    App\Service\OnlineBookingConfigService:
+        arguments:
+            $legacyFrameAncestors: '%frameAncestors%'
+
     App\Service\TemplatesService:
         arguments:
             - '%webHost%'
@@ -134,10 +138,6 @@ services:
         arguments:
             $rpId: '%env(RELYING_PARTY_ID)%'
             $rpName: '%env(RELYING_PARTY_NAME)%'
-
-    App\EventSubscriber\EmbeddingSecuritySubscriber:
-        arguments:
-            $frameAncestors: '%frameAncestors%'
 
     App\Workflow\Trigger\WorkflowTriggerRegistry:
         arguments:
