@@ -2,7 +2,6 @@ TEMPLATE_CASHJOURNAL_PDF: PDF Booking Journal
 TEMPLATE_FILE_PDF: PDF file
 TEMPLATE_GDPR_PDF: PDF for GDPR Export
 TEMPLATE_GENERAL_EMAIL: General Email Template
-TEMPLATE_NEWSLETTER_EMAIL: Email Newsletter
 TEMPLATE_INVOICE_EMAIL: Email template for invoices
 TEMPLATE_INVOICE_PDF: PDF invoice
 TEMPLATE_RESERVATION_EMAIL: Email template for reservations
@@ -100,7 +99,6 @@ templates.params.help: Orientation and margins for generated PDFs (all margins i
 templates.params.orientation: Orientation
 templates.params.orientation.portrait: Portrait (P)
 templates.params.orientation.landscape: Landscape (L)
-templates.params.format: 'Page format'
 templates.params.margin_top: Top margin (mm)
 templates.params.margin_bottom: Bottom margin (mm)
 templates.params.margin_left: Left margin (mm)
