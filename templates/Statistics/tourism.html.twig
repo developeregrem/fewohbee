@@ -51,25 +51,29 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <select id="snapshotMonth" name="snapshotMonth" class="form-select"
-                                    data-statistics-target="snapshotMonth"
-                                    data-action="change->statistics#drawSnapshotAction">
-                                {% set currentMonth = 'now'|date('n') %}
-                                {% for month in monthList %}
-                                    <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{% endif %}>{{ month }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <select id="snapshotYear" name="snapshotYear" class="form-select"
-                                    data-statistics-target="snapshotYear"
-                                    data-action="change->statistics#drawSnapshotAction">
-                                {% set currentYear = 'now'|date('Y') %}
-                                {% for i in minYear..maxYear %}
-                                    <option value="{{ i }}"{%if i == currentYear %} selected="selected"{% endif %}>{{ i }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="col-auto">
+                            <div class="input-group">
+                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                <select id="snapshotMonth" name="snapshotMonth" class="form-select" style="width: 6em"
+                                        data-statistics-target="snapshotMonth"
+                                        data-action="change->statistics#drawSnapshotAction">
+                                    {% set currentMonth = 'now'|date('n') %}
+                                    {% for month in monthList %}
+                                        <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                <select id="snapshotYear" name="snapshotYear" class="form-select" style="width: 4em"
+                                        data-statistics-target="snapshotYear"
+                                        data-action="change->statistics#drawSnapshotAction">
+                                    {% set currentYear = 'now'|date('Y') %}
+                                    {% for i in minYear..maxYear %}
+                                        <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
+                            </div>
                         </div>
                     </div>
                 </form>
