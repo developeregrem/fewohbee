@@ -48,7 +48,7 @@
                         </div>
                         <div class="col-auto">
                             <div class="input-group">
-                                <button type="button" class="btn btn-link px-1" onclick="stepSelect('snapshotMonth', -1, 'snapshotYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="-1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
                                 <select id="snapshotMonth" name="snapshotMonth" class="form-select" style="width: 6em"
                                         data-statistics-target="snapshotMonth"
                                         data-action="change->statistics#drawSnapshotAction">
@@ -57,8 +57,8 @@
                                         <option value="{{ loop.index }}"{%if loop.index == currentMonth %} selected="selected"{%endif%}>{{ month }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="btn btn-link px-1" onclick="stepSelect('snapshotMonth', 1, 'snapshotYear', {{ minYear }}, {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
-                                <button type="button" class="btn btn-link p-0" onclick="stepYear(-1, 'snapshotYear', {{ minYear }})"><i class="fas fa-chevron-left fa-xs"></i></button>
+                                <button type="button" class="btn btn-link px-1" data-action="click->statistics#stepMonthAction" data-statistics-direction-param="1" data-statistics-month-target-param="snapshotMonth" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="-1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-left fa-xs"></i></button>
                                 <select id="snapshotYear" name="snapshotYear" class="form-select" style="width: 4em"
                                         data-statistics-target="snapshotYear"
                                         data-action="change->statistics#drawSnapshotAction">
@@ -67,7 +67,7 @@
                                         <option value="{{ i }}"{%if i == currentYear %} selected="selected"{%endif%}>{{ i }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="btn btn-link p-0" onclick="stepYear(1, 'snapshotYear', {{ maxYear }})"><i class="fas fa-chevron-right fa-xs"></i></button>
+                                <button type="button" class="btn btn-link p-0" data-action="click->statistics#stepYearAction" data-statistics-direction-param="1" data-statistics-year-target-param="snapshotYear" data-statistics-min-year-param="{{ minYear }}" data-statistics-max-year-param="{{ maxYear }}"><i class="fas fa-chevron-right fa-xs"></i></button>
                             </div>
                         </div>
                     </div>
@@ -209,25 +209,4 @@
 {% block javascripts %}
     {{ parent() }}
     <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/chart-4.5.1.js" defer></script>
-    <script>
-    function stepSelect(monthId, direction, yearId, minYear, maxYear) {
-        const monthSel = document.getElementById(monthId);
-        const yearSel  = document.getElementById(yearId);
-        let month = parseInt(monthSel.value, 10) + direction;
-        let year  = parseInt(yearSel.value, 10);
-        if (month < 1) { if (year <= minYear) return; month = 12; year--; }
-        else if (month > 12) { if (year >= maxYear) return; month = 1; year++; }
-        monthSel.value = month;
-        yearSel.value  = year;
-        monthSel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    function stepYear(direction, selectId, limit) {
-        const sel = document.getElementById(selectId);
-        let year = parseInt(sel.value, 10) + direction;
-        if (direction < 0 && year < limit) return;
-        if (direction > 0 && year > limit) return;
-        sel.value = year;
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    </script>
 {% endblock %}
