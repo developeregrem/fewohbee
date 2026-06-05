@@ -30,6 +30,7 @@ invoice.flash.delete.success: The invoice was deleted successfully .
 invoice.flash.edit.success: Invoice was processed successfully.
 invoice.guest: Guest
 invoice.id: Invoice ID
+invoice.id.adopt: "Use next invoice number"
 invoice.id.last: 'Latest: '
 invoice.lastname: Last Name
 invoice.miscellaneous: Miscellaneous
