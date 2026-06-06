@@ -56,7 +56,7 @@ export default class extends Controller {
         if (!url) {
             return;
         }
-        if (title) setModalTitle(title);
+        setModalTitle(title);
         const target = document.getElementById('modal-content-ajax');
         
         httpRequest({
