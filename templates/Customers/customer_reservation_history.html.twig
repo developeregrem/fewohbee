@@ -49,7 +49,7 @@
                                                                         <a href="#"
                                                                         data-action="click->customers#openModalAction"
                                                                         data-url="{{ path('invoices.get.invoice', {id: invoice.id}) }}"
-                                                                        data-title="{{ invoice.number }}"
+                                                                        data-title="{{ 'invoice.details'|trans }}"
                                                                         class="text-decoration-none {{ invoice.status == 1 ? 'text-danger' : (invoice.status == 2 ? 'text-success' : (invoice.status == 3 ? 'text-warning' : 'text-muted')) }}"
                                                                         title="{{ ('invoice.status.' ~ (invoice.status == 1 ? 'unpaid' : invoice.status == 2 ? 'paid' : invoice.status == 3 ? 'prepaid' : 'canceled'))|trans }}">
                                                                             {{ invoice.number ? invoice.number : '–' }}
