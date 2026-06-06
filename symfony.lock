@@ -228,18 +228,6 @@
     "setasign/fpdi": {
         "version": "v2.3.6"
     },
-    "symfony/apache-pack": {
-        "version": "1.0",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "1.0",
-            "ref": "5d454ec6cc4c700ed3d963f3803e1d427d9669fb"
-        },
-        "files": [
-            "public/.htaccess"
-        ]
-    },
     "symfony/asset": {
         "version": "v5.3.4"
     },
