@@ -523,13 +523,15 @@ class ReservationRepository extends ServiceEntityRepository
     public function loadAllReservationsForCustomer(\App\Entity\Customer $customer): array
     {
         return $this->createQueryBuilder('r')
-            ->select('r', 'a', 'rs')
+            ->select('r', 'a', 'rs', 'i')
             ->leftJoin('r.appartment', 'a')
             ->leftJoin('r.reservationStatus', 'rs')
+            ->leftJoin('r.invoices', 'i')
             ->where('r.booker = :customer')
             ->orWhere(':customer MEMBER OF r.customers')
             ->setParameter('customer', $customer)
             ->orderBy('r.startDate', 'DESC')
+            ->distinct()
             ->getQuery()
             ->getResult();
     }

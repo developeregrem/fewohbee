@@ -65,7 +65,9 @@ export default class extends Controller {
             target,
             onSuccess: (html) => {
                 target.innerHTML = html;
-                initReservationHistoryPagination();
+                // rAF stellt sicher, dass Bootstrap das neue DOM
+                // registriert hat, bevor Listener angehängt werden
+                requestAnimationFrame(() => initReservationHistoryPagination());
             }
         });
     }
@@ -99,6 +101,11 @@ function initReservationHistoryPagination() {
     const tbody = document.querySelector('#reservationHistoryCollapse tbody');
     if (!tbody) return;
     const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    // Alten Pager aus vorherigem Modal-Aufruf entfernen
+    const oldPager = document.getElementById('res-history-pager');
+    if (oldPager) oldPager.remove();
+
     if (rows.length <= perPage) return;
 
     let currentPage = 1;
