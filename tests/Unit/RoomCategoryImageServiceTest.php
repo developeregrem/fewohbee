@@ -107,6 +107,7 @@ final class RoomCategoryImageServiceTest extends TestCase
         return new ImageUrlGenerator(
             'local',
             '',
+            '',
             'resources/images/export',
             'resources/images/room-categories',
             new RequestStack(),

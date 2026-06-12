@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Entity;
+namespace App\GeoEntity;
 
 use App\Repository\PostalCodeDataRepository;
 use Doctrine\ORM\Mapping as ORM;

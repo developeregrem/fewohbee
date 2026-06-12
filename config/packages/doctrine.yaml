@@ -6,6 +6,9 @@ parameters:
     env(DATABASE_URL): ''
     # define default server version when env variable is not defined
     env(DB_SERVER_VERSION): '8.0'
+    # Self-hosted default: postal code reference data lives in the main application
+    # database. shared db: set GEO_DATABASE_URL to the central geodata database.
+    geo_database_url_default: '%env(resolve:DATABASE_URL)%'
 
 doctrine:
     dbal:
@@ -21,6 +24,25 @@ doctrine:
                     collate: utf8mb4_unicode_ci
                 url: '%env(resolve:DATABASE_URL)%'
                 profiling_collect_backtrace: '%kernel.debug%'
+                # postal_code_data is managed by the geo connection (it only still
+                # exists here on self-hosted setups) — keep it out of schema diffs
+                # so migrations never try to drop it
+                schema_filter: '~^(?!postal_code_data$)~'
+            geo:
+                driver: 'pdo_mysql'
+                server_version: '%env(resolve:DB_SERVER_VERSION)%'
+                charset: utf8mb4
+                default_table_options:
+                    charset: utf8mb4
+                    # DBAL 4 key is "collation" (legacy "collate" is ignored);
+                    # applied when the import command creates the table on first run
+                    collation: utf8mb4_unicode_ci
+                url: '%env(default:geo_database_url_default:GEO_DATABASE_URL)%'
+                profiling_collect_backtrace: '%kernel.debug%'
+                # schema tooling on this connection may only ever touch the
+                # reference table — protects the app tables when the connection
+                # falls back to the main database (self-hosted default)
+                schema_filter: '~^postal_code_data$~'
     orm:
         default_entity_manager: default
         entity_managers:
@@ -49,12 +71,32 @@ doctrine:
                         dir: '%kernel.project_dir%/src/Entity'
                         prefix: 'App\Entity'
                         alias: App
+            # postal code reference data (shared/central database on SaaS).
+            # NOTE: the namespace must NOT start with the string "App\Entity" —
+            # getManagerForClass() matches mapping prefixes by string prefix, so
+            # e.g. App\EntityGeo would be claimed by the default entity manager.
+            geo:
+                connection: geo
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                validate_xml_mapping: true
+                auto_mapping: false
+                mappings:
+                    AppGeo:
+                        type: attribute
+                        is_bundle: false
+                        dir: '%kernel.project_dir%/src/GeoEntity'
+                        prefix: 'App\GeoEntity'
+                        alias: AppGeo
 
 when@test:
     doctrine:
         dbal:
-            # "TEST_TOKEN" is typically set by ParaTest
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+            connections:
+                # "TEST_TOKEN" is typically set by ParaTest
+                default:
+                    dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+                geo:
+                    dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:
     doctrine:
