@@ -1,0 +1,81 @@
+                <div class="row">
+                    <div class="col">
+                        <div class="accordion accordion-flush" id="reservationHistoryAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="reservationHistoryHeading">
+                                    <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#reservationHistoryCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="reservationHistoryCollapse">
+                                        {{ 'customer.reservation.history'|trans }}
+                                        <span class="badge bg-secondary ms-2">{{ reservations|length }}</span>
+                                    </button>
+                                </h2>
+                                <div id="reservationHistoryCollapse"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="reservationHistoryHeading"
+                                    data-bs-parent="#reservationHistoryAccordion">
+                                    <div class="accordion-body p-0 mt-3">
+                                        {% if reservations is empty %}
+                                            <p class="text-muted small p-3 mb-0">{{ 'customer.reservation.history.empty'|trans }}</p>
+                                        {% else %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>{{ 'housekeeping.summary.arrive'|trans({}, 'Housekeeping') }}</th>
+                                                            <th>{{ 'housekeeping.summary.depart'|trans({}, 'Housekeeping') }}</th>
+                                                            <th>{{ 'registrationbook.stays'|trans }}</th>
+                                                            <th>{{ 'statistics.tourism.room_label'|trans }}</th>
+                                                            <th>{{ 'reservation.status'|trans }}</th>
+                                                            <th>{{ 'invoice.number.short'|trans }}</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for res in reservations %}
+                                                        <tr class="{{ res.reservationStatus and res.reservationStatus.code == 'canceled_noshow' ? 'text-muted' : '' }}">
+                                                            <td>{{ res.startDate|date('d.m.y') }}</td>
+                                                            <td>{{ res.endDate|date('d.m.y') }}</td>
+                                                            <td>{{ res.amount }}</td>
+                                                            <td>{{ res.appartment ? res.appartment.number ~ ' ' ~ res.appartment.description : '–' }}</td>
+                                                            <td>{{ res.reservationStatus ? res.reservationStatus.name : '–' }}</td>
+                                                            <td>
+                                                                {% if res.invoices is empty %}
+                                                                    <span class="text-muted">–</span>
+                                                                {% else %}
+                                                                    {% for invoice in res.invoices %}
+                                                                        <a href="#"
+                                                                        data-action="click->customers#openModalAction"
+                                                                        data-url="{{ path('invoices.get.invoice', {id: invoice.id}) }}"
+                                                                        data-title="{{ 'invoice.details'|trans }}"
+                                                                        class="text-decoration-none {{ invoice.status == 1 ? 'text-danger' : (invoice.status == 2 ? 'text-success' : (invoice.status == 3 ? 'text-warning' : 'text-muted')) }}"
+                                                                        title="{{ ('invoice.status.' ~ (invoice.status == 1 ? 'unpaid' : invoice.status == 2 ? 'paid' : invoice.status == 3 ? 'prepaid' : 'canceled'))|trans }}">
+                                                                            {{ invoice.number ? invoice.number : '–' }}
+                                                                        </a>{% if not loop.last %}<br>{% endif %}
+                                                                    {% endfor %}
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>
+                                                                <a href="#"
+                                                                data-action="click->customers#openModalAction"
+                                                                data-url="{{ path('reservations.get.reservation', {id: res.id}) }}"
+                                                                data-title="{{ 'reservation.details'|trans }}"
+                                                                class="btn btn-sm btn-outline-secondary py-0"
+                                                                title="{{ 'reservation.details'|trans }}">
+                                                                    <i class="fas fa-external-link-alt"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>

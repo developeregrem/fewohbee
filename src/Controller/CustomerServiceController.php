@@ -17,6 +17,7 @@ use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Enum\IDCardType;
 use App\Entity\Template;
+use App\Repository\ReservationRepository;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\TemplatesService;
@@ -100,14 +101,23 @@ class CustomerServiceController extends AbstractController
     }
 
     #[Route('/{id}/get', name: 'customers.get.customer', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getCustomerAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
-    {
+    public function getCustomerAction(
+        ManagerRegistry $doctrine,
+        CSRFProtectionService $csrf,
+        ReservationRepository $reservationRepo,
+        $id
+    ) {
         $em = $doctrine->getManager();
         $customer = $em->getRepository(Customer::class)->find($id);
 
+        $reservations = $customer
+            ? $reservationRepo->loadAllReservationsForCustomer($customer)
+            : [];
+
         return $this->render('Customers/customer_form_show.html.twig', [
-            'customer' => $customer,
-            'token' => $csrf->getCSRFTokenForForm(),
+            'customer'     => $customer,
+            'token'        => $csrf->getCSRFTokenForForm(),
+            'reservations' => $reservations,
         ]);
     }
 
