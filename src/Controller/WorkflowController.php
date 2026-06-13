@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
@@ -219,9 +218,6 @@ class WorkflowController extends AbstractController
             } elseif ($type === 'reservation_status_select') {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadReservationStatusOptions();
-            } elseif ($type === 'reservation_origin_select') {
-                $field['type'] = 'select';
-                $field['options'] = $this->loadReservationOriginOptions();
             } elseif ($type === 'accounting_account_select') {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadAccountingAccountOptions();
@@ -260,18 +256,6 @@ class WorkflowController extends AbstractController
         $options = [['value' => 0, 'label' => '–']];
         foreach ($statuses as $status) {
             $options[] = ['value' => $status->getId(), 'label' => $status->getName()];
-        }
-
-        return $options;
-    }
-
-    /** @return array<int, array{value: int, label: string}> */
-    private function loadReservationOriginOptions(): array
-    {
-        $origins = $this->em->getRepository(ReservationOrigin::class)->findBy([], ['name' => 'ASC']);
-        $options = [['value' => 0, 'label' => '–']];
-        foreach ($origins as $origin) {
-            $options[] = ['value' => $origin->getId(), 'label' => $origin->getName()];
         }
 
         return $options;

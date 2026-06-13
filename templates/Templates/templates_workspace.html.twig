@@ -98,14 +98,6 @@
                             <option value="L" {% if pdfParams.orientation|default('P') == 'L' %}selected{% endif %}>{{ 'templates.params.orientation.landscape'|trans }}</option>
                         </select>
                     </div>
-                    <div class="col-6">
-                        <label for="params-format-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.format'|trans }}</label>
-                        <select class="form-select" name="params-format-{{ template.id }}" id="params-format-{{ template.id }}">
-                            <option value="A4" {% if pdfParams.format|default('A4') == 'A4' %}selected{% endif %}>A4</option>
-                            <option value="A5" {% if pdfParams.format|default('A4') == 'A5' %}selected{% endif %}>A5</option>
-                            <option value="A6" {% if pdfParams.format|default('A4') == 'A6' %}selected{% endif %}>A6</option>
-                        </select>
-                    </div>
                 </div>
             </div>
         </div>
@@ -303,25 +295,4 @@
         <input name="_csrf_token" value="{{ token }}" type="hidden">
     </form>
 </div>
-<script>
-document.addEventListener('change', function(e) {
-    if (!e.target.matches('select[name^="params-format-"]')) return;
-
-    const id = e.target.name.replace('params-format-', '');
-    const format = e.target.value;
-
-    const margins = {
-        'A4': { marginLeft: 25, marginRight: 20, marginTop: 20, marginBottom: 20, marginHeader: 9, marginFooter: 9 },
-        'A5': { marginLeft: 15, marginRight: 12, marginTop: 12, marginBottom: 12, marginHeader: 6, marginFooter: 6 },
-        'A6': { marginLeft: 10, marginRight: 8,  marginTop: 8,  marginBottom: 8,  marginHeader: 4, marginFooter: 4 },
-    };
-
-    if (!margins[format]) return;
-
-    for (const [key, value] of Object.entries(margins[format])) {
-        const input = document.querySelector(`input[name="params-${key}-${id}"]`);
-        if (input) input.value = value;
-    }
-});
-</script>
 {% endblock %}

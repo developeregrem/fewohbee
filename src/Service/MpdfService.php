@@ -24,19 +24,20 @@ class MpdfService
         $this->requestStack = $requestStack;
     }
 
-    public function getMpdf(string $format = 'A4')
+    // put your code here
+    public function getMpdf()
     {
         $locale = $this->requestStack->getCurrentRequest()->getLocale();
-        $isA5 = 'A5' === strtoupper($format);
-        $isA6 = 'A6' === strtoupper($format);
         $config = [
-            'format'        => strtoupper($format),
-            'margin_left'   => $isA6 ? 10 : ($isA5 ? 15 : 25),
-            'margin_right'  => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_top'    => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_bottom' => $isA6 ? 8  : ($isA5 ? 12 : 20),
-            'margin_header' => $isA6 ? 4  : ($isA5 ? 6  : 9),
-            'margin_footer' => $isA6 ? 4  : ($isA5 ? 6  : 9),
+            'mode' => $locale,
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 25,
+            'margin_right' => 20,
+            'margin_top' => 20,
+            'margin_bottom' => 20,
+            'margin_header' => 9,
+            'margin_footer' => 9,
         ];
 
         return new \Mpdf\Mpdf($config);

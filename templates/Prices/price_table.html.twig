@@ -2,7 +2,6 @@
 <thead>
 <tr>
     <th>{{ 'price.description'|trans }}</th>
-    <th class="text-center">{{ 'price.persons'|trans }}</th>
     <th>{{ 'price.season'|trans }}</th>
     <th>{{ 'price.daysinweek'|trans }}</th>
     <th>{{ 'price.price'|trans }}</th>
@@ -24,13 +23,6 @@
                       title="{{ 'price.package.overview.tooltip'|trans({'%count%': packageComponentCount}) }}">
                     <i class="fas fa-layer-group"></i> {{ 'price.package.overview.badge'|trans({'%count%': packageComponentCount}) }}
                 </span>
-            {% endif %}
-        </td>
-        <td class="text-center">
-            {% if price.numberOfPersons is not null %}
-                {{ price.numberOfPersons }}
-            {% else %}
-                -
             {% endif %}
         </td>
         <td>
