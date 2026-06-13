@@ -98,10 +98,8 @@ templates.notfound: No template could be found. Please ensure a template exists 
 templates.params: PDF layout
 templates.params.help: Orientation and margins for generated PDFs (all margins in mm).
 templates.params.orientation: Orientation
-templates.params.format: Page format
 templates.params.orientation.portrait: Portrait (P)
 templates.params.orientation.landscape: Landscape (L)
-templates.params.format: 'Page format'
 templates.params.margin_top: Top margin (mm)
 templates.params.margin_bottom: Bottom margin (mm)
 templates.params.margin_left: Left margin (mm)
