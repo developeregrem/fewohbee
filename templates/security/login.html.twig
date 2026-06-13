@@ -27,8 +27,8 @@
     ) }}
     {% endif %}
     >
-    <div class="logo-icon-stack mb-4"><i class="fas fa-bed"></i></div>
-    <h1 class="h3 mb-3 fw-normal">{{ 'login.application.title'|trans }}</h1>
+    <div class="logo-icon-stack mb-4"><img src="{{ app.request.basepath }}/img/logo-fewohbee.png"></div>
+    <h1 class="h3 mb-3 fw-normal"><span style="color: #012546">Fewoh</span><span style="color: #FB9005">Bee</span></h1>
 
     {% if error %}
         <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
@@ -62,7 +62,7 @@
     <div class="row mt-3">
         <div class="col text-end"><a href="{{ path('app_forgot_password_request') }}">{{ 'login.pwforgotten.link'|trans }}</a></div>
     </div>
-    <p class="mt-4 mb-3 text-muted">&copy; Copyright {{ "now"|date("Y") }} - {{ 'login.copy'|trans }}</p>
+    <p class="mt-4 mb-3 text-muted">&copy; Copyright {{ "now"|date("Y") }} - <a class="text-muted" href="https://www.fewohbee.app" target="_blank" style="text-decoration:none;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';">{{ 'login.copy'|trans }}</a></p>
   </form>
 </main>
 {% endblock %}
