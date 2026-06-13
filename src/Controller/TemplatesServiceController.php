@@ -76,6 +76,7 @@ class TemplatesServiceController extends AbstractController
             'contextDefinition' => $provider ? $provider->getPreviewContextDefinition() : [],
             'context' => $provider ? $provider->buildSampleContext() : [],
             'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
+            'formatDefaultMargins' => TemplatesService::FORMAT_DEFAULT_MARGINS,
         ]);
     }
 
@@ -99,6 +100,7 @@ class TemplatesServiceController extends AbstractController
             'context' => [],
             'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
             'isNew' => true,
+            'formatDefaultMargins' => TemplatesService::FORMAT_DEFAULT_MARGINS,
         ]);
     }
 

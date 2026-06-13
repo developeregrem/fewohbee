@@ -37,6 +37,7 @@ class TemplatesService
      * Default mPDF layout parameters for templates.
      */
     public const DEFAULT_TEMPLATE_PARAMS = [
+        'format' => 'A4',
         'orientation' => 'P',
         'marginLeft' => 25.0,
         'marginRight' => 20.0,
@@ -44,6 +45,32 @@ class TemplatesService
         'marginBottom' => 20.0,
         'marginHeader' => 9.0,
         'marginFooter' => 9.0,
+    ];
+    public const FORMAT_DEFAULT_MARGINS = [
+        'A4' => [
+            'marginLeft'   => 25.0,
+            'marginRight'  => 20.0,
+            'marginTop'    => 20.0,
+            'marginBottom' => 20.0,
+            'marginHeader' => 9.0,
+            'marginFooter' => 9.0,
+        ],
+        'A5' => [
+            'marginLeft'   => 15.0,
+            'marginRight'  => 12.0,
+            'marginTop'    => 12.0,
+            'marginBottom' => 12.0,
+            'marginHeader' => 6.0,
+            'marginFooter' => 6.0,
+        ],
+        'A6' => [
+            'marginLeft'   => 10.0,
+            'marginRight'  => 8.0,
+            'marginTop'    => 8.0,
+            'marginBottom' => 8.0,
+            'marginHeader' => 4.0,
+            'marginFooter' => 4.0,
+        ],
     ];
     private $webHost;
 
@@ -85,7 +112,7 @@ class TemplatesService
             $template->setIsDefault(true);
         } else {
             $template->setIsDefault(false);
-        }        
+        }
         $template->setHidden($request->request->has('hidden-'.$id));
         return $template;
     }
@@ -332,14 +359,16 @@ class TemplatesService
             return $params;
         }
 
+        $format = strtoupper((string) ($decoded['format'] ?? 'A4'));
+        $params['format'] = in_array($format, ['A4', 'A5', 'A6'], true) ? $format : 'A4';
+
         $orientation = strtoupper((string) ($decoded['orientation'] ?? $params['orientation']));
         $params['orientation'] = 'L' === $orientation ? 'L' : 'P';
 
+        $params = array_merge($params, self::FORMAT_DEFAULT_MARGINS[$params['format']]);
+
         foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
-            if (!array_key_exists($key, $decoded)) {
-                continue;
-            }
-            if (is_numeric($decoded[$key])) {
+            if (array_key_exists($key, $decoded) && is_numeric($decoded[$key])) {
                 $params[$key] = (float) $decoded[$key];
             }
         }
@@ -355,9 +384,11 @@ class TemplatesService
         $orientationField = 'params-orientation-'.$id;
         $hasStructuredInput = $request->request->has($orientationField);
         if ($hasStructuredInput) {
-            $structured = [
-                'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
-            ];
+   	        $format = strtoupper((string) $request->request->get('params-format-'.$id, 'A4')); // NEU
+                $structured = [
+                    'format'      => in_array($format, ['A4', 'A5', 'A6'], true) ? $format : 'A4',
+                    'orientation' => strtoupper((string) $request->request->get($orientationField, 'P')),
+                ];
             foreach (['marginLeft', 'marginRight', 'marginTop', 'marginBottom', 'marginHeader', 'marginFooter'] as $key) {
                 $value = $request->request->get('params-'.$key.'-'.$id);
                 if (is_numeric($value)) {
@@ -496,9 +527,9 @@ class TemplatesService
          * S: return the document as a string. filename is ignored.
          */
         $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
-        $mpdf = $this->mpdfs->getMpdf();
-
         $params = json_decode($template->getParams());
+        $format = isset($params->format) ? strtoupper($params->format) : 'A4';
+        $mpdf = $this->mpdfs->getMpdf($format);
         $mpdf->addPage(
             $params->orientation,
             '',

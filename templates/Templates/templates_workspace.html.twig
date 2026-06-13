@@ -98,6 +98,14 @@
                             <option value="L" {% if pdfParams.orientation|default('P') == 'L' %}selected{% endif %}>{{ 'templates.params.orientation.landscape'|trans }}</option>
                         </select>
                     </div>
+                    <div class="col-6">
+                        <label for="params-format-{{ template.id }}" class="form-label small mb-1">{{ 'templates.params.format'|trans }}</label>
+                        <select class="form-select" name="params-format-{{ template.id }}" id="params-format-{{ template.id }}" data-action="change->template-editor#formatChanged" data-format-margins="{{ formatDefaultMargins|json_encode }}">
+                            <option value="A4" {% if pdfParams.format|default('A4') == 'A4' %}selected{% endif %}>A4</option>
+                            <option value="A5" {% if pdfParams.format|default('A4') == 'A5' %}selected{% endif %}>A5</option>
+                            <option value="A6" {% if pdfParams.format|default('A4') == 'A6' %}selected{% endif %}>A6</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
