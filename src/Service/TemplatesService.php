@@ -522,12 +522,11 @@ class TemplatesService
          * F: save to a local file with the name given by filename (may include a path).
          * S: return the document as a string. filename is ignored.
          */
-            $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
-            $params = json_decode($template->getParams());
-	    $format = isset($params->format) ? strtoupper($params->format) : 'A4'; // NEU
-	    $mpdf = $this->mpdfs->getMpdf($format);                                 // NEU (war: getMpdf())	
-
-	    $mpdf->addPage(
+        $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
+        $params = json_decode($template->getParams());
+        $format = isset($params->format) ? strtoupper($params->format) : 'A4';
+        $mpdf = $this->mpdfs->getMpdf($format);
+        $mpdf->addPage(
             $params->orientation,
             '',
             '',

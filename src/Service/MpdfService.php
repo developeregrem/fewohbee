@@ -30,7 +30,9 @@ class MpdfService
         $isA5 = 'A5' === strtoupper($format);
         $isA6 = 'A6' === strtoupper($format);
         $config = [
+            'mode'          => $locale,
             'format'        => strtoupper($format),
+            'orientation'   => 'P',
             'margin_left'   => $isA6 ? 10 : ($isA5 ? 15 : 25),
             'margin_right'  => $isA6 ? 8  : ($isA5 ? 12 : 20),
             'margin_top'    => $isA6 ? 8  : ($isA5 ? 12 : 20),
