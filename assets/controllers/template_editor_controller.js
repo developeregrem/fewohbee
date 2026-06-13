@@ -2018,4 +2018,19 @@ export default class extends Controller {
         return this.schemaUrlTemplate.replace('placeholder', typeId);
     }
 
+    formatChanged(event) {
+        const select = event.target;
+        const format = select.value;
+        const margins = JSON.parse(select.dataset.formatMargins);
+
+        if (!margins[format]) return;
+
+        const id = select.name.replace('params-format-', '');
+
+        for (const [key, value] of Object.entries(margins[format])) {
+            const input = this.element.querySelector(`input[name="params-${key}-${id}"]`);
+            if (input) input.value = value;
+        }
+    }
+
 }
