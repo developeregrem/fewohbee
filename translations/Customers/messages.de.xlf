@@ -214,6 +214,14 @@
                 <source>customer.mandateReference.label</source>
                 <target>Mandatsreferenznr.</target>
             </trans-unit>
+            <trans-unit id="customer.reservation.history">
+                <source>customer.reservation.history</source>
+                <target>Reservierungshistorie</target>
+            </trans-unit>
+            <trans-unit id="customer.reservation.history.empty">
+                <source>customer.reservation.history.empty</source>
+                <target>Keine Reservierungen vorhanden.</target>
+            </trans-unit>       
         </body>
     </file>
 </xliff>
