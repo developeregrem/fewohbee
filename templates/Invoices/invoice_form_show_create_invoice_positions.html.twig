@@ -4,9 +4,18 @@
         <form id="new-invoice-id" class="form" role="form" data-action="submit->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
         <div class="row">            
             <div id="invoice-id" class="col">
-                <input type="text" name="invoiceid" class="form-control"
-                       placeholder="{{ 'invoice.id'|trans }} ({{ 'invoice.id.last'|trans }} {{ lastinvoiceid }})"
-                       value="{{ invoiceid }}">                    
+                <div class="input-group">
+                    <input type="text" name="invoiceid" class="form-control"
+                        placeholder="{{ 'invoice.id'|trans }} ({{ 'invoice.id.last'|trans }} {{ lastinvoiceid }})"
+                        value="{{ invoiceid }}"
+                        id="invoiceidInput">
+                    <button class="btn btn-link text-secondary" type="button"
+                            title="{{ 'invoice.id.adopt'|trans }}"
+                            data-action="click->invoices#adoptNextInvoiceNumberAction"
+                            data-last-number="{{ lastinvoiceid }}">
+                        <i class="fas fa-clone"></i>
+                    </button>
+                </div>
             </div>
             <div id="invoice-id" class="col">
                 <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"                       
