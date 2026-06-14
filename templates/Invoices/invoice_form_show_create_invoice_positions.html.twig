@@ -11,7 +11,8 @@
                         id="invoiceidInput">
                     <button class="btn btn-link text-secondary" type="button"
                             title="{{ 'invoice.id.adopt'|trans }}"
-                            onclick="document.getElementById('invoiceidInput').value='{{ lastinvoiceid }}'">
+                            data-action="click->invoices#adoptNextInvoiceNumberAction"
+                            data-last-number="{{ lastinvoiceid }}">
                         <i class="fas fa-clone"></i>
                     </button>
                 </div>
