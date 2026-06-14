@@ -194,6 +194,21 @@ export default class extends Controller {
         return false;
     }
 
+    adoptNextInvoiceNumberAction(event) {
+        const last = event.currentTarget.dataset.lastNumber || '';
+        const input = document.getElementById('invoiceidInput');
+        if (!input) return;
+        const match = last.match(/^(.*?)(\d+)$/);
+        if (match) {
+            const prefix = match[1];
+            const num = match[2];
+            const next = String(parseInt(num, 10) + 1).padStart(num.length, '0');
+            input.value = prefix + next;
+        } else {
+            input.value = last;
+        }
+    }
+
     fillFieldsFromPriceCategoryAction(event) {
         const select = event.currentTarget;
         const selected = select.options[select.selectedIndex];
