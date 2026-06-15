@@ -23,6 +23,9 @@ class ApartmentType extends AbstractType
         $builder
             ->add('number', TextType::class, [
                 'label' => 'appartment.number',
+                'attr' => [
+                    'maxlength' => 10,
+                ],
             ])
             ->add('description', TextType::class, [
                 'label' => 'appartment.description',
