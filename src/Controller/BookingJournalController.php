@@ -21,6 +21,7 @@ use App\Service\BookingJournal\OpeningBalanceService;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -588,9 +589,15 @@ class BookingJournalController extends AbstractController
             'Kassenblatt-'.$batch->getYear().'-'.$batch->getMonth(),
             $template
         );
+        $filename = 'Kassenblatt-'.$batch->getYear().'-'.$batch->getMonth().'.pdf';
 
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $filename
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

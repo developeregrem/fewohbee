@@ -23,6 +23,7 @@ use App\Service\CustomerService;
 use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -296,6 +297,11 @@ class CustomerServiceController extends AbstractController
         $pdfOutput = $ts->getPDFOutput($templateOutput, 'GDPR-Export', $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            'GDPR-Export.pdf'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

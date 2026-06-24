@@ -244,7 +244,7 @@ class InvoiceService
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string
     {
         $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
-        $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template, true);
+        $pdfOutput = $ts->getPDFOutput($templateOutput, $this->buildInvoiceExportFilename($invoice, true), $template);
         $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
 
         return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))

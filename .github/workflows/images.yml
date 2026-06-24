@@ -61,7 +61,7 @@ jobs:
 
             if [[ "$EVENT_NAME" == "schedule" ]]; then
               package_name="fewohbee-phpfpm"
-              versions_url="https://api.github.com/orgs/${IMAGE_OWNER}/packages/container/${package_name}/versions?per_page=100"
+              versions_url="https://api.github.com/users/${IMAGE_OWNER}/packages/container/${package_name}/versions?per_page=100"
 
               latest_tag_timestamp="$(
                 {

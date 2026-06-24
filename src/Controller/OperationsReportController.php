@@ -134,8 +134,7 @@ class OperationsReportController extends AbstractController
         $pdfOutput = $templatesService->getPDFOutput(
             $templateOutput,
             'Operations-Report-'.$startDate->format('Y-m-d'),
-            $template,
-            true
+            $template
         );
 
         $response = new Response($pdfOutput);

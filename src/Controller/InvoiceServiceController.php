@@ -904,6 +904,11 @@ class InvoiceServiceController extends AbstractController
         $pdfOutput = $ts->getPDFOutput($templateOutput, $filenameBase, $template);
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_ATTACHMENT,
+            $filenameBase.'.pdf'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

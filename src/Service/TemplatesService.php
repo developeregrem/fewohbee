@@ -510,7 +510,7 @@ class TemplatesService
         $attachment = $this->em->getRepository(Correspondence::class)->find($attachmentId);
         if ($attachment instanceof FileCorrespondence) {
             $binaryPayload = $attachment->getBinaryPayload();
-            $data = $binaryPayload ?: $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate(), true);
+            $data = $binaryPayload ?: $this->getPDFOutput($attachment->getText(), $attachment->getName(), $attachment->getTemplate());
 
             return new MailAttachment($data, $attachment->getName().'.pdf', 'application/pdf');
         }
@@ -518,15 +518,15 @@ class TemplatesService
         return null;
     }
 
-    public function getPDFOutput($input, $name, $template, $noResponseOutput = false, ?string $destOverride = null)
+    public function getPDFOutput(string $input, string $name, Template $template): string
     {
         /*
-         * I: send the file inline to the browser. The plug-in is used if available. The name given by filename is used when one selects the "Save as" option on the link generating the PDF.
-         * D: send to the browser and force a file download with the name given by filename.
-         * F: save to a local file with the name given by filename (may include a path).
-         * S: return the document as a string. filename is ignored.
+         * Return the PDF bytes as a string. Controllers are responsible for
+         * Symfony responses and headers:
+         * - Content-Type: application/pdf
+         * - inline: HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, $filename)
+         * - download: HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename)
          */
-        $dest = $destOverride ?: ($noResponseOutput ? 'S' : 'D');
         $params = json_decode($template->getParams());
         $format = isset($params->format) ? strtoupper($params->format) : 'A4';
         $mpdf = $this->mpdfs->getMpdf($format);
@@ -554,7 +554,7 @@ class TemplatesService
          */
         $mpdf->WriteHTML($inputMapped, 0);
 
-        return $mpdf->Output($name.'.pdf', $dest);
+        return $mpdf->Output($name.'.pdf', 'S');
     }
 
     /**
