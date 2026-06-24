@@ -96,6 +96,11 @@ when@test:
                 default:
                     dbname_suffix: '_test%env(default::TEST_TOKEN)%'
                 geo:
+                    # In tests the postal_code_data table lives in the single test
+                    # database (created by migrations, seeded by first-run). Pin the
+                    # geo connection to DATABASE_URL so it never points at a separate
+                    # geo database — independent of any GEO_DATABASE_URL set in .env.
+                    url: '%env(resolve:DATABASE_URL)%'
                     dbname_suffix: '_test%env(default::TEST_TOKEN)%'
 
 when@prod:
