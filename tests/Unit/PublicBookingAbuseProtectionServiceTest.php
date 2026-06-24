@@ -7,10 +7,9 @@ namespace App\Tests\Unit;
 use App\Exception\PublicBookingException;
 use App\Service\PublicBookingAbuseProtectionService;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Session;
-use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\RateLimiter\RateLimit;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
@@ -34,7 +33,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $availabilityLimiter,
             $submitLimiter,
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -45,11 +44,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
     /** Ensure submit requests are rejected when the submit limiter denies consumption. */
     public function testValidateSubmitRequestThrowsWhenSubmitRateLimitIsExceeded(): void
     {
-        $requestStack = $this->createRequestStackWithSession();
-        $session = $requestStack->getSession();
-        self::assertNotNull($session);
-        $session->set('public_booking_submit_token', 'valid-token');
-
+        // The limiter is checked before the token, so the token value is irrelevant here.
         $request = new Request([], [
             'website' => '',
             'form_started_at' => (string) (time() - 5),
@@ -65,7 +60,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $availabilityLimiter,
             $submitLimiter,
-            $requestStack
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -87,34 +82,32 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $service->validateAvailabilityRequest($request);
         $this->addToAssertionCount(1);
     }
 
-    /** Ensure a valid submit request with correct token passes all checks. */
+    /** Ensure a valid submit request with a previously issued token passes all checks. */
     public function testValidateSubmitRequestPassesForValidRequest(): void
     {
-        $requestStack = $this->createRequestStackWithSession();
-        $session = $requestStack->getSession();
-        $session->set('public_booking_submit_token', 'my-token');
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createTokenStore()
+        );
+
+        $token = $service->issueSubmitToken();
 
         $request = new Request([], [
             'website' => '',
             'form_started_at' => (string) (time() - 5),
-            'submit_token' => 'my-token',
+            'submit_token' => $token,
         ]);
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'PHPUnit');
         $request->headers->set('Accept-Language', 'de');
-
-        $service = new PublicBookingAbuseProtectionService(
-            $this->createLimiterFactoryReturningAccepted(true),
-            $this->createLimiterFactoryReturningAccepted(true),
-            $requestStack
-        );
 
         $service->validateSubmitRequest($request);
         $this->addToAssertionCount(1);
@@ -134,7 +127,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -156,7 +149,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -177,7 +170,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -185,13 +178,9 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service->validateAvailabilityRequest($request);
     }
 
-    /** Ensure an invalid submit token is rejected. */
+    /** Ensure an unknown submit token (never issued) is rejected. */
     public function testInvalidSubmitTokenIsRejected(): void
     {
-        $requestStack = $this->createRequestStackWithSession();
-        $session = $requestStack->getSession();
-        $session->set('public_booking_submit_token', 'correct-token');
-
         $request = new Request([], [
             'website' => '',
             'form_started_at' => (string) (time() - 5),
@@ -204,7 +193,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $requestStack
+            $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
@@ -215,24 +204,22 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
     /** Ensure a submit token cannot be reused (double-submit protection). */
     public function testSubmitTokenCannotBeReused(): void
     {
-        $requestStack = $this->createRequestStackWithSession();
-        $session = $requestStack->getSession();
-        $session->set('public_booking_submit_token', 'one-time-token');
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createTokenStore()
+        );
+
+        $token = $service->issueSubmitToken();
 
         $request = new Request([], [
             'website' => '',
             'form_started_at' => (string) (time() - 5),
-            'submit_token' => 'one-time-token',
+            'submit_token' => $token,
         ]);
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'PHPUnit');
         $request->headers->set('Accept-Language', 'de');
-
-        $service = new PublicBookingAbuseProtectionService(
-            $this->createLimiterFactoryReturningAccepted(true),
-            $this->createLimiterFactoryReturningAccepted(true),
-            $requestStack
-        );
 
         // First submit succeeds
         $service->validateSubmitRequest($request);
@@ -249,7 +236,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
-            $this->createRequestStackWithSession()
+            $this->createTokenStore()
         );
 
         $stateWithoutToken = $service->createFormState(false);
@@ -284,16 +271,9 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         return $factory;
     }
 
-    /** Create a request stack with an attached mock session used by submit token checks. */
-    private function createRequestStackWithSession(): RequestStack
+    /** Create an in-memory, cookie-independent token store used by submit token checks. */
+    private function createTokenStore(): CacheItemPoolInterface
     {
-        $session = new Session(new MockArraySessionStorage());
-        $request = new Request();
-        $request->setSession($session);
-
-        $stack = new RequestStack();
-        $stack->push($request);
-
-        return $stack;
+        return new ArrayAdapter();
     }
 }

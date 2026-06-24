@@ -2,7 +2,12 @@
 
 {% block body %}
 {% set autoScrollTarget = null %}
-{% if step >= 3 and availability is not empty %}
+{% if errorMessage %}
+    {# An error must always be visible. The alert sits at the very top of the
+       card, above the form, so prioritize it over any step container —
+       otherwise the auto-scroll would jump past the error. #}
+    {% set autoScrollTarget = 'fhb-form-error' %}
+{% elseif step >= 3 and availability is not empty %}
     {% set autoScrollTarget = 'fhb-booker-details' %}
 {% elseif availabilityChecked %}
     {% set autoScrollTarget = 'fhb-availability-results' %}
@@ -39,7 +44,7 @@
                         {% endif %}
 
                         {% if errorMessage %}
-                            <div class="alert alert-danger py-2">{{ errorMessage|trans }}</div>
+                            <div class="alert alert-danger py-2 fhb-scroll-target" id="fhb-form-error" tabindex="-1" role="alert">{{ errorMessage|trans }}</div>
                         {% endif %}
 
                         {% if successMessage %}

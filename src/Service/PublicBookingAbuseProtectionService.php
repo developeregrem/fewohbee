@@ -5,23 +5,30 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Exception\PublicBookingException;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Uid\Uuid;
 
 class PublicBookingAbuseProtectionService
 {
-    private const SESSION_SUBMIT_TOKEN = 'public_booking_submit_token';
-        private const MINIMUM_ELAPSED_SECONDS = 1;
+    private const SUBMIT_TOKEN_CACHE_PREFIX = 'public_booking_submit_token_';
+    private const SUBMIT_TOKEN_TTL_SECONDS = 7200;
+    private const MINIMUM_ELAPSED_SECONDS = 1;
 
     public function __construct(
         #[Autowire(service: 'limiter.public_booking_availability')]
         private readonly RateLimiterFactoryInterface $availabilityLimiter,
         #[Autowire(service: 'limiter.public_booking_submit')]
         private readonly RateLimiterFactoryInterface $submitLimiter,
-        private readonly RequestStack $requestStack
+        // Server-side, cookie-independent token store. Using the shared cache
+        // pool (not the session) is essential for the embedded booking form:
+        // when the iframe lives on a third-party domain, the session cookie is
+        // not sent on the cross-site submit POST (SameSite=Lax), so a session
+        // bound token would always be lost between the preview and submit step.
+        #[Autowire(service: 'cache.app')]
+        private readonly CacheItemPoolInterface $submitTokenStore,
     ) {
     }
 
@@ -59,16 +66,15 @@ class PublicBookingAbuseProtectionService
         ];
     }
 
-    /** Store and return a fresh single-use submit token for the current public booking session. */
+    /** Store and return a fresh single-use submit token for the current public booking flow. */
     public function issueSubmitToken(): string
     {
-        $session = $this->requestStack->getSession();
-        if (null === $session) {
-            return Uuid::v4()->toRfc4122();
-        }
-
         $token = Uuid::v4()->toRfc4122();
-        $session->set(self::SESSION_SUBMIT_TOKEN, $token);
+
+        $item = $this->submitTokenStore->getItem($this->submitTokenCacheKey($token));
+        $item->set(true);
+        $item->expiresAfter(self::SUBMIT_TOKEN_TTL_SECONDS);
+        $this->submitTokenStore->save($item);
 
         return $token;
     }
@@ -103,22 +109,27 @@ class PublicBookingAbuseProtectionService
         }
     }
 
-    /** Ensure the preview-issued submit token matches and cannot be reused. */
+    /** Ensure the preview-issued submit token exists and cannot be reused (single-use). */
     private function consumeSubmitToken(Request $request): void
     {
-        $session = $this->requestStack->getSession();
         $submittedToken = trim((string) $request->request->get('submit_token', ''));
-
-        if (null === $session || '' === $submittedToken) {
-            throw new PublicBookingException('online_booking.error.invalid_request');
-        }
-
-        $storedToken = (string) $session->get(self::SESSION_SUBMIT_TOKEN, '');
-        $session->remove(self::SESSION_SUBMIT_TOKEN);
-
-        if ('' === $storedToken || !hash_equals($storedToken, $submittedToken)) {
+        if ('' === $submittedToken) {
             throw new PublicBookingException('online_booking.error.invalid_submit_token');
         }
+
+        $cacheKey = $this->submitTokenCacheKey($submittedToken);
+        if (!$this->submitTokenStore->getItem($cacheKey)->isHit()) {
+            throw new PublicBookingException('online_booking.error.invalid_submit_token');
+        }
+
+        // Delete on first use so the token cannot be replayed or double-submitted.
+        $this->submitTokenStore->deleteItem($cacheKey);
+    }
+
+    /** Build a PSR-6 safe cache key for a submit token (hashed to neutralize arbitrary input). */
+    private function submitTokenCacheKey(string $token): string
+    {
+        return self::SUBMIT_TOKEN_CACHE_PREFIX.hash('sha256', $token);
     }
 
     /** Build a stable limiter key based on client IP and the current public-booking flow step. */
