@@ -77,7 +77,8 @@ guest_category:
 
 guest_category_modifier:
   title: "Per-category surcharges / discounts"
-  description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price."
+  description: "Define a surcharge, discount, flat rate or \"free\" per guest category on top of the nightly rate. The adult rate stays the base price. Modifiers only apply to nightly rates calculated per person — not to flat-rate or per-room prices."
+  threshold_hint: "From which occupancy these modifiers take effect (minimum full-fare guests) is configured per room category — e.g. so that children are only discounted from 3 guests onwards."
   add: "Add modifier"
   empty: "No modifiers configured yet — nightly rates apply unchanged for every category."
   delete:

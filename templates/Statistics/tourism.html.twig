@@ -30,7 +30,12 @@
          data-statistics-overnights-by-country-label-value="{{ 'statistics.tourism.overnights_by_country'|trans }}"
          data-statistics-arrivals-by-state-label-value="{{ 'statistics.tourism.arrivals_by_state'|trans }}"
          data-statistics-overnights-by-state-label-value="{{ 'statistics.tourism.overnights_by_state'|trans }}"
-         data-statistics-no-state-data-label-value="{{ 'statistics.tourism.no_state_data'|trans }}">
+         data-statistics-no-state-data-label-value="{{ 'statistics.tourism.no_state_data'|trans }}"
+         data-statistics-guest-category-label-value="{{ 'statistics.tourism.guest_category'|trans }}"
+         data-statistics-overnights-by-guest-category-label-value="{{ 'statistics.tourism.overnights_by_guest_category'|trans }}"
+         data-statistics-no-category-data-label-value="{{ 'statistics.tourism.no_category_data'|trans }}"
+         data-statistics-total-label-value="{{ 'statistics.tourism.total'|trans }}"
+         data-statistics-last-calculated-label-value="{{ 'statistics.tourism.last_calculated'|trans }}">
         <input type="hidden" id="statistics_csrf_token" name="_csrf_token" value="{{ csrf_token('statistics.snapshot.warning.ignore') }}">
         <div class="row align-items-end justify-content-between">
             <div class="col-md-8">
@@ -79,6 +84,7 @@
                     <i class="fas fa-sync-alt"></i>
                     {{ 'statistics.tourism.regenerate'|trans }}
                 </button>
+                <div class="text-muted small mt-1" data-statistics-target="snapshotUpdatedAt"></div>
             </div>
         </div>
         <div class="row mt-3">
@@ -181,6 +187,65 @@
                     <div class="card-body">
                         <div style="position: relative; height:30vh;">
                             <canvas id="snapshotOvernightsChart" data-statistics-target="snapshotOvernightsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.overnights_by_guest_category'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{ 'statistics.tourism.guest_category'|trans }}</th>
+                                        <th class="text-end">{{ 'statistics.tourism.overnights'|trans }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody data-statistics-target="snapshotByGuestCategoryBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="text-muted small mt-2 d-none" data-statistics-target="noCategoryDataHint">
+                            {{ 'statistics.tourism.no_category_data'|trans }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.overnights_by_guest_category'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div style="position: relative; height:30vh;">
+                            <canvas id="snapshotByGuestCategoryChart" data-statistics-target="snapshotByGuestCategoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        {{ 'statistics.tourism.by_country_and_category_table'|trans }}
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm mb-0">
+                                <thead data-statistics-target="snapshotCountryCategoryHead"></thead>
+                                <tbody data-statistics-target="snapshotCountryCategoryBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="text-muted small mt-2 d-none" data-statistics-target="noCountryCategoryDataHint">
+                            {{ 'statistics.tourism.no_category_data'|trans }}
                         </div>
                     </div>
                 </div>

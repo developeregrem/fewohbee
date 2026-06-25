@@ -100,6 +100,7 @@
         <div class="col">
             <h3>{{ 'guest_category_modifier.title'|trans }}</h3>
             <p class="text-muted">{{ 'guest_category_modifier.description'|trans }}</p>
+            <p class="text-body-secondary small"><i class="fas fa-circle-info me-1"></i>{{ 'guest_category_modifier.threshold_hint'|trans }}</p>
             <button type="button" class="btn btn-secondary"
                     data-action="click->settings#openModalAction"
                     data-url="{{ path('guest_category_modifier_new') }}"

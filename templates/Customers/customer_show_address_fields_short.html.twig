@@ -25,11 +25,11 @@
                     <div class="col-sm-6">
                         <dl>
                             <dt>{{ 'customer.phone'|trans }}</dt>
-                            <dd>{% if address.phone %}{{ address.phone }}{% else %} -{% endif %}</dd>
+                            <dd>{% if address.phone %}<a href="tel:{{ address.phone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">{{ address.phone }}</a>{% else %} -{% endif %}</dd>
                             <dt>{{ 'customer.fax'|trans }}</dt>
                             <dd>{% if address.fax %}{{ address.fax }}{% else %} -{% endif %}</dd>
                             <dt>{{ 'customer.mobilephone'|trans }}</dt>
-                            <dd>{% if address.mobilephone %}{{ address.mobilephone }}{% else %} -{% endif %}</dd>
+                            <dd>{% if address.mobilephone %}<a href="tel:{{ address.mobilephone|replace({' ': '', '-': '', '/': '', '(': '', ')': ''}) }}">{{ address.mobilephone }}</a>{% else %} -{% endif %}</dd>
                         </dl>
                     </div>
               </div>

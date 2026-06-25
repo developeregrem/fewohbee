@@ -58,6 +58,16 @@ class OnlineBookingConfigType extends AbstractType
                     'placeholder' => 'online_booking.placeholder.unlimited',
                 ],
             ])
+            ->add('allowedEmbeddingOrigins', TextareaType::class, [
+                'label' => 'online_booking.settings.allowed_embedding_origins',
+                'help' => 'online_booking.settings.allowed_embedding_origins_help',
+                'help_html' => true,
+                'required' => false,
+                'attr' => [
+                    'rows' => 4,
+                    'placeholder' => "https://www.example.com\nhttps://example.com",
+                ],
+            ])
             ->add('bookingMode', ChoiceType::class, [
                 'label' => 'online_booking.settings.booking_mode',
                 'choices' => [
@@ -225,6 +235,27 @@ class OnlineBookingConfigType extends AbstractType
                 ->setTranslationDomain('messages')
                 ->addViolation();
         }
+
+        foreach ($this->splitEmbeddingOrigins($config->getAllowedEmbeddingOrigins()) as $origin) {
+            $parts = parse_url($origin);
+            $scheme = false !== $parts ? ($parts['scheme'] ?? null) : null;
+            $host = false !== $parts ? ($parts['host'] ?? null) : null;
+            if (!\in_array($scheme, ['http', 'https'], true) || null === $host || '' === trim((string) $host)) {
+                $context->buildViolation('online_booking.validation.embedding_origin_invalid')
+                    ->atPath('allowedEmbeddingOrigins')
+                    ->setParameter('%origin%', $origin)
+                    ->setTranslationDomain('messages')
+                    ->addViolation();
+            }
+        }
+    }
+
+    /** @return string[] */
+    private function splitEmbeddingOrigins(?string $origins): array
+    {
+        $tokens = preg_split('/[\s,]+/', trim((string) $origins), -1, \PREG_SPLIT_NO_EMPTY);
+
+        return false === $tokens ? [] : $tokens;
     }
 
     /**

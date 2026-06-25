@@ -177,6 +177,54 @@ final class OnlineBookingConfigServiceTest extends TestCase
         self::assertSame([7, 9], $service->getAllowedRoomIds($config));
     }
 
+    public function testLegacyFrameAncestorsAreAdoptedIntoEmptyConfig(): void
+    {
+        $config = new OnlineBookingConfig();
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::once())->method('flush');
+
+        $repository = $this->createMock(OnlineBookingConfigRepository::class);
+        $repository->expects(self::once())->method('findSingleton')->willReturn($config);
+
+        $service = new OnlineBookingConfigService(
+            $em,
+            $repository,
+            $this->createStub(SubsidiaryRepository::class),
+            $this->createStub(AppartmentRepository::class),
+            'https://www.example.com https://example.com/path'
+        );
+
+        $resolvedConfig = $service->getConfig();
+
+        self::assertSame($config, $resolvedConfig);
+        self::assertSame("https://www.example.com\nhttps://example.com", $config->getAllowedEmbeddingOrigins());
+        self::assertSame('https://www.example.com https://example.com', $service->getAllowedEmbeddingOriginsForCsp($config));
+    }
+
+    public function testMissingLegacyFrameAncestorsDoNotPersistEmptyConfig(): void
+    {
+        $config = new OnlineBookingConfig();
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::never())->method('flush');
+
+        $repository = $this->createMock(OnlineBookingConfigRepository::class);
+        $repository->expects(self::once())->method('findSingleton')->willReturn($config);
+
+        $service = new OnlineBookingConfigService(
+            $em,
+            $repository,
+            $this->createStub(SubsidiaryRepository::class),
+            $this->createStub(AppartmentRepository::class),
+            ''
+        );
+
+        $service->getConfig();
+
+        self::assertNull($config->getAllowedEmbeddingOrigins());
+    }
+
     /** Create a minimal template instance with a named template type for type filtering tests. */
     private function createTemplateWithType(string $typeName): Template
     {

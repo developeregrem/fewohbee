@@ -15,6 +15,7 @@ namespace App\DataFixtures;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
+use App\Entity\GuestCategory;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
@@ -56,6 +57,7 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
         $origins = $manager->getRepository(ReservationOrigin::class)->findAll();
         $customer = $manager->getRepository(Customer::class)->findOneBy(['lastname' => 'Mustermann']);
         $status = $manager->getRepository(ReservationStatus::class)->find(2); // first is canceled
+        $defaultAdult = $manager->getRepository(GuestCategory::class)->findOneBy(['systemCode' => 'default_adult']);
 
         if (!($customer instanceof Customer)) {
             return;
@@ -75,6 +77,9 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
             $res->setBooker($customer);
             $res->addCustomer($customer);
             $res->setPersons($app->getBedsMax());
+            if ($defaultAdult instanceof GuestCategory && null !== $defaultAdult->getId()) {
+                $res->setGuestCounts([(int) $defaultAdult->getId() => $app->getBedsMax()]);
+            }
             $res->setReservationStatus($status);
             $res->setStartDate($start);
             $res->setEndDate($end);

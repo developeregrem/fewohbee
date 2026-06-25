@@ -77,9 +77,9 @@
                         {% if wf %}
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div>
-                                <strong class="small">{{ wf.name }}</strong>
+                                <strong class="small">{{ wf.name|trans }}</strong>
                                 {% if wf.description %}
-                                    <br><span class="text-body-secondary small">{{ wf.description }}</span>
+                                    <br><span class="text-body-secondary small">{{ wf.description|trans }}</span>
                                 {% endif %}
                             </div>
                             <div class="d-flex align-items-center gap-2 ms-3">
@@ -96,6 +96,49 @@
                         </div>
                         {% endif %}
                     {% endfor %}
+                </div>
+            </div>
+
+            {# -- Mail -- #}
+            <div class="card mb-3" data-controller="mail-settings" data-mail-settings-test-url-value="{{ path('settings.general.smtp_test') }}" data-mail-settings-generic-error-value="{{ 'app_settings.smtp_test.generic_error'|trans }}">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope text-primary me-2"></i>{{ 'app_settings.section.mail'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'app_settings.section.mail_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {% if not mailEnabled %}
+                        <div class="alert alert-warning small py-2 mb-3">
+                            <i class="fas fa-ban me-1"></i>
+                            {{ 'app_settings.mail_disabled_hint'|trans }}
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.mailFromEmail) }}</div>
+                        <div class="col-md-6">{{ form_row(form.mailFromName) }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.mailReturnPath) }}</div>
+                        <div class="col-md-6 d-flex align-items-center pt-md-4">{{ form_row(form.mailCopy) }}</div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-5">{{ form_row(form.smtpHost) }}</div>
+                        <div class="col-md-3">{{ form_row(form.smtpPort) }}</div>
+                        <div class="col-md-4">{{ form_row(form.smtpEncryption) }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">{{ form_row(form.smtpUsername) }}</div>
+                        <div class="col-md-6">{{ form_row(form.smtpPassword) }}</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-outline-primary btn-sm" type="button" data-action="mail-settings#testConnection" data-mail-settings-target="button">
+                            <i class="fas fa-plug me-1"></i>{{ 'app_settings.smtp_test.button'|trans }}
+                        </button>
+                        <div class="small" data-mail-settings-target="result"></div>
+                    </div>
                 </div>
             </div>
 

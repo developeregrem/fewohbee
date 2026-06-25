@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Appartment;
 use App\Entity\Reservation;
+use App\Entity\ReservationStatus;
 use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
@@ -41,10 +42,10 @@ class HousekeepingViewService
      *     }>
      * }
      */
-    public function buildDayView(\DateTimeImmutable $date, ?Subsidiary $subsidiary, string $statusMode = 'blocking'): array
+    public function buildDayView(\DateTimeImmutable $date, ?Subsidiary $subsidiary, string $statusMode = 'blocking', ?array $statusIds = null): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary, $statusMode);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $date, $date);
         $dateKey = $date->format('Y-m-d');
@@ -97,10 +98,11 @@ class HousekeepingViewService
         \DateTimeImmutable $end,
         ?Subsidiary $subsidiary,
         array $occupancyTypes,
-        string $statusMode = 'blocking'
+        string $statusMode = 'blocking',
+        ?array $statusIds = null
     ): array {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
@@ -159,10 +161,10 @@ class HousekeepingViewService
      *     }>
      * }
      */
-    public function buildWeekView(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary, string $statusMode = 'blocking'): array
+    public function buildWeekView(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary, string $statusMode = 'blocking', ?array $statusIds = null): array
     {
         $apartments = $this->loadApartments($subsidiary);
-        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode);
+        $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
@@ -326,6 +328,43 @@ class HousekeepingViewService
         $filtered = array_values(array_intersect($allowed, $values));
 
         return [] === $filtered ? $allowed : $filtered;
+    }
+
+    /**
+     * Normalize selected reservation status IDs against the list of known statuses.
+     *
+     * Empty input intentionally returns []: the repository helper interprets [] as
+     * "fall back to blocking statuses only", which is the default behaviour the UI
+     * expects when the user has not picked any specific status.
+     *
+     * @param iterable<ReservationStatus> $allStatuses
+     *
+     * @return int[]
+     */
+    public function normalizeReservationStatusIds(mixed $param, iterable $allStatuses): array
+    {
+        if (is_string($param)) {
+            $values = array_filter(array_map('trim', explode(',', $param)), static fn (string $v): bool => '' !== $v);
+        } elseif (is_array($param)) {
+            $values = $param;
+        } else {
+            return [];
+        }
+
+        $allowed = [];
+        foreach ($allStatuses as $status) {
+            $allowed[(int) $status->getId()] = true;
+        }
+
+        $result = [];
+        foreach ($values as $value) {
+            $id = (int) $value;
+            if ($id > 0 && isset($allowed[$id]) && !in_array($id, $result, true)) {
+                $result[] = $id;
+            }
+        }
+
+        return $result;
     }
 
     /**

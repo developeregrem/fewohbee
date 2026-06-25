@@ -197,6 +197,7 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this->getFindBaseQuery($reservation)
                 /* select only room type */
             ->andWhere('p.type = 1');
+        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -215,6 +216,7 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this->getFindBaseQuery($reservation)
             ->andWhere('p.type = 1')
             ->andWhere('p.isBookableOnline = true');
+        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -233,6 +235,7 @@ class PriceRepository extends ServiceEntityRepository
         $q = $this->getFindBaseQuery($reservation)
             ->andWhere('p.type = 1')
             ->andWhere('p.isMandatoryOnline = true');
+        $this->addMiscRoomCategoryFilter($q, $reservation);
 
         try {
             return $q->getQuery()->getResult();
@@ -269,6 +272,26 @@ class PriceRepository extends ServiceEntityRepository
             ->setParameter('roid', $reservation->getReservationOrigin()->getId());
 
         return $q;
+    }
+
+    /**
+     * Restrict misc prices (type=1) to those that either have no room category (apply to everyone,
+     * backwards compatible) or match the room category of the reservation's apartment.
+     */
+    private function addMiscRoomCategoryFilter(\Doctrine\ORM\QueryBuilder $q, Reservation $reservation): void
+    {
+        $category = $reservation->getAppartment()?->getRoomCategory();
+        if (null === $category) {
+            // Apartment without a category can only match category-less misc prices.
+            $q->andWhere('p.roomCategory IS NULL');
+
+            return;
+        }
+
+        // Parentheses are required: andWhere() does not wrap a raw OR string, so without them
+        // AND/OR precedence would match category-bound prices regardless of the other conditions.
+        $q->andWhere('(p.roomCategory IS NULL OR p.roomCategory = :rc)')
+            ->setParameter('rc', $category);
     }
 
     /**

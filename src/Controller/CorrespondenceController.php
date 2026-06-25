@@ -440,13 +440,16 @@ class CorrespondenceController extends AbstractController
         $pdfOutput = $templatesService->getPDFOutput(
             $templateOutput,
             'Registration-'.$reservation->getId(),
-            $template,
-            false,
-            'I'
+            $template
         );
 
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
+        $disposition = HeaderUtils::makeDisposition(
+            HeaderUtils::DISPOSITION_INLINE,
+            'Registration-'.$reservation->getId().'.pdf'
+        );
+        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

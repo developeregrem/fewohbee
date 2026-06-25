@@ -7,20 +7,36 @@ parameters:
     returnPath: '%env(RETURN_PATH)%'
     webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
-    uploadDirectory: '%kernel.project_dir%/public/%publicUploadDirectory%'
-    roomCategoryImageDirectory: '%kernel.project_dir%/public/resources/images/room-categories'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
-    version: '4.8.0'
+    version: '4.9.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
+    mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
     default_mailcopy: 'true'
+    default_mail_enabled: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
     default_frame_ancestors: ''
     frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
     # fallback parameters
+    # legacy mail env defaults; new installations configure these in the UI
+    env(FROM_MAIL): ''
+    env(FROM_NAME): ''
+    env(RETURN_PATH): ''
+    env(MAILER_DSN): 'null://null'
     # define the redis host
     env(REDIS_HOST): 'redis'
     # define the used redix index
     env(REDIS_IDX): '1'
+    # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
+    env(STORAGE_ADAPTER): 'local'
+    env(STORAGE_S3_ENDPOINT): ''
+    env(STORAGE_S3_REGION): ''
+    env(STORAGE_S3_BUCKET): ''
+    env(STORAGE_S3_KEY): ''
+    env(STORAGE_S3_SECRET): ''
+    env(STORAGE_S3_PUBLIC_URL): ''
+    # Optional key prefix inside the bucket, e.g. a per-tenant UUID for a shared
+    # SaaS bucket. Empty (default) = write to the bucket root (single-tenant).
+    env(STORAGE_S3_PREFIX): ''
 
 services:
     # default configuration for services in *this* file
@@ -48,7 +64,7 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/*'
-        exclude: '../src/{Entity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
+        exclude: '../src/{Entity,GeoEntity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class
@@ -60,28 +76,59 @@ services:
     # please note that last definitions always *replace* previous ones    
     App\Service\MailService:
         arguments:
-            - '%fromMail%'
-            - '%fromName%'
-            - '%returnPath%'
-            - '%mailCopy%'
+            $mailEnabled: '%mailEnabled%'
+
+    App\Service\SmtpPasswordCrypto:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
     
     App\Service\AppSettingsService:
         arguments:
             $fromMail: '%fromMail%'
+            $fromName: '%fromName%'
+            $returnPath: '%returnPath%'
+            $mailCopy: '%mailCopy%'
+            $mailerDsn: '%env(MAILER_DSN)%'
+
+    App\Service\OnlineBookingConfigService:
+        arguments:
+            $legacyFrameAncestors: '%frameAncestors%'
 
     App\Service\TemplatesService:
         arguments:
             - '%webHost%'
             
+    # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally
+    # wires storages that reference this id). Works with any S3-compatible provider
+    # (Hetzner Object Storage, MinIO, R2, Wasabi, AWS) via the configured endpoint.
+    storage.s3_client:
+        class: Aws\S3\S3Client
+        arguments:
+            - endpoint: '%env(STORAGE_S3_ENDPOINT)%'
+              region: '%env(STORAGE_S3_REGION)%'
+              version: 'latest'
+              use_path_style_endpoint: true
+              credentials:
+                  key: '%env(STORAGE_S3_KEY)%'
+                  secret: '%env(STORAGE_S3_SECRET)%'
+
+    App\Service\Storage\ImageUrlGenerator:
+        arguments:
+            $adapter: '%env(STORAGE_ADAPTER)%'
+            $s3PublicUrl: '%env(STORAGE_S3_PUBLIC_URL)%'
+            $s3Prefix: '%env(STORAGE_S3_PREFIX)%'
+            $localExportPrefix: '%publicUploadDirectory%'
+            $localRoomCategoryPrefix: '%roomCategoryImagePublicDirectory%'
+
     App\Service\FileUploader:
         arguments:
-            $publicDirectory: '%publicUploadDirectory%'
-            $targetDirectory: '%uploadDirectory%'
+            $storage: '@images.export.storage'
+            $urlGenerator: '@App\Service\Storage\ImageUrlGenerator'
 
     App\Service\RoomCategoryImageService:
         arguments:
-            $imageDirectory: '%roomCategoryImageDirectory%'
-            $imagePublicDirectory: '%roomCategoryImagePublicDirectory%'
+            $storage: '@images.roomcat.storage'
+            $urlGenerator: '@App\Service\Storage\ImageUrlGenerator'
 
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:
@@ -95,10 +142,6 @@ services:
         arguments:
             $rpId: '%env(RELYING_PARTY_ID)%'
             $rpName: '%env(RELYING_PARTY_NAME)%'
-
-    App\EventSubscriber\EmbeddingSecuritySubscriber:
-        arguments:
-            $frameAncestors: '%frameAncestors%'
 
     App\Workflow\Trigger\WorkflowTriggerRegistry:
         arguments:

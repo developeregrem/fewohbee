@@ -64,7 +64,8 @@ class FirstRunCommand extends Command
             ->addOption('last-name', null, InputOption::VALUE_REQUIRED, 'Lastname for the initial admin.')
             ->addOption('email', null, InputOption::VALUE_REQUIRED, 'Email address for the admin user.')
             ->addOption('accommodation-name', null, InputOption::VALUE_REQUIRED, 'Name of the accommodation that should be created.')
-            ->addOption('load-sample-data', null, InputOption::VALUE_NONE, 'Load sample data (rooms, prices, reservations, invoices).');
+            ->addOption('load-sample-data', null, InputOption::VALUE_NONE, 'Load sample data (rooms, prices, reservations, invoices).')
+            ->addOption('if-not-initialized', null, InputOption::VALUE_NONE, 'Exit successfully (no action) if the app is already initialized. Makes the command safe to run repeatedly, e.g. from an automated init job.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -76,6 +77,15 @@ class FirstRunCommand extends Command
         $users = $this->em->getRepository(User::class)->findAll();
 
         if (count($users) > 0) {
+            // --if-not-initialized makes the command idempotent: an automated
+            // init job re-runs it on every deploy/sync and must not fail just
+            // because the app is already set up.
+            if ($input->getOption('if-not-initialized')) {
+                $io->note('App already prepared, nothing to do (--if-not-initialized).');
+
+                return Command::SUCCESS;
+            }
+
             $io->error('App already prepared!');
 
             return Command::FAILURE;
@@ -180,6 +190,9 @@ class FirstRunCommand extends Command
         $this->templatesFixtures->load($this->em);
         $io->note('Base templates loaded.');
 
+        $this->guestCategorySeeder->seedDefaults();
+        $io->note('Default guest categories prepared.');
+
         $loadSampleData = $input->getOption('load-sample-data')
             || ($input->isInteractive() && $io->confirm('Load sample data (rooms, prices, reservations, invoices)?', false));
         if ($loadSampleData) {
@@ -189,9 +202,6 @@ class FirstRunCommand extends Command
 
             $this->workflowSeeder->seedExampleWorkflows();
             $io->note('Example workflows created.');
-
-            $this->guestCategorySeeder->seedDefaults();
-            $io->note('Default guest categories prepared.');
         }
 
         $io->success('All done! You can now navigate to the app and login with the provided username and password.');

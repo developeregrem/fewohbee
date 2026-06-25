@@ -41,7 +41,7 @@
                  draggable="true"
                  data-action="dragstart->room-category-images#dragStart dragover->room-category-images#dragOver drop->room-category-images#drop dragend->room-category-images#dragEnd">
                 <div class="card h-100">
-                    <img src="{{ app.request.basepath }}/{{ imagePublicDirectory }}/{{ category.id }}/thumb_{{ image.filename }}"
+                    <img src="{{ room_category_image_url(image, 'thumb') }}"
                          class="card-img-top" alt="" style="height:100px;object-fit:cover">
                     <div class="card-body p-1 text-center">
                         <button type="button"

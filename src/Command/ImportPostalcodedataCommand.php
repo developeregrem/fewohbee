@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\PostalCodeData;
+use App\GeoEntity\PostalCodeData;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -22,7 +23,7 @@ class ImportPostalcodedataCommand extends Command
 {
     private const BATCH_SIZE = 500;
 
-    public function __construct(private readonly EntityManagerInterface $em, ?string $name = null)
+    public function __construct(private readonly EntityManagerInterface $geoEntityManager, ?string $name = null)
     {
         parent::__construct($name);
     }
@@ -41,19 +42,21 @@ class ImportPostalcodedataCommand extends Command
         $inputFile = $input->getArgument('file');
         $override = $input->getOption('override');
 
+        $this->ensureTableExists();
+
         if ($override) {
             $this->emptyTable();
             $io->info('Successfully cleared old data.');
         }
 
         $stream = null;
-        $connection = $this->em->getConnection();
+        $connection = $this->geoEntityManager->getConnection();
         $nativeConnection = $connection->getNativeConnection();
         $importedRows = 0;
         $pendingRows = 0;
         $insertSql = sprintf(
             'INSERT INTO %s (country_code, postal_code, place_name, state_name, state_name_short) VALUES (?, ?, ?, ?, ?)',
-            $this->em->getClassMetadata(PostalCodeData::class)->getTableName()
+            $this->geoEntityManager->getClassMetadata(PostalCodeData::class)->getTableName()
         );
 
         try {
@@ -154,10 +157,24 @@ class ImportPostalcodedataCommand extends Command
         }
     }
 
+    /**
+     * The table is created on first use so that a fresh (e.g. central/shared)
+     * geo database does not require any migration to be run against it.
+     */
+    private function ensureTableExists(): void
+    {
+        $metadata = $this->geoEntityManager->getClassMetadata(PostalCodeData::class);
+        $schemaManager = $this->geoEntityManager->getConnection()->createSchemaManager();
+
+        if (!$schemaManager->tablesExist([$metadata->getTableName()])) {
+            (new SchemaTool($this->geoEntityManager))->createSchema([$metadata]);
+        }
+    }
+
     private function emptyTable(): void
     {
-        $cmd = $this->em->getClassMetadata(PostalCodeData::class);
-        $connection = $this->em->getConnection();
+        $cmd = $this->geoEntityManager->getClassMetadata(PostalCodeData::class);
+        $connection = $this->geoEntityManager->getConnection();
         $platform = $connection->getDatabasePlatform();
         $tableName = $cmd->getTableName();
 

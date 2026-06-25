@@ -302,7 +302,7 @@ class TemplatesServiceController extends AbstractController
             $this->addFlash('warning', $e->getMessage());
             return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
         }
-        $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template, true, 'I');
+        $pdfOutput = $templatesService->getPDFOutput($html, 'Template-Preview-'.$template->getId(), $template);
 
         $response = new Response($pdfOutput);
         $response->headers->set('Content-Type', 'application/pdf');
@@ -473,10 +473,8 @@ class TemplatesServiceController extends AbstractController
             return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        $path = rtrim($request->getBasePath(), '/').'/'.$fos->getPublicDirectory().'/'.$name;
-
         return $this->json([
-            'location' => $path,
+            'location' => $fos->getPublicUrl($name),
         ]);
     }
 }

@@ -12,12 +12,15 @@ fi
 # Resolve ${HOST_NAME} placeholder in server-name include
 envsubst '${HOST_NAME}' < /etc/nginx/conf.d/templates/server_name.template > /etc/nginx/conf.d/server_name.active
 
-# Resolve ${PHP_FPM_HOST} in the fewohbee snippet (keeping nginx $-vars untouched)
-envsubst '${PHP_FPM_HOST}' \
-    < /etc/nginx/conf.d/site-enabled-https/01_fewohbee.snippet \
-    > /etc/nginx/conf.d/site-enabled-https/01_fewohbee.snippet.tmp \
-    && mv /etc/nginx/conf.d/site-enabled-https/01_fewohbee.snippet.tmp \
-          /etc/nginx/conf.d/site-enabled-https/01_fewohbee.snippet
+# Resolve ${PHP_FPM_HOST} in the fewohbee snippet (keeping nginx $-vars untouched).
+# Writes back in-place via `cat >` instead of `mv` so it also works when the
+# snippet is provided via a bind-mount (e.g. docker-compose.override.yml) —
+# `mv` would fail with "Resource busy" against a bind-mount target.
+SNIPPET=/etc/nginx/conf.d/site-enabled-https/01_fewohbee.snippet
+TMP=$(mktemp)
+envsubst '${PHP_FPM_HOST}' < "$SNIPPET" > "$TMP"
+cat "$TMP" > "$SNIPPET"
+rm -f "$TMP"
 
 if [ "${REVERSE_PROXY:-false}" != "true" ]; then
     # Wait for SSL certificates to be provided by the acme container.

@@ -152,6 +152,50 @@ final class TouristTaxServiceTest extends TestCase
         self::assertCount(0, $rows);
     }
 
+    public function testRangeFilterIsTimezoneAgnostic(): void
+    {
+        // Regression: reservation start is created in the app's local timezone (e.g. Europe/Berlin),
+        // but report range comes from filter parsing in UTC. A naive timestamp-based compare
+        // dropped the first night of the month due to the 2h offset.
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $tax = $this->makeTax('Kurtaxe', false, [[$adult, '2.00', null]]);
+        $service = $this->makeService([$tax], [$adult]);
+
+        $r = new Reservation();
+        $r->setStartDate(new \DateTime('2026-06-01 00:00:00', new \DateTimeZone('Europe/Berlin')));
+        $r->setEndDate(new \DateTime('2026-06-04 00:00:00', new \DateTimeZone('Europe/Berlin')));
+        $apt = new Appartment();
+        $apt->setObject(new Subsidiary());
+        $r->setAppartment($apt);
+        $r->setGuestCounts([1 => 1]);
+
+        $rangeStart = new \DateTime('2026-06-01 00:00:00', new \DateTimeZone('UTC'));
+        $rangeEnd = new \DateTime('2026-06-30 23:59:59', new \DateTimeZone('UTC'));
+        $rows = $service->calculateForReservation($r, $rangeStart, $rangeEnd);
+
+        self::assertCount(1, $rows);
+        self::assertSame(3, $rows[0]->nights, 'All 3 nights must be counted despite TZ mismatch between reservation and range');
+    }
+
+    public function testRangeFilterCountsFullStayWhenInsideRange(): void
+    {
+        // Reproduces the report scenario: reservation 01.06-04.06 (3 nights) reported
+        // for full June. Range filter must NOT drop any of the 3 nights.
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $tax = $this->makeTax('Kurtaxe', false, [[$adult, '2.00', null]]);
+
+        $service = $this->makeService([$tax], [$adult]);
+        $r = $this->makeReservationWithDates([1 => 1], '2026-06-01', '2026-06-04');
+
+        $rangeStart = new \DateTime('2026-06-01 00:00:00');
+        $rangeEnd = new \DateTime('2026-06-30 23:59:59');
+        $rows = $service->calculateForReservation($r, $rangeStart, $rangeEnd);
+
+        self::assertCount(1, $rows);
+        self::assertSame(3, $rows[0]->nights);
+        self::assertSame(6.0, $rows[0]->total());
+    }
+
     public function testZeroCountCategoryIsSkipped(): void
     {
         $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);

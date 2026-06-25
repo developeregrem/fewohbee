@@ -67,11 +67,8 @@ when@dev:
             not_compromised_password:
                 enabled: false
 
-when@prod: &pw_blacklist_prod
-        framework:
-            validation:
-                not_compromised_password:
-                    enabled: '%env(bool:USE_PASSWORD_BLACKLIST)%'
-
-# use same config as in prod
-when@redis: *pw_blacklist_prod
+when@prod:
+    framework:
+        validation:
+            not_compromised_password:
+                enabled: '%env(bool:USE_PASSWORD_BLACKLIST)%'

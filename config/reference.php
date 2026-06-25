@@ -1049,7 +1049,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             servicename?: scalar|Param|null, // Overrules dbname parameter if given and used as SERVICE_NAME or SID connection parameter for Oracle depending on the service parameter.
  *             sessionMode?: scalar|Param|null, // The session mode to use for the oci8 driver
  *             server?: scalar|Param|null, // The name of a running database server to connect to for SQL Anywhere.
- *             default_dbname?: scalar|Param|null, // Override the default database (postgres) to connect to for PostgreSQL connexion.
+ *             default_dbname?: scalar|Param|null, // Override the default database (postgres) to connect to for PostgreSQL connection.
  *             sslmode?: scalar|Param|null, // Determines whether or with what priority a SSL TCP/IP connection will be negotiated with the server for PostgreSQL.
  *             sslrootcert?: scalar|Param|null, // The name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
  *             sslcert?: scalar|Param|null, // The path to the SSL client certificate file for PostgreSQL.
@@ -1095,7 +1095,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                 servicename?: scalar|Param|null, // Overrules dbname parameter if given and used as SERVICE_NAME or SID connection parameter for Oracle depending on the service parameter.
  *                 sessionMode?: scalar|Param|null, // The session mode to use for the oci8 driver
  *                 server?: scalar|Param|null, // The name of a running database server to connect to for SQL Anywhere.
- *                 default_dbname?: scalar|Param|null, // Override the default database (postgres) to connect to for PostgreSQL connexion.
+ *                 default_dbname?: scalar|Param|null, // Override the default database (postgres) to connect to for PostgreSQL connection.
  *                 sslmode?: scalar|Param|null, // Determines whether or with what priority a SSL TCP/IP connection will be negotiated with the server for PostgreSQL.
  *                 sslrootcert?: scalar|Param|null, // The name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
  *                 sslcert?: scalar|Param|null, // The path to the SSL client certificate file for PostgreSQL.
@@ -1174,7 +1174,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *                     lock_path?: scalar|Param|null, // Default: "%kernel.cache_dir%/doctrine/orm/slc/filelock"
  *                     lock_lifetime?: scalar|Param|null, // Default: 60
  *                     type?: scalar|Param|null, // Default: "default"
- *                     lifetime?: scalar|Param|null, // Default: 0
+ *                     lifetime?: scalar|Param|null, // Default: null
  *                     service?: scalar|Param|null,
  *                     name?: scalar|Param|null,
  *                 }>,
@@ -1414,6 +1414,123 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     },
  *     default_transport?: scalar|Param|null, // Default: "default"
  * }
+ * @psalm-type OneupFlysystemConfig = array{
+ *     adapters?: array<string, array{ // Default: []
+ *         local?: array{
+ *             lazy?: bool|Param, // Default: false
+ *             location?: scalar|Param|null,
+ *             permissions?: array{
+ *                 file?: array{
+ *                     public?: int|Param, // Default: null
+ *                     private?: int|Param, // Default: null
+ *                 },
+ *                 dir?: array{
+ *                     public?: int|Param, // Default: null
+ *                     private?: int|Param, // Default: null
+ *                 },
+ *             },
+ *             writeFlags?: scalar|Param|null, // Default: 2
+ *             linkHandling?: scalar|Param|null, // Default: 2
+ *             mimeTypeDetector?: scalar|Param|null, // Default: null
+ *             lazyRootCreation?: scalar|Param|null, // Default: false
+ *         },
+ *         awss3v3?: array{
+ *             client?: scalar|Param|null,
+ *             bucket?: scalar|Param|null,
+ *             prefix?: scalar|Param|null, // Default: ""
+ *             visibilityConverter?: scalar|Param|null, // Default: null
+ *             mimeTypeDetector?: scalar|Param|null, // Default: null
+ *             options?: list<scalar|Param|null>,
+ *             streamReads?: bool|Param, // Default: true
+ *         },
+ *         ftp?: array{
+ *             options?: array{
+ *                 host?: scalar|Param|null,
+ *                 root?: scalar|Param|null,
+ *                 username?: scalar|Param|null,
+ *                 password?: scalar|Param|null,
+ *                 port?: scalar|Param|null, // Default: 21
+ *                 ssl?: bool|Param, // Default: false
+ *                 timeout?: scalar|Param|null, // Default: 90
+ *                 utf8?: bool|Param, // Default: false
+ *                 passive?: bool|Param, // Default: true
+ *                 transferMode?: scalar|Param|null, // Default: null
+ *                 systemType?: scalar|Param|null, // Default: null
+ *                 ignorePassiveAddress?: bool|Param|null, // Default: null
+ *                 timestampsOnUnixListingsEnabled?: bool|Param, // Default: false
+ *                 recurseManually?: bool|Param, // Default: false
+ *                 useRawListOptions?: bool|Param, // Default: false
+ *             },
+ *             connectionProvider?: scalar|Param|null, // Default: null
+ *             connectivityChecker?: scalar|Param|null, // Default: null
+ *             visibilityConverter?: scalar|Param|null, // Default: null
+ *             mimeTypeDetector?: scalar|Param|null, // Default: null
+ *         },
+ *         sftp?: array{
+ *             options?: array{
+ *                 host?: scalar|Param|null,
+ *                 username?: scalar|Param|null,
+ *                 password?: scalar|Param|null, // Default: null
+ *                 privateKey?: scalar|Param|null, // Default: null
+ *                 passphrase?: scalar|Param|null, // Default: null
+ *                 port?: scalar|Param|null, // Default: 22
+ *                 useAgent?: bool|Param, // Default: false
+ *                 timeout?: scalar|Param|null, // Default: 10
+ *                 maxTries?: scalar|Param|null, // Default: 4
+ *                 hostFingerprint?: scalar|Param|null, // Default: null
+ *                 connectivityChecker?: scalar|Param|null, // Default: null
+ *                 root?: scalar|Param|null,
+ *             },
+ *             permissions?: array{
+ *                 file?: array{
+ *                     public?: int|Param, // Default: null
+ *                     private?: int|Param, // Default: null
+ *                 },
+ *                 dir?: array{
+ *                     public?: int|Param, // Default: null
+ *                     private?: int|Param, // Default: null
+ *                 },
+ *             },
+ *             mimeTypeDetector?: scalar|Param|null, // Default: null
+ *         },
+ *         memory?: array{
+ *             defaultVisibility?: scalar|Param|null, // Default: "public"
+ *         },
+ *         custom?: array{
+ *             service?: mixed,
+ *         },
+ *         async_aws_s3?: array{
+ *             client?: scalar|Param|null,
+ *             bucket?: scalar|Param|null,
+ *             prefix?: scalar|Param|null, // Default: ""
+ *             visibilityConverter?: scalar|Param|null, // Default: null
+ *         },
+ *         googlecloudstorage?: array{
+ *             client?: scalar|Param|null,
+ *             bucket?: scalar|Param|null,
+ *             prefix?: scalar|Param|null, // Default: ""
+ *             visibilityHandler?: scalar|Param|null, // Default: null
+ *             defaultVisibility?: scalar|Param|null, // Default: "private"
+ *             mimeTypeDetector?: scalar|Param|null, // Default: null
+ *         },
+ *         gitlab?: array{
+ *             client?: scalar|Param|null,
+ *             prefix?: scalar|Param|null, // Default: ""
+ *         },
+ *         azureblob?: array{
+ *             client?: scalar|Param|null,
+ *             container?: scalar|Param|null,
+ *             prefix?: scalar|Param|null, // Default: null
+ *         },
+ *     }>,
+ *     filesystems?: array<string, array{ // Default: []
+ *         adapter?: scalar|Param|null,
+ *         alias?: scalar|Param|null, // Default: null
+ *         mount?: scalar|Param|null, // Default: null
+ *         visibility?: scalar|Param|null,
+ *         directory_visibility?: scalar|Param|null,
+ *     }>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1427,6 +1544,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *     stimulus?: StimulusConfig,
  *     turbo?: TurboConfig,
+ *     oneup_flysystem?: OneupFlysystemConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1443,6 +1561,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
+ *         oneup_flysystem?: OneupFlysystemConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1457,20 +1576,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
- *     },
- *     "when@redis"?: array{
- *         imports?: ImportsConfig,
- *         parameters?: ParametersConfig,
- *         services?: ServicesConfig,
- *         framework?: FrameworkConfig,
- *         twig?: TwigConfig,
- *         security?: SecurityConfig,
- *         doctrine?: DoctrineConfig,
- *         doctrine_migrations?: DoctrineMigrationsConfig,
- *         monolog?: MonologConfig,
- *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
- *         stimulus?: StimulusConfig,
- *         turbo?: TurboConfig,
+ *         oneup_flysystem?: OneupFlysystemConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1487,6 +1593,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         symfonycasts_reset_password?: SymfonycastsResetPasswordConfig,
  *         stimulus?: StimulusConfig,
  *         turbo?: TurboConfig,
+ *         oneup_flysystem?: OneupFlysystemConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
@@ -1572,7 +1679,6 @@ namespace Symfony\Component\Routing\Loader\Configurator;
  * @psalm-type RoutesConfig = array{
  *     "when@dev"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@prod"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
- *     "when@redis"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     "when@test"?: array<string, RouteConfig|ImportConfig|AliasConfig>,
  *     ...<string, RouteConfig|ImportConfig|AliasConfig>
  * }

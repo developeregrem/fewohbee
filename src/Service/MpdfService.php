@@ -13,20 +13,26 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class MpdfService
 {
-    private $requestStack;
-
-    public function __construct(RequestStack $requestStack)
-    {
-        $this->requestStack = $requestStack;
+    public function __construct(
+        private readonly RequestStack $requestStack,
+        #[Autowire('%kernel.cache_dir%/mpdf')]
+        private readonly string $tempDir,
+    ) {
     }
 
     public function getMpdf(string $format = 'A4')
     {
         $locale = $this->requestStack->getCurrentRequest()->getLocale();
+
+        if (!is_dir($this->tempDir)) {
+            @mkdir($this->tempDir, 0775, true);
+        }
+
         $isA5 = 'A5' === strtoupper($format);
         $isA6 = 'A6' === strtoupper($format);
         $config = [
@@ -39,6 +45,7 @@ class MpdfService
             'margin_bottom' => $isA6 ? 8  : ($isA5 ? 12 : 20),
             'margin_header' => $isA6 ? 4  : ($isA5 ? 6  : 9),
             'margin_footer' => $isA6 ? 4  : ($isA5 ? 6  : 9),
+            'tempDir'       => $this->tempDir
         ];
 
         return new \Mpdf\Mpdf($config);

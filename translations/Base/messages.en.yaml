@@ -61,7 +61,7 @@ operations.frontdesk.filter.date: Date
 operations.frontdesk.filter.subsidiary: Branch
 operations.frontdesk.filter.sections: Show
 operations.frontdesk.filter.reservations: Reservations
-operations.frontdesk.filter.includeCanceled: canceled/no-show
+operations.filter.reservationStatus: Reservation status
 operations.frontdesk.arrivals: Arrivals
 operations.frontdesk.departures: Departures
 operations.frontdesk.inhouse: Inhouse

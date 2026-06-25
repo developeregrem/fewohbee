@@ -54,6 +54,7 @@
                         {{ form_errors(form.inquiryReservationStatusId) }}
                         {{ form_errors(form.bookingReservationStatusId) }}
                         {{ form_errors(form.reservationOriginId) }}
+                        {{ form_errors(form.allowedEmbeddingOrigins) }}
                     </div>
                 </div>
             {% endif %}
@@ -72,6 +73,8 @@
                     <div class="row mt-2">
                         <div class="col-md-6">{{ form_row(form.bookingHorizonMonths) }}</div>
                     </div>
+                    <hr class="my-3">
+                    {{ form_row(form.allowedEmbeddingOrigins) }}
                 </div>
             </div>
 

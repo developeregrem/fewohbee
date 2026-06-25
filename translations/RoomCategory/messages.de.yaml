@@ -5,6 +5,11 @@ category:
     ask: Möchten Sie diese Kategorie wirklich löschen?
   details: Details / öffentliche Beschreibung
   description: Verwaltung der Zimmerkategorien
+  min_full_payers: Mindestanzahl Vollzahler
+  min_full_payers.help: >-
+    Anzahl Gäste, die immer den vollen Personenpreis zahlen, bevor Preisanpassungen
+    je Gästekategorie (z. B. Kinderrabatte) greifen. Beispiel: 2 → Rabatte greifen
+    erst ab 3 Personen. 0 = keine Mindestanzahl.
   double: Doppelzimmer
   flash:
     create:

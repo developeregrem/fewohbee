@@ -77,7 +77,8 @@ guest_category:
 
 guest_category_modifier:
   title: "Preisanpassungen je Gastkategorie"
-  description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif."
+  description: "Lege je Gastkategorie einen Aufschlag, Rabatt, Pauschalpreis oder \"frei\" auf den Übernachtungspreis fest. Der Erwachsenenpreis bleibt der Basistarif. Anpassungen wirken nur bei Übernachtungspreisen, die pro Person berechnet werden — nicht bei Pauschal- oder Zimmerpreisen."
+  threshold_hint: "Ab welcher Belegung diese Anpassungen greifen (Mindestanzahl Vollzahler), legst du je Zimmerkategorie fest — z. B. damit Kinder erst ab 3 Personen vergünstigt werden."
   add: "Preisanpassung hinzufügen"
   empty: "Noch keine Preisanpassungen angelegt — Übernachtungspreise gelten unverändert für alle Kategorien."
   delete:

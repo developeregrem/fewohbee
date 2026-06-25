@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Appartment;
+use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Repository\PriceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -119,92 +121,241 @@ class PublicPricingService
     }
 
     /**
-     * Retrieve all bookable-online extras with calculated total prices for the given stay.
+     * Build the catalogue of bookable-online extras for the room-selection step (step 2),
+     * spanning every available room category. Global extras (no room category) keep their
+     * guest-selectable quantity; category-bound extras are flagged `autoQuantity` — their
+     * quantity is derived from the actual booking later (see {@see resolveExtras()}) and is
+     * therefore not user-editable. The concrete line totals are only known once rooms are
+     * selected, so the catalogue intentionally exposes per-unit prices, not totals.
      *
-     * @return array<int, array{id: int, description: string, unitPrice: float, unitPriceFormatted: string, calculationType: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool}>
+     * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> $samples
+     *        One representative room per available type/category
+     *
+     * @return array<int, array{id: int, description: string, categoryId: ?int, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
      */
-    public function getBookableExtras(
-        Appartment $sampleRoom,
+    public function catalogExtras(
+        array $samples,
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
-        int $persons,
-        int $roomsCount,
+        int $totalPersons,
+        int $totalRooms,
     ): array {
         $origin = $this->configService->getReservationOrigin();
-        if (null === $origin) {
-            return [];
-        }
-
-        $reservation = new Reservation();
-        $reservation->setAppartment($sampleRoom);
-        $reservation->setStartDate(new \DateTime($dateFrom->format('Y-m-d')));
-        $reservation->setEndDate(new \DateTime($dateTo->format('Y-m-d')));
-        $reservation->setPersons($persons);
-        $reservation->setReservationOrigin($origin);
-
-        $extras = $this->priceRepository->findBookableOnlineExtras($reservation);
-        if ([] === $extras) {
+        if (null === $origin || [] === $samples) {
             return [];
         }
 
         $nights = max(1, (int) $dateFrom->diff($dateTo)->days);
-        $result = [];
+        $global = [];
+        $byCategory = [];
 
-        foreach ($extras as $price) {
-            // Check that this price has valid days in the stay period
-            $pricesPerDay = $this->priceService->getPricesForReservationDays(
-                $reservation,
-                1,
-                new ArrayCollection([$price]),
-            );
+        foreach ($samples as $sample) {
+            $reservation = $this->buildSampleReservation($sample['sampleRoom'], max(1, $totalPersons), $dateFrom, $dateTo, $origin);
+            foreach ($this->priceRepository->findBookableOnlineExtras($reservation) as $price) {
+                $id = (int) $price->getId();
+                $isGlobal = null === $price->getRoomCategory();
+                if ($isGlobal && isset($global[$id])) {
+                    continue;
+                }
+                if (!$isGlobal && isset($byCategory[$id])) {
+                    continue;
+                }
 
-            $validDays = 0;
-            // Day 0 is arrival day, skip it — count from day 1 (same as InvoiceService::prefillMiscPositions)
-            for ($i = 1; $i <= $nights; ++$i) {
-                if (isset($pricesPerDay[$i]) && null !== $pricesPerDay[$i]) {
-                    ++$validDays;
+                $validDays = $this->countValidDays($reservation, $price, $nights);
+                if (0 === $validDays && !$price->getIsFlatPrice()) {
+                    continue;
+                }
+
+                $unitPrice = (float) $price->getPrice();
+                [$calculationType, $perUnit] = $this->unitPricing($price, $unitPrice, $validDays, $isGlobal ? $totalPersons : 1);
+                if ($perUnit <= 0.0) {
+                    continue;
+                }
+
+                $entry = [
+                    'id' => $id,
+                    'description' => (string) $price->getDescription(),
+                    'categoryId' => $price->getRoomCategory()?->getId(),
+                    'categoryName' => $isGlobal ? null : ($sample['categoryName'] ?? $price->getRoomCategory()?->getName()),
+                    'calculationType' => $calculationType,
+                    'unitPrice' => $unitPrice,
+                    'unitPriceFormatted' => number_format($unitPrice, 2, ',', '.'),
+                    'pricePerUnit' => $perUnit,
+                    'pricePerUnitFormatted' => number_format($perUnit, 2, ',', '.'),
+                    'maxQuantity' => $isGlobal ? max(1, $totalRooms) : 1,
+                    'isMandatory' => $price->getIsMandatoryOnline(),
+                    'autoQuantity' => !$isGlobal,
+                ];
+
+                if ($isGlobal) {
+                    $global[$id] = $entry;
+                } else {
+                    $byCategory[$id] = $entry;
                 }
             }
+        }
 
+        // Global extras first, then category-bound grouped by category name.
+        usort($byCategory, static fn ($a, $b) => [$a['categoryName'], $a['description']] <=> [$b['categoryName'], $b['description']]);
+
+        return array_merge(array_values($global), array_values($byCategory));
+    }
+
+    /**
+     * Resolve bookable-online extras against the concrete booked composition. Category-bound
+     * extras receive a quantity derived from how many rooms / persons of that category are
+     * actually booked (locked); global extras keep the guest-selected quantity. Mandatory
+     * extras are forced on. Each entry carries its Price for downstream reservation attachment.
+     *
+     * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment, roomCount: int, persons: int}> $buckets
+     *        Booked rooms grouped by category (categoryId null = rooms without a category)
+     * @param array<int, int> $selectedExtras Price ID => quantity/flag from the guest
+     *
+     * @return array<int, array{id: int, description: string, categoryId: ?int, categoryName: ?string, calculationType: string, isMandatory: bool, autoQuantity: bool, quantity: int, pricePerUnit: float, lineTotal: float, lineTotalFormatted: string, price: Price}>
+     */
+    public function resolveExtras(
+        array $buckets,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        int $totalPersons,
+        int $totalRooms,
+        array $selectedExtras,
+    ): array {
+        $origin = $this->configService->getReservationOrigin();
+        if (null === $origin || [] === $buckets) {
+            return [];
+        }
+
+        $nights = max(1, (int) $dateFrom->diff($dateTo)->days);
+
+        // Gather candidate prices, remembering which category bucket each belongs to.
+        $candidates = [];
+        foreach ($buckets as $bucket) {
+            $reservation = $this->buildSampleReservation($bucket['sampleRoom'], max(1, (int) $bucket['persons']), $dateFrom, $dateTo, $origin);
+            foreach ($this->priceRepository->findBookableOnlineExtras($reservation) as $price) {
+                $id = (int) $price->getId();
+                if (isset($candidates[$id])) {
+                    continue;
+                }
+                $isGlobal = null === $price->getRoomCategory();
+                $candidates[$id] = [
+                    'price' => $price,
+                    'reservation' => $reservation,
+                    'bucket' => $isGlobal ? null : $bucket,
+                ];
+            }
+        }
+
+        $result = [];
+        foreach ($candidates as $id => $candidate) {
+            $price = $candidate['price'];
+            $isGlobal = null === $price->getRoomCategory();
+            $scopeRooms = $isGlobal ? $totalRooms : (int) $candidate['bucket']['roomCount'];
+            $scopePersons = $isGlobal ? $totalPersons : (int) $candidate['bucket']['persons'];
+
+            $validDays = $this->countValidDays($candidate['reservation'], $price, $nights);
             if (0 === $validDays && !$price->getIsFlatPrice()) {
                 continue;
             }
 
             $unitPrice = (float) $price->getPrice();
-            $isFlatPrice = $price->getIsFlatPrice();
-            $isPerRoom = $price->getIsPerRoom();
+            $mandatory = $price->getIsMandatoryOnline();
+            $selected = (int) ($selectedExtras[$id] ?? 0);
+            $isOn = $mandatory || $selected >= 1;
 
-            if ($isFlatPrice) {
+            if ($price->getIsFlatPrice()) {
                 $calculationType = 'flat';
-                $pricePerUnit = $unitPrice;
-                $maxQuantity = $roomsCount;
-            } elseif ($isPerRoom) {
+                $perUnit = $unitPrice;
+                // Global: once per booking, guest-selectable. Category-bound: once per room of that
+                // category (a flat price bills once per reservation, so N matching rooms => N×).
+                $quantity = $isGlobal
+                    ? min(max($mandatory ? 1 : $selected, 0), max(1, $scopeRooms))
+                    : ($isOn ? $scopeRooms : 0);
+            } elseif ($price->getIsPerRoom()) {
                 $calculationType = 'per_room_night';
-                $pricePerUnit = $unitPrice * $validDays;
-                $maxQuantity = $roomsCount;
+                $perUnit = $unitPrice * $validDays;
+                $quantity = $isGlobal
+                    ? min(max($mandatory ? 1 : $selected, 0), max(1, $scopeRooms))
+                    : ($isOn ? $scopeRooms : 0);
             } else {
                 $calculationType = 'per_person_night';
-                $pricePerUnit = $unitPrice * $persons * $validDays;
-                $maxQuantity = 1;
+                // Single unit spans all persons in scope (mirrors legacy per-person behaviour).
+                $perUnit = $unitPrice * $scopePersons * $validDays;
+                $quantity = $isOn ? 1 : 0;
             }
 
-            if ($pricePerUnit <= 0.0) {
+            if ($quantity < 1 || $perUnit <= 0.0) {
                 continue;
             }
 
+            $lineTotal = $perUnit * $quantity;
             $result[] = [
-                'id' => (int) $price->getId(),
+                'id' => $id,
                 'description' => (string) $price->getDescription(),
-                'unitPrice' => $unitPrice,
-                'unitPriceFormatted' => number_format($unitPrice, 2, ',', '.'),
+                'categoryId' => $price->getRoomCategory()?->getId(),
+                'categoryName' => $price->getRoomCategory()?->getName(),
                 'calculationType' => $calculationType,
-                'pricePerUnit' => $pricePerUnit,
-                'pricePerUnitFormatted' => number_format($pricePerUnit, 2, ',', '.'),
-                'maxQuantity' => $maxQuantity,
-                'isMandatory' => $price->getIsMandatoryOnline(),
+                'isMandatory' => $mandatory,
+                'autoQuantity' => !$isGlobal,
+                'quantity' => $quantity,
+                'pricePerUnit' => $perUnit,
+                'lineTotal' => $lineTotal,
+                'lineTotalFormatted' => number_format($lineTotal, 2, ',', '.'),
+                'price' => $price,
             ];
         }
 
         return $result;
+    }
+
+    /**
+     * Determine the calculation type label and per-unit price for an extra.
+     *
+     * @return array{0: string, 1: float} [calculationType, pricePerUnit]
+     */
+    private function unitPricing(Price $price, float $unitPrice, int $validDays, int $persons): array
+    {
+        if ($price->getIsFlatPrice()) {
+            return ['flat', $unitPrice];
+        }
+        if ($price->getIsPerRoom()) {
+            return ['per_room_night', $unitPrice * $validDays];
+        }
+
+        return ['per_person_night', $unitPrice * max(1, $persons) * $validDays];
+    }
+
+    /**
+     * Count how many nights of the stay the extra is valid for (season/weekday aware).
+     * Day 0 is the arrival day and is skipped (same as InvoiceService::prefillMiscPositions).
+     */
+    private function countValidDays(Reservation $reservation, Price $price, int $nights): int
+    {
+        $pricesPerDay = $this->priceService->getPricesForReservationDays(
+            $reservation,
+            1,
+            new ArrayCollection([$price]),
+        );
+
+        $validDays = 0;
+        for ($i = 1; $i <= $nights; ++$i) {
+            if (isset($pricesPerDay[$i]) && null !== $pricesPerDay[$i]) {
+                ++$validDays;
+            }
+        }
+
+        return $validDays;
+    }
+
+    private function buildSampleReservation(Appartment $room, int $persons, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, ReservationOrigin $origin): Reservation
+    {
+        $reservation = new Reservation();
+        $reservation->setAppartment($room);
+        $reservation->setStartDate(new \DateTime($dateFrom->format('Y-m-d')));
+        $reservation->setEndDate(new \DateTime($dateTo->format('Y-m-d')));
+        $reservation->setPersons($persons);
+        $reservation->setReservationOrigin($origin);
+
+        return $reservation;
     }
 }

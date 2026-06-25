@@ -16,16 +16,19 @@ namespace App\Service;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Enum\IDCardType;
-use App\Entity\PostalCodeData;
 use App\Entity\Template;
+use App\GeoEntity\PostalCodeData;
+use App\Repository\PostalCodeDataRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class CustomerService
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly PostalCodeDataRepository $postalCodeDataRepository,
+    ) {
     }
 
     public function getCustomerFromForm(Request $request, $id = 'new')
@@ -175,7 +178,7 @@ class CustomerService
      */
     public function getCitiesByZIP($country, $zip)
     {
-        $cities = $this->em->getRepository(PostalCodeData::class)->findPlacesByCode($country, $zip);
+        $cities = $this->postalCodeDataRepository->findPlacesByCode($country, $zip);
         $result = [];
         /* @var $city PostalCodeData */
         foreach ($cities as $city) {

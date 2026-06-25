@@ -7,6 +7,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\AppartmentRepository')]
 #[ORM\Table(name: 'appartments')]
@@ -17,6 +18,7 @@ class Appartment
     #[ORM\Column(type: 'integer')]
     private $id;
     #[ORM\Column(type: 'string', length: 10)]
+    #[Assert\Length(max: 10)]
     private string $number;
     #[ORM\Column(type: 'smallint')]
     private int $beds_max;

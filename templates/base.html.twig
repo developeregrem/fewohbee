@@ -18,7 +18,7 @@
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
         <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/autoComplete.min.10.2.7.js" defer></script>
     {% endblock %}
-    <!--<link rel="icon" type="image/x-icon" href="" />-->
+    <link rel="icon" type="image/png" href="{{ app.request.basepath }}/img/favicon.png" />
 </head>
 <body>
 {% block body %}
@@ -137,7 +137,7 @@
               </div>
                 <div id="modal-content-ajax">
                      <div class="modal-body">
-                        <img src="{{ app.request.basepath }}/resources/images/ajax-loader.gif"/>
+                        <img src="{{ app.request.basepath }}/img/ajax-loader.gif"/>
                     </div>
                 </div>
             </div>
@@ -181,10 +181,10 @@
             };
         }
         window.config = window.config || new window.FebConfig();
-        window.loader = window.loader || '<img src="' + window.config.basePath + '/resources/images/ajax-loader.gif" />';
+        window.loader = window.loader || '<img src="' + window.config.basePath + '/img/ajax-loader.gif" />';
         if (!window.loaderNode) {
             window.loaderNode = document.createElement("img");
-            window.loaderNode.src = window.config.basePath + "/resources/images/ajax-loader.gif";
+            window.loaderNode.src = window.config.basePath + "/img/ajax-loader.gif";
         }
         window.modalLoader = window.modalLoader || '<div class="modal-body">' + window.loader + '</div>';
     </script>

@@ -22,6 +22,7 @@ templates.operations.housekeeping_week: Housekeeping week view
 templates.operations.frontdesk_checklist: Frontdesk checklist
 templates.operations.meals_checklist: Meals checklist
 templates.operations.management_monthly_summary: Monthly management summary
+templates.operations.tourist_tax_monthly: Monthly tourist tax report
 templates.operations.import.title: No templates for operations reports.
 templates.operations.import.text: You can import the default report templates now.
 templates.operations.import.button: Import templates

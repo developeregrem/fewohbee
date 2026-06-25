@@ -19,6 +19,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
+use App\Repository\GuestCategoryRepository;
 use App\Service\InvoiceService;
 use App\Service\MonthlyStatsService;
 use App\Service\StatisticsService;
@@ -150,7 +151,7 @@ class StatisticsController extends AbstractController
     /**
      * Return or create a monthly snapshot for the requested period.
      */
-    public function getMonthlySnapshotAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, Request $request): JsonResponse
+    public function getMonthlySnapshotAction(ManagerRegistry $doctrine, MonthlyStatsService $monthlyStatsService, GuestCategoryRepository $guestCategoryRepository, Request $request): JsonResponse
     {
         $em = $doctrine->getManager();
         $month = (int) $request->query->get('month');
@@ -185,6 +186,11 @@ class StatisticsController extends AbstractController
             $warnings = $metrics['warnings'] ?? [];
         }
 
+        $guestCategories = [];
+        foreach ($guestCategoryRepository->findActiveForSubsidiary($subsidiary) as $category) {
+            $guestCategories[(string) $category->getId()] = $category->getName();
+        }
+
         return new JsonResponse([
             'id' => $snapshot->getId(),
             'month' => $snapshot->getMonth(),
@@ -193,6 +199,8 @@ class StatisticsController extends AbstractController
             'metrics' => $metrics,
             'warnings' => $warnings,
             'countryNames' => Countries::getNames($request->getLocale()),
+            'guestCategories' => $guestCategories,
+            'updatedAt' => $snapshot->getUpdatedAt()->format(\DateTimeInterface::ATOM),
         ]);
     }
 

@@ -56,21 +56,20 @@ class OperationsFrontdeskController extends AbstractController
         $selectedCategories = $filterService->normalizeCategories(
             $filterService->resolveFilterArray($request, $session, 'frontdesk.categories', 'categories')
         );
-        $includeCanceled = $filterService->resolveFilterBool(
-            $request,
-            $session,
-            'frontdesk.includeCanceled',
-            'includeCanceled',
-            true
+        $selectedStatusIds = $viewService->normalizeReservationStatusIds(
+            $filterService->resolveFilterArray($request, $session, 'frontdesk.statuses', 'statuses'),
+            $reservationStatuses
         );
-        $statusMode = $includeCanceled ? 'all' : 'blocking';
+        // drop legacy session entry from the previous includeCanceled toggle
+        $session->remove('frontdesk.includeCanceled');
 
         $rangeView = $viewService->buildRangeView(
             $selectedDate,
             $selectedDate,
             $selectedSubsidiary,
             $viewService->getAllowedOccupancyTypes(),
-            $statusMode
+            'all',
+            $selectedStatusIds
         );
         $dayKey = $selectedDate->format('Y-m-d');
         $dayView = $rangeView['dayViews'][$dayKey] ?? [
@@ -86,7 +85,7 @@ class OperationsFrontdeskController extends AbstractController
             'selectedSubsidiaryId' => $subsidiaryId,
             'selectedDate' => $selectedDate,
             'selectedCategories' => $selectedCategories,
-            'includeCanceled' => $includeCanceled,
+            'selectedStatusIds' => $selectedStatusIds,
             'frontdeskItems' => $items,
             'reservationStatuses' => $reservationStatuses,
         ];

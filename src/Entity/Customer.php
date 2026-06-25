@@ -130,7 +130,7 @@ class Customer
 
     public function getRemarkF(): string
     {
-        return nl2br($this->remark);
+        return nl2br($this->remark ?? '');
     }
 
     public function setRemark($remark): void
