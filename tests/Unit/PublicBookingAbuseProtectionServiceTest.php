@@ -250,6 +250,44 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         self::assertNotEmpty($stateWithToken['submitToken']);
     }
 
+    /** Ensure the fallback notice is suppressed on the first failure and triggered on repeated failures. */
+    public function testRegisterSubmitFailureTriggersFallbackAfterRepeatedFailures(): void
+    {
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createTokenStore()
+        );
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->headers->set('User-Agent', 'PHPUnit');
+        $request->headers->set('Accept-Language', 'de');
+
+        self::assertFalse($service->registerSubmitFailure($request), 'First failure must not trigger the fallback');
+        self::assertTrue($service->registerSubmitFailure($request), 'Second failure must trigger the fallback');
+    }
+
+    /** Ensure clearing the counter resets the fallback state (e.g. after a successful booking). */
+    public function testClearSubmitFailuresResetsCounter(): void
+    {
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createTokenStore()
+        );
+
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->headers->set('User-Agent', 'PHPUnit');
+        $request->headers->set('Accept-Language', 'de');
+
+        $service->registerSubmitFailure($request);
+        $service->clearSubmitFailures($request);
+
+        self::assertFalse($service->registerSubmitFailure($request), 'Counter must start over after a reset');
+    }
+
     /** Build a limiter factory mock that always returns a limiter with the requested acceptance state. */
     private function createLimiterFactoryReturningAccepted(bool $accepted): RateLimiterFactoryInterface
     {

@@ -59,6 +59,7 @@ class PublicBookingController extends AbstractController
             'guestCategories' => $guestCategories,
             'errorMessage' => $error,
             'successMessage' => $successMessage,
+            'submitFallbackNotice' => false,
             'minArrivalDate' => (new \DateTimeImmutable('today'))->format('Y-m-d'),
             'maxDepartureDate' => $restrictionService->getMaxDepartureDate()?->format('Y-m-d'),
             'availabilityChecked' => false,
@@ -206,6 +207,8 @@ class PublicBookingController extends AbstractController
                 $view['roomPriceBreakdown'] = $result['roomPriceBreakdown'];
                 $view['bookingResult'] = $result;
 
+                $abuseProtectionService->clearSubmitFailures($request);
+
                 return $this->redirectToRoute('public.booking', [
                     'embed' => $embed ? 1 : 0,
                     'submitted' => 1,
@@ -214,6 +217,12 @@ class PublicBookingController extends AbstractController
             }
         } catch (PublicBookingException $e) {
             $view['errorMessage'] = $e->getMessage();
+
+            // Repeated failures on the final step are usually something the guest
+            // cannot resolve — surface a "contact the property directly" notice.
+            if ('submit' === $intent) {
+                $view['submitFallbackNotice'] = $abuseProtectionService->registerSubmitFailure($request);
+            }
 
             if (
                 $dateFrom instanceof \DateTimeImmutable

@@ -178,6 +178,7 @@ online_booking:
     submit_booking: "Jetzt buchen"
     submit_inquiry: "Anfrage senden"
     start_new: "Neue Buchung starten"
+    submit_fallback_notice: "Leider scheint es derzeit ein Problem mit der Buchungsfunktion zu geben. Bitte wenden Sie sich direkt an die Unterkunft – zum Beispiel per E-Mail oder Telefon."
     website_field: "Website"
     step_search: "Suche"
     step_select: "Auswahl"

@@ -178,6 +178,7 @@ online_booking:
     submit_booking: "Book now"
     submit_inquiry: "Send inquiry"
     start_new: "Start a new booking"
+    submit_fallback_notice: "Unfortunately there seems to be a problem with the booking function at the moment. Please contact the property directly – for example by email or phone."
     website_field: "Website"
     step_search: "Search"
     step_select: "Select"

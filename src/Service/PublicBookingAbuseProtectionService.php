@@ -17,6 +17,11 @@ class PublicBookingAbuseProtectionService
     private const SUBMIT_TOKEN_TTL_SECONDS = 7200;
     private const MINIMUM_ELAPSED_SECONDS = 1;
 
+    private const SUBMIT_FAILURE_CACHE_PREFIX = 'public_booking_submit_failures_';
+    private const SUBMIT_FAILURE_TTL_SECONDS = 3600;
+    /** Show the "contact the property directly" fallback once a client has failed the submit step this often. */
+    private const SUBMIT_FALLBACK_THRESHOLD = 2;
+
     public function __construct(
         #[Autowire(service: 'limiter.public_booking_availability')]
         private readonly RateLimiterFactoryInterface $availabilityLimiter,
@@ -51,6 +56,34 @@ class PublicBookingAbuseProtectionService
         $this->assertMinimumElapsedTime($request);
         $this->consumeToken($this->submitLimiter, $this->buildLimiterKey($request, 'submit'), 'online_booking.error.try_again_later_submit');
         $this->consumeSubmitToken($request);
+    }
+
+    /**
+     * Record a failed submit attempt for this client and report whether the
+     * "contact the property directly" fallback notice should now be shown.
+     *
+     * The booking submit can fail repeatedly for reasons the guest cannot fix
+     * themselves (e.g. third-party-cookie issues in an embedded iframe). After
+     * a couple of failures we stop sending them in circles and point them to a
+     * human channel instead.
+     */
+    public function registerSubmitFailure(Request $request): bool
+    {
+        $key = $this->submitFailureCacheKey($request);
+        $item = $this->submitTokenStore->getItem($key);
+        $count = ($item->isHit() ? (int) $item->get() : 0) + 1;
+
+        $item->set($count);
+        $item->expiresAfter(self::SUBMIT_FAILURE_TTL_SECONDS);
+        $this->submitTokenStore->save($item);
+
+        return $count >= self::SUBMIT_FALLBACK_THRESHOLD;
+    }
+
+    /** Reset the submit failure counter after a successful booking. */
+    public function clearSubmitFailures(Request $request): void
+    {
+        $this->submitTokenStore->deleteItem($this->submitFailureCacheKey($request));
     }
 
     /**
@@ -130,6 +163,12 @@ class PublicBookingAbuseProtectionService
     private function submitTokenCacheKey(string $token): string
     {
         return self::SUBMIT_TOKEN_CACHE_PREFIX.hash('sha256', $token);
+    }
+
+    /** Build a PSR-6 safe, per-client cache key for the submit failure counter. */
+    private function submitFailureCacheKey(Request $request): string
+    {
+        return self::SUBMIT_FAILURE_CACHE_PREFIX.hash('sha256', $this->buildLimiterKey($request, 'submit_failures'));
     }
 
     /** Build a stable limiter key based on client IP and the current public-booking flow step. */

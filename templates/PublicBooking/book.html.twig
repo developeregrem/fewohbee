@@ -2,7 +2,9 @@
 
 {% block body %}
 {% set autoScrollTarget = null %}
-{% if errorMessage %}
+{% if submitFallbackNotice %}
+    {% set autoScrollTarget = 'fhb-form-fallback' %}
+{% elseif errorMessage %}
     {# An error must always be visible. The alert sits at the very top of the
        card, above the form, so prioritize it over any step container —
        otherwise the auto-scroll would jump past the error. #}
@@ -41,6 +43,10 @@
                                     {% if not loop.last %}<span class="text-muted" style="font-size:.6rem">&#9654;</span>{% endif %}
                                 {% endfor %}
                             </div>
+                        {% endif %}
+
+                        {% if submitFallbackNotice %}
+                            <div class="alert alert-warning fhb-scroll-target" id="fhb-form-fallback" tabindex="-1" role="alert">{{ 'online_booking.public.submit_fallback_notice'|trans }}</div>
                         {% endif %}
 
                         {% if errorMessage %}
