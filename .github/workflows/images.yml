@@ -108,7 +108,7 @@ jobs:
           echo "runtime_refresh=$runtime_refresh" >> "$GITHUB_OUTPUT"
 
   # -------------------------------------------------------------------------
-  # phpfpm-prod, phpfpm-debug, cli-prod — all from docker/app/Dockerfile.
+  # phpfpm-prod, phpfpm-debug, cli-prod, cli-debug — all from docker/app/Dockerfile.
   # base/vendor-prod/app-prod stages are shared, so cache:warmup runs once per
   # build and is reused across phpfpm-prod and cli-prod.
   # nginx depends on phpfpm-prod and runs after.
@@ -141,6 +141,9 @@ jobs:
           - target: cli-prod
             image: cli
             suffix: ''
+          - target: cli-debug
+            image: cli
+            suffix: '-debug'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -315,6 +318,18 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Add debug aliases for nginx
+        id: nginx-tags
+        env:
+          TAGS: ${{ needs.prepare.outputs.runtime_refresh == 'true' && steps.runtime-tags.outputs.tags || steps.meta.outputs.tags }}
+        run: |
+          {
+            echo "tags<<EOF"
+            printf '%s\n' "$TAGS"
+            printf '%s\n' "$TAGS" | sed 's/$/-debug/'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build & push
         uses: docker/build-push-action@v7
         with:
@@ -326,7 +341,7 @@ jobs:
           no-cache: ${{ needs.prepare.outputs.runtime_refresh == 'true' }}
           build-args: |
             PHPFPM_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/fewohbee-phpfpm:${{ steps.phpfpm-tag.outputs.tag }}
-          tags: ${{ needs.prepare.outputs.runtime_refresh == 'true' && steps.runtime-tags.outputs.tags || steps.meta.outputs.tags }}
+          tags: ${{ steps.nginx-tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=nginx-prod
           cache-to: type=gha,scope=nginx-prod,mode=max

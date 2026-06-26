@@ -5,9 +5,10 @@
 #   phpfpm-prod   – minimal php-fpm runtime, vendor without dev-deps, cache warmed
 #   phpfpm-debug  – php-fpm with dev-deps + xdebug
 #   cli-prod      – crond runtime for the dockerized setup
+#   cli-debug     – crond runtime with dev-deps + xdebug
 #
-# All targets share base, vendor-prod, and app-prod stages, so composer install
-# and cache:warmup run only once per build.
+# All targets share base, vendor-prod/vendor-debug, and app-prod/app-debug
+# stages, so composer install and cache:warmup run only once per build.
 #
 ARG PHP_VERSION=8.5
 ARG PHP_EXTS="redis intl gd pdo_mysql exif"
@@ -104,9 +105,9 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
 
 ############################
-# Stage: phpfpm-debug
+# Stage: app-debug
 ############################
-FROM base AS phpfpm-debug
+FROM base AS app-debug
 
 # Same as app-prod: image identity, not user-overridable in normal deployments.
 ENV APP_ENV=dev \
@@ -120,6 +121,11 @@ RUN TZ=UTC composer dump-autoload \
     && mkdir -p var/cache var/log \
     && chown -R 82:82 var
 
+############################
+# Stage: phpfpm-debug
+############################
+FROM app-debug AS phpfpm-debug
+
 COPY docker/app/phpfpm-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
@@ -132,6 +138,20 @@ CMD ["php-fpm"]
 # Stage: cli-prod (crond for dockerized)
 ############################
 FROM app-prod AS cli-prod
+
+COPY docker/app/cli-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+COPY docker/app/crontab /etc/crontabs/www-data
+RUN chown root:root /etc/crontabs/www-data && chmod 600 /etc/crontabs/www-data
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["crond", "-f", "-L", "/dev/stdout"]
+
+############################
+# Stage: cli-debug (crond for dockerized debug/dev)
+############################
+FROM app-debug AS cli-debug
 
 COPY docker/app/cli-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
