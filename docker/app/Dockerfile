@@ -118,8 +118,9 @@ COPY --from=vendor-debug /var/www/html/vendor ./vendor
 COPY --chown=82:82 . ./
 
 RUN TZ=UTC composer dump-autoload \
+    && php bin/console importmap:install --no-interaction \
     && mkdir -p var/cache var/log \
-    && chown -R 82:82 var
+    && chown -R 82:82 var assets/vendor
 
 ############################
 # Stage: phpfpm-debug
