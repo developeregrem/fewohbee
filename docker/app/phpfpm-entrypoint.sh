@@ -31,6 +31,16 @@ if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 fi
 
+if [ "${APP_ENV:-prod}" != "dev" ]; then
+    if php bin/console debug:container doctrine.result_cache_pool >/dev/null 2>&1 \
+        && php bin/console debug:container doctrine.system_cache_pool >/dev/null 2>&1; then
+        echo "[entrypoint] Clearing Doctrine cache pools."
+        php bin/console --no-interaction cache:pool:clear doctrine.result_cache_pool doctrine.system_cache_pool
+    else
+        echo "[entrypoint] Doctrine cache pools are not configured; skipping cache pool clear."
+    fi
+fi
+
 if [ "${APP_ENV}" = "dev" ]; then
     php bin/console cache:clear --no-interaction || true
 fi
