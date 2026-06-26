@@ -1,5 +1,7 @@
 {# year and month are provided #}
 {% set startDate = date(year ~ '-' ~ month ~ '-01 UTC') %}
+{# set today date for highlight #}
+{% set todayDate = 'now'|date('Y-m-d') %}
 
 {# this is a dummy date where the first of month is monday which is used for the table header #}
 {% set dummyDate = date('2021-11-01 UTC') %}
@@ -104,10 +106,16 @@
             
             {% set tdContent = tdContent ~ '<div class="' ~ resCss ~'" style="' ~  style ~'"'~ action|raw ~' title="'~ block('popTitle') ~'" data-bs-content="'~ block('popBody')|raw ~'">&nbsp;</div> ' ~ dummyContent %}
         {% endfor %}
-        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}" 
+        {# highlight today with overlay and bold day number #}
+        {% set isToday = tmpDateFormatted == todayDate %}
+        {% set todayCss = isToday ? ' reservation-table-today' : '' %}
+        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}{{ todayCss }}"
             style="width: {{ 100 / 7}}%" data-day="{{ tmpDate|date("Y-m-d")  }}">
-            <div class="d-flex w-100 h-100">{{ tdContent|raw }}</div>
-            <div class="reservation-yearly-day">{{ tmpDate|date('d') }}</div>
+            {% if isToday %}<div class="reservation-table-today-overlay position-absolute top-0 start-0 w-100 h-100"></div>{% endif %}
+            <div class="d-flex w-100 h-100">
+                {{ tdContent|raw }}
+            </div>
+            <div class="reservation-yearly-day{% if isToday %} fw-bold{% endif %}">{{ tmpDate|date('d') }}</div>
         </td>
            
         
