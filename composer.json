@@ -7,7 +7,7 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "azuyalabs/yasumi": "2.10.*",
+        "azuyalabs/yasumi": "2.11.*",
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-fixtures-bundle": "^4.0",
         "doctrine/doctrine-migrations-bundle": "^4.0",
