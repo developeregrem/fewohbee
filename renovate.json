@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Berlin",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Open PRs for base image and GitHub Actions updates; do not auto-merge. Security patches within the same base image tag are picked up by the scheduled image rebuild, not by Renovate.",
+      "matchManagers": ["dockerfile", "github-actions"],
+      "automerge": false
+    }
+  ]
+}
