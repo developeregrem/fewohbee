@@ -3,6 +3,7 @@
   "extends": ["config:recommended"],
   "timezone": "Europe/Berlin",
   "labels": ["dependencies"],
+  "enabledManagers": ["dockerfile", "github-actions"],
   "packageRules": [
     {
       "description": "Open PRs for base image and GitHub Actions updates; do not auto-merge. Security patches within the same base image tag are picked up by the scheduled image rebuild, not by Renovate.",
