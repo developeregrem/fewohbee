@@ -36,76 +36,9 @@ jobs:
       - name: Resolve build mode
         id: prepare
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_OWNER: ${{ env.IMAGE_OWNER }}
-        run: |
-          set -euo pipefail
-
-          checkout_ref="${GITHUB_REF}"
-          release_version=""
-          run_build="true"
-          runtime_refresh="false"
-
-          if [[ "$EVENT_NAME" == "schedule" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            runtime_refresh="true"
-            latest_tag="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
-            if [[ -z "$latest_tag" ]]; then
-              echo "No stable vX.Y.Z release tag found."
-              exit 1
-            fi
-
-            checkout_ref="$latest_tag"
-            release_version="${latest_tag#v}"
-            echo "Runtime refresh source: $latest_tag (image tag: $release_version)"
-
-            if [[ "$EVENT_NAME" == "schedule" ]]; then
-              package_name="fewohbee-phpfpm"
-              versions_url="https://api.github.com/users/${IMAGE_OWNER}/packages/container/${package_name}/versions?per_page=100"
-
-              latest_tag_timestamp="$(
-                {
-                  curl -fsSL \
-                    -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                    -H "Accept: application/vnd.github+json" \
-                    -H "X-GitHub-Api-Version: 2022-11-28" \
-                    "$versions_url" 2>/dev/null || echo "[]"
-                } |
-                python3 -c '
-          import json
-          import sys
-
-          tag = sys.argv[1]
-          versions = json.load(sys.stdin)
-          matches = [
-              version.get("updated_at", "")
-              for version in versions
-              if tag in version.get("metadata", {}).get("container", {}).get("tags", [])
-          ]
-          print(max(matches) if matches else "")
-          ' "$release_version"
-              )"
-
-              if [[ -n "$latest_tag_timestamp" ]]; then
-                latest_tag_epoch="$(date -u -d "$latest_tag_timestamp" +%s)"
-                cutoff_epoch="$(date -u -d '7 days ago' +%s)"
-
-                if (( latest_tag_epoch > cutoff_epoch )); then
-                  echo "Image tag $release_version was updated at $latest_tag_timestamp (< 7 days). Skipping scheduled rebuild."
-                  run_build="false"
-                else
-                  echo "Image tag $release_version was last updated at $latest_tag_timestamp. Rebuilding."
-                fi
-              else
-                echo "Image tag $release_version was not found in GHCR. Rebuilding."
-              fi
-            fi
-          fi
-
-          echo "checkout_ref=$checkout_ref" >> "$GITHUB_OUTPUT"
-          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
-          echo "run_build=$run_build" >> "$GITHUB_OUTPUT"
-          echo "runtime_refresh=$runtime_refresh" >> "$GITHUB_OUTPUT"
+        run: .github/scripts/resolve-image-build.sh
 
   # -------------------------------------------------------------------------
   # phpfpm-prod, phpfpm-debug, cli-prod, cli-debug — all from docker/app/Dockerfile.
@@ -187,13 +120,7 @@ jobs:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/fewohbee-${{ matrix.image }}
           VERSION: ${{ needs.prepare.outputs.release_version }}
           SUFFIX: ${{ matrix.suffix }}
-        run: |
-          {
-            echo "tags<<EOF"
-            echo "${IMAGE}:${VERSION}${SUFFIX}"
-            echo "${IMAGE}:latest${SUFFIX}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+        run: .github/scripts/write-runtime-tags.sh "$IMAGE" "$VERSION" "$SUFFIX"
 
       - name: Build & push
         uses: docker/build-push-action@v7
@@ -310,25 +237,13 @@ jobs:
         env:
           IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/fewohbee-nginx
           VERSION: ${{ needs.prepare.outputs.release_version }}
-        run: |
-          {
-            echo "tags<<EOF"
-            echo "${IMAGE}:${VERSION}"
-            echo "${IMAGE}:latest"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+        run: .github/scripts/write-runtime-tags.sh "$IMAGE" "$VERSION"
 
       - name: Add debug aliases for nginx
         id: nginx-tags
         env:
           TAGS: ${{ needs.prepare.outputs.runtime_refresh == 'true' && steps.runtime-tags.outputs.tags || steps.meta.outputs.tags }}
-        run: |
-          {
-            echo "tags<<EOF"
-            printf '%s\n' "$TAGS"
-            printf '%s\n' "$TAGS" | sed 's/$/-debug/'
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+        run: .github/scripts/write-tags-with-debug-aliases.sh
 
       - name: Build & push
         uses: docker/build-push-action@v7
