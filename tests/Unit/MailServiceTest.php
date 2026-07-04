@@ -22,11 +22,11 @@ final class MailServiceTest extends TestCase
         $captured = null;
 
         $appSettingsService = $this->createMock(AppSettingsService::class);
-        $appSettingsService->method('getSettings')->willReturn($settings);
-        $appSettingsService->method('getEffectiveMailFromEmail')->with($settings)->willReturn('info@fewohbee.de');
-        $appSettingsService->method('getEffectiveMailFromName')->with($settings)->willReturn('FewohBee Test');
-        $appSettingsService->method('getEffectiveMailReturnPath')->with($settings)->willReturn('bounce@fewohbee.de');
-        $appSettingsService->method('isEffectiveMailCopyEnabled')->with($settings)->willReturn(true);
+        $appSettingsService->expects(self::once())->method('getSettings')->willReturn($settings);
+        $appSettingsService->expects(self::once())->method('getEffectiveMailFromEmail')->with($settings)->willReturn('info@fewohbee.de');
+        $appSettingsService->expects(self::once())->method('getEffectiveMailFromName')->with($settings)->willReturn('FewohBee Test');
+        $appSettingsService->expects(self::once())->method('getEffectiveMailReturnPath')->with($settings)->willReturn('bounce@fewohbee.de');
+        $appSettingsService->expects(self::once())->method('isEffectiveMailCopyEnabled')->with($settings)->willReturn(true);
 
         $mailer = $this->createMock(MailerInterface::class);
         $mailer

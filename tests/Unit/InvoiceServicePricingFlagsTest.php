@@ -179,16 +179,16 @@ final class InvoiceServicePricingFlagsTest extends TestCase
         self::assertEqualsWithDelta(367.0, $brutto, 0.01);
 
         // VAT 7%: 357.00 × 7 / 107 = 23.3551... → rounded 23.36
-        self::assertArrayHasKey(7.0, $vats);
-        self::assertEqualsWithDelta(357.0, $vats[7.0]['brutto'], 0.01);
-        self::assertEqualsWithDelta(23.36, round($vats[7.0]['netto'], 2), 0.01);
-        self::assertEqualsWithDelta(333.64, round($vats[7.0]['netSum'], 2), 0.01);
+        self::assertArrayHasKey(7, $vats);
+        self::assertEqualsWithDelta(357.0, $vats[7]['brutto'], 0.01);
+        self::assertEqualsWithDelta(23.36, round($vats[7]['netto'], 2), 0.01);
+        self::assertEqualsWithDelta(333.64, round($vats[7]['netSum'], 2), 0.01);
 
         // VAT 19%: 10.00 × 19 / 119 = 1.5966... → rounded 1.60
-        self::assertArrayHasKey(19.0, $vats);
-        self::assertEqualsWithDelta(10.0, $vats[19.0]['brutto'], 0.01);
-        self::assertEqualsWithDelta(1.60, round($vats[19.0]['netto'], 2), 0.01);
-        self::assertEqualsWithDelta(8.40, round($vats[19.0]['netSum'], 2), 0.01);
+        self::assertArrayHasKey(19, $vats);
+        self::assertEqualsWithDelta(10.0, $vats[19]['brutto'], 0.01);
+        self::assertEqualsWithDelta(1.60, round($vats[19]['netto'], 2), 0.01);
+        self::assertEqualsWithDelta(8.40, round($vats[19]['netSum'], 2), 0.01);
     }
 
     public function testCalculateSumsIncludesVatFalseAddsVatToNet(): void
@@ -225,9 +225,9 @@ final class InvoiceServicePricingFlagsTest extends TestCase
         // 200.00 netto + 38.00 VAT = 238.00 brutto
         self::assertEqualsWithDelta(238.0, $brutto, 0.001);
         self::assertEqualsWithDelta(38.0, $netto, 0.001);
-        self::assertEqualsWithDelta(238.0, $vats[19.0]['brutto'], 0.001);
-        self::assertEqualsWithDelta(38.0, $vats[19.0]['netto'], 0.001);
-        self::assertEqualsWithDelta(200.0, $vats[19.0]['netSum'], 0.001);
+        self::assertEqualsWithDelta(238.0, $vats[19]['brutto'], 0.001);
+        self::assertEqualsWithDelta(38.0, $vats[19]['netto'], 0.001);
+        self::assertEqualsWithDelta(200.0, $vats[19]['netSum'], 0.001);
     }
 
     public function testFlatPriceDisablesPerRoomFlag(): void
