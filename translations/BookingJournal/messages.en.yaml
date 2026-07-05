@@ -190,6 +190,7 @@ accounting.journal.export.warn.no_input_bukey: "Entry #%doc%: expense booking wi
 # Journal - Entries
 accounting.journal.entry.add: Add Entry
 accounting.journal.entry.edit: Edit Entry
+accounting.journal.entry.duplicate: Duplicate Entry
 accounting.journal.entry.date: Date
 accounting.journal.entry.doc_number: Doc No.
 accounting.journal.entry.amount: Amount

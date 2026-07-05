@@ -38,34 +38,39 @@
     </div>
     <div class="row justify-content-between mb-3">
         <div class="col d-flex align-items-center gap-3 flex-wrap">
+            {# fixed-width slots keep the prev/next arrows in a stable position regardless of the month name length, so rapid clicking never lands on empty space #}
             <div class="d-flex align-items-center gap-2">
-                {% if previousBatch %}
-                    {% set previousBatchLabel = getLocalizedMonth(previousBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ previousBatch.year %}
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item">
-                            <a href="{{ path('journal.batch.entries', {'id': previousBatch.id, 'filter': filter}) }}"
-                               class="page-link"
-                               title="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}"
-                               aria-label="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}">
-                                &larr;
-                            </a>
-                        </li>
-                    </ul>
-                {% endif %}
-                <h4 class="mb-0">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
-                {% if nextBatch %}
-                    {% set nextBatchLabel = getLocalizedMonth(nextBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ nextBatch.year %}
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item">
-                            <a href="{{ path('journal.batch.entries', {'id': nextBatch.id, 'filter': filter}) }}"
-                               class="page-link"
-                               title="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}"
-                               aria-label="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}">
-                                &rarr;
-                            </a>
-                        </li>
-                    </ul>
-                {% endif %}
+                <div style="width: 2rem" class="text-end">
+                    {% if previousBatch %}
+                        {% set previousBatchLabel = getLocalizedMonth(previousBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ previousBatch.year %}
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item">
+                                <a href="{{ path('journal.batch.entries', {'id': previousBatch.id, 'filter': filter}) }}"
+                                   class="page-link"
+                                   title="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}"
+                                   aria-label="{{ 'accounting.journal.batch.previous_month'|trans({'%month%': previousBatchLabel}) }}">
+                                    &larr;
+                                </a>
+                            </li>
+                        </ul>
+                    {% endif %}
+                </div>
+                <h4 class="mb-0 text-center" style="width: 13rem; white-space: nowrap;">{{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}</h4>
+                <div style="width: 2rem">
+                    {% if nextBatch %}
+                        {% set nextBatchLabel = getLocalizedMonth(nextBatch.month, 'MMMM', app.request.locale) ~ ' ' ~ nextBatch.year %}
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item">
+                                <a href="{{ path('journal.batch.entries', {'id': nextBatch.id, 'filter': filter}) }}"
+                                   class="page-link"
+                                   title="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}"
+                                   aria-label="{{ 'accounting.journal.batch.next_month'|trans({'%month%': nextBatchLabel}) }}">
+                                    &rarr;
+                                </a>
+                            </li>
+                        </ul>
+                    {% endif %}
+                </div>
             </div>
             <select class="form-select form-select-sm" style="width: 12rem"
                     onchange="window.location.href='{{ path('journal.batch.entries', {'id': batch.id}) }}?filter=' + this.value">
@@ -81,7 +86,7 @@
             {% if not batch.closed %}
                 <button type="button" class="btn btn-secondary btn-sm"
                         data-action="click->booking-journal#openOffcanvas"
-                        data-url="{{ path('journal.entry.new', {'id': batch.id, 'filter': filter}) }}"
+                        data-url="{{ path('journal.entry.new', {'id': batch.id, 'filter': filter, 'page': page}) }}"
                         data-offcanvas-title="{{ 'accounting.journal.entry.add'|trans }}">
                     <i class="fas fa-plus"></i> {{ 'accounting.journal.entry.add'|trans }}
                 </button>
@@ -120,6 +125,7 @@
                     <th class="text-end">{{ 'accounting.journal.bankbook.incomes'|trans }}</th>
                     <th class="text-end">{{ 'accounting.journal.bankbook.expenses'|trans }}</th>
                     <th>{{ 'accounting.journal.bankbook.counter_account'|trans }}</th>
+                    <th class="d-none d-md-table-cell">{{ 'accounting.journal.entry.tax_rate'|trans }}</th>
                     <th class="d-none d-md-table-cell">{{ 'accounting.journal.entry.invoice'|trans }}</th>
                     <th>{{ 'accounting.journal.entry.remark'|trans }}</th>
                     <th></th>
@@ -143,16 +149,24 @@
                                 {{ entry.counterAccountLegacy ?? '-' }}
                             {% endif %}
                         </td>
+                        <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
                         <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         data-action="click->booking-journal#openOffcanvas"
-                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter}) }}"
+                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter, 'page': page}) }}"
                                         data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
                                         title="{{ 'button.edit'|trans }}">
                                     <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->booking-journal#openOffcanvas"
+                                        data-url="{{ path('journal.entry.duplicate', {'id': entry.id, 'filter': filter, 'page': page}) }}"
+                                        data-offcanvas-title="{{ 'accounting.journal.entry.duplicate'|trans }}"
+                                        title="{{ 'accounting.journal.entry.duplicate'|trans }}">
+                                    <i class="fas fa-copy"></i>
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
@@ -168,7 +182,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="8" class="text-center text-muted">{{ 'accounting.journal.entry.empty'|trans }}</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted">{{ 'accounting.journal.entry.empty'|trans }}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -217,10 +231,17 @@
                             {% if not batch.closed %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         data-action="click->booking-journal#openOffcanvas"
-                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter}) }}"
+                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter, 'page': page}) }}"
                                         data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
                                         title="{{ 'button.edit'|trans }}">
                                     <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->booking-journal#openOffcanvas"
+                                        data-url="{{ path('journal.entry.duplicate', {'id': entry.id, 'filter': filter, 'page': page}) }}"
+                                        data-offcanvas-title="{{ 'accounting.journal.entry.duplicate'|trans }}"
+                                        title="{{ 'accounting.journal.entry.duplicate'|trans }}">
+                                    <i class="fas fa-copy"></i>
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
@@ -273,10 +294,17 @@
                             {% if not batch.closed %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         data-action="click->booking-journal#openOffcanvas"
-                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter}) }}"
+                                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'filter': filter, 'page': page}) }}"
                                         data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}"
                                         title="{{ 'button.edit'|trans }}">
                                     <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-link p-0 border-0"
+                                        data-action="click->booking-journal#openOffcanvas"
+                                        data-url="{{ path('journal.entry.duplicate', {'id': entry.id, 'filter': filter, 'page': page}) }}"
+                                        data-offcanvas-title="{{ 'accounting.journal.entry.duplicate'|trans }}"
+                                        title="{{ 'accounting.journal.entry.duplicate'|trans }}">
+                                    <i class="fas fa-copy"></i>
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
