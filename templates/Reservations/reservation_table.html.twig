@@ -91,6 +91,7 @@
         <tbody>
         {% set totalColumnCount = grid.dayColumns|length * 2 + 1 %}
         {% set emptyTdNr = 0 %}
+        {% set todayDate = 'now'|date('Y-m-d') %}
 
         {% for row in grid.rows %}
             {# Subsidiary group header #}
@@ -129,10 +130,14 @@
 
                 {# ── Cells ── #}
                 {% for cell in row.cells %}
+                    {% set cellEndOffset = cell.startsAtDayBoundary ? ((cell.span - 1) / 2)|round(0, 'floor') : (cell.span / 2)|round(0, 'floor') %}
+                    {% set cellEndDate = cell.date|date_modify('+' ~ cellEndOffset ~ ' day')|date('Y-m-d') %}
+                    {% set isSingleDayCell = cell.span <= 2 %}
+                    {% set todayCss = isSingleDayCell and todayDate >= cell.date and todayDate <= cellEndDate ? ' reservation-table-today' : '' %}
                     {% if cell.type == 'reservation' %}
                         {# Reservation cell #}
                         {% set reservation = cell.reservation %}
-                        <td class="reservation text-center cell-{{ cell.position }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}"
+                        <td class="reservation text-center cell-{{ cell.position }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}{{ todayCss }}"
                             colspan="{{ cell.span }}"
                         >
                             <div data-action="click->reservations#openReservationAction"
@@ -146,12 +151,12 @@
                         </td>
                     {% elseif cell.type == 'blocked' %}
                         {# Blocked cell #}
-                        <td class="td-blocked" colspan="{{ cell.span }}">
+                        <td class="td-blocked{{ todayCss }}" colspan="{{ cell.span }}">
                             <div class="blocked-inner"></div>
                         </td>
                     {% else %}
                         {# Empty half-day cell #}
-                        <td class="td-empty td-half td-half-{{ cell.side }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}"
+                        <td class="td-empty td-half td-half-{{ cell.side }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}{{ todayCss }}"
                             data-day="{{ cell.date }}" data-appartment="{{ row.apartment.id }}"
                             data-tdnumber="{{ emptyTdNr }}"
                         ></td>
