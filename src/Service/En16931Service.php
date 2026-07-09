@@ -7,6 +7,8 @@ namespace App\Service;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
 use App\Service\EInvoice\EInvoiceProfileGeneratorInterface;
+use App\Service\EInvoice\Validation\En16931InvoiceValidator;
+use App\Service\EInvoice\Validation\EInvoiceValidationResult;
 use App\Service\EInvoice\ZugferdInvoiceGenerator;
 use horstoeko\zugferd\ZugferdProfiles;
 
@@ -14,7 +16,7 @@ use horstoeko\zugferd\ZugferdProfiles;
 class En16931Service implements EInvoiceProfileGeneratorInterface
 {
     // Uses the shared ZUGFeRD generator with EN16931 profile id.
-    public function __construct(private ZugferdInvoiceGenerator $generator)
+    public function __construct(private ZugferdInvoiceGenerator $generator, private En16931InvoiceValidator $validator)
     {
     }
 
@@ -30,9 +32,15 @@ class En16931Service implements EInvoiceProfileGeneratorInterface
         return 'invoice.settings.einvoiceProfile.en16931';
     }
 
+    // Checks the EN 16931 baseline rules.
+    public function validate(Invoice $invoice, InvoiceSettingsData $settings): EInvoiceValidationResult
+    {
+        return $this->validator->validate($invoice, $settings);
+    }
+
     // Generates the invoice data for EN 16931.
     public function generateInvoiceData(Invoice $invoice, InvoiceSettingsData $settings): string
     {
-        return $this->generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_EN16931);
+        return $this->generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_EN16931, $this->validator);
     }
 }

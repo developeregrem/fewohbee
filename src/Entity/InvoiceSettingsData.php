@@ -23,16 +23,21 @@ class InvoiceSettingsData
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $vatID = null;
 
-    #[ORM\Column(length: 100)]
+    // BT-30 seller legal registration identifier (e.g. Handelsregisternummer); alternative to the
+    // VAT id for satisfying BR-CO-26 when the seller has no VAT id.
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $registrationNumber = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
     private ?string $contactName = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $contactDepartment = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, nullable: true)]
     private ?string $contactPhone = null;
 
-    #[ORM\Column(length: 60)]
+    #[ORM\Column(length: 60, nullable: true)]
     private ?string $contactMail = null;
 
     #[ORM\Column(length: 60)]
@@ -68,8 +73,8 @@ class InvoiceSettingsData
     #[ORM\Column(type: Types::SMALLINT, nullable: true)]
     private ?int $paymentDueDays = null;
 
-    #[ORM\Column(length: 50, options: ['default' => 'xrechnung'])]
-    private ?string $einvoiceProfile = 'xrechnung';
+    #[ORM\Column(length: 50, options: ['default' => 'en16931'])]
+    private ?string $einvoiceProfile = 'en16931';
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $creditorReference = null;
@@ -115,12 +120,24 @@ class InvoiceSettingsData
         return $this;
     }
 
+    public function getRegistrationNumber(): ?string
+    {
+        return $this->registrationNumber;
+    }
+
+    public function setRegistrationNumber(?string $registrationNumber): static
+    {
+        $this->registrationNumber = $registrationNumber;
+
+        return $this;
+    }
+
     public function getContactName(): ?string
     {
         return $this->contactName;
     }
 
-    public function setContactName(string $contactName): static
+    public function setContactName(?string $contactName): static
     {
         $this->contactName = $contactName;
 
@@ -144,7 +161,7 @@ class InvoiceSettingsData
         return $this->contactPhone;
     }
 
-    public function setContactPhone(string $contactPhone): static
+    public function setContactPhone(?string $contactPhone): static
     {
         $this->contactPhone = $contactPhone;
 
@@ -156,7 +173,7 @@ class InvoiceSettingsData
         return $this->contactMail;
     }
 
-    public function setContactMail(string $contactMail): static
+    public function setContactMail(?string $contactMail): static
     {
         $this->contactMail = $contactMail;
 

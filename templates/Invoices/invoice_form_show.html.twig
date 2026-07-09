@@ -298,7 +298,8 @@
 
 <div class="modal-footer">
     <div class="col p-0" id="boxDefault">
-        <form id="invoice-form-status"  role="form">   
+        {% include 'Invoices/_einvoice_readiness.html.twig' %}
+        <form id="invoice-form-status"  role="form">
            <div class="row"> 
                 <div class="col-sm-2">
             <select id="invoce-status" name="invoice-status" class="form-control me-sm-2" data-action="change->invoices#invoiceStatusChangeAction">
@@ -314,9 +315,15 @@
             </div>
             <div class="col text-end">
        
-        <button type="button" class="btn btn-secondary " id="invoiceEditButton" 
+        <button type="button" class="btn btn-secondary " id="invoiceEditButton"
                 data-action="click->invoices#toggleInvoiceEditFieldsAction">{{ 'button.edit'|trans }}</button>
-        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'template': templateId }) }}" class="btn btn-secondary export-link" target="_blank">{{ 'button.export.pdf'|trans }}</a>
+        <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'template': templateId }) }}" class="btn btn-secondary export-link" target="_blank"
+           title="{{ readiness is defined and readiness and readiness.ready ? 'button.export.einvoicepdf'|trans : 'button.export.pdf'|trans }}">
+            <i class="fas fa-file-pdf"></i></a>
+        {% if activeProfileKey is defined and activeProfileKey == 'xrechnung' %}
+        <a href="{{ path('invoices.export.xrechnung', {'id': invoice.id }) }}" class="btn btn-secondary" title="{{ 'button.export.xml'|trans }}">
+            <i class="fa-solid fa-file-code"></i></a>
+        {% endif %}
         {% if is_granted('ROLE_ADMIN') %}
         <button type="button" class="btn btn-danger"
                     data-action="click->invoices#toggleInvoiceDeleteAction">{{ 'button.delete'|trans }}</button>

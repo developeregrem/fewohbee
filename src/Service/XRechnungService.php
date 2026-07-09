@@ -16,6 +16,8 @@ namespace App\Service;
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
 use App\Service\EInvoice\EInvoiceProfileGeneratorInterface;
+use App\Service\EInvoice\Validation\EInvoiceValidationResult;
+use App\Service\EInvoice\Validation\XRechnungInvoiceValidator;
 use App\Service\EInvoice\ZugferdInvoiceGenerator;
 use horstoeko\zugferd\ZugferdProfiles;
 
@@ -23,7 +25,7 @@ use horstoeko\zugferd\ZugferdProfiles;
 class XRechnungService implements EInvoiceProfileGeneratorInterface
 {
     // Uses the shared ZUGFeRD generator with XRechnung profile id.
-    public function __construct(private ZugferdInvoiceGenerator $generator)
+    public function __construct(private ZugferdInvoiceGenerator $generator, private XRechnungInvoiceValidator $validator)
     {
     }
 
@@ -39,15 +41,15 @@ class XRechnungService implements EInvoiceProfileGeneratorInterface
         return 'invoice.settings.einvoiceProfile.xrechnung';
     }
 
+    // Checks EN 16931 baseline plus BR-DE rules.
+    public function validate(Invoice $invoice, InvoiceSettingsData $settings): EInvoiceValidationResult
+    {
+        return $this->validator->validate($invoice, $settings);
+    }
+
     // Generates the invoice data for XRechnung.
     public function generateInvoiceData(Invoice $invoice, InvoiceSettingsData $settings): string
     {
-        return $this->generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_XRECHNUNG_3);
-    }
-
-    // Backward-compatible method for existing callers.
-    public function createInvoice(Invoice $invoice, InvoiceSettingsData $settings): string
-    {
-        return $this->generateInvoiceData($invoice, $settings);
+        return $this->generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_XRECHNUNG_3, $this->validator);
     }
 }

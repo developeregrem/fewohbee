@@ -290,13 +290,13 @@
                 <source>button.export.pdf</source>
                 <target>als PDF exportieren</target>
             </trans-unit>
-            <trans-unit id="button.export.pdfxrechnung">
-                <source>button.export.pdfxml</source>
-                <target>als PDF + E-Rechnung exportieren</target>
+            <trans-unit id="button.export.einvoicepdf">
+                <source>button.export.einvoicepdf</source>
+                <target>als PDF mit eingebetteter E-Rechnung exportieren</target>
             </trans-unit>
-            <trans-unit id="button.export.xrechnung">
-                <source>button.export.xrechnung</source>
-                <target>als E-Rechnung exportieren</target>
+            <trans-unit id="button.export.xml">
+                <source>button.export.xml</source>
+                <target>als XRechnung-XML exportieren (für Behördenportale)</target>
             </trans-unit>
             <trans-unit id="button.add">
                 <source>button.add</source>

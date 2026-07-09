@@ -29,6 +29,7 @@ use App\Service\CalendarService;
 use App\Service\CalendarImportService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
+use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use App\Service\ReservationObject;
@@ -1258,7 +1259,7 @@ class ReservationServiceController extends AbstractController
      * Shown in conversations when clicking on next after reservation selection.
      */
     #[Route('/select/template', name: 'reservations.select.template', methods: ['POST'])]
-    public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, Request $request)
+    public function selectTemplateAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, ReservationService $rs, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
         $progress = $request->request->get('inProcess', 'false');
@@ -1291,6 +1292,7 @@ class ReservationServiceController extends AbstractController
             'inProcess' => $progress,
             'correspondences' => $correspondences,
             'invoices' => $invoices,
+            'einvoiceReadiness' => $readinessService->checkAll($invoices),
         ]);
     }
 

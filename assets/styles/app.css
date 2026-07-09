@@ -739,3 +739,12 @@ div .reservation-yearly-day {
 #accordionSettings label.required:after {
     content: " *";
 }
+
+/* compact e-invoice readiness disclosure: hide the default marker, keep the summary clickable */
+details.einvoice-readiness > summary {
+    list-style: none;
+    cursor: pointer;
+}
+details.einvoice-readiness > summary::-webkit-details-marker {
+    display: none;
+}

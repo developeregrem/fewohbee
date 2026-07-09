@@ -194,19 +194,24 @@ export default class extends Controller {
         return false;
     }
 
-    adoptNextInvoiceNumberAction(event) {
-        const last = event.currentTarget.dataset.lastNumber || '';
-        const input = document.getElementById('invoiceidInput');
-        if (!input) return;
-        const match = last.match(/^(.*?)(\d+)$/);
-        if (match) {
-            const prefix = match[1];
-            const num = match[2];
-            const next = String(parseInt(num, 10) + 1).padStart(num.length, '0');
-            input.value = prefix + next;
-        } else {
-            input.value = last;
+    // Auto-saves invoice number and date to the session while typing (debounced).
+    updateInvoiceMetaAction() {
+        if (!this.debouncedInvoiceMeta) {
+            this.debouncedInvoiceMeta = debounce(() => this.saveInvoiceMeta(), 400);
         }
+        this.debouncedInvoiceMeta();
+    }
+
+    saveInvoiceMeta() {
+        const wrapper = document.getElementById('invoice-meta');
+        if (!wrapper) return;
+        const url = wrapper.dataset.invoicesMetaUrl;
+        if (!url) return;
+        const number = document.getElementById('invoiceidInput');
+        const date = document.getElementById('invoiceDate');
+        const data = `invoiceid=${encodeURIComponent(number ? number.value : '')}&invoiceDate=${encodeURIComponent(date ? date.value : '')}`;
+        // onSuccess no-op keeps the request silent; without it the shared helper would reload the page.
+        httpRequest({ url, method: 'POST', data, loader: false, onSuccess: () => {} });
     }
 
     fillFieldsFromPriceCategoryAction(event) {

@@ -1,0 +1,24 @@
+{# Compact, unobtrusive e-invoice readiness indicator; expects `readiness` (EInvoiceReadiness or null).
+   E-invoices are only mandatory for B2B, so the warning stays subtle: just an icon + short label,
+   the full list of missing fields is revealed on click. #}
+{% if readiness is defined and readiness is not null and readiness.configured %}
+    {% if readiness.ready %}
+        <span class="text-success small" title="{{ 'invoice.einvoice.status.ready'|trans }}">
+            <i class="fa-solid fa-circle-check"></i> {{ 'invoice.einvoice.ready.short'|trans }}
+        </span>
+    {% else %}
+        <details class="einvoice-readiness d-inline-block small">
+            <summary class="text-warning">
+                <i class="fa-solid fa-circle-info"></i> {{ 'invoice.einvoice.notready.short'|trans }}
+            </summary>
+            <div class="mt-1 ps-3 border-start text-muted">
+                <div class="fw-semibold">{{ 'invoice.einvoice.status.missing'|trans }}:</div>
+                <ul class="mb-0">
+                    {% for violation in readiness.result.violations %}
+                        <li>{{ violation.messageKey|trans }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </details>
+    {% endif %}
+{% endif %}

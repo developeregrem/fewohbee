@@ -11,8 +11,45 @@
     </h2>
     <div id="collapse{{ idx }}" class="accordion-collapse collapse{% if (editSettingId is defined and editSettingId == setting.id) or (editSettingId == 0 and (setting.isActive or setting.id == null)) %} show{% endif %}" data-bs-parent="#accordionSettings">
         <div class="accordion-body">
-            {{ form_start(form, {'attr': {'data-action': 'submit->invoices#submitFormAction', 'id': 'sttings-form-'~idx }}) }}
-                {{ form_widget(form) }}
+            {{ form_start(form, {'attr': {'data-action': 'submit->invoices#submitFormAction', 'id': 'sttings-form-'~idx, 'data-controller': 'einvoice-settings' }}) }}
+                {% if form.vars.submitted and not form.vars.valid %}
+                    <div class="alert alert-danger py-2">{{ 'invoice.settings.form.error'|trans }}</div>
+                {% endif %}
+                <h5>{{ 'invoice.settings.section.profile'|trans }}</h5>
+                {{ form_row(form.einvoiceProfile) }}
+                <div class="alert alert-info py-2" data-einvoice-settings-target="hintEn16931">{{ 'invoice.settings.profile.hint.en16931'|trans }}</div>
+                <div class="alert alert-info py-2 d-none" data-einvoice-settings-target="hintXrechnung">{{ 'invoice.settings.profile.hint.xrechnung'|trans }}</div>
+
+                <h5 class="mt-4">{{ 'invoice.settings.section.company'|trans }}</h5>
+                {{ form_row(form.companyName) }}
+                {{ form_row(form.companyAddress) }}
+                {{ form_row(form.companyPostCode) }}
+                {{ form_row(form.companyCity) }}
+                {{ form_row(form.companyCountry) }}
+
+                <h5 class="mt-4">{{ 'invoice.settings.section.contact'|trans }}</h5>
+                <p class="form-text text-muted mt-0 mb-2 d-none" data-einvoice-settings-target="contactHint">{{ 'invoice.settings.xrechnung.required.hint'|trans }}</p>
+                {{ form_row(form.contactName) }}
+                {{ form_row(form.contactDepartment) }}
+                {{ form_row(form.contactPhone) }}
+                {{ form_row(form.contactMail) }}
+                {{ form_row(form.companyInvoiceMail) }}
+
+                <h5 class="mt-4">{{ 'invoice.settings.section.tax'|trans }}</h5>
+                {{ form_row(form.taxNumber) }}
+                {{ form_row(form.vatID) }}
+                {{ form_row(form.registrationNumber) }}
+
+                <h5 class="mt-4">{{ 'invoice.settings.section.payment'|trans }}</h5>
+                {{ form_row(form.accountName) }}
+                {{ form_row(form.accountIBAN) }}
+                {{ form_row(form.accountBIC) }}
+                {{ form_row(form.paymentDueDays) }}
+                {{ form_row(form.paymentTerms) }}
+                {{ form_row(form.creditorReference) }}
+
+                <hr>
+                {{ form_row(form.isActive) }}
                 <div class="row text-end">
                     <div class="col-md">
                         {% if setting.id != null %}

@@ -30,6 +30,8 @@ use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
+use App\Service\EInvoice\EInvoiceReadinessService;
+use App\Service\EInvoice\Validation\EInvoiceValidationException;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -53,7 +55,7 @@ class InvoiceServiceController extends AbstractController
     private $perPage = 20;
 
     #[Route('/', name: 'invoices.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
 
@@ -74,12 +76,14 @@ class InvoiceServiceController extends AbstractController
                 'page' => $page,
                 'pages' => $pages,
                 'search' => $search,
+                'einvoiceReadiness' => $readinessService->checkAll($invoices),
+                'activeProfileKey' => $readinessService->getActiveProfileKey(),
             ]
         );
     }
 
     #[Route('/search', name: 'invoices.search', methods: ['POST'])]
-    public function searchInvoicesAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, Request $request)
+    public function searchInvoicesAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
         $search = $request->request->get('search', '');
@@ -99,11 +103,13 @@ class InvoiceServiceController extends AbstractController
             'pages' => $pages,
             'search' => $search,
             'templateId' => $templateId,
+            'einvoiceReadiness' => $readinessService->checkAll($invoices),
+            'activeProfileKey' => $readinessService->getActiveProfileKey(),
         ]);
     }
 
     #[Route('/get/{id}/', name: 'invoices.get.invoice', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, $id)
+    public function getInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceReadinessService $readinessService, $id)
     {
         $em = $doctrine->getManager();
         $invoice = $em->getRepository(Invoice::class)->find($id);
@@ -144,6 +150,8 @@ class InvoiceServiceController extends AbstractController
                 'apartmentTotal' => $apartmentTotal,
                 'miscTotal' => $miscTotal,
                 'error' => true,
+                'readiness' => $readinessService->check($invoice),
+                'activeProfileKey' => $readinessService->getActiveProfileKey(),
             ]
         );
     }
@@ -216,7 +224,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/positions/create', name: 'invoices.create.invoice.positions', methods: ['GET', 'POST'])]
-    public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, Request $request)
+    public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EInvoiceReadinessService $readinessService, Request $request)
     {
         $em = $doctrine->getManager();
         $selectedReservationIds = $reservationService->getSelectedReservationIds();
@@ -244,52 +252,65 @@ class InvoiceServiceController extends AbstractController
         }
         $invoice = $is->getInvoiceInCreation($requestStack);
 
-        if (!$requestStack->getSession()->has('invoiceDate')) {
-            $invoiceDate = new \DateTime();
-            $requestStack->getSession()->set('invoiceDate', $invoiceDate);
-        } else {
-            $invoiceDate = $requestStack->getSession()->get('invoiceDate');
-        }
+        // Number and date now live directly on the in-creation invoice (not in separate session keys),
+        // so the e-invoice readiness reflects them and no extra submit is needed.
+        $lastInvoiceId = $em->getRepository(Invoice::class)->getLastInvoiceId();
+        $is->ensureInvoiceCreationMeta($invoice, $lastInvoiceId);
 
-        if (!$requestStack->getSession()->has('new-invoice-id')) {
-            $invoiceid = null;
-            $lastInvoiceId = $em->getRepository(Invoice::class)->getLastInvoiceId();
-        } else {
-            $invoiceid = $requestStack->getSession()->get('new-invoice-id');
-            $lastInvoiceId = '';
-        }
-
+        // Values coming from a re-rendered fragment (back navigation still posts them).
         if (null != $request->request->get('invoiceid')) {
-            $invoiceid = $request->request->get('invoiceid');
-            $requestStack->getSession()->set('new-invoice-id', $invoiceid);
+            $invoice->setNumber(trim((string) $request->request->get('invoiceid')));
         }
-        if (null != $request->request->get('invoiceDate') && strlen($request->request->get('invoiceDate')) > 0) {
-            $invoiceDate = new \DateTime($request->request->get('invoiceDate'));
-            $requestStack->getSession()->set('invoiceDate', $invoiceDate);
+        $postedDate = (string) $request->request->get('invoiceDate', '');
+        if ('' !== $postedDate) {
+            try {
+                $invoice->setDate(new \DateTime($postedDate));
+            } catch (\Exception) {
+                // keep the current date on unparsable input
+            }
         }
 
-        if (0 != count($newInvoicePositionsAppartmentsArray) && null != $invoiceid) {
-            $appartmentPositionExists = true;
-        } else {
-            $appartmentPositionExists = false;
-        }
+        // The invoice needs at least one position (apartment or miscellaneous) to be billable;
+        // number/date are auto-filled, so they no longer gate the continue button.
+        $canContinue = count($newInvoicePositionsAppartmentsArray) > 0 || count($newInvoicePositionsMiscellaneousArray) > 0;
 
         return $this->render(
             'Invoices/invoice_form_show_create_invoice_positions.html.twig',
             [
                 'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
                 'positionsAppartment' => $newInvoicePositionsAppartmentsArray,
-                'appartmentPositionExists' => $appartmentPositionExists,
+                'canContinue' => $canContinue,
                 'lastinvoiceid' => $lastInvoiceId,
-                'invoiceid' => $invoiceid,
+                'invoiceid' => $invoice->getNumber(),
                 'invoice' => $invoice,
-                'invoiceDate' => $invoiceDate,
+                'invoiceDate' => $invoice->getDate(),
+                'readiness' => $readinessService->check($invoice),
             ]
         );
     }
 
+    // Auto-save endpoint for invoice number and date while creating an invoice (no page submit needed).
+    #[Route('/create/positions/meta', name: 'invoices.create.invoice.meta', methods: ['POST'])]
+    public function saveInvoiceMetaAction(RequestStack $requestStack, InvoiceService $is, Request $request): Response
+    {
+        $invoice = $is->getInvoiceInCreation($requestStack);
+        if (null !== $request->request->get('invoiceid')) {
+            $invoice->setNumber(trim((string) $request->request->get('invoiceid')));
+        }
+        $dateRaw = (string) $request->request->get('invoiceDate', '');
+        if ('' !== $dateRaw) {
+            try {
+                $invoice->setDate(new \DateTime($dateRaw));
+            } catch (\Exception) {
+                // unparsable input: keep the current date
+            }
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
     #[Route('/create/invoice/customer/change', name: 'invoices.show.change.customer', methods: ['GET', 'POST'])]
-    public function showChangeCustomerInvoiceFormAction(ManagerRegistry $doctrine, InvoiceService $is, Request $request, RequestStack $requestStack)
+    public function showChangeCustomerInvoiceFormAction(ManagerRegistry $doctrine, InvoiceService $is, EInvoiceReadinessService $readinessService, Request $request, RequestStack $requestStack)
     {
         $invoice = $is->getInvoiceInCreation($requestStack);
 
@@ -313,6 +334,7 @@ class InvoiceServiceController extends AbstractController
                 'customers' => $customersArray,
                 'invoice' => $invoice,
                 'form' => $form->createView(),
+                'readiness' => $readinessService->check($invoice),
             ]
         );
     }
@@ -658,10 +680,11 @@ class InvoiceServiceController extends AbstractController
         $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
         $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments');
 
-        $invoice->setNumber($requestStack->getSession()->get('new-invoice-id'));
+        if ('' === trim((string) $invoice->getNumber())) {
+            $this->addFlash('warning', 'invoice.number.missing.error');
 
-        $invoiceDate = $requestStack->getSession()->get('invoiceDate');
-        $invoice->setDate($invoiceDate);
+            return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
+        }
 
         $vatSums = [];
         $brutto = 0;
@@ -707,6 +730,12 @@ class InvoiceServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ('' === trim((string) $invoice->getNumber())) {
+                $this->addFlash('warning', 'invoice.number.missing.error');
+
+                return $this->render('feedback.html.twig', ['error' => true]);
+            }
+
             $newInvoiceReservationsArray = $reservationService->getSelectedReservationIds();
 
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
@@ -778,7 +807,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/edit/customer/change', name: 'invoices.get.invoice.customer.change', methods: ['GET', 'POST'])]
-    public function showChangeCustomerInvoiceEditAction(ManagerRegistry $doctrine, InvoiceService $is, Request $request, RequestStack $requestStack, Invoice $invoice): Response
+    public function showChangeCustomerInvoiceEditAction(ManagerRegistry $doctrine, InvoiceService $is, EInvoiceReadinessService $readinessService, Request $request, RequestStack $requestStack, Invoice $invoice): Response
     {
         $em = $doctrine->getManager();
 
@@ -807,6 +836,7 @@ class InvoiceServiceController extends AbstractController
                 'customers' => $customersArray,
                 'invoice' => $invoice,
                 'form' => $form->createView(),
+                'readiness' => $readinessService->check($invoice),
             ]
         );
     }
@@ -885,58 +915,39 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/export/pdf/{id}/{template}', name: 'invoices.export.pdf', methods: ['GET'])]
-    public function exportToPdfAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, Invoice $invoice, Template $template): Response
+    public function exportToPdfAction(RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService, Invoice $invoice, Template $template): Response
     {
-        $em = $doctrine->getManager();
         // save id, after page reload template will be preselected in dropdown
         $requestStack->getSession()->set('invoice-template-id', $template->getId());
 
-        $templateOutput = null;
-        try {
-            $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
-        } catch (\InvalidArgumentException $e) {
-            $this->addFlash('warning', $e->getMessage());
-
-            return $this->redirect($this->generateUrl('invoices.overview'));
+        // Default export is the hybrid PDF with embedded e-invoice XML; plain PDF is the fallback
+        // when mandatory fields are missing or the merge fails.
+        $pdfOutput = null;
+        $filenameBase = null;
+        $readiness = $readinessService->check($invoice);
+        if ($readiness->ready) {
+            try {
+                $pdfOutput = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $readinessService->getActiveSettings());
+                $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
+            } catch (\Throwable $e) {
+                $this->addFlash('warning', 'invoice.einvoice.export.fallback');
+                $pdfOutput = null;
+            }
         }
 
-        $filenameBase = $is->buildInvoiceExportFilename($invoice);
-        $pdfOutput = $ts->getPDFOutput($templateOutput, $filenameBase, $template);
+        if (null === $pdfOutput) {
+            try {
+                $templateOutput = $ts->renderTemplate($template->getId(), $invoice->getId());
+            } catch (\InvalidArgumentException $e) {
+                $this->addFlash('warning', $e->getMessage());
+
+                return $this->redirect($this->generateUrl('invoices.overview'));
+            }
+            $filenameBase = $is->buildInvoiceExportFilename($invoice);
+            $pdfOutput = $ts->getPDFOutput($templateOutput, $filenameBase, $template);
+        }
+
         $response = new Response($pdfOutput);
-        $response->headers->set('Content-Type', 'application/pdf');
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            $filenameBase.'.pdf'
-        );
-        $response->headers->set('Content-Disposition', $disposition);
-
-        return $response;
-    }
-
-    #[Route('/export/pdf-xml/{id}/{template}', name: 'invoices.export.pdfxml', methods: ['GET'])]
-    public function exportToPdfXMLAction(ManagerRegistry $doctrine, RequestStack $requestStack, TemplatesService $ts, InvoiceService $is, EInvoiceExportService $einvoice, Invoice $invoice, Template $template): Response
-    {
-        $em = $doctrine->getManager();
-        // save id, after page reload template will be preselected in dropdown
-        $requestStack->getSession()->set('invoice-template-id', $template->getId());
-
-        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
-        if (!($invoiceSettings instanceof InvoiceSettingsData)) {
-            $this->addFlash('danger', 'invoice.settings.active.error');
-
-            return $this->redirect($this->generateUrl('invoices.overview'));
-        }
-
-        try {
-            $mergedPdf = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $invoiceSettings);
-        } catch (\Throwable $e) {
-            $this->addFlash('warning', $e->getMessage());
-
-            return $this->redirect($this->generateUrl('invoices.overview'));
-        }
-
-        $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
-        $response = new Response($mergedPdf);
         $response->headers->set('Content-Type', 'application/pdf');
         $disposition = HeaderUtils::makeDisposition(
             HeaderUtils::DISPOSITION_ATTACHMENT,
@@ -960,8 +971,9 @@ class InvoiceServiceController extends AbstractController
         $xml = '';
         try {
             $xml = $einvoice->generateInvoiceData($invoice, $invoiceSettings);
-        } catch (\InvalidArgumentException $e) {
-            $this->addFlash('warning', $e->getMessage());
+        } catch (EInvoiceValidationException $e) {
+            // Details are shown in the invoice detail readiness panel and the list tooltip.
+            $this->addFlash('warning', 'invoice.einvoice.status.missing');
 
             return $this->redirect($this->generateUrl('invoices.overview'));
         }
@@ -1006,12 +1018,17 @@ class InvoiceServiceController extends AbstractController
 
         $templateId = $ts->getTemplateId($doctrine, $requestStack, 'TEMPLATE_INVOICE_PDF', 'invoice-template-id');
 
+        // getSettings is a sub-request (forwarded) only after a create/edit/delete of a setting;
+        // in that case keep the user on the e-invoice tab instead of the default template tab.
+        $activeTab = $requestStack->getParentRequest() instanceof Request ? 'einvoice' : 'template';
+
         return $this->render('Invoices/invoice_form_settings.html.twig', [
             'settings' => $settings,
             'forms' => $forms,
             'templates' => $templates,
             'templateId' => $templateId,
             'editSettingId' => $editSettingId,
+            'activeTab' => $activeTab,
         ]);
     }
 

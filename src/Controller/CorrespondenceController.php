@@ -16,12 +16,12 @@ namespace App\Controller;
 use App\Entity\Correspondence;
 use App\Entity\FileCorrespondence;
 use App\Entity\Invoice;
-use App\Entity\InvoiceSettingsData;
 use App\Entity\MailCorrespondence;
 use App\Entity\Reservation;
 use App\Entity\Template;
 use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
+use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\ReservationService;
@@ -308,50 +308,40 @@ class CorrespondenceController extends AbstractController
 
     /**
      * Adds an already added file (correspondence) as attachment of the current mail.
+     * Invoices are attached as hybrid PDF (embedded e-invoice XML) whenever validation passes,
+     * otherwise as plain PDF.
      */
     #[IsGranted('ROLE_RESERVATIONS')]
     #[Route('/attachment/add', name: 'correspondence.attachment.add', methods: ['POST'])]
-    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice): Response
+    public function addAttachmentAction(ManagerRegistry $doctrine, TemplatesService $ts, Request $request, InvoiceService $is, EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService): Response
     {
         $em = $doctrine->getManager();
         $error = false;
         $isInvoice = $request->request->get('isInvoice', 'false');
-        $isEInvoice = $request->request->get('isEInvoice', 'false');
         $cId = $request->request->get('id');
         if ('false' != $isInvoice) {
-            $binaryPayload = null;
-            if ('false' != $isEInvoice) {
-                $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
-                if (!($invoice instanceof Invoice)) {
-                    $this->addFlash('warning', 'templates.attachment.notfound');
-                    $error = true;
-                } else {
-                    $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
-                    if (!($invoiceSettings instanceof InvoiceSettingsData)) {
-                        $this->addFlash('danger', 'invoice.settings.active.error');
-                        $error = true;
-                    } else {
-                        $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
-                        $defaultTemplate = $ts->getDefaultTemplate($templates);
-                        if (null === $defaultTemplate) {
-                            $this->addFlash('warning', 'templates.notfound');
-                            $error = true;
-                        } else {
-                            try {
-                                $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $invoiceSettings);
-                            } catch (\InvalidArgumentException $e) {
-                                $this->addFlash('warning', $e->getMessage());
-                                $error = true;
-                            } catch (\Throwable $e) {
-                                $this->addFlash('warning', $e->getMessage());
-                                $error = true;
-                            }
+            $invoice = $cId ? $em->getRepository(Invoice::class)->find($cId) : null;
+            if (!($invoice instanceof Invoice)) {
+                $this->addFlash('warning', 'templates.attachment.notfound');
+                $error = true;
+            } else {
+                $binaryPayload = null;
+                $asEInvoice = false;
+                $readiness = $readinessService->check($invoice);
+                if ($readiness->ready) {
+                    $templates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
+                    $defaultTemplate = $ts->getDefaultTemplate($templates);
+                    if (null !== $defaultTemplate) {
+                        try {
+                            $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->getActiveSettings());
+                            $asEInvoice = true;
+                        } catch (\Throwable $e) {
+                            $this->addFlash('warning', 'invoice.einvoice.export.fallback');
+                            $binaryPayload = null;
                         }
                     }
                 }
-            }
-            if (!$error) {
-                $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, 'false' != $isEInvoice);
+                $cId = $ts->makeCorespondenceOfInvoice($cId, $is, $binaryPayload, $asEInvoice);
             }
         }
 

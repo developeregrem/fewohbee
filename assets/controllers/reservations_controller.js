@@ -519,17 +519,11 @@ export default class extends Controller {
         event.preventDefault();
         const id = event.currentTarget.dataset.attachmentId;
         const isInvoice = event.currentTarget.dataset.isInvoice === 'true';
-        const einvoiceCheckbox = event.currentTarget.querySelector('[data-einvoice-checkbox]');
-        const isEInvoice = !!(einvoiceCheckbox && einvoiceCheckbox.checked);
         const url = event.currentTarget.dataset.url;
         if (url && this.modalContent) {
             this.modalContent.dataset.addAttachmentUrl = url;
         }
-        this.addAsAttachment(id, isInvoice, isEInvoice);
-    }
-
-    stopAttachmentRowClickAction(event) {
-        event.stopPropagation();
+        this.addAsAttachment(id, isInvoice);
     }
 
     previewTemplateForReservationAction(event) {
@@ -1890,7 +1884,7 @@ export default class extends Controller {
 
     
 
-    addAsAttachment(id, isInvoice, isEInvoice = false) {
+    addAsAttachment(id, isInvoice) {
         const url = this.getContextValue('addAttachmentUrl');
         if (!url) {
             return false;
@@ -1898,7 +1892,7 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
-            data: { id, isInvoice, isEInvoice },
+            data: { id, isInvoice },
             loader: false,
             target: this.modalContent,
             onSuccess: (data) => {

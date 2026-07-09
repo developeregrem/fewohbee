@@ -50,6 +50,7 @@
             </thead>
             <tbody>
             {% for invoice in invoices %}
+                    {% set readiness = einvoiceReadiness[invoice.id] ?? null %}
                     <tr class="mouse-pointer"
                         data-action="click->reservations#addAttachmentAction"
                         data-url="{{ path('correspondence.attachment.add') }}"
@@ -58,10 +59,15 @@
                         <td style="width:10.0pt"><i class="fas fa-file-pdf" aria-hidden="true" title="{{ 'invoice.number.short'|trans }}"></i></td>
                         <td>{{ invoice.number }} ({{ invoice.date|date('d.m.Y') }})</td>
                         <td class="text-center">
-                            <input type="checkbox"
-                                   data-einvoice-checkbox
-                                   data-action="click->reservations#stopAttachmentRowClickAction"
-                                   title="{{ 'invoice.einvoice'|trans }}">
+                            {% if readiness and readiness.configured %}
+                                {% if readiness.ready %}
+                                    <span class="text-success" title="{{ 'invoice.einvoice.attach.auto'|trans }}">
+                                        <i class="fa-solid fa-circle-check"></i></span>
+                                {% else %}
+                                    <span class="text-warning" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
+                                        <i class="fa-solid fa-triangle-exclamation"></i></span>
+                                {% endif %}
+                            {% endif %}
                         </td>
                     </tr>
             {% endfor %}
