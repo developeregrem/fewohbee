@@ -247,8 +247,13 @@ class InvoiceServiceController extends AbstractController
         $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments');
 
         if (!$requestStack->getSession()->has('newInvoice') && count($reservations) > 0) {
-            $customer = $reservations[0]->getBooker();
-            $is->setDefaultCustomer($customer, $requestStack);
+            foreach ($reservations as $reservation) {
+                $customer = $reservation->getBooker();
+                if (null !== $customer) {
+                    $is->setDefaultCustomer($customer, $requestStack);
+                    break;
+                }
+            }
         }
         $invoice = $is->getInvoiceInCreation($requestStack);
 

@@ -952,7 +952,7 @@ class InvoiceService
                     $result[$customer->getId()] = $customer;
                 }
             }
-            if (!array_key_exists($booker->getId(), $result)) {
+            if (null !== $booker && !array_key_exists($booker->getId(), $result)) {
                 $result[$booker->getId()] = $booker;
             }
         }

@@ -402,6 +402,10 @@
                 <source>reservation.review.todo</source>
                 <target>Gast hinzufügen und Personenanzahl prüfen.</target>
             </trans-unit>
+            <trans-unit id="reservation.booker.missing.short">
+                <source>reservation.booker.missing.short</source>
+                <target>Kein Gast hinterlegt</target>
+            </trans-unit>
             <trans-unit id="reservation.import.booker.missing">
                 <source>reservation.import.booker.missing</source>
                 <target>Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.</target>
