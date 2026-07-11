@@ -41,7 +41,7 @@ class CalendarImportService
     /** Run synchronization for a single import configuration. */
     public function syncImport(CalendarSyncImport $import): void
     {
-        if (!$import->isActive()) {
+        if (!$import->isActive() || !$import->getApartment()->isActive()) {
             return;
         }
 

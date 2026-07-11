@@ -32,7 +32,7 @@ class ApartmentCalendarController extends AbstractController
         $em = $doctrine->getManager();
         $sync = $em->getRepository(CalendarSync::class)->findOneBy(['uuid' => Uuid::fromString($uuid)]);
         /* @var $sync CalendarSync */
-        if (!$sync instanceof CalendarSync || !$sync->getIsPublic()) {
+        if (!$sync instanceof CalendarSync || !$sync->getIsPublic() || !$sync->getApartment()?->isActive()) {
             throw new NotFoundHttpException();
         }
         $css->updateExportDate($sync);

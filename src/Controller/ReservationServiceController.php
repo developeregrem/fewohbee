@@ -235,7 +235,7 @@ class ReservationServiceController extends AbstractController
         }
         $apartment = $em->getRepository(Appartment::class)->find($apartmentId);
 
-        if (!$apartment instanceof Appartment) {
+        if (!$apartment instanceof Appartment || !$apartment->isActive()) {
             throw new NotFoundHttpException();
         }
 

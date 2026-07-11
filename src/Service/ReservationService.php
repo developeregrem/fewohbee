@@ -255,7 +255,7 @@ class ReservationService
         if ('all' == $propertyId) {
             $appartments = $this->em->getRepository(Appartment::class)->findAll();
         } else {
-            $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId]);
+            $appartments = $this->em->getRepository(Appartment::class)->findBy(['object' => $propertyId, 'active' => true]);
         }
         $availableApartments = [];
         foreach ($appartments as $ap) {
@@ -440,6 +440,10 @@ class ReservationService
      */
     public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null): bool
     {
+        if (!$apartment->isActive()) {
+            return false;
+        }
+
         $reservationsForApartment = $this->em->getRepository(Reservation::class)
             ->loadReservationsForApartmentWithoutStartEnd($start, $end, $apartment);
 

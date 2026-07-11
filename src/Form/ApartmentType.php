@@ -52,6 +52,12 @@ class ApartmentType extends AbstractType
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
             ])
+            ->add('active', CheckboxType::class, [
+                'label' => 'appartment.active',
+                'help' => 'appartment.active.hint',
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
+                'required' => false,
+            ])
         ;
     }
 

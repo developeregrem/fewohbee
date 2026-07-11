@@ -40,6 +40,14 @@ class AppartmentRepository extends ServiceEntityRepository
 
     public function findAll(): array
     {
+        return $this->addDefaultSorting($this->createBaseQueryBuilder()->andWhere('a.active = true'))
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** Return all rooms, including inactive ones, for room settings. */
+    public function findAllIncludingInactive(): array
+    {
         return $this->addDefaultSorting($this->createBaseQueryBuilder())
             ->getQuery()
             ->getResult();
@@ -54,6 +62,7 @@ class AppartmentRepository extends ServiceEntityRepository
     {
         $rows = $this->createQueryBuilder('a')
             ->select('a.id')
+            ->where('a.active = true')
             ->getQuery()
             ->getArrayResult();
 
@@ -75,6 +84,7 @@ class AppartmentRepository extends ServiceEntityRepository
         $rows = $this->createQueryBuilder('a')
             ->select('a.id')
             ->where('a.id IN (:ids)')
+            ->andWhere('a.active = true')
             ->setParameter('ids', $ids)
             ->getQuery()
             ->getArrayResult();
@@ -113,6 +123,7 @@ class AppartmentRepository extends ServiceEntityRepository
 
         return $this->addDefaultSorting(
             $this->createBaseQueryBuilder()
+                ->andWhere('a.active = true')
                 ->andWhere('a.object = :id')
                 ->setParameter('id', $propertyId)
         )
@@ -160,6 +171,7 @@ class AppartmentRepository extends ServiceEntityRepository
             ->join('a.object', 'o')
             ->addSelect('o')
             ->where('a.id IN (:roomIds)')
+            ->andWhere('a.active = true')
             ->andWhere('o.id IN (:subsidiaryIds)')
             ->setParameter('roomIds', $roomIds)
             ->setParameter('subsidiaryIds', $subsidiaryIds)
@@ -189,6 +201,7 @@ class AppartmentRepository extends ServiceEntityRepository
             ->join('a.object', 'o')
             ->addSelect('o')
             ->where('a.id IN (:ids)')
+            ->andWhere('a.active = true')
             ->setParameter('ids', $ids)
             ->getQuery()
             ->getResult();
