@@ -22,6 +22,7 @@ export default class extends Controller {
         'snapshotRoomsTotal',
         'snapshotBedsTotal',
         'snapshotUtilization',
+        'snapshotBlockedRoomDays',
         'snapshotWarnings',
         'snapshotArrivalsChart',
         'snapshotOvernightsChart',
@@ -461,6 +462,10 @@ export default class extends Controller {
         if (this.hasSnapshotUtilizationTarget) {
             const util = utilization.month_percent ?? 0;
             this.snapshotUtilizationTarget.textContent = `${util.toFixed(2)}%`;
+        }
+        if (this.hasSnapshotBlockedRoomDaysTarget) {
+            const blocked = metrics.blocked || {};
+            this.snapshotBlockedRoomDaysTarget.textContent = (blocked.room_days ?? 0).toLocaleString();
         }
     }
 

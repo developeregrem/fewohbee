@@ -7,6 +7,8 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\CalendarSync;
 use App\Entity\Reservation;
+use App\Entity\RoomBlock;
+use App\Repository\RoomBlockRepository;
 use Symfony\Component\Intl\Countries;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Yasumi\Filters\OnFilter;
@@ -25,11 +27,12 @@ use Yasumi\Yasumi;
 
 class CalendarService
 {
-    /* @var $holidays AbstractProvider */
-    private static $holidays;
+    private ?AbstractProvider $holidays = null;
 
-    public function __construct(private TranslatorInterface $translator)
-    {
+    public function __construct(
+        private TranslatorInterface $translator,
+        private readonly RoomBlockRepository $roomBlockRepository,
+    ) {
     }
 
     /**
@@ -37,12 +40,12 @@ class CalendarService
      */
     private function initPublicdays(int $year, string $code, string $locale): iterable
     {
-        if (null === self::$holidays || self::$holidays->getYear() !== $year) {
-            self::$holidays = Yasumi::createByISO3166_2($code, $year, $locale);
+        if (null === $this->holidays || $this->holidays->getYear() !== $year) {
+            $this->holidays = Yasumi::createByISO3166_2($code, $year, $locale);
             $this->includeSubdivisions($code, $locale);
         }
 
-        return self::$holidays;
+        return $this->holidays;
     }
 
     /**
@@ -52,7 +55,7 @@ class CalendarService
     {
         $this->initPublicdays((int) $date->format('Y'), $code, $locale);
 
-        return new OnFilter(self::$holidays->getIterator(), $date);
+        return new OnFilter($this->holidays->getIterator(), $date);
     }
 
     /**
@@ -63,9 +66,9 @@ class CalendarService
         $filtered = $this->getSubdivisions($code);
 
         foreach ($filtered as $provider) {
-            $subDivisionProvider = Yasumi::create($provider, self::$holidays->getYear(), $locale);
+            $subDivisionProvider = Yasumi::create($provider, $this->holidays->getYear(), $locale);
             foreach ($subDivisionProvider as $holiday) {
-                self::$holidays->addHoliday($holiday);
+                $this->holidays->addHoliday($holiday);
             }
         }
     }
@@ -138,9 +141,34 @@ class CalendarService
             }
         }
 
+        // room blocks are always exported as busy, independent of the status filter
+        foreach ($this->roomBlockRepository->findBy(['appartment' => $room]) as $block) {
+            $content .= $this->getIcalBlockEventBody($block);
+        }
+
         $content .= $this->getIcalFooter();
 
         return $content;
+    }
+
+    private function getIcalBlockEventBody(RoomBlock $block): string
+    {
+        // neutral summary, no reason/note: the export may be consumed by external portals
+        return "BEGIN:VEVENT\r\n".
+                'DTSTART;VALUE=DATE:'.$block->getStartDate()->format('Ymd')."\r\n".
+                // endDate is exclusive, matching the DTEND/availability convention used above
+                'DTEND;VALUE=DATE:'.$block->getEndDate()->format('Ymd')."\r\n".
+                'DTSTAMP:'.date('Ymd').'T'.date('His')."Z\r\n".
+                'UID:'.$block->getUuid()->toBase32()."@fewohbee\r\n".
+                'CREATED:'.$block->getCreatedAt()->format('Ymd').'T'.$block->getCreatedAt()->format('His')."Z\r\n".
+                "DESCRIPION:\r\n".
+                'LAST-MODIFIED:'.$block->getCreatedAt()->format('Ymd').'T'.$block->getCreatedAt()->format('His')."Z\r\n".
+                "LOCATION:\r\n".
+                "SEQUENCE:0\r\n".
+                "STATUS:CONFIRMED\r\n".
+                "SUMMARY:Blocked\r\n".
+                "TRANSP:TRANSPARENT\r\n".
+                "END:VEVENT\r\n";
     }
 
     private function getIcalHeader(Appartment $room): string

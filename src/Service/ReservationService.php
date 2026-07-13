@@ -39,6 +39,7 @@ class ReservationService
         private readonly InvoiceService $is,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly GuestCategoryRepository $guestCategoryRepository,
+        private readonly AvailabilityService $availabilityService,
     ) {
     }
 
@@ -440,42 +441,7 @@ class ReservationService
      */
     public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null): bool
     {
-        if (!$apartment->isActive()) {
-            return false;
-        }
-
-        $reservationsForApartment = $this->em->getRepository(Reservation::class)
-            ->loadReservationsForApartmentWithoutStartEnd($start, $end, $apartment);
-
-        // during update process we ignore the reservation that we want to update
-        if (null !== $reservation) {
-            $reservationsForApartment = array_filter(
-                $reservationsForApartment,
-                fn ($v, $k) => $v->getId() !== $reservation->getId(),
-                ARRAY_FILTER_USE_BOTH
-            );
-        }
-
-        // check wheather multiple reservations are allowed and check if there is still place for new geuests in it
-        if (count($reservationsForApartment) > 0) {
-            if (!$apartment->isMultipleOccupancy()) {
-                return false;
-            }
-
-            foreach ($reservationsForApartment as $reservationForApartment) {
-                $numberOfPersons += $reservationForApartment->getPersons();
-            }
-            // room has still some free beds
-            // todo over booking is possible because number of beds for current reservation is not taken into account
-            if ($numberOfPersons <= $apartment->getBedsMax()) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            // no other reservations for the given time period
-            return true;
-        }
+        return $this->availabilityService->isRoomAvailable($apartment, $start, $end, $numberOfPersons, $reservation);
     }
 
     public function updateReservationCustomers($reservation, $customer, $tab): void

@@ -164,6 +164,8 @@ export default class extends Controller {
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
         this.updateConflictBadgeFromModal();
+        this.refreshTableAfterBlockChange();
+        this.initBlockRoomPicker();
         enableDeletePopover();
         window.setTimeout(() => {
             this.isHandlingModalChange = false;
@@ -228,6 +230,233 @@ export default class extends Controller {
         const createNew = event?.currentTarget?.dataset.reservationsCreateNew === 'true';
         const url = event?.currentTarget?.dataset.url;
         this.selectAppartment(createNew, url);
+    }
+
+    openBlockFormAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    openBlockListAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.list.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    openBlockAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    // Reload the block list with the current year/month/subsidiary filter (stays in the modal).
+    reloadBlockListAction(event) {
+        const form = event.target.closest('[data-block-list-filter]');
+        if (!form) return;
+        const url = form.dataset.url;
+        if (!url) return;
+        httpRequest({
+            url,
+            method: 'GET',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+            loader: false,
+        });
+    }
+
+    toggleBlockSelect(event) {
+        this._syncBlockBulkState(event.target.closest('.modal-body'));
+    }
+
+    toggleAllBlockSelect(event) {
+        const scope = event.target.closest('.modal-body');
+        if (!scope) return;
+        scope.querySelectorAll('[data-block-select]').forEach((cb) => { cb.checked = event.target.checked; });
+        this._syncBlockBulkState(scope);
+    }
+
+    askBulkDeleteBlocks(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        if (!bar) return;
+        bar.querySelector('[data-block-bulk-delete]')?.classList.add('d-none');
+        const confirm = bar.querySelector('[data-block-bulk-confirm]');
+        confirm?.classList.remove('d-none');
+        confirm?.classList.add('d-inline-flex');
+    }
+
+    cancelBulkDeleteBlocks(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        this._resetBulkDeleteConfirm(bar);
+    }
+
+    bulkDeleteBlocksAction(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        const scope = event.target.closest('.modal-body');
+        if (!bar || !scope) return;
+        const url = bar.dataset.url;
+        const ids = Array.from(scope.querySelectorAll('[data-block-select]:checked')).map((cb) => cb.value);
+        if (!url || ids.length === 0) {
+            this._resetBulkDeleteConfirm(bar);
+            return;
+        }
+        const params = new URLSearchParams();
+        params.append('_token', bar.querySelector('[data-block-bulk-token]')?.value || '');
+        ids.forEach((id) => params.append('ids[]', id));
+        httpRequest({
+            url,
+            method: 'POST',
+            data: params.toString(),
+            target: this.modalContent,
+            loader: false,
+        });
+    }
+
+    _resetBulkDeleteConfirm(bar) {
+        if (!bar) return;
+        const confirm = bar.querySelector('[data-block-bulk-confirm]');
+        confirm?.classList.add('d-none');
+        confirm?.classList.remove('d-inline-flex');
+        bar.querySelector('[data-block-bulk-delete]')?.classList.remove('d-none');
+    }
+
+    _syncBlockBulkState(scope) {
+        if (!scope) return;
+        const boxes = Array.from(scope.querySelectorAll('[data-block-select]'));
+        const selected = boxes.filter((cb) => cb.checked).length;
+        const bar = scope.querySelector('[data-block-bulk-bar]');
+        if (bar) {
+            const count = bar.querySelector('[data-block-bulk-count]');
+            if (count) count.textContent = String(selected);
+            const btn = bar.querySelector('[data-block-bulk-delete]');
+            if (btn) btn.disabled = selected === 0;
+            if (selected === 0) this._resetBulkDeleteConfirm(bar);
+        }
+        const master = scope.querySelector('[data-block-select-all]');
+        if (master) {
+            master.checked = boxes.length > 0 && selected === boxes.length;
+            master.indeterminate = selected > 0 && selected < boxes.length;
+        }
+    }
+
+    // Submit the room-block create form: on success reload the index page
+    // (flash + table refresh, like reservation creation); on conflict/validation
+    // the server returns the form again, which we render back into the modal.
+    submitBlockFormAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        if (!form) {
+            return;
+        }
+        const url = form.dataset.url || form.getAttribute('action');
+        httpRequest({
+            url,
+            method: form.method || 'POST',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+            loader: false,
+            onSuccess: (data) => {
+                if (data && data.trim().length > 0) {
+                    if (this.modalContent) {
+                        this.modalContent.innerHTML = data;
+                    }
+                    return;
+                }
+                window.location.href = this.startUrl || '/';
+            }
+        });
+    }
+
+    filterBlockRooms(event) {
+        const query = event.target.value.trim().toLowerCase();
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        picker.querySelectorAll('[data-block-room-item]').forEach((item) => {
+            const haystack = item.dataset.search || '';
+            const match = query === '' || haystack.includes(query);
+            item.classList.toggle('d-none', !match);
+        });
+        // hide subsidiary groups that have no visible rooms left
+        picker.querySelectorAll('[data-block-subsidiary-group]').forEach((group) => {
+            const hasVisible = group.querySelector('[data-block-room-item]:not(.d-none)') !== null;
+            group.classList.toggle('d-none', !hasVisible);
+        });
+    }
+
+    toggleAllBlockRooms(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        this._setBlockCheckboxes(this._visibleBlockCheckboxes(picker), event.target.checked);
+        this._syncBlockRoomState(picker);
+    }
+
+    toggleSubsidiaryBlockRooms(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        const subId = event.target.dataset.blockSubsidiaryToggle;
+        const boxes = this._visibleBlockCheckboxes(picker)
+            .filter((cb) => cb.dataset.blockSubsidiary === subId);
+        this._setBlockCheckboxes(boxes, event.target.checked);
+        this._syncBlockRoomState(picker);
+    }
+
+    syncBlockRoomSelection(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (picker) this._syncBlockRoomState(picker);
+    }
+
+    _visibleBlockCheckboxes(picker) {
+        return Array.from(picker.querySelectorAll('[data-block-room-checkbox]'))
+            .filter((cb) => !cb.closest('[data-block-room-item]').classList.contains('d-none'));
+    }
+
+    _setBlockCheckboxes(boxes, checked) {
+        boxes.forEach((cb) => { cb.checked = checked; });
+    }
+
+    // Keep master/subsidiary checkboxes and the selected-count badge in sync.
+    _syncBlockRoomState(picker) {
+        const allBoxes = Array.from(picker.querySelectorAll('[data-block-room-checkbox]'));
+        const selected = allBoxes.filter((cb) => cb.checked).length;
+        const badge = picker.querySelector('[data-block-selected-count]');
+        if (badge) badge.textContent = String(selected);
+
+        const master = picker.querySelector('[data-block-room-all]');
+        if (master) {
+            const visible = this._visibleBlockCheckboxes(picker);
+            const visibleChecked = visible.filter((cb) => cb.checked).length;
+            master.checked = visible.length > 0 && visibleChecked === visible.length;
+            master.indeterminate = visibleChecked > 0 && visibleChecked < visible.length;
+        }
+
+        picker.querySelectorAll('[data-block-subsidiary-toggle]').forEach((toggle) => {
+            const subId = toggle.dataset.blockSubsidiaryToggle;
+            const subBoxes = allBoxes.filter((cb) => cb.dataset.blockSubsidiary === subId);
+            const subChecked = subBoxes.filter((cb) => cb.checked).length;
+            toggle.checked = subBoxes.length > 0 && subChecked === subBoxes.length;
+            toggle.indeterminate = subChecked > 0 && subChecked < subBoxes.length;
+        });
     }
 
     reservationPreviewAction(event) {
@@ -972,6 +1201,7 @@ export default class extends Controller {
                 const apartmentId = calendar.dataset.reservationsApartmentId;
                 if (apartmentId && firstDay) {
                     this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
+                    setModalTitle(this.translate('nav.reservation.add'));
                     $('#modalCenter').modal('toggle');
                 }
                 return;
@@ -1000,6 +1230,7 @@ export default class extends Controller {
 
             if (apartments.length > 0) {
                 this.selectableAddMultipleAppartmentsToSelection(apartments);
+                setModalTitle(this.translate('nav.reservation.add'));
                 $('#modalCenter').modal('toggle');
             }
         };
@@ -1160,6 +1391,22 @@ export default class extends Controller {
                 enableDeletePopover();
             }
         });
+    }
+
+    initBlockRoomPicker() {
+        const picker = this.modalContent?.querySelector('[data-block-room-picker]');
+        if (picker) {
+            this._syncBlockRoomState(picker);
+        }
+    }
+
+    refreshTableAfterBlockChange() {
+        const marker = this.modalContent?.querySelector('[data-blocks-changed]');
+        if (!marker) {
+            return;
+        }
+        delete marker.dataset.blocksChanged;
+        this.getNewTable();
     }
 
     updateConflictBadgeFromModal() {

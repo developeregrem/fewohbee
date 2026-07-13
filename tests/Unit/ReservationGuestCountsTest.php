@@ -94,6 +94,7 @@ final class ReservationGuestCountsTest extends TestCase
             $this->createStub(InvoiceService::class),
             $this->createStub(EventDispatcherInterface::class),
             $repo,
+            $this->createStub(\App\Service\AvailabilityService::class),
         );
     }
 

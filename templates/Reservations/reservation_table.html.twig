@@ -145,9 +145,14 @@
                             >{{ cell.displayName }}</div>
                         </td>
                     {% elseif cell.type == 'blocked' %}
-                        {# Blocked cell #}
-                        <td class="td-blocked" colspan="{{ cell.span }}">
-                            <div class="blocked-inner"></div>
+                        {# Blocked cell (room block / out of order) #}
+                        <td class="td-blocked cell-{{ cell.position }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}" colspan="{{ cell.span }}">
+                            <div class="blocked-inner"
+                                 data-action="click->reservations#openBlockAction"
+                                 data-url="{{ path('reservations.blocks.get', {'id': cell.blockId}) }}"
+                                 data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                                 data-bs-trigger="hover" data-bs-content="{{ cell.displayName }}"
+                                 title="{{ cell.displayName }}"></div>
                         </td>
                     {% else %}
                         {# Empty half-day cell #}

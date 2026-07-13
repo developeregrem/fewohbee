@@ -44,6 +44,11 @@ final class ApartmentActivationTest extends TestCase
             $this->createStub(InvoiceService::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(GuestCategoryRepository::class),
+            new \App\Service\AvailabilityService(
+                $this->createStub(ReservationRepository::class),
+                $this->createStub(\App\Repository\RoomBlockRepository::class),
+                $this->createStub(\App\Repository\AppartmentRepository::class),
+            ),
         );
 
         $apartment = (new Appartment())->setActive(false);
@@ -68,6 +73,7 @@ final class ApartmentActivationTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(ReservationRepository::class),
+            $this->createStub(\App\Repository\RoomBlockRepository::class),
         );
 
         $import = (new CalendarSyncImport())

@@ -1,0 +1,96 @@
+<div class="modal-body" data-controller="reservations">
+    <div id="flash-message-overlay"></div>
+    {% if error %}
+        <div class="alert alert-warning">{{ error|trans }}</div>
+    {% endif %}
+    {% if conflicts|length > 0 %}
+        <div class="alert alert-danger">
+            <strong>{{ 'roomblock.conflict.heading'|trans }}</strong>
+            <ul class="mb-0 mt-2">
+                {% for conflict in conflicts %}
+                    {% for reservation in conflict.reservations %}
+                        <li>
+                            {{ 'roomblock.conflict.reservation.line'|trans({
+                                '%room%': conflict.room.number,
+                                '%from%': reservation.startDate|date('d.m.Y'),
+                                '%end%': reservation.endDate|date('d.m.Y'),
+                            }) }}
+                        </li>
+                    {% endfor %}
+                    {% for conflictBlock in conflict.blocks %}
+                        <li>
+                            {{ 'roomblock.conflict.block.line'|trans({
+                                '%room%': conflict.room.number,
+                                '%reason%': conflictBlock.reason,
+                                '%from%': conflictBlock.startDate|date('d.m.Y'),
+                                '%end%': conflictBlock.endDate|date('d.m.Y'),
+                            }) }}
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    <dl class="row mb-2">
+        <dt class="col-sm-4">{{ 'roomblock.room'|trans }}</dt>
+        <dd class="col-sm-8">{{ roomBlock.appartment.number }} <span class="text-muted small">{{ roomBlock.appartment.description }}</span></dd>
+        <dt class="col-sm-4">{{ 'roomblock.nights'|trans }}</dt>
+        <dd class="col-sm-8">{{ roomBlock.nights }}</dd>
+        <dt class="col-sm-4">{{ 'roomblock.createdby'|trans }}</dt>
+        <dd class="col-sm-8">
+            {{ roomBlock.createdBy ? roomBlock.createdBy.username : ('roomblock.source.' ~ roomBlock.source.value)|trans }},
+            {{ roomBlock.createdAt|date('d.m.Y H:i') }}
+        </dd>
+    </dl>
+    {% if is_granted('ROLE_RESERVATIONS') %}
+        <form data-action="submit->reservations#submitFormAction" action="{{ path('reservations.blocks.edit', {'id': roomBlock.id}|merge(filterQuery|default({}))) }}" method="POST">
+            <input type="hidden" name="_token" value="{{ csrf_token('room_block') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="block-from">{{ 'roomblock.from'|trans }}</label>
+                    <input type="date" class="form-control" id="block-from" name="from" value="{{ roomBlock.startDate|date('Y-m-d') }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="block-end">{{ 'roomblock.to'|trans }}</label>
+                    <input type="date" class="form-control" id="block-end" name="end" value="{{ roomBlock.endDate|date('Y-m-d') }}" required>
+                    <div class="form-text">{{ 'roomblock.to.hint'|trans }}</div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="block-reason">{{ 'roomblock.reason'|trans }}</label>
+                <input type="text" class="form-control" id="block-reason" name="reason" value="{{ roomBlock.reason }}" maxlength="255" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="block-note">{{ 'roomblock.note'|trans }}</label>
+                <textarea class="form-control" id="block-note" name="note" rows="2">{{ roomBlock.note }}</textarea>
+            </div>
+            {% set id = roomBlock.id %}
+            {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery|default({}))) %}
+            {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
+            {% use "common/delete_popover.html.twig" %}
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-danger"
+                        data-popover="delete"
+                        data-bs-content='{{ block('deletePopoverContent') }}'
+                        data-delete-target="#modal-content-ajax">
+                    <i class="fas fa-trash-alt"></i> {{ 'button.delete'|trans }}
+                </button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+                    <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <dl class="row">
+            <dt class="col-sm-4">{{ 'roomblock.period'|trans }}</dt>
+            <dd class="col-sm-8">{{ roomBlock.startDate|date('d.m.Y') }} &ndash; {{ roomBlock.endDate|date('d.m.Y') }}</dd>
+            <dt class="col-sm-4">{{ 'roomblock.reason'|trans }}</dt>
+            <dd class="col-sm-8">{{ roomBlock.reason }}</dd>
+            {% if roomBlock.note %}
+                <dt class="col-sm-4">{{ 'roomblock.note'|trans }}</dt>
+                <dd class="col-sm-8">{{ roomBlock.note }}</dd>
+            {% endif %}
+        </dl>
+    {% endif %}
+</div>

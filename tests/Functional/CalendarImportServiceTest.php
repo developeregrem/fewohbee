@@ -222,7 +222,8 @@ final class CalendarImportServiceTest extends KernelTestCase
             $cache,
             $translator,
             $eventDispatcher,
-            $this->getReservationRepository()
+            $this->getReservationRepository(),
+            $this->em->getRepository(\App\Entity\RoomBlock::class)
         );
     }
 

@@ -1,0 +1,109 @@
+<div class="modal-body" data-controller="reservations">
+    <div id="flash-message-overlay"></div>
+    {% if error %}
+        <div class="alert alert-warning">{{ error|trans }}</div>
+    {% endif %}
+    {% if conflicts|length > 0 %}
+        <div class="alert alert-danger">
+            <strong>{{ 'roomblock.conflict.heading'|trans }}</strong>
+            <ul class="mb-0 mt-2">
+                {% for conflict in conflicts %}
+                    {% for reservation in conflict.reservations %}
+                        <li>
+                            {{ 'roomblock.conflict.reservation.line'|trans({
+                                '%room%': conflict.room.number,
+                                '%from%': reservation.startDate|date('d.m.Y'),
+                                '%end%': reservation.endDate|date('d.m.Y'),
+                            }) }}
+                        </li>
+                    {% endfor %}
+                    {% for block in conflict.blocks %}
+                        <li>
+                            {{ 'roomblock.conflict.block.line'|trans({
+                                '%room%': conflict.room.number,
+                                '%reason%': block.reason,
+                                '%from%': block.startDate|date('d.m.Y'),
+                                '%end%': block.endDate|date('d.m.Y'),
+                            }) }}
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    <form data-action="submit->reservations#submitBlockFormAction" action="{{ path('reservations.blocks.create') }}" method="POST">
+        <input type="hidden" name="_token" value="{{ csrf_token('room_block') }}">
+        <div class="mb-3" data-block-room-picker>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                <label class="form-label mb-0">
+                    {{ 'roomblock.rooms'|trans }}
+                    <span class="badge bg-secondary ms-1" data-block-selected-count>0</span>
+                </label>
+                <div class="input-group input-group-sm" style="max-width: 16rem;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="search" class="form-control" placeholder="{{ 'roomblock.search.placeholder'|trans }}"
+                           data-action="input->reservations#filterBlockRooms" data-block-room-search>
+                </div>
+            </div>
+            <div class="form-check border-bottom pb-2 mb-2">
+                <input class="form-check-input" type="checkbox" id="block-room-all"
+                       data-action="change->reservations#toggleAllBlockRooms" data-block-room-all>
+                <label class="form-check-label fw-semibold" for="block-room-all">{{ 'roomblock.select_all'|trans }}</label>
+            </div>
+            <div class="border rounded p-2" style="max-height: 40vh; overflow-y: auto;" data-block-room-list>
+                {% for subsidiaryName, rooms in roomsBySubsidiary %}
+                    <div class="mb-2" data-block-subsidiary-group>
+                        {% if roomsBySubsidiary|length > 1 %}
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="block-sub-{{ loop.index }}"
+                                       data-action="change->reservations#toggleSubsidiaryBlockRooms"
+                                       data-block-subsidiary-toggle="{{ loop.index }}">
+                                <label class="form-check-label fw-bold small text-muted" for="block-sub-{{ loop.index }}">{{ subsidiaryName }}</label>
+                            </div>
+                        {% endif %}
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-1">
+                            {% for room in rooms %}
+                                <div class="col" data-block-room-item data-search="{{ (room.number ~ ' ' ~ room.description)|lower }}">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="rooms[]" value="{{ room.id }}"
+                                               id="block-room-{{ room.id }}"
+                                               data-block-room-checkbox
+                                               data-block-subsidiary="{{ loop.parent.loop.index }}"
+                                               data-action="change->reservations#syncBlockRoomSelection"
+                                               {% if room.id in selectedRoomIds %}checked{% endif %}>
+                                        <label class="form-check-label text-truncate d-block" for="block-room-{{ room.id }}" title="{{ room.number }} {{ room.description }}">
+                                            {{ room.number }} <span class="text-muted small">{{ room.description }}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="block-from">{{ 'roomblock.from'|trans }}</label>
+                <input type="date" class="form-control" id="block-from" name="from" value="{{ from }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label" for="block-end">{{ 'roomblock.to'|trans }}</label>
+                <input type="date" class="form-control" id="block-end" name="end" value="{{ end }}" required>
+                <div class="form-text">{{ 'roomblock.to.hint'|trans }}</div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="block-reason">{{ 'roomblock.reason'|trans }}</label>
+            <input type="text" class="form-control" id="block-reason" name="reason" value="{{ reason }}" maxlength="255" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="block-note">{{ 'roomblock.note'|trans }}</label>
+            <textarea class="form-control" id="block-note" name="note" rows="2">{{ note }}</textarea>
+        </div>
+        <div class="text-end">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+            <button type="submit" class="btn btn-primary">{{ 'roomblock.submit'|trans }}</button>
+        </div>
+    </form>
+</div>

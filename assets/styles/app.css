@@ -144,6 +144,14 @@ body {
         var(--feb-border-muted) 4px,
         var(--feb-border-muted) 5px
     );
+    padding: 0 !important;
+}
+
+.blocked-inner {
+    width: 100%;
+    height: 100%;
+    min-height: 1.7rem;
+    cursor: pointer;
 }
 
 .reservation-inner {

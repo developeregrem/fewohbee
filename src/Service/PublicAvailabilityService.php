@@ -21,6 +21,7 @@ class PublicAvailabilityService
         private readonly PublicPricingService $pricingService,
         private readonly RoomCategoryImageService $imageService,
         private readonly TranslatorInterface $translator,
+        private readonly AvailabilityService $availabilityService,
     ) {
     }
 
@@ -71,14 +72,20 @@ class PublicAvailabilityService
         }
 
         $rooms = $this->appartmentRepository->findForPublicBooking($allowedRoomIds, $allowedSubsidiaryIds);
+        $roomIdList = array_map(static fn (Appartment $room): int => (int) $room->getId(), $rooms);
         $occupancyByRoomId = $this->reservationRepository->loadOccupancyByApartmentIdsWithoutStartEnd(
             $dateFrom,
             $dateTo,
-            array_map(static fn (Appartment $room): int => (int) $room->getId(), $rooms)
+            $roomIdList
         );
+        // room blocks make a room unbookable regardless of bed math
+        $blockedRoomIds = $this->availabilityService->getBlockedRoomIds($roomIdList, $dateFrom, $dateTo);
 
         $grouped = [];
         foreach ($rooms as $room) {
+            if (in_array((int) $room->getId(), $blockedRoomIds, true)) {
+                continue;
+            }
             if (!$this->isRoomAvailableForPublicBooking($room, $occupancyByRoomId)) {
                 continue;
             }

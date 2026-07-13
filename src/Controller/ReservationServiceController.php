@@ -27,6 +27,7 @@ use App\Entity\Template;
 use App\Form\ReservationMetaType;
 use App\Service\CalendarService;
 use App\Service\CalendarImportService;
+use App\Entity\RoomBlock;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
@@ -198,12 +199,17 @@ class ReservationServiceController extends AbstractController
         $allReservations = $em->getRepository(Reservation::class)
             ->loadReservationsForApartments($startDate, $endDate, $appartments, $statusMode);
 
+        // blocks are independent of the reservation status mode -> always load them
+        $allBlocks = $em->getRepository(RoomBlock::class)
+            ->findForApartments($startDate, $endDate, $appartments);
+
         $grid = $tableService->buildGrid(
             $appartments,
             $startDate,
             $interval,
             $allReservations,
             'all' === $objectId || null === $objectId,
+            $allBlocks,
         );
 
         return $this->render('Reservations/reservation_table.html.twig', [
