@@ -45,7 +45,7 @@
       <input type="password" class="form-control" id="floatingPassword" name="_password"  placeholder="{{ 'login.password.placeholder'|trans }}">
       <label for="floatingPassword">{{ 'login.password.placeholder'|trans }}</label>
     </div>
-    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+    <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
 
     <div class="checkbox mb-3">
       <label>

@@ -24,8 +24,14 @@ parameters:
     env(MAILER_DSN): 'null://null'
     # define the redis host
     env(REDIS_HOST): 'redis'
-    # define the used redix index
+    # define the legacy/default Redis index
     env(REDIS_IDX): '1'
+    # Optional dedicated Redis databases. Container entrypoints fall back to
+    # REDIS_IDX, preserving compatibility with existing self-hosted setups.
+    env(REDIS_PORT): '6379'
+    env(REDIS_SYSTEM_IDX): '%env(REDIS_IDX)%'
+    env(REDIS_SESSION_IDX): '%env(REDIS_IDX)%'
+    env(REDIS_PREFIX): 'fewohbee_'
     # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
     env(STORAGE_ADAPTER): 'local'
     env(STORAGE_S3_ENDPOINT): ''

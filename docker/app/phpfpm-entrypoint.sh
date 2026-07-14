@@ -3,6 +3,17 @@ set -e
 
 cd /var/www/html
 
+# Normalize the Redis settings before the first PHP process reads conf.ini.
+# REDIS_IDX is the legacy, self-hosted setting; the dedicated variables remain
+# optional so existing installations keep working unchanged.
+export REDIS_HOST="${REDIS_HOST:-redis}"
+export REDIS_PORT="${REDIS_PORT:-6379}"
+export REDIS_IDX="${REDIS_IDX:-1}"
+export REDIS_SYSTEM_IDX="${REDIS_SYSTEM_IDX:-${REDIS_IDX}}"
+export REDIS_SESSION_IDX="${REDIS_SESSION_IDX:-${REDIS_IDX}}"
+export REDIS_PREFIX="${REDIS_PREFIX:-fewohbee_}"
+export SESSION_MAX_LIFETIME="${SESSION_MAX_LIFETIME:-1440}"
+
 # Backward compatibility: the legacy fewohbee convention used APP_ENV=redis to
 # enable the Redis cache adapter. Symfony reserves APP_ENV for prod/dev/test, so
 # we translate the old value to the new flag here. Existing dockerized .env files

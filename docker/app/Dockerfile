@@ -20,7 +20,8 @@ FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 ARG PHP_EXTS
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    COMPOSER_NO_INTERACTION=1
+    COMPOSER_NO_INTERACTION=1 \
+    SESSION_MAX_LIFETIME=1440
 
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
