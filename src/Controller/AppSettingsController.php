@@ -28,7 +28,7 @@ class AppSettingsController extends AbstractController
         AppSettingsService $settingsService,
         WorkflowRepository $workflowRepository,
         SmtpPasswordCrypto $smtpPasswordCrypto,
-        MailService $mailService
+        MailService $mailService,
     ): Response
     {
         $settings = $settingsService->getSettings();
@@ -53,6 +53,7 @@ class AppSettingsController extends AbstractController
             }
 
             $settingsService->saveSettings($settings);
+
             $this->addFlash('success', 'app_settings.flash.saved');
 
             return $this->redirectToRoute('settings.general.index');

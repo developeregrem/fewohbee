@@ -16,6 +16,7 @@ namespace App\Twig;
 use App\Entity\Reservation;
 use App\Service\AppSettingsService;
 use App\Service\CalendarService;
+use App\Service\CalendarEntryDisplayService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -29,13 +30,15 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     private $requestStack;
     private $calendarService;
     private $appSettingsService;
+    private $calendarEntryDisplayService;
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService, CalendarEntryDisplayService $calendarEntryDisplayService)
     {
         $this->em = $em;
         $this->requestStack = $requestStack;
         $this->calendarService = $cs;
         $this->appSettingsService = $appSettingsService;
+        $this->calendarEntryDisplayService = $calendarEntryDisplayService;
     }
 
     public function getGlobals(): array
@@ -70,6 +73,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
             new TwigFunction('getLocalizedDate', [$this, 'getLocalizedDateFilter']),
             new TwigFunction('existsById', [$this, 'existsById']),
             new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
+            new TwigFunction('getCalendarEntriesForDay', [$this, 'getCalendarEntriesForDay']),
+            new TwigFunction('calendar_accent_marker_style', [$this, 'getCalendarAccentMarkerStyle']),
             new TwigFunction('getReservationsForDay', [$this, 'getReservationsForDay']),
             new TwigFunction('timestamp2UTC', [$this, 'timestamp2UTC']),
             new TwigFunction('date2UTC', [$this, 'date2UTC']),
@@ -223,6 +228,61 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     public function getPublicdaysForDay($date, $code, $locale)
     {
         return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
+    }
+
+    /**
+     * @return \App\Entity\CalendarEntry[]
+     */
+    public function getCalendarEntriesForDay(\DateTimeInterface $date): array
+    {
+        return $this->calendarEntryDisplayService->getForDay($date);
+    }
+
+    /**
+     * Builds a stacked-line accent style for a set of hex colors, one per
+     * configured calendar that has an entry on this day - e.g. two colors
+     * renders as two 2px lines stacked at the top of the cell. Same
+     * box-shadow-inset technique as status_accent_marker_style (single
+     * color, used for reservation origin), extended to any number of
+     * colors via comma-separated box-shadow values.
+     *
+     * The first 4 stack downward from the top edge; beyond that, the cell
+     * would get too crowded up top, so the 5th onward stack upward from the
+     * bottom edge instead (5th right above the border, 6th above that, ...).
+     *
+     * @param string[] $colors
+     */
+    public function getCalendarAccentMarkerStyle(array $colors): string
+    {
+        $colors = array_values(array_unique($colors));
+        if ([] === $colors) {
+            return '';
+        }
+
+        $topColors = \array_slice($colors, 0, 4);
+        $bottomColors = \array_slice($colors, 4);
+
+        $shadows = [];
+        foreach ($topColors as $i => $color) {
+            $offset = 3 * ($i + 1);
+            $shadows[] = sprintf('inset 0 %dpx 0 0 %s', $offset, $color);
+        }
+
+        // These cells are sticky-positioned table headers, which fake their
+        // bottom border via an inset box-shadow (see .table-sticky thead th
+        // in app.css) rather than a real border - since this inline style
+        // replaces the whole box-shadow property, re-add that layer here so
+        // entry cells don't lose their bottom border underneath the lines.
+        // Listed before the bottom-stacked colors below so its 1px sliver
+        // isn't painted over by them.
+        $shadows[] = 'inset 0 -1px 0 0 var(--bs-border-color)';
+
+        foreach ($bottomColors as $j => $color) {
+            $offset = -(3 * ($j + 1) + 1);
+            $shadows[] = sprintf('inset 0 %dpx 0 0 %s', $offset, $color);
+        }
+
+        return ' box-shadow: '.implode(', ', $shadows).';';
     }
 
     public function getReservationsForDay(\DateTimeInterface $day, array $reservations): array

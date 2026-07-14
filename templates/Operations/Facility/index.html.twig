@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'facility.title'|trans }}
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <div class="me-auto">
+                <h1 class="h3 mb-0">{{ 'facility.title'|trans }}</h1>
+                <div class="text-muted small">
+                    {{ 'facility.confirmed.card_title'|trans({'%year%': year}) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col col-md-3">
+                <form method="get">
+                    <label class="form-label">{{ 'facility.confirmed.filter.year'|trans }}</label>
+                    <select name="year" class="form-select" onchange="this.form.submit()">
+                        {% for availableYear in availableYears %}
+                            <option value="{{ availableYear }}"{% if availableYear == year %} selected{% endif %}>{{ availableYear }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ 'facility.confirmed.table.date'|trans }}</th>
+                        <th>{{ 'facility.confirmed.table.entry'|trans }}</th>
+                        <th>{{ 'facility.confirmed.table.calendar'|trans }}</th>
+                        <th>{{ 'facility.confirmed.table.confirmed_at'|trans }}</th>
+                        <th>{{ 'facility.confirmed.table.confirmed_by'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                        <tr>
+                            <td>{{ entry.date|date('d.m.Y') }}</td>
+                            <td>{{ entry.title }}</td>
+                            <td>
+                                <span class="d-inline-block rounded me-1" style="width: 0.7rem; height: 0.7rem; background-color: {{ entry.calendar.color }};"></span>
+                                {{ entry.calendar.name }}
+                            </td>
+                            <td>{{ entry.confirmedAt|date('d.m.Y H:i') }}</td>
+                            <td>
+                                {% if entry.confirmedBy %}
+                                    {{ entry.confirmedBy.firstname }} {{ entry.confirmedBy.lastname }}
+                                {% else %}
+                                    <span class="text-muted">&ndash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                {{ 'facility.confirmed.empty'|trans }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

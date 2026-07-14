@@ -1,0 +1,46 @@
+<div class="modal-body" data-calendar-reminder-count="{{ pendingReminders|length }}" data-controller="reservations">
+    <div id="flash-message-overlay"></div>
+    <h6 class="mb-2">{{ 'reservation.calendar_reminder.section.title'|trans }}</h6>
+    <p class="text-muted">{{ 'reservation.calendar_reminder.hint'|trans }}</p>
+    {% if pendingReminders|length == 0 %}
+        <div class="text-muted">{{ 'reservation.calendar_reminder.empty'|trans }}</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>{{ 'reservation.calendar_reminder.table.date'|trans }}</th>
+                        <th>{{ 'reservation.calendar_reminder.table.entry'|trans }}</th>
+                        <th class="text-end">{{ 'reservation.calendar_reminder.table.actions'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reminder in pendingReminders %}
+                        {% set isToday = reminder.date|date('Y-m-d') == 'now'|date('Y-m-d') %}
+                        <tr>
+                            <td>
+                                {{ reminder.date|date('d.m.Y') }}
+                                {% if isToday %}
+                                    <span class="badge bg-danger ms-1">{{ 'reservation.calendar_reminder.today'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="fas fa-circle me-2" style="color: {{ reminder.calendar.color }}; font-size: 0.6em; vertical-align: middle;"></i>
+                                {{ reminder.title }}
+                                <span class="text-muted small">({{ reminder.calendar.name }})</span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-primary"
+                                        data-action="click->reservations#confirmCalendarReminderAction"
+                                        data-url="{{ path('reservations.calendar_reminder.confirm', {'id': reminder.id}) }}"
+                                        title="{{ 'reservation.calendar_reminder.action.confirm.title'|trans }}">
+                                    <i class="fas fa-check"></i> {{ 'reservation.calendar_reminder.action.confirm.title'|trans }}
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>

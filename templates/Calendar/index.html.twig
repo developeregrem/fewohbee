@@ -1,0 +1,124 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'calendar.index.title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="settings">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-secondary"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('settings.calendars.new') }}"
+                    data-title="{{ 'calendar.form.title_new'|trans }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'calendar.index.add'|trans }}</button>
+        </div>
+    </div>
+
+    {% if calendars|length == 0 %}
+        <div class="row mt-3">
+            <div class="col">
+                <div class="alert alert-info">{{ 'calendar.index.empty'|trans }}</div>
+            </div>
+        </div>
+    {% else %}
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'calendar.index.table.color'|trans }}</th>
+                    <th>{{ 'calendar.index.table.name'|trans }}</th>
+                    <th>{{ 'calendar.index.table.confirmation'|trans }}</th>
+                    <th>{{ 'calendar.index.table.source'|trans }}</th>
+                    <th class="text-end">{{ 'calendar.index.table.entries'|trans }}</th>
+                    <th>{{ 'base.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for calendar in calendars %}
+                    <tr>
+                        <td><span class="d-inline-block rounded" style="width: 1.2rem; height: 1.2rem; background-color: {{ calendar.color }};"></span></td>
+                        <td>{{ calendar.name }}</td>
+                        <td>
+                            {% if calendar.requiresConfirmation %}
+                                <i class="fas fa-check text-success" title="{{ 'calendar.form.requires_confirmation'|trans }}"></i>
+                            {% else %}
+                                <span class="text-muted">&ndash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-body-secondary">
+                            {% if calendar.icsFilename %}
+                                {{ 'calendar.index.source_upload'|trans }}
+                            {% elseif calendar.icsUrl %}
+                                {{ 'calendar.index.source_url'|trans }}
+                            {% else %}
+                                {{ 'calendar.index.source_manual'|trans }}
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ entryCounts[calendar.id] ?? 0 }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <i class="fas fa-edit"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('settings.calendars.edit', {'id': calendar.id}) }}"
+                                   data-title="{{ 'calendar.form.title_edit'|trans }}"></i></a>
+                            {% set id = calendar.id %}
+                            {% set targetUrl = path('settings.calendars.delete', {'id': calendar.id}) %}
+                            {% set deletePopoverHint = 'calendar.form.delete_confirm'|trans %}
+                            {% use "common/delete_popover.html.twig" %}
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i class="fas fa-trash-alt"
+                                   data-popover="delete"
+                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if availableCleanupYears|length > 0 %}
+        <div class="row mt-4">
+            <div class="col">
+                <h2 class="h5">{{ 'calendar.cleanup.title'|trans }}</h2>
+                <div class="text-muted small mb-2">{{ 'calendar.cleanup.hint'|trans }}</div>
+                <div class="row g-2 align-items-end">
+                    <div class="col col-md-3">
+                        <form method="get">
+                            <label class="form-label">{{ 'calendar.cleanup.filter.year'|trans }}</label>
+                            <select name="cleanupYear" class="form-select" onchange="this.form.submit()">
+                                {% for availableYear in availableCleanupYears %}
+                                    <option value="{{ availableYear }}"{% if availableYear == cleanupYear %} selected{% endif %}>{{ availableYear }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    {% if unconfirmedCleanupCount > 0 %}
+                        <div class="col-auto">
+                            <form method="post" action="{{ path('settings.calendars.cleanup_unconfirmed', {'year': cleanupYear}) }}"
+                                  onsubmit="return confirm('{{ 'calendar.cleanup.confirm'|trans({'%count%': unconfirmedCleanupCount, '%year%': cleanupYear})|e('js') }}')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('calendar-cleanup-' ~ cleanupYear) }}">
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fas fa-broom me-1"></i>
+                                    {{ 'calendar.cleanup.button'|trans({'%count%': unconfirmedCleanupCount}) }}
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="col-auto">
+                            <span class="text-muted small">{{ 'calendar.cleanup.empty'|trans }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

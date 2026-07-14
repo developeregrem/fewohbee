@@ -142,6 +142,19 @@
                 </div>
             </div>
 
+            {# -- Calendars pointer -- #}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-calendar-alt text-primary me-2"></i>{{ 'app_settings.section.calendars'|trans }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-body-secondary small mb-2">{{ 'app_settings.section.calendars_desc'|trans }}</p>
+                    <a href="{{ path('settings.calendars.index') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>{{ 'app_settings.section.calendars_link'|trans }}
+                    </a>
+                </div>
+            </div>
+
             {# -- Save bar -- #}
             <div class="card sticky-bottom mb-3" style="z-index:10">
                 <div class="card-body py-2 d-flex align-items-center justify-content-between">

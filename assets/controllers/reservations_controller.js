@@ -210,6 +210,37 @@ export default class extends Controller {
         });
     }
 
+    openCalendarReminderAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        this.calendarReminderUrl = url;
+        if (this.modalContent) {
+            this.modalContent.dataset.calendarReminderUrl = url;
+        }
+        setModalTitle(this.translate('reservation.calendar_reminder.title'));
+        this.loadCalendarReminderModal();
+    }
+
+    confirmCalendarReminderAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        httpRequest({
+            url,
+            method: 'POST',
+            target: this.modalContent,
+            loader: false,
+            onSuccess: (data) => {
+                if (this.showFeedback(data)) {
+                    return;
+                }
+                this.loadCalendarReminderModal();
+                this.getNewTable();
+            }
+        });
+    }
+
     paginateImportReviewAction(event) {
         event.preventDefault();
         const url = event.currentTarget.getAttribute('href');
@@ -219,6 +250,30 @@ export default class extends Controller {
             this.modalContent.dataset.conflictsUrl = url;
         }
         this.loadConflictsModal();
+    }
+
+    // Save/delete a calendar entry from the modal opened via initCalendarEntryModal().
+    // The delete button overrides the form's action via formaction, so use
+    // whichever button actually triggered the submit rather than form.action.
+    saveCalendarEntryAction(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const submitter = event.submitter;
+        const url = (submitter && submitter.getAttribute('formaction')) || form.action;
+        httpRequest({
+            url,
+            method: 'POST',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+            onSuccess: (data) => {
+                if (data && data.trim().length > 0) {
+                    this.modalContent.innerHTML = data;
+                    return;
+                }
+                $('#modalCenter').modal('hide');
+                this.getNewTable();
+            }
+        });
     }
 
     selectAppartmentAction(event) {
@@ -744,7 +799,16 @@ export default class extends Controller {
     toggleDisplayTableRows() {
         this.toggleRow('reservation-table-header-month', getLocalStorageItem('reservation-settings-show-month'));
         this.toggleRow('reservation-table-header-week', getLocalStorageItem('reservation-settings-show-week'));
-        this.toggleRow('reservation-table-header-weekday', getLocalStorageItem('reservation-settings-show-weekday'));
+        const showWeekday = getLocalStorageItem('reservation-settings-show-weekday');
+        this.toggleRow('reservation-table-header-weekday', showWeekday);
+
+        // Calendar accent lines are rendered in both the weekday and the
+        // date-number row - only show them once, preferring the weekday
+        // row when it's visible and falling back to the date row otherwise.
+        const table = document.getElementById('reservation-table');
+        if (table) {
+            table.classList.toggle('weekday-row-visible', showWeekday === 'true');
+        }
     }
 
     toggleRow(name, show) {
@@ -807,7 +871,83 @@ export default class extends Controller {
         $('.reservation-inner').popover({ placement: 'top', html: true, trigger: 'hover' });
         $('.room-info').popover({ html: true });
         $('.holiday-info').popover();
+        $('.calendar-info').popover();
         $('.reservation-popover').popover({ placement: 'top', html: true, trigger: 'hover' });
+
+        this.initClickPopoverDismissal();
+        this.initCalendarEntryModal();
+    }
+
+    // Calendar-entry edit/create links live inside a Bootstrap popover's
+    // floating content, appended to <body> outside this controller's DOM
+    // scope - a Stimulus data-action on them wouldn't resolve, and
+    // Bootstrap's popover sanitizer strips data-bs-toggle/data-bs-target
+    // from the HTML content anyway (only href/class survive). So this is
+    // a plain click interceptor, same trick as initClickPopoverDismissal.
+    //
+    // The document-level guard means this listener is registered only once
+    // and outlives any single controller instance (e.g. across a Turbo
+    // navigation to another page and back) - so it must never close over
+    // `this.modalContent` from whichever instance happened to be connected
+    // the first time it ran, since a later navigation can leave that
+    // reference pointing at a detached, invisible node while a fresh
+    // #modal-content-ajax sits in the live page. Re-resolve it by id on
+    // every click instead, or the fetched form silently goes nowhere and
+    // the modal just spins forever. this.translate() is fine to keep using
+    // the first instance's copy - the translation strings are the same on
+    // every page.
+    initCalendarEntryModal() {
+        if (document._calendarEntryModalBound) {
+            return;
+        }
+        document._calendarEntryModalBound = true;
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.js-calendar-entry-link');
+            if (!trigger) {
+                return;
+            }
+            event.preventDefault();
+            const modalContent = document.getElementById('modal-content-ajax');
+            if (!modalContent) {
+                return;
+            }
+            setModalTitle(this.translate('calendar_entry.modal.title'));
+            httpRequest({
+                url: trigger.getAttribute('href'),
+                method: 'GET',
+                target: modalContent,
+            });
+            $('#modalCenter').modal('show');
+        });
+    }
+
+    // Click-triggered popovers (holiday/calendar info) otherwise only close
+    // when the trigger cell itself is clicked again. Close them on any click
+    // on a link (the popover content links to edit/create a calendar entry)
+    // or anywhere outside the popover.
+    initClickPopoverDismissal() {
+        if (document._calendarPopoverDismissalBound) {
+            return;
+        }
+        document._calendarPopoverDismissalBound = true;
+
+        document.addEventListener('click', (event) => {
+            document.querySelectorAll('.holiday-info, .calendar-info').forEach((trigger) => {
+                const instance = window.bootstrap?.Popover.getInstance(trigger);
+                if (!instance || trigger.contains(event.target)) {
+                    return;
+                }
+
+                const tip = document.getElementById(trigger.getAttribute('aria-describedby') || '');
+                const clickedInsideTip = tip ? tip.contains(event.target) : false;
+                const clickedLink = event.target.closest('a');
+
+                if (clickedLink || !clickedInsideTip) {
+                    instance.hide();
+                }
+            });
+        });
     }
 
     initCellSelection() {
@@ -1179,6 +1319,43 @@ export default class extends Controller {
             return;
         }
         const value = parseInt(countSource.dataset.conflictCount || '0', 10);
+        badge.textContent = Number.isNaN(value) ? '0' : String(value);
+        if (value > 0) {
+            button.classList.remove('d-none');
+        } else {
+            button.classList.add('d-none');
+        }
+    }
+
+    loadCalendarReminderModal() {
+        const targetUrl = this.calendarReminderUrl || this.modalContent?.dataset?.calendarReminderUrl;
+        if (!targetUrl) {
+            return;
+        }
+        httpRequest({
+            url: targetUrl,
+            method: 'GET',
+            target: this.modalContent,
+            onSuccess: (data) => {
+                if (this.modalContent) {
+                    this.modalContent.innerHTML = data;
+                }
+                this.updateCalendarReminderBadgeFromModal();
+            }
+        });
+    }
+
+    updateCalendarReminderBadgeFromModal() {
+        const badge = document.querySelector('[data-calendar-reminder-count-badge]');
+        const button = document.querySelector('[data-calendar-reminder-button]');
+        const countSource = this.modalContent?.querySelector('[data-calendar-reminder-count]');
+        if (!badge || !button) {
+            return;
+        }
+        if (!countSource || !countSource.dataset || typeof countSource.dataset.calendarReminderCount === 'undefined') {
+            return;
+        }
+        const value = parseInt(countSource.dataset.calendarReminderCount || '0', 10);
         badge.textContent = Number.isNaN(value) ? '0' : String(value);
         if (value > 0) {
             button.classList.remove('d-none');

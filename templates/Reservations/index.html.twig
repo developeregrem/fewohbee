@@ -40,6 +40,8 @@
             'templates.edit': 'templates.edit'|trans,
             'templates.preview': 'templates.preview'|trans,
             'reservation.conflict.title': 'reservation.conflict.title'|trans,
+            'reservation.calendar_reminder.title': 'reservation.calendar_reminder.title'|trans,
+            'calendar_entry.modal.title': 'calendar_entry.modal.title'|trans,
             'templates.editor.toolbar.font_family': 'templates.editor.toolbar.font_family'|trans,
             'templates.editor.toolbar.font_size': 'templates.editor.toolbar.font_size'|trans,
         }|json_encode|e('html_attr')
@@ -72,6 +74,15 @@
                         <span class="badge {{ alertBadge }} ms-1" data-conflict-count-badge>{{ conflictCount }}</span>
                     </a>
                 {% endif %}
+                <a href="#" class="btn btn-outline-warning mb-2 me-sm-2{{ calendarReminderCount > 0 ? '' : ' d-none' }}"
+                   data-action="click->reservations#openCalendarReminderAction"
+                   data-url="{{ path('reservations.calendar_reminder') }}"
+                   data-bs-toggle="modal" data-bs-target="#modalCenter"
+                   data-calendar-reminder-button>
+                    <i class="fas fa-calendar-check"></i>
+                    {{ 'reservation.calendar_reminder.button'|trans }}
+                    <span class="badge bg-warning ms-1" data-calendar-reminder-count-badge>{{ calendarReminderCount }}</span>
+                </a>
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"

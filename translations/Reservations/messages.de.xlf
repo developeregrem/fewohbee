@@ -278,6 +278,10 @@
                 <source>reservation.table.settings.showCanceledOnly</source>
                 <target>Nur stornierte/No-Show anzeigen</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.showCalendarEntries">
+                <source>reservation.table.settings.showCalendarEntries</source>
+                <target>Kalendereinträge anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>
@@ -353,6 +357,106 @@
             <trans-unit id="reservation.conflict.table.actions">
                 <source>reservation.conflict.table.actions</source>
                 <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.button">
+                <source>reservation.calendar_reminder.button</source>
+                <target>Erinnerungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.title">
+                <source>reservation.calendar_reminder.title</source>
+                <target>Kalender-Erinnerungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.section.title">
+                <source>reservation.calendar_reminder.section.title</source>
+                <target>Einträge bestätigen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.hint">
+                <source>reservation.calendar_reminder.hint</source>
+                <target>Anstehende Müllabfuhr: Bitte bestätigen, sobald die jeweilige Tonne zur Abholung bereitgestellt wurde.</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.today">
+                <source>reservation.calendar_reminder.today</source>
+                <target>Heute</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.empty">
+                <source>reservation.calendar_reminder.empty</source>
+                <target>Keine offenen Erinnerungen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.date">
+                <source>reservation.calendar_reminder.table.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.entry">
+                <source>reservation.calendar_reminder.table.entry</source>
+                <target>Eintrag</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.actions">
+                <source>reservation.calendar_reminder.table.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.action.confirm.title">
+                <source>reservation.calendar_reminder.action.confirm.title</source>
+                <target>Bestätigen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.title_edit">
+                <source>calendar_entry.title_edit</source>
+                <target>Kalendereintrag bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.title_new">
+                <source>calendar_entry.title_new</source>
+                <target>Kalendereintrag hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.modal.title">
+                <source>calendar_entry.modal.title</source>
+                <target>Kalendereintrag</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.calendar">
+                <source>calendar_entry.calendar</source>
+                <target>Kalender</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.calendar">
+                <source>calendar_entry.form.calendar</source>
+                <target>Kalender</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date">
+                <source>calendar_entry.form.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.title">
+                <source>calendar_entry.form.title</source>
+                <target>Titel</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.popover.new">
+                <source>calendar_entry.popover.new</source>
+                <target>+ Neuer Termin</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.confirmed_at">
+                <source>calendar_entry.confirmed_at</source>
+                <target>Erinnerung bestätigt am %datetime%</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.sync_warning">
+                <source>calendar_entry.sync_warning</source>
+                <target>Dieser Eintrag wurde aus einer ICS-Quelle importiert. Manuelle Änderungen am Datum können beim nächsten Sync dieser Quelle wieder überschrieben werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.delete">
+                <source>calendar_entry.delete</source>
+                <target>Löschen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.unconfirm">
+                <source>calendar_entry.unconfirm</source>
+                <target>Bestätigung rückgängig machen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.delete_confirm">
+                <source>calendar_entry.delete_confirm</source>
+                <target>Diesen Kalendereintrag löschen? Das kann nicht rückgängig gemacht werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.flash.saved">
+                <source>calendar_entry.flash.saved</source>
+                <target>Kalendereintrag gespeichert.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.flash.deleted">
+                <source>calendar_entry.flash.deleted</source>
+                <target>Kalendereintrag gelöscht.</target>
             </trans-unit>
             <trans-unit id="reservation.conflict.action.ignore">
                 <source>reservation.conflict.action.ignore</source>

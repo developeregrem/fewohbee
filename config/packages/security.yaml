@@ -59,6 +59,7 @@ security:
         - { path: ^/operations/housekeeping, roles: ROLE_OPERATIONS }
         - { path: ^/operations/frontdesk, roles: ROLE_OPERATIONS }
         - { path: ^/operations/reports, roles: ROLE_OPERATIONS }
+        - { path: ^/operations/facility, roles: ROLE_OPERATIONS }
         - { path: ^/customers, roles: ROLE_CUSTOMERS }
         - { path: ^/invoices, roles: ROLE_INVOICES }
         - { path: ^/registrationbook, roles: ROLE_REGISTRATIONBOOK }
