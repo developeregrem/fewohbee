@@ -3,7 +3,6 @@ calendar:
     title: "Kalender verwalten"
     add: "Kalender hinzufügen"
     empty: "Noch keine Kalender konfiguriert."
-    source_upload: "ICS-Datei"
     source_url: "ICS-URL"
     source_manual: "Manuell"
     table:
@@ -22,9 +21,8 @@ calendar:
     ics_url: "ICS-URL"
     ics_url_help: "Wird bei jedem Speichern sowie täglich automatisch synchronisiert."
     ics_file: "ICS-Datei hochladen"
-    ics_file_help: "Überschreibt eine ggf. gesetzte URL. Erlaubt: .ics, max. 2 MB."
+    ics_file_help: "Einmaliger Import beim Speichern, unabhängig von einer ggf. gesetzten URL. Erlaubt: .ics, max. 2 MB."
     ics_file_invalid: "Bitte eine gültige ICS-Datei (.ics) hochladen."
-    current_file: "Aktuell aus Upload hinterlegt"
     current_url: "Aktuell aus URL synchronisiert"
     last_sync: "Zuletzt synchronisiert: %datetime%"
     last_sync_empty: "keine Einträge in der Quelle gefunden, alte Daten unverändert"

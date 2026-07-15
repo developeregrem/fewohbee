@@ -130,10 +130,6 @@ services:
             $storage: '@images.roomcat.storage'
             $urlGenerator: '@App\Service\Storage\ImageUrlGenerator'
 
-    App\Service\CalendarEntrySyncService:
-        arguments:
-            $calendarStorage: '@calendar.storage'
-
     App\Service\EInvoice\EInvoiceProfileRegistry:
         arguments:
             $profiles: !tagged_iterator app.einvoice.profile

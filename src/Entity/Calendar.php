@@ -39,9 +39,6 @@ class Calendar
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $icsUrl = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
-    private ?string $icsFilename = null;
-
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTime $lastSyncedAt = null;
 
@@ -110,18 +107,6 @@ class Calendar
         return $this;
     }
 
-    public function getIcsFilename(): ?string
-    {
-        return $this->icsFilename;
-    }
-
-    public function setIcsFilename(?string $icsFilename): self
-    {
-        $this->icsFilename = $icsFilename;
-
-        return $this;
-    }
-
     public function getLastSyncedAt(): ?\DateTime
     {
         return $this->lastSyncedAt;
@@ -148,6 +133,6 @@ class Calendar
 
     public function hasIcsSource(): bool
     {
-        return null !== $this->icsUrl || null !== $this->icsFilename;
+        return null !== $this->icsUrl;
     }
 }

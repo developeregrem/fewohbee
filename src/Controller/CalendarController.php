@@ -11,9 +11,7 @@ use App\Repository\CalendarRepository;
 use App\Service\CalendarEntrySyncService;
 use App\Service\Exception\CalendarSyncException;
 use Doctrine\ORM\EntityManagerInterface;
-use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -60,78 +58,53 @@ class CalendarController extends AbstractController
     public function new(
         Request $request,
         EntityManagerInterface $em,
-        #[Autowire(service: 'calendar.storage')] FilesystemOperator $calendarStorage,
         CalendarEntrySyncService $syncService,
         TranslatorInterface $translator,
     ): Response {
         $calendar = new Calendar();
 
-        return $this->handleForm($request, $em, $calendarStorage, $syncService, $translator, $calendar, true);
+        return $this->handleForm($request, $em, $syncService, $translator, $calendar, true);
     }
 
     #[Route('/{id}/edit', name: 'settings.calendars.edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
     public function edit(
         Request $request,
         EntityManagerInterface $em,
-        #[Autowire(service: 'calendar.storage')] FilesystemOperator $calendarStorage,
         CalendarEntrySyncService $syncService,
         TranslatorInterface $translator,
         Calendar $calendar,
     ): Response {
-        return $this->handleForm($request, $em, $calendarStorage, $syncService, $translator, $calendar, false);
+        return $this->handleForm($request, $em, $syncService, $translator, $calendar, false);
     }
 
     private function handleForm(
         Request $request,
         EntityManagerInterface $em,
-        FilesystemOperator $calendarStorage,
         CalendarEntrySyncService $syncService,
         TranslatorInterface $translator,
         Calendar $calendar,
         bool $isNew,
     ): Response {
-        $previousUrl = $calendar->getIcsUrl();
-
         $form = $this->createForm(CalendarType::class, $calendar);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var ?UploadedFile $icsFile */
-            $icsFile = $form->get('icsFile')->getData();
-
-            if (null !== $icsFile) {
-                $newFilename = 'calendar-'.uniqid().'.ics';
-                $stream = fopen($icsFile->getPathname(), 'rb');
-                $calendarStorage->writeStream($newFilename, $stream);
-                if (\is_resource($stream)) {
-                    fclose($stream);
-                }
-
-                $previousFilename = $calendar->getIcsFilename();
-                if (null !== $previousFilename && $calendarStorage->fileExists($previousFilename)) {
-                    $calendarStorage->delete($previousFilename);
-                }
-
-                // an upload always wins over a previously configured URL
-                $calendar->setIcsFilename($newFilename);
-                $calendar->setIcsUrl(null);
-            } elseif (null !== $calendar->getIcsUrl() && $calendar->getIcsUrl() !== $previousUrl) {
-                // no new file this submission, but the URL was newly entered
-                // or changed - treat that as switching away from the upload
-                $previousFilename = $calendar->getIcsFilename();
-                if (null !== $previousFilename && $calendarStorage->fileExists($previousFilename)) {
-                    $calendarStorage->delete($previousFilename);
-                }
-                $calendar->setIcsFilename(null);
-            }
-
             $em->persist($calendar);
             $em->flush();
 
+            /** @var ?UploadedFile $icsFile */
+            $icsFile = $form->get('icsFile')->getData();
+
             $syncFailed = false;
-            if ($calendar->hasIcsSource()) {
-                try {
-                    $count = $syncService->sync($calendar);
+            try {
+                // an uploaded file is a one-off bulk import, independent of
+                // whatever URL is (or isn't) configured for ongoing sync -
+                // the file itself is never stored, only the entries it produces
+                $count = null !== $icsFile
+                    ? $syncService->importIcsString($calendar, (string) file_get_contents($icsFile->getPathname()))
+                    : $syncService->sync($calendar);
+
+                if (null !== $count) {
                     $calendar->setLastSyncedAt(new \DateTime());
                     $calendar->setLastSyncCount($count);
                     $em->flush();
@@ -141,12 +114,12 @@ class CalendarController extends AbstractController
                     } else {
                         $this->addFlash('success', 'calendar.flash.synced');
                     }
-                } catch (CalendarSyncException $e) {
-                    $syncFailed = true;
-                    $this->addFlash('danger', $translator->trans('calendar.flash.sync_failed', [
-                        '%message%' => $e->getMessage(),
-                    ]));
                 }
+            } catch (CalendarSyncException $e) {
+                $syncFailed = true;
+                $this->addFlash('danger', $translator->trans('calendar.flash.sync_failed', [
+                    '%message%' => $e->getMessage(),
+                ]));
             }
 
             if (!$syncFailed) {
@@ -168,19 +141,10 @@ class CalendarController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'settings.calendars.delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]
-    public function delete(
-        Request $request,
-        EntityManagerInterface $em,
-        #[Autowire(service: 'calendar.storage')] FilesystemOperator $calendarStorage,
-        Calendar $calendar,
-    ): Response {
+    public function delete(Request $request, EntityManagerInterface $em, Calendar $calendar): Response
+    {
         if (!$this->isCsrfTokenValid('delete'.$calendar->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException();
-        }
-
-        $filename = $calendar->getIcsFilename();
-        if (null !== $filename && $calendarStorage->fileExists($filename)) {
-            $calendarStorage->delete($filename);
         }
 
         // orphanRemoval on Calendar::$entries takes care of the entries themselves

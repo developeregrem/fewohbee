@@ -11,6 +11,15 @@ export function serializeData(data) {
         return data;
     }
     if (data instanceof FormData) {
+        // A form with an actual file selected has to stay multipart - flattening
+        // it to a query string would coerce the File value to a useless
+        // "[object File]" string and silently drop the upload.
+        for (const value of data.values()) {
+            if (value instanceof File && value.size > 0) {
+                return data;
+            }
+        }
+
         return new URLSearchParams([...data.entries()]).toString();
     }
     if (typeof data === 'object') {
@@ -62,6 +71,18 @@ export function request({ url, method = 'GET', data = null, target = null, loade
     if (fetchOptions.method === 'GET') {
         if (serialized) {
             finalUrl += (finalUrl.includes('?') ? '&' : '?') + serialized;
+        }
+    } else if (serialized instanceof FormData) {
+        // Let the browser set its own multipart Content-Type (with boundary).
+        fetchOptions.body = serialized;
+
+        const form = typeof csrfForm === 'string' ? document.querySelector(csrfForm) : csrfForm;
+        if (form instanceof HTMLFormElement && form.querySelector('input[data-controller="csrf-protection"]')) {
+            generateCsrfToken(form);
+            const csrfHeaders = generateCsrfHeaders(form);
+            Object.keys(csrfHeaders).forEach((key) => {
+                fetchOptions.headers[key] = csrfHeaders[key];
+            });
         }
     } else {
         fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';

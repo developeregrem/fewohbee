@@ -47,13 +47,6 @@ return static function (ContainerConfigurator $container): void {
                         'prefix' => $keyPrefix('room-categories'),
                     ],
                 ],
-                'calendar.adapter' => [
-                    'awss3v3' => [
-                        'client' => 'storage.s3_client',
-                        'bucket' => $bucket,
-                        'prefix' => $keyPrefix('calendar'),
-                    ],
-                ],
             ],
             'filesystems' => [
                 'images_export' => [
@@ -63,10 +56,6 @@ return static function (ContainerConfigurator $container): void {
                 'images_roomcat' => [
                     'adapter' => 'images.roomcat.adapter',
                     'alias' => 'images.roomcat.storage',
-                ],
-                'calendar' => [
-                    'adapter' => 'calendar.adapter',
-                    'alias' => 'calendar.storage',
                 ],
             ],
         ]);
@@ -99,17 +88,6 @@ return static function (ContainerConfigurator $container): void {
                     ],
                 ],
             ],
-            // Not under public/ on purpose: the ICS file itself never needs to be
-            // served directly, only parsed server-side by CalendarEntrySyncService.
-            'calendar.adapter' => [
-                'local' => [
-                    'location' => '%kernel.project_dir%/var/calendar',
-                    'permissions' => [
-                        'file' => ['public' => 0644, 'private' => 0644],
-                        'dir' => ['public' => 0755, 'private' => 0755],
-                    ],
-                ],
-            ],
         ],
         'filesystems' => [
             'images_export' => [
@@ -119,10 +97,6 @@ return static function (ContainerConfigurator $container): void {
             'images_roomcat' => [
                 'adapter' => 'images.roomcat.adapter',
                 'alias' => 'images.roomcat.storage',
-            ],
-            'calendar' => [
-                'adapter' => 'calendar.adapter',
-                'alias' => 'calendar.storage',
             ],
         ],
     ]);

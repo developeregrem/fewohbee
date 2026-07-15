@@ -19,15 +19,13 @@
         {{ form_row(form.icsUrl) }}
         {{ form_row(form.icsFile) }}
 
-        {% if not isNew and (calendar.icsFilename or calendar.icsUrl) %}
-            <p class="text-body-secondary small mb-1">
-                <i class="fas fa-check-circle text-success me-1"></i>
-                {% if calendar.icsFilename %}
-                    {{ 'calendar.form.current_file'|trans }}
-                {% else %}
+        {% if not isNew %}
+            {% if calendar.icsUrl %}
+                <p class="text-body-secondary small mb-1">
+                    <i class="fas fa-check-circle text-success me-1"></i>
                     {{ 'calendar.form.current_url'|trans }}
-                {% endif %}
-            </p>
+                </p>
+            {% endif %}
             {% if calendar.lastSyncedAt %}
                 <p class="text-body-secondary small mb-0">
                     {{ 'calendar.form.last_sync'|trans({'%datetime%': calendar.lastSyncedAt|date('d.m.Y H:i')}) }}

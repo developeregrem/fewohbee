@@ -32,7 +32,7 @@ class CalendarRepository extends ServiceEntityRepository
     public function findWithIcsSource(): array
     {
         return $this->createQueryBuilder('c')
-            ->andWhere('c.icsUrl IS NOT NULL OR c.icsFilename IS NOT NULL')
+            ->andWhere('c.icsUrl IS NOT NULL')
             ->getQuery()
             ->getResult();
     }

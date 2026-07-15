@@ -3,7 +3,6 @@ calendar:
     title: "Manage calendars"
     add: "Add calendar"
     empty: "No calendars configured yet."
-    source_upload: "ICS file"
     source_url: "ICS URL"
     source_manual: "Manual"
     table:
@@ -22,9 +21,8 @@ calendar:
     ics_url: "ICS URL"
     ics_url_help: "Synced on every save and once daily."
     ics_file: "Upload ICS file"
-    ics_file_help: "Replaces a configured URL. Allowed: .ics, max 2 MB."
+    ics_file_help: "One-time import on save, independent of any configured URL. Allowed: .ics, max 2 MB."
     ics_file_invalid: "Please upload a valid ICS (.ics) file."
-    current_file: "Currently configured via upload"
     current_url: "Currently synced from URL"
     last_sync: "Last synced: %datetime%"
     last_sync_empty: "no entries found in the source, old data unchanged"

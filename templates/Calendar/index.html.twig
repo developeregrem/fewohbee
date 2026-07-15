@@ -51,9 +51,7 @@
                             {% endif %}
                         </td>
                         <td class="small text-body-secondary">
-                            {% if calendar.icsFilename %}
-                                {{ 'calendar.index.source_upload'|trans }}
-                            {% elseif calendar.icsUrl %}
+                            {% if calendar.icsUrl %}
                                 {{ 'calendar.index.source_url'|trans }}
                             {% else %}
                                 {{ 'calendar.index.source_manual'|trans }}
