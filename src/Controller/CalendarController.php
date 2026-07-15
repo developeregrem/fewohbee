@@ -105,10 +105,6 @@ class CalendarController extends AbstractController
                     : $syncService->sync($calendar);
 
                 if (null !== $count) {
-                    $calendar->setLastSyncedAt(new \DateTime());
-                    $calendar->setLastSyncCount($count);
-                    $em->flush();
-
                     if (0 === $count) {
                         $this->addFlash('warning', 'calendar.flash.synced_empty');
                     } else {

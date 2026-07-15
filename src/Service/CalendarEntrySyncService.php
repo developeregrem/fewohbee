@@ -73,6 +73,11 @@ class CalendarEntrySyncService
             throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);
         }
 
+        // Recorded here (not by callers) so both the admin-form save path
+        // and the calendars:sync cron command keep this in sync consistently.
+        $calendar->setLastSyncedAt(new \DateTime());
+        $calendar->setLastSyncCount($count);
+
         // Deliberately never deletes entries missing from this import (e.g.
         // last year's dates dropping out of a rolling ICS feed) - a
         // confirmed entry is a historical record (see the Facility
