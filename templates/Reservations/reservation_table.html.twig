@@ -65,7 +65,10 @@
                 {% for entry in dayEntries %}
                     {% set entryColors = entryColors|merge([entry.calendar.color]) %}
                     {% set entriesText = entriesText ~ "<a href='" ~ path('reservations.calendar_entry.edit', {'id': entry.id}) ~ "' class='text-dark text-decoration-underline js-calendar-entry-link'>" ~ entry.title ~ "</a> <span class='text-muted small'>(" ~ entry.calendar.name ~ ")</span>" %}
-                    {% if not loop.last %}{% set entriesText = entriesText ~ "<br />" %}{% endif %}
+                    {% if not loop.last %}
+                        {% set nextEntry = dayEntries[loop.index0 + 1] %}
+                        {% set entriesText = entriesText ~ (nextEntry.calendar.id != entry.calendar.id ? "<hr class='my-1'>" : "<br />") %}
+                    {% endif %}
                 {% endfor %}
                 {% set newEntryUrl = showCalendars ? path('reservations.calendar_entry.new', {'date': col.date|date_modify('+0 day')|date('Y-m-d')}) : null %}
                 {% set newEntryLink = newEntryUrl ? "<a href='" ~ newEntryUrl ~ "' class='text-primary text-decoration-underline js-calendar-entry-link'>" ~ 'calendar_entry.popover.new'|trans ~ "</a>" : "" %}
@@ -119,7 +122,10 @@
                 {% for entry in dayEntries %}
                     {% set entryColors = entryColors|merge([entry.calendar.color]) %}
                     {% set entriesText = entriesText ~ "<a href='" ~ path('reservations.calendar_entry.edit', {'id': entry.id}) ~ "' class='text-dark text-decoration-underline js-calendar-entry-link'>" ~ entry.title ~ "</a> <span class='text-muted small'>(" ~ entry.calendar.name ~ ")</span>" %}
-                    {% if not loop.last %}{% set entriesText = entriesText ~ "<br />" %}{% endif %}
+                    {% if not loop.last %}
+                        {% set nextEntry = dayEntries[loop.index0 + 1] %}
+                        {% set entriesText = entriesText ~ (nextEntry.calendar.id != entry.calendar.id ? "<hr class='my-1'>" : "<br />") %}
+                    {% endif %}
                 {% endfor %}
                 {% set newEntryUrl = showCalendars ? path('reservations.calendar_entry.new', {'date': col.date|date_modify('+0 day')|date('Y-m-d')}) : null %}
                 {% set newEntryLink = newEntryUrl ? "<a href='" ~ newEntryUrl ~ "' class='text-primary text-decoration-underline js-calendar-entry-link'>" ~ 'calendar_entry.popover.new'|trans ~ "</a>" : "" %}

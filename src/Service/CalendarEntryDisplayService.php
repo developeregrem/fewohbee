@@ -64,6 +64,14 @@ class CalendarEntryDisplayService
         foreach ($this->entryRepo->findBy([]) as $entry) {
             self::$entriesByDate[$entry->getDate()->format('Y-m-d')][] = $entry;
         }
+
+        // Group same-day entries by calendar (alphabetically, matching the
+        // Calendar management list) so the year-overview popover can tell
+        // calendars apart with a separator line instead of an arbitrary mix.
+        foreach (self::$entriesByDate as &$entries) {
+            usort($entries, static fn (CalendarEntry $a, CalendarEntry $b) => $a->getCalendar()->getName() <=> $b->getCalendar()->getName());
+        }
+        unset($entries);
     }
 
     /**
