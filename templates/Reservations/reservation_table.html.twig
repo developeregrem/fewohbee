@@ -29,7 +29,7 @@
     {% set publicdays = getPublicdaysForDay(col.date|date_modify('+0 day'), showCountry, app.request.locale) %}
     {% set holidayText = "" %}
     {% for holiday in publicdays %}
-        {% set holidayText = holidayText ~ "<i class='fas fa-flag me-1'></i>" ~ holiday.name %}
+        {% set holidayText = holidayText ~ holiday.name %}
         {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
     {% endfor %}
     {% set dayEntries = showCalendars ? getCalendarEntriesForDay(col.date|date_modify('+0 day')) : [] %}
