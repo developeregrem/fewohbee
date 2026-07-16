@@ -14,17 +14,22 @@ use App\Repository\CalendarRepository;
  * overview, next to public holidays - one accent line per calendar that
  * has an entry that day, stacked in the cell.
  *
- * Loads everything once per request (static cache) instead of querying per
- * grid column/calendar - the yearly overview calls this once per day column,
- * which would otherwise mean a couple hundred queries per page load.
+ * Loads one year at a time and caches it for the lifetime of this instance
+ * (Symfony creates a fresh instance per request under php-fpm/CLI, this
+ * project's only runtimes) instead of querying per grid column/calendar -
+ * the yearly overview calls this once per day column, which would
+ * otherwise mean a couple hundred queries per page load.
  */
 class CalendarEntryDisplayService
 {
-    /** @var array<string, CalendarEntry[]>|null */
-    private static ?array $entriesByDate = null;
+    /** @var array<string, CalendarEntry[]> */
+    private array $entriesByDate = [];
+
+    /** @var array<int, true> years already loaded into $entriesByDate */
+    private array $warmedYears = [];
 
     /** @var Calendar[]|null */
-    private static ?array $calendars = null;
+    private ?array $calendars = null;
 
     public function __construct(
         private readonly CalendarEntryRepository $entryRepo,
@@ -37,9 +42,9 @@ class CalendarEntryDisplayService
      */
     public function getForDay(\DateTimeInterface $date): array
     {
-        $this->warm();
+        $this->warmYear((int) $date->format('Y'));
 
-        return self::$entriesByDate[$date->format('Y-m-d')] ?? [];
+        return $this->entriesByDate[$date->format('Y-m-d')] ?? [];
     }
 
     /**
@@ -47,40 +52,32 @@ class CalendarEntryDisplayService
      */
     public function getAllCalendars(): array
     {
-        $this->warm();
+        $this->calendars ??= $this->calendarRepo->findAllOrdered();
 
-        return self::$calendars;
+        return $this->calendars;
     }
 
-    private function warm(): void
+    private function warmYear(int $year): void
     {
-        if (null !== self::$entriesByDate) {
+        if (isset($this->warmedYears[$year])) {
             return;
         }
+        $this->warmedYears[$year] = true;
 
-        self::$calendars = $this->calendarRepo->findAllOrdered();
-
-        self::$entriesByDate = [];
-        foreach ($this->entryRepo->findBy([]) as $entry) {
-            self::$entriesByDate[$entry->getDate()->format('Y-m-d')][] = $entry;
+        foreach ($this->entryRepo->findForYear($year) as $entry) {
+            $this->entriesByDate[$entry->getDate()->format('Y-m-d')][] = $entry;
         }
 
         // Group same-day entries by calendar (alphabetically, matching the
         // Calendar management list) so the year-overview popover can tell
         // calendars apart with a separator line instead of an arbitrary mix.
-        foreach (self::$entriesByDate as &$entries) {
-            usort($entries, static fn (CalendarEntry $a, CalendarEntry $b) => $a->getCalendar()->getName() <=> $b->getCalendar()->getName());
+        // Scoped to this year's dates only - re-sorting the whole map on
+        // every warmYear() call would redo work for years already sorted.
+        foreach ($this->entriesByDate as $dateKey => &$entries) {
+            if ((int) substr($dateKey, 0, 4) === $year) {
+                usort($entries, static fn (CalendarEntry $a, CalendarEntry $b) => $a->getCalendar()->getName() <=> $b->getCalendar()->getName());
+            }
         }
         unset($entries);
-    }
-
-    /**
-     * Reset the request-level cache. Only needed in long-running processes
-     * (tests, workers) where the same PHP process serves multiple requests.
-     */
-    public static function resetCache(): void
-    {
-        self::$entriesByDate = null;
-        self::$calendars = null;
     }
 }

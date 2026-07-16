@@ -51,7 +51,7 @@ class CalendarEntry
 
     /** Who acknowledged the reminder - shown in the Facility overview. */
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $confirmedBy = null;
 
     public function getId(): ?int

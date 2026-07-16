@@ -135,6 +135,26 @@ class CalendarEntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * All entries (any calendar, confirmed or not) within the given year,
+     * with their calendar eager-loaded - backs the year-overview accent
+     * lines/popovers via CalendarEntryDisplayService, scoped to the year
+     * actually being displayed instead of loading the whole table.
+     *
+     * @return CalendarEntry[]
+     */
+    public function findForYear(int $year): array
+    {
+        return $this->createQueryBuilder('e')
+            ->join('e.calendar', 'c')
+            ->addSelect('c')
+            ->andWhere('e.date BETWEEN :from AND :to')
+            ->setParameter('from', new \DateTimeImmutable($year.'-01-01'))
+            ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Full year range with at least one entry across ANY calendar, newest
      * first - used to populate the year filter for the unconfirmed-entry
      * cleanup on the calendar management page.

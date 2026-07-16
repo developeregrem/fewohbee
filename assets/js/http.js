@@ -13,9 +13,12 @@ export function serializeData(data) {
     if (data instanceof FormData) {
         // A form with an actual file selected has to stay multipart - flattening
         // it to a query string would coerce the File value to a useless
-        // "[object File]" string and silently drop the upload.
+        // "[object File]" string and silently drop the upload. An empty file
+        // input also yields a File instance (name: '', size: 0), so check the
+        // name too - otherwise a genuinely selected but 0-byte file would be
+        // indistinguishable from "nothing selected" and get dropped the same way.
         for (const value of data.values()) {
-            if (value instanceof File && value.size > 0) {
+            if (value instanceof File && (value.size > 0 || value.name !== '')) {
                 return data;
             }
         }

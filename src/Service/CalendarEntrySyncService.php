@@ -10,6 +10,8 @@ use App\Repository\CalendarEntryRepository;
 use App\Service\Exception\CalendarSyncException;
 use App\Service\Ics\IcsEventParser;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Imports entries from an ICS source (URL, configured per Calendar, or a
@@ -33,6 +35,7 @@ class CalendarEntrySyncService
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
         private readonly IcsEventParser $icsParser,
+        private readonly HttpClientInterface $httpClient,
     ) {
     }
 
@@ -47,9 +50,17 @@ class CalendarEntrySyncService
             return null;
         }
 
-        $content = @file_get_contents($url);
-        if (false === $content) {
-            throw new CalendarSyncException('ICS-URL konnte nicht abgerufen werden: '.$url);
+        // Bounded timeout (matching CalendarImportService's ICS fetch) so one
+        // unresponsive host can't stall the whole calendars:sync cron run,
+        // which fetches every configured calendar sequentially in one process.
+        try {
+            $response = $this->httpClient->request('GET', $url, ['timeout' => 10]);
+            if (200 !== $response->getStatusCode()) {
+                throw new CalendarSyncException('ICS-URL antwortete mit Status '.$response->getStatusCode().': '.$url);
+            }
+            $content = $response->getContent();
+        } catch (ExceptionInterface $exception) {
+            throw new CalendarSyncException('ICS-URL konnte nicht abgerufen werden: '.$url, previous: $exception);
         }
 
         return $this->importIcsString($calendar, $content);
@@ -66,51 +77,68 @@ class CalendarEntrySyncService
         $unchanged = 0;
 
         try {
+            $seenUids = [];
             foreach ($this->icsParser->parseEvents($icsData) as $event) {
                 $summary = trim((string) ($event['SUMMARY'] ?? ''));
                 if ('' === $summary) {
                     continue;
                 }
 
-                match ($this->upsert($calendar, $event, $summary)) {
+                match ($this->upsert($calendar, $event, $summary, $seenUids)) {
                     self::OUTCOME_NEW => $new++,
                     self::OUTCOME_UPDATED => $updated++,
                     self::OUTCOME_UNCHANGED => $unchanged++,
                     null => null,
                 };
             }
+
+            $result = new CalendarEntrySyncResult($new, $updated, $unchanged);
+
+            // Recorded here (not by callers) so both the admin-form save path
+            // and the calendars:sync cron command keep this in sync consistently.
+            $calendar->setLastSyncedAt(new \DateTime());
+            $calendar->setLastSyncCount($result->total());
+            $calendar->setLastSyncNewCount($result->new);
+            $calendar->setLastSyncUpdatedCount($result->updated);
+            $calendar->setLastSyncUnchangedCount($result->unchanged);
+
+            // Deliberately never deletes entries missing from this import (e.g.
+            // last year's dates dropping out of a rolling ICS feed) - a
+            // confirmed entry is a historical record (see the Facility
+            // overview) and re-syncing must not be able to erase it. Stale,
+            // never-confirmed entries can still be removed manually.
+            $this->em->flush();
         } catch (\Throwable $e) {
             throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);
         }
-
-        $result = new CalendarEntrySyncResult($new, $updated, $unchanged);
-
-        // Recorded here (not by callers) so both the admin-form save path
-        // and the calendars:sync cron command keep this in sync consistently.
-        $calendar->setLastSyncedAt(new \DateTime());
-        $calendar->setLastSyncCount($result->total());
-        $calendar->setLastSyncNewCount($result->new);
-        $calendar->setLastSyncUpdatedCount($result->updated);
-        $calendar->setLastSyncUnchangedCount($result->unchanged);
-
-        // Deliberately never deletes entries missing from this import (e.g.
-        // last year's dates dropping out of a rolling ICS feed) - a
-        // confirmed entry is a historical record (see the Facility
-        // overview) and re-syncing must not be able to erase it. Stale,
-        // never-confirmed entries can still be removed manually.
-        $this->em->flush();
 
         return $result;
     }
 
     /**
-     * @param array<string, string> $event
+     * @param array<string, string>        $event
+     * @param array<string, CalendarEntry> $seenUids entries already upserted
+     *                                                by this import call,
+     *                                                keyed by icsUid - since
+     *                                                nothing is flushed until
+     *                                                the whole import
+     *                                                finishes, a second event
+     *                                                that hashes to the same
+     *                                                fallback UID (no UID in
+     *                                                the source, identical
+     *                                                summary+date) wouldn't
+     *                                                be found by a fresh DB
+     *                                                lookup and would
+     *                                                otherwise be persisted
+     *                                                as a duplicate, tripping
+     *                                                the unique constraint at
+     *                                                flush time
      *
      * Returns which of OUTCOME_NEW/OUTCOME_UPDATED/OUTCOME_UNCHANGED this
      * event resulted in, or null if the event was skipped (no usable
      * DTSTART).
      */
-    private function upsert(Calendar $calendar, array $event, string $summary): ?string
+    private function upsert(Calendar $calendar, array $event, string $summary, array &$seenUids): ?string
     {
         $dtStartRaw = $event['DTSTART'] ?? null;
         if (null === $dtStartRaw) {
@@ -132,7 +160,7 @@ class CalendarEntrySyncService
         // calendars' feeds can't collide.
         $uid = 'cal'.$calendar->getId().'-'.('' !== $rawUid ? $rawUid.'-'.$dateKey : md5($summary.'-'.$dateKey));
 
-        $entry = $this->repo->findOneBy(['icsUid' => $uid]);
+        $entry = $seenUids[$uid] ?? $this->repo->findOneBy(['icsUid' => $uid]);
         $isNew = null === $entry;
         $unchanged = !$isNew && $entry->getDate() == $date && $entry->getTitle() === $summary;
 
@@ -143,6 +171,7 @@ class CalendarEntrySyncService
             ->setTitle($summary);
 
         $this->em->persist($entry);
+        $seenUids[$uid] = $entry;
 
         return match (true) {
             $isNew => self::OUTCOME_NEW,

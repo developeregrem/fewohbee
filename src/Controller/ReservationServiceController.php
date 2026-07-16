@@ -96,7 +96,11 @@ class ReservationServiceController extends AbstractController
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
-        $calendarReminderCount = $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0;
+        // Deliberately independent of $showCalendarEntries, which only
+        // controls the cosmetic accent lines/popovers on the year grid -
+        // a pending day-before/day-of confirmation must stay visible even
+        // for a user who has never opted into that display.
+        $calendarReminderCount = $calendarEntryRepository->countPendingReminders();
 
         return $this->render('Reservations/index.html.twig', [
             'objects' => $objects,
@@ -1537,16 +1541,15 @@ class ReservationServiceController extends AbstractController
 
     #[Route('/calendar-reminder', name: 'reservations.calendar_reminder', methods: ['GET'])]
     /** Render the day-before/day-of reminder modal for all calendars that require confirmation. */
-    public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository, RequestStack $requestStack): Response
+    public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository): Response
     {
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
-
         return $this->render('Reservations/calendar_entry_reminder.html.twig', [
-            'pendingReminders' => $showCalendarEntries ? $calendarEntryRepository->findPendingReminders() : [],
+            'pendingReminders' => $calendarEntryRepository->findPendingReminders(),
         ]);
     }
 
     #[Route('/calendar-reminder/{id}/confirm', name: 'reservations.calendar_reminder.confirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
     /** Acknowledge a single pending calendar-entry reminder. */
     public function confirmCalendarReminderAction(ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
@@ -1560,6 +1563,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/calendar-reminder/{id}/unconfirm', name: 'reservations.calendar_reminder.unconfirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
     /** Undo an accidental confirmation, reopening the reminder. */
     public function unconfirmCalendarReminderAction(ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
@@ -1573,6 +1577,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/calendar-entry/new', name: 'reservations.calendar_entry.new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
     /**
      * Manually add an entry to a calendar, independent of any ICS source.
      * Reached from the "+ new entry" link in the year overview popover,
@@ -1626,6 +1631,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/calendar-entry/{id}/edit', name: 'reservations.calendar_entry.edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
     /**
      * Edit a single calendar entry, reached via the popover link in the
      * year overview - opened in the shared reservation modal, same as
@@ -1655,6 +1661,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/calendar-entry/{id}/delete', name: 'reservations.calendar_entry.delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
         if (!$this->isCsrfTokenValid('delete-calendar-entry-'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
