@@ -89,6 +89,9 @@ class CalendarEntrySyncService
         // and the calendars:sync cron command keep this in sync consistently.
         $calendar->setLastSyncedAt(new \DateTime());
         $calendar->setLastSyncCount($result->total());
+        $calendar->setLastSyncNewCount($result->new);
+        $calendar->setLastSyncUpdatedCount($result->updated);
+        $calendar->setLastSyncUnchangedCount($result->unchanged);
 
         // Deliberately never deletes entries missing from this import (e.g.
         // last year's dates dropping out of a rolling ICS feed) - a

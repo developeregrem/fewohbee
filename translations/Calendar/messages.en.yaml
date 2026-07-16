@@ -26,7 +26,7 @@ calendar:
     current_url: "Currently synced from URL"
     last_sync: "Last synced: %datetime%"
     last_sync_empty: "no entries found in the source, old data unchanged"
-    entries_imported: "%count% entry imported|%count% entries imported"
+    last_sync_breakdown: "%new% new, %updated% updated, %unchanged% unchanged"
     delete: "Delete"
     delete_confirm: "Delete this calendar including all its entries? This cannot be undone."
   flash:

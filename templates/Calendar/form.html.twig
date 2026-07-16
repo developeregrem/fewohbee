@@ -33,7 +33,11 @@
                     {% if calendar.lastSyncCount == 0 %}
                         <span class="text-warning">{{ 'calendar.form.last_sync_empty'|trans }}</span>
                     {% else %}
-                        {{ 'calendar.form.entries_imported'|trans({'%count%': calendar.lastSyncCount}) }}
+                        {{ 'calendar.form.last_sync_breakdown'|trans({
+                            '%new%': calendar.lastSyncNewCount ?? 0,
+                            '%updated%': calendar.lastSyncUpdatedCount ?? 0,
+                            '%unchanged%': calendar.lastSyncUnchangedCount ?? 0,
+                        }) }}
                     {% endif %}
                 </p>
             {% endif %}

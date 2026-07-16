@@ -45,6 +45,15 @@ class Calendar
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $lastSyncCount = null;
 
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $lastSyncNewCount = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $lastSyncUpdatedCount = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    private ?int $lastSyncUnchangedCount = null;
+
     /** @var \Doctrine\Common\Collections\Collection<int, CalendarEntry> */
     #[ORM\OneToMany(mappedBy: 'calendar', targetEntity: CalendarEntry::class, orphanRemoval: true)]
     private \Doctrine\Common\Collections\Collection $entries;
@@ -127,6 +136,42 @@ class Calendar
     public function setLastSyncCount(?int $lastSyncCount): self
     {
         $this->lastSyncCount = $lastSyncCount;
+
+        return $this;
+    }
+
+    public function getLastSyncNewCount(): ?int
+    {
+        return $this->lastSyncNewCount;
+    }
+
+    public function setLastSyncNewCount(?int $lastSyncNewCount): self
+    {
+        $this->lastSyncNewCount = $lastSyncNewCount;
+
+        return $this;
+    }
+
+    public function getLastSyncUpdatedCount(): ?int
+    {
+        return $this->lastSyncUpdatedCount;
+    }
+
+    public function setLastSyncUpdatedCount(?int $lastSyncUpdatedCount): self
+    {
+        $this->lastSyncUpdatedCount = $lastSyncUpdatedCount;
+
+        return $this;
+    }
+
+    public function getLastSyncUnchangedCount(): ?int
+    {
+        return $this->lastSyncUnchangedCount;
+    }
+
+    public function setLastSyncUnchangedCount(?int $lastSyncUnchangedCount): self
+    {
+        $this->lastSyncUnchangedCount = $lastSyncUnchangedCount;
 
         return $this;
     }
