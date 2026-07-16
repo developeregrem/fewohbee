@@ -19,7 +19,7 @@ calendar:
     requires_confirmation: "Requires confirmation"
     requires_confirmation_help: "Shows a day-before reminder that must be actively confirmed (e.g. for waste collection)."
     ics_url: "ICS URL"
-    ics_url_help: "Synced on every save and once daily."
+    ics_url_help: "Synced on every save and once hourly."
     ics_file: "Upload ICS file"
     ics_file_help: "One-time import on save, independent of any configured URL. Allowed: .ics, max 2 MB."
     ics_file_invalid: "Please upload a valid ICS (.ics) file."
@@ -32,7 +32,7 @@ calendar:
   flash:
     saved: "Calendar saved."
     deleted: "Calendar deleted."
-    synced: "Calendar synced."
+    synced: "Calendar synced: %new% new, %updated% updated, %unchanged% unchanged."
     synced_empty: "Sync ran, but the source had no entries - existing entries remain unchanged."
     sync_failed: "Calendar could not be synced: %message%"
   cleanup:

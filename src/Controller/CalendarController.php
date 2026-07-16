@@ -100,15 +100,19 @@ class CalendarController extends AbstractController
                 // an uploaded file is a one-off bulk import, independent of
                 // whatever URL is (or isn't) configured for ongoing sync -
                 // the file itself is never stored, only the entries it produces
-                $count = null !== $icsFile
+                $result = null !== $icsFile
                     ? $syncService->importIcsString($calendar, (string) file_get_contents($icsFile->getPathname()))
                     : $syncService->sync($calendar);
 
-                if (null !== $count) {
-                    if (0 === $count) {
+                if (null !== $result) {
+                    if (0 === $result->total()) {
                         $this->addFlash('warning', 'calendar.flash.synced_empty');
                     } else {
-                        $this->addFlash('success', 'calendar.flash.synced');
+                        $this->addFlash('success', $translator->trans('calendar.flash.synced', [
+                            '%new%' => $result->new,
+                            '%updated%' => $result->updated,
+                            '%unchanged%' => $result->unchanged,
+                        ]));
                     }
                 }
             } catch (CalendarSyncException $e) {

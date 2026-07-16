@@ -40,8 +40,14 @@ class CalendarEntrySyncCommand extends Command
         $hadFailure = false;
         foreach ($calendars as $calendar) {
             try {
-                $count = $this->syncService->sync($calendar);
-                $io->writeln(sprintf('%s: %d entr%s synchronized.', $calendar->getName(), $count, 1 === $count ? 'y' : 'ies'));
+                $result = $this->syncService->sync($calendar);
+                $io->writeln(sprintf(
+                    '%s: %d new, %d updated, %d unchanged.',
+                    $calendar->getName(),
+                    $result->new,
+                    $result->updated,
+                    $result->unchanged,
+                ));
             } catch (CalendarSyncException $e) {
                 $hadFailure = true;
                 $io->error(sprintf('%s: %s', $calendar->getName(), $e->getMessage()));

@@ -25,6 +25,10 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class CalendarEntrySyncService
 {
+    private const OUTCOME_NEW = 'new';
+    private const OUTCOME_UPDATED = 'updated';
+    private const OUTCOME_UNCHANGED = 'unchanged';
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
@@ -34,10 +38,9 @@ class CalendarEntrySyncService
 
     /**
      * Fetches the ICS content from $calendar's configured URL and syncs it.
-     * Returns the number of entries imported, or null if no URL is
-     * configured at all.
+     * Returns null if no URL is configured at all.
      */
-    public function sync(Calendar $calendar): ?int
+    public function sync(Calendar $calendar): ?CalendarEntrySyncResult
     {
         $url = $calendar->getIcsUrl();
         if (null === $url) {
@@ -52,13 +55,15 @@ class CalendarEntrySyncService
         return $this->importIcsString($calendar, $content);
     }
 
-    public function importIcsString(Calendar $calendar, string $icsData): int
+    public function importIcsString(Calendar $calendar, string $icsData): CalendarEntrySyncResult
     {
         if (!$this->icsParser->isValidCalendar($icsData)) {
             throw new CalendarSyncException('ICS-Datei konnte nicht gelesen werden.');
         }
 
-        $count = 0;
+        $new = 0;
+        $updated = 0;
+        $unchanged = 0;
 
         try {
             foreach ($this->icsParser->parseEvents($icsData) as $event) {
@@ -67,16 +72,23 @@ class CalendarEntrySyncService
                     continue;
                 }
 
-                $count += $this->upsert($calendar, $event, $summary);
+                match ($this->upsert($calendar, $event, $summary)) {
+                    self::OUTCOME_NEW => $new++,
+                    self::OUTCOME_UPDATED => $updated++,
+                    self::OUTCOME_UNCHANGED => $unchanged++,
+                    null => null,
+                };
             }
         } catch (\Throwable $e) {
             throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);
         }
 
+        $result = new CalendarEntrySyncResult($new, $updated, $unchanged);
+
         // Recorded here (not by callers) so both the admin-form save path
         // and the calendars:sync cron command keep this in sync consistently.
         $calendar->setLastSyncedAt(new \DateTime());
-        $calendar->setLastSyncCount($count);
+        $calendar->setLastSyncCount($result->total());
 
         // Deliberately never deletes entries missing from this import (e.g.
         // last year's dates dropping out of a rolling ICS feed) - a
@@ -85,22 +97,29 @@ class CalendarEntrySyncService
         // never-confirmed entries can still be removed manually.
         $this->em->flush();
 
-        return $count;
+        return $result;
     }
 
-    /** @param array<string, string> $event */
-    private function upsert(Calendar $calendar, array $event, string $summary): int
+    /**
+     * @param array<string, string> $event
+     *
+     * Returns which of OUTCOME_NEW/OUTCOME_UPDATED/OUTCOME_UNCHANGED this
+     * event resulted in, or null if the event was skipped (no usable
+     * DTSTART).
+     */
+    private function upsert(Calendar $calendar, array $event, string $summary): ?string
     {
         $dtStartRaw = $event['DTSTART'] ?? null;
         if (null === $dtStartRaw) {
-            return 0;
+            return null;
         }
 
         $dtStart = $this->icsParser->parseDate($dtStartRaw);
         if (null === $dtStart) {
-            return 0;
+            return null;
         }
 
+        $date = $dtStart->setTime(0, 0);
         $dateKey = $dtStart->format('Ymd');
 
         $rawUid = trim((string) ($event['UID'] ?? ''));
@@ -110,14 +129,22 @@ class CalendarEntrySyncService
         // calendars' feeds can't collide.
         $uid = 'cal'.$calendar->getId().'-'.('' !== $rawUid ? $rawUid.'-'.$dateKey : md5($summary.'-'.$dateKey));
 
-        $entry = $this->repo->findOneBy(['icsUid' => $uid]) ?? new CalendarEntry();
+        $entry = $this->repo->findOneBy(['icsUid' => $uid]);
+        $isNew = null === $entry;
+        $unchanged = !$isNew && $entry->getDate() == $date && $entry->getTitle() === $summary;
+
+        $entry ??= new CalendarEntry();
         $entry->setCalendar($calendar)
             ->setIcsUid($uid)
-            ->setDate($dtStart->setTime(0, 0))
+            ->setDate($date)
             ->setTitle($summary);
 
         $this->em->persist($entry);
 
-        return 1;
+        return match (true) {
+            $isNew => self::OUTCOME_NEW,
+            $unchanged => self::OUTCOME_UNCHANGED,
+            default => self::OUTCOME_UPDATED,
+        };
     }
 }

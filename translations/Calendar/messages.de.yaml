@@ -19,7 +19,7 @@ calendar:
     requires_confirmation: "Bestätigung erforderlich"
     requires_confirmation_help: "Zeigt eine Tag-vorher-Erinnerung, die aktiv bestätigt werden muss (z.B. für Abfalltermine)."
     ics_url: "ICS-URL"
-    ics_url_help: "Wird bei jedem Speichern sowie täglich automatisch synchronisiert."
+    ics_url_help: "Wird bei jedem Speichern sowie stündlich automatisch synchronisiert."
     ics_file: "ICS-Datei hochladen"
     ics_file_help: "Einmaliger Import beim Speichern, unabhängig von einer ggf. gesetzten URL. Erlaubt: .ics, max. 2 MB."
     ics_file_invalid: "Bitte eine gültige ICS-Datei (.ics) hochladen."
@@ -32,7 +32,7 @@ calendar:
   flash:
     saved: "Kalender wurde gespeichert."
     deleted: "Kalender wurde gelöscht."
-    synced: "Kalender wurde synchronisiert."
+    synced: "Kalender wurde synchronisiert: %new% neu, %updated% aktualisiert, %unchanged% unverändert."
     synced_empty: "Sync durchgeführt, aber keine Einträge in der Quelle gefunden – bisherige Einträge bleiben unverändert aktiv."
     sync_failed: "Kalender konnte nicht synchronisiert werden: %message%"
   cleanup:
