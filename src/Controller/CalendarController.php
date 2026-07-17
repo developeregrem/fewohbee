@@ -27,7 +27,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class CalendarController extends AbstractController
 {
     #[Route('', name: 'settings.calendars.index', methods: ['GET'])]
-    public function index(CalendarRepository $calendarRepo, CalendarEntryRepository $entryRepo, Request $request): Response
+    public function index(CalendarRepository $calendarRepo, CalendarEntryRepository $entryRepo): Response
     {
         $calendars = $calendarRepo->findAllOrdered();
         $entryCounts = [];
@@ -35,22 +35,9 @@ class CalendarController extends AbstractController
             $entryCounts[$calendar->getId()] = $entryRepo->count(['calendar' => $calendar]);
         }
 
-        $currentYear = (int) date('Y');
-        $availableCleanupYears = $entryRepo->findDistinctYears();
-        // the cleanup is only ever offered for years that are over, so
-        // don't bother suggesting the current one even if there's data in it
-        $availableCleanupYears = array_values(array_filter(
-            $availableCleanupYears,
-            static fn (int $y) => $y < $currentYear,
-        ));
-        $cleanupYear = (int) $request->query->get('cleanupYear', (string) ($availableCleanupYears[0] ?? $currentYear - 1));
-
         return $this->render('Calendar/index.html.twig', [
             'calendars' => $calendars,
             'entryCounts' => $entryCounts,
-            'availableCleanupYears' => $availableCleanupYears,
-            'cleanupYear' => $cleanupYear,
-            'unconfirmedCleanupCount' => [] !== $availableCleanupYears ? $entryRepo->countUnconfirmedForYear($cleanupYear) : 0,
         ]);
     }
 
@@ -59,11 +46,12 @@ class CalendarController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         CalendarEntrySyncService $syncService,
+        CalendarEntryRepository $entryRepo,
         TranslatorInterface $translator,
     ): Response {
         $calendar = new Calendar();
 
-        return $this->handleForm($request, $em, $syncService, $translator, $calendar, true);
+        return $this->handleForm($request, $em, $syncService, $entryRepo, $translator, $calendar, true);
     }
 
     #[Route('/{id}/edit', name: 'settings.calendars.edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
@@ -71,16 +59,18 @@ class CalendarController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         CalendarEntrySyncService $syncService,
+        CalendarEntryRepository $entryRepo,
         TranslatorInterface $translator,
         Calendar $calendar,
     ): Response {
-        return $this->handleForm($request, $em, $syncService, $translator, $calendar, false);
+        return $this->handleForm($request, $em, $syncService, $entryRepo, $translator, $calendar, false);
     }
 
     private function handleForm(
         Request $request,
         EntityManagerInterface $em,
         CalendarEntrySyncService $syncService,
+        CalendarEntryRepository $entryRepo,
         TranslatorInterface $translator,
         Calendar $calendar,
         bool $isNew,
@@ -137,6 +127,7 @@ class CalendarController extends AbstractController
             'form' => $form->createView(),
             'calendar' => $calendar,
             'isNew' => $isNew,
+            'unconfirmedPastCount' => $isNew ? 0 : $entryRepo->countUnconfirmedPast($calendar),
         ]);
     }
 
@@ -157,30 +148,28 @@ class CalendarController extends AbstractController
     }
 
     /**
-     * Deletes entries with no confirmedAt for a past year, across every
-     * calendar - a manual cleanup so the database doesn't keep accumulating
+     * Deletes this calendar's past, never-confirmed entries - offered as a
+     * button in the edit dialog so the database doesn't keep accumulating
      * rows now that sync() never prunes anything on its own (see
-     * CalendarEntrySyncService). Deliberately restricted to years before
-     * the current one - this year's still-open reminders must stay
-     * reachable.
+     * CalendarEntrySyncService). Confirmed entries and anything from today
+     * onwards are never touched.
      */
-    #[Route('/cleanup-unconfirmed/{year}', name: 'settings.calendars.cleanup_unconfirmed', requirements: ['year' => '\\d{4}'], methods: ['POST'])]
-    public function cleanupUnconfirmed(int $year, Request $request, CalendarEntryRepository $entryRepo, TranslatorInterface $translator): Response
+    #[Route('/{id}/cleanup-unconfirmed', name: 'settings.calendars.cleanup_unconfirmed', requirements: ['id' => '\\d+'], methods: ['DELETE'])]
+    public function cleanupUnconfirmed(Request $request, Calendar $calendar, CalendarEntryRepository $entryRepo, TranslatorInterface $translator): Response
     {
-        if (!$this->isCsrfTokenValid('calendar-cleanup-'.$year, (string) $request->request->get('_token'))) {
+        // 'delete' ~ id, where the template passes id as "cleanup<id>" - the
+        // shared delete_popover component builds the token that way, and the
+        // prefix keeps it distinct from the calendar's own delete token.
+        if (!$this->isCsrfTokenValid('deletecleanup'.$calendar->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException();
         }
 
-        if ($year >= (int) date('Y')) {
-            throw $this->createAccessDeniedException('Cannot clean up the current or a future year.');
-        }
-
-        $deleted = $entryRepo->deleteUnconfirmedForYear($year);
+        $deleted = $entryRepo->deleteUnconfirmedPast($calendar);
         $this->addFlash('success', $translator->trans('calendar.cleanup.flash.deleted', [
             '%count%' => $deleted,
-            '%year%' => $year,
+            '%calendar%' => $calendar->getName(),
         ]));
 
-        return $this->redirectToRoute('settings.calendars.index', ['cleanupYear' => $year]);
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

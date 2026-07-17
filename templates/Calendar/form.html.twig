@@ -41,6 +41,23 @@
                     {% endif %}
                 </p>
             {% endif %}
+
+            {% if unconfirmedPastCount > 0 %}
+                <hr class="my-3">
+                <div class="text-body-secondary small mb-2">{{ 'calendar.cleanup.hint'|trans }}</div>
+                {# Prefixed id so the popover's csrf_token('delete' ~ id) stays
+                   distinct from this calendar's own delete token. #}
+                {% set id = 'cleanup' ~ calendar.id %}
+                {% set targetUrl = path('settings.calendars.cleanup_unconfirmed', {'id': calendar.id}) %}
+                {% set deletePopoverHint = 'calendar.cleanup.confirm'|trans({'%count%': unconfirmedPastCount}) %}
+                {% use "common/delete_popover.html.twig" %}
+                <button type="button" class="btn btn-outline-danger btn-sm"
+                        data-popover="delete"
+                        data-title="{{ 'calendar.cleanup.title'|trans }}"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                    <i class="fas fa-broom me-1"></i>{{ 'calendar.cleanup.button'|trans({'%count%': unconfirmedPastCount}) }}
+                </button>
+            {% endif %}
         {% endif %}
     </div>
     <div class="modal-footer">

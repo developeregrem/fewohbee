@@ -36,11 +36,9 @@ calendar:
     synced_empty: "Sync durchgeführt, aber keine Einträge in der Quelle gefunden – bisherige Einträge bleiben unverändert aktiv."
     sync_failed: "Kalender konnte nicht synchronisiert werden: %message%"
   cleanup:
-    title: "Datenbank aufräumen"
-    hint: "Löscht Einträge, die nie bestätigt wurden, für ein vergangenes Jahr – kalenderübergreifend. Bestätigte Einträge bleiben immer erhalten."
-    filter.year: "Jahr"
-    button: "%count% unbestätigten Termin löschen|%count% unbestätigte Termine löschen"
-    confirm: "%count% unbestätigte Termine aus %year% unwiderruflich löschen? Bestätigte Termine sind davon nicht betroffen."
-    empty: "Keine unbestätigten Termine in diesem Jahr."
+    title: "Vergangene Termine aufräumen"
+    hint: "Löscht vergangene Termine dieses Kalenders, die nie bestätigt wurden. Bestätigte Termine sowie alles ab heute bleiben erhalten."
+    button: "%count% vergangenen unbestätigten Termin löschen|%count% vergangene unbestätigte Termine löschen"
+    confirm: "%count% vergangenen unbestätigten Termin unwiderruflich löschen?|%count% vergangene unbestätigte Termine unwiderruflich löschen?"
     flash:
-      deleted: "%count% unbestätigter Termin aus %year% gelöscht.|%count% unbestätigte Termine aus %year% gelöscht."
+      deleted: "%count% vergangener unbestätigter Termin aus %calendar% gelöscht.|%count% vergangene unbestätigte Termine aus %calendar% gelöscht."

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 class CalendarEntryRepository extends ServiceEntityRepository
@@ -79,43 +81,31 @@ class CalendarEntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * How many entries a deleteUnconfirmedForYear() call for this year
-     * would remove - used to show a specific count in the confirmation
-     * prompt before actually deleting anything.
+     * How many entries a deleteUnconfirmedPast() call would remove - used to
+     * show a specific count on the button before anything is deleted.
      */
-    public function countUnconfirmedForYear(int $year): int
+    public function countUnconfirmedPast(Calendar $calendar): int
     {
-        return (int) $this->createQueryBuilder('e')
+        return (int) $this->unconfirmedPastQuery($calendar)
             ->select('COUNT(e.id)')
-            ->andWhere('e.confirmedAt IS NULL')
-            ->andWhere('e.date BETWEEN :from AND :to')
-            ->setParameter('from', new \DateTimeImmutable($year.'-01-01'))
-            ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
             ->getQuery()
             ->getSingleScalarResult();
     }
 
     /**
-     * Deletes entries with no confirmedAt, across ALL calendars, within the
-     * given year - a manual cleanup for years that are over, since sync()
-     * never prunes anything on its own anymore (see
-     * CalendarEntrySyncService). Generic on purpose: calendars that don't
-     * require confirmation never have confirmedAt set at all, so their
-     * entries are just as eligible here as a genuinely-missed reminder on a
-     * confirmation-requiring calendar - "was this ever confirmed" is the
-     * only thing that determines whether an entry is disposable history or
-     * an audit record worth keeping forever, not which calendar it's on.
+     * Deletes this calendar's entries that are in the past and were never
+     * confirmed - a manual cleanup so the database doesn't keep accumulating
+     * rows now that sync() never prunes anything on its own (see
+     * CalendarEntrySyncService). Confirmed entries are a historical record
+     * (see the Facility overview) and are never touched; neither is anything
+     * from today onwards, whose reminder may still be acted on.
      *
      * @return int number of entries deleted
      */
-    public function deleteUnconfirmedForYear(int $year): int
+    public function deleteUnconfirmedPast(Calendar $calendar): int
     {
-        $ids = $this->createQueryBuilder('e')
+        $ids = $this->unconfirmedPastQuery($calendar)
             ->select('e.id')
-            ->andWhere('e.confirmedAt IS NULL')
-            ->andWhere('e.date BETWEEN :from AND :to')
-            ->setParameter('from', new \DateTimeImmutable($year.'-01-01'))
-            ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
             ->getQuery()
             ->getSingleColumnResult();
 
@@ -132,6 +122,17 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('ids', $ids)
             ->getQuery()
             ->execute();
+    }
+
+    /** Shared filter behind countUnconfirmedPast()/deleteUnconfirmedPast(). */
+    private function unconfirmedPastQuery(Calendar $calendar): QueryBuilder
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.calendar = :calendar')
+            ->andWhere('e.confirmedAt IS NULL')
+            ->andWhere('e.date < :today')
+            ->setParameter('calendar', $calendar)
+            ->setParameter('today', new \DateTimeImmutable('today'));
     }
 
     /**
@@ -152,35 +153,6 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * Full year range with at least one entry across ANY calendar, newest
-     * first - used to populate the year filter for the unconfirmed-entry
-     * cleanup on the calendar management page.
-     *
-     * @return int[]
-     */
-    public function findDistinctYears(): array
-    {
-        $minDate = $this->createQueryBuilder('e')
-            ->select('MIN(e.date)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $maxDate = $this->createQueryBuilder('e')
-            ->select('MAX(e.date)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        if (null === $minDate || null === $maxDate) {
-            return [];
-        }
-
-        $minYear = (int) (new \DateTimeImmutable($minDate))->format('Y');
-        $maxYear = (int) (new \DateTimeImmutable($maxDate))->format('Y');
-
-        return range($maxYear, $minYear);
     }
 
     /**

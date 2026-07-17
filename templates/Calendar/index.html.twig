@@ -82,41 +82,5 @@
     </div>
     {% endif %}
 
-    {% if availableCleanupYears|length > 0 %}
-        <div class="row mt-4">
-            <div class="col">
-                <h2 class="h5">{{ 'calendar.cleanup.title'|trans }}</h2>
-                <div class="text-muted small mb-2">{{ 'calendar.cleanup.hint'|trans }}</div>
-                <div class="row g-2 align-items-end">
-                    <div class="col col-md-3">
-                        <form method="get">
-                            <label class="form-label">{{ 'calendar.cleanup.filter.year'|trans }}</label>
-                            <select name="cleanupYear" class="form-select" onchange="this.form.submit()">
-                                {% for availableYear in availableCleanupYears %}
-                                    <option value="{{ availableYear }}"{% if availableYear == cleanupYear %} selected{% endif %}>{{ availableYear }}</option>
-                                {% endfor %}
-                            </select>
-                        </form>
-                    </div>
-                    {% if unconfirmedCleanupCount > 0 %}
-                        <div class="col-auto">
-                            <form method="post" action="{{ path('settings.calendars.cleanup_unconfirmed', {'year': cleanupYear}) }}"
-                                  onsubmit="return confirm('{{ 'calendar.cleanup.confirm'|trans({'%count%': unconfirmedCleanupCount, '%year%': cleanupYear})|e('js') }}')">
-                                <input type="hidden" name="_token" value="{{ csrf_token('calendar-cleanup-' ~ cleanupYear) }}">
-                                <button type="submit" class="btn btn-outline-danger">
-                                    <i class="fas fa-broom me-1"></i>
-                                    {{ 'calendar.cleanup.button'|trans({'%count%': unconfirmedCleanupCount}) }}
-                                </button>
-                            </form>
-                        </div>
-                    {% else %}
-                        <div class="col-auto">
-                            <span class="text-muted small">{{ 'calendar.cleanup.empty'|trans }}</span>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    {% endif %}
 </div>
 {% endblock %}
