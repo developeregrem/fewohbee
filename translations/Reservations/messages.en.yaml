@@ -113,7 +113,7 @@ reservation.kurtaxe.waived.help: Enable if this booking is exempt from tourist t
 reservation.calendar_reminder.button: Reminders
 reservation.calendar_reminder.title: Calendar reminders
 reservation.calendar_reminder.section.title: Confirm entries
-reservation.calendar_reminder.hint: "Upcoming waste collection: please confirm once the respective bin has been put out for pickup."
+reservation.calendar_reminder.hint: "Confirmed entries are kept permanently."
 reservation.calendar_reminder.today: Today
 reservation.calendar_reminder.empty: No open calendar reminders.
 reservation.calendar_reminder.table.date: Date

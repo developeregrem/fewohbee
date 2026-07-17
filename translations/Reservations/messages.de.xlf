@@ -372,7 +372,7 @@
             </trans-unit>
             <trans-unit id="reservation.calendar_reminder.hint">
                 <source>reservation.calendar_reminder.hint</source>
-                <target>Anstehende Müllabfuhr: Bitte bestätigen, sobald die jeweilige Tonne zur Abholung bereitgestellt wurde.</target>
+                <target>Bestätigte Einträge bleiben dauerhaft erhalten.</target>
             </trans-unit>
             <trans-unit id="reservation.calendar_reminder.today">
                 <source>reservation.calendar_reminder.today</source>
