@@ -96,11 +96,7 @@ class ReservationServiceController extends AbstractController
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
-        // Deliberately independent of $showCalendarEntries, which only
-        // controls the cosmetic accent lines/popovers on the year grid -
-        // a pending day-before/day-of confirmation must stay visible even
-        // for a user who has never opted into that display.
-        $calendarReminderCount = $calendarEntryRepository->countPendingReminders();
+        $calendarReminderCount = $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0;
 
         return $this->render('Reservations/index.html.twig', [
             'objects' => $objects,
@@ -1541,10 +1537,12 @@ class ReservationServiceController extends AbstractController
 
     #[Route('/calendar-reminder', name: 'reservations.calendar_reminder', methods: ['GET'])]
     /** Render the day-before/day-of reminder modal for all calendars that require confirmation. */
-    public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository): Response
+    public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository, RequestStack $requestStack): Response
     {
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+
         return $this->render('Reservations/calendar_entry_reminder.html.twig', [
-            'pendingReminders' => $calendarEntryRepository->findPendingReminders(),
+            'pendingReminders' => $showCalendarEntries ? $calendarEntryRepository->findPendingReminders() : [],
         ]);
     }
 
