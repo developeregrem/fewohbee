@@ -652,14 +652,17 @@ body {
     border-bottom: 0 !important;
 }
 
-/* Calendar-entry accent lines are rendered in both the weekday and the
-   date-number row (see reservation_table.html.twig); toggleDisplayTableRows()
-   adds .weekday-row-visible once that row is shown, so suppress the
-   duplicate lines on the date row - overriding the inline box-shadow needs
-   !important since inline styles otherwise win. Restore the plain bottom
-   border (rather than "none") so non-entry cells don't lose theirs too. */
+/* Calendar-entry accent bars are rendered in both the weekday and the
+   date-number row (see reservation_table.html.twig / calendar_accent_marker_style);
+   toggleDisplayTableRows() adds .weekday-row-visible once that row is
+   shown, so suppress the duplicate bars on the date row - overriding the
+   inline box-shadow/background-image needs !important since inline styles
+   otherwise win. Restores the plain bottom border (rather than "none") so
+   non-entry cells don't lose theirs too, and clears the background-image
+   layers (the segmented-row gradients) entirely. */
 #reservation-table.weekday-row-visible .table-days th {
     box-shadow: inset 0 -1px 0 0 var(--bs-border-color) !important;
+    background-image: none !important;
 }
 
 #reservation-table .room-info {
