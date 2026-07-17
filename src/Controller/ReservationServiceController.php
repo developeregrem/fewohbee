@@ -22,12 +22,14 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
+use App\Event\ReservationCreatedEvent;
 use App\Form\ReservationMetaType;
-use App\Service\CalendarService;
+use App\Service\AvailabilityService;
 use App\Service\CalendarImportService;
-use App\Entity\RoomBlock;
+use App\Service\CalendarService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
@@ -35,17 +37,16 @@ use App\Service\InvoiceService;
 use App\Service\PriceService;
 use App\Service\ReservationObject;
 use App\Service\ReservationService;
+use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
-use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use App\Event\ReservationCreatedEvent;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -53,6 +54,7 @@ use Symfony\Component\Intl\Countries;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[IsGranted('ROLE_RESERVATIONS_RO')] // ROLE_RESERVATIONS is included
 #[Route('/reservation')]
@@ -961,10 +963,26 @@ class ReservationServiceController extends AbstractController
      */
     #[Route('/edit/{id}', name: 'reservations.edit.reservation.change', methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
-    public function editChangeReservationAction(ReservationService $rs, Request $request, Reservation $reservation): Response
-    {
-        $success = $rs->updateReservation($request, $reservation);
-        if (!$success) {
+    public function editChangeReservationAction(
+        ManagerRegistry $doctrine,
+        AvailabilityService $availabilityService,
+        ReservationService $rs,
+        Request $request,
+        Reservation $reservation,
+    ): Response {
+        $apartment = $doctrine->getManager()->getRepository(Appartment::class)
+            ->find($request->request->getInt('aid'));
+        $guestCountsRaw = $request->request->get('guestCounts', '{}');
+        $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+        $persons = [] !== $guestCounts
+            ? $rs->computePersonsFromCounts($guestCounts)
+            : $request->request->getInt('persons');
+
+        // Reject an oversized move before updateReservation() can mutate the
+        // managed entity. isRoomAvailable() repeats this as the source of truth.
+        if ($apartment instanceof Appartment && !$availabilityService->hasCapacity($apartment, $persons)) {
+            $this->addFlash('warning', 'reservation.move.capacity');
+        } elseif (!$rs->updateReservation($request, $reservation)) {
             $this->addFlash('warning', 'reservation.flash.update.conflict');
         } else {
             $this->addFlash('success', 'reservation.flash.update.success');
@@ -973,6 +991,63 @@ class ReservationServiceController extends AbstractController
         return $this->forward('App\Controller\ReservationServiceController::editReservationAction', [
             'id' => $reservation->getId(),
             'error' => true,
+        ]);
+    }
+
+    #[Route('/{id}/move', name: 'reservations.move', methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    /** called when moving a reservation via drag and drop */
+    public function moveReservationAction(
+        ManagerRegistry $doctrine,
+        AvailabilityService $availabilityService,
+        ReservationService $reservationService,
+        TranslatorInterface $translator,
+        Request $request,
+        Reservation $reservation,
+    ): JsonResponse {
+        if (!$this->isCsrfTokenValid('reservation_move', $request->request->getString('_token'))) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.move.error'),
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $apartmentId = $request->request->getInt('apartmentId');
+        $startDateValue = (string) $request->request->get('startDate');
+        $startDate = \DateTime::createFromFormat('!Y-m-d', $startDateValue, new \DateTimeZone('UTC'));
+        $validStartDate = false !== $startDate && $startDate->format('Y-m-d') === $startDateValue;
+        $apartment = $doctrine->getManager()->getRepository(Appartment::class)->find($apartmentId);
+
+        if (!$validStartDate || !$apartment instanceof Appartment || !$apartment->isActive()) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.move.error'),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!$availabilityService->hasCapacity($apartment, $reservation->getPersons())) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.move.capacity'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // Only the new start date comes from the UI; keep the existing duration.
+        $duration = (int) $reservation->getStartDate()->diff($reservation->getEndDate())->days;
+        $endDate = (clone $startDate)->modify('+'.$duration.' days');
+
+        // The central availability check includes room blocks and overlapping
+        // reservations; the moved reservation itself is ignored there.
+        if (!$reservationService->moveReservation($reservation, $apartment, $startDate, $endDate)) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => $translator->trans('reservation.flash.update.conflict'),
+            ], Response::HTTP_CONFLICT);
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => $translator->trans('reservation.move.success'),
         ]);
     }
 

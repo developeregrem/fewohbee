@@ -21,7 +21,8 @@
 {% use 'Reservations/_resevation_popover.html.twig' %}
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
-    <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table">
+    <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table"
+           data-reservation-move-token="{{ csrf_token('reservation_move') }}">
         <thead>
         {# ── Month headers ── #}
         {% if displayMonth %}
@@ -78,7 +79,7 @@
                     {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
                 {% endfor %}
                 {% set holidayCss = holidayText|length > 0 ? " bg-info bg-opacity-25 holiday-info" : "" %}
-                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2"
+                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" data-day="{{ col.date }}"
                     {% if holidayText|length > 0 %}
                         data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
                         data-bs-content="{{ holidayText }}" data-bs-trigger="hover" data-bs-html="true"
@@ -110,7 +111,7 @@
                 {% endif %}
             {% endif %}
 
-            <tr{% if row.isSubRow %} class="border-top-0"{% endif %}>
+            <tr data-appartment="{{ row.apartment.id }}"{% if row.isSubRow %} class="border-top-0"{% endif %}>
                 {% if row.isSubRow %}
                     <td></td>
                 {% else %}
@@ -138,6 +139,11 @@
                             <div data-action="click->reservations#openReservationAction"
                                  data-reservation-id="{{ cell.reservationId }}"
                                  data-url="{{ path('reservations.get.reservation', {'id': cell.reservationId}) }}"
+                                 {% if is_granted('ROLE_RESERVATIONS') %}
+                                     draggable="true"
+                                     data-move-url="{{ path('reservations.move', {'id': cell.reservationId}) }}"
+                                     aria-description="{{ 'reservation.move.hint'|trans }}"
+                                 {% endif %}
                                  style="background-color: {{ cell.color }}; color: {{ cell.contrastColor }}"
                                  class="reservation-inner text-center"
                                  title="{{ block('popTitle') }}"

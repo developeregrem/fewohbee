@@ -507,6 +507,12 @@ export default class extends Controller {
 
     openReservationAction(event) {
         event.preventDefault();
+        // Browsers may emit a click after dragend. Do not open the reservation
+        // modal when the user's intention was to move the reservation.
+        if (this.suppressReservationClick) {
+            this.suppressReservationClick = false;
+            return;
+        }
         const tab = event.currentTarget.dataset.tab || null;
         const url = event.currentTarget.dataset.url;
         const reservationId = event.currentTarget.dataset.reservationId || null;
@@ -714,7 +720,7 @@ export default class extends Controller {
     editUpdateReservationAction(event) {
         event.preventDefault();
         const id = event.currentTarget.dataset.appartmentId;
-        this.editUpdateReservation(id);
+        this.editUpdateReservation(id, event.currentTarget.closest('.appartment-options'));
     }
 
     sendEmailAction(event) {
@@ -850,6 +856,17 @@ export default class extends Controller {
     // ----- table helpers -----
 
     getNewTable(url = null) {
+        // Modal fragments also contain a reservations controller. Always let
+        // the controller owning the table filter perform a global table reload,
+        // because only that instance carries page permissions such as canSelect.
+        const tableControllerElement = this.tableFilter?.closest('[data-controller~="reservations"]');
+        const tableController = tableControllerElement
+            ? this.application.getControllerForElementAndIdentifier(tableControllerElement, 'reservations')
+            : null;
+        if (tableController && tableController !== this) {
+            return tableController.getNewTable(url);
+        }
+
         const targetUrl = url || this.tableUrl;
         if (!targetUrl || !this.tableFilter) {
             return false;
@@ -1020,7 +1037,208 @@ export default class extends Controller {
 
     initTableInteractions() {
         this.initPopovers();
+        this.initReservationDragAndDrop();
         this.initCellSelection();
+    }
+
+    /**
+     * Move a reservation while keeping its duration unchanged.
+     *
+     * The table uses merged cells (colspan) for reservation bars. Therefore a
+     * drop target cannot be derived from empty half-day cells alone: the room
+     * comes from the row under the pointer and the date from the matching day
+     * header. This also permits dropping onto a day covered by the dragged
+     * reservation itself, for example to move a long stay by only one day.
+     */
+    initReservationDragAndDrop() {
+        // Read-only users can inspect reservations but must not move them.
+        if (!this.canSelectValue) {
+            return;
+        }
+
+        const table = document.querySelector('.table-reservation');
+        if (!table) {
+            return;
+        }
+
+        let draggedReservation = null;
+        let dropTarget = null;
+
+        // A hovered popover can cover rows above the source reservation. Hide
+        // and disable all reservation popovers until the drag has finished.
+        const setReservationPopoversEnabled = (enabled) => {
+            if (!window.jQuery) {
+                return;
+            }
+
+            const popovers = $(table).find('.reservation-inner');
+            if (!enabled) {
+                popovers.popover('hide');
+            }
+            popovers.popover(enabled ? 'enable' : 'disable');
+        };
+
+        // Called after a successful drop, a rejected drop, and drag cancel.
+        // Keeping cleanup in one place prevents stale highlights/popover state.
+        const clearDragState = () => {
+            draggedReservation?.classList.remove('reservation-dragging');
+            dropTarget?.classList.remove('reservation-drop-target');
+            table.querySelectorAll('.reservation-drop-target').forEach((cell) => {
+                cell.classList.remove('reservation-drop-target');
+            });
+            draggedReservation = null;
+            dropTarget = null;
+            setReservationPopoversEnabled(true);
+        };
+
+        table.querySelectorAll('.reservation-inner[draggable="true"]').forEach((reservation) => {
+            reservation.addEventListener('dragstart', (event) => {
+                draggedReservation = reservation;
+                setReservationPopoversEnabled(false);
+                reservation.blur();
+                reservation.classList.add('reservation-dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', reservation.dataset.reservationId || '');
+            });
+
+            reservation.addEventListener('dragend', () => {
+                // Suppress only the synthetic click immediately following this
+                // drag; regular clicks must keep opening the details modal.
+                this.suppressReservationClick = true;
+                window.setTimeout(() => { this.suppressReservationClick = false; }, 100);
+                clearDragState();
+            });
+        });
+
+        const tbody = table.tBodies[0];
+        const dayHeaders = Array.from(table.querySelectorAll('.table-days th[data-day]'));
+
+        // Resolve the logical target independently from the actual <td> below
+        // the pointer. Reservation and block cells may span several days, while
+        // every day header always represents exactly one calendar day.
+        const getDropInfo = (event) => {
+            const row = event.target.closest('tbody tr[data-appartment]');
+            const cell = event.target.closest('td');
+            // cellIndex 0 is the sticky room-name column, never a date target.
+            if (!row || !cell || cell.cellIndex === 0) {
+                return null;
+            }
+
+            const dayHeader = dayHeaders.find((header) => {
+                const rect = header.getBoundingClientRect();
+                return event.clientX >= rect.left && event.clientX < rect.right;
+            });
+            if (!dayHeader) {
+                return null;
+            }
+
+            return {
+                apartmentId: row.dataset.appartment,
+                startDate: dayHeader.dataset.day,
+                cell,
+            };
+        };
+
+        tbody.addEventListener('dragover', (event) => {
+            if (!draggedReservation) {
+                return;
+            }
+            const dropInfo = getDropInfo(event);
+            if (!dropInfo) {
+                return;
+            }
+
+            // HTML drag-and-drop only fires "drop" when dragover is cancelled.
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            if (dropTarget !== dropInfo.cell) {
+                dropTarget?.classList.remove('reservation-drop-target');
+                dropTarget = dropInfo.cell;
+                dropTarget.classList.add('reservation-drop-target');
+            }
+        });
+
+        tbody.addEventListener('dragleave', (event) => {
+            if (!tbody.contains(event.relatedTarget)) {
+                dropTarget?.classList.remove('reservation-drop-target');
+                dropTarget = null;
+            }
+        });
+
+        tbody.addEventListener('drop', (event) => {
+            const dropInfo = getDropInfo(event);
+            if (!draggedReservation || !dropInfo) {
+                return;
+            }
+
+            event.preventDefault();
+            const moveUrl = draggedReservation.dataset.moveUrl;
+            const token = table.dataset.reservationMoveToken;
+            // Keep a stable reference: dragend may clear draggedReservation
+            // before the asynchronous request has completed.
+            const movingReservation = draggedReservation;
+            movingReservation.classList.add('reservation-moving');
+
+            httpRequest({
+                url: moveUrl,
+                method: 'POST',
+                data: {
+                    apartmentId: dropInfo.apartmentId,
+                    startDate: dropInfo.startDate,
+                    _token: token,
+                },
+                loader: false,
+                onSuccess: (data) => {
+                    let response = {};
+                    try { response = JSON.parse(data); } catch (_) { /* handled by fallback */ }
+                    this.showTableAlert(response.message || this.translate('reservation.move.success'), 'success');
+                    // Let the server rebuild all colspans and occupancy subrows
+                    // instead of attempting to move the table cell manually.
+                    this.getNewTable();
+                },
+                onError: (error) => {
+                    // The endpoint uses 409 for date/room collisions and 422
+                    // when the target room has too few beds.
+                    const isConflict = error.startsWith('409 ');
+                    const isCapacityError = error.startsWith('422 ');
+                    this.showTableAlert(
+                        this.translate(
+                            isConflict
+                                ? 'reservation.flash.update.conflict'
+                                : (isCapacityError ? 'reservation.move.capacity' : 'reservation.move.error')
+                        ),
+                        isConflict || isCapacityError ? 'warning' : 'danger'
+                    );
+                },
+                onComplete: () => {
+                    movingReservation.classList.remove('reservation-moving');
+                    clearDragState();
+                },
+            });
+        });
+    }
+
+    /** Replace the current page-level feedback with one dismissible alert. */
+    showTableAlert(message, type = 'info') {
+        const container = document.getElementById('flash-message-container');
+        if (!container) {
+            return;
+        }
+
+        const column = document.createElement('div');
+        column.className = 'col-12';
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.setAttribute('role', 'alert');
+        alert.append(document.createTextNode(message));
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn-close';
+        close.dataset.bsDismiss = 'alert';
+        close.setAttribute('aria-label', 'Close');
+        alert.append(close);
+        column.append(alert);
+        container.replaceChildren(column);
     }
 
     initPopovers() {
@@ -2094,12 +2312,18 @@ export default class extends Controller {
         return false;
     }
 
-    editUpdateReservation(appartmentId) {
+    editUpdateReservation(appartmentId, optionsElement = null) {
         const reservationId = $('#reservation-id').val() || appartmentId;
-        const optsContainer = $('#appartment-options-' + appartmentId);
-        const status = optsContainer.find('select[name="status"]').val() ?? '';
-        const guestCounts = optsContainer.find('input[name="guestCounts"]').val() ?? '{}';
-        const persons = optsContainer.find('input[name="persons"]').val() ?? '0';
+        // Use the clicked room's cell for dynamically loaded options. The
+        // footer button for the current room falls back to its stable ID.
+        const optsContainer = $(optionsElement || '#appartment-options-' + appartmentId);
+        const status = optsContainer.find('select[name="status"]').val();
+        const guestCounts = optsContainer.find('input[name="guestCounts"]').val();
+        const persons = optsContainer.find('input[name="persons"]').val();
+        if (!optsContainer.length || !status || guestCounts === undefined || persons === undefined) {
+            return false;
+        }
+
         const overrideEl = optsContainer.find('input[name="adultRuleOverride"]')[0];
         const params = new URLSearchParams();
         params.append('status', status);

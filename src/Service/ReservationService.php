@@ -388,16 +388,45 @@ class ReservationService
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
         $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
         $adultRuleOverride = (bool) $request->request->get('adultRuleOverride', false);
-        $kurtaxeWaived = (bool) $request->request->get('kurtaxeWaived', false);
+        $kurtaxeWaived = (bool) $request->request->get('kurtaxeWaived', $reservation->isKurtaxeWaived());
 
         $apartment = $this->em->getRepository(Appartment::class)->find($apartmentId);
         $reservationStatus = $this->em->getRepository(ReservationStatus::class)->find($status);
+        if (!$reservationStatus instanceof ReservationStatus) {
+            // Moving a room must not clear the required status when a dynamic
+            // options form does not submit a status value.
+            $reservationStatus = $reservation->getReservationStatus();
+        }
+
+        // Never apply a partial update when a submitted relation cannot be resolved.
+        if (!$apartment instanceof Appartment || !$reservationStatus instanceof ReservationStatus) {
+            return false;
+        }
 
         if ($start > $end) {
             $tmp = $start;
             $start = $end;
             $end = $tmp;
         }
+
+        // Occupancy data is needed for the availability check below. Keep its
+        // previous state so a rejected move leaves the managed entity untouched.
+        $previousGuestCounts = $reservation->getGuestCounts();
+        $previousPersons = $reservation->getPersons();
+        $previousAdultRuleOverride = $reservation->isAdultRuleOverride();
+        $previousKurtaxeWaived = $reservation->isKurtaxeWaived();
+        $restoreOccupancy = static function () use (
+            $reservation,
+            $previousGuestCounts,
+            $previousPersons,
+            $previousAdultRuleOverride,
+            $previousKurtaxeWaived,
+        ): void {
+            $reservation->setGuestCounts($previousGuestCounts);
+            $reservation->setPersons($previousPersons);
+            $reservation->setAdultRuleOverride($previousAdultRuleOverride);
+            $reservation->setKurtaxeWaived($previousKurtaxeWaived);
+        };
 
         // Apply guest counts (or fall back to legacy persons-only path)
         $reservation->setAdultRuleOverride($adultRuleOverride);
@@ -410,30 +439,65 @@ class ReservationService
             if ($persons > 0 && null !== $defaultAdult) {
                 $this->applyGuestCounts($reservation, [(int) $defaultAdult->getId() => $persons]);
             } else {
+                // Keep both occupancy representations consistent. Previously
+                // persons=0 left stale guestCounts on the reservation.
+                $reservation->setGuestCounts([]);
                 $reservation->setPersons($persons);
             }
         }
 
         // Hard "at least one adult" validation
         if (!$this->isAdultRuleSatisfied($reservation)) {
+            $restoreOccupancy();
+
             return false;
         }
 
-        $persons = $reservation->getPersons();
-        $available = $this->isApartmentAvailable($start, $end, $apartment, $persons, $reservation);
+        if (!$this->moveReservation($reservation, $apartment, $start, $end, flush: false)) {
+            $restoreOccupancy();
 
-        // update reservation if no other stands in conflict
-        if ($available) {
-            $reservation->setStartDate($start);
-            $reservation->setEndDate($end);
+            return false;
         }
-        $reservation->setAppartment($apartment);
+
         $this->changeStatus($reservation, $reservationStatus, flush: false);
 
         $this->em->persist($reservation);
         $this->em->flush();
 
-        return $available;
+        return true;
+    }
+
+    /**
+     * Move one reservation to another period and/or room after a central
+     * availability check. No reservation data is changed on conflict.
+     */
+    public function moveReservation(
+        Reservation $reservation,
+        Appartment $apartment,
+        \DateTimeInterface $start,
+        \DateTimeInterface $end,
+        bool $flush = true,
+    ): bool {
+        if (!$this->availabilityService->isRoomAvailable(
+            $apartment,
+            $start,
+            $end,
+            $reservation->getPersons(),
+            $reservation,
+        )) {
+            return false;
+        }
+
+        $reservation->setStartDate(\DateTime::createFromInterface($start));
+        $reservation->setEndDate(\DateTime::createFromInterface($end));
+        $reservation->setAppartment($apartment);
+
+        if ($flush) {
+            $this->em->persist($reservation);
+            $this->em->flush();
+        }
+
+        return true;
     }
 
     /**

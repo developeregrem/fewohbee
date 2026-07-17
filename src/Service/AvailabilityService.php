@@ -44,7 +44,7 @@ class AvailabilityService
         ?Reservation $ignoreReservation = null,
         ?RoomBlock $ignoreBlock = null,
     ): bool {
-        if (!$room->isActive()) {
+        if (!$room->isActive() || !$this->hasCapacity($room, $numberOfPersons)) {
             return false;
         }
 
@@ -61,12 +61,18 @@ class AvailabilityService
             foreach ($reservations as $reservation) {
                 $numberOfPersons += $reservation->getPersons();
             }
-            // room has still some free beds
-            // todo over booking is possible because number of beds for current reservation is not taken into account
             return $numberOfPersons <= $room->getBedsMax();
         }
 
         return true;
+    }
+
+    /**
+     * Whether the room can accommodate the requested persons on its own.
+     */
+    public function hasCapacity(Appartment $room, int $numberOfPersons): bool
+    {
+        return $numberOfPersons <= $room->getBedsMax();
     }
 
     /**

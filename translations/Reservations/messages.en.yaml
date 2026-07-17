@@ -34,6 +34,10 @@ reservation.flash.update.conflict.persons: >-
 reservation.flash.update.customeralreadyinlist: The guest has already been added to the room.
 reservation.flash.update.success: Reservation has been successfully updated.
 reservation.flash.update.toomuchcustomers: No more guests can be assigned!
+reservation.move.success: Reservation has been moved successfully.
+reservation.move.error: The reservation could not be moved.
+reservation.move.capacity: The selected room does not have enough beds for this reservation.
+reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
 reservation.new.reservation.appartments.addmore: Add rooms to the reservation

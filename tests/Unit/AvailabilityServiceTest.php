@@ -31,6 +31,21 @@ final class AvailabilityServiceTest extends TestCase
         self::assertFalse($service->isRoomAvailable($room, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-05')));
     }
 
+    public function testRoomIsUnavailableWhenReservationExceedsBedCapacity(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1);
+
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-01'),
+            new \DateTimeImmutable('2026-08-05'),
+            3,
+        ));
+        self::assertFalse($service->hasCapacity($room, 3));
+        self::assertTrue($service->hasCapacity($room, 2));
+    }
+
     public function testOverlappingReservationMakesRoomUnavailable(): void
     {
         $service = $this->makeService([self::makeReservation(10, '2026-08-02', '2026-08-04')], []);

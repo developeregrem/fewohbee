@@ -163,6 +163,25 @@ body {
     text-overflow: ellipsis;
 }
 
+.reservation-inner[draggable="true"] {
+    cursor: grab;
+}
+
+.reservation-inner.reservation-dragging {
+    cursor: grabbing;
+    opacity: .55;
+}
+
+.reservation-inner.reservation-moving {
+    opacity: .55;
+    pointer-events: none;
+}
+
+#reservation-table .reservation-drop-target {
+    background: var(--feb-ui-selecting-bg) !important;
+    box-shadow: inset 0 0 0 2px var(--bs-primary);
+}
+
 .reservation-confirmed {
     background-color: var(--feb-reservation-confirmed-bg);
 }

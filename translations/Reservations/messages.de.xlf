@@ -118,6 +118,22 @@
                 <source>reservation.flash.update.success</source>
                 <target>Reservierung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="reservation.move.success">
+                <source>reservation.move.success</source>
+                <target>Reservierung wurde erfolgreich verschoben.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.error">
+                <source>reservation.move.error</source>
+                <target>Die Reservierung konnte nicht verschoben werden.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.capacity">
+                <source>reservation.move.capacity</source>
+                <target>Das gewählte Zimmer hat nicht genügend Betten für diese Reservierung.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.hint">
+                <source>reservation.move.hint</source>
+                <target>Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.</target>
+            </trans-unit>
             <trans-unit id="reservation.button.change.customer">
                 <source>reservation.button.change.customer</source>
                 <target>Gast zuweisen</target>
