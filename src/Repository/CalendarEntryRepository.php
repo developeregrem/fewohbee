@@ -55,32 +55,6 @@ class CalendarEntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Confirmed entries for the given year, across all calendars that
-     * require confirmation (in practice the waste calendar) - used by the
-     * Facility overview under Operations to show who put a bin out and
-     * when.
-     *
-     * @return CalendarEntry[]
-     */
-    public function findConfirmedForYear(int $year): array
-    {
-        return $this->createQueryBuilder('e')
-            ->join('e.calendar', 'c')
-            ->addSelect('c')
-            ->leftJoin('e.confirmedBy', 'u')
-            ->addSelect('u')
-            ->andWhere('c.requiresConfirmation = true')
-            ->andWhere('e.confirmedAt IS NOT NULL')
-            ->andWhere('e.date BETWEEN :from AND :to')
-            ->setParameter('from', new \DateTimeImmutable($year.'-01-01'))
-            ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
-            ->orderBy('e.date', 'DESC')
-            ->addOrderBy('e.confirmedAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
      * How many entries a deleteUnconfirmedPast() call would remove - used to
      * show a specific count on the button before anything is deleted.
      */
@@ -97,8 +71,8 @@ class CalendarEntryRepository extends ServiceEntityRepository
      * confirmed - a manual cleanup so the database doesn't keep accumulating
      * rows now that sync() never prunes anything on its own (see
      * CalendarEntrySyncService). Confirmed entries are a historical record
-     * (see the Facility overview) and are never touched; neither is anything
-     * from today onwards, whose reminder may still be acted on.
+     * and are never touched; neither is anything from today onwards, whose
+     * reminder may still be acted on.
      *
      * @return int number of entries deleted
      */
@@ -153,40 +127,5 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
             ->getQuery()
             ->getResult();
-    }
-
-    /**
-     * Full year range with at least one confirmed entry, newest first.
-     * Uses MIN/MAX (standard DQL) rather than YEAR(), which isn't a
-     * built-in DQL function in this project.
-     *
-     * @return int[]
-     */
-    public function findDistinctConfirmedYears(): array
-    {
-        $minDate = $this->createQueryBuilder('e')
-            ->select('MIN(e.date)')
-            ->join('e.calendar', 'c')
-            ->andWhere('c.requiresConfirmation = true')
-            ->andWhere('e.confirmedAt IS NOT NULL')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $maxDate = $this->createQueryBuilder('e')
-            ->select('MAX(e.date)')
-            ->join('e.calendar', 'c')
-            ->andWhere('c.requiresConfirmation = true')
-            ->andWhere('e.confirmedAt IS NOT NULL')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        if (null === $minDate || null === $maxDate) {
-            return [];
-        }
-
-        $minYear = (int) (new \DateTimeImmutable($minDate))->format('Y');
-        $maxYear = (int) (new \DateTimeImmutable($maxDate))->format('Y');
-
-        return range($maxYear, $minYear);
     }
 }

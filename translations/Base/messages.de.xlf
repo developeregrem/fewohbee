@@ -110,10 +110,6 @@
                 <source>nav.operations.reports</source>
                 <target>Berichte</target>
             </trans-unit>
-            <trans-unit id="nav.operations.facility">
-                <source>nav.operations.facility</source>
-                <target>Facility</target>
-            </trans-unit>
             <trans-unit id="operations.reports.title">
                 <source>operations.reports.title</source>
                 <target>Betriebsberichte</target>
@@ -141,42 +137,6 @@
             <trans-unit id="operations.reports.preview">
                 <source>operations.reports.preview</source>
                 <target>Vorschau</target>
-            </trans-unit>
-            <trans-unit id="facility.title">
-                <source>facility.title</source>
-                <target>Facility</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.card_title">
-                <source>facility.confirmed.card_title</source>
-                <target>Bestätigte Abfallabfuhren %year%</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.empty">
-                <source>facility.confirmed.empty</source>
-                <target>Noch keine bestätigten Abfuhren in diesem Jahr.</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.filter.year">
-                <source>facility.confirmed.filter.year</source>
-                <target>Jahr</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.table.date">
-                <source>facility.confirmed.table.date</source>
-                <target>Datum</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.table.entry">
-                <source>facility.confirmed.table.entry</source>
-                <target>Tonne</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.table.calendar">
-                <source>facility.confirmed.table.calendar</source>
-                <target>Kalender</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.table.confirmed_at">
-                <source>facility.confirmed.table.confirmed_at</source>
-                <target>Bestätigt am</target>
-            </trans-unit>
-            <trans-unit id="facility.confirmed.table.confirmed_by">
-                <source>facility.confirmed.table.confirmed_by</source>
-                <target>Bestätigt von</target>
             </trans-unit>
             <trans-unit id="operations.frontdesk.title">
                 <source>operations.frontdesk.title</source>

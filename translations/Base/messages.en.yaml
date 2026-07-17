@@ -49,7 +49,6 @@ nav.housekeeping: Housekeeping
 nav.operations: Operations
 nav.operations.frontdesk: Frontdesk checklist
 nav.operations.reports: Reports
-nav.operations.facility: Facility
 operations.reports.title: Operations Reports
 operations.reports.date_start: Start date
 operations.reports.date_end: End date
@@ -57,15 +56,6 @@ operations.reports.template: Template
 operations.reports.download: Download PDF
 operations.reports.template.missing: Please select a template.
 operations.reports.preview: Preview
-facility.title: Facility
-facility.confirmed.card_title: "Confirmed waste collections %year%"
-facility.confirmed.empty: No confirmed collections yet this year.
-facility.confirmed.filter.year: Year
-facility.confirmed.table.date: Date
-facility.confirmed.table.entry: Bin
-facility.confirmed.table.calendar: Calendar
-facility.confirmed.table.confirmed_at: Confirmed at
-facility.confirmed.table.confirmed_by: Confirmed by
 operations.frontdesk.title: Frontdesk checklist
 operations.frontdesk.filter.date: Date
 operations.frontdesk.filter.subsidiary: Branch

@@ -104,9 +104,9 @@ class CalendarEntrySyncService
 
             // Deliberately never deletes entries missing from this import (e.g.
             // last year's dates dropping out of a rolling ICS feed) - a
-            // confirmed entry is a historical record (see the Facility
-            // overview) and re-syncing must not be able to erase it. Stale,
-            // never-confirmed entries can still be removed manually.
+            // confirmed entry is a historical record and re-syncing must not
+            // be able to erase it. Stale, never-confirmed entries can still
+            // be removed manually.
             $this->em->flush();
         } catch (\Throwable $e) {
             throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);

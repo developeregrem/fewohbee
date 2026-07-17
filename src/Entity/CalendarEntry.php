@@ -49,7 +49,7 @@ class CalendarEntry
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTime $confirmedAt = null;
 
-    /** Who acknowledged the reminder - shown in the Facility overview. */
+    /** Who acknowledged the reminder. */
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $confirmedBy = null;
