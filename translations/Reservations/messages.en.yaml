@@ -126,10 +126,13 @@ calendar_entry.modal.title: Calendar entry
 calendar_entry.calendar: Calendar
 calendar_entry.form.calendar: Calendar
 calendar_entry.form.date: Date
+calendar_entry.form.date_to: Until
+calendar_entry.form.date_to_help: "Optional - fill in for a multi-day entry (e.g. a vacation period). Creates one entry per day."
+calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
 calendar_entry.form.title: Title
 calendar_entry.popover.new: + New entry
 calendar_entry.confirmed_at: "Reminder confirmed on %datetime%"
-calendar_entry.sync_warning: This entry was imported from an ICS source. Manual changes to the date may be overwritten the next time that source is synced.
+calendar_entry.sync_warning: "This entry comes from an ICS source. Until it's confirmed, its date and title are reset to the source value on every sync."
 calendar_entry.delete: Delete
 calendar_entry.delete_confirm: Delete this calendar entry? This cannot be undone.
 calendar_entry.unconfirm: Undo confirmation

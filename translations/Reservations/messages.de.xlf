@@ -422,6 +422,18 @@
                 <source>calendar_entry.form.date</source>
                 <target>Datum</target>
             </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to">
+                <source>calendar_entry.form.date_to</source>
+                <target>Bis</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to_help">
+                <source>calendar_entry.form.date_to_help</source>
+                <target>Optional - für einen mehrtägigen Termin (z.B. Urlaub) ausfüllen. Legt einen Eintrag pro Tag an.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to_too_far">
+                <source>calendar_entry.form.date_to_too_far</source>
+                <target>Der Zeitraum darf nicht mehr als %max% Tage umfassen.</target>
+            </trans-unit>
             <trans-unit id="calendar_entry.form.title">
                 <source>calendar_entry.form.title</source>
                 <target>Titel</target>
@@ -436,7 +448,7 @@
             </trans-unit>
             <trans-unit id="calendar_entry.sync_warning">
                 <source>calendar_entry.sync_warning</source>
-                <target>Dieser Eintrag wurde aus einer ICS-Quelle importiert. Manuelle Änderungen am Datum können beim nächsten Sync dieser Quelle wieder überschrieben werden.</target>
+                <target>Dieser Eintrag stammt aus einer ICS-Quelle. Solange er nicht bestätigt ist, werden Datum und Titel bei jedem Sync wieder auf den Wert aus der Quelle gesetzt.</target>
             </trans-unit>
             <trans-unit id="calendar_entry.delete">
                 <source>calendar_entry.delete</source>

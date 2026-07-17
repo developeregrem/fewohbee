@@ -18,7 +18,7 @@
         </p>
     {% endif %}
 
-    {% if not isNew and calendarEntry.calendar.hasIcsSource %}
+    {% if not isNew and calendarEntry.calendar.hasIcsSource and not calendarEntry.isManuallyCreated and not calendarEntry.confirmedAt %}
         <div class="alert alert-warning small" role="alert">
             <i class="fas fa-triangle-exclamation me-1"></i>
             {{ 'calendar_entry.sync_warning'|trans }}
@@ -32,6 +32,9 @@
                 <div class="col">{{ form_row(form.calendar, {'label': false}) }}</div>
             {% endif %}
             <div class="col">{{ form_row(form.date, {'label': false}) }}</div>
+            {% if isNew %}
+                <div class="col">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans}}) }}</div>
+            {% endif %}
             <div class="col">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
         </div>
 

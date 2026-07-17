@@ -107,6 +107,18 @@ class CalendarEntry
         return $this;
     }
 
+    /**
+     * Whether this entry was created through the manual "+ new entry" form
+     * rather than an ICS sync - see the icsUid doc comment above. The
+     * calendar's hasIcsSource() alone isn't enough to tell: a calendar with
+     * a configured URL can still have manually added entries alongside the
+     * synced ones.
+     */
+    public function isManuallyCreated(): bool
+    {
+        return str_starts_with($this->icsUid, 'manual-');
+    }
+
     public function getConfirmedAt(): ?\DateTime
     {
         return $this->confirmedAt;

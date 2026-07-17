@@ -31,6 +31,15 @@ class CalendarEntrySyncService
     private const OUTCOME_UPDATED = 'updated';
     private const OUTCOME_UNCHANGED = 'unchanged';
 
+    /**
+     * Upper bound on how many days a single VEVENT's DTSTART..DTEND span is
+     * expanded into - a malformed or absurd DTEND in an external ICS feed
+     * (untrusted input) must not be able to spawn an unbounded number of
+     * rows. No real waste/vacation/maintenance calendar needs a single
+     * event longer than a year.
+     */
+    private const MAX_EVENT_SPAN_DAYS = 366;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
@@ -84,12 +93,13 @@ class CalendarEntrySyncService
                     continue;
                 }
 
-                match ($this->upsert($calendar, $event, $summary, $seenUids)) {
-                    self::OUTCOME_NEW => $new++,
-                    self::OUTCOME_UPDATED => $updated++,
-                    self::OUTCOME_UNCHANGED => $unchanged++,
-                    null => null,
-                };
+                foreach ($this->upsert($calendar, $event, $summary, $seenUids) as $outcome) {
+                    match ($outcome) {
+                        self::OUTCOME_NEW => $new++,
+                        self::OUTCOME_UPDATED => $updated++,
+                        self::OUTCOME_UNCHANGED => $unchanged++,
+                    };
+                }
             }
 
             $result = new CalendarEntrySyncResult($new, $updated, $unchanged);
@@ -134,49 +144,82 @@ class CalendarEntrySyncService
      *                                                the unique constraint at
      *                                                flush time
      *
-     * Returns which of OUTCOME_NEW/OUTCOME_UPDATED/OUTCOME_UNCHANGED this
-     * event resulted in, or null if the event was skipped (no usable
-     * DTSTART).
+     * Multi-day events (DTSTART..DTEND) are expanded into one CalendarEntry
+     * per day, the same way an RRULE-recurring source is expected to list
+     * one VEVENT per occurrence - every other consumer of CalendarEntry
+     * (reminders, cleanup, the year-overview popover, confirmation) already
+     * thinks in single days, so this keeps that true instead of teaching
+     * each of them about ranges.
+     *
+     * @return list<string> one OUTCOME_* per day the event spans, in order;
+     *                      empty if skipped (no usable DTSTART, or a DTEND
+     *                      implying a span over MAX_EVENT_SPAN_DAYS)
      */
-    private function upsert(Calendar $calendar, array $event, string $summary, array &$seenUids): ?string
+    private function upsert(Calendar $calendar, array $event, string $summary, array &$seenUids): array
     {
         $dtStartRaw = $event['DTSTART'] ?? null;
         if (null === $dtStartRaw) {
-            return null;
+            return [];
         }
 
         $dtStart = $this->icsParser->parseDate($dtStartRaw);
         if (null === $dtStart) {
-            return null;
+            return [];
+        }
+        $start = $dtStart->setTime(0, 0);
+
+        // DTEND is exclusive for all-day events per RFC 5545 - a 3-day event
+        // Aug 1-3 has DTSTART=20260801, DTEND=20260804. Falls back to a
+        // single day when DTEND is absent, unparseable, or not after DTSTART.
+        $dtEndRaw = $event['DTEND'] ?? null;
+        $dtEnd = null !== $dtEndRaw ? $this->icsParser->parseDate($dtEndRaw) : null;
+        $end = null !== $dtEnd ? $dtEnd->setTime(0, 0) : $start->modify('+1 day');
+        if ($end <= $start) {
+            $end = $start->modify('+1 day');
         }
 
-        $date = $dtStart->setTime(0, 0);
-        $dateKey = $dtStart->format('Ymd');
+        if ($start->diff($end)->days > self::MAX_EVENT_SPAN_DAYS) {
+            return [];
+        }
 
         $rawUid = trim((string) ($event['UID'] ?? ''));
-        // Fallback for ICS files without UIDs: derive a stable key from
-        // content + date so re-imports still upsert instead of duplicating.
-        // Prefixed with the calendar id so the same UID in two different
-        // calendars' feeds can't collide.
-        $uid = 'cal'.$calendar->getId().'-'.('' !== $rawUid ? $rawUid.'-'.$dateKey : md5($summary.'-'.$dateKey));
 
-        $entry = $seenUids[$uid] ?? $this->repo->findOneBy(['icsUid' => $uid]);
-        $isNew = null === $entry;
-        $unchanged = !$isNew && $entry->getDate() == $date && $entry->getTitle() === $summary;
+        $outcomes = [];
+        for ($date = $start; $date < $end; $date = $date->modify('+1 day')) {
+            $dateKey = $date->format('Ymd');
 
-        $entry ??= new CalendarEntry();
-        $entry->setCalendar($calendar)
-            ->setIcsUid($uid)
-            ->setDate($date)
-            ->setTitle($summary);
+            // Fallback for ICS files without UIDs: derive a stable key from
+            // content + date so re-imports still upsert instead of
+            // duplicating. Prefixed with the calendar id so the same UID in
+            // two different calendars' feeds can't collide. The date suffix
+            // also disambiguates each day of a multi-day event.
+            $uid = 'cal'.$calendar->getId().'-'.('' !== $rawUid ? $rawUid.'-'.$dateKey : md5($summary.'-'.$dateKey));
 
-        $this->em->persist($entry);
-        $seenUids[$uid] = $entry;
+            $entry = $seenUids[$uid] ?? $this->repo->findOneBy(['icsUid' => $uid]);
+            $isNew = null === $entry;
+            // A confirmed entry is a historical record (see
+            // deleteUnconfirmedPast()) - re-syncing must not be able to
+            // change what it says either, not just avoid deleting it.
+            // Reported as unchanged since nothing in the DB was touched.
+            $isConfirmed = !$isNew && $entry->isConfirmed();
+            $unchanged = !$isNew && ($isConfirmed || ($entry->getDate() == $date && $entry->getTitle() === $summary));
 
-        return match (true) {
-            $isNew => self::OUTCOME_NEW,
-            $unchanged => self::OUTCOME_UNCHANGED,
-            default => self::OUTCOME_UPDATED,
-        };
+            $entry ??= new CalendarEntry();
+            $entry->setCalendar($calendar)->setIcsUid($uid);
+            if (!$isConfirmed) {
+                $entry->setDate($date)->setTitle($summary);
+            }
+
+            $this->em->persist($entry);
+            $seenUids[$uid] = $entry;
+
+            $outcomes[] = match (true) {
+                $isNew => self::OUTCOME_NEW,
+                $unchanged => self::OUTCOME_UNCHANGED,
+                default => self::OUTCOME_UPDATED,
+            };
+        }
+
+        return $outcomes;
     }
 }

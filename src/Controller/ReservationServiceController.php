@@ -44,6 +44,7 @@ use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,6 +63,15 @@ use Symfony\Component\Uid\Uuid;
 class ReservationServiceController extends AbstractController
 {
     private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
+
+    /**
+     * Upper bound on how many days a manually created calendar entry's
+     * date/dateTo range is expanded into - mirrors
+     * CalendarEntrySyncService::MAX_EVENT_SPAN_DAYS for the same reason: a
+     * fat-fingered end date years out must not be able to create thousands
+     * of rows.
+     */
+    private const MAX_MANUAL_ENTRY_RANGE_DAYS = 366;
 
     private $perPage = 15;
 
@@ -1581,7 +1591,7 @@ class ReservationServiceController extends AbstractController
      * Reached from the "+ new entry" link in the year overview popover,
      * which passes the clicked day via the date query param.
      */
-    public function newCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarRepository $calendarRepository): Response
+    public function newCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarRepository $calendarRepository, TranslatorInterface $translator): Response
     {
         $calendars = $calendarRepository->findAllOrdered();
         if ([] === $calendars) {
@@ -1599,26 +1609,42 @@ class ReservationServiceController extends AbstractController
         $calendarEntry->setDate($date instanceof \DateTimeImmutable ? $date : new \DateTimeImmutable('today'));
         $calendarEntry->setTitle('');
 
-        $form = $this->createForm(CalendarEntryType::class, $calendarEntry, ['include_calendar' => true]);
+        $form = $this->createForm(CalendarEntryType::class, $calendarEntry, ['include_calendar' => true, 'include_date_to' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // manual entries don't come from an ICS source, so there's no
-            // natural UID to key upserts off - generate one that will never
-            // collide with a real ICS UID, purely to satisfy the unique
-            // constraint the ICS-sync upsert relies on.
-            $calendarEntry->setIcsUid('manual-'.bin2hex(random_bytes(8)));
+            $startDate = $calendarEntry->getDate();
+            $dateTo = $form->get('dateTo')->getData();
+            $endDate = ($dateTo instanceof \DateTimeImmutable && $dateTo > $startDate) ? $dateTo : $startDate;
 
-            $em = $doctrine->getManager();
-            $em->persist($calendarEntry);
-            $em->flush();
+            if ($startDate->diff($endDate)->days > self::MAX_MANUAL_ENTRY_RANGE_DAYS) {
+                $form->get('dateTo')->addError(new FormError($translator->trans('calendar_entry.form.date_to_too_far', [
+                    '%max%' => self::MAX_MANUAL_ENTRY_RANGE_DAYS,
+                ])));
+            } else {
+                $em = $doctrine->getManager();
+                // A range is just N independent single-day rows (same as a
+                // multi-day ICS event, see CalendarEntrySyncService) - each
+                // gets its own random UID, purely to satisfy the unique
+                // constraint the ICS-sync upsert relies on; manual entries
+                // are never re-synced so there's no need for it to be
+                // stable/derived.
+                for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
+                    $entry = $day == $startDate
+                        ? $calendarEntry
+                        : (new CalendarEntry())->setCalendar($calendarEntry->getCalendar())->setTitle($calendarEntry->getTitle());
+                    $entry->setDate($day)->setIcsUid('manual-'.bin2hex(random_bytes(8)));
+                    $em->persist($entry);
+                }
+                $em->flush();
 
-            if ($request->isXmlHttpRequest()) {
-                return new Response('', Response::HTTP_NO_CONTENT);
+                if ($request->isXmlHttpRequest()) {
+                    return new Response('', Response::HTTP_NO_CONTENT);
+                }
+                $this->addFlash('success', 'calendar_entry.flash.saved');
+
+                return $this->redirectToRoute('start');
             }
-            $this->addFlash('success', 'calendar_entry.flash.saved');
-
-            return $this->redirectToRoute('start');
         }
 
         return $this->render('Reservations/calendar_entry_edit.html.twig', [

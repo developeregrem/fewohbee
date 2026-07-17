@@ -31,12 +31,28 @@ class CalendarEntryType extends AbstractType
                 'label' => 'calendar_entry.form.date',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
-            ])
-            ->add('title', TextType::class, [
-                'label' => 'calendar_entry.form.title',
-                'attr' => ['maxlength' => 100],
-            ])
-        ;
+            ]);
+
+        if ($options['include_date_to']) {
+            // Unmapped - CalendarEntry only ever stores a single day. When
+            // set, the controller creates one entry per day in the range
+            // instead of teaching the entity/every consumer about ranges
+            // (see CalendarEntrySyncService, which does the same for
+            // multi-day ICS events).
+            $builder->add('dateTo', DateType::class, [
+                'label' => 'calendar_entry.form.date_to',
+                'widget' => 'single_text',
+                'input' => 'datetime_immutable',
+                'required' => false,
+                'mapped' => false,
+                'help' => 'calendar_entry.form.date_to_help',
+            ]);
+        }
+
+        $builder->add('title', TextType::class, [
+            'label' => 'calendar_entry.form.title',
+            'attr' => ['maxlength' => 100],
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -44,6 +60,7 @@ class CalendarEntryType extends AbstractType
         $resolver->setDefaults([
             'data_class' => CalendarEntry::class,
             'include_calendar' => false,
+            'include_date_to' => false,
         ]);
     }
 }

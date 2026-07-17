@@ -97,6 +97,13 @@ function _patchTooltipAllowList() {
     const allowList = window.bootstrap.Tooltip.Default.allowList;
     allowList.form = ['action'];
     allowList.input = ['type', 'name', 'value'];
+    // 'type' only - class/title already pass through the '*' wildcard entry.
+    // Needed so a delete form's submit trigger can carry an icon (<input>
+    // is a void element and can't have an <i> child).
+    allowList.button = ['type'];
+    // Icon is colored per-calendar (a template-controlled hex value, not
+    // arbitrary user input), so it needs style - not in the '*' wildcard.
+    allowList.i = ['style'];
     _allowListPatched = true;
 }
 

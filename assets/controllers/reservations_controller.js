@@ -59,6 +59,7 @@ export default class extends Controller {
         window.lastClickedReservationUrl = window.lastClickedReservationUrl || null;
 
         this.setupTableFilterListeners();
+        this.setupCalendarEntryDeleteListener();
         this.applyStoredTableSettings();
         this.observeModalContent();
         this.boundResize = this.handleResize.bind(this);
@@ -127,6 +128,37 @@ export default class extends Controller {
                 }
             });
         }
+    }
+
+    // The day-popover's delete form is injected by Bootstrap (data-bs-html)
+    // into document.body when the popover is shown, and Bootstrap's
+    // sanitizer strips data-action/onclick from that content - so this
+    // can't be a Stimulus action or an inline confirm(), it has to be a
+    // plain delegated listener on document.
+    setupCalendarEntryDeleteListener() {
+        document.addEventListener('submit', (event) => {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement) || !form.matches('.js-calendar-entry-delete-form')) {
+                return;
+            }
+            event.preventDefault();
+            if (!window.confirm(this.translate('calendar_entry.delete_confirm'))) {
+                return;
+            }
+            const popover = form.closest('.popover');
+            httpRequest({
+                url: form.action,
+                method: 'POST',
+                data: httpSerializeForm(form),
+                onSuccess: () => {
+                    if (popover) {
+                        const trigger = document.querySelector(`[aria-describedby="${popover.id}"]`);
+                        window.bootstrap?.Popover?.getInstance(trigger)?.hide();
+                    }
+                    this.getNewTable();
+                },
+            });
+        });
     }
 
     applyStoredTableSettings() {
