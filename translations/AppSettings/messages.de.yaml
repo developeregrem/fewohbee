@@ -7,9 +7,6 @@ app_settings:
   save: "Einstellungen speichern"
   save_hint: "Änderungen werden sofort wirksam."
   section:
-    calendars: "Kalender"
-    calendars_desc: "Abfallkalender, Ferien, Veranstaltungen etc. werden jetzt zentral unter Kalender verwalten konfiguriert."
-    calendars_link: "Zu den Kalendern"
     currency: "Währung"
     currency_desc: "Währungscode und Symbol für Rechnungen und Preisanzeigen."
     invoices: "Rechnungen"

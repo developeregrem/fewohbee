@@ -7,9 +7,6 @@ app_settings:
   save: "Save settings"
   save_hint: "Changes take effect immediately."
   section:
-    calendars: "Calendars"
-    calendars_desc: "Waste collection, vacations, events etc. are now configured centrally under Manage calendars."
-    calendars_link: "Go to calendars"
     currency: "Currency"
     currency_desc: "Currency code and symbol used in invoices and price displays."
     invoices: "Invoices"
