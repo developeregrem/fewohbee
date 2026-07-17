@@ -91,6 +91,7 @@ export default class extends Controller {
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-weekday', 'false');
         setLocalStorageItemIfNotExists('reservation-settings-show-object', 'all');
+        setLocalStorageItemIfNotExists('reservation-settings-show-calendar-entries', 'false');
 
         this.tableFilter.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -689,6 +690,7 @@ export default class extends Controller {
 
         this.setLocalTableSetting('interval', 'reservations-intervall', 'int');
         this.setLocalTableSetting('apartment', 'reservations-apartment', 'int');
+        this.setLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
 
         // set custom spinner here, so that the reservation table content is not replaced
         const spinner = this.tableFilter ? this.tableFilter.querySelector('[data-reservations-table-spinner]') : null;
@@ -742,8 +744,9 @@ export default class extends Controller {
                 if (initial) {
                     this.getLocalTableSetting('holidaySubdivision', 'reservations-table-holidaysubdivision');
                     this.getLocalTableSetting('object', 'reservation-settings-show-object');
+                    this.getLocalTableSetting('showCalendarEntries', 'reservation-settings-show-calendar-entries', 'checkbox');
                     this.getNewTable();
-                }                
+                }
                 this.updateDisplaySettingsOnChange();
             }
         });
@@ -2219,6 +2222,13 @@ export default class extends Controller {
     getLocalTableSetting(targetFieldName, settingName, type = 'string') {
         const setting = getLocalStorageItem(settingName);
         if (setting !== null && setting.length > 0) {
+            if (type === 'checkbox') {
+                const targetField = document.querySelector("#table-filter input[type='checkbox'][name='" + targetFieldName + "']");
+                if (targetField !== null) {
+                    targetField.checked = setting === 'true';
+                }
+                return;
+            }
             let value = setting;
             if (type === 'int') {
                 value = parseInt(setting);
@@ -2234,6 +2244,14 @@ export default class extends Controller {
     }
 
     setLocalTableSetting(targetFieldName, settingName, type = 'string') {
+        if (type === 'checkbox') {
+            const targetField = document.querySelector("#table-filter input[type='checkbox'][name='" + targetFieldName + "']");
+            if (targetField === null) {
+                return;
+            }
+            localStorage.setItem(settingName, targetField.checked ? 'true' : 'false');
+            return;
+        }
         const targetField = document.querySelector("#table-filter select[name='" + targetFieldName + "']");
         if (targetField === null) {
             return;
