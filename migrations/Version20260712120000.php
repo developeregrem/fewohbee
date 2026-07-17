@@ -24,6 +24,9 @@ final class Version20260712120000 extends AbstractMigration
             ics_url VARCHAR(255) DEFAULT NULL,
             last_synced_at DATETIME DEFAULT NULL,
             last_sync_count INT DEFAULT NULL,
+            last_sync_new_count INT DEFAULT NULL,
+            last_sync_updated_count INT DEFAULT NULL,
+            last_sync_unchanged_count INT DEFAULT NULL,
             PRIMARY KEY(id)
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
 
@@ -43,7 +46,7 @@ final class Version20260712120000 extends AbstractMigration
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
 
         $this->addSql('ALTER TABLE calendar_entry ADD CONSTRAINT FK_CALENDAR_ENTRY_CALENDAR FOREIGN KEY (calendar_id) REFERENCES calendar (id) ON DELETE CASCADE');
-        $this->addSql('ALTER TABLE calendar_entry ADD CONSTRAINT FK_CALENDAR_ENTRY_CONFIRMED_BY FOREIGN KEY (confirmed_by_id) REFERENCES users (id)');
+        $this->addSql('ALTER TABLE calendar_entry ADD CONSTRAINT FK_CALENDAR_ENTRY_CONFIRMED_BY FOREIGN KEY (confirmed_by_id) REFERENCES users (id) ON DELETE SET NULL');
     }
 
     public function down(Schema $schema): void
