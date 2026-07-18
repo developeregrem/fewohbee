@@ -8,6 +8,15 @@
 <div class="container" data-controller="settings">
     <div class="row">
         <div class="col">
+            <h2 class="fs-4 mb-1">
+                <i class="fas fa-calendar-alt text-primary me-1"></i>
+                {{ 'calendar.index.title'|trans }}
+            </h2>
+            <p class="text-body-secondary mb-3">{{ 'calendar.index.description'|trans }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
             <button type="button" class="btn btn-secondary"
                     data-action="click->settings#openModalAction"
                     data-url="{{ path('settings.calendars.new') }}"

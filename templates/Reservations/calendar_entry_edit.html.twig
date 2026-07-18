@@ -1,4 +1,5 @@
 {% form_theme form 'bootstrap_5_layout.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 <div class="modal-body" data-controller="reservations">
     <div id="flash-message-overlay"></div>
@@ -48,19 +49,21 @@
                 </button>
             {% endif %}
             {% if not isNew %}
-                <button type="submit"
-                        class="btn btn-danger me-2"
-                        formaction="{{ path('reservations.calendar_entry.delete', {'id': calendarEntry.id}) }}"
-                        formnovalidate
-                        onclick="return confirm('{{ 'calendar_entry.delete_confirm'|trans|e('js') }}')">
+                {# Same delete popover as the day-header list in the overview
+                   (see _calendar_entry_popover_item.html.twig) - the shared
+                   component carries its own CSRF token, so this button only
+                   needs to trigger it. #}
+                {% set id = 'calendarentry' ~ calendarEntry.id %}
+                {% set targetUrl = path('reservations.calendar_entry.delete', {'id': calendarEntry.id}) %}
+                <button type="button"
+                        class="btn btn-danger me-2 js-calendar-entry-delete"
+                        data-popover="delete"
+                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
                     {{ 'calendar_entry.delete'|trans }}
                 </button>
             {% endif %}
             <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
         </div>
-
-        {% if not isNew %}
-            <input type="hidden" name="_token" value="{{ csrf_token('delete-calendar-entry-' ~ calendarEntry.id) }}">
-        {% endif %}
     {{ form_end(form) }}
 </div>

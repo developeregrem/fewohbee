@@ -130,35 +130,97 @@ export default class extends Controller {
         }
     }
 
-    // The day-popover's delete form is injected by Bootstrap (data-bs-html)
-    // into document.body when the popover is shown, and Bootstrap's
-    // sanitizer strips data-action/onclick from that content - so this
-    // can't be a Stimulus action or an inline confirm(), it has to be a
-    // plain delegated listener on document.
+    /**
+     * Day-header popover content is injected into document.body by
+     * Bootstrap each time the popover opens, so the delete triggers inside
+     * it don't exist yet when the page (or a re-rendered table) is wired
+     * up. Hook them on shown.bs.popover instead - the event bubbles, so one
+     * delegated listener covers every current and future day popover - and
+     * dispose them again on hide so the instances don't outlive their
+     * (removed) elements.
+     */
     setupCalendarEntryDeleteListener() {
-        document.addEventListener('submit', (event) => {
-            const form = event.target;
-            if (!(form instanceof HTMLFormElement) || !form.matches('.js-calendar-entry-delete-form')) {
+        if (document._calendarEntryDeleteBound) {
+            return;
+        }
+        document._calendarEntryDeleteBound = true;
+
+        document.addEventListener('shown.bs.popover', (event) => {
+            const tip = this.popoverTipFor(event.target);
+            if (!tip) {
                 return;
             }
-            event.preventDefault();
-            if (!window.confirm(this.translate('calendar_entry.delete_confirm'))) {
+            tip.querySelectorAll('.js-calendar-entry-delete').forEach((trigger) => {
+                enableDeletePopover({
+                    root: trigger,
+                    onSuccess: (deleteTrigger) => this.afterCalendarEntryDeleted(deleteTrigger),
+                });
+            });
+        });
+
+        document.addEventListener('hide.bs.popover', (event) => {
+            const tip = this.popoverTipFor(event.target);
+            if (!tip) {
                 return;
             }
-            const popover = form.closest('.popover');
-            httpRequest({
-                url: form.action,
-                method: 'POST',
-                data: httpSerializeForm(form),
+            tip.querySelectorAll('.js-calendar-entry-delete').forEach((trigger) => {
+                window.bootstrap?.Popover?.getInstance(trigger)?.dispose();
+            });
+        });
+    }
+
+    /**
+     * Re-arms the calendar-entry delete popover inside the modal with a
+     * handler that closes the modal and reloads just the table - the plain
+     * enableDeletePopover() above leaves it at its default, a full page
+     * reload.
+     */
+    enableCalendarEntryDeleteInModal() {
+        this.modalContent?.querySelectorAll('.js-calendar-entry-delete').forEach((trigger) => {
+            enableDeletePopover({
+                root: trigger,
                 onSuccess: () => {
-                    if (popover) {
-                        const trigger = document.querySelector(`[aria-describedby="${popover.id}"]`);
-                        window.bootstrap?.Popover?.getInstance(trigger)?.hide();
-                    }
+                    $('#modalCenter').modal('hide');
                     this.getNewTable();
                 },
             });
         });
+    }
+
+    /** Whether $candidateTip is a popover whose own trigger sits inside $tip. */
+    isTipOfTriggerWithin(candidateTip, tip) {
+        if (!candidateTip || candidateTip === tip) {
+            return false;
+        }
+        const owner = document.querySelector(`[aria-describedby="${candidateTip.id}"]`);
+
+        return owner ? tip.contains(owner) : false;
+    }
+
+    /** The rendered popover element belonging to a day-header trigger, if open. */
+    popoverTipFor(trigger) {
+        if (!(trigger instanceof Element) || !trigger.classList.contains('calendar-info')) {
+            return null;
+        }
+
+        return document.getElementById(trigger.getAttribute('aria-describedby') || '');
+    }
+
+    /**
+     * Closes both the delete confirmation and the day popover it was opened
+     * from - the table is about to be re-rendered, which would otherwise
+     * leave both stranded in the body, anchored to a removed cell.
+     */
+    afterCalendarEntryDeleted(deleteTrigger) {
+        window.bootstrap?.Popover?.getInstance(deleteTrigger)?.hide();
+
+        const dayTip = deleteTrigger.closest('.popover');
+        if (dayTip) {
+            const dayTrigger = document.querySelector(`[aria-describedby="${dayTip.id}"]`);
+            window.bootstrap?.Popover?.getInstance(dayTrigger)?.hide();
+        }
+
+        this.getNewTable();
     }
 
     applyStoredTableSettings() {
@@ -198,6 +260,7 @@ export default class extends Controller {
         this.attachPaginationLinks();
         this.updateConflictBadgeFromModal();
         enableDeletePopover();
+        this.enableCalendarEntryDeleteInModal();
         window.setTimeout(() => {
             this.isHandlingModalChange = false;
         }, 0);
@@ -977,6 +1040,15 @@ export default class extends Controller {
                 const tip = document.getElementById(trigger.getAttribute('aria-describedby') || '');
                 const clickedInsideTip = tip ? tip.contains(event.target) : false;
                 const clickedLink = event.target.closest('a');
+
+                // A delete confirmation opened from inside this popover
+                // renders as its own popover in the body, so it is neither
+                // inside `tip` nor anything this trigger contains - without
+                // this its buttons (plain <a>s) would read as "clicked a
+                // link elsewhere" and close the popover underneath them.
+                if (tip && this.isTipOfTriggerWithin(event.target.closest('.popover'), tip)) {
+                    return;
+                }
 
                 if (clickedLink || !clickedInsideTip) {
                     instance.hide();

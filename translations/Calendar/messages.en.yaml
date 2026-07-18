@@ -1,6 +1,7 @@
 calendar:
   index:
     title: "Manage calendars"
+    description: "Create calendars whose entries show up in the reservation overview."
     add: "Add calendar"
     empty: "No calendars configured yet."
     source_url: "ICS URL"
@@ -17,7 +18,8 @@ calendar:
     name: "Name"
     color: "Color"
     requires_confirmation: "Requires confirmation"
-    requires_confirmation_help: "Shows a day-before reminder that must be actively confirmed (e.g. for waste collection)."
+    requires_confirmation_help: "Shows entries as a reminder from the day before until they are confirmed. Confirmed entries are kept permanently."
+    source_hint: "Optional: sync this calendar from an ICS source. Leave empty to add entries by hand in the reservation overview."
     ics_url: "ICS URL"
     ics_url_help: "Synced on every save and once hourly."
     ics_file: "Upload ICS file"

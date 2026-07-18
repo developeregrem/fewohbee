@@ -134,7 +134,6 @@ calendar_entry.popover.new: + New entry
 calendar_entry.confirmed_at: "Reminder confirmed on %datetime%"
 calendar_entry.sync_warning: "This entry comes from an ICS source. Until it's confirmed, its date and title are reset to the source value on every sync."
 calendar_entry.delete: Delete
-calendar_entry.delete_confirm: Delete this calendar entry? This cannot be undone.
 calendar_entry.unconfirm: Undo confirmation
 calendar_entry.flash.saved: Calendar entry saved.
 calendar_entry.flash.deleted: Calendar entry deleted.

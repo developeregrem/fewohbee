@@ -458,10 +458,6 @@
                 <source>calendar_entry.unconfirm</source>
                 <target>Bestätigung rückgängig machen</target>
             </trans-unit>
-            <trans-unit id="calendar_entry.delete_confirm">
-                <source>calendar_entry.delete_confirm</source>
-                <target>Diesen Kalendereintrag löschen? Das kann nicht rückgängig gemacht werden.</target>
-            </trans-unit>
             <trans-unit id="calendar_entry.flash.saved">
                 <source>calendar_entry.flash.saved</source>
                 <target>Kalendereintrag gespeichert.</target>

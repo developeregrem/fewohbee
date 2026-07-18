@@ -1684,11 +1684,15 @@ class ReservationServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/calendar-entry/{id}/delete', name: 'reservations.calendar_entry.delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[Route('/calendar-entry/{id}/delete', name: 'reservations.calendar_entry.delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     public function deleteCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
-        if (!$this->isCsrfTokenValid('delete-calendar-entry-'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+        // 'delete' ~ id, where both call sites pass id as
+        // "calendarentry<id>" - the shared delete_popover component builds
+        // the token that way, and the prefix keeps it distinct from other
+        // entities' delete tokens.
+        if (!$this->isCsrfTokenValid('deletecalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException();
         }
 

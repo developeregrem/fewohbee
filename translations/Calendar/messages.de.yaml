@@ -1,6 +1,7 @@
 calendar:
   index:
     title: "Kalender verwalten"
+    description: "Lege Kalender an, deren Termine in der Reservierungsübersicht erscheinen."
     add: "Kalender hinzufügen"
     empty: "Noch keine Kalender konfiguriert."
     source_url: "ICS-URL"
@@ -17,7 +18,8 @@ calendar:
     name: "Name"
     color: "Farbe"
     requires_confirmation: "Bestätigung erforderlich"
-    requires_confirmation_help: "Zeigt eine Tag-vorher-Erinnerung, die aktiv bestätigt werden muss (z.B. für Abfalltermine)."
+    requires_confirmation_help: "Zeigt Termine ab dem Vortag als Erinnerung, bis sie bestätigt sind. Bestätigte Termine bleiben dauerhaft erhalten."
+    source_hint: "Optional: diesen Kalender aus einer ICS-Quelle synchronisieren. Leer lassen, um Termine von Hand in der Reservierungsübersicht anzulegen."
     ics_url: "ICS-URL"
     ics_url_help: "Wird bei jedem Speichern sowie stündlich automatisch synchronisiert."
     ics_file: "ICS-Datei hochladen"

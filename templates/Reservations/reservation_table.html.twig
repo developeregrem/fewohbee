@@ -37,18 +37,12 @@
     {% set entryColors = [] %}
     {% for entry in dayEntries %}
         {% set entryColors = entryColors|merge([entry.calendar.color]) %}
-        {# Bootstrap's popover sanitizer strips data-action/onclick from
-           injected HTML, so this can't be a Stimulus action - deleteCalendarEntryFromPopover in
-           reservations_controller.js delegates on document instead, keyed
-           off the js-calendar-entry-delete-form class. form/input/button/i[style] are
-           allow-listed by _patchTooltipAllowList (utils.js), which
-           enableDeletePopover() has already run by the time any popover
-           can be opened. #}
-        {% set deleteForm = "<form method='post' action='" ~ path('reservations.calendar_entry.delete', {'id': entry.id}) ~ "' class='d-inline js-calendar-entry-delete-form'><input type='hidden' name='_token' value='" ~ csrf_token('delete-calendar-entry-' ~ entry.id) ~ "'><button type='submit' class='btn btn-link btn-sm p-0 ms-1' title='" ~ 'calendar_entry.delete'|trans|e('html_attr') ~ "'><i class='fas fa-trash-alt' style='color: " ~ entry.calendar.color ~ "; font-size: 0.8em;'></i></button></form>" %}
-        {% set entriesText = entriesText ~ "<a href='" ~ path('reservations.calendar_entry.edit', {'id': entry.id}) ~ "' class='text-dark text-decoration-underline js-calendar-entry-link'>" ~ entry.title ~ "</a> <span class='text-muted small'>(" ~ entry.calendar.name ~ ")</span>" ~ deleteForm %}
-        {% if not loop.last %}
-            {% set nextEntry = dayEntries[loop.index0 + 1] %}
-            {% set entriesText = entriesText ~ (nextEntry.calendar.id != entry.calendar.id ? "<hr class='my-1'>" : "<br />") %}
+        {% set entriesText = entriesText ~ include('Reservations/_calendar_entry_popover_item.html.twig', {'entry': entry})|trim %}
+        {# Each entry renders as its own block-level row, so consecutive
+           entries need no separator - only a rule where the calendar
+           changes, to keep calendars visually apart. #}
+        {% if not loop.last and dayEntries[loop.index0 + 1].calendar.id != entry.calendar.id %}
+            {% set entriesText = entriesText ~ "<hr class='my-1'>" %}
         {% endif %}
     {% endfor %}
     {% set newEntryUrl = showCalendars ? path('reservations.calendar_entry.new', {'date': col.date|date_modify('+0 day')|date('Y-m-d')}) : null %}
