@@ -55,6 +55,25 @@ class CalendarEntryRepository extends ServiceEntityRepository
     }
 
     /**
+     * Every entry this calendar holds for one source event, oldest first -
+     * backs the reconciliation in CalendarEntrySyncService, which needs the
+     * whole set at once to tell a moved occurrence from a new one.
+     *
+     * @return CalendarEntry[]
+     */
+    public function findBySource(Calendar $calendar, string $sourceUid): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.calendar = :calendar')
+            ->andWhere('e.sourceUid = :sourceUid')
+            ->setParameter('calendar', $calendar)
+            ->setParameter('sourceUid', $sourceUid)
+            ->orderBy('e.date', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * How many entries a deleteUnconfirmedPast() call would remove - used to
      * show a specific count on the button before anything is deleted.
      */

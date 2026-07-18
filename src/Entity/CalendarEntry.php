@@ -14,8 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity(repositoryClass: CalendarEntryRepository::class)]
 #[ORM\Table(name: 'calendar_entry')]
-#[ORM\UniqueConstraint(name: 'uniq_calendar_entry_ics_uid', columns: ['ics_uid'])]
 #[ORM\Index(name: 'idx_calendar_entry_date', columns: ['date'])]
+#[ORM\Index(name: 'idx_calendar_entry_source', columns: ['calendar_id', 'source_uid'])]
 class CalendarEntry
 {
     #[ORM\Id]
@@ -35,12 +35,18 @@ class CalendarEntry
     private string $title;
 
     /**
-     * Stable identifier derived from the ICS UID (plus date, for expanded
-     * recurring events), or "manual-<random>" for manually created entries.
-     * Used to upsert on re-sync without duplicating rows.
+     * Identifies the source event this entry came from - the ICS UID,
+     * prefixed with the calendar id so the same UID in two feeds can't
+     * collide. Null for manually created entries.
+     *
+     * Deliberately carries no date: a multi-day or recurring source event
+     * owns several entries under one sourceUid, and re-syncing reconciles
+     * that whole set against the source (see CalendarEntrySyncService), so
+     * moving an occurrence updates its entry instead of orphaning it and
+     * inserting a second one.
      */
-    #[ORM\Column(name: 'ics_uid', type: Types::STRING, length: 255)]
-    private string $icsUid;
+    #[ORM\Column(name: 'source_uid', type: Types::STRING, length: 255, nullable: true)]
+    private ?string $sourceUid = null;
 
     /**
      * Set once staff acknowledges the day-before reminder for this date -
@@ -95,28 +101,28 @@ class CalendarEntry
         return $this;
     }
 
-    public function getIcsUid(): string
+    public function getSourceUid(): ?string
     {
-        return $this->icsUid;
+        return $this->sourceUid;
     }
 
-    public function setIcsUid(string $icsUid): self
+    public function setSourceUid(?string $sourceUid): self
     {
-        $this->icsUid = $icsUid;
+        $this->sourceUid = $sourceUid;
 
         return $this;
     }
 
     /**
      * Whether this entry was created through the manual "+ new entry" form
-     * rather than an ICS sync - see the icsUid doc comment above. The
+     * rather than an ICS sync - see the sourceUid doc comment above. The
      * calendar's hasIcsSource() alone isn't enough to tell: a calendar with
      * a configured URL can still have manually added entries alongside the
      * synced ones.
      */
     public function isManuallyCreated(): bool
     {
-        return str_starts_with($this->icsUid, 'manual-');
+        return null === $this->sourceUid;
     }
 
     public function getConfirmedAt(): ?\DateTime

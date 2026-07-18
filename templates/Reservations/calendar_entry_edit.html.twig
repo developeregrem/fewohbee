@@ -41,10 +41,15 @@
 
         <div class="d-flex justify-content-end mt-3">
             {% if not isNew and calendarEntry.confirmedAt %}
-                <button type="submit"
+                {# Not a form submit: it carries its own CSRF token, and the
+                   surrounding form already renders a "_token" field of its
+                   own (stateless form protection), which a second one would
+                   collide with. #}
+                <button type="button"
                         class="btn btn-outline-secondary me-2"
-                        formaction="{{ path('reservations.calendar_reminder.unconfirm', {'id': calendarEntry.id}) }}"
-                        formnovalidate>
+                        data-action="click->reservations#unconfirmCalendarEntryAction"
+                        data-url="{{ path('reservations.calendar_reminder.unconfirm', {'id': calendarEntry.id}) }}"
+                        data-token="{{ csrf_token('unconfirmcalendarentry' ~ calendarEntry.id) }}">
                     {{ 'calendar_entry.unconfirm'|trans }}
                 </button>
             {% endif %}

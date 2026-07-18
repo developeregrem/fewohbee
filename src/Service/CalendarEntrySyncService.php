@@ -86,14 +86,32 @@ class CalendarEntrySyncService
         $unchanged = 0;
 
         try {
-            $seenUids = [];
+            // Collect the whole feed first, grouped by source event, so each
+            // event is reconciled against the database once with all of its
+            // dates known - two VEVENTs sharing a UID (or a UID-less feed
+            // repeating a summary) then merge instead of fighting over the
+            // same rows.
+            $occurrences = [];
             foreach ($this->icsParser->parseEvents($icsData) as $event) {
                 $summary = trim((string) ($event['SUMMARY'] ?? ''));
                 if ('' === $summary) {
                     continue;
                 }
 
-                foreach ($this->upsert($calendar, $event, $summary, $seenUids) as $outcome) {
+                $dates = $this->resolveDates($event);
+                if ([] === $dates) {
+                    continue;
+                }
+
+                $sourceUid = $this->buildSourceUid($calendar, $event, $summary, $dates[0]);
+                $occurrences[$sourceUid]['summary'] = $summary;
+                foreach ($dates as $date) {
+                    $occurrences[$sourceUid]['dates'][$date->format('Y-m-d')] = $date;
+                }
+            }
+
+            foreach ($occurrences as $sourceUid => $occurrence) {
+                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates']) as $outcome) {
                     match ($outcome) {
                         self::OUTCOME_NEW => $new++,
                         self::OUTCOME_UPDATED => $updated++,
@@ -112,11 +130,11 @@ class CalendarEntrySyncService
             $calendar->setLastSyncUpdatedCount($result->updated);
             $calendar->setLastSyncUnchangedCount($result->unchanged);
 
-            // Deliberately never deletes entries missing from this import (e.g.
-            // last year's dates dropping out of a rolling ICS feed) - a
-            // confirmed entry is a historical record and re-syncing must not
-            // be able to erase it. Stale, never-confirmed entries can still
-            // be removed manually.
+            // An event that dropped out of the feed entirely (e.g. last
+            // year's dates leaving a rolling window) is never reconciled and
+            // so is never touched - only days an event still in the feed no
+            // longer covers are cleaned up, and confirmed entries not even
+            // then. Stale entries can still be removed manually.
             $this->em->flush();
         } catch (\Throwable $e) {
             throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);
@@ -126,36 +144,22 @@ class CalendarEntrySyncService
     }
 
     /**
-     * @param array<string, string>        $event
-     * @param array<string, CalendarEntry> $seenUids entries already upserted
-     *                                                by this import call,
-     *                                                keyed by icsUid - since
-     *                                                nothing is flushed until
-     *                                                the whole import
-     *                                                finishes, a second event
-     *                                                that hashes to the same
-     *                                                fallback UID (no UID in
-     *                                                the source, identical
-     *                                                summary+date) wouldn't
-     *                                                be found by a fresh DB
-     *                                                lookup and would
-     *                                                otherwise be persisted
-     *                                                as a duplicate, tripping
-     *                                                the unique constraint at
-     *                                                flush time
+     * Every day a single VEVENT covers.
      *
-     * Multi-day events (DTSTART..DTEND) are expanded into one CalendarEntry
-     * per day, the same way an RRULE-recurring source is expected to list
-     * one VEVENT per occurrence - every other consumer of CalendarEntry
-     * (reminders, cleanup, the year-overview popover, confirmation) already
-     * thinks in single days, so this keeps that true instead of teaching
-     * each of them about ranges.
+     * Multi-day events (DTSTART..DTEND) are expanded into one day each, the
+     * same way an RRULE-recurring source is expected to list one VEVENT per
+     * occurrence - every other consumer of CalendarEntry (reminders,
+     * cleanup, the year-overview popover, confirmation) already thinks in
+     * single days, so this keeps that true instead of teaching each of them
+     * about ranges.
      *
-     * @return list<string> one OUTCOME_* per day the event spans, in order;
-     *                      empty if skipped (no usable DTSTART, or a DTEND
-     *                      implying a span over MAX_EVENT_SPAN_DAYS)
+     * @param array<string, string> $event
+     *
+     * @return list<\DateTimeImmutable> empty if the event has no usable
+     *                                  DTSTART, or a DTEND implying a span
+     *                                  over MAX_EVENT_SPAN_DAYS
      */
-    private function upsert(Calendar $calendar, array $event, string $summary, array &$seenUids): array
+    private function resolveDates(array $event): array
     {
         $dtStartRaw = $event['DTSTART'] ?? null;
         if (null === $dtStartRaw) {
@@ -182,44 +186,123 @@ class CalendarEntrySyncService
             return [];
         }
 
+        $dates = [];
+        for ($date = $start; $date < $end; $date = $date->modify('+1 day')) {
+            $dates[] = $date;
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Prefixed with the calendar id so the same UID in two different
+     * calendars' feeds can't collide.
+     *
+     * A feed without UIDs (invalid per RFC 5545, but seen in the wild) falls
+     * back to hashing summary + start date. That keeps re-imports stable,
+     * but deliberately ties the identity to the date: without a UID there is
+     * no way to tell a moved occurrence from an unrelated one, and the
+     * date-independent identity below would then make every occurrence of a
+     * repeating summary look like one event whose dates keep changing.
+     *
+     * @param array<string, string> $event
+     */
+    private function buildSourceUid(Calendar $calendar, array $event, string $summary, \DateTimeImmutable $start): string
+    {
         $rawUid = trim((string) ($event['UID'] ?? ''));
+        $suffix = '' !== $rawUid ? $rawUid : md5($summary.'-'.$start->format('Ymd'));
+
+        return 'cal'.$calendar->getId().'-'.$suffix;
+    }
+
+    /**
+     * Brings the entries stored for one source event in line with the dates
+     * that event now covers.
+     *
+     * Entries are matched to dates rather than recreated, so an occurrence
+     * moved in the source (same UID, different day) updates the entry it
+     * already has instead of leaving the old day behind as an orphan and
+     * inserting a second one.
+     *
+     * Confirmed entries are a historical record (see deleteUnconfirmedPast())
+     * and are never rewritten or removed here: one still matching a source
+     * date keeps it, one whose date is gone is left alone rather than being
+     * reused for another day.
+     *
+     * @param array<string, \DateTimeImmutable> $dates keyed by Y-m-d
+     *
+     * @return list<string> one OUTCOME_* per entry touched or left in place
+     */
+    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates): array
+    {
+        ksort($dates);
+        $existing = $this->repo->findBySource($calendar, $sourceUid);
+
+        $matched = [];
+        $spare = [];
+        foreach ($existing as $entry) {
+            $key = $entry->getDate()->format('Y-m-d');
+            if (isset($dates[$key]) && !isset($matched[$key])) {
+                $matched[$key] = $entry;
+            } else {
+                $spare[] = $entry;
+            }
+        }
 
         $outcomes = [];
-        for ($date = $start; $date < $end; $date = $date->modify('+1 day')) {
-            $dateKey = $date->format('Ymd');
+        foreach ($matched as $entry) {
+            if ($entry->isConfirmed() || $entry->getTitle() === $summary) {
+                $outcomes[] = self::OUTCOME_UNCHANGED;
+                continue;
+            }
+            $entry->setTitle($summary);
+            $outcomes[] = self::OUTCOME_UPDATED;
+        }
 
-            // Fallback for ICS files without UIDs: derive a stable key from
-            // content + date so re-imports still upsert instead of
-            // duplicating. Prefixed with the calendar id so the same UID in
-            // two different calendars' feeds can't collide. The date suffix
-            // also disambiguates each day of a multi-day event.
-            $uid = 'cal'.$calendar->getId().'-'.('' !== $rawUid ? $rawUid.'-'.$dateKey : md5($summary.'-'.$dateKey));
-
-            $entry = $seenUids[$uid] ?? $this->repo->findOneBy(['icsUid' => $uid]);
-            $isNew = null === $entry;
-            // A confirmed entry is a historical record (see
-            // deleteUnconfirmedPast()) - re-syncing must not be able to
-            // change what it says either, not just avoid deleting it.
-            // Reported as unchanged since nothing in the DB was touched.
-            $isConfirmed = !$isNew && $entry->isConfirmed();
-            $unchanged = !$isNew && ($isConfirmed || ($entry->getDate() == $date && $entry->getTitle() === $summary));
-
-            $entry ??= new CalendarEntry();
-            $entry->setCalendar($calendar)->setIcsUid($uid);
-            if (!$isConfirmed) {
+        foreach (array_diff_key($dates, $matched) as $date) {
+            $entry = $this->takeReusable($spare);
+            if (null !== $entry) {
                 $entry->setDate($date)->setTitle($summary);
+                $outcomes[] = self::OUTCOME_UPDATED;
+                continue;
             }
 
+            $entry = (new CalendarEntry())
+                ->setCalendar($calendar)
+                ->setSourceUid($sourceUid)
+                ->setDate($date)
+                ->setTitle($summary);
             $this->em->persist($entry);
-            $seenUids[$uid] = $entry;
+            $outcomes[] = self::OUTCOME_NEW;
+        }
 
-            $outcomes[] = match (true) {
-                $isNew => self::OUTCOME_NEW,
-                $unchanged => self::OUTCOME_UNCHANGED,
-                default => self::OUTCOME_UPDATED,
-            };
+        // Whatever is left belongs to days this event no longer covers.
+        foreach ($spare as $entry) {
+            if ($entry->isConfirmed()) {
+                $outcomes[] = self::OUTCOME_UNCHANGED;
+                continue;
+            }
+            $this->em->remove($entry);
         }
 
         return $outcomes;
+    }
+
+    /**
+     * Pops the first entry that may be re-dated, skipping confirmed ones.
+     *
+     * @param list<CalendarEntry> $spare
+     */
+    private function takeReusable(array &$spare): ?CalendarEntry
+    {
+        foreach ($spare as $i => $entry) {
+            if (!$entry->isConfirmed()) {
+                unset($spare[$i]);
+
+                return $entry;
+            }
+        }
+
+        return null;
     }
 }

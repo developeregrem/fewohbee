@@ -33,6 +33,7 @@
                                 <button type="button" class="btn btn-sm btn-primary"
                                         data-action="click->reservations#confirmCalendarReminderAction"
                                         data-url="{{ path('reservations.calendar_reminder.confirm', {'id': reminder.id}) }}"
+                                        data-token="{{ csrf_token('confirmcalendarentry' ~ reminder.id) }}"
                                         title="{{ 'reservation.calendar_reminder.action.confirm.title'|trans }}">
                                     <i class="fas fa-check"></i> {{ 'reservation.calendar_reminder.action.confirm.title'|trans }}
                                 </button>

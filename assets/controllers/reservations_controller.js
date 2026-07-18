@@ -325,6 +325,7 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
+            data: { _token: event.currentTarget.dataset.token || '' },
             target: this.modalContent,
             loader: false,
             onSuccess: (data) => {
@@ -334,6 +335,22 @@ export default class extends Controller {
                 this.loadCalendarReminderModal();
                 this.getNewTable();
             }
+        });
+    }
+
+    /** Reopens a confirmed reminder, from the calendar-entry edit modal. */
+    unconfirmCalendarEntryAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        httpRequest({
+            url,
+            method: 'POST',
+            data: { _token: event.currentTarget.dataset.token || '' },
+            onSuccess: () => {
+                $('#modalCenter').modal('hide');
+                this.getNewTable();
+            },
         });
     }
 

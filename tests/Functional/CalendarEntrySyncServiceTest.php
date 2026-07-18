@@ -105,6 +105,79 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertNotNull($entries[0]->getConfirmedAt());
     }
 
+    public function testMovingAnEventUpdatesItsEntryInsteadOfDuplicatingIt(): void
+    {
+        $calendar = $this->createCalendar('Events '.uniqid());
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-1', '20261102', null, 'Wartung'));
+
+        // Same UID, one day later - the source moved the appointment.
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-1', '20261103', null, 'Wartung'));
+
+        self::assertSame(0, $result->new, 'a moved event must not count as new');
+        self::assertSame(1, $result->updated);
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(1, $entries, 'the old day must not be left behind');
+        self::assertSame('2026-11-03', $entries[0]->getDate()->format('Y-m-d'));
+    }
+
+    public function testMovingAMultiDayEventShiftsItsEntriesWithoutOrphans(): void
+    {
+        $calendar = $this->createCalendar('Events '.uniqid());
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-2', '20261201', '20261204', 'Messe'));
+
+        // Whole three-day span shifted forward by one day.
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-2', '20261202', '20261205', 'Messe'));
+
+        self::assertSame(0, $result->new);
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertSame(['2026-12-02', '2026-12-03', '2026-12-04'], array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $entries,
+        ));
+    }
+
+    public function testShorteningAnEventDropsTheDaysItNoLongerCovers(): void
+    {
+        $calendar = $this->createCalendar('Events '.uniqid());
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-shrink-1', '20270301', '20270304', 'Umbau'));
+
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-shrink-1', '20270301', '20270303', 'Umbau'));
+
+        self::assertCount(2, $this->entriesForCalendar($calendar));
+    }
+
+    public function testAConfirmedEntryIsNeitherMovedNorRemovedWhenItsEventMoves(): void
+    {
+        $calendar = $this->createCalendar('Events '.uniqid());
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-3', '20270401', null, 'Abnahme'));
+
+        $entry = $this->entriesForCalendar($calendar)[0];
+        $entry->setConfirmedAt(new \DateTime());
+        $this->em->flush();
+        $this->em->clear();
+        $calendar = $this->em->getRepository(Calendar::class)->find($calendar->getId());
+
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-moved-3', '20270402', null, 'Abnahme'));
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(2, $entries, 'the confirmed day stays, the new day is added alongside it');
+        self::assertSame('2027-04-01', $entries[0]->getDate()->format('Y-m-d'));
+        self::assertNotNull($entries[0]->getConfirmedAt());
+        self::assertSame('2027-04-02', $entries[1]->getDate()->format('Y-m-d'));
+    }
+
+    public function testAnEventGoneFromTheFeedIsLeftUntouched(): void
+    {
+        $calendar = $this->createCalendar('Events '.uniqid());
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-gone-1', '20270501', null, 'Alt'));
+
+        // A later feed that no longer mentions that UID at all.
+        $this->service->importIcsString($calendar, $this->buildIcs('uid-gone-2', '20270601', null, 'Neu'));
+
+        self::assertCount(2, $this->entriesForCalendar($calendar));
+    }
+
     public function testAbsurdlyLongSpanIsSkippedInsteadOfCreatingThousandsOfEntries(): void
     {
         $calendar = $this->createCalendar('Broken feed '.uniqid());

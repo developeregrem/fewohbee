@@ -36,10 +36,10 @@ final class Version20260712120000 extends AbstractMigration
             confirmed_by_id INT DEFAULT NULL,
             date DATE NOT NULL,
             title VARCHAR(100) NOT NULL,
-            ics_uid VARCHAR(255) NOT NULL,
+            source_uid VARCHAR(255) DEFAULT NULL,
             confirmed_at DATETIME DEFAULT NULL,
-            UNIQUE INDEX uniq_calendar_entry_ics_uid (ics_uid),
             INDEX idx_calendar_entry_date (date),
+            INDEX idx_calendar_entry_source (calendar_id, source_uid),
             INDEX IDX_CALENDAR_ENTRY_CALENDAR (calendar_id),
             INDEX IDX_CALENDAR_ENTRY_CONFIRMED_BY (confirmed_by_id),
             PRIMARY KEY(id)

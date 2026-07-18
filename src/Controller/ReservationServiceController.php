@@ -1559,8 +1559,12 @@ class ReservationServiceController extends AbstractController
     #[Route('/calendar-reminder/{id}/confirm', name: 'reservations.calendar_reminder.confirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     /** Acknowledge a single pending calendar-entry reminder. */
-    public function confirmCalendarReminderAction(ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    public function confirmCalendarReminderAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
+        if (!$this->isCsrfTokenValid('confirmcalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
         if (!$calendarEntry->isConfirmed()) {
             $calendarEntry->setConfirmedAt(new \DateTime());
             $calendarEntry->setConfirmedBy($this->getUser() instanceof User ? $this->getUser() : null);
@@ -1573,8 +1577,12 @@ class ReservationServiceController extends AbstractController
     #[Route('/calendar-reminder/{id}/unconfirm', name: 'reservations.calendar_reminder.unconfirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
     #[IsGranted('ROLE_RESERVATIONS')]
     /** Undo an accidental confirmation, reopening the reminder. */
-    public function unconfirmCalendarReminderAction(ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    public function unconfirmCalendarReminderAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
     {
+        if (!$this->isCsrfTokenValid('unconfirmcalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
         if ($calendarEntry->isConfirmed()) {
             $calendarEntry->setConfirmedAt(null);
             $calendarEntry->setConfirmedBy(null);
@@ -1624,16 +1632,14 @@ class ReservationServiceController extends AbstractController
             } else {
                 $em = $doctrine->getManager();
                 // A range is just N independent single-day rows (same as a
-                // multi-day ICS event, see CalendarEntrySyncService) - each
-                // gets its own random UID, purely to satisfy the unique
-                // constraint the ICS-sync upsert relies on; manual entries
-                // are never re-synced so there's no need for it to be
-                // stable/derived.
+                // multi-day ICS event, see CalendarEntrySyncService). They
+                // keep sourceUid null, which is what marks them as manually
+                // created and keeps the sync from ever reconciling them.
                 for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
                     $entry = $day == $startDate
                         ? $calendarEntry
                         : (new CalendarEntry())->setCalendar($calendarEntry->getCalendar())->setTitle($calendarEntry->getTitle());
-                    $entry->setDate($day)->setIcsUid('manual-'.bin2hex(random_bytes(8)));
+                    $entry->setDate($day);
                     $em->persist($entry);
                 }
                 $em->flush();
