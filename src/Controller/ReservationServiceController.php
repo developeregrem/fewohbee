@@ -156,20 +156,20 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $calendarEntryRepository);
         } else {
-            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
+            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request, $calendarEntryRepository);
         }
     }
 
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -238,6 +238,7 @@ class ReservationServiceController extends AbstractController
             'selectedSubdivision' => $selectedSubdivision,
             'objectId' => $objectId,
             'showCalendarEntries' => $showCalendarEntries,
+            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
         ]);
     }
 
@@ -246,7 +247,7 @@ class ReservationServiceController extends AbstractController
      *
      * @throws NotFoundHttpException
      */
-    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, CalendarEntryRepository $calendarEntryRepository): Response
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('object');
@@ -275,9 +276,12 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+
         return $this->render('Reservations/reservation_table_year.html.twig', [
             'year' => $year,
             'apartment' => $apartment,
+            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
             // "holidayCountry" => $holidayCountry,
             // 'selectedSubdivision' => $selectedSubdivision
         ]);

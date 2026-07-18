@@ -821,6 +821,7 @@ export default class extends Controller {
                     this.tableContainer.innerHTML = data;
                     this.addAppartmentSelectableUrl = this.tableContainer.dataset.reservationsAddAppartmentSelectableUrl || this.addAppartmentSelectableUrl;
                 }
+                this.updateCalendarReminderBadgeFromTable();
                 this.toggleDisplayTableRows();
                 this.initStickyTables();
                 this.initFit();
@@ -1470,16 +1471,33 @@ export default class extends Controller {
     }
 
     updateCalendarReminderBadgeFromModal() {
-        const badge = document.querySelector('[data-calendar-reminder-count-badge]');
-        const button = document.querySelector('[data-calendar-reminder-button]');
         const countSource = this.modalContent?.querySelector('[data-calendar-reminder-count]');
-        if (!badge || !button) {
-            return;
-        }
         if (!countSource || !countSource.dataset || typeof countSource.dataset.calendarReminderCount === 'undefined') {
             return;
         }
-        const value = parseInt(countSource.dataset.calendarReminderCount || '0', 10);
+        this.applyCalendarReminderBadge(countSource.dataset.calendarReminderCount);
+    }
+
+    /**
+     * The reminder count rendered with the page comes from the session, which may still be
+     * empty when the table settings are restored from local storage. The table response
+     * carries the recalculated count, so the badge follows the table instead of staying stale.
+     */
+    updateCalendarReminderBadgeFromTable() {
+        const countSource = this.tableContainer?.querySelector('[data-reservations-calendar-reminder-count]');
+        if (!countSource || !countSource.dataset || typeof countSource.dataset.reservationsCalendarReminderCount === 'undefined') {
+            return;
+        }
+        this.applyCalendarReminderBadge(countSource.dataset.reservationsCalendarReminderCount);
+    }
+
+    applyCalendarReminderBadge(rawValue) {
+        const badge = document.querySelector('[data-calendar-reminder-count-badge]');
+        const button = document.querySelector('[data-calendar-reminder-button]');
+        if (!badge || !button) {
+            return;
+        }
+        const value = parseInt(rawValue || '0', 10);
         badge.textContent = Number.isNaN(value) ? '0' : String(value);
         if (value > 0) {
             button.classList.remove('d-none');
