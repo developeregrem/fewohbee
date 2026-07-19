@@ -660,6 +660,10 @@ body {
    otherwise win. Restores the plain bottom border (rather than "none") so
    non-entry cells don't lose theirs too, and clears the background-image
    layers (the segmented-row gradients) entirely. */
+/* Note that this box-shadow doubles as the bottom line the sticky header
+   otherwise draws for itself - the !important overrides it for this one row.
+   The two have to match: change the header line (colour, width) where it is
+   defined and the date row silently keeps the old one. */
 #reservation-table.weekday-row-visible .table-days th {
     box-shadow: inset 0 -1px 0 0 var(--bs-border-color) !important;
     background-image: none !important;
