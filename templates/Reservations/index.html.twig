@@ -57,8 +57,8 @@
             {% else %}
                 {% include 'Reservations/_index_yearly_form.html.twig' %}
             {% endif %}
-            {% if is_granted('ROLE_RESERVATIONS') %}
             <div class="col-md-auto">
+                {% if is_granted('ROLE_RESERVATIONS') %}
                 <a href="#" class="me-3" data-action="click->reservations#getNewTableAction" title="{{ 'reservation.table.reload'|trans }}" data-url="{{ path('reservations.get.table') }}"><i class="fas fa-sync-alt" data-reservations-table-spinner></i></a>
                 {% if conflictCount > 0 %}
                     {% set alertClass = hasConflicts ? 'btn-outline-danger' : 'btn-outline-warning' %}
@@ -74,6 +74,11 @@
                         <span class="badge {{ alertBadge }} ms-1" data-conflict-count-badge>{{ conflictCount }}</span>
                     </a>
                 {% endif %}
+                {% endif %}
+                {# Outside the write gate on purpose: read-only staff should see
+                   which entries still need confirming today, they just can't
+                   tick them off (the confirm button inside the modal is gated
+                   separately). #}
                 <a href="#" class="btn btn-outline-warning mb-2 me-sm-2{{ calendarReminderCount > 0 ? '' : ' d-none' }}"
                    data-action="click->reservations#openCalendarReminderAction"
                    data-url="{{ path('reservations.calendar_reminder') }}"
@@ -83,6 +88,7 @@
                     {{ 'reservation.calendar_reminder.button'|trans }}
                     <span class="badge bg-warning ms-1" data-calendar-reminder-count-badge>{{ calendarReminderCount }}</span>
                 </a>
+                {% if is_granted('ROLE_RESERVATIONS') %}
                 <button type="button" class="btn btn-secondary mb-2 me-sm-2"
                         data-action="click->reservations#selectAppartmentAction"
                         data-reservations-create-new="true"
@@ -90,8 +96,8 @@
                         data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-plus"></i> {{ 'nav.reservation.add'|trans }}
                 </button>
+                {% endif %}
             </div>
-            {% endif %}
             <div class="col col-md-2 text-end ms-auto">
                 <a href="{{ path('start.toggle.view', {show: 'table'}) }}" class="fs-5 {% if show == 'table' %}text-primary{% else %}text-secondary{% endif %}" title="{{ 'reservation.table.view.table'|trans }}">
                     <i class="fas fa-list"></i></a>

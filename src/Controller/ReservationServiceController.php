@@ -237,6 +237,7 @@ class ReservationServiceController extends AbstractController
                 $holidayRegion,
                 $request->getLocale(),
                 $showCalendarEntries,
+                $this->isGranted('ROLE_RESERVATIONS'),
             ),
         );
 

@@ -30,13 +30,17 @@
                                 <span class="text-muted small">({{ reminder.calendar.name }})</span>
                             </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-primary"
-                                        data-action="click->reservations#confirmCalendarReminderAction"
-                                        data-url="{{ path('reservations.calendar_reminder.confirm', {'id': reminder.id}) }}"
-                                        data-token="{{ csrf_token('confirmcalendarentry' ~ reminder.id) }}"
-                                        title="{{ 'reservation.calendar_reminder.action.confirm.title'|trans }}">
-                                    <i class="fas fa-check"></i> {{ 'reservation.calendar_reminder.action.confirm.title'|trans }}
-                                </button>
+                                {# Confirming is a write - read-only staff see the
+                                   pending reminders but get no button. #}
+                                {% if is_granted('ROLE_RESERVATIONS') %}
+                                    <button type="button" class="btn btn-sm btn-primary"
+                                            data-action="click->reservations#confirmCalendarReminderAction"
+                                            data-url="{{ path('reservations.calendar_reminder.confirm', {'id': reminder.id}) }}"
+                                            data-token="{{ csrf_token('confirmcalendarentry' ~ reminder.id) }}"
+                                            title="{{ 'reservation.calendar_reminder.action.confirm.title'|trans }}">
+                                        <i class="fas fa-check"></i> {{ 'reservation.calendar_reminder.action.confirm.title'|trans }}
+                                    </button>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor %}

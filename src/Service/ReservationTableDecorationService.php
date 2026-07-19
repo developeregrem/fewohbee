@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Dto\ReservationTable\DayCalendarEntry;
 use App\Dto\ReservationTable\DayDecoration;
 use App\Repository\CalendarEntryRepository;
+use App\Repository\CalendarRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -21,6 +22,7 @@ class ReservationTableDecorationService
 {
     public function __construct(
         private readonly CalendarEntryRepository $entryRepo,
+        private readonly CalendarRepository $calendarRepo,
         private readonly CalendarService $calendarService,
         private readonly UrlGeneratorInterface $urlGenerator,
     ) {
@@ -34,6 +36,8 @@ class ReservationTableDecorationService
      * would be that many round trips for a feature that is usually empty.
      *
      * @param \DateTimeImmutable[] $days
+     * @param bool $canManageEntries whether the viewer may create/edit/delete entries
+     *                               (ROLE_RESERVATIONS; read-only staff only ever see them)
      *
      * @return array<string, DayDecoration>
      */
@@ -42,12 +46,18 @@ class ReservationTableDecorationService
         string $holidayCountry,
         string $locale,
         bool $showCalendarEntries,
+        bool $canManageEntries = false,
     ): array {
         if ([] === $days) {
             return [];
         }
 
-        $entriesByDate = $showCalendarEntries ? $this->loadEntriesByDate($days) : [];
+        $entriesByDate = $showCalendarEntries ? $this->loadEntriesByDate($days, $canManageEntries) : [];
+
+        // Offering "add entry" without a single calendar configured would send
+        // the user to a form that can only 404 - it needs a calendar to put the
+        // entry in. Reads as broken, so the link is left out instead.
+        $canAddEntries = $showCalendarEntries && $canManageEntries && $this->calendarRepo->count([]) > 0;
 
         $decorations = [];
         foreach ($days as $day) {
@@ -61,7 +71,7 @@ class ReservationTableDecorationService
             $decorations[$dateKey] = new DayDecoration(
                 holidays: $holidays,
                 calendarEntries: $entriesByDate[$dateKey] ?? [],
-                newEntryUrl: $showCalendarEntries
+                newEntryUrl: $canAddEntries
                     ? $this->urlGenerator->generate('reservations.calendar_entry.new', ['date' => $dateKey])
                     : null,
             );
@@ -75,7 +85,7 @@ class ReservationTableDecorationService
      *
      * @return array<string, DayCalendarEntry[]>
      */
-    private function loadEntriesByDate(array $days): array
+    private function loadEntriesByDate(array $days, bool $canManageEntries): array
     {
         $first = $days[array_key_first($days)];
         $last = $days[array_key_last($days)];
@@ -95,8 +105,10 @@ class ReservationTableDecorationService
                 calendarId: $calendar->getId(),
                 calendarName: $calendar->getName(),
                 color: $calendar->getColor(),
-                editUrl: $this->urlGenerator->generate('reservations.calendar_entry.edit', ['id' => $entry->getId()]),
-                deleteUrl: $this->urlGenerator->generate('reservations.calendar_entry.delete', ['id' => $entry->getId()]),
+                // Null for read-only staff: the routes reject them anyway, so
+                // the popover would only offer links into a 403.
+                editUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.edit', ['id' => $entry->getId()]) : null,
+                deleteUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.delete', ['id' => $entry->getId()]) : null,
                 startsCalendarGroup: null !== $previous && $previous->calendarId !== $calendar->getId(),
             );
         }
