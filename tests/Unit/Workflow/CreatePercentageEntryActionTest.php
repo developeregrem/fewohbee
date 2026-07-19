@@ -65,7 +65,19 @@ final class CreatePercentageEntryActionTest extends TestCase
         $action->execute($this->config(['percent' => '10', 'remark' => 'Kommission %number%']), $this->invoice('17730'), []);
 
         self::assertSame('Kommission 17730', $captured['remark']);
-        self::assertSame('17730', $captured['invoiceNumber']);
+    }
+
+    public function testLeavesTheDocumentNumberEmptyForLater(): void
+    {
+        // The reference that belongs in that field is the supplier's invoice
+        // for the deduction, which does not exist yet - the remark carries the
+        // link to our own invoice instead.
+        $captured = null;
+        $action = $this->makeAction(gross: 100.0, capture: $captured);
+
+        $action->execute($this->config(['percent' => '10']), $this->invoice('17730'), []);
+
+        self::assertNull($captured['invoiceNumber']);
     }
 
     public function testLeavesTheInvoiceIdUnsetSoThePayoutDoesNotRedateIt(): void

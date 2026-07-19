@@ -11,6 +11,17 @@
 
 {% block content %}
 <div class="container" data-controller="booking-journal">
+    {# Shown here rather than only when closing fails: the reference is easiest
+       to supply while the month is still being worked on. #}
+    {% if missingDocumentNumbers|default(0) > 0 %}
+        <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
+            <i class="fas fa-triangle-exclamation mt-1"></i>
+            <div>
+                <strong>{{ 'accounting.journal.missing_document_numbers'|trans({'%count%': missingDocumentNumbers}) }}</strong><br>
+                <span class="small">{{ 'accounting.journal.missing_document_numbers_hint'|trans }}</span>
+            </div>
+        </div>
+    {% endif %}
     <div class="row mb-2">
         <div class="col text-end">
             <div class="dropdown">

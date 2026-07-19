@@ -221,6 +221,9 @@ accounting.journal.back: Back to Journal
 # Journal - Flash Messages
 accounting.journal.flash.batch_created: Month created successfully.
 accounting.journal.flash.batch_closed: Month closed.
+accounting.journal.flash.batch_missing_document_numbers: 'Month cannot be closed: %count% entry/entries still wait for a document number.'
+accounting.journal.missing_document_numbers: '%count% entry/entries without a document number'
+accounting.journal.missing_document_numbers_hint: These entries were booked before the document they refer to. The month can only be closed once the number has been supplied.
 accounting.journal.flash.batch_reopened: Month reopened.
 accounting.journal.flash.entry_created: Entry created successfully.
 accounting.journal.flash.entry_updated: Entry updated successfully.

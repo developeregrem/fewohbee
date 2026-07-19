@@ -140,20 +140,27 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             !empty($config['debitAccountId']) ? $this->accountRepo->find((int) $config['debitAccountId']) : null,
             !empty($config['creditAccountId']) ? $this->accountRepo->find((int) $config['creditAccountId']) : null,
             '' !== $remark ? $remark : null,
-            $entity->getNumber(),
-            // Deliberately no invoiceId: the bank import re-dates every entry
-            // carrying one when a statement line matches that invoice, and a
-            // deduction belongs to the invoice date rather than to the payout.
+            // No document reference yet: the one that belongs here is the
+            // supplier's invoice for the deduction, which is issued later and
+            // usually covers several invoices at once. The entry is flagged as
+            // waiting for it below, and a batch will not close until it has one.
+            null,
+            // Deliberately no invoiceId either: the bank import re-dates every
+            // entry carrying one when a statement line matches that invoice,
+            // and a deduction belongs to the invoice date rather than to the
+            // payout. The invoice number stays traceable through the remark.
             null,
             null,
             !empty($config['taxRateId']) ? $this->taxRateRepo->find((int) $config['taxRateId']) : null,
         );
 
+        $entry->setRequiresDocumentNumber(true);
+
         return $this->translator->trans('workflow.log.percentage_entry_created', [
             // Formatted like the amount beside it: "1,40" rather than PHP's "1.4".
             '%percent%' => number_format($percent, 2, ',', '.'),
             '%amount%' => number_format($amount, 2, ',', '.'),
-            '%number%' => (string) $entry->getInvoiceNumber(),
+            '%number%' => (string) $entity->getNumber(),
         ]);
     }
 
