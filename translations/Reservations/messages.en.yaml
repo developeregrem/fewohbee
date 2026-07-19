@@ -127,7 +127,7 @@ calendar_entry.calendar: Calendar
 calendar_entry.form.calendar: Calendar
 calendar_entry.form.date: Date
 calendar_entry.form.date_to: Until
-calendar_entry.form.date_to_help: "Optional - fill in for a multi-day entry (e.g. a vacation period). Creates one entry per day."
+calendar_entry.form.date_to_help: "End date – optional, for a multi-day entry (e.g. a vacation period). Creates one entry per day."
 calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
 calendar_entry.form.title: Title
 calendar_entry.popover.new: + New entry

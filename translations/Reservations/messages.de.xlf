@@ -428,7 +428,7 @@
             </trans-unit>
             <trans-unit id="calendar_entry.form.date_to_help">
                 <source>calendar_entry.form.date_to_help</source>
-                <target>Optional - für einen mehrtägigen Termin (z.B. Urlaub) ausfüllen. Legt einen Eintrag pro Tag an.</target>
+                <target>Enddatum – optional für einen mehrtägigen Termin (z.B. Urlaub). Legt einen Eintrag pro Tag an.</target>
             </trans-unit>
             <trans-unit id="calendar_entry.form.date_to_too_far">
                 <source>calendar_entry.form.date_to_too_far</source>
