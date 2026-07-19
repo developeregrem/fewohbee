@@ -16,7 +16,6 @@ namespace App\Twig;
 use App\Entity\Reservation;
 use App\Service\AppSettingsService;
 use App\Service\CalendarService;
-use App\Service\CalendarEntryDisplayService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -30,15 +29,13 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     private $requestStack;
     private $calendarService;
     private $appSettingsService;
-    private $calendarEntryDisplayService;
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService, CalendarEntryDisplayService $calendarEntryDisplayService)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService)
     {
         $this->em = $em;
         $this->requestStack = $requestStack;
         $this->calendarService = $cs;
         $this->appSettingsService = $appSettingsService;
-        $this->calendarEntryDisplayService = $calendarEntryDisplayService;
     }
 
     public function getGlobals(): array
@@ -73,7 +70,6 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
             new TwigFunction('getLocalizedDate', [$this, 'getLocalizedDateFilter']),
             new TwigFunction('existsById', [$this, 'existsById']),
             new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
-            new TwigFunction('getCalendarEntriesForDay', [$this, 'getCalendarEntriesForDay']),
             new TwigFunction('calendar_accent_marker_style', [$this, 'getCalendarAccentMarkerStyle']),
             new TwigFunction('getReservationsForDay', [$this, 'getReservationsForDay']),
             new TwigFunction('timestamp2UTC', [$this, 'timestamp2UTC']),
@@ -228,14 +224,6 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     public function getPublicdaysForDay($date, $code, $locale)
     {
         return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
-    }
-
-    /**
-     * @return \App\Entity\CalendarEntry[]
-     */
-    public function getCalendarEntriesForDay(\DateTimeInterface $date): array
-    {
-        return $this->calendarEntryDisplayService->getForDay($date);
     }
 
     /**

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Twig;
 
 use App\Service\AppSettingsService;
-use App\Service\CalendarEntryDisplayService;
 use App\Service\CalendarService;
 use App\Twig\AppTwigExtensions;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,7 +31,6 @@ final class CalendarAccentMarkerStyleTest extends TestCase
             $this->createStub(RequestStack::class),
             $this->createStub(CalendarService::class),
             $this->createStub(AppSettingsService::class),
-            $this->createStub(CalendarEntryDisplayService::class),
         );
     }
 

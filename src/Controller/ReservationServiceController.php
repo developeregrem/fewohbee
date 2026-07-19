@@ -40,6 +40,7 @@ use App\Service\ReservationObject;
 use App\Service\ReservationService;
 use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
+use App\Service\ReservationTableDecorationService;
 use App\Service\ReservationTableService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
@@ -156,11 +157,11 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $calendarEntryRepository);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $calendarEntryRepository, $decorationService);
         } else {
             return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request, $calendarEntryRepository);
         }
@@ -169,7 +170,7 @@ class ReservationServiceController extends AbstractController
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -221,12 +222,22 @@ class ReservationServiceController extends AbstractController
         $allReservations = $em->getRepository(Reservation::class)
             ->loadReservationsForApartments($startDate, $endDate, $appartments, $statusMode);
 
+        // A selected subdivision narrows the holiday set; "all" keeps the
+        // whole country's (mirrors what the template used to decide).
+        $holidayRegion = 'all' === $selectedSubdivision ? $holidayCountry : $selectedSubdivision;
+
         $grid = $tableService->buildGrid(
             $appartments,
             $startDate,
             $interval,
             $allReservations,
             'all' === $objectId || null === $objectId,
+            $decorationService->buildForDays(
+                $tableService->buildDays($startDate, $interval),
+                $holidayRegion,
+                $request->getLocale(),
+                $showCalendarEntries,
+            ),
         );
 
         return $this->render('Reservations/reservation_table.html.twig', [

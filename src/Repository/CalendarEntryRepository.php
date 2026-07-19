@@ -129,21 +129,25 @@ class CalendarEntryRepository extends ServiceEntityRepository
     }
 
     /**
-     * All entries (any calendar, confirmed or not) within the given year,
-     * with their calendar eager-loaded - backs the year-overview accent
-     * lines/popovers via CalendarEntryDisplayService, scoped to the year
-     * actually being displayed instead of loading the whole table.
+     * All entries (any calendar, confirmed or not) that fall inside the given
+     * period, with their calendar eager-loaded - backs the accent lines and
+     * day popovers in the reservation overview.
+     *
+     * Ordered by calendar name so same-day entries arrive grouped per
+     * calendar, which is what the popover separates with a rule.
      *
      * @return CalendarEntry[]
      */
-    public function findForYear(int $year): array
+    public function findForPeriod(\DateTimeInterface $from, \DateTimeInterface $to): array
     {
         return $this->createQueryBuilder('e')
             ->join('e.calendar', 'c')
             ->addSelect('c')
             ->andWhere('e.date BETWEEN :from AND :to')
-            ->setParameter('from', new \DateTimeImmutable($year.'-01-01'))
-            ->setParameter('to', new \DateTimeImmutable($year.'-12-31'))
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('c.name', 'ASC')
+            ->addOrderBy('e.date', 'ASC')
             ->getQuery()
             ->getResult();
     }

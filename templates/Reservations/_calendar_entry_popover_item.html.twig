@@ -10,7 +10,10 @@
    Lives in its own template rather than inline in the macro because
    {% use %} (needed for the shared delete-popover block) is only valid at
    the top level of a template. #}
+{# `entry` is a DayCalendarEntry, not the doctrine entity: urls and colors
+   arrive resolved. The CSRF token stays here, because it comes with the
+   shared delete-popover block every other delete in the app uses. #}
 {% use "common/delete_popover.html.twig" %}
 {% set id = 'calendarentry' ~ entry.id %}
-{% set targetUrl = path('reservations.calendar_entry.delete', {'id': entry.id}) %}
-<div class="d-flex justify-content-between align-items-center gap-2"><span><a href="{{ path('reservations.calendar_entry.edit', {'id': entry.id}) }}" class="text-dark text-decoration-underline js-calendar-entry-link">{{ entry.title }}</a> <span class="text-muted small">({{ entry.calendar.name }})</span></span><button type="button" class="btn btn-link btn-sm p-0 js-calendar-entry-delete" data-popover="delete" data-title="{{ 'registrationbook.delete.ask'|trans }}" data-bs-content="{{ block('deletePopoverContent')|e('html_attr') }}" title="{{ 'calendar_entry.delete'|trans }}"><i class="fas fa-trash-alt" style="color: {{ entry.calendar.color }}; font-size: 0.8em;"></i></button></div>
+{% set targetUrl = entry.deleteUrl %}
+<div class="d-flex justify-content-between align-items-center gap-2"><span><a href="{{ entry.editUrl }}" class="text-dark text-decoration-underline js-calendar-entry-link">{{ entry.title }}</a> <span class="text-muted small">({{ entry.calendarName }})</span></span><button type="button" class="btn btn-link btn-sm p-0 js-calendar-entry-delete" data-popover="delete" data-title="{{ 'registrationbook.delete.ask'|trans }}" data-bs-content="{{ block('deletePopoverContent')|e('html_attr') }}" title="{{ 'calendar_entry.delete'|trans }}"><i class="fas fa-trash-alt" style="color: {{ entry.color }}; font-size: 0.8em;"></i></button></div>
