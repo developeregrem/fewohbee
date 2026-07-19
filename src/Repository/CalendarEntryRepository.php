@@ -40,6 +40,29 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Entry count per calendar, in one grouped query rather than one count
+     * per calendar - the management list needs all of them at once.
+     *
+     * Calendars without a single entry produce no row and are simply absent
+     * from the result; callers treat a missing key as zero.
+     *
+     * @return array<int, int> calendar id => number of entries
+     */
+    public function countGroupedByCalendar(): array
+    {
+        $counts = [];
+        foreach ($this->createQueryBuilder('e')
+            ->select('IDENTITY(e.calendar) AS calendarId, COUNT(e.id) AS entryCount')
+            ->groupBy('e.calendar')
+            ->getQuery()
+            ->getScalarResult() as $row) {
+            $counts[(int) $row['calendarId']] = (int) $row['entryCount'];
+        }
+
+        return $counts;
+    }
+
     public function countPendingReminders(): int
     {
         return (int) $this->createQueryBuilder('e')

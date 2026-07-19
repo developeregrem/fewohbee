@@ -29,15 +29,9 @@ class CalendarController extends AbstractController
     #[Route('', name: 'settings.calendars.index', methods: ['GET'])]
     public function index(CalendarRepository $calendarRepo, CalendarEntryRepository $entryRepo): Response
     {
-        $calendars = $calendarRepo->findAllOrdered();
-        $entryCounts = [];
-        foreach ($calendars as $calendar) {
-            $entryCounts[$calendar->getId()] = $entryRepo->count(['calendar' => $calendar]);
-        }
-
         return $this->render('Calendar/index.html.twig', [
-            'calendars' => $calendars,
-            'entryCounts' => $entryCounts,
+            'calendars' => $calendarRepo->findAllOrdered(),
+            'entryCounts' => $entryRepo->countGroupedByCalendar(),
         ]);
     }
 
