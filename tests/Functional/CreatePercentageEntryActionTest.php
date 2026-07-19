@@ -166,6 +166,30 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         $this->reopenBatch($batchId);
     }
 
+    public function testTheFilterListsExactlyTheWaitingEntries(): void
+    {
+        // The warning is only actionable if it can point at the entries it
+        // counts - this is the view it links to.
+        $invoice = $this->createInvoice(115.20, '2026-10-15');
+        $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
+        $since = $this->lastEntryId();
+        $action->execute($this->config('12', ''), $invoice, []);
+        $this->em()->flush();
+
+        $entry = $this->entriesSince($since)[0];
+        $repo = $this->em()->getRepository(\App\Entity\BookingEntry::class);
+        $batch = $entry->getBookingBatch();
+
+        $waiting = $repo->findByBatch($batch, '', 1, 20, \App\Repository\BookingEntryRepository::MODE_MISSING_DOCUMENT);
+        self::assertSame([$entry->getId()], array_map(static fn ($e) => $e->getId(), iterator_to_array($waiting)));
+
+        $entry->setInvoiceNumber('1656376969');
+        $this->em()->flush();
+
+        $afterwards = $repo->findByBatch($batch, '', 1, 20, \App\Repository\BookingEntryRepository::MODE_MISSING_DOCUMENT);
+        self::assertCount(0, iterator_to_array($afterwards), 'entry still listed after the number was supplied');
+    }
+
     private function isBatchClosed(int $id): bool
     {
         return (bool) $this->connection()->fetchOne('SELECT is_closed FROM booking_batches WHERE id = ?', [$id]);

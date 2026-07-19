@@ -142,7 +142,7 @@ class BookingJournalController extends AbstractController
         $page = (int) $request->query->get('page', 1);
         $search = $request->query->get('search', '');
         $filter = $request->query->get('filter', 'all');
-        if (!in_array($filter, ['all', 'cashbook', 'bankbook'], true)) {
+        if (!in_array($filter, ['all', 'cashbook', 'bankbook', BookingEntryRepository::MODE_MISSING_DOCUMENT], true)) {
             $filter = 'all';
         }
 

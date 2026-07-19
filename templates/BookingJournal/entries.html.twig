@@ -18,7 +18,10 @@
             <i class="fas fa-triangle-exclamation mt-1"></i>
             <div>
                 <strong>{{ 'accounting.journal.missing_document_numbers'|trans({'%count%': missingDocumentNumbers}) }}</strong><br>
-                <span class="small">{{ 'accounting.journal.missing_document_numbers_hint'|trans }}</span>
+                <span class="small">{{ 'accounting.journal.missing_document_numbers_hint'|trans }}</span><br>
+                <a class="small" href="{{ path('journal.batch.entries', {'id': batch.id, 'filter': 'missing_document'}) }}">
+                    {{ 'accounting.journal.missing_document_numbers_show'|trans }}
+                </a>
             </div>
         </div>
     {% endif %}
@@ -89,6 +92,9 @@
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
                 <option value="cashbook"{% if filter == 'cashbook' %} selected{% endif %}>{{ 'accounting.journal.filter.cashbook'|trans }}</option>
                 <option value="bankbook"{% if filter == 'bankbook' %} selected{% endif %}>{{ 'accounting.journal.filter.bankbook'|trans }}</option>
+                {% if missingDocumentNumbers|default(0) > 0 or filter == 'missing_document' %}
+                    <option value="missing_document"{% if filter == 'missing_document' %} selected{% endif %}>{{ 'accounting.journal.filter.missing_document'|trans }}</option>
+                {% endif %}
             </select>
         </div>
         <div class="col-auto d-flex gap-2 align-items-center">
