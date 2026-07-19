@@ -74,6 +74,15 @@ workflow:
     attachment_policy_help: "Zum Beispiel, wenn zu einer Reservierung noch gar keine Rechnung existiert."
     attachment_policy.skip_missing: "E-Mail trotzdem senden (ohne den fehlenden Anhang)"
     attachment_policy.require_all: "E-Mail nicht senden"
+    percentage_entry_percent: "Prozentsatz"
+    percentage_entry_percent_help: "Anteil am Rechnungsbrutto, z.B. 12 für eine Kommission oder 1,4 für eine Zahlungsgebühr. Ohne einschränkende Bedingung wird auf jede Rechnung gebucht."
+    percentage_entry_debit_account: "Sollkonto"
+    percentage_entry_debit_account_help: "Konto, auf das der Abzug gebucht wird (Aufwand oder Reverse-Charge)."
+    percentage_entry_credit_account: "Habenkonto"
+    percentage_entry_credit_account_help: "Konto, von dem der Abzug abgeht - in der Regel dasselbe, gegen das auch die Rechnung gebucht wurde."
+    percentage_entry_tax_rate: "Steuersatz"
+    percentage_entry_remark: "Bemerkung"
+    percentage_entry_remark_help: "%number% wird durch die Rechnungsnummer ersetzt, z.B. „Kommission %number%“."
 
   # Trigger labels
   trigger:
@@ -111,6 +120,7 @@ workflow:
     send_general_email: "Allgemeine E-Mail anhand eines Templates versenden"
     send_notification_email: "Benachrichtigungs-E-Mail senden"
     create_booking_entry: "Buchungseintrag erstellen"
+    create_percentage_entry: "Prozentualen Buchungseintrag erstellen"
     change_invoice_status: "Rechnungsstatus ändern"
     change_payment_means: "Zahlungsmethode ändern"
     change_reservation_status: "Reservierungsstatus ändern"
@@ -177,6 +187,8 @@ workflow:
     notification_calendar_import_sent: "Kalenderimport-Benachrichtigung an %recipient% gesendet"
     booking_entries_created: "%count% Buchungseinträge für Rechnung %number% erstellt"
     skipped_no_amounts: "Übersprungen: Rechnung enthält keine buchbaren Beträge"
+    skipped_no_percentage: "Übersprungen: kein gültiger Prozentsatz konfiguriert"
+    percentage_entry_created: "Buchung über %amount% (%percent% % vom Brutto) für Rechnung %number% erstellt"
     skipped_invalid_config: "Übersprungen: ungültige Konfiguration"
     skipped_status_not_found: "Übersprungen: Reservierungsstatus nicht gefunden"
     skipped_no_reservations: "Übersprungen: Rechnung hat keine verknüpften Reservierungen"
