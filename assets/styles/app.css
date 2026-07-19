@@ -232,21 +232,44 @@ body {
 
 .table-responsive { position: relative; }
 
+/* With border-collapse the table paints the shared border lines, not the cells,
+   so a sticky header cell has nothing to cover them with - the reservation bars
+   scrolling underneath stayed visible as a coloured line in every border
+   between two day columns.
+
+   The header cells therefore give up their borders entirely, which leaves the
+   table nothing to paint there and nothing to shine through. The background
+   covers the full cell box; the horizontal lines come from an inset shadow on
+   the cell, which sticks with it. */
 .table.table-sticky thead th, .table.table-sticky thead td {
   position: sticky;
   z-index: 3;
-  /* fester Hintergrund, damit nichts durchscheint */
+  border: 0 !important;
   background-color: var(--bs-table-bg, var(--bs-body-bg));
-  /* klare Unterkante auch bei border-collapse */
-  box-shadow: inset 0 -1px 0 var(--bs-border-color);
-  background-clip: padding-box; /* verhindert „Border-Bleeding“ */
+  box-shadow: inset 0 -1px 0 var(--bs-border-color); /* bottom line */
 }
 
 .table.table-sticky thead tr:first-child td{
-  /* top + bottom Schatten kombinieren: */
   box-shadow:
-    inset 0  1px 0 var(--bs-border-color),  /* obere Linie */
-    inset 0 -1px 0 var(--bs-border-color);  /* untere Linie */
+    inset 0  1px 0 var(--bs-border-color),  /* top line */
+    inset 0 -1px 0 var(--bs-border-color);  /* bottom line */
+}
+
+/* The vertical separator sits in a pseudo-element rather than in that shadow:
+   header cells can carry a background or shadow of their own (the calendar
+   entries' accent bars, partly set inline), which would override a shadow
+   declared here. It sits on the inside of the right edge so the neighbouring
+   cell's background cannot paint over it. */
+.table.table-sticky thead th::after,
+.table.table-sticky thead td::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
 }
 
 /* left sticky column in reservation overview*/
