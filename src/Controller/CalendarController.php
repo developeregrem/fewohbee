@@ -95,13 +95,23 @@ class CalendarController extends AbstractController
                     : $syncService->sync($calendar);
 
                 if (null !== $result) {
-                    if (0 === $result->total()) {
-                        $this->addFlash('warning', 'calendar.flash.synced_empty');
-                    } else {
+                    if ($result->total() > 0) {
                         $this->addFlash('success', $translator->trans('calendar.flash.synced', [
                             '%new%' => $result->new,
                             '%updated%' => $result->updated,
                             '%unchanged%' => $result->unchanged,
+                        ]));
+                    } elseif (0 === $result->skippedRecurring) {
+                        // Only claim the source was empty when it really was:
+                        // a feed made entirely of recurring events imports
+                        // nothing either, and the message below names that
+                        // reason instead of blaming the source.
+                        $this->addFlash('warning', 'calendar.flash.synced_empty');
+                    }
+
+                    if ($result->skippedRecurring > 0) {
+                        $this->addFlash('warning', $translator->trans('calendar.flash.synced_recurring_skipped', [
+                            '%count%' => $result->skippedRecurring,
                         ]));
                     }
                 }

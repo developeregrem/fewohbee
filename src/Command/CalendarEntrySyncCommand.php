@@ -48,6 +48,17 @@ class CalendarEntrySyncCommand extends Command
                     $result->updated,
                     $result->unchanged,
                 ));
+
+                // Not a failure - the run stays successful - but silently
+                // importing nothing from a recurring feed is what makes this
+                // confusing in the first place, so it gets said out loud.
+                if ($result->skippedRecurring > 0) {
+                    $io->warning(sprintf(
+                        '%s: %d recurring event(s) skipped, RRULE is not expanded.',
+                        $calendar->getName(),
+                        $result->skippedRecurring,
+                    ));
+                }
             } catch (CalendarSyncException $e) {
                 $hadFailure = true;
                 $io->error(sprintf('%s: %s', $calendar->getName(), $e->getMessage()));

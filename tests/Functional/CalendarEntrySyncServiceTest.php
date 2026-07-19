@@ -276,6 +276,70 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertNotSame($entries[0]->getSourceUid(), $entries[1]->getSourceUid());
     }
 
+    public function testRecurringEventIsSkippedAndCountedInsteadOfLandingOnItsFirstDate(): void
+    {
+        $calendar = $this->createCalendar('Geburtstage '.uniqid());
+
+        // How a birthday actually looks in an exported feed: one VEVENT on the
+        // year of birth, repeating via RRULE. Importing DTSTART alone would
+        // file it decades in the past, where nobody would ever see it.
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:geburtstag-anna',
+            'DTSTART;VALUE=DATE:19800315',
+            'RRULE:FREQ=YEARLY',
+            'SUMMARY:Geburtstag Anna',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(1, $result->skippedRecurring);
+        self::assertSame(0, $result->total());
+        self::assertCount(0, $this->entriesForCalendar($calendar));
+    }
+
+    public function testANonRecurringEventInTheSameFeedStillImports(): void
+    {
+        $calendar = $this->createCalendar('Gemischt '.uniqid());
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:wiederkehrend',
+            'DTSTART;VALUE=DATE:19800315',
+            'RRULE:FREQ=YEARLY',
+            'SUMMARY:Geburtstag Anna',
+            'END:VEVENT',
+            'BEGIN:VEVENT',
+            'UID:einmalig',
+            'DTSTART;VALUE=DATE:20260910',
+            'SUMMARY:Restmüll',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(1, $result->skippedRecurring);
+        self::assertSame(1, $result->new);
+        self::assertSame('Restmüll', $this->entriesForCalendar($calendar)[0]->getTitle());
+    }
+
+    public function testAFeedWithoutRecurrenceReportsNothingSkipped(): void
+    {
+        $calendar = $this->createCalendar('Ohne Serie '.uniqid());
+
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-plain', '20260911', null, 'Papier'));
+
+        self::assertSame(0, $result->skippedRecurring);
+        self::assertSame(1, $result->new);
+    }
+
     private function createCalendar(string $name): Calendar
     {
         $calendar = new Calendar();

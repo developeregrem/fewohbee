@@ -23,7 +23,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * (CalendarSync entity).
  *
  * Only single VEVENTs are supported (one per occurrence) - a source that
- * expresses collection dates via an RRULE-recurring VEVENT isn't handled.
+ * expresses its dates via an RRULE-recurring VEVENT isn't expanded. Such
+ * events are skipped and counted, so the caller can tell the user why a
+ * birthday or holiday feed produced nothing, rather than storing one entry
+ * on the original DTSTART where it would never be seen.
  */
 class CalendarEntrySyncService
 {
@@ -94,6 +97,7 @@ class CalendarEntrySyncService
         $new = 0;
         $updated = 0;
         $unchanged = 0;
+        $skippedRecurring = 0;
 
         try {
             // Collect the whole feed first, grouped by source event, so each
@@ -105,6 +109,17 @@ class CalendarEntrySyncService
             foreach ($this->icsParser->parseEvents($icsData) as $event) {
                 $summary = trim((string) ($event['SUMMARY'] ?? ''));
                 if ('' === $summary) {
+                    continue;
+                }
+
+                // A recurring event carries its repetition in the RRULE, which
+                // is not expanded here. Importing it anyway would store a
+                // single entry on DTSTART - for a birthday feed that is the
+                // year of birth, decades in the past, where nobody will ever
+                // see it while the import cheerfully reports success. Skipped
+                // and counted instead, so the caller can name the reason.
+                if ('' !== trim((string) ($event['RRULE'] ?? ''))) {
+                    ++$skippedRecurring;
                     continue;
                 }
                 // Truncated here rather than at the assignment sites so the
@@ -135,7 +150,7 @@ class CalendarEntrySyncService
                 }
             }
 
-            $result = new CalendarEntrySyncResult($new, $updated, $unchanged);
+            $result = new CalendarEntrySyncResult($new, $updated, $unchanged, $skippedRecurring);
 
             // Recorded here (not by callers) so both the admin-form save path
             // and the calendars:sync cron command keep this in sync consistently.

@@ -37,6 +37,7 @@ calendar:
     synced: "Kalender wurde synchronisiert: %new% neu, %updated% aktualisiert, %unchanged% unverändert."
     synced_empty: "Sync durchgeführt, aber keine Einträge in der Quelle gefunden – bisherige Einträge bleiben unverändert aktiv."
     sync_failed: "Kalender konnte nicht synchronisiert werden: %message%"
+    synced_recurring_skipped: "%count% wiederkehrende Termine wurden übersprungen – Serientermine (z.B. jährliche Geburtstage) werden nicht aufgelöst. Solche Termine bitte manuell anlegen oder eine Quelle verwenden, die jeden Termin einzeln exportiert."
   cleanup:
     title: "Vergangene Termine aufräumen"
     hint: "Löscht vergangene Termine dieses Kalenders, die nie bestätigt wurden. Bestätigte Termine sowie alles ab heute bleiben erhalten."

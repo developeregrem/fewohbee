@@ -37,6 +37,7 @@ calendar:
     synced: "Calendar synced: %new% new, %updated% updated, %unchanged% unchanged."
     synced_empty: "Sync ran, but the source had no entries - existing entries remain unchanged."
     sync_failed: "Calendar could not be synced: %message%"
+    synced_recurring_skipped: "%count% recurring entries were skipped - repeating events (e.g. yearly birthdays) are not expanded. Add such entries manually, or use a source that exports every occurrence separately."
   cleanup:
     title: "Clean up past entries"
     hint: "Deletes this calendar's past entries that were never confirmed. Confirmed entries and anything from today onwards are kept."
