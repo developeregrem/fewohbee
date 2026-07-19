@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Repository\CalendarRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A configured calendar (waste collection, vacations, events, ...) that
@@ -23,10 +24,13 @@ class Calendar
     private ?int $id = null;
 
     #[ORM\Column(type: Types::STRING, length: 100)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $name;
 
     /** Hex color (e.g. #ffc107), used for the accent line in the year overview. */
     #[ORM\Column(type: Types::STRING, length: 20)]
+    #[Assert\Length(max: 20)]
     private string $color = '#ffc107';
 
     /**
@@ -37,6 +41,7 @@ class Calendar
     private bool $requiresConfirmation = false;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    #[Assert\Length(max: 255)]
     private ?string $icsUrl = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]

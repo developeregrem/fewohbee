@@ -40,6 +40,16 @@ class CalendarEntrySyncService
      */
     private const MAX_EVENT_SPAN_DAYS = 366;
 
+    /**
+     * Column widths of CalendarEntry::$title and ::$sourceUid. A feed is
+     * untrusted input, so an over-long SUMMARY or UID must not reach the
+     * flush: the insert would fail, and Doctrine closes the EntityManager on
+     * a failed flush - which takes every calendar synced after this one down
+     * with it, not just the offending entry.
+     */
+    private const MAX_TITLE_LENGTH = 100;
+    private const MAX_SOURCE_UID_LENGTH = 255;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
@@ -97,6 +107,11 @@ class CalendarEntrySyncService
                 if ('' === $summary) {
                     continue;
                 }
+                // Truncated here rather than at the assignment sites so the
+                // stored title and the value hashed into a UID-less feed's
+                // source id stay the same string - otherwise a re-import
+                // would keep seeing a "changed" title.
+                $summary = mb_substr($summary, 0, self::MAX_TITLE_LENGTH);
 
                 $dates = $this->resolveDates($event);
                 if ([] === $dates) {
@@ -212,7 +227,18 @@ class CalendarEntrySyncService
         $rawUid = trim((string) ($event['UID'] ?? ''));
         $suffix = '' !== $rawUid ? $rawUid : md5($summary.'-'.$start->format('Ymd'));
 
-        return 'cal'.$calendar->getId().'-'.$suffix;
+        $sourceUid = 'cal'.$calendar->getId().'-'.$suffix;
+
+        // A UID long enough to overflow the column is replaced by a hash of
+        // itself rather than cut off: truncation would map two feed events
+        // sharing a long prefix onto one id, and they would then fight over
+        // the same rows on every sync. Hashing stays deterministic, so
+        // re-imports keep matching the entries they created.
+        if (mb_strlen($sourceUid) > self::MAX_SOURCE_UID_LENGTH) {
+            $sourceUid = 'cal'.$calendar->getId().'-'.md5($suffix);
+        }
+
+        return $sourceUid;
     }
 
     /**

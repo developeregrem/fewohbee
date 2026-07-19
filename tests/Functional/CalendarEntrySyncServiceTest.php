@@ -189,6 +189,93 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertCount(0, $this->entriesForCalendar($calendar));
     }
 
+    public function testOverlongSummaryIsTruncatedInsteadOfFailingTheFlush(): void
+    {
+        $calendar = $this->createCalendar('Long summary '.uniqid());
+
+        $summary = str_repeat('a', 250);
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-long-summary', '20260901', null, $summary));
+
+        self::assertSame(1, $result->new);
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertSame(100, mb_strlen($entries[0]->getTitle()));
+        self::assertSame(str_repeat('a', 100), $entries[0]->getTitle());
+    }
+
+    public function testTruncationCountsCharactersNotBytes(): void
+    {
+        $calendar = $this->createCalendar('Umlauts '.uniqid());
+
+        // 150 two-byte characters: cutting at 100 bytes would both overshoot
+        // the column and risk splitting one in half.
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-umlaut', '20260902', null, str_repeat('ü', 150)));
+
+        self::assertSame(1, $result->new);
+        self::assertSame(str_repeat('ü', 100), $this->entriesForCalendar($calendar)[0]->getTitle());
+    }
+
+    public function testAnOverlongSummaryDoesNotStopTheRemainingEvents(): void
+    {
+        // The point of truncating at all: a failed flush closes the
+        // EntityManager, which would take every later calendar down too.
+        $calendar = $this->createCalendar('Mixed feed '.uniqid());
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:uid-mixed-long',
+            'DTSTART;VALUE=DATE:20260905',
+            'SUMMARY:'.str_repeat('x', 300),
+            'END:VEVENT',
+            'BEGIN:VEVENT',
+            'UID:uid-mixed-short',
+            'DTSTART;VALUE=DATE:20260906',
+            'SUMMARY:Restmüll',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(2, $result->new);
+        $titles = array_map(static fn (CalendarEntry $e) => $e->getTitle(), $this->entriesForCalendar($calendar));
+        self::assertContains('Restmüll', $titles);
+    }
+
+    public function testOverlongUidIsHashedSoItStillFitsTheColumn(): void
+    {
+        $calendar = $this->createCalendar('Long uid '.uniqid());
+
+        $uid = str_repeat('u', 400);
+        $result = $this->service->importIcsString($calendar, $this->buildIcs($uid, '20260903', null, 'Langes UID'));
+
+        self::assertSame(1, $result->new);
+        $sourceUid = $this->entriesForCalendar($calendar)[0]->getSourceUid();
+        self::assertLessThanOrEqual(255, mb_strlen((string) $sourceUid));
+
+        // Deterministic: syncing the same feed again must match the entry it
+        // already created rather than inserting a second one.
+        $again = $this->service->importIcsString($calendar, $this->buildIcs($uid, '20260903', null, 'Langes UID'));
+        self::assertSame(0, $again->new);
+        self::assertSame(1, $again->unchanged);
+    }
+
+    public function testTwoDistinctOverlongUidsStayDistinct(): void
+    {
+        $calendar = $this->createCalendar('Uid collision '.uniqid());
+
+        // Same 400-character prefix, different tail - cutting instead of
+        // hashing would collapse these two events onto one entry.
+        $prefix = str_repeat('u', 400);
+        $this->service->importIcsString($calendar, $this->buildIcs($prefix.'-one', '20260903', null, 'Erstes'));
+        $this->service->importIcsString($calendar, $this->buildIcs($prefix.'-two', '20260904', null, 'Zweites'));
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(2, $entries);
+        self::assertNotSame($entries[0]->getSourceUid(), $entries[1]->getSourceUid());
+    }
+
     private function createCalendar(string $name): Calendar
     {
         $calendar = new Calendar();

@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Repository\CalendarEntryRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * A single dated entry within a Calendar (waste collection day, vacation
@@ -32,6 +33,8 @@ class CalendarEntry
 
     /** Free-text label, e.g. "Restmüll", "Sommerferien", "Wartung Heizung". */
     #[ORM\Column(type: Types::STRING, length: 100)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $title;
 
     /**
