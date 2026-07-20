@@ -222,10 +222,8 @@ accounting.journal.back: Zurück zum Journal
 accounting.journal.flash.batch_created: Monat erfolgreich angelegt.
 accounting.journal.flash.batch_closed: Monat abgeschlossen.
 accounting.journal.flash.batch_missing_document_numbers: 'Monat kann nicht abgeschlossen werden: %count% Buchung(en) warten noch auf eine Belegnummer.'
-accounting.journal.missing_document_numbers: '%count% Buchung(en) ohne Belegnummer'
-accounting.journal.missing_document_numbers_hint: Diese Buchungen wurden vor dem zugehörigen Beleg erfasst. Der Monat lässt sich erst abschließen, wenn die Belegnummer nachgetragen ist.
-accounting.journal.filter.missing_document: Ohne Belegnummer
-accounting.journal.missing_document_numbers_show: Diese Buchungen anzeigen
+accounting.journal.entry.missing_document: Beleg fehlt
+accounting.journal.entry.missing_document_hint: Diese Buchung wurde vor dem zugehörigen Beleg erfasst. Der Monat lässt sich erst abschließen, wenn die Belegnummer nachgetragen ist.
 accounting.journal.flash.batch_reopened: Monat wieder geöffnet.
 accounting.journal.flash.entry_created: Buchung erfolgreich angelegt.
 accounting.journal.flash.entry_updated: Buchung erfolgreich aktualisiert.

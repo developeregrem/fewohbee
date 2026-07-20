@@ -22,9 +22,6 @@ class BookingEntryRepository extends ServiceEntityRepository
         parent::__construct($registry, BookingEntry::class);
     }
 
-    /** Filter mode listing only entries that still wait for their document reference. */
-    public const MODE_MISSING_DOCUMENT = 'missing_document';
-
     public function findByBatch(BookingBatch $batch, string $search = '', int $page = 1, int $limit = 20, string $mode = 'all'): Paginator
     {
         $qb = $this->createQueryBuilder('e')
@@ -47,11 +44,6 @@ class BookingEntryRepository extends ServiceEntityRepository
                 ->andWhere('da.isBankAccount = true OR ca.isBankAccount = true')
                 ->andWhere('e.sourceType IS NULL OR e.sourceType != :opening')
                 ->setParameter('opening', BookingEntry::SOURCE_OPENING_BALANCE);
-        } elseif (self::MODE_MISSING_DOCUMENT === $mode) {
-            // The warning about entries still waiting for a reference is only
-            // useful if it can name them - this is what it links to.
-            $qb->andWhere('e.requiresDocumentNumber = true')
-                ->andWhere("e.invoiceNumber IS NULL OR e.invoiceNumber = ''");
         }
 
         if ('' !== $search) {

@@ -83,6 +83,10 @@ workflow:
     percentage_entry_tax_rate: "Tax rate"
     percentage_entry_remark: "Remark"
     percentage_entry_remark_help: "%number% is replaced by the invoice number, e.g. \"Commission %number%\"."
+    percentage_entry_requires_document: Waits for a document number
+    percentage_entry_requires_document_help: The entry is dated the day the workflow runs and belongs to that month. Marks it as "Document missing" while no document number is filled in. The month can then only be closed once it has been supplied. Set to "No" when no separate document is issued for this deduction.
+    percentage_entry_requires_document_yes: "Yes"
+    percentage_entry_requires_document_no: "No"
 
   trigger:
     online_booking_created: "New online booking received"

@@ -83,8 +83,8 @@ final class CreatePercentageEntryActionTest extends TestCase
     public function testLeavesTheInvoiceIdUnsetSoThePayoutDoesNotRedateIt(): void
     {
         // The bank import re-dates every entry carrying an invoiceId once a
-        // statement line matches that invoice; a deduction belongs to the
-        // invoice date instead.
+        // statement line matches that invoice; a deduction belongs to the day
+        // the payment was recorded instead.
         $captured = null;
         $action = $this->makeAction(gross: 100.0, capture: $captured);
 

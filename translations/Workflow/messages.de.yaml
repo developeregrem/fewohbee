@@ -83,6 +83,10 @@ workflow:
     percentage_entry_tax_rate: "Steuersatz"
     percentage_entry_remark: "Bemerkung"
     percentage_entry_remark_help: "%number% wird durch die Rechnungsnummer ersetzt, z.B. „Kommission %number%“."
+    percentage_entry_requires_document: Wartet auf Belegnummer
+    percentage_entry_requires_document_help: Die Buchung erhält das Datum des Tages, an dem der Workflow läuft, und zählt zu dessen Monat. Markiert sie mit „Beleg fehlt“, solange keine Belegnummer eingetragen ist. Der Monat lässt sich dann erst abschließen, wenn sie nachgetragen wurde. Auf „Nein“ stellen, wenn zu diesem Abzug kein eigener Beleg kommt.
+    percentage_entry_requires_document_yes: Ja
+    percentage_entry_requires_document_no: Nein
 
   # Trigger labels
   trigger:

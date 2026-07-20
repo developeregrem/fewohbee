@@ -74,9 +74,11 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         self::assertSame('Zahlungsgebühr '.$invoice->getNumber(), $entries[1]->getRemark());
     }
 
-    public function testTheEntryCarriesTheInvoiceDateAndTheConfiguredAccounts(): void
+    public function testTheEntryCarriesTheExecutionDateAndTheConfiguredAccounts(): void
     {
-        $invoice = $this->createInvoice(115.20);
+        // The invoice date is months back, so an entry carrying it instead of
+        // the day the payment was recorded would be plain to see.
+        $invoice = $this->createInvoice(115.20, '2026-02-11');
         $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
         $since = $this->lastEntryId();
 
@@ -85,7 +87,7 @@ final class CreatePercentageEntryActionTest extends WebTestCase
 
         $entry = $this->entriesSince($since)[0];
 
-        self::assertSame($invoice->getDate()->format('Y-m-d'), $entry->getDate()->format('Y-m-d'));
+        self::assertSame((new \DateTime('today'))->format('Y-m-d'), $entry->getDate()->format('Y-m-d'));
         self::assertSame($this->account('3123')->getId(), $entry->getDebitAccount()?->getId());
         self::assertSame($this->account('1200')->getId(), $entry->getCreditAccount()?->getId());
         // Left unset on purpose: the bank import re-dates entries carrying one.
@@ -114,6 +116,24 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         self::assertFalse($entry->isMissingDocumentNumber(), 'supplying the number completes the entry');
     }
 
+    public function testTheEntryCanBeConfiguredNotToWait(): void
+    {
+        // Not every deduction is documented by a paper of its own, and one that
+        // is not must never hold the month open.
+        $invoice = $this->createInvoice(115.20);
+        $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
+        $since = $this->lastEntryId();
+
+        $config = $this->config('12', '') + ['requiresDocumentNumber' => '0'];
+        $action->execute($config, $invoice, []);
+        $this->em()->flush();
+
+        $entry = $this->entriesSince($since)[0];
+
+        self::assertFalse($entry->requiresDocumentNumber());
+        self::assertFalse($entry->isMissingDocumentNumber());
+    }
+
     public function testTheBatchCountsTheWaitingEntry(): void
     {
         $invoice = $this->createInvoice(115.20);
@@ -140,16 +160,13 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->adminUser());
 
-        // A month of its own: entries left waiting by the other tests would
-        // otherwise keep this batch open no matter what happens here.
-        $invoice = $this->createInvoice(115.20, '2026-09-15');
+        $invoice = $this->createInvoice(115.20);
         $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
         $since = $this->lastEntryId();
         $action->execute($this->config('12', ''), $invoice, []);
         $this->em()->flush();
 
         $entry = $this->entriesSince($since)[0];
-        $entryId = $entry->getId();
         $batchId = $entry->getBookingBatch()->getId();
 
         // Each client request reboots the kernel, so state is read back from
@@ -157,37 +174,16 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         $this->toggleBatch($client, $batchId);
         self::assertFalse($this->isBatchClosed($batchId), 'batch closed despite a waiting entry');
 
-        $this->setEntryDocumentNumber($entryId, '1656376969');
+        // Every entry booked here lands in the current month, so the other
+        // tests leave their own waiters in this batch. They have to be
+        // completed too before the guard can let go.
+        $this->completeWaitingEntries($batchId);
 
         $this->toggleBatch($client, $batchId);
         self::assertTrue($this->isBatchClosed($batchId), 'batch stayed open although the number was supplied');
 
         // Leave the fixture as found - a closed batch would block later tests.
         $this->reopenBatch($batchId);
-    }
-
-    public function testTheFilterListsExactlyTheWaitingEntries(): void
-    {
-        // The warning is only actionable if it can point at the entries it
-        // counts - this is the view it links to.
-        $invoice = $this->createInvoice(115.20, '2026-10-15');
-        $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
-        $since = $this->lastEntryId();
-        $action->execute($this->config('12', ''), $invoice, []);
-        $this->em()->flush();
-
-        $entry = $this->entriesSince($since)[0];
-        $repo = $this->em()->getRepository(\App\Entity\BookingEntry::class);
-        $batch = $entry->getBookingBatch();
-
-        $waiting = $repo->findByBatch($batch, '', 1, 20, \App\Repository\BookingEntryRepository::MODE_MISSING_DOCUMENT);
-        self::assertSame([$entry->getId()], array_map(static fn ($e) => $e->getId(), iterator_to_array($waiting)));
-
-        $entry->setInvoiceNumber('1656376969');
-        $this->em()->flush();
-
-        $afterwards = $repo->findByBatch($batch, '', 1, 20, \App\Repository\BookingEntryRepository::MODE_MISSING_DOCUMENT);
-        self::assertCount(0, iterator_to_array($afterwards), 'entry still listed after the number was supplied');
     }
 
     private function isBatchClosed(int $id): bool
@@ -200,9 +196,15 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         $this->connection()->executeStatement('UPDATE booking_batches SET is_closed = 0 WHERE id = ?', [$id]);
     }
 
-    private function setEntryDocumentNumber(int $id, string $number): void
+    /** Supplies the reference every entry of the batch is still waiting for. */
+    private function completeWaitingEntries(int $batchId): void
     {
-        $this->connection()->executeStatement('UPDATE booking_entries SET invoice_number = ? WHERE id = ?', [$number, $id]);
+        $this->connection()->executeStatement(
+            "UPDATE booking_entries SET invoice_number = '1656376969'
+             WHERE booking_batch_id = ? AND requires_document_number = 1
+               AND (invoice_number IS NULL OR invoice_number = '')",
+            [$batchId]
+        );
     }
 
     private function connection(): \Doctrine\DBAL\Connection

@@ -11,20 +11,6 @@
 
 {% block content %}
 <div class="container" data-controller="booking-journal">
-    {# Shown here rather than only when closing fails: the reference is easiest
-       to supply while the month is still being worked on. #}
-    {% if missingDocumentNumbers|default(0) > 0 %}
-        <div class="alert alert-warning d-flex align-items-start gap-2" role="alert">
-            <i class="fas fa-triangle-exclamation mt-1"></i>
-            <div>
-                <strong>{{ 'accounting.journal.missing_document_numbers'|trans({'%count%': missingDocumentNumbers}) }}</strong><br>
-                <span class="small">{{ 'accounting.journal.missing_document_numbers_hint'|trans }}</span><br>
-                <a class="small" href="{{ path('journal.batch.entries', {'id': batch.id, 'filter': 'missing_document'}) }}">
-                    {{ 'accounting.journal.missing_document_numbers_show'|trans }}
-                </a>
-            </div>
-        </div>
-    {% endif %}
     <div class="row mb-2">
         <div class="col text-end">
             <div class="dropdown">
@@ -92,9 +78,6 @@
                 <option value="all"{% if filter == 'all' %} selected{% endif %}>{{ 'accounting.journal.filter.all'|trans }}</option>
                 <option value="cashbook"{% if filter == 'cashbook' %} selected{% endif %}>{{ 'accounting.journal.filter.cashbook'|trans }}</option>
                 <option value="bankbook"{% if filter == 'bankbook' %} selected{% endif %}>{{ 'accounting.journal.filter.bankbook'|trans }}</option>
-                {% if missingDocumentNumbers|default(0) > 0 or filter == 'missing_document' %}
-                    <option value="missing_document"{% if filter == 'missing_document' %} selected{% endif %}>{{ 'accounting.journal.filter.missing_document'|trans }}</option>
-                {% endif %}
             </select>
         </div>
         <div class="col-auto d-flex gap-2 align-items-center">
@@ -168,7 +151,7 @@
                             {% endif %}
                         </td>
                         <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}
@@ -242,7 +225,7 @@
                                 {{ entry.counterAccountLegacy ?? '-' }}
                             {% endif %}
                         </td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}
@@ -304,7 +287,7 @@
                         <td>{{ entry.debitAccount ? entry.debitAccount.label : (entry.counterAccountLegacy ?? '-') }}</td>
                         <td>{{ entry.creditAccount ? entry.creditAccount.label : '-' }}</td>
                         <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}

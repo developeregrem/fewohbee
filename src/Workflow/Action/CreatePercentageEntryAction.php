@@ -29,6 +29,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *                              same one the invoice itself was booked against
  *   taxRateId       int|null – tax rate recorded on the entry
  *   remark          string   – free text, %number% is replaced by the invoice number
+ *   requiresDocumentNumber string – '1' marks the entry as waiting for a document
+ *                              reference, which also holds the month open
  */
 class CreatePercentageEntryAction implements WorkflowActionInterface
 {
@@ -107,6 +109,17 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                 'help' => 'workflow.form.percentage_entry_remark_help',
                 'default' => '',
             ],
+            [
+                'key' => 'requiresDocumentNumber',
+                'type' => 'select',
+                'label' => 'workflow.form.percentage_entry_requires_document',
+                'help' => 'workflow.form.percentage_entry_requires_document_help',
+                'options' => [
+                    ['value' => '1', 'label' => 'workflow.form.percentage_entry_requires_document_yes'],
+                    ['value' => '0', 'label' => 'workflow.form.percentage_entry_requires_document_no'],
+                ],
+                'default' => '1',
+            ],
         ];
     }
 
@@ -133,9 +146,13 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         $remark = str_replace('%number%', (string) $entity->getNumber(), trim((string) ($config['remark'] ?? '')));
 
         $entry = $this->bookingJournalService->createEntryFromStatement(
-            // The invoice's own date, so the deduction sits next to the revenue
-            // entry even when the workflow runs later.
-            $entity->getDate(),
+            // The day the workflow runs, not the invoice date. The action is
+            // meant for a workflow that runs when the invoice is marked as paid,
+            // so today is the day the payment was recorded - and a deduction
+            // settled out of that payment belongs in the month it was settled,
+            // not in the one the invoice was written in. Nothing enforces that
+            // trigger, so the form says which day the entry gets.
+            new \DateTime('today'),
             number_format($amount, 2, '.', ''),
             !empty($config['debitAccountId']) ? $this->accountRepo->find((int) $config['debitAccountId']) : null,
             !empty($config['creditAccountId']) ? $this->accountRepo->find((int) $config['creditAccountId']) : null,
@@ -147,14 +164,19 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             null,
             // Deliberately no invoiceId either: the bank import re-dates every
             // entry carrying one when a statement line matches that invoice,
-            // and a deduction belongs to the invoice date rather than to the
-            // payout. The invoice number stays traceable through the remark.
+            // which would drag the deduction to the payout date - and a payout
+            // covering several invoices says nothing about any single one of
+            // them. The date is chosen above; the bank import must not override
+            // it. The invoice number stays traceable through the remark.
             null,
             null,
             !empty($config['taxRateId']) ? $this->taxRateRepo->find((int) $config['taxRateId']) : null,
         );
 
-        $entry->setRequiresDocumentNumber(true);
+        // Defaults to true: workflows configured before the choice existed all
+        // book deductions that are documented by a supplier invoice arriving
+        // later, and silently dropping the guard would let their month close.
+        $entry->setRequiresDocumentNumber('0' !== (string) ($config['requiresDocumentNumber'] ?? '1'));
 
         return $this->translator->trans('workflow.log.percentage_entry_created', [
             // Formatted like the amount beside it: "1,40" rather than PHP's "1.4".
