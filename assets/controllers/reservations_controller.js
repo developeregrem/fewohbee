@@ -92,7 +92,9 @@ export default class extends Controller {
         setLocalStorageItemIfNotExists('reservation-settings-show-week', 'true');
         setLocalStorageItemIfNotExists('reservation-settings-show-weekday', 'false');
         setLocalStorageItemIfNotExists('reservation-settings-show-object', 'all');
-        setLocalStorageItemIfNotExists('reservation-settings-show-calendar-entries', 'false');
+        // On by default: a calendar without its entries shown is of little use,
+        // and local storage then only ever records an explicit "off".
+        setLocalStorageItemIfNotExists('reservation-settings-show-calendar-entries', 'true');
 
         this.tableFilter.addEventListener('submit', (event) => {
             event.preventDefault();

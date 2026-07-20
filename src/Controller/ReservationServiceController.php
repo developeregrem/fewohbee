@@ -103,7 +103,7 @@ class ReservationServiceController extends AbstractController
         $hasExplicitYearlyApartmentRequested = (bool) $requestStack->getSession()->get('reservation-overview-explicit-yearly-apartment-requested', false);
         $requestStack->getSession()->remove('reservation-overview-explicit-yearly-apartment-requested');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
@@ -216,7 +216,7 @@ class ReservationServiceController extends AbstractController
         $startDate = new \DateTimeImmutable(date('Y-m-d', $date), new \DateTimeZone('UTC'));
         $endDate = $startDate->modify('+'.$interval.' days');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
         $statusMode = $showCanceled ? 'non_blocking' : 'blocking';
 
         $allReservations = $em->getRepository(Reservation::class)
@@ -288,7 +288,7 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
 
         return $this->render('Reservations/reservation_table_year.html.twig', [
             'year' => $year,
@@ -319,7 +319,7 @@ class ReservationServiceController extends AbstractController
 
         $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
 
         return $this->render('Reservations/reservation_table_settings_input_fields.html.twig', [
             'objects' => $objects,
@@ -1565,7 +1565,7 @@ class ReservationServiceController extends AbstractController
     /** Render the day-before/day-of reminder modal for all calendars that require confirmation. */
     public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository, RequestStack $requestStack): Response
     {
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
 
         return $this->render('Reservations/calendar_entry_reminder.html.twig', [
             'pendingReminders' => $showCalendarEntries ? $calendarEntryRepository->findPendingReminders() : [],
