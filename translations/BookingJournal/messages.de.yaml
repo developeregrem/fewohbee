@@ -176,6 +176,13 @@ accounting.journal.export: Export
 accounting.journal.export.datev: DATEV Buchungsstapel (CSV)
 accounting.journal.export.year: Jahresexport DATEV
 accounting.journal.export.year.help: "Alle Buchungen des ausgewählten Jahres in einer DATEV-CSV exportieren."
+accounting.journal.year_view.title: Jahresansicht
+accounting.journal.year_view.help: "Alle Buchungen des ausgewählten Jahres in einer sortierbaren Tabelle."
+accounting.journal.year_view.toggle_filters: Filter
+accounting.journal.year_view.filter_placeholder: Filtern …
+accounting.journal.year_view.filter_compare_placeholder: "z. B. > 100"
+accounting.journal.year_view.filter_compare_hint: "Vergleiche: > < >= <= = != — mehrere kombinierbar, z. B. Zeitraum >=01.06.2026 <=31.08.2026 (sonst Textsuche)"
+accounting.journal.year_view.closed_month: Monat abgeschlossen – nicht bearbeitbar
 accounting.journal.export.no_batches: "Für dieses Jahr gibt es keine Buchungen."
 accounting.journal.export.no_settings: "Bitte zuerst die DATEV-Export-Einstellungen konfigurieren."
 accounting.journal.export.warn_intro: "Folgende Einträge sind unvollständig. Der Export ist trotzdem möglich – die Korrekturen können hier oder nachträglich in DATEV vorgenommen werden."

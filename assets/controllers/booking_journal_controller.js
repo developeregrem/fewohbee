@@ -38,6 +38,14 @@ export default class extends Controller {
         window.location.href = template.replace('__YEAR__', encodeURIComponent(year));
     }
 
+    openYearView(event) {
+        event.preventDefault();
+        const template = event.currentTarget.dataset.urlTemplate;
+        const year = this.hasYearSelectTarget ? this.yearSelectTarget.value : '';
+        if (!template || !year) return;
+        window.location.href = template.replace('__YEAR__', encodeURIComponent(year));
+    }
+
     paginateBatchesAction(event) {
         event.preventDefault();
         const page = event.currentTarget.dataset.page || 1;
