@@ -6,6 +6,7 @@ namespace App\Workflow\Action;
 
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
+use App\Entity\ReservationOrigin;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -24,7 +25,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * workflow's conditions.
  *
  * Config:
- *   percent         string   – percentage of the invoice's gross total
+ *   percentSource   string   – where the percentage comes from, see the constants
+ *   percent         string   – percentage of the gross total, used when the source
+ *                              is manual
  *   debitAccountId  int|null – expense (or reverse-charge) account
  *   creditAccountId int|null – account the deduction is taken from, usually the
  *                              same one the invoice itself was booked against
@@ -35,6 +38,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class CreatePercentageEntryAction implements WorkflowActionInterface
 {
+    /** The percentage is typed into the workflow. */
+    public const PERCENT_SOURCE_MANUAL = 'manual';
+
+    /** The percentage is the commission configured on the invoice's reservation origin. */
+    public const PERCENT_SOURCE_COMMISSION = 'origin_commission';
+
+    /** The percentage is the payment fee configured on the invoice's reservation origin. */
+    public const PERCENT_SOURCE_PAYMENT_FEE = 'origin_payment_fee';
+
     public function __construct(
         private readonly BookingJournalService $bookingJournalService,
         private readonly AccountingAccountRepository $accountRepo,
@@ -71,11 +83,26 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
     {
         return [
             [
+                'key' => 'percentSource',
+                'type' => 'select',
+                'label' => 'workflow.form.percentage_entry_percent_source',
+                'help' => 'workflow.form.percentage_entry_percent_source_help',
+                'options' => [
+                    ['value' => self::PERCENT_SOURCE_MANUAL, 'label' => 'workflow.form.percentage_entry_percent_source_manual'],
+                    ['value' => self::PERCENT_SOURCE_COMMISSION, 'label' => 'workflow.form.percentage_entry_percent_source_commission'],
+                    ['value' => self::PERCENT_SOURCE_PAYMENT_FEE, 'label' => 'workflow.form.percentage_entry_percent_source_payment_fee'],
+                ],
+                'default' => self::PERCENT_SOURCE_MANUAL,
+            ],
+            [
                 'key' => 'percent',
                 'type' => 'text',
                 'label' => 'workflow.form.percentage_entry_percent',
                 'help' => 'workflow.form.percentage_entry_percent_help',
                 'default' => '',
+                // Only relevant when the percentage is typed in, not read from
+                // the origin - so it only shows for the manual source.
+                'showIf' => ['key' => 'percentSource', 'value' => self::PERCENT_SOURCE_MANUAL],
             ],
             [
                 'key' => 'debitAccountId',
@@ -131,7 +158,7 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_unsupported_entity'));
         }
 
-        $percent = (float) str_replace(',', '.', trim((string) ($config['percent'] ?? '')));
+        $percent = $this->resolvePercent($config, $entity);
         if ($percent <= 0.0) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_percentage'));
         }
@@ -187,6 +214,42 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             '%amount%' => number_format($amount, 2, ',', '.'),
             '%number%' => (string) $entity->getNumber(),
         ]);
+    }
+
+    /**
+     * The percentage to book, from wherever the config points it at. Reading it
+     * from the reservation origin keeps commission and payment fee in one place
+     * shared with what the guest is shown, rather than repeated in each
+     * workflow's config where the two could drift apart. An origin source that
+     * finds no origin or no value yields zero, which the caller treats as
+     * nothing to book - the same as a manual percentage left blank.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function resolvePercent(array $config, Invoice $invoice): float
+    {
+        $source = (string) ($config['percentSource'] ?? self::PERCENT_SOURCE_MANUAL);
+
+        $raw = match ($source) {
+            self::PERCENT_SOURCE_COMMISSION => $this->originOf($invoice)?->getCommissionPercent(),
+            self::PERCENT_SOURCE_PAYMENT_FEE => $this->originOf($invoice)?->getPaymentFeePercent(),
+            default => $config['percent'] ?? '',
+        };
+
+        return (float) str_replace(',', '.', trim((string) $raw));
+    }
+
+    /** The origin of the invoice's first reservation that carries one. */
+    private function originOf(Invoice $invoice): ?ReservationOrigin
+    {
+        foreach ($invoice->getReservations() as $reservation) {
+            $origin = $reservation->getReservationOrigin();
+            if (null !== $origin) {
+                return $origin;
+            }
+        }
+
+        return null;
     }
 
     /** Gross total of the invoice, the same figure the invoice itself shows. */

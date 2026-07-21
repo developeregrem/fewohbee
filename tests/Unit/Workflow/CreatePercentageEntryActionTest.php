@@ -7,7 +7,10 @@ namespace App\Tests\Unit\Workflow;
 use App\Entity\AccountingAccount;
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
+use App\Entity\Reservation;
+use App\Entity\ReservationOrigin;
 use App\Entity\TaxRate;
+use Doctrine\Common\Collections\ArrayCollection;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -101,6 +104,42 @@ final class CreatePercentageEntryActionTest extends TestCase
         $action->execute($this->config(['percent' => '']), $this->invoice(), []);
     }
 
+    public function testReadsTheCommissionFromTheReservationOrigin(): void
+    {
+        // The percentage is left off the config; it comes from the origin, the
+        // same value the guest is shown. The manual field is ignored.
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+        $action->execute($config, $this->invoiceWithOrigin(commission: '12', paymentFee: '1.4'), []);
+
+        self::assertSame('13.82', $captured['amount']);
+    }
+
+    public function testReadsThePaymentFeeFromTheReservationOrigin(): void
+    {
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_PAYMENT_FEE]);
+        $action->execute($config, $this->invoiceWithOrigin(commission: '12', paymentFee: '1.4'), []);
+
+        self::assertSame('1.61', $captured['amount']);
+    }
+
+    public function testSkipsWhenTheOriginSourceHasNoValue(): void
+    {
+        // A direct booking, or an origin whose fee is not filled in: nothing to
+        // book, the same as a manual percentage left blank.
+        $action = $this->makeAction(gross: 115.20);
+
+        $config = $this->config(['percent' => '99', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $this->invoiceWithOrigin(commission: null, paymentFee: null), []);
+    }
+
     public function testSkipsWhenTheInvoiceHasNoAmount(): void
     {
         $action = $this->makeAction(gross: 0.0);
@@ -138,6 +177,24 @@ final class CreatePercentageEntryActionTest extends TestCase
         $invoice = $this->createStub(Invoice::class);
         $invoice->method('getNumber')->willReturn($number);
         $invoice->method('getDate')->willReturn(new \DateTime('2026-06-26'));
+
+        return $invoice;
+    }
+
+    private function invoiceWithOrigin(?string $commission, ?string $paymentFee): Invoice
+    {
+        $origin = new ReservationOrigin();
+        $origin->setName('Booking.com');
+        $origin->setCommissionPercent($commission);
+        $origin->setPaymentFeePercent($paymentFee);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getNumber')->willReturn('17730');
+        $invoice->method('getDate')->willReturn(new \DateTime('2026-06-26'));
+        $invoice->method('getReservations')->willReturn(new ArrayCollection([$reservation]));
 
         return $invoice;
     }
