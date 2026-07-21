@@ -238,6 +238,8 @@ class InvoiceService
         $periods = $this->getUniqueReservationPeriods($invoice);
         $appartmentNumbers = $this->getUniqueAppartmentsNumber($invoice);
 
+        $surcharge = $this->resolveGuestSurcharge($invoice, $brutto);
+
         $params = [
             'invoice' => $invoice,
             'vats' => $vatSums,
@@ -252,9 +254,59 @@ class InvoiceService
             // Issuer data follows the invoice's branch, so a two-company setup prints
             // each invoice's own payment period. Null when none is configured.
             'paymentDueDate' => $this->readinessService?->resolveSettingsFor($invoice)?->dueDateFor($invoice->getDate()),
+            // The portal's commission and payment fee for a booking through the
+            // reservation's origin. Amounts are zero (not null) when no origin
+            // applies; originName is null then, so a template can guard with a
+            // plain [% if originName %]. A total, if wanted, is originCommission
+            // + originPaymentFee - left to the template rather than provided.
+            'originName' => $surcharge['name'],
+            'originCommission' => $surcharge['commission'],
+            'originCommissionFormated' => number_format($surcharge['commission'], 2, ',', '.'),
+            'originPaymentFee' => $surcharge['paymentFee'],
+            'originPaymentFeeFormated' => number_format($surcharge['paymentFee'], 2, ',', '.'),
         ];
 
         return $params;
+    }
+
+    /**
+     * The extra a guest paid by booking through the reservation's origin rather
+     * than directly, split into the portal's commission and payment fee, each a
+     * configured percentage of the gross total. Mirrors the basis the deduction
+     * workflows book on, so the figures shown to the guest match what the portal
+     * actually took.
+     *
+     * The first reservation carrying an origin with either percentage decides
+     * it; an invoice mixing origins is not a case that arises here. Amounts are
+     * zero rather than null when nothing applies, so templates need no null-guard
+     * beyond a truthiness check.
+     *
+     * @return array{name: ?string, commission: float, paymentFee: float}
+     */
+    private function resolveGuestSurcharge(Invoice $invoice, float $brutto): array
+    {
+        $empty = ['name' => null, 'commission' => 0.0, 'paymentFee' => 0.0];
+
+        foreach ($invoice->getReservations() as $reservation) {
+            $origin = $reservation->getReservationOrigin();
+            if (null === $origin) {
+                continue;
+            }
+
+            $commissionPercent = (float) ($origin->getCommissionPercent() ?? 0.0);
+            $paymentFeePercent = (float) ($origin->getPaymentFeePercent() ?? 0.0);
+            if ($commissionPercent <= 0.0 && $paymentFeePercent <= 0.0) {
+                continue;
+            }
+
+            return [
+                'name' => $origin->getName(),
+                'commission' => round($brutto * $commissionPercent / 100.0, 2),
+                'paymentFee' => round($brutto * $paymentFeePercent / 100.0, 2),
+            ];
+        }
+
+        return $empty;
     }
 
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string

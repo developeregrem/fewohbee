@@ -21,6 +21,20 @@ class ReservationOrigin
     #[ORM\Column(type: 'string', length: 7, nullable: true)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private $color;
+
+    /**
+     * The portal's commission for a booking through this origin, as a
+     * percentage of the gross total. Together with the payment fee it makes up
+     * what the guest carries over the direct price; kept apart so it mirrors
+     * the two deductions booked for it. Null when none applies (direct booking).
+     */
+    #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $commissionPercent = null;
+
+    /** The portal's payment fee, as a percentage of the gross total; see commission. */
+    #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $paymentFeePercent = null;
+
     #[ORM\ManyToMany(targetEntity: 'Price', mappedBy: 'reservationOrigins')]
     private $prices;
     #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
@@ -91,6 +105,32 @@ class ReservationOrigin
     public function setColor(?string $color): self
     {
         $this->color = $color;
+
+        return $this;
+    }
+
+    /** Portal commission as a percentage of the gross total, null when none applies. */
+    public function getCommissionPercent(): ?string
+    {
+        return $this->commissionPercent;
+    }
+
+    public function setCommissionPercent(?string $commissionPercent): self
+    {
+        $this->commissionPercent = $commissionPercent;
+
+        return $this;
+    }
+
+    /** Portal payment fee as a percentage of the gross total, null when none applies. */
+    public function getPaymentFeePercent(): ?string
+    {
+        return $this->paymentFeePercent;
+    }
+
+    public function setPaymentFeePercent(?string $paymentFeePercent): self
+    {
+        $this->paymentFeePercent = $paymentFeePercent;
 
         return $this;
     }

@@ -114,6 +114,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'appartmentTotal' => ['type' => 'scalar'],
             'miscTotal' => ['type' => 'scalar'],
             'paymentDueDate' => ['type' => 'date'],
+            'originName' => ['type' => 'scalar'],
+            'originCommission' => ['type' => 'scalar'],
+            'originCommissionFormated' => ['type' => 'scalar'],
+            'originPaymentFee' => ['type' => 'scalar'],
+            'originPaymentFeeFormated' => ['type' => 'scalar'],
         ];
     }
 
@@ -261,6 +266,27 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'content' => "<p data-if=\"paymentDueDate\">{{ 'invoice.payment_due_date'|trans }}: [[ paymentDueDate|date('d.m.Y') ]]</p>",
             ],
             [
+                'id' => 'invoice.origin_name',
+                'label' => 'templates.editor.origin_name',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ originName ]]',
+            ],
+            [
+                'id' => 'invoice.origin_commission',
+                'label' => 'templates.editor.origin_commission',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ originCommissionFormated ]] €',
+            ],
+            [
+                'id' => 'invoice.origin_payment_fee',
+                'label' => 'templates.editor.origin_payment_fee',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '[[ originPaymentFeeFormated ]] €',
+            ],
+            [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
                 'group' => 'PDF',
@@ -337,6 +363,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         $periods = $this->invoiceService->getUniqueReservationPeriods($invoice);
         $numbers = $this->invoiceService->getUniqueAppartmentsNumber($invoice);
 
+        // Sample surcharges so a template using the origin placeholders renders
+        // in the preview; a real invoice fills these from its reservation origin.
+        $sampleCommission = round($brutto * 12.0 / 100.0, 2);
+        $samplePaymentFee = round($brutto * 1.4 / 100.0, 2);
+
         $params = [
             'invoice' => $invoice,
             'vats' => $vats,
@@ -351,6 +382,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             // A sample invoice has no issuer behind it, so the preview shows what a
             // ten-day period would look like rather than leaving the line empty.
             'paymentDueDate' => (new \DateTimeImmutable('today'))->modify('+10 days'),
+            'originName' => 'Booking.com',
+            'originCommission' => $sampleCommission,
+            'originCommissionFormated' => number_format($sampleCommission, 2, ',', '.'),
+            'originPaymentFee' => $samplePaymentFee,
+            'originPaymentFeeFormated' => number_format($samplePaymentFee, 2, ',', '.'),
         ];
 
         return $this->appendPreviewMeta($params, $ctx);

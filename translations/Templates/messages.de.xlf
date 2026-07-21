@@ -822,6 +822,18 @@
                 <source>templates.editor.apartment_modifier.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Aufschlag- und Ermäßigungspositionen ein (z.B. Last-Minute-Rabatt, Haustiergebühr). Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.origin_name">
+                <source>templates.editor.origin_name</source>
+                <target>Buchungsherkunft (Name)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_commission">
+                <source>templates.editor.origin_commission</source>
+                <target>OTA-Kommission</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_payment_fee">
+                <source>templates.editor.origin_payment_fee</source>
+                <target>OTA-Zahlungsgebühr</target>
+            </trans-unit>
             <trans-unit id="templates.editor.tourist_tax.positions">
                 <source>templates.editor.tourist_tax.positions</source>
                 <target>Liste der Beherbergungsabgabe</target>

@@ -30,6 +30,18 @@
                 <source>reservationorigin.color.help</source>
                 <target>Die Farbe wird in der Reservierungsübersicht als Indikator an der Reservierung angezeigt.</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.guest_surcharge_enabled">
+                <source>reservationorigin.guest_surcharge_enabled</source>
+                <target>OTA-Gebühren</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.commission_percent">
+                <source>reservationorigin.commission_percent</source>
+                <target>Kommission</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.payment_fee_percent">
+                <source>reservationorigin.payment_fee_percent</source>
+                <target>Zahlungsgebühr</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>
@@ -41,6 +53,10 @@
             <trans-unit id="reservationorigin.flash.edit.success">
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.flash.surcharge_required">
+                <source>reservationorigin.flash.surcharge_required</source>
+                <target>Bei aktivierten OTA-Gebühren muss mindestens Kommission oder Zahlungsgebühr angegeben werden.</target>
             </trans-unit>
             <trans-unit id="reservationorigin.flash.delete.success">
                 <source>reservationorigin.flash.delete.success</source>

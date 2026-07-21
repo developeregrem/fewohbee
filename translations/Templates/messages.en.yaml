@@ -72,6 +72,9 @@ templates.editor.apartment_modifier.positions.desc: >-
   Inserts a table with all apartment surcharge / discount positions (e.g.
   last-minute discounts, pet fees). The table is only rendered when such
   positions exist on the invoice.
+templates.editor.origin_name: Booking origin (name)
+templates.editor.origin_commission: OTA commission
+templates.editor.origin_payment_fee: OTA payment fee
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.payment_qr: Payment QR code (GiroCode)
 templates.editor.payment_qr.desc: >-
