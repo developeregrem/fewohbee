@@ -13,11 +13,15 @@
 
 {% macro filterth(index, type, extraClass) %}
     {% set compare = type in ['number', 'date'] %}
+    {# Date and number columns support comparison operators, but the hint differs:
+       only date columns talk about a "range", numbers get a plain number example. #}
+    {% set placeholderKey = compare ? 'accounting.journal.year_view.filter_compare_placeholder_' ~ type : 'accounting.journal.year_view.filter_placeholder' %}
+    {% set hintKey = 'accounting.journal.year_view.filter_compare_hint_' ~ type %}
     <th{% if extraClass %} class="{{ extraClass }}"{% endif %}>
         <input type="search" class="form-control form-control-sm" data-journal-year-table-target="columnFilter"
                data-column-index="{{ index }}" data-column-type="{{ type }}" data-action="input->journal-year-table#filter"
-               placeholder="{{ (compare ? 'accounting.journal.year_view.filter_compare_placeholder' : 'accounting.journal.year_view.filter_placeholder')|trans }}"
-               {% if compare %}title="{{ 'accounting.journal.year_view.filter_compare_hint'|trans }}"{% endif %}
+               placeholder="{{ placeholderKey|trans }}"
+               {% if compare %}title="{{ hintKey|trans }}"{% endif %}
                aria-label="{{ 'accounting.journal.year_view.filter_placeholder'|trans }}">
     </th>
 {% endmacro %}

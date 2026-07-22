@@ -180,8 +180,10 @@ accounting.journal.year_view.title: Yearly view
 accounting.journal.year_view.help: "All entries of the selected year in one sortable table."
 accounting.journal.year_view.toggle_filters: Filters
 accounting.journal.year_view.filter_placeholder: Filter …
-accounting.journal.year_view.filter_compare_placeholder: "e.g. > 100"
-accounting.journal.year_view.filter_compare_hint: "Comparisons: > < >= <= = != — combine several, e.g. range >=2026-06-01 <=2026-08-31 (otherwise text search)"
+accounting.journal.year_view.filter_compare_placeholder_date: "e.g. >=2026-06-01"
+accounting.journal.year_view.filter_compare_hint_date: "Comparisons: > < >= <= = != — combine for a range, e.g. >=2026-06-01 <=2026-08-31 (otherwise text search)"
+accounting.journal.year_view.filter_compare_placeholder_number: "e.g. > 100"
+accounting.journal.year_view.filter_compare_hint_number: "Comparisons: > < >= <= = != — combine several, e.g. >=100 <=500 (otherwise text search)"
 accounting.journal.year_view.closed_month: Month closed – not editable
 accounting.journal.export.no_batches: "No bookings exist for this year."
 accounting.journal.export.no_settings: "Please configure the DATEV export settings first."
