@@ -28,8 +28,7 @@
    in app.css, which turns these two values into a fixed layout. #}
 {% set nameColumnChars = ('reservation.appartment.name'|trans)|length %}
 {% for row in grid.rows %}
-    {% set apartmentLabel = row.apartment.number ~ (row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 ? ' (' ~ row.apartment.roomCategory.acronym ~ ')' : '') %}
-    {% set nameColumnChars = max(nameColumnChars, apartmentLabel|length) %}
+    {% set nameColumnChars = max(nameColumnChars, row.apartmentLabel|length) %}
 {% endfor %}
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
@@ -143,7 +142,7 @@
                             show: 'yearly',
                             apartmentId: row.apartment.id
                         }) }}" title="{{ 'reservation.table.view.yearly'|trans }}">
-                            {{ row.apartment.number }}{% if row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 %} ({{ row.apartment.roomCategory.acronym }}){% endif %}
+                            {{ row.apartmentLabel }}
                         </a>
                     </td>
                 {% endif %}

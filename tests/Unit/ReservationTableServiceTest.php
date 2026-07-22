@@ -10,6 +10,7 @@ use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
 use App\Service\ReservationTableService;
 use PHPUnit\Framework\TestCase;
 
@@ -569,6 +570,46 @@ final class ReservationTableServiceTest extends TestCase
         // Mar 3 right: empty (departure)
         self::assertSame(TableCell::TYPE_EMPTY, $cells[2]->type);
         self::assertSame('right', $cells[2]->side);
+    }
+
+    // ── Apartment Label Tests ─────────────────────────────────────────
+    // The label is prebuilt in the DTO (single source for column-width
+    // calculation and rendered cell); see ReservationTableService::buildApartmentLabel().
+
+    public function testApartmentLabelWithoutRoomCategory(): void
+    {
+        $apt = self::makeApartment(1, '101');
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101', $grid->rows[0]->apartmentLabel);
+    }
+
+    public function testApartmentLabelWithRoomCategoryAcronym(): void
+    {
+        $category = new RoomCategory();
+        $category->setAcronym('DBL');
+        $apt = self::makeApartment(1, '101');
+        $apt->setRoomCategory($category);
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101 (DBL)', $grid->rows[0]->apartmentLabel);
+    }
+
+    public function testApartmentLabelWithEmptyAcronymOmitsParentheses(): void
+    {
+        $category = new RoomCategory();
+        $category->setAcronym('');
+        $apt = self::makeApartment(1, '101');
+        $apt->setRoomCategory($category);
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101', $grid->rows[0]->apartmentLabel);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
