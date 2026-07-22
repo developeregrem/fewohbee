@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Cache\RuntimePrefixedRedisAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
@@ -28,25 +29,39 @@ return static function (ContainerConfigurator $container): void {
             ->args([
                 'redis://%env(REDIS_HOST)%:%env(int:REDIS_PORT)%/%env(int:REDIS_IDX)%',
                 ['lazy' => true],
-            ])
-            ->call('setOption', [\Redis::OPT_PREFIX, '%env(REDIS_PREFIX)%']);
+            ]);
 
         $services->set('app.redis_system_cache_connection', \Redis::class)
             ->factory([RedisAdapter::class, 'createConnection'])
             ->args([
                 'redis://%env(REDIS_HOST)%:%env(int:REDIS_PORT)%/%env(int:REDIS_SYSTEM_IDX)%',
                 ['lazy' => true],
+            ]);
+
+        $services->set('app.cache_adapter.redis_app', RuntimePrefixedRedisAdapter::class)
+            ->abstract()
+            ->args([
+                service('app.redis_app_cache_connection'),
+                '',
+                0,
+                service('cache.default_marshaller')->nullOnInvalid(),
+                '%env(REDIS_PREFIX)%',
             ])
-            ->call('setOption', [\Redis::OPT_PREFIX, '%env(REDIS_PREFIX)%']);
+            ->tag('cache.pool', [
+                'provider' => 'app.redis_app_cache_connection',
+                'clearer' => 'cache.default_clearer',
+                'reset' => 'reset',
+            ]);
 
         // cache.system needs its own provider so REDIS_SYSTEM_IDX is effective.
-        $services->set('app.cache_adapter.redis_system', RedisAdapter::class)
+        $services->set('app.cache_adapter.redis_system', RuntimePrefixedRedisAdapter::class)
             ->abstract()
             ->args([
                 service('app.redis_system_cache_connection'),
                 '',
                 0,
                 service('cache.default_marshaller')->nullOnInvalid(),
+                '%env(REDIS_PREFIX)%',
             ])
             ->tag('cache.pool', [
                 'provider' => 'app.redis_system_cache_connection',
@@ -54,7 +69,7 @@ return static function (ContainerConfigurator $container): void {
                 'reset' => 'reset',
             ]);
 
-        $cache['app'] = 'cache.adapter.redis';
+        $cache['app'] = 'app.cache_adapter.redis_app';
         $cache['system'] = 'app.cache_adapter.redis_system';
         $cache['default_redis_provider'] = 'app.redis_app_cache_connection';
     }
