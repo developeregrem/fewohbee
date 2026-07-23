@@ -299,6 +299,20 @@ body {
   pointer-events: none;
 }
 
+/* The right-edge pseudo-element above supplies the separators between header
+   cells. Since their real borders are disabled, the first cell in each row
+   also needs an explicit left edge to close the table outline. */
+.table.table-sticky thead tr > :first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
+}
+
 /* left sticky column in reservation overview*/
 .table.table-sticky tbody tr > *:first-child {
   position: sticky;

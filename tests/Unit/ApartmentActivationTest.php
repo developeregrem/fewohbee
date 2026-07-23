@@ -9,6 +9,7 @@ use App\Entity\CalendarSyncImport;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\ReservationRepository;
 use App\Service\CalendarImportService;
+use App\Service\Ics\IcsEventParser;
 use App\Service\InvoiceService;
 use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -74,6 +75,7 @@ final class ApartmentActivationTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(ReservationRepository::class),
             $this->createStub(\App\Repository\RoomBlockRepository::class),
+            $this->createStub(IcsEventParser::class),
         );
 
         $import = (new CalendarSyncImport())
