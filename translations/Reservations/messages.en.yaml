@@ -74,6 +74,7 @@ reservation.table.settings.displayWeekday: Display weekday names
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.showCanceledOnly: Show only canceled/no-show reservations
+reservation.table.settings.showCalendarEntries: Show calendar entries
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View
@@ -153,3 +154,30 @@ roomblock.conflict.block.line: 'Room %room%: existing block "%reason%" from %fro
 roomblock.error.period: Please enter a valid period of at least one night.
 roomblock.error.reason: Please enter a reason.
 roomblock.error.rooms: Please select at least one room.
+reservation.calendar_reminder.button: Reminders
+reservation.calendar_reminder.title: Calendar reminders
+reservation.calendar_reminder.section.title: Confirm entries
+reservation.calendar_reminder.hint: "Confirmed entries are kept permanently."
+reservation.calendar_reminder.today: Today
+reservation.calendar_reminder.empty: No open calendar reminders.
+reservation.calendar_reminder.table.date: Date
+reservation.calendar_reminder.table.entry: Entry
+reservation.calendar_reminder.table.actions: Actions
+reservation.calendar_reminder.action.confirm.title: Confirm
+calendar_entry.title_edit: Edit calendar entry
+calendar_entry.title_new: Add calendar entry
+calendar_entry.modal.title: Calendar entry
+calendar_entry.calendar: Calendar
+calendar_entry.form.calendar: Calendar
+calendar_entry.form.date: Date
+calendar_entry.form.date_to: Until
+calendar_entry.form.date_to_help: "End date – optional, for a multi-day entry (e.g. a vacation period). Creates one entry per day."
+calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
+calendar_entry.form.title: Title
+calendar_entry.popover.new: + New entry
+calendar_entry.confirmed_at: "Reminder confirmed on %datetime%"
+calendar_entry.sync_warning: "This entry comes from an ICS source. Until it's confirmed, its date and title are reset to the source value on every sync."
+calendar_entry.delete: Delete
+calendar_entry.unconfirm: Undo confirmation
+calendar_entry.flash.saved: Calendar entry saved.
+calendar_entry.flash.deleted: Calendar entry deleted.

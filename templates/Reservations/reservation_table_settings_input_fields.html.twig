@@ -55,6 +55,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <div class="col-sm text-start">
+                        <div class="form-check form-check-inline form-switch">
+                            <input type="hidden" name="showCalendarEntries" value="0">
+                            <input type="checkbox" name="showCalendarEntries" id="show-calendar-entries" class="form-check-input" value="1"
+                                   {% if showCalendarEntries %}checked{% endif %}
+                                   data-action="change->reservations#getNewTableAction">
+                            <label class="checkbox-inline checkbox-switch form-check-label" for="show-calendar-entries">{{ 'reservation.table.settings.showCalendarEntries'|trans }}</label>
+                        </div>
+                    </div>
+                </div>
 			</div>
 
             <div class="tab-pane fade" id="nav-holidays" role="tabpanel" aria-labelledby="nav-holidays-tab" tabindex="1">

@@ -26,7 +26,12 @@ use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Event\ReservationCreatedEvent;
+use App\Entity\CalendarEntry;
+use App\Entity\User;
 use App\Form\ReservationMetaType;
+use App\Form\CalendarEntryType;
+use App\Repository\CalendarEntryRepository;
+use App\Repository\CalendarRepository;
 use App\Service\AvailabilityService;
 use App\Service\CalendarImportService;
 use App\Service\CalendarService;
@@ -40,10 +45,12 @@ use App\Service\ReservationService;
 use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
+use App\Service\ReservationTableDecorationService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,13 +69,22 @@ class ReservationServiceController extends AbstractController
 {
     private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
 
+    /**
+     * Upper bound on how many days a manually created calendar entry's
+     * date/dateTo range is expanded into - mirrors
+     * CalendarEntrySyncService::MAX_EVENT_SPAN_DAYS for the same reason: a
+     * fat-fingered end date years out must not be able to create thousands
+     * of rows.
+     */
+    private const MAX_MANUAL_ENTRY_RANGE_DAYS = 366;
+
     private $perPage = 15;
 
     /**
      * Index Action start page.
      */
     #[Route('/', name: 'start', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs, CalendarEntryRepository $calendarEntryRepository)
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -91,9 +107,11 @@ class ReservationServiceController extends AbstractController
         $hasExplicitYearlyApartmentRequested = (bool) $requestStack->getSession()->get('reservation-overview-explicit-yearly-apartment-requested', false);
         $requestStack->getSession()->remove('reservation-overview-explicit-yearly-apartment-requested');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
+        $calendarReminderCount = $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0;
 
         return $this->render('Reservations/index.html.twig', [
             'objects' => $objects,
@@ -109,9 +127,11 @@ class ReservationServiceController extends AbstractController
             'show' => $show,
             'hasExplicitYearlyApartmentRequested' => $hasExplicitYearlyApartmentRequested,
             'showCanceled' => $showCanceled,
+            'showCalendarEntries' => $showCalendarEntries,
             'showFirstSteps' => (0 == $firstApartmentId),
             'conflictCount' => $alertCount,
             'hasConflicts' => $conflictCount > 0,
+            'calendarReminderCount' => $calendarReminderCount,
         ]);
     }
 
@@ -141,20 +161,20 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $calendarEntryRepository, $decorationService);
         } else {
-            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
+            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request, $calendarEntryRepository);
         }
     }
 
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -163,6 +183,7 @@ class ReservationServiceController extends AbstractController
         $holidayCountry = $request->query->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->query->get('holidaySubdivision', 'all');
         $showCanceledParam = $request->query->get('showCanceled');
+        $showCalendarEntriesParam = $request->query->get('showCalendarEntries');
 
         if (null == $date) {
             $dateRef = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
@@ -191,11 +212,15 @@ class ReservationServiceController extends AbstractController
         if (null !== $showCanceledParam) {
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
+        if (null !== $showCalendarEntriesParam) {
+            $requestStack->getSession()->set('reservation-overview-show-calendar-entries', '1' === $showCalendarEntriesParam || 'true' === $showCalendarEntriesParam);
+        }
 
         // Build the grid using the new service (single bulk query instead of N+1)
         $startDate = new \DateTimeImmutable(date('Y-m-d', $date), new \DateTimeZone('UTC'));
         $endDate = $startDate->modify('+'.$interval.' days');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
         $statusMode = $showCanceled ? 'non_blocking' : 'blocking';
 
         $allReservations = $em->getRepository(Reservation::class)
@@ -205,6 +230,10 @@ class ReservationServiceController extends AbstractController
         $allBlocks = $em->getRepository(RoomBlock::class)
             ->findForApartments($startDate, $endDate, $appartments);
 
+        // A selected subdivision narrows the holiday set; "all" keeps the
+        // whole country's (mirrors what the template used to decide).
+        $holidayRegion = 'all' === $selectedSubdivision ? $holidayCountry : $selectedSubdivision;
+
         $grid = $tableService->buildGrid(
             $appartments,
             $startDate,
@@ -212,6 +241,13 @@ class ReservationServiceController extends AbstractController
             $allReservations,
             'all' === $objectId || null === $objectId,
             $allBlocks,
+            $decorationService->buildForDays(
+                $tableService->buildDays($startDate, $interval),
+                $holidayRegion,
+                $request->getLocale(),
+                $showCalendarEntries,
+                $this->isGranted('ROLE_RESERVATIONS'),
+            ),
         );
 
         return $this->render('Reservations/reservation_table.html.twig', [
@@ -222,6 +258,8 @@ class ReservationServiceController extends AbstractController
             'holidayCountry' => $holidayCountry,
             'selectedSubdivision' => $selectedSubdivision,
             'objectId' => $objectId,
+            'showCalendarEntries' => $showCalendarEntries,
+            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
         ]);
     }
 
@@ -230,7 +268,7 @@ class ReservationServiceController extends AbstractController
      *
      * @throws NotFoundHttpException
      */
-    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
+    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, CalendarEntryRepository $calendarEntryRepository): Response
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('object');
@@ -259,9 +297,12 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
+
         return $this->render('Reservations/reservation_table_year.html.twig', [
             'year' => $year,
             'apartment' => $apartment,
+            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
             // "holidayCountry" => $holidayCountry,
             // 'selectedSubdivision' => $selectedSubdivision
         ]);
@@ -276,13 +317,18 @@ class ReservationServiceController extends AbstractController
         $selectedCountry = $request->request->get('holidayCountry', 'DE');
         $selectedSubdivision = $request->request->get('holidaySubdivision', 'all');
         $showCanceledParam = $request->request->get('showCanceled');
+        $showCalendarEntriesParam = $request->request->get('showCalendarEntries');
         $requestStack->getSession()->set('reservation-overview', 'table');
         if (null !== $showCanceledParam) {
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
+        if (null !== $showCalendarEntriesParam) {
+            $requestStack->getSession()->set('reservation-overview-show-calendar-entries', '1' === $showCalendarEntriesParam || 'true' === $showCalendarEntriesParam);
+        }
 
         $objectId = $requestStack->getSession()->get('reservation-overview-objectid', 'all');
         $showCanceled = (bool) $requestStack->getSession()->get('reservation-overview-show-canceled', false);
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
 
         return $this->render('Reservations/reservation_table_settings_input_fields.html.twig', [
             'objects' => $objects,
@@ -291,6 +337,7 @@ class ReservationServiceController extends AbstractController
             'selectedCountry' => $selectedCountry,
             'selectedSubdivision' => $selectedSubdivision,
             'showCanceled' => $showCanceled,
+            'showCalendarEntries' => $showCalendarEntries,
         ]);
     }
 
@@ -1595,6 +1642,175 @@ class ReservationServiceController extends AbstractController
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/calendar-reminder', name: 'reservations.calendar_reminder', methods: ['GET'])]
+    /** Render the day-before/day-of reminder modal for all calendars that require confirmation. */
+    public function getCalendarReminderAction(CalendarEntryRepository $calendarEntryRepository, RequestStack $requestStack): Response
+    {
+        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
+
+        return $this->render('Reservations/calendar_entry_reminder.html.twig', [
+            'pendingReminders' => $showCalendarEntries ? $calendarEntryRepository->findPendingReminders() : [],
+        ]);
+    }
+
+    #[Route('/calendar-reminder/{id}/confirm', name: 'reservations.calendar_reminder.confirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    /** Acknowledge a single pending calendar-entry reminder. */
+    public function confirmCalendarReminderAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    {
+        if (!$this->isCsrfTokenValid('confirmcalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$calendarEntry->isConfirmed()) {
+            $calendarEntry->setConfirmedAt(new \DateTime());
+            $calendarEntry->setConfirmedBy($this->getUser() instanceof User ? $this->getUser() : null);
+            $doctrine->getManager()->flush();
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/calendar-reminder/{id}/unconfirm', name: 'reservations.calendar_reminder.unconfirm', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    /** Undo an accidental confirmation, reopening the reminder. */
+    public function unconfirmCalendarReminderAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    {
+        if (!$this->isCsrfTokenValid('unconfirmcalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($calendarEntry->isConfirmed()) {
+            $calendarEntry->setConfirmedAt(null);
+            $calendarEntry->setConfirmedBy(null);
+            $doctrine->getManager()->flush();
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/calendar-entry/new', name: 'reservations.calendar_entry.new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    /**
+     * Manually add an entry to a calendar, independent of any ICS source.
+     * Reached from the "+ new entry" link in the year overview popover,
+     * which passes the clicked day via the date query param.
+     */
+    public function newCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarRepository $calendarRepository, TranslatorInterface $translator): Response
+    {
+        $calendars = $calendarRepository->findAllOrdered();
+        if ([] === $calendars) {
+            throw $this->createNotFoundException('No calendars configured yet.');
+        }
+
+        $dateParam = $request->query->get('date');
+        $date = $dateParam ? \DateTimeImmutable::createFromFormat('!Y-m-d', $dateParam) : false;
+
+        $requestedCalendarId = (int) $request->query->get('calendar', 0);
+        $defaultCalendar = $requestedCalendarId > 0 ? $calendarRepository->find($requestedCalendarId) : null;
+
+        $calendarEntry = new CalendarEntry();
+        $calendarEntry->setCalendar($defaultCalendar ?? $calendars[0]);
+        $calendarEntry->setDate($date instanceof \DateTimeImmutable ? $date : new \DateTimeImmutable('today'));
+        $calendarEntry->setTitle('');
+
+        $form = $this->createForm(CalendarEntryType::class, $calendarEntry, ['include_calendar' => true, 'include_date_to' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $startDate = $calendarEntry->getDate();
+            $dateTo = $form->get('dateTo')->getData();
+            $endDate = ($dateTo instanceof \DateTimeImmutable && $dateTo > $startDate) ? $dateTo : $startDate;
+
+            if ($startDate->diff($endDate)->days > self::MAX_MANUAL_ENTRY_RANGE_DAYS) {
+                $form->get('dateTo')->addError(new FormError($translator->trans('calendar_entry.form.date_to_too_far', [
+                    '%max%' => self::MAX_MANUAL_ENTRY_RANGE_DAYS,
+                ])));
+            } else {
+                $em = $doctrine->getManager();
+                // A range is just N independent single-day rows (same as a
+                // multi-day ICS event, see CalendarEntrySyncService). They
+                // keep sourceUid null, which is what marks them as manually
+                // created and keeps the sync from ever reconciling them.
+                for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
+                    $entry = $day == $startDate
+                        ? $calendarEntry
+                        : (new CalendarEntry())->setCalendar($calendarEntry->getCalendar())->setTitle($calendarEntry->getTitle());
+                    $entry->setDate($day);
+                    $em->persist($entry);
+                }
+                $em->flush();
+
+                if ($request->isXmlHttpRequest()) {
+                    return new Response('', Response::HTTP_NO_CONTENT);
+                }
+                $this->addFlash('success', 'calendar_entry.flash.saved');
+
+                return $this->redirectToRoute('start');
+            }
+        }
+
+        return $this->render('Reservations/calendar_entry_edit.html.twig', [
+            'form' => $form->createView(),
+            'calendarEntry' => $calendarEntry,
+            'isNew' => true,
+        ]);
+    }
+
+    #[Route('/calendar-entry/{id}/edit', name: 'reservations.calendar_entry.edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    /**
+     * Edit a single calendar entry, reached via the popover link in the
+     * year overview - opened in the shared reservation modal, same as
+     * "+ Reservierung hinzufügen".
+     */
+    public function editCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    {
+        $form = $this->createForm(CalendarEntryType::class, $calendarEntry);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $doctrine->getManager()->flush();
+
+            if ($request->isXmlHttpRequest()) {
+                return new Response('', Response::HTTP_NO_CONTENT);
+            }
+            $this->addFlash('success', 'calendar_entry.flash.saved');
+
+            return $this->redirectToRoute('start');
+        }
+
+        return $this->render('Reservations/calendar_entry_edit.html.twig', [
+            'form' => $form->createView(),
+            'calendarEntry' => $calendarEntry,
+            'isNew' => false,
+        ]);
+    }
+
+    #[Route('/calendar-entry/{id}/delete', name: 'reservations.calendar_entry.delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function deleteCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    {
+        // 'delete' ~ id, where both call sites pass id as
+        // "calendarentry<id>" - the shared delete_popover component builds
+        // the token that way, and the prefix keeps it distinct from other
+        // entities' delete tokens.
+        if (!$this->isCsrfTokenValid('deletecalendarentry'.$calendarEntry->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $em = $doctrine->getManager();
+        $em->remove($calendarEntry);
+        $em->flush();
+
+        if ($request->isXmlHttpRequest()) {
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+        $this->addFlash('success', 'calendar_entry.flash.deleted');
+
+        return $this->redirectToRoute('start');
     }
 
     private function createTimeFromRequestValue(?string $value): ?\DateTime

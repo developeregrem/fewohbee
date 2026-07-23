@@ -70,6 +70,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
             new TwigFunction('getLocalizedDate', [$this, 'getLocalizedDateFilter']),
             new TwigFunction('existsById', [$this, 'existsById']),
             new TwigFunction('getPublicdaysForDay', [$this, 'getPublicdaysForDay']),
+            new TwigFunction('calendar_accent_marker_style', [$this, 'getCalendarAccentMarkerStyle']),
             new TwigFunction('getReservationsForDay', [$this, 'getReservationsForDay']),
             new TwigFunction('timestamp2UTC', [$this, 'timestamp2UTC']),
             new TwigFunction('date2UTC', [$this, 'date2UTC']),
@@ -223,6 +224,112 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     public function getPublicdaysForDay($date, $code, $locale)
     {
         return $this->calendarService->getPublicdaysForDay($date, $code, $locale);
+    }
+
+    /**
+     * Upper bound on how many colors a single accent row holds before a
+     * second (third, ...) row starts - 4 equal segments in a header cell
+     * this narrow is already tight, a 5th would be unreadable.
+     */
+    private const ACCENT_ROW_MAX_COLORS = 4;
+
+    /** Thickness of one accent row, in pixels. */
+    private const ACCENT_ROW_HEIGHT_PX = 3;
+
+    /**
+     * Builds an accent-bar style for a set of hex colors, one per configured
+     * calendar that has an entry on this day. Each row of up to 4 colors is
+     * one horizontal bar split into that many equal-width segments (2
+     * colors -> 50/50, 3 -> thirds, 4 -> quarters); a 5th color onward
+     * starts a second stacked row, sized as evenly as possible across rows
+     * rather than maxing out each row before starting the next (5 -> 3+2,
+     * not 4+1; 6 -> 3+3, not 4+2) so no single row is ever more lopsided
+     * than it has to be.
+     *
+     * Implemented as stacked background-image layers (one hard-stop
+     * linear-gradient per row) rather than the box-shadow-per-color
+     * technique this replaced, since box-shadow can only paint whole-width
+     * lines - splitting a row into side-by-side segments needs a gradient.
+     *
+     * @param string[] $colors
+     */
+    public function getCalendarAccentMarkerStyle(array $colors): string
+    {
+        $colors = array_values(array_unique($colors));
+        if ([] === $colors) {
+            return '';
+        }
+
+        $rows = $this->splitIntoBalancedRows($colors, self::ACCENT_ROW_MAX_COLORS);
+
+        $images = [];
+        $positions = [];
+        $sizes = [];
+        foreach ($rows as $i => $rowColors) {
+            $images[] = $this->hardStopGradient($rowColors);
+            $positions[] = sprintf('0 %dpx', $i * self::ACCENT_ROW_HEIGHT_PX);
+            $sizes[] = sprintf('100%% %dpx', self::ACCENT_ROW_HEIGHT_PX);
+        }
+
+        // These cells are sticky-positioned table headers, which fake their
+        // bottom border via an inset box-shadow (see .table-sticky thead th
+        // in app.css) rather than a real border - since this inline style
+        // replaces the whole box-shadow property, re-add that layer here so
+        // entry cells don't lose their bottom border underneath the bars.
+        return sprintf(
+            ' box-shadow: inset 0 -1px 0 0 var(--bs-border-color); background-image: %s; background-position: %s; background-size: %s; background-repeat: no-repeat;',
+            implode(', ', $images),
+            implode(', ', $positions),
+            implode(', ', $sizes),
+        );
+    }
+
+    /**
+     * Splits $colors into ceil(count($colors) / $maxPerRow) rows, as evenly
+     * sized as possible (earlier rows get the remainder, one extra color
+     * each) rather than filling every row up to $maxPerRow before starting
+     * the next.
+     *
+     * @param string[] $colors
+     *
+     * @return list<string[]>
+     */
+    private function splitIntoBalancedRows(array $colors, int $maxPerRow): array
+    {
+        $total = \count($colors);
+        $rowCount = (int) ceil($total / $maxPerRow);
+        $base = intdiv($total, $rowCount);
+        $extra = $total % $rowCount;
+
+        $rows = [];
+        $offset = 0;
+        for ($i = 0; $i < $rowCount; ++$i) {
+            $size = $base + ($i < $extra ? 1 : 0);
+            $rows[] = \array_slice($colors, $offset, $size);
+            $offset += $size;
+        }
+
+        return $rows;
+    }
+
+    /**
+     * A linear-gradient with hard color stops - no actual gradient/blend,
+     * just $colors painted as equal-width side-by-side blocks.
+     *
+     * @param string[] $colors
+     */
+    private function hardStopGradient(array $colors): string
+    {
+        $count = \count($colors);
+        $stops = [];
+        foreach ($colors as $i => $color) {
+            $from = (int) round($i / $count * 100);
+            $to = (int) round(($i + 1) / $count * 100);
+            $stops[] = sprintf('%s %d%%', $color, $from);
+            $stops[] = sprintf('%s %d%%', $color, $to);
+        }
+
+        return 'linear-gradient(to right, '.implode(', ', $stops).')';
     }
 
     public function getReservationsForDay(\DateTimeInterface $day, array $reservations): array

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Dto\ReservationTable\DayCalendarEntry;
+use App\Dto\ReservationTable\DayDecoration;
 use App\Dto\ReservationTable\TableCell;
 use App\Entity\Appartment;
 use App\Entity\Customer;
@@ -704,5 +706,66 @@ final class ReservationTableServiceTest extends TestCase
         $apt->setMultipleOccupancy($multipleOccupancy);
 
         return $apt;
+    }
+
+    // ── Day Decorations ───────────────────────────────────────────────
+
+    public function testDayColumnsStayBareWithoutDecorations(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 1);
+        $columns = $this->service->buildDayColumns($days);
+
+        self::assertSame([], $columns[0]->holidays);
+        self::assertSame([], $columns[0]->calendarEntries);
+        self::assertSame([], $columns[0]->accentColors);
+        self::assertNull($columns[0]->newEntryUrl);
+    }
+
+    public function testDayColumnsPickUpDecorationsByDate(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 1);
+        $columns = $this->service->buildDayColumns($days, [
+            '2024-03-02' => new DayDecoration(
+                holidays: ['Karfreitag'],
+                calendarEntries: [self::makeEntry(1, 'Müll', 7, '#ff0000')],
+                newEntryUrl: '/new/2024-03-02',
+            ),
+        ]);
+
+        // Only the decorated day is touched; the other keeps its defaults.
+        self::assertSame([], $columns[0]->holidays);
+        self::assertNull($columns[0]->newEntryUrl);
+
+        self::assertSame(['Karfreitag'], $columns[1]->holidays);
+        self::assertCount(1, $columns[1]->calendarEntries);
+        self::assertSame('Müll', $columns[1]->calendarEntries[0]->title);
+        self::assertSame('/new/2024-03-02', $columns[1]->newEntryUrl);
+    }
+
+    public function testAccentColorsFollowEntryOrder(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 0);
+        $columns = $this->service->buildDayColumns($days, [
+            '2024-03-01' => new DayDecoration(calendarEntries: [
+                self::makeEntry(1, 'A', 7, '#ff0000'),
+                self::makeEntry(2, 'B', 8, '#00ff00'),
+                self::makeEntry(3, 'C', 8, '#00ff00'),
+            ]),
+        ]);
+
+        self::assertSame(['#ff0000', '#00ff00', '#00ff00'], $columns[0]->accentColors);
+    }
+
+    private static function makeEntry(int $id, string $title, int $calendarId, string $color): DayCalendarEntry
+    {
+        return new DayCalendarEntry(
+            id: $id,
+            title: $title,
+            calendarId: $calendarId,
+            calendarName: 'Kalender '.$calendarId,
+            color: $color,
+            editUrl: '/edit/'.$id,
+            deleteUrl: '/delete/'.$id,
+        );
     }
 }

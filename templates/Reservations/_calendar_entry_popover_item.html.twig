@@ -1,0 +1,19 @@
+{# One calendar entry inside a day-header popover: title, its calendar's
+   name, and a delete trigger.
+
+   Rendered into the day cell's data-bs-content attribute (see the
+   dayHeaderCell macro in reservation_table.html.twig), i.e. this markup is
+   escaped once on output there and unescaped again when Bootstrap injects
+   it - which is why the nested delete-popover content below needs its own
+   e('html_attr') pass to survive that second round trip.
+
+   Lives in its own template rather than inline in the macro because
+   {% use %} (needed for the shared delete-popover block) is only valid at
+   the top level of a template. #}
+{# `entry` is a DayCalendarEntry, not the doctrine entity: urls and colors
+   arrive resolved. The CSRF token stays here, because it comes with the
+   shared delete-popover block every other delete in the app uses. #}
+{% use "common/delete_popover.html.twig" %}
+{% set id = 'calendarentry' ~ entry.id %}
+{% set targetUrl = entry.deleteUrl %}
+<div class="d-flex justify-content-between align-items-center gap-2"><span>{% if entry.editUrl %}<a href="{{ entry.editUrl }}" class="text-dark text-decoration-underline js-calendar-entry-link">{{ entry.title }}</a>{% else %}{{ entry.title }}{% endif %} <span class="text-muted small">({{ entry.calendarName }})</span></span>{% if entry.deleteUrl %}<button type="button" class="btn btn-link btn-sm p-0 js-calendar-entry-delete" data-popover="delete" data-title="{{ 'registrationbook.delete.ask'|trans }}" data-bs-content="{{ block('deletePopoverContent')|e('html_attr') }}" title="{{ 'calendar_entry.delete'|trans }}"><i class="fas fa-trash-alt" style="color: {{ entry.color }}; font-size: 0.8em;"></i></button>{% endif %}</div>

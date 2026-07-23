@@ -9,6 +9,7 @@ use App\Entity\Reservation;
 use App\Event\CalendarImportBookingCreatedEvent;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
+use App\Service\Ics\IcsEventParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -37,6 +38,7 @@ class CalendarImportService
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly ReservationRepository $reservationRepository,
         private readonly RoomBlockRepository $roomBlockRepository,
+        private readonly IcsEventParser $icsParser,
     ) {
     }
 
@@ -64,13 +66,13 @@ class CalendarImportService
             return;
         }
 
-        if (!$this->isValidCalendar($content)) {
+        if (!$this->icsParser->isValidCalendar($content)) {
             $this->updateSyncError($import, 'calendar.sync.import.error.invalid_ical');
 
             return;
         }
 
-        $events = $this->parseEvents($content);
+        $events = $this->icsParser->parseEvents($content);
         if (count($events) === 0) {
             $this->updateSyncError($import, 'calendar.sync.import.error.no_events');
 
@@ -150,58 +152,6 @@ class CalendarImportService
         return sprintf('calendar_import_sync_all_%d', $bucket);
     }
 
-    /** Validate that the content is a basic iCal container. */
-    private function isValidCalendar(string $content): bool
-    {
-        return str_contains($content, 'BEGIN:VCALENDAR') && str_contains($content, 'END:VCALENDAR');
-    }
-
-    /** Parse VEVENT blocks into structured event data. */
-    private function parseEvents(string $content): array
-    {
-        $lines = preg_split('/\r\n|\r|\n/', $content);
-        $unfolded = [];
-        foreach ($lines as $line) {
-            if ($line === '') {
-                continue;
-            }
-            if (!empty($unfolded) && (str_starts_with($line, ' ') || str_starts_with($line, "\t"))) {
-                $unfolded[count($unfolded) - 1] .= ltrim($line);
-            } else {
-                $unfolded[] = $line;
-            }
-        }
-
-        $events = [];
-        $current = null;
-        foreach ($unfolded as $line) {
-            if ('BEGIN:VEVENT' === $line) {
-                $current = [];
-                continue;
-            }
-            if ('END:VEVENT' === $line) {
-                if (is_array($current)) {
-                    $events[] = $current;
-                }
-                $current = null;
-                continue;
-            }
-            if (!is_array($current)) {
-                continue;
-            }
-
-            $parts = explode(':', $line, 2);
-            if (count($parts) !== 2) {
-                continue;
-            }
-            [$name, $value] = $parts;
-            $name = strtoupper(explode(';', $name, 2)[0]);
-            $current[$name] = $value;
-        }
-
-        return $events;
-    }
-
     /** Persist a single event, respecting conflict strategy and updates. */
     private function syncEvent(CalendarSyncImport $import, array $event): string
     {
@@ -210,12 +160,12 @@ class CalendarImportService
         }
 
         $uid = $event['UID'];
-        $start = $this->parseIcalDate($event['DTSTART']);
+        $start = $this->icsParser->parseDate($event['DTSTART']);
         if (null === $start) {
             return self::SYNC_SKIP_MISSING;
         }
 
-        $end = isset($event['DTEND']) ? $this->parseIcalDate($event['DTEND']) : null;
+        $end = isset($event['DTEND']) ? $this->icsParser->parseDate($event['DTEND']) : null;
         $end = $end ?? $start;
 
         if ($this->isEventInPast($end)) {
@@ -234,22 +184,6 @@ class CalendarImportService
     private function isEventValid(array $event): bool
     {
         return isset($event['UID'], $event['DTSTAMP'], $event['DTSTART']);
-    }
-
-    /** Parse an iCal date or date-time string into a DateTimeImmutable. */
-    private function parseIcalDate(string $value): ?\DateTimeImmutable
-    {
-        if (preg_match('/^\d{8}$/', $value) === 1) {
-            $date = \DateTimeImmutable::createFromFormat('Ymd', $value);
-
-            return $date ?: null;
-        }
-
-        try {
-            return new \DateTimeImmutable($value);
-        } catch (\Exception $exception) {
-            return null;
-        }
     }
 
     /** Check whether an event ended before today. */

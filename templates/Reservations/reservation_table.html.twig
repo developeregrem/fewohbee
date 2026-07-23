@@ -1,3 +1,5 @@
+<div class="d-none" data-reservations-calendar-reminder-count="{{ calendarReminderCount|default(0) }}"></div>
+
 {% set displayMonth = true %}
 {% set displayWeek = true %}
 {% set displayWeekday = true %}
@@ -12,13 +14,62 @@
     7: 'reservation.table.weekday.sunday'|trans,
 } %}
 
-{% if selectedSubdivision == 'all' %}
-    {% set showCountry = holidayCountry %}
-{% else %}
-    {% set showCountry = selectedSubdivision %}
-{% endif %}
-
 {% use 'Reservations/_resevation_popover.html.twig' %}
+
+{# Everything a day header shows besides the label - holidays, calendar
+   entries, the "add entry" link - arrives resolved on col (see
+   ReservationTableDecorationService). Popover content still has to end up as
+   one string, because that is what Bootstrap reads out of data-bs-content. #}
+{% macro dayHeaderCell(col, label) %}
+    {% set weekendCss = col.isWeekend ? ' reservation-table-weekend' : '' %}
+    {% set holidayText = col.holidays|join('<br />') %}
+    {% set entriesText = "" %}
+    {% for entry in col.calendarEntries %}
+        {# Each entry renders as its own block-level row, so consecutive
+           entries need no separator - only a rule where the calendar
+           changes, to keep calendars visually apart. #}
+        {% if entry.startsCalendarGroup %}
+            {% set entriesText = entriesText ~ "<hr class='my-1'>" %}
+        {% endif %}
+        {% set entriesText = entriesText ~ include('Reservations/_calendar_entry_popover_item.html.twig', {'entry': entry})|trim %}
+    {% endfor %}
+    {% set newEntryLink = col.newEntryUrl ? "<a href='" ~ col.newEntryUrl ~ "' class='text-primary text-decoration-underline js-calendar-entry-link'>" ~ 'calendar_entry.popover.new'|trans ~ "</a>" : "" %}
+    {# Popovers with only holiday text stay hover-triggered (no interactive
+       content, matches pre-existing behavior); popovers with calendar-entry
+       or "new entry" links need a click, since a link inside a hover popover
+       is unreachable - the popover closes as soon as the mouse leaves the cell. #}
+    {% set hasInteractiveContent = entriesText|length > 0 or newEntryLink|length > 0 %}
+    {% set popoverText = holidayText %}
+    {% if entriesText|length > 0 %}
+        {% set popoverText = popoverText ~ (holidayText|length > 0 ? "<hr class='my-1'>" : "") ~ entriesText %}
+    {% endif %}
+    {% if newEntryLink|length > 0 %}
+        {% set popoverText = popoverText ~ (popoverText|length > 0 ? "<hr class='my-1'>" : "") ~ newEntryLink %}
+    {% endif %}
+    {% set headerCss = "" %}
+    {% if holidayText|length > 0 %}
+        {% set headerCss = headerCss ~ " bg-info bg-opacity-25 holiday-info" %}
+    {% endif %}
+    {% if hasInteractiveContent %}
+        {% set headerCss = headerCss ~ " calendar-info" %}
+    {% endif %}
+    {% if holidayText|length == 0 and entriesText|length == 0 and col.newEntryUrl %}
+        {# Nothing to show but the "add new" link - skip the popover
+           step and let the cell link straight to the new-entry form. #}
+        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2" data-day="{{ col.date }}">
+            <a href="{{ col.newEntryUrl }}" class="text-reset text-decoration-none d-block js-calendar-entry-link" title="{{ 'calendar_entry.popover.new'|trans }}">{{ label }}</a>
+        </th>
+    {% else %}
+        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2" data-day="{{ col.date }}"
+            style="{{ calendar_accent_marker_style(col.accentColors) }}"
+            {% if popoverText|length > 0 %}
+                data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                data-bs-content="{{ popoverText }}" data-bs-trigger="{{ hasInteractiveContent ? 'click' : 'hover' }}" data-bs-html="true"
+            {% endif %}
+        >{{ label }}</th>
+    {% endif %}
+{% endmacro %}
+{% import _self as calendarMacros %}
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table"
@@ -49,20 +100,7 @@
         <tr id="reservation-table-header-weekday" class="table-weekdays">
             <th class="text-center"></th>
             {% for col in grid.dayColumns %}
-                {% set weekendCss = col.isWeekend ? ' reservation-table-weekend' : '' %}
-                {% set publicdays = getPublicdaysForDay(col.date|date_modify('+0 day'), showCountry, app.request.locale) %}
-                {% set holidayText = "" %}
-                {% for holiday in publicdays %}
-                    {% set holidayText = holidayText ~ holiday.name %}
-                    {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
-                {% endfor %}
-                {% set holidayCss = holidayText|length > 0 ? " bg-info bg-opacity-25 holiday-info" : "" %}
-                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2"
-                    {% if holidayText|length > 0 %}
-                        data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
-                        data-bs-content="{{ holidayText }}" data-bs-trigger="hover" data-bs-html="true"
-                    {% endif %}
-                >{{ weekdayLabels[col.isoDayOfWeek] ?? '' }}</th>
+                {{ calendarMacros.dayHeaderCell(col, weekdayLabels[col.isoDayOfWeek] ?? '') }}
             {% endfor %}
         </tr>
         {% endif %}
@@ -71,20 +109,7 @@
         <tr class="table-days">
             <th class="text-center">{{ 'reservation.appartment.name'|trans }}</th>
             {% for col in grid.dayColumns %}
-                {% set weekendCss = col.isWeekend ? ' reservation-table-weekend' : '' %}
-                {% set publicdays = getPublicdaysForDay(col.date|date_modify('+0 day'), showCountry, app.request.locale) %}
-                {% set holidayText = "" %}
-                {% for holiday in publicdays %}
-                    {% set holidayText = holidayText ~ holiday.name %}
-                    {% if not loop.last %}{% set holidayText = holidayText ~ "<br />" %}{% endif %}
-                {% endfor %}
-                {% set holidayCss = holidayText|length > 0 ? " bg-info bg-opacity-25 holiday-info" : "" %}
-                <th class="text-center{{ weekendCss }}{{ holidayCss }}" colspan="2" data-day="{{ col.date }}"
-                    {% if holidayText|length > 0 %}
-                        data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
-                        data-bs-content="{{ holidayText }}" data-bs-trigger="hover" data-bs-html="true"
-                    {% endif %}
-                >{{ '%02d'|format(col.dayOfMonth) }}</th>
+                {{ calendarMacros.dayHeaderCell(col, '%02d'|format(col.dayOfMonth)) }}
             {% endfor %}
         </tr>
         </thead>

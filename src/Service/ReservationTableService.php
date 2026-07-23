@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\ReservationTable\DayCalendarEntry;
 use App\Dto\ReservationTable\DayColumn;
+use App\Dto\ReservationTable\DayDecoration;
 use App\Dto\ReservationTable\TableCell;
 use App\Dto\ReservationTable\TableGrid;
 use App\Dto\ReservationTable\TableHeader;
@@ -24,6 +26,9 @@ class ReservationTableService
      * @param Reservation[] $allReservations all reservations for ALL apartments in the period (pre-loaded)
      * @param bool          $showSubsidiaryHeaders whether to show subsidiary group headers
      * @param RoomBlock[]   $allBlocks all room blocks for ALL apartments in the period (pre-loaded)
+     * @param array<string, DayDecoration> $decorations holidays/calendar entries per Y-m-d, from
+     *                                                  ReservationTableDecorationService; empty leaves the
+     *                                                  day columns bare
      */
     public function buildGrid(
         array $apartments,
@@ -32,11 +37,12 @@ class ReservationTableService
         array $allReservations,
         bool $showSubsidiaryHeaders = false,
         array $allBlocks = [],
+        array $decorations = [],
     ): TableGrid {
         $days = $this->buildDays($startDate, $interval);
         $monthHeaders = $this->buildMonthHeaders($days);
         $weekHeaders = $this->buildWeekHeaders($days);
-        $dayColumns = $this->buildDayColumns($days);
+        $dayColumns = $this->buildDayColumns($days, $decorations);
 
         // Group reservations by apartment ID
         $reservationsByApartment = [];
@@ -166,20 +172,29 @@ class ReservationTableService
     }
 
     /**
-     * @param \DateTimeImmutable[] $days
+     * @param \DateTimeImmutable[]         $days
+     * @param array<string, DayDecoration> $decorations keyed by Y-m-d
      *
      * @return DayColumn[]
      */
-    public function buildDayColumns(array $days): array
+    public function buildDayColumns(array $days, array $decorations = []): array
     {
         $columns = [];
         foreach ($days as $day) {
             $dow = (int) $day->format('N');
+            $dateKey = $day->format('Y-m-d');
+            $decoration = $decorations[$dateKey] ?? null;
+            $entries = $decoration?->calendarEntries ?? [];
+
             $columns[] = new DayColumn(
-                date: $day->format('Y-m-d'),
+                date: $dateKey,
                 dayOfMonth: (int) $day->format('j'),
                 isoDayOfWeek: $dow,
                 isWeekend: $dow >= 6,
+                holidays: $decoration?->holidays ?? [],
+                calendarEntries: $entries,
+                accentColors: array_map(static fn (DayCalendarEntry $e) => $e->color, $entries),
+                newEntryUrl: $decoration?->newEntryUrl,
             );
         }
 
