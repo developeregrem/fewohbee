@@ -662,10 +662,39 @@ body {
     background-color: var(--feb-weekend-bg) !important;
 }
 
+/* Holiday highlighting must win over the plain weekend background -
+   .reservation-table-weekend uses !important, so only a combined selector
+   (higher specificity) with its own !important can override it. Colors
+   mirror Bootstrap's bg-info bg-opacity-25 utility.
+   Calendar-entry accent lines (box-shadow, see calendar_accent_marker_style)
+   don't need an equivalent override - box-shadow and background-color are
+   different properties and never fight for precedence the way two
+   background-colors do. */
+.reservation-table-weekend.holiday-info {
+    background-color: rgba(var(--bs-info-rgb), .25) !important;
+}
+
 
 /* remove bottom border of tr for multiple reservations of one apartment (select tr where the next tr has border-top-0 class) */
 #reservation-table tr:has( + .border-top-0) {
     border-bottom: 0 !important;
+}
+
+/* Calendar-entry accent bars are rendered in both the weekday and the
+   date-number row (see reservation_table.html.twig / calendar_accent_marker_style);
+   toggleDisplayTableRows() adds .weekday-row-visible once that row is
+   shown, so suppress the duplicate bars on the date row - overriding the
+   inline box-shadow/background-image needs !important since inline styles
+   otherwise win. Restores the plain bottom border (rather than "none") so
+   non-entry cells don't lose theirs too, and clears the background-image
+   layers (the segmented-row gradients) entirely. */
+/* Note that this box-shadow doubles as the bottom line the sticky header
+   otherwise draws for itself - the !important overrides it for this one row.
+   The two have to match: change the header line (colour, width) where it is
+   defined and the date row silently keeps the old one. */
+#reservation-table.weekday-row-visible .table-days th {
+    box-shadow: inset 0 -1px 0 0 var(--bs-border-color) !important;
+    background-image: none !important;
 }
 
 #reservation-table .room-info {

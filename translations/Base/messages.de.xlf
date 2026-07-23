@@ -334,6 +334,10 @@
                 <source>nav.tourism</source>
                 <target>Tourismus</target>
             </trans-unit>
+            <trans-unit id="nav.calendars">
+                <source>nav.calendars</source>
+                <target>Kalender verwalten</target>
+            </trans-unit>
             <trans-unit id="nav.templates">
                 <source>nav.templates</source>
                 <target>Vorlagen</target>

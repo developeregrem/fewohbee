@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'calendar.index.title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container" data-controller="settings">
+    <div class="row">
+        <div class="col">
+            <h2 class="fs-4 mb-1">
+                <i class="fas fa-calendar-alt text-primary me-1"></i>
+                {{ 'calendar.index.title'|trans }}
+            </h2>
+            <p class="text-body-secondary mb-3">{{ 'calendar.index.description'|trans }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-secondary"
+                    data-action="click->settings#openModalAction"
+                    data-url="{{ path('settings.calendars.new') }}"
+                    data-title="{{ 'calendar.form.title_new'|trans }}"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalCenter">
+                <i class="fas fa-plus"></i> {{ 'calendar.index.add'|trans }}</button>
+        </div>
+    </div>
+
+    {% if calendars|length == 0 %}
+        <div class="row mt-3">
+            <div class="col">
+                <div class="alert alert-info">{{ 'calendar.index.empty'|trans }}</div>
+            </div>
+        </div>
+    {% else %}
+    <div class="row mt-3">
+        <div class="col">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>{{ 'calendar.index.table.color'|trans }}</th>
+                    <th>{{ 'calendar.index.table.name'|trans }}</th>
+                    <th>{{ 'calendar.index.table.confirmation'|trans }}</th>
+                    <th>{{ 'calendar.index.table.source'|trans }}</th>
+                    <th class="text-end">{{ 'calendar.index.table.entries'|trans }}</th>
+                    <th>{{ 'base.action'|trans }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for calendar in calendars %}
+                    <tr>
+                        <td><span class="d-inline-block rounded" style="width: 1.2rem; height: 1.2rem; background-color: {{ calendar.color }};"></span></td>
+                        <td>{{ calendar.name }}</td>
+                        <td>
+                            {% if calendar.requiresConfirmation %}
+                                <i class="fas fa-check text-success" title="{{ 'calendar.form.requires_confirmation'|trans }}"></i>
+                            {% else %}
+                                <span class="text-muted">&ndash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-body-secondary">
+                            {% if calendar.icsUrl %}
+                                {{ 'calendar.index.source_url'|trans }}
+                            {% else %}
+                                {{ 'calendar.index.source_manual'|trans }}
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ entryCounts[calendar.id] ?? 0 }}</td>
+                        <td>
+                            <a href="#" title="{{ 'button.edit'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
+                                <i class="fas fa-edit"
+                                   data-action="click->settings#openModalAction"
+                                   data-url="{{ path('settings.calendars.edit', {'id': calendar.id}) }}"
+                                   data-title="{{ 'calendar.form.title_edit'|trans }}"></i></a>
+                            {% set id = calendar.id %}
+                            {% set targetUrl = path('settings.calendars.delete', {'id': calendar.id}) %}
+                            {% set deletePopoverHint = 'calendar.form.delete_confirm'|trans %}
+                            {% use "common/delete_popover.html.twig" %}
+                            <a href="#" title="{{ 'button.delete'|trans }}">
+                                <i class="fas fa-trash-alt"
+                                   data-popover="delete"
+                                   data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                   data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
