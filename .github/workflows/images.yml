@@ -78,9 +78,14 @@ jobs:
             image: cli
             suffix: '-debug'
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v7
+
+      - name: Checkout image source
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.checkout_ref }}
+          path: src
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -125,8 +130,8 @@ jobs:
       - name: Build & push
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: docker/app/Dockerfile
+          context: src
+          file: src/docker/app/Dockerfile
           target: ${{ matrix.target }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
@@ -154,9 +159,14 @@ jobs:
         github.event.pull_request.head.repo.full_name != github.repository
       )
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout workflow helpers
+        uses: actions/checkout@v7
+
+      - name: Checkout image source
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.checkout_ref }}
+          path: src
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -248,8 +258,8 @@ jobs:
       - name: Build & push
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: docker/nginx/Dockerfile
+          context: src
+          file: src/docker/nginx/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           pull: ${{ needs.prepare.outputs.runtime_refresh == 'true' }}
