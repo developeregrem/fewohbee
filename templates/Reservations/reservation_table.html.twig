@@ -16,6 +16,17 @@
 
 {% use 'Reservations/_resevation_popover.html.twig' %}
 
+{# Width of the apartment column, in characters of its longest label - the
+   header counts too, since it has to fit. CSS cannot work this out on its
+   own: on a table, min-width/max-width on cells are undefined per spec and
+   ignored, and width is only a suggestion, so a table stretched to 100% hands
+   the leftover space to every column including this one. See #reservation-table
+   in app.css, which turns these two values into a fixed layout. #}
+{% set nameColumnChars = ('reservation.appartment.name'|trans)|length %}
+{% for row in grid.rows %}
+    {% set nameColumnChars = max(nameColumnChars, row.apartmentLabel|length) %}
+{% endfor %}
+
 {# Everything a day header shows besides the label - holidays, calendar
    entries, the "add entry" link - arrives resolved on col (see
    ReservationTableDecorationService). Popover content still has to end up as
@@ -73,7 +84,16 @@
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table"
-           data-reservation-move-token="{{ csrf_token('reservation_move') }}">
+           data-reservation-move-token="{{ csrf_token('reservation_move') }}"
+           style="--reservation-name-col: {{ nameColumnChars }}ch; --reservation-day-count: {{ grid.dayColumns|length }};">
+        {# Explicit columns because the layout is fixed: without them the month
+           row's colspans would decide the widths, and a month covering three
+           days would claim as much room as one covering twenty-seven. The
+           half-day columns stay unsized so they share what remains equally. #}
+        <colgroup>
+            <col class="reservation-name-col">
+            {% for col in grid.dayColumns %}<col><col>{% endfor %}
+        </colgroup>
         <thead>
         {# ── Month headers ── #}
         {% if displayMonth %}
@@ -148,7 +168,7 @@
                             show: 'yearly',
                             apartmentId: row.apartment.id
                         }) }}" title="{{ 'reservation.table.view.yearly'|trans }}">
-                            {{ row.apartment.number }}{% if row.apartment.roomCategory is not null and row.apartment.roomCategory.acronym|length > 0 %} ({{ row.apartment.roomCategory.acronym }}){% endif %}
+                            {{ row.apartmentLabel }}
                         </a>
                     </td>
                 {% endif %}

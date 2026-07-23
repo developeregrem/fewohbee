@@ -208,24 +208,29 @@ body {
     background-color: var(--feb-selection-bg);
 }
 
-/* Fixed apartment-name column width */
-#reservation-table thead th:first-child,
-#reservation-table thead td:first-child,
-#reservation-table tbody td:first-child {
-    min-width: 50px;
-    width: 80px;
-    max-width: 150px;
+/* Column widths come from the colgroup, not from the cells: on a table,
+   min-width/max-width on cells are undefined per spec and ignored, and width
+   is only a suggestion. A table stretched to 100% therefore handed the
+   apartment column a share of the leftover space no matter what it was told,
+   which is what made it needlessly wide on short periods.
+
+   Laid out fixed so the colgroup actually decides, and given an explicit
+   width so that "fixed" doesn't also mean "squeezed": at least the viewport,
+   and 46px per day once there are enough days to exceed it - which is when
+   the container starts scrolling, as before. Both custom properties are set
+   on the table by reservation_table.html.twig. */
+#reservation-table {
+    table-layout: fixed;
+    width: max(
+        100%,
+        calc(var(--reservation-name-col, 8ch) + 1.5rem + var(--reservation-day-count, 30) * 46px)
+    );
 }
 
-/* Equal half-day column widths; table stays scrollable */
-#reservation-table th[colspan="2"] {
-    min-width: 46px;
-    width: 46px;
-}
-
-#reservation-table .td-half {
-    min-width: 23px;
-    width: 23px;
+/* Longest label plus cell padding; the half-day columns are left unsized and
+   split whatever is left in equal parts. */
+#reservation-table > colgroup > col.reservation-name-col {
+    width: calc(var(--reservation-name-col, 8ch) + 1.5rem);
 }
 
 /* Right border on the last cell of each row */
@@ -254,21 +259,44 @@ body {
 
 .table-responsive { position: relative; }
 
+/* With border-collapse the table paints the shared border lines, not the cells,
+   so a sticky header cell has nothing to cover them with - the reservation bars
+   scrolling underneath stayed visible as a coloured line in every border
+   between two day columns.
+
+   The header cells therefore give up their borders entirely, which leaves the
+   table nothing to paint there and nothing to shine through. The background
+   covers the full cell box; the horizontal lines come from an inset shadow on
+   the cell, which sticks with it. */
 .table.table-sticky thead th, .table.table-sticky thead td {
   position: sticky;
   z-index: 3;
-  /* fester Hintergrund, damit nichts durchscheint */
+  border: 0 !important;
   background-color: var(--bs-table-bg, var(--bs-body-bg));
-  /* klare Unterkante auch bei border-collapse */
-  box-shadow: inset 0 -1px 0 var(--bs-border-color);
-  background-clip: padding-box; /* verhindert „Border-Bleeding“ */
+  box-shadow: inset 0 -1px 0 var(--bs-border-color); /* bottom line */
 }
 
 .table.table-sticky thead tr:first-child td{
-  /* top + bottom Schatten kombinieren: */
   box-shadow:
-    inset 0  1px 0 var(--bs-border-color),  /* obere Linie */
-    inset 0 -1px 0 var(--bs-border-color);  /* untere Linie */
+    inset 0  1px 0 var(--bs-border-color),  /* top line */
+    inset 0 -1px 0 var(--bs-border-color);  /* bottom line */
+}
+
+/* The vertical separator sits in a pseudo-element rather than in that shadow:
+   header cells can carry a background or shadow of their own (the calendar
+   entries' accent bars, partly set inline), which would override a shadow
+   declared here. It sits on the inside of the right edge so the neighbouring
+   cell's background cannot paint over it. */
+.table.table-sticky thead th::after,
+.table.table-sticky thead td::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
 }
 
 /* left sticky column in reservation overview*/

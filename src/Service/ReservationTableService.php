@@ -76,22 +76,41 @@ class ReservationTableService
             $aptReservations = $reservationsByApartment[$apartment->getId()] ?? [];
             // blocks act on the physical room -> attach them to the first row only
             $aptBlocks = $blocksByApartment[$apartment->getId()] ?? [];
+            $apartmentLabel = $this->buildApartmentLabel($apartment);
 
             if ($apartment->isMultipleOccupancy() && count($aptReservations) > 0) {
                 $occupancyRows = $this->resolveMultipleOccupancy($aptReservations);
                 $first = true;
                 foreach ($occupancyRows as $rowReservations) {
                     $cells = $this->buildCellsForRow($days, $rowReservations, $startDate, $interval, $first ? $aptBlocks : []);
-                    $rows[] = new TableRow($apartment, $cells, !$first);
+                    $rows[] = new TableRow($apartment, $cells, $apartmentLabel, !$first);
                     $first = false;
                 }
             } else {
                 $cells = $this->buildCellsForRow($days, $aptReservations, $startDate, $interval, $aptBlocks);
-                $rows[] = new TableRow($apartment, $cells);
+                $rows[] = new TableRow($apartment, $cells, $apartmentLabel);
             }
         }
 
         return new TableGrid($monthHeaders, $weekHeaders, $dayColumns, $rows, $subsidiaryBreaks);
+    }
+
+    /**
+     * Display label for an apartment: its number, plus the room category acronym
+     * in parentheses when present, e.g. "101 (DBL)". Single source of truth for
+     * both the column-width calculation and the rendered cell in the template.
+     */
+    private function buildApartmentLabel(Appartment $apartment): string
+    {
+        $label = $apartment->getNumber();
+        $roomCategory = $apartment->getRoomCategory();
+        $acronym = $roomCategory?->getAcronym();
+
+        if ($acronym !== null && $acronym !== '') {
+            $label .= ' ('.$acronym.')';
+        }
+
+        return $label;
     }
 
     /**
