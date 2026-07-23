@@ -1,0 +1,74 @@
+{% form_theme form 'bootstrap_5_layout.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
+
+<div class="modal-body" data-controller="reservations">
+    <div id="flash-message-overlay"></div>
+    <h6 class="mb-3">{{ isNew ? 'calendar_entry.title_new'|trans : 'calendar_entry.title_edit'|trans }}</h6>
+
+    {% if not isNew %}
+        <p class="text-body-secondary small mb-3">
+            <i class="fas fa-circle me-1" style="color: {{ calendarEntry.calendar.color }}; font-size: 0.7em; vertical-align: middle;"></i>
+            {{ 'calendar_entry.calendar'|trans }}: <strong>{{ calendarEntry.calendar.name }}</strong>
+        </p>
+    {% endif %}
+
+    {% if not isNew and calendarEntry.confirmedAt %}
+        <p class="text-muted small">
+            <i class="fas fa-check-circle text-success me-1"></i>
+            {{ 'calendar_entry.confirmed_at'|trans({'%datetime%': calendarEntry.confirmedAt|date('d.m.Y H:i')}) }}
+        </p>
+    {% endif %}
+
+    {% if not isNew and calendarEntry.calendar.hasIcsSource and not calendarEntry.isManuallyCreated and not calendarEntry.confirmedAt %}
+        <div class="alert alert-warning small" role="alert">
+            <i class="fas fa-triangle-exclamation me-1"></i>
+            {{ 'calendar_entry.sync_warning'|trans }}
+        </div>
+    {% endif %}
+
+    {% set formAction = isNew ? path('reservations.calendar_entry.new') : path('reservations.calendar_entry.edit', {'id': calendarEntry.id}) %}
+    {{ form_start(form, {'attr': {'data-action': 'submit->reservations#saveCalendarEntryAction'}, 'action': formAction}) }}
+        <div class="row">
+            {% if isNew %}
+                <div class="col">{{ form_row(form.calendar, {'label': false}) }}</div>
+            {% endif %}
+            <div class="col">{{ form_row(form.date, {'label': false}) }}</div>
+            {% if isNew %}
+                <div class="col">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans}}) }}</div>
+            {% endif %}
+            <div class="col">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            {% if not isNew and calendarEntry.confirmedAt %}
+                {# Not a form submit: it carries its own CSRF token, and the
+                   surrounding form already renders a "_token" field of its
+                   own (stateless form protection), which a second one would
+                   collide with. #}
+                <button type="button"
+                        class="btn btn-outline-secondary me-2"
+                        data-action="click->reservations#unconfirmCalendarEntryAction"
+                        data-url="{{ path('reservations.calendar_reminder.unconfirm', {'id': calendarEntry.id}) }}"
+                        data-token="{{ csrf_token('unconfirmcalendarentry' ~ calendarEntry.id) }}">
+                    {{ 'calendar_entry.unconfirm'|trans }}
+                </button>
+            {% endif %}
+            {% if not isNew %}
+                {# Same delete popover as the day-header list in the overview
+                   (see _calendar_entry_popover_item.html.twig) - the shared
+                   component carries its own CSRF token, so this button only
+                   needs to trigger it. #}
+                {% set id = 'calendarentry' ~ calendarEntry.id %}
+                {% set targetUrl = path('reservations.calendar_entry.delete', {'id': calendarEntry.id}) %}
+                <button type="button"
+                        class="btn btn-danger me-2 js-calendar-entry-delete"
+                        data-popover="delete"
+                        data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                    {{ 'calendar_entry.delete'|trans }}
+                </button>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
+        </div>
+    {{ form_end(form) }}
+</div>

@@ -33,6 +33,10 @@ export default class extends Controller {
                 }
                 enableTooltips(this.modalContent);
                 enablePopovers(this.modalContent);
+                // enablePopovers deliberately skips data-popover="delete", and
+                // connect()'s document-wide call ran before this content existed,
+                // so delete popovers inside the modal need wiring up here.
+                enableDeletePopover({ root: this.modalContent });
             },
         });
     }
