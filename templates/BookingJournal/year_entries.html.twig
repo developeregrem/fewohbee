@@ -32,7 +32,7 @@
 
 {% block content %}
 {% import _self as m %}
-<div class="container-fluid" data-controller="sortable-table journal-year-table booking-journal"
+<div class="container-fluid px-4" data-controller="sortable-table journal-year-table booking-journal"
      data-sortable-table-locale-value="{{ app.request.locale|default(app.locale)|replace({'_': '-'}) }}">
     <div class="row justify-content-between align-items-center mb-3">
         <div class="col-auto">
@@ -41,7 +41,7 @@
                 {{ 'accounting.journal.batch.year'|trans }}
                 {# Pick the year when more than one is available, otherwise just show it. #}
                 {% if years|length > 1 %}
-                    <select class="form-select" style="width: 6.5rem; font-size: inherit; border: 0; box-shadow: none; background-color: transparent; padding-left: .25rem"
+                    <select class="form-select" style="width: auto; font-size: inherit; border: 0; box-shadow: none; background-color: transparent; padding-left: .25rem; padding-right: 1.4rem; background-position: right .35rem center"
                             data-action="change->booking-journal#navigateToYear"
                             data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
                             aria-label="{{ 'accounting.journal.batch.year'|trans }}">
