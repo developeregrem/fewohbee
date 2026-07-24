@@ -111,6 +111,29 @@ final class TemplatesServiceTest extends TestCase
         self::assertStringNotContainsString('data-if=', $output);
     }
 
+    public function testRenderTemplateStringConvertsDataIfOnTable(): void
+    {
+        $service = $this->createService();
+        $template = <<<'HTML'
+            <table data-if="invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')|length > 0"><tbody><tr><th>Modifiers</th></tr></tbody></table>
+            HTML;
+
+        $hiddenOutput = $service->renderTemplateString($template, [
+            'invoice' => ['positions' => [
+                ['positionGroup' => 'tourist_tax'],
+            ]],
+        ]);
+        $visibleOutput = $service->renderTemplateString($template, [
+            'invoice' => ['positions' => [
+                ['positionGroup' => 'apartment_modifier'],
+            ]],
+        ]);
+
+        self::assertStringNotContainsString('<table', $hiddenOutput);
+        self::assertStringContainsString('<table><tbody><tr><th>Modifiers</th></tr></tbody></table>', $visibleOutput);
+        self::assertStringNotContainsString('data-if=', $visibleOutput);
+    }
+
     public function testRenderTemplateStringKeepsStyleAndClassOnDataRepeatElement(): void
     {
         $service = $this->createService();
