@@ -4,10 +4,14 @@
     {{ parent() }} - {{ 'accounting.journal.year_view.title'|trans }} {{ year }}
 {% endblock %}
 
-{% macro sortth(label, type, extraClass) %}
-    <th{% if extraClass %} class="{{ extraClass }}"{% endif %} role="button" data-sortable data-sort-type="{{ type }}"
-        data-action="click->journal-year-table#sort">
-        {{ label }}<span class="sort-indicator text-muted"></span>
+{% macro sortth(label, type, extraClass, alignEnd) %}
+    <th{% if extraClass %} class="{{ extraClass }}"{% endif %} aria-sort="none"
+        data-sortable-table-target="header" data-sort-type="{{ type }}">
+        <button type="button" class="sort-header{% if alignEnd %} ms-auto{% endif %}"
+                data-action="click->sortable-table#sort">
+            <span>{{ label }}</span>
+            <span class="sort-icon"><i class="fas fa-sort" aria-hidden="true"></i></span>
+        </button>
     </th>
 {% endmacro %}
 
@@ -28,28 +32,34 @@
 
 {% block content %}
 {% import _self as m %}
-<div class="container-fluid" data-controller="journal-year-table booking-journal">
+<div class="container-fluid" data-controller="sortable-table journal-year-table booking-journal"
+     data-sortable-table-locale-value="{{ app.request.locale|default(app.locale)|replace({'_': '-'}) }}">
     <div class="row justify-content-between align-items-center mb-3">
         <div class="col-auto">
-            <h4 class="mb-0">{{ 'accounting.journal.year_view.title'|trans }} {{ year }}</h4>
+            <h4 class="mb-0 d-flex align-items-center gap-2">
+                {{ 'accounting.journal.year_view.title'|trans }}
+                {{ 'accounting.journal.batch.year'|trans }}
+                {# Pick the year when more than one is available, otherwise just show it. #}
+                {% if years|length > 1 %}
+                    <select class="form-select" style="width: 6.5rem; font-size: inherit; border: 0; box-shadow: none; background-color: transparent; padding-left: .25rem"
+                            data-action="change->booking-journal#navigateToYear"
+                            data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
+                            aria-label="{{ 'accounting.journal.batch.year'|trans }}">
+                        {% for y in years %}
+                            <option value="{{ y.year }}" style="font-size: 1rem; font-weight: 400" {% if y.year == year %}selected{% endif %}>{{ y.year }}</option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    {{ year }}
+                {% endif %}
+            </h4>
         </div>
         <div class="col-auto d-flex gap-2 align-items-center">
-            {# Year switcher #}
-            {% if years|length > 0 %}
-                <div class="btn-group btn-group-sm" role="group">
-                    {% for y in years %}
-                        <a href="{{ path('journal.year.entries', {'year': y.year}) }}"
-                           class="btn {{ y.year == year ? 'btn-secondary' : 'btn-outline-secondary' }}">{{ y.year }}</a>
-                    {% endfor %}
-                </div>
-            {% endif %}
             <button type="button" class="btn btn-outline-secondary btn-sm" aria-pressed="false"
                     data-action="click->journal-year-table#toggleFilters"
                     title="{{ 'accounting.journal.year_view.toggle_filters'|trans }}">
                 <i class="fas fa-filter"></i> {{ 'accounting.journal.year_view.toggle_filters'|trans }}
             </button>
-            <a href="{{ path('journal.overview') }}" class="btn btn-outline-secondary btn-sm"
-               title="{{ 'button.back'|trans }}"><i class="fas fa-arrow-left"></i></a>
         </div>
     </div>
 
@@ -59,7 +69,7 @@
             <tr>
                 {{ m.sortth('accounting.journal.entry.date'|trans, 'date') }}
                 {{ m.sortth('accounting.journal.entry.doc_number'|trans, 'number') }}
-                {{ m.sortth('accounting.journal.entry.amount'|trans, 'number', 'text-end') }}
+                {{ m.sortth('accounting.journal.entry.amount'|trans, 'number', 'text-end', true) }}
                 {{ m.sortth('accounting.journal.entry.debit'|trans, 'text') }}
                 {{ m.sortth('accounting.journal.entry.credit'|trans, 'text') }}
                 {{ m.sortth('accounting.journal.entry.tax_rate'|trans, 'text', 'd-none d-md-table-cell') }}
@@ -77,7 +87,7 @@
                 {{ m.filterth(7, 'text') }}
             </tr>
             </thead>
-            <tbody data-journal-year-table-target="tbody">
+            <tbody data-sortable-table-target="tbody" data-journal-year-table-target="tbody">
             {% for entry in entries %}
                 {% set batch = entry.bookingBatch %}
                 {% if batch.closed %}

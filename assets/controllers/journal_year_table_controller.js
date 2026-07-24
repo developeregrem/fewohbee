@@ -1,12 +1,14 @@
 import { Controller } from '@hotwired/stimulus';
+import { parseDecimal } from '../js/table_helpers.js';
 
 /*
- * Client-side sort and filter for the read-only yearly journal table. The whole
- * year is rendered at once, so sorting and filtering happen in the browser
- * without a round-trip - the point is to have everything on one screen.
+ * Per-column filtering for the read-only yearly journal table. The whole year
+ * is rendered at once, so filtering happens in the browser without a round-trip
+ * - the point is to have everything on one screen. Sorting is handled by the
+ * generic `sortable-table` controller sharing this element.
  */
 export default class extends Controller {
-    static targets = ['tbody', 'columnFilter', 'filterRow'];
+    static targets = ['columnFilter', 'filterRow', 'tbody'];
 
     // Show or hide the per-column filter row. Hiding clears the filters so no
     // rows stay hidden behind a filter row that is no longer visible.
@@ -24,37 +26,6 @@ export default class extends Controller {
             this.columnFilterTargets.forEach((input) => { input.value = ''; });
             this.filter();
         }
-    }
-
-    sort(event) {
-        const th = event.currentTarget;
-        const headers = Array.from(th.parentNode.children);
-        const index = headers.indexOf(th);
-        const type = th.dataset.sortType || 'text';
-        const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
-
-        // reset every header's direction and indicator, then mark this one
-        headers.forEach((h) => {
-            delete h.dataset.sortDir;
-            const ind = h.querySelector('.sort-indicator');
-            if (ind) ind.textContent = '';
-        });
-        th.dataset.sortDir = dir;
-        const indicator = th.querySelector('.sort-indicator');
-        if (indicator) indicator.textContent = dir === 'asc' ? ' ▲' : ' ▼';
-
-        const rows = Array.from(this.tbodyTarget.querySelectorAll('tr'))
-            .filter((r) => r.dataset.emptyRow === undefined);
-
-        rows.sort((a, b) => {
-            const av = this._cellValue(a, index, type);
-            const bv = this._cellValue(b, index, type);
-            if (av < bv) return dir === 'asc' ? -1 : 1;
-            if (av > bv) return dir === 'asc' ? 1 : -1;
-            return 0;
-        });
-
-        rows.forEach((r) => this.tbodyTarget.appendChild(r));
     }
 
     // Each column has its own filter; a row is shown only when it matches every
@@ -112,24 +83,16 @@ export default class extends Controller {
 
     /** Turn a cell value or a typed operand into something comparable, or null. */
     _comparable(raw, type) {
-        const s = String(raw).trim();
         if (type === 'number') {
-            const n = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
-            return Number.isNaN(n) ? null : n;
+            // parseDecimal understands German grouping, so "1.234,56" and a
+            // ">=1.000" operand both parse correctly.
+            return parseDecimal(raw);
         }
         // date: accept ISO (2097-03-15) or German (15.03.2097), compare as ISO strings
+        const s = String(raw).trim();
         if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
         const de = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
         if (de) return `${de[3]}-${de[2].padStart(2, '0')}-${de[1].padStart(2, '0')}`;
         return null;
-    }
-
-    _cellValue(row, index, type) {
-        const cell = row.children[index];
-        if (!cell) return type === 'number' ? 0 : '';
-        const raw = cell.dataset.sortValue ?? cell.textContent.trim();
-        if (type === 'number') return parseFloat(String(raw).replace(',', '.')) || 0;
-        // dates carry an ISO Y-m-d sort value and sort correctly as strings
-        return String(raw).toLowerCase();
     }
 }

@@ -739,3 +739,34 @@ div .reservation-yearly-day {
 #accordionSettings label.required:after {
     content: " *";
 }
+
+/*
+ * Sortable table headers (generic sortable-table Stimulus controller)
+ */
+.sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    padding: 0;
+    text-align: inherit;
+    white-space: nowrap;
+}
+.sort-header:hover,
+.sort-header:focus {
+    color: var(--bs-primary);
+}
+.sort-header .sort-icon {
+    display: inline-flex;
+    justify-content: center;
+    min-width: .75rem;
+    opacity: .45;
+}
+th[aria-sort="ascending"] .sort-icon,
+th[aria-sort="descending"] .sort-icon {
+    opacity: 1;
+}

@@ -176,7 +176,7 @@ accounting.journal.export: Export
 accounting.journal.export.datev: DATEV Buchungsstapel (CSV)
 accounting.journal.export.year: Jahresexport DATEV
 accounting.journal.export.year.help: "Alle Buchungen des ausgewählten Jahres in einer DATEV-CSV exportieren."
-accounting.journal.year_view.title: Jahresansicht
+accounting.journal.year_view.title: Buchungsstapel
 accounting.journal.year_view.help: "Alle Buchungen des ausgewählten Jahres in einer sortierbaren Tabelle."
 accounting.journal.year_view.toggle_filters: Filter
 accounting.journal.year_view.filter_placeholder: Filtern …

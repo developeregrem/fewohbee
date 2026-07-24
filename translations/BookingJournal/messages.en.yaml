@@ -176,7 +176,7 @@ accounting.journal.export: Export
 accounting.journal.export.datev: DATEV Booking Stack (CSV)
 accounting.journal.export.year: Annual DATEV Export
 accounting.journal.export.year.help: "Export all entries of the selected year as a single DATEV CSV file."
-accounting.journal.year_view.title: Yearly view
+accounting.journal.year_view.title: Booking batch
 accounting.journal.year_view.help: "All entries of the selected year in one sortable table."
 accounting.journal.year_view.toggle_filters: Filters
 accounting.journal.year_view.filter_placeholder: Filter …
