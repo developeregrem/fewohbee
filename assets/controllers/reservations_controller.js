@@ -1060,6 +1060,7 @@ export default class extends Controller {
             loader: false,  // we handle the spinner ourselves
             onSuccess: (data) => {
                 if (this.tableContainer) {
+                    this.disposeTablePopovers();
                     this.tableContainer.innerHTML = data;
                     this.addAppartmentSelectableUrl = this.tableContainer.dataset.reservationsAddAppartmentSelectableUrl || this.addAppartmentSelectableUrl;
                 }
@@ -1079,6 +1080,42 @@ export default class extends Controller {
         });
 
         return false;
+    }
+
+    /**
+     * Bootstrap appends popover tips to <body>, outside the table container.
+     * Dispose their instances before replacing the table, otherwise those tips
+     * lose their trigger and remain as permanent orphan elements in the page.
+     */
+    disposeTablePopovers() {
+        if (!this.tableContainer) {
+            return;
+        }
+
+        const selector = [
+            '[data-bs-toggle="popover"]',
+            '.reservation-inner',
+            '.reservation-popover',
+            '.room-info',
+            '.holiday-info',
+            '.calendar-info',
+        ].join(',');
+
+        this.tableContainer.querySelectorAll(selector).forEach((trigger) => {
+            const tipId = trigger.getAttribute('aria-describedby');
+            const tip = tipId ? document.getElementById(tipId) : null;
+            const instance = window.bootstrap?.Popover?.getInstance(trigger);
+
+            if (instance) {
+                instance.dispose();
+            } else if (window.jQuery?.fn?.popover) {
+                $(trigger).popover('dispose');
+            }
+
+            // dispose() normally removes the tip. Keep this fallback for tips
+            // created by an older table/controller instance.
+            tip?.remove();
+        });
     }
 
     loadTableSettings(url, initial = false) {
@@ -1245,6 +1282,7 @@ export default class extends Controller {
 
         let draggedReservation = null;
         let dropTarget = null;
+        let keepPopoversDisabled = false;
 
         // A hovered popover can cover rows above the source reservation. Hide
         // and disable all reservation popovers until the drag has finished.
@@ -1270,7 +1308,9 @@ export default class extends Controller {
             });
             draggedReservation = null;
             dropTarget = null;
-            setReservationPopoversEnabled(true);
+            if (!keepPopoversDisabled) {
+                setReservationPopoversEnabled(true);
+            }
         };
 
         table.querySelectorAll('.reservation-inner[draggable="true"]').forEach((reservation) => {
@@ -1354,6 +1394,9 @@ export default class extends Controller {
             }
 
             event.preventDefault();
+            // Do not re-enable the old table's popovers in dragend while the
+            // successful move is already scheduling a table replacement.
+            keepPopoversDisabled = true;
             const moveUrl = draggedReservation.dataset.moveUrl;
             const token = table.dataset.reservationMoveToken;
             // Keep a stable reference: dragend may clear draggedReservation
@@ -1379,6 +1422,7 @@ export default class extends Controller {
                     this.getNewTable();
                 },
                 onError: (error) => {
+                    keepPopoversDisabled = false;
                     // The endpoint uses 409 for date/room collisions and 422
                     // when the target room has too few beds.
                     const isConflict = error.startsWith('409 ');
