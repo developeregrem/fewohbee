@@ -43,7 +43,12 @@ category:
     set_primary: Set as primary image
     delete: Delete image
     no_images: No images uploaded yet.
-    hint: "Allowed formats: JPEG, PNG, WebP. Maximum file size: 10 MB. Landscape orientation is recommended."
+    hint: "Allowed formats: JPEG, PNG, WebP. Maximum 10 MB and 20 megapixels; width and height must each not exceed 8,000 pixels. Landscape orientation is recommended."
+    validation:
+      invalid: The image could not be processed. Please select a valid image file.
+      file_size: The image file is too large. The maximum allowed size is 10 MB.
+      format: Invalid image file. Allowed formats are JPEG, PNG and WebP.
+      resolution: The image resolution is too high. The maximum is 20 megapixels; width and height must each not exceed 8,000 pixels. Please resize the image before uploading it.
 
 amenity:
   wifi: WiFi
