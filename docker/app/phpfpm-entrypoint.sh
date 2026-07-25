@@ -13,6 +13,57 @@ export REDIS_SYSTEM_IDX="${REDIS_SYSTEM_IDX:-${REDIS_IDX}}"
 export REDIS_SESSION_IDX="${REDIS_SESSION_IDX:-${REDIS_IDX}}"
 export REDIS_PREFIX="${REDIS_PREFIX:-fewohbee_}"
 export SESSION_MAX_LIFETIME="${SESSION_MAX_LIFETIME:-1440}"
+export PHP_FPM_PM_MAX_CHILDREN="${PHP_FPM_PM_MAX_CHILDREN:-5}"
+export PHP_FPM_REQUEST_TERMINATE_TIMEOUT="${PHP_FPM_REQUEST_TERMINATE_TIMEOUT:-120s}"
+
+case "${PHP_FPM_PM_MAX_CHILDREN}" in
+    ''|*[!0-9]*)
+        echo "[entrypoint] ERROR: PHP_FPM_PM_MAX_CHILDREN must be a positive integer." >&2
+        exit 1
+        ;;
+esac
+if [ "${PHP_FPM_PM_MAX_CHILDREN}" -lt 1 ]; then
+    echo "[entrypoint] ERROR: PHP_FPM_PM_MAX_CHILDREN must be at least 1." >&2
+    exit 1
+fi
+
+fpm_start_servers=2
+fpm_max_spare_servers=3
+if [ "${PHP_FPM_PM_MAX_CHILDREN}" -lt "${fpm_start_servers}" ]; then
+    fpm_start_servers="${PHP_FPM_PM_MAX_CHILDREN}"
+fi
+if [ "${PHP_FPM_PM_MAX_CHILDREN}" -lt "${fpm_max_spare_servers}" ]; then
+    fpm_max_spare_servers="${PHP_FPM_PM_MAX_CHILDREN}"
+fi
+
+timeout_number="${PHP_FPM_REQUEST_TERMINATE_TIMEOUT}"
+case "${timeout_number}" in
+    *s|*m|*h|*d) timeout_number="${timeout_number%?}" ;;
+esac
+case "${timeout_number}" in
+    ''|*[!0-9]*)
+        echo "[entrypoint] ERROR: PHP_FPM_REQUEST_TERMINATE_TIMEOUT must be a positive duration such as 120s." >&2
+        exit 1
+        ;;
+esac
+if [ "${timeout_number}" -lt 1 ]; then
+    echo "[entrypoint] ERROR: PHP_FPM_REQUEST_TERMINATE_TIMEOUT must be greater than zero." >&2
+    exit 1
+fi
+
+# The image runs as www-data. The active file is pre-created with that owner at
+# build time, so rendering works without making the whole FPM config writable.
+fpm_pool_template=/usr/local/etc/php-fpm.d/zz-fewohbee.conf.template
+fpm_pool_config=/usr/local/etc/php-fpm.d/zz-fewohbee.conf
+fpm_pool_tmp="/tmp/fewohbee-fpm-pool.$$"
+sed \
+    -e "s/@MAX_CHILDREN@/${PHP_FPM_PM_MAX_CHILDREN}/g" \
+    -e "s/@START_SERVERS@/${fpm_start_servers}/g" \
+    -e "s/@MAX_SPARE_SERVERS@/${fpm_max_spare_servers}/g" \
+    -e "s/@REQUEST_TERMINATE_TIMEOUT@/${PHP_FPM_REQUEST_TERMINATE_TIMEOUT}/g" \
+    "${fpm_pool_template}" > "${fpm_pool_tmp}"
+cat "${fpm_pool_tmp}" > "${fpm_pool_config}"
+rm -f "${fpm_pool_tmp}"
 
 # Backward compatibility: the legacy fewohbee convention used APP_ENV=redis to
 # enable the Redis cache adapter. Symfony reserves APP_ENV for prod/dev/test, so
