@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="modal-body" data-controller="reservations"{% if blocksChanged|default(false) %} data-blocks-changed="1"{% endif %}>
     <div id="flash-message-overlay"></div>
     {% if successMessage|default(null) %}
@@ -106,7 +108,6 @@
                                 {% set id = roomBlock.id %}
                                 {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery)) %}
                                 {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <td class="text-end">
                                     <button type="button" class="btn btn-sm btn-outline-secondary me-2"
                                             data-action="click->reservations#openBlockAction"

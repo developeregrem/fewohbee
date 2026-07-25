@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} - {{ 'nav.journal'|trans }} - {{ getLocalizedMonth(batch.month, 'MMMM', app.request.locale) }} {{ batch.year }}
@@ -170,7 +171,6 @@
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         title="{{ 'button.delete'|trans }}"
                                         data-popover="delete"
@@ -245,7 +245,6 @@
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         title="{{ 'button.delete'|trans }}"
                                         data-popover="delete"
@@ -308,7 +307,6 @@
                                 </button>
                                 {% set id = entry.id %}
                                 {% set targetUrl = path('journal.entry.delete', {'id': entry.id}) %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                         title="{{ 'button.delete'|trans }}"
                                         data-popover="delete"

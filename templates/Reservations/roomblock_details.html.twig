@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="modal-body" data-controller="reservations">
     <div id="flash-message-overlay"></div>
     {% if error %}
@@ -67,7 +69,6 @@
             {% set id = roomBlock.id %}
             {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery|default({}))) %}
             {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
-            {% use "common/delete_popover.html.twig" %}
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-danger"
                         data-popover="delete"

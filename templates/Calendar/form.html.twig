@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 {% set formAction = isNew ? path('settings.calendars.new') : path('settings.calendars.edit', {'id': calendar.id}) %}
 {{ form_start(form, {
     'attr': {
@@ -51,7 +53,6 @@
                 {% set id = 'cleanup' ~ calendar.id %}
                 {% set targetUrl = path('settings.calendars.cleanup_unconfirmed', {'id': calendar.id}) %}
                 {% set deletePopoverHint = 'calendar.cleanup.confirm'|trans({'%count%': unconfirmedPastCount}) %}
-                {% use "common/delete_popover.html.twig" %}
                 <button type="button" class="btn btn-outline-danger btn-sm"
                         data-popover="delete"
                         data-title="{{ 'calendar.cleanup.title'|trans }}"

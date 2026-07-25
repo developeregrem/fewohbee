@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="d-flex justify-content-end mb-2">
     <a href="{{ path('bank_import.profiles.new') }}" class="btn btn-primary btn-sm">
         <i class="fas fa-plus"></i> {{ 'accounting.bank_import.profile.add'|trans }}
@@ -21,7 +23,6 @@
             {% for profile in profiles %}
                 {% set id = profile.id %}
                 {% set targetUrl = path('bank_import.profiles.delete', {'id': profile.id}) %}
-                {% use "common/delete_popover.html.twig" %}
                 <tr>
                     <td>
                         <strong>{{ profile.name }}</strong>

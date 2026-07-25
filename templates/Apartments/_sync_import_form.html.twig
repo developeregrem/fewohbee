@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div data-controller="calendar-imports">
     <div class="row mb-4">
         <div class="col">{{ 'calendar.sync.import.hint'|trans }}</div>
@@ -27,7 +29,6 @@
                         {% for import in sync.apartment.calendarSyncImports %}
                             {% set id = import.id %}
                             {% set targetUrl = path('apartments.sync.import.delete', {'id': import.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <tr>
                                 <td>{{ import.name }}</td>
                                 <td>

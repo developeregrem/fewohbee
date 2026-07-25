@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="accordion-item">
     <h2 class="accordion-header">
         <button class="accordion-button {% if not setting.isActive and setting.id != null %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ idx }}"
@@ -55,7 +57,6 @@
                         {% if setting.id != null %}
                             {% set id = setting.id %}
                             {% set targetUrl = path('invoices.settings.delete', {'id': setting.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <button type="button" class="btn btn-danger" 
                                 title="{{ 'registrationbook.delete.ask'|trans }}"
                                 data-popover="delete" data-bs-content='{{ block('deletePopoverContent') }}'>                            

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  Benutzerverwaltung
@@ -52,7 +53,6 @@
                                    data-enable-edit="true"></i></a>
                             {% set id = user.id %}
                             {% set targetUrl = path('users.delete.user', {'id': user.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i class="fas fa-trash-alt"
                                    data-popover="delete"

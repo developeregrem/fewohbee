@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <table class="table table-bordered table-hover">
 <thead>
 <tr>
@@ -84,7 +86,6 @@
                    data-enable-edit="true"></i></a>
             {% set id = price.id %}
             {% set targetUrl = path('prices.delete.price', {'id': price.id}) %}
-            {% use "common/delete_popover.html.twig" %}
             <a href="#" title="{{ 'button.delete'|trans }}">
                 <i class="fas fa-trash-alt"
                     data-popover="delete"
