@@ -11,7 +11,9 @@ use App\Service\MpdfService;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
@@ -107,6 +109,29 @@ final class TemplatesServiceTest extends TestCase
         self::assertStringContainsString('YES', $output);
         self::assertStringNotContainsString('>NO<', $output);
         self::assertStringNotContainsString('data-if=', $output);
+    }
+
+    public function testRenderTemplateStringConvertsDataIfOnTable(): void
+    {
+        $service = $this->createService();
+        $template = <<<'HTML'
+            <table data-if="invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')|length > 0"><tbody><tr><th>Modifiers</th></tr></tbody></table>
+            HTML;
+
+        $hiddenOutput = $service->renderTemplateString($template, [
+            'invoice' => ['positions' => [
+                ['positionGroup' => 'tourist_tax'],
+            ]],
+        ]);
+        $visibleOutput = $service->renderTemplateString($template, [
+            'invoice' => ['positions' => [
+                ['positionGroup' => 'apartment_modifier'],
+            ]],
+        ]);
+
+        self::assertStringNotContainsString('<table', $hiddenOutput);
+        self::assertStringContainsString('<table><tbody><tr><th>Modifiers</th></tr></tbody></table>', $visibleOutput);
+        self::assertStringNotContainsString('data-if=', $visibleOutput);
     }
 
     public function testRenderTemplateStringKeepsStyleAndClassOnDataRepeatElement(): void
@@ -333,6 +358,101 @@ final class TemplatesServiceTest extends TestCase
         self::assertSame($input, $output);
     }
 
+    // ─── Export image embedding (S3 migration gap) ──────────────────────────────
+
+    public function testPrepareImagesEmbedsLegacyLocalExportImageFromStorage(): void
+    {
+        $png = $this->onePixelPng();
+        $service = $this->createServiceWithExportStorage($this->exportStorageWith('logo-abc123.png', $png));
+
+        // After a local→S3 migration the stored src still points at the old local path,
+        // but the bytes now live in the export storage. It must be inlined, not host-rewritten.
+        $output = $service->prepareImagesForRendering('<p><img src="/resources/images/export/logo-abc123.png"></p>');
+
+        self::assertStringContainsString('src="data:image/png;base64,'.base64_encode($png).'"', $output);
+        self::assertStringNotContainsString('/resources/images/export/', $output);
+    }
+
+    public function testPrepareImagesEmbedsAbsoluteS3ExportUrlFromStorage(): void
+    {
+        $png = $this->onePixelPng();
+        $service = $this->createServiceWithExportStorage($this->exportStorageWith('logo-abc123.png', $png));
+
+        $output = $service->prepareImagesForRendering(
+            '<img src="https://bucket.fsn1.your-objectstorage.com/tenant-uuid/export/logo-abc123.png">'
+        );
+
+        self::assertStringContainsString('src="data:image/png;base64,'.base64_encode($png).'"', $output);
+        self::assertStringNotContainsString('your-objectstorage.com', $output);
+    }
+
+    public function testPrepareImagesLeavesSrcUntouchedWhenFileMissing(): void
+    {
+        $storage = $this->createStub(FilesystemOperator::class);
+        $storage->method('fileExists')->willReturn(false);
+        $service = $this->createServiceWithExportStorage($storage);
+
+        $output = $service->prepareImagesForRendering('<img src="/resources/images/export/missing.png">');
+
+        // No inlining possible → original src stays; mPDF simply skips the broken image.
+        self::assertStringContainsString('src="/resources/images/export/missing.png"', $output);
+        self::assertStringNotContainsString('data:image', $output);
+    }
+
+    public function testPrepareImagesPicksJpegMimeFromExtension(): void
+    {
+        $jpg = $this->onePixelPng(); // bytes are irrelevant for the mime derivation
+        $service = $this->createServiceWithExportStorage($this->exportStorageWith('photo.jpeg', $jpg));
+
+        $output = $service->prepareImagesForRendering('<img src="/resources/images/export/photo.jpeg">');
+
+        self::assertStringContainsString('data:image/jpeg;base64,', $output);
+    }
+
+    public function testGetPdfOutputEmbedsMigratedExportImageIntoPdf(): void
+    {
+        $png = $this->onePixelPng();
+
+        $requestStack = new RequestStack();
+        $requestStack->push(Request::create('https://tenant.example/'));
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $service = new TemplatesService(
+            new Environment(new ArrayLoader()),
+            $this->createStub(EntityManagerInterface::class),
+            $requestStack,
+            new MpdfService($requestStack, sys_get_temp_dir().'/mpdf-test'),
+            $translator,
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $this->exportStorageWith('logo-abc123.png', $png)
+        );
+
+        $template = new Template();
+        $template->setParams(json_encode([
+            'format' => 'A4',
+            'orientation' => 'P',
+            'marginLeft' => 25.0,
+            'marginRight' => 20.0,
+            'marginTop' => 20.0,
+            'marginBottom' => 20.0,
+            'marginHeader' => 9.0,
+            'marginFooter' => 9.0,
+        ]));
+
+        $pdf = $service->getPDFOutput(
+            '<p>Hallo</p><img src="/resources/images/export/logo-abc123.png">',
+            'test',
+            $template
+        );
+
+        // A well-formed PDF whose body carries an embedded image object proves mPDF
+        // accepted the inlined data URI (a broken/absent image would be silently skipped).
+        self::assertStringStartsWith('%PDF-', $pdf);
+        self::assertStringContainsString('/Image', $pdf);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private function createService(): TemplatesService
@@ -344,13 +464,13 @@ final class TemplatesServiceTest extends TestCase
             ->willReturnCallback(static fn (string $id, array $params = []): string => strtr($id, $params));
 
         return new TemplatesService(
-            'http://example.test',
             $twig,
             $this->createStub(EntityManagerInterface::class),
             new RequestStack(),
             $this->createStub(MpdfService::class),
             $translator,
-            $this->createStub(TemplateRenderParamsResolver::class)
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $this->createStub(FilesystemOperator::class)
         );
     }
 
@@ -376,13 +496,46 @@ final class TemplatesServiceTest extends TestCase
             ->willReturn($repo);
 
         return new TemplatesService(
-            'http://example.test',
             $twig,
             $em,
             new RequestStack(),
             $this->createStub(MpdfService::class),
             $translator,
-            $this->createStub(TemplateRenderParamsResolver::class)
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $this->createStub(FilesystemOperator::class)
+        );
+    }
+
+    private function createServiceWithExportStorage(FilesystemOperator $exportStorage): TemplatesService
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new TemplatesService(
+            new Environment(new ArrayLoader()),
+            $this->createStub(EntityManagerInterface::class),
+            new RequestStack(),
+            $this->createStub(MpdfService::class),
+            $translator,
+            $this->createStub(TemplateRenderParamsResolver::class),
+            $exportStorage
+        );
+    }
+
+    private function exportStorageWith(string $filename, string $bytes): FilesystemOperator
+    {
+        $storage = $this->createStub(FilesystemOperator::class);
+        $storage->method('fileExists')->willReturnCallback(static fn (string $path): bool => $path === $filename);
+        $storage->method('read')->willReturnCallback(static fn (string $path): string => $path === $filename ? $bytes : '');
+
+        return $storage;
+    }
+
+    /** A minimal, valid 1×1 transparent PNG. */
+    private function onePixelPng(): string
+    {
+        return base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
         );
     }
 

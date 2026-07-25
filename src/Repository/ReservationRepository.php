@@ -251,6 +251,45 @@ class ReservationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Lightweight (appartmentId, startDate, endDate) spans of blocking, non-conflict reservations
+     * that truly overlap the period, optionally scoped by subsidiary and room category.
+     *
+     * @return array<array{appartmentId: int, startDate: string, endDate: string}>
+     */
+    public function loadBlockingSpansForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, string|int $objectId = 'all', ?int $roomCategoryId = null): array
+    {
+        $qb = $this
+            ->createQueryBuilder('u')
+            ->select('IDENTITY(u.appartment) AS appartmentId')
+            ->addSelect('u.startDate')
+            ->addSelect('u.endDate')
+            ->join('u.appartment', 'a')
+            ->andWhere('u.isConflict = 0')
+            ->andWhere('u.startDate < :end AND u.endDate > :start')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end);
+
+        if ('all' !== $objectId) {
+            $qb->andWhere('a.object = :objectId')
+                ->setParameter('objectId', $objectId);
+        }
+        if (null !== $roomCategoryId) {
+            $qb->andWhere('a.roomCategory = :categoryId')
+                ->setParameter('categoryId', $roomCategoryId);
+        }
+
+        $this->applyBlockingStatusFilter($qb, 'u');
+
+        $rows = $qb->getQuery()->getArrayResult();
+
+        return array_map(static fn (array $row): array => [
+            'appartmentId' => (int) $row['appartmentId'],
+            'startDate' => $row['startDate'] instanceof \DateTimeInterface ? $row['startDate']->format('Y-m-d') : (string) $row['startDate'],
+            'endDate' => $row['endDate'] instanceof \DateTimeInterface ? $row['endDate']->format('Y-m-d') : (string) $row['endDate'],
+        ], $rows);
+    }
+
+    /**
      * Load all reservations for multiple apartments in a single query.
      * Includes boundary touches (for table display where partial reservations must be shown).
      *

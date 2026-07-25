@@ -61,7 +61,7 @@ function extendWithTemplateAttrs(Base, ...attrGroups) {
 }
 
 const TemplateLink = extendWithTemplateAttrs(Link, styleAndClassAttributes());
-const TemplateTable = extendWithTemplateAttrs(Table, styleAndClassAttributes());
+const TemplateTable = extendWithTemplateAttrs(Table, repeatAndConditionAttributes(), styleAndClassAttributes());
 const TemplateTableRow = extendWithTemplateAttrs(TableRow, repeatAndConditionAttributes(), styleAndClassAttributes());
 const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndConditionAttributes(), styleAndClassAttributes());
 const TemplateTableCell = extendWithTemplateAttrs(TableCell, repeatAndConditionAttributes(), styleAndClassAttributes());

@@ -1,4 +1,5 @@
 {% import 'BookingJournal/BankImport/_rule_summary.html.twig' as ruleUi %}
+{% use "common/delete_popover.html.twig" %}
 
 <div class="card">
     <div class="table-responsive">
@@ -17,7 +18,6 @@
             {% for rule in rules %}
                 {% set id = rule.id %}
                 {% set targetUrl = path('bank_import.rules.delete', {'id': rule.id}) %}
-                {% use "common/delete_popover.html.twig" %}
                 <tr class="{% if not rule.isEnabled %}text-muted{% endif %}">
                     <td class="text-center"><span class="badge bg-secondary">{{ rule.priority }}</span></td>
                     <td>

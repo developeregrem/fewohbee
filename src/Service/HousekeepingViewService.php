@@ -7,10 +7,12 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomBlock;
 use App\Entity\RoomDayStatus;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\RoomBlockRepository;
 use App\Repository\RoomDayStatusRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -23,7 +25,8 @@ class HousekeepingViewService
         private readonly AppartmentRepository $appartmentRepository,
         private readonly ReservationRepository $reservationRepository,
         private readonly RoomDayStatusRepository $roomDayStatusRepository,
-        private readonly TranslatorInterface $translator
+        private readonly TranslatorInterface $translator,
+        private readonly RoomBlockRepository $roomBlockRepository,
     ) {
     }
 
@@ -47,13 +50,14 @@ class HousekeepingViewService
         $apartments = $this->loadApartments($subsidiary);
         $reservations = $this->reservationRepository->findForHousekeepingRange($date, $date->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
+        $blocksByApartment = $this->loadBlocksByApartment($apartments, $date, $date);
         $statusMap = $this->loadStatusMap($apartments, $date, $date);
         $dateKey = $date->format('Y-m-d');
 
         $rows = [];
         foreach ($apartments as $apartment) {
             $apartmentReservations = $reservationsByApartment[$apartment->getId()] ?? [];
-            $occupancy = $this->resolveOccupancyForDay($date, $apartmentReservations);
+            $occupancy = $this->resolveOccupancyForDay($date, $apartmentReservations, $blocksByApartment[$apartment->getId()] ?? []);
             $rows[] = [
                 'apartment' => $apartment,
                 'occupancyType' => $occupancy['type'],
@@ -104,6 +108,7 @@ class HousekeepingViewService
         $apartments = $this->loadApartments($subsidiary);
         $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
+        $blocksByApartment = $this->loadBlocksByApartment($apartments, $start, $end);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
 
@@ -113,7 +118,7 @@ class HousekeepingViewService
             $rows = [];
             foreach ($apartments as $apartment) {
                 $apartmentReservations = $reservationsByApartment[$apartment->getId()] ?? [];
-                $occupancy = $this->resolveOccupancyForDay($day, $apartmentReservations);
+                $occupancy = $this->resolveOccupancyForDay($day, $apartmentReservations, $blocksByApartment[$apartment->getId()] ?? []);
                 $rows[] = [
                     'apartment' => $apartment,
                     'occupancyType' => $occupancy['type'],
@@ -166,16 +171,18 @@ class HousekeepingViewService
         $apartments = $this->loadApartments($subsidiary);
         $reservations = $this->reservationRepository->findForHousekeepingRange($start, $end->modify('+1 day'), $subsidiary, $statusMode, $statusIds);
         $reservationsByApartment = $this->groupReservationsByApartment($reservations);
+        $blocksByApartment = $this->loadBlocksByApartment($apartments, $start, $end);
         $statusMap = $this->loadStatusMap($apartments, $start, $end);
         $days = $this->buildDaysRange($start, $end);
 
         $rows = [];
         foreach ($apartments as $apartment) {
             $apartmentReservations = $reservationsByApartment[$apartment->getId()] ?? [];
+            $apartmentBlocks = $blocksByApartment[$apartment->getId()] ?? [];
             $dayEntries = [];
             foreach ($days as $day) {
                 $dateKey = $day->format('Y-m-d');
-                $occupancy = $this->resolveOccupancyForDay($day, $apartmentReservations);
+                $occupancy = $this->resolveOccupancyForDay($day, $apartmentReservations, $apartmentBlocks);
                 $dayEntries[$dateKey] = [
                     'occupancyType' => $occupancy['type'],
                     'guestCount' => $occupancy['guestCount'],
@@ -201,11 +208,15 @@ class HousekeepingViewService
     /**
      * Resolve the occupancy type and display details for a single day.
      *
+     * Reservation activity (arrival/departure/turnover/stayover) takes precedence over a
+     * room block: housekeeping still needs to see e.g. the checkout on the day a block starts.
+     *
      * @param Reservation[] $reservations
+     * @param RoomBlock[]   $blocks
      *
      * @return array{type: string, guestCount: int|null, summary: string|null}
      */
-    public function resolveOccupancyForDay(\DateTimeImmutable $date, array $reservations): array
+    public function resolveOccupancyForDay(\DateTimeImmutable $date, array $reservations, array $blocks = []): array
     {
         $arrivals = [];
         $departures = [];
@@ -267,6 +278,19 @@ class HousekeepingViewService
             ];
         }
 
+        foreach ($blocks as $block) {
+            $startKey = $block->getStartDate()->format('Y-m-d');
+            $endKey = $block->getEndDate()->format('Y-m-d');
+            // endDate is exclusive: the room is free again on that day
+            if ($startKey <= $dateKey && $endKey > $dateKey) {
+                return [
+                    'type' => 'BLOCKED',
+                    'guestCount' => null,
+                    'summary' => $block->getReason(),
+                ];
+            }
+        }
+
         return [
             'type' => 'FREE',
             'guestCount' => null,
@@ -298,6 +322,7 @@ class HousekeepingViewService
             'ARRIVAL' => 'housekeeping.occupancy.arrival',
             'DEPARTURE' => 'housekeeping.occupancy.departure',
             'TURNOVER' => 'housekeeping.occupancy.turnover',
+            'BLOCKED' => 'housekeeping.occupancy.blocked',
         ];
     }
 
@@ -306,7 +331,7 @@ class HousekeepingViewService
      */
     public function getAllowedOccupancyTypes(): array
     {
-        return ['FREE', 'STAYOVER', 'ARRIVAL', 'DEPARTURE', 'TURNOVER'];
+        return ['FREE', 'STAYOVER', 'ARRIVAL', 'DEPARTURE', 'TURNOVER', 'BLOCKED'];
     }
 
     /**
@@ -581,5 +606,22 @@ class HousekeepingViewService
     private function loadStatusMap(array $apartments, \DateTimeImmutable $start, \DateTimeImmutable $end): array
     {
         return $this->roomDayStatusRepository->findForApartmentsAndDates($apartments, $start, $end);
+    }
+
+    /**
+     * Load room blocks for the given apartments and (inclusive) date range, grouped by apartment id.
+     *
+     * @param Appartment[] $apartments
+     *
+     * @return array<int, RoomBlock[]>
+     */
+    private function loadBlocksByApartment(array $apartments, \DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        $grouped = [];
+        foreach ($this->roomBlockRepository->findForApartments($start, $end, $apartments) as $block) {
+            $grouped[$block->getAppartment()->getId()][] = $block;
+        }
+
+        return $grouped;
     }
 }

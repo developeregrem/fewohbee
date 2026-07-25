@@ -261,6 +261,8 @@ export default class extends Controller {
         this.attachCustomerSearchInputs();
         this.attachPaginationLinks();
         this.updateConflictBadgeFromModal();
+        this.refreshTableAfterBlockChange();
+        this.initBlockRoomPicker();
         enableDeletePopover();
         this.enableCalendarEntryDeleteInModal();
         window.setTimeout(() => {
@@ -400,6 +402,233 @@ export default class extends Controller {
         this.selectAppartment(createNew, url);
     }
 
+    openBlockFormAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    openBlockListAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.list.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    openBlockAction(event) {
+        event.preventDefault();
+        const url = event.currentTarget.dataset.url;
+        if (!url) return;
+        setModalTitle(this.translate('roomblock.title'));
+        $('#modalCenter').modal('show');
+        httpRequest({
+            url,
+            method: 'GET',
+            target: this.modalContent,
+        });
+    }
+
+    // Reload the block list with the current year/month/subsidiary filter (stays in the modal).
+    reloadBlockListAction(event) {
+        const form = event.target.closest('[data-block-list-filter]');
+        if (!form) return;
+        const url = form.dataset.url;
+        if (!url) return;
+        httpRequest({
+            url,
+            method: 'GET',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+            loader: false,
+        });
+    }
+
+    toggleBlockSelect(event) {
+        this._syncBlockBulkState(event.target.closest('.modal-body'));
+    }
+
+    toggleAllBlockSelect(event) {
+        const scope = event.target.closest('.modal-body');
+        if (!scope) return;
+        scope.querySelectorAll('[data-block-select]').forEach((cb) => { cb.checked = event.target.checked; });
+        this._syncBlockBulkState(scope);
+    }
+
+    askBulkDeleteBlocks(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        if (!bar) return;
+        bar.querySelector('[data-block-bulk-delete]')?.classList.add('d-none');
+        const confirm = bar.querySelector('[data-block-bulk-confirm]');
+        confirm?.classList.remove('d-none');
+        confirm?.classList.add('d-inline-flex');
+    }
+
+    cancelBulkDeleteBlocks(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        this._resetBulkDeleteConfirm(bar);
+    }
+
+    bulkDeleteBlocksAction(event) {
+        const bar = event.target.closest('[data-block-bulk-bar]');
+        const scope = event.target.closest('.modal-body');
+        if (!bar || !scope) return;
+        const url = bar.dataset.url;
+        const ids = Array.from(scope.querySelectorAll('[data-block-select]:checked')).map((cb) => cb.value);
+        if (!url || ids.length === 0) {
+            this._resetBulkDeleteConfirm(bar);
+            return;
+        }
+        const params = new URLSearchParams();
+        params.append('_token', bar.querySelector('[data-block-bulk-token]')?.value || '');
+        ids.forEach((id) => params.append('ids[]', id));
+        httpRequest({
+            url,
+            method: 'POST',
+            data: params.toString(),
+            target: this.modalContent,
+            loader: false,
+        });
+    }
+
+    _resetBulkDeleteConfirm(bar) {
+        if (!bar) return;
+        const confirm = bar.querySelector('[data-block-bulk-confirm]');
+        confirm?.classList.add('d-none');
+        confirm?.classList.remove('d-inline-flex');
+        bar.querySelector('[data-block-bulk-delete]')?.classList.remove('d-none');
+    }
+
+    _syncBlockBulkState(scope) {
+        if (!scope) return;
+        const boxes = Array.from(scope.querySelectorAll('[data-block-select]'));
+        const selected = boxes.filter((cb) => cb.checked).length;
+        const bar = scope.querySelector('[data-block-bulk-bar]');
+        if (bar) {
+            const count = bar.querySelector('[data-block-bulk-count]');
+            if (count) count.textContent = String(selected);
+            const btn = bar.querySelector('[data-block-bulk-delete]');
+            if (btn) btn.disabled = selected === 0;
+            if (selected === 0) this._resetBulkDeleteConfirm(bar);
+        }
+        const master = scope.querySelector('[data-block-select-all]');
+        if (master) {
+            master.checked = boxes.length > 0 && selected === boxes.length;
+            master.indeterminate = selected > 0 && selected < boxes.length;
+        }
+    }
+
+    // Submit the room-block create form: on success reload the index page
+    // (flash + table refresh, like reservation creation); on conflict/validation
+    // the server returns the form again, which we render back into the modal.
+    submitBlockFormAction(event) {
+        event.preventDefault();
+        const form = event.target.closest('form');
+        if (!form) {
+            return;
+        }
+        const url = form.dataset.url || form.getAttribute('action');
+        httpRequest({
+            url,
+            method: form.method || 'POST',
+            data: httpSerializeForm(form),
+            target: this.modalContent,
+            loader: false,
+            onSuccess: (data) => {
+                if (data && data.trim().length > 0) {
+                    if (this.modalContent) {
+                        this.modalContent.innerHTML = data;
+                    }
+                    return;
+                }
+                window.location.href = this.startUrl || '/';
+            }
+        });
+    }
+
+    filterBlockRooms(event) {
+        const query = event.target.value.trim().toLowerCase();
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        picker.querySelectorAll('[data-block-room-item]').forEach((item) => {
+            const haystack = item.dataset.search || '';
+            const match = query === '' || haystack.includes(query);
+            item.classList.toggle('d-none', !match);
+        });
+        // hide subsidiary groups that have no visible rooms left
+        picker.querySelectorAll('[data-block-subsidiary-group]').forEach((group) => {
+            const hasVisible = group.querySelector('[data-block-room-item]:not(.d-none)') !== null;
+            group.classList.toggle('d-none', !hasVisible);
+        });
+    }
+
+    toggleAllBlockRooms(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        this._setBlockCheckboxes(this._visibleBlockCheckboxes(picker), event.target.checked);
+        this._syncBlockRoomState(picker);
+    }
+
+    toggleSubsidiaryBlockRooms(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (!picker) return;
+        const subId = event.target.dataset.blockSubsidiaryToggle;
+        const boxes = this._visibleBlockCheckboxes(picker)
+            .filter((cb) => cb.dataset.blockSubsidiary === subId);
+        this._setBlockCheckboxes(boxes, event.target.checked);
+        this._syncBlockRoomState(picker);
+    }
+
+    syncBlockRoomSelection(event) {
+        const picker = event.target.closest('[data-block-room-picker]');
+        if (picker) this._syncBlockRoomState(picker);
+    }
+
+    _visibleBlockCheckboxes(picker) {
+        return Array.from(picker.querySelectorAll('[data-block-room-checkbox]'))
+            .filter((cb) => !cb.closest('[data-block-room-item]').classList.contains('d-none'));
+    }
+
+    _setBlockCheckboxes(boxes, checked) {
+        boxes.forEach((cb) => { cb.checked = checked; });
+    }
+
+    // Keep master/subsidiary checkboxes and the selected-count badge in sync.
+    _syncBlockRoomState(picker) {
+        const allBoxes = Array.from(picker.querySelectorAll('[data-block-room-checkbox]'));
+        const selected = allBoxes.filter((cb) => cb.checked).length;
+        const badge = picker.querySelector('[data-block-selected-count]');
+        if (badge) badge.textContent = String(selected);
+
+        const master = picker.querySelector('[data-block-room-all]');
+        if (master) {
+            const visible = this._visibleBlockCheckboxes(picker);
+            const visibleChecked = visible.filter((cb) => cb.checked).length;
+            master.checked = visible.length > 0 && visibleChecked === visible.length;
+            master.indeterminate = visibleChecked > 0 && visibleChecked < visible.length;
+        }
+
+        picker.querySelectorAll('[data-block-subsidiary-toggle]').forEach((toggle) => {
+            const subId = toggle.dataset.blockSubsidiaryToggle;
+            const subBoxes = allBoxes.filter((cb) => cb.dataset.blockSubsidiary === subId);
+            const subChecked = subBoxes.filter((cb) => cb.checked).length;
+            toggle.checked = subBoxes.length > 0 && subChecked === subBoxes.length;
+            toggle.indeterminate = subChecked > 0 && subChecked < subBoxes.length;
+        });
+    }
+
     reservationPreviewAction(event) {
         event.preventDefault();
         const customerId = event.currentTarget.dataset.customerId || null;
@@ -448,6 +677,12 @@ export default class extends Controller {
 
     openReservationAction(event) {
         event.preventDefault();
+        // Browsers may emit a click after dragend. Do not open the reservation
+        // modal when the user's intention was to move the reservation.
+        if (this.suppressReservationClick) {
+            this.suppressReservationClick = false;
+            return;
+        }
         const tab = event.currentTarget.dataset.tab || null;
         const url = event.currentTarget.dataset.url;
         const reservationId = event.currentTarget.dataset.reservationId || null;
@@ -655,7 +890,7 @@ export default class extends Controller {
     editUpdateReservationAction(event) {
         event.preventDefault();
         const id = event.currentTarget.dataset.appartmentId;
-        this.editUpdateReservation(id);
+        this.editUpdateReservation(id, event.currentTarget.closest('.appartment-options'));
     }
 
     sendEmailAction(event) {
@@ -689,17 +924,11 @@ export default class extends Controller {
         event.preventDefault();
         const id = event.currentTarget.dataset.attachmentId;
         const isInvoice = event.currentTarget.dataset.isInvoice === 'true';
-        const einvoiceCheckbox = event.currentTarget.querySelector('[data-einvoice-checkbox]');
-        const isEInvoice = !!(einvoiceCheckbox && einvoiceCheckbox.checked);
         const url = event.currentTarget.dataset.url;
         if (url && this.modalContent) {
             this.modalContent.dataset.addAttachmentUrl = url;
         }
-        this.addAsAttachment(id, isInvoice, isEInvoice);
-    }
-
-    stopAttachmentRowClickAction(event) {
-        event.stopPropagation();
+        this.addAsAttachment(id, isInvoice);
     }
 
     previewTemplateForReservationAction(event) {
@@ -797,6 +1026,17 @@ export default class extends Controller {
     // ----- table helpers -----
 
     getNewTable(url = null) {
+        // Modal fragments also contain a reservations controller. Always let
+        // the controller owning the table filter perform a global table reload,
+        // because only that instance carries page permissions such as canSelect.
+        const tableControllerElement = this.tableFilter?.closest('[data-controller~="reservations"]');
+        const tableController = tableControllerElement
+            ? this.application.getControllerForElementAndIdentifier(tableControllerElement, 'reservations')
+            : null;
+        if (tableController && tableController !== this) {
+            return tableController.getNewTable(url);
+        }
+
         const targetUrl = url || this.tableUrl;
         if (!targetUrl || !this.tableFilter) {
             return false;
@@ -820,6 +1060,7 @@ export default class extends Controller {
             loader: false,  // we handle the spinner ourselves
             onSuccess: (data) => {
                 if (this.tableContainer) {
+                    this.disposeTablePopovers();
                     this.tableContainer.innerHTML = data;
                     this.addAppartmentSelectableUrl = this.tableContainer.dataset.reservationsAddAppartmentSelectableUrl || this.addAppartmentSelectableUrl;
                 }
@@ -839,6 +1080,42 @@ export default class extends Controller {
         });
 
         return false;
+    }
+
+    /**
+     * Bootstrap appends popover tips to <body>, outside the table container.
+     * Dispose their instances before replacing the table, otherwise those tips
+     * lose their trigger and remain as permanent orphan elements in the page.
+     */
+    disposeTablePopovers() {
+        if (!this.tableContainer) {
+            return;
+        }
+
+        const selector = [
+            '[data-bs-toggle="popover"]',
+            '.reservation-inner',
+            '.reservation-popover',
+            '.room-info',
+            '.holiday-info',
+            '.calendar-info',
+        ].join(',');
+
+        this.tableContainer.querySelectorAll(selector).forEach((trigger) => {
+            const tipId = trigger.getAttribute('aria-describedby');
+            const tip = tipId ? document.getElementById(tipId) : null;
+            const instance = window.bootstrap?.Popover?.getInstance(trigger);
+
+            if (instance) {
+                instance.dispose();
+            } else if (window.jQuery?.fn?.popover) {
+                $(trigger).popover('dispose');
+            }
+
+            // dispose() normally removes the tip. Keep this fallback for tips
+            // created by an older table/controller instance.
+            tip?.remove();
+        });
     }
 
     loadTableSettings(url, initial = false) {
@@ -979,7 +1256,215 @@ export default class extends Controller {
 
     initTableInteractions() {
         this.initPopovers();
+        this.initReservationDragAndDrop();
         this.initCellSelection();
+    }
+
+    /**
+     * Move a reservation while keeping its duration unchanged.
+     *
+     * The table uses merged cells (colspan) for reservation bars. Therefore a
+     * drop target cannot be derived from empty half-day cells alone: the room
+     * comes from the row under the pointer and the date from the matching day
+     * header. This also permits dropping onto a day covered by the dragged
+     * reservation itself, for example to move a long stay by only one day.
+     */
+    initReservationDragAndDrop() {
+        // Read-only users can inspect reservations but must not move them.
+        if (!this.canSelectValue) {
+            return;
+        }
+
+        const table = document.querySelector('.table-reservation');
+        if (!table) {
+            return;
+        }
+
+        let draggedReservation = null;
+        let dropTarget = null;
+        let keepPopoversDisabled = false;
+
+        // A hovered popover can cover rows above the source reservation. Hide
+        // and disable all reservation popovers until the drag has finished.
+        const setReservationPopoversEnabled = (enabled) => {
+            if (!window.jQuery) {
+                return;
+            }
+
+            const popovers = $(table).find('.reservation-inner');
+            if (!enabled) {
+                popovers.popover('hide');
+            }
+            popovers.popover(enabled ? 'enable' : 'disable');
+        };
+
+        // Called after a successful drop, a rejected drop, and drag cancel.
+        // Keeping cleanup in one place prevents stale highlights/popover state.
+        const clearDragState = () => {
+            draggedReservation?.classList.remove('reservation-dragging');
+            dropTarget?.classList.remove('reservation-drop-target');
+            table.querySelectorAll('.reservation-drop-target').forEach((cell) => {
+                cell.classList.remove('reservation-drop-target');
+            });
+            draggedReservation = null;
+            dropTarget = null;
+            if (!keepPopoversDisabled) {
+                setReservationPopoversEnabled(true);
+            }
+        };
+
+        table.querySelectorAll('.reservation-inner[draggable="true"]').forEach((reservation) => {
+            reservation.addEventListener('dragstart', (event) => {
+                draggedReservation = reservation;
+                setReservationPopoversEnabled(false);
+                reservation.blur();
+                reservation.classList.add('reservation-dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', reservation.dataset.reservationId || '');
+            });
+
+            reservation.addEventListener('dragend', () => {
+                // Suppress only the synthetic click immediately following this
+                // drag; regular clicks must keep opening the details modal.
+                this.suppressReservationClick = true;
+                window.setTimeout(() => { this.suppressReservationClick = false; }, 100);
+                clearDragState();
+            });
+        });
+
+        const tbody = table.tBodies[0];
+        const dayHeaders = Array.from(table.querySelectorAll('.table-days th[data-day]'));
+
+        // Resolve the logical target independently from the actual <td> below
+        // the pointer. Reservation and block cells may span several days, while
+        // every day header always represents exactly one calendar day.
+        const getDropInfo = (event) => {
+            const row = event.target.closest('tbody tr[data-appartment]');
+            const cell = event.target.closest('td');
+            // cellIndex 0 is the sticky room-name column, never a date target.
+            if (!row || !cell || cell.cellIndex === 0) {
+                return null;
+            }
+
+            const dayHeader = dayHeaders.find((header) => {
+                const rect = header.getBoundingClientRect();
+                return event.clientX >= rect.left && event.clientX < rect.right;
+            });
+            if (!dayHeader) {
+                return null;
+            }
+
+            return {
+                apartmentId: row.dataset.appartment,
+                startDate: dayHeader.dataset.day,
+                cell,
+            };
+        };
+
+        tbody.addEventListener('dragover', (event) => {
+            if (!draggedReservation) {
+                return;
+            }
+            const dropInfo = getDropInfo(event);
+            if (!dropInfo) {
+                return;
+            }
+
+            // HTML drag-and-drop only fires "drop" when dragover is cancelled.
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            if (dropTarget !== dropInfo.cell) {
+                dropTarget?.classList.remove('reservation-drop-target');
+                dropTarget = dropInfo.cell;
+                dropTarget.classList.add('reservation-drop-target');
+            }
+        });
+
+        tbody.addEventListener('dragleave', (event) => {
+            if (!tbody.contains(event.relatedTarget)) {
+                dropTarget?.classList.remove('reservation-drop-target');
+                dropTarget = null;
+            }
+        });
+
+        tbody.addEventListener('drop', (event) => {
+            const dropInfo = getDropInfo(event);
+            if (!draggedReservation || !dropInfo) {
+                return;
+            }
+
+            event.preventDefault();
+            // Do not re-enable the old table's popovers in dragend while the
+            // successful move is already scheduling a table replacement.
+            keepPopoversDisabled = true;
+            const moveUrl = draggedReservation.dataset.moveUrl;
+            const token = table.dataset.reservationMoveToken;
+            // Keep a stable reference: dragend may clear draggedReservation
+            // before the asynchronous request has completed.
+            const movingReservation = draggedReservation;
+            movingReservation.classList.add('reservation-moving');
+
+            httpRequest({
+                url: moveUrl,
+                method: 'POST',
+                data: {
+                    apartmentId: dropInfo.apartmentId,
+                    startDate: dropInfo.startDate,
+                    _token: token,
+                },
+                loader: false,
+                onSuccess: (data) => {
+                    let response = {};
+                    try { response = JSON.parse(data); } catch (_) { /* handled by fallback */ }
+                    this.showTableAlert(response.message || this.translate('reservation.move.success'), 'success');
+                    // Let the server rebuild all colspans and occupancy subrows
+                    // instead of attempting to move the table cell manually.
+                    this.getNewTable();
+                },
+                onError: (error) => {
+                    keepPopoversDisabled = false;
+                    // The endpoint uses 409 for date/room collisions and 422
+                    // when the target room has too few beds.
+                    const isConflict = error.startsWith('409 ');
+                    const isCapacityError = error.startsWith('422 ');
+                    this.showTableAlert(
+                        this.translate(
+                            isConflict
+                                ? 'reservation.flash.update.conflict'
+                                : (isCapacityError ? 'reservation.move.capacity' : 'reservation.move.error')
+                        ),
+                        isConflict || isCapacityError ? 'warning' : 'danger'
+                    );
+                },
+                onComplete: () => {
+                    movingReservation.classList.remove('reservation-moving');
+                    clearDragState();
+                },
+            });
+        });
+    }
+
+    /** Replace the current page-level feedback with one dismissible alert. */
+    showTableAlert(message, type = 'info') {
+        const container = document.getElementById('flash-message-container');
+        if (!container) {
+            return;
+        }
+
+        const column = document.createElement('div');
+        column.className = 'col-12';
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.setAttribute('role', 'alert');
+        alert.append(document.createTextNode(message));
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'btn-close';
+        close.dataset.bsDismiss = 'alert';
+        close.setAttribute('aria-label', 'Close');
+        alert.append(close);
+        column.append(alert);
+        container.replaceChildren(column);
     }
 
     initPopovers() {
@@ -1245,6 +1730,7 @@ export default class extends Controller {
                 const apartmentId = calendar.dataset.reservationsApartmentId;
                 if (apartmentId && firstDay) {
                     this.selectableAddAppartmentToSelection(apartmentId, firstDay, lastDay || firstDay);
+                    setModalTitle(this.translate('nav.reservation.add'));
                     $('#modalCenter').modal('toggle');
                 }
                 return;
@@ -1273,6 +1759,7 @@ export default class extends Controller {
 
             if (apartments.length > 0) {
                 this.selectableAddMultipleAppartmentsToSelection(apartments);
+                setModalTitle(this.translate('nav.reservation.add'));
                 $('#modalCenter').modal('toggle');
             }
         };
@@ -1433,6 +1920,22 @@ export default class extends Controller {
                 enableDeletePopover();
             }
         });
+    }
+
+    initBlockRoomPicker() {
+        const picker = this.modalContent?.querySelector('[data-block-room-picker]');
+        if (picker) {
+            this._syncBlockRoomState(picker);
+        }
+    }
+
+    refreshTableAfterBlockChange() {
+        const marker = this.modalContent?.querySelector('[data-blocks-changed]');
+        if (!marker) {
+            return;
+        }
+        delete marker.dataset.blocksChanged;
+        this.getNewTable();
     }
 
     updateConflictBadgeFromModal() {
@@ -2174,12 +2677,18 @@ export default class extends Controller {
         return false;
     }
 
-    editUpdateReservation(appartmentId) {
+    editUpdateReservation(appartmentId, optionsElement = null) {
         const reservationId = $('#reservation-id').val() || appartmentId;
-        const optsContainer = $('#appartment-options-' + appartmentId);
-        const status = optsContainer.find('select[name="status"]').val() ?? '';
-        const guestCounts = optsContainer.find('input[name="guestCounts"]').val() ?? '{}';
-        const persons = optsContainer.find('input[name="persons"]').val() ?? '0';
+        // Use the clicked room's cell for dynamically loaded options. The
+        // footer button for the current room falls back to its stable ID.
+        const optsContainer = $(optionsElement || '#appartment-options-' + appartmentId);
+        const status = optsContainer.find('select[name="status"]').val();
+        const guestCounts = optsContainer.find('input[name="guestCounts"]').val();
+        const persons = optsContainer.find('input[name="persons"]').val();
+        if (!optsContainer.length || !status || guestCounts === undefined || persons === undefined) {
+            return false;
+        }
+
         const overrideEl = optsContainer.find('input[name="adultRuleOverride"]')[0];
         const params = new URLSearchParams();
         params.append('status', status);
@@ -2211,7 +2720,7 @@ export default class extends Controller {
 
     
 
-    addAsAttachment(id, isInvoice, isEInvoice = false) {
+    addAsAttachment(id, isInvoice) {
         const url = this.getContextValue('addAttachmentUrl');
         if (!url) {
             return false;
@@ -2219,7 +2728,7 @@ export default class extends Controller {
         httpRequest({
             url,
             method: 'POST',
-            data: { id, isInvoice, isEInvoice },
+            data: { id, isInvoice },
             loader: false,
             target: this.modalContent,
             onSuccess: (data) => {

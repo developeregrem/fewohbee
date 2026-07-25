@@ -1,31 +1,31 @@
 <div data-controller="invoices reservations">
 <div class="modal-body">
     <div class="ps-5 pe-5">
-        <form id="new-invoice-id" class="form" role="form" data-action="submit->invoices#showCreateInvoicePositionsAction" data-url="{{ path('invoices.create.invoice.positions') }}" data-create-positions="false">
-        <div class="row">            
-            <div id="invoice-id" class="col">
-                <div class="input-group">
-                    <input type="text" name="invoiceid" class="form-control"
-                        placeholder="{{ 'invoice.id'|trans }} ({{ 'invoice.id.last'|trans }} {{ lastinvoiceid }})"
-                        value="{{ invoiceid }}"
-                        id="invoiceidInput">
-                    <button class="btn btn-link text-secondary" type="button"
-                            title="{{ 'invoice.id.adopt'|trans }}"
-                            data-action="click->invoices#adoptNextInvoiceNumberAction"
-                            data-last-number="{{ lastinvoiceid }}">
-                        <i class="fas fa-clone"></i>
-                    </button>
-                </div>
+        <div id="flash-message-overlay">{% include 'feedback.html.twig' %}</div>
+        <div class="row" data-invoices-meta-url="{{ path('invoices.create.invoice.meta') }}" id="invoice-meta">
+            <div class="col">
+                <label for="invoiceidInput" class="form-label">{{ 'invoice.id'|trans }}</label>
+                <input type="text" name="invoiceid" class="form-control"
+                    placeholder="{{ 'invoice.id'|trans }}"
+                    value="{{ invoiceid }}"
+                    id="invoiceidInput"
+                    data-action="input->invoices#updateInvoiceMetaAction">
+                {% if lastinvoiceid is not empty %}
+                    <small class="form-text text-muted">{{ 'invoice.id.last'|trans }} {{ lastinvoiceid }}</small>
+                {% endif %}
             </div>
-            <div id="invoice-id" class="col">
-                <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"                       
-                       value="{{ invoiceDate|date("Y-m-d") }}">
+            <div class="col">
+                <label for="invoiceDate" class="form-label">{{ 'invoice.date'|trans }}</label>
+                <input type="date" name="invoiceDate" class="form-control" id="invoiceDate"
+                       value="{{ invoiceDate|date("Y-m-d") }}"
+                       data-action="change->invoices#updateInvoiceMetaAction">
             </div>
         </div>
-        <div class="row mt-4">
-            <button type="submit" class="btn btn-secondary" type="button">{{ 'invoice.button.save.numberanddate'|trans }}</button>
-        </div>        
-        </form>
+        <div class="row mt-3">
+            <div class="col">
+                {% include 'Invoices/_einvoice_readiness.html.twig' %}
+            </div>
+        </div>
         <div class="row">
             <div class="col">
                 <h4 class="mt-4">{{ 'invoice.guest'|trans }}&nbsp;
@@ -94,12 +94,12 @@
         <li class="page-item " data-action="click->reservations#selectReservationAction" data-url="{{ path('invoices.select.reservation') }}">
             <a class="page-link" href="#">&larr; {{ 'button.back'|trans }}</a></li>
     </ul>
-    {% if appartmentPositionExists %}
+    {% if canContinue %}
     <ul class="pagination">
         <li class="page-item" data-action="click->invoices#showNewInvoicePreviewAction" data-url="{{ path('invoices.show.new.invoice.preview') }}">
             <a class="page-link" href="#">{{ 'button.continue'|trans }}&rarr;</a>
         </li>
     </ul>
-    {% endif %} 
+    {% endif %}
 </div>
 </div>

@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  Appartmentverwaltung
@@ -28,11 +29,12 @@
                         <th>{{ 'appartment.number'|trans }}</th>
                         <th>{{ 'appartment.description'|trans }}</th>
                         <th>{{ 'appartment.bedsmax'|trans }}</th>
+                        <th>{{ 'appartment.active'|trans }}</th>
                         <th>{{ 'appartment.action'|trans }}</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {% set columnCount = 4 %}
+                    {% set columnCount = 5 %}
                     {% set previousSubsidiaryId = null %}
                     {% for apartment in apartments %}
                         {% set currentSubsidiaryId = apartment.object is defined and apartment.object ? apartment.object.id : null %}
@@ -44,10 +46,17 @@
                             </tr>
                             {% set previousSubsidiaryId = currentSubsidiaryId %}
                         {% endif %}
-                        <tr>
+                        <tr{% if not apartment.active %} class="table-secondary text-muted"{% endif %}>
                             <td>{{ apartment.number }}</td>
                             <td>{{ apartment.description }}{% if apartment.multipleOccupancy %} <i class="fa-solid fa-users" title="{{ 'apartment.multiple.occupancy.text'|trans }}"></i>{% endif %}</td>
                             <td>{{ apartment.bedsmax }}</td>
+                            <td class="text-center">
+                                {% if apartment.active %}
+                                    <i class="fas fa-check text-success" title="{{ 'appartment.active.yes'|trans }}" aria-label="{{ 'appartment.active.yes'|trans }}"></i>
+                                {% else %}
+                                    <i class="fas fa-times text-secondary" title="{{ 'appartment.active.no'|trans }}" aria-label="{{ 'appartment.active.no'|trans }}"></i>
+                                {% endif %}
+                            </td>
                             <td>
                                 <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">
                                     <i class="fas fa-info-circle"
@@ -68,7 +77,6 @@
                                        data-modal-size="lg"></i></a>
                                 {% set id = apartment.id %}
                                 {% set targetUrl = path('appartments.delete.appartment', {'id': apartment.id}) %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <a href="#" title="{{ 'button.delete'|trans }}">
                                     <i class="fas fa-trash-alt"
                                         data-popover="delete"

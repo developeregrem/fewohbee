@@ -23,6 +23,8 @@ use App\Entity\TemplateType;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -72,18 +74,15 @@ class TemplatesService
             'marginFooter' => 4.0,
         ],
     ];
-    private $webHost;
-
     public function __construct(
-        string $webHost,
         private Environment $twig,
         private EntityManagerInterface $em,
         private RequestStack $requestStack,
         private MpdfService $mpdfs,
         private TranslatorInterface $translator,
-        private TemplateRenderParamsResolver $renderParamsResolver
+        private TemplateRenderParamsResolver $renderParamsResolver,
+        private readonly FilesystemOperator $exportStorage
     ) {
-        $this->webHost = $webHost;
     }
 
     /**
@@ -544,7 +543,7 @@ class TemplatesService
             $params->marginFooter
         );
 
-        $inputMapped = $this->mapImageSrc($input);
+        $inputMapped = $this->prepareImagesForRendering($input);
 
         /*
          * mode
@@ -558,21 +557,75 @@ class TemplatesService
     }
 
     /**
-     * This maps the src of images to the real web host.
-     * This is sometimes needed e.g. when using it with docker.
-     * The docker web host is "web" when the application is requested via "localhost" in the browser,
-     * mpdf uses the host from the request, which is localhost. But there is no web server listening on localhost in the php container.
-     * That's why we need to change the src to the real host "web".
+     * Prepares the image sources of a template's HTML for mPDF rendering.
+     *
+     * Template (export) images — the only images a user can embed into a PDF template
+     * (via the editor's image upload) — are inlined as base64 `data:` URIs read straight
+     * from the configured export storage (@images.export.storage). This is
+     * adapter-agnostic: it works whether the stored <img src> is a legacy local path
+     * (/resources/images/export/foo.png) or an absolute S3 URL
+     * (https://bucket/.../export/foo.png), and it decouples the PDF from *how* the file
+     * is served — after a local→S3 migration the local upload directory is gone, so an
+     * HTTP fetch of the old local path 404s even though the bytes now live in S3.
+     * Reading by filename from Flysystem always finds them, in both storage modes. This
+     * is what let us drop the internal http-only nginx host mPDF used to fetch from
+     * (which only ever existed to dodge self-signed-certificate errors).
+     *
+     * A missing/unreadable file leaves the original src untouched (mPDF then simply
+     * skips the broken image, as it always did for a missing file).
      *
      * @param string $input
      *
      * @return string
      */
-    private function mapImageSrc($input)
+    public function prepareImagesForRendering(string $input): string
     {
-        $host = rtrim($this->webHost, '/').'/';
+        $embedded = [];
 
-        return preg_replace('/src="\/(.*)"/i', 'src="'.$host.'$1"', $input);
+        return preg_replace_callback(
+            // Match an <img> src that points at an export image, capturing the bare
+            // filename after the last "/export/" segment (local path or S3 URL alike).
+            '/src="([^"]*\/export\/([^"\/?]+)[^"]*)"/i',
+            function (array $m) use (&$embedded): string {
+                $filename = rawurldecode($m[2]);
+
+                if (!array_key_exists($filename, $embedded)) {
+                    $embedded[$filename] = $this->exportImageDataUri($filename);
+                }
+
+                return null === $embedded[$filename]
+                    ? $m[0]
+                    : 'src="'.$embedded[$filename].'"';
+            },
+            $input
+        );
+    }
+
+    /**
+     * Reads an export image from the configured storage and returns it as a base64
+     * `data:` URI, or null when the file cannot be read (missing/unreadable) so the
+     * caller can leave the original src untouched.
+     */
+    private function exportImageDataUri(string $filename): ?string
+    {
+        try {
+            if (!$this->exportStorage->fileExists($filename)) {
+                return null;
+            }
+            $binary = $this->exportStorage->read($filename);
+        } catch (FilesystemException) {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            default => 'image/png',
+        };
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
     }
 
     /**

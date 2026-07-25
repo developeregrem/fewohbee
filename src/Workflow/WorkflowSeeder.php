@@ -91,6 +91,18 @@ class WorkflowSeeder
         );
 
         $this->createOrUpdate(
+            systemCode: 'example_send_invoice_email',
+            name: 'workflow.system.example_send_invoice_email.name',
+            description: 'workflow.system.example_send_invoice_email.description',
+            triggerType: 'invoice.created',
+            actionType: 'send_invoice_email',
+            defaultEnabled: false,
+            conditions: [['type' => 'invoice.has_email', 'config' => []]],
+            actionConfig: ['recipientType' => 'invoice_email', 'templateId' => 0, 'customRecipient' => '', 'attachmentMode' => 'einvoice_preferred', 'attachXml' => 'no'],
+            isSystem: false,
+        );
+
+        $this->createOrUpdate(
             systemCode: 'example_invoice_paid_reservation_status',
             name: 'workflow.system.example_invoice_paid_reservation_status.name',
             description: 'workflow.system.example_invoice_paid_reservation_status.description',

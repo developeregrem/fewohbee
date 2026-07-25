@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="card mb-2">
     <div class="card-body py-2 d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center flex-grow-1 me-3">
@@ -36,7 +38,6 @@
             {% if not workflow.system %}
                 {% set id = workflow.id %}
                 {% set targetUrl = path('settings.workflows.delete', {id: workflow.id}) %}
-                {% use "common/delete_popover.html.twig" %}
                 <button type="button" class="btn btn-sm btn-outline-danger"
                         title="{{ 'workflow.confirm_delete'|trans }}"
                         data-popover="delete"

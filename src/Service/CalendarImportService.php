@@ -8,6 +8,7 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Event\CalendarImportBookingCreatedEvent;
 use App\Repository\ReservationRepository;
+use App\Repository\RoomBlockRepository;
 use App\Service\Ics\IcsEventParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -36,6 +37,7 @@ class CalendarImportService
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly ReservationRepository $reservationRepository,
+        private readonly RoomBlockRepository $roomBlockRepository,
         private readonly IcsEventParser $icsParser,
     ) {
     }
@@ -43,7 +45,7 @@ class CalendarImportService
     /** Run synchronization for a single import configuration. */
     public function syncImport(CalendarSyncImport $import): void
     {
-        if (!$import->isActive()) {
+        if (!$import->isActive() || !$import->getApartment()->isActive()) {
             return;
         }
 
@@ -201,7 +203,7 @@ class CalendarImportService
         array $event
     ): string {
         $conflicts = $this->findConflicts($import, $start, $end, $reservation);
-        if (count($conflicts) > 0) {
+        if (count($conflicts) > 0 || $this->hasBlockConflict($import, $start, $end)) {
             return $this->handleConflict($import, $reservation, $start, $end, $event, $conflicts, true);
         }
 
@@ -219,7 +221,7 @@ class CalendarImportService
         array $event
     ): string {
         $conflicts = $this->findConflicts($import, $start, $end, null);
-        if (count($conflicts) > 0) {
+        if (count($conflicts) > 0 || $this->hasBlockConflict($import, $start, $end)) {
             return $this->handleConflict($import, null, $start, $end, $event, $conflicts, false);
         }
 
@@ -248,17 +250,19 @@ class CalendarImportService
             return self::SYNC_SKIP_CONFLICT;
         }
 
-        // store the current event and mark conflicitng reservations as conflicted
+        // store the current event and mark conflicitng reservations as conflicted;
+        // a room block cannot be overwritten -> the import itself stays marked as conflict
         if (CalendarSyncImport::CONFLICT_OVERWRITE === $strategy) {
+            $importStaysConflict = $this->hasBlockConflict($import, $start, $end);
             foreach ($conflicts as $conflict) {
                 $conflict->setIsConflict(true);
                 $conflict->setIsConflictIgnored(false);
             }
-            $reservation = $existing ?? $this->buildReservation($import, $start, $end, $event, false);
+            $reservation = $existing ?? $this->buildReservation($import, $start, $end, $event, $importStaysConflict);
             if ($isUpdate) {
-                $this->updateExistingImportedReservation($reservation, $start, $end, false);
+                $this->updateExistingImportedReservation($reservation, $start, $end, $importStaysConflict);
             } else {
-                $this->applyImportedReservationData($import, $reservation, $start, $end, $event, false);
+                $this->applyImportedReservationData($import, $reservation, $start, $end, $event, $importStaysConflict);
             }
             if (!$isUpdate) {
                 $this->em->persist($reservation);
@@ -374,6 +378,16 @@ class CalendarImportService
         }));
     }
 
+    /** Check whether a room block truly overlaps the given period. */
+    private function hasBlockConflict(CalendarSyncImport $import, \DateTimeImmutable $start, \DateTimeImmutable $end): bool
+    {
+        return count($this->roomBlockRepository->findOverlappingForApartment(
+            $import->getApartment(),
+            $this->toDate($start),
+            $this->toDate($end)
+        )) > 0;
+    }
+
     /** Check whether a conflict for the given UID was intentionally ignored. */
     private function hasIgnoredConflict(CalendarSyncImport $import, string $refUid): bool
     {
@@ -399,6 +413,15 @@ class CalendarImportService
         );
 
         if (count($blocking) > 0) {
+            return false;
+        }
+
+        // a room block also prevents resolving the conflict
+        if (count($this->roomBlockRepository->findOverlappingForApartment(
+            $reservation->getAppartment(),
+            $reservation->getStartDate(),
+            $reservation->getEndDate()
+        )) > 0) {
             return false;
         }
 

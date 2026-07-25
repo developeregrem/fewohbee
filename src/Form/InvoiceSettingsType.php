@@ -32,6 +32,11 @@ class InvoiceSettingsType extends AbstractType
             ->add('einvoiceProfile', ChoiceType::class, [
                 'label' => 'invoice.settings.einvoiceProfile',
                 'choices' => $this->profileRegistry->getProfileChoices(),
+                'help' => 'invoice.settings.einvoiceProfile.help',
+                'attr' => [
+                    'data-einvoice-settings-target' => 'profileSelect',
+                    'data-action' => 'einvoice-settings#profileChanged',
+                ],
             ])
             ->add('companyName', TextType::class, [
                 'label' => 'invoice.settings.companyName',
@@ -43,12 +48,20 @@ class InvoiceSettingsType extends AbstractType
             ->add('vatID', TextType::class, [
                 'label' => 'invoice.settings.vatID',
                 'required' => false,
+                'help' => 'invoice.settings.vatID.hint',
                 'constraints' => [
                     new Callback([$this, 'validateVatIDCountry']),
                 ],
             ])
+            ->add('registrationNumber', TextType::class, [
+                'label' => 'invoice.settings.registrationNumber',
+                'help' => 'invoice.settings.registrationNumber.hint',
+                'required' => false,
+            ])
             ->add('contactName', TextType::class, [
                 'label' => 'invoice.settings.contactName',
+                'required' => false,
+                'row_attr' => ['class' => 'js-xrechnung-required'],
             ])
             ->add('contactDepartment', TextType::class, [
                 'label' => 'invoice.settings.contactDepartment',
@@ -56,9 +69,13 @@ class InvoiceSettingsType extends AbstractType
             ])
             ->add('contactPhone', TextType::class, [
                 'label' => 'invoice.settings.contactPhone',
+                'required' => false,
+                'row_attr' => ['class' => 'js-xrechnung-required'],
             ])
             ->add('contactMail', TextType::class, [
                 'label' => 'invoice.settings.contactMail',
+                'required' => false,
+                'row_attr' => ['class' => 'js-xrechnung-required'],
                 'constraints' => [
                     new Email(),
                 ],
@@ -134,6 +151,36 @@ class InvoiceSettingsType extends AbstractType
         }
     }
 
+    // Enforces the seller-side e-invoice requirements already at settings save time, so the user
+    // does not only discover them when generating an invoice. Payment-means-dependent rules
+    // (IBAN/BIC/creditor id) are not checked here as they depend on the individual invoice.
+    public function validateProfileRequirements(InvoiceSettingsData $settings, ExecutionContextInterface $context): void
+    {
+        // BR-CO-26: e-invoices need a seller VAT id (BT-31) or a legal registration number (BT-30);
+        // the German tax number (BT-32) alone does not satisfy the rule.
+        if (empty($settings->getVatID()) && empty($settings->getRegistrationNumber())) {
+            $context->buildViolation('invoice.settings.selleridentifier.required')
+                ->atPath('vatID')
+                ->setTranslationDomain('messages')
+                ->addViolation();
+        }
+
+        // BR-DE-5/6/7: XRechnung additionally requires the seller contact (name, phone, email).
+        if ('xrechnung' !== $settings->getEinvoiceProfile()) {
+            return;
+        }
+
+        foreach (['contactName', 'contactPhone', 'contactMail'] as $field) {
+            $getter = 'get'.ucfirst($field);
+            if (empty($settings->$getter())) {
+                $context->buildViolation('invoice.settings.xrechnung.contact.error')
+                    ->atPath($field)
+                    ->setTranslationDomain('messages')
+                    ->addViolation();
+            }
+        }
+    }
+
     // Ensures either payment terms or payment due days is set.
     public function validatePaymentTerms(InvoiceSettingsData $settings, ExecutionContextInterface $context): void
     {
@@ -155,6 +202,7 @@ class InvoiceSettingsType extends AbstractType
             'data_class' => InvoiceSettingsData::class,
             'constraints' => [
                 new Callback([$this, 'validatePaymentTerms']),
+                new Callback([$this, 'validateProfileRequirements']),
             ],
         ]);
     }

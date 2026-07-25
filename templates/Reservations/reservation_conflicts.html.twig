@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <div class="modal-body" data-conflict-count="{{ conflicts|length + reviewTotal }}" data-controller="reservations">
     <div id="flash-message-overlay"></div>
     <h6 class="mb-2">{{ 'reservation.conflict.section.title'|trans }}</h6>
@@ -21,7 +23,6 @@
                         {% set id = reservation.id %}
                         {% set targetUrl = path('reservations.conflicts.ignore', {'id': reservation.id}) %}
                         {% set deletePopoverHint = 'reservation.conflict.ignore.confirm'|trans %}
-                        {% use "common/delete_popover.html.twig" %}
                         <tr>
                             <td>{{ reservation.appartment.number }}</td>
                             <td>

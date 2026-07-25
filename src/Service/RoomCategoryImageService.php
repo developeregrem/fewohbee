@@ -13,6 +13,7 @@ use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Handles upload, resize (3 variants), deletion, and URL generation
@@ -25,6 +26,10 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class RoomCategoryImageService
 {
+    /** Upper bounds are checked before GD decodes the complete source image. */
+    public const MAX_PIXELS = 20_000_000;
+    public const MAX_DIMENSION = 8_000;
+
     /** Maximum width for each image variant */
     private const VARIANT_THUMB = 300;
     private const VARIANT_MEDIUM = 800;
@@ -34,6 +39,7 @@ class RoomCategoryImageService
         private readonly FilesystemOperator $storage,
         private readonly ImageUrlGenerator $urlGenerator,
         private readonly ValidatorInterface $validator,
+        private readonly TranslatorInterface $translator,
         private readonly EntityManagerInterface $em,
     ) {
     }
@@ -49,9 +55,7 @@ class RoomCategoryImageService
      */
     public function upload(RoomCategory $roomCategory, UploadedFile $file): RoomCategoryImage
     {
-        if (!$this->isValidImage($file)) {
-            throw new \InvalidArgumentException('Invalid image file. Maximum size: 10MB, allowed formats: JPEG, PNG, WebP.');
-        }
+        $this->validateImage($file);
 
         $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $safeFilename = transliterator_transliterate(
@@ -169,17 +173,30 @@ class RoomCategoryImageService
         );
     }
 
-    /**
-     * Validates that the uploaded file is a valid image (JPEG, PNG, WebP) under 10MB.
-     */
-    private function isValidImage(UploadedFile $file): bool
+    /** Validates file size, type and decoded dimensions before GD is invoked. */
+    private function validateImage(UploadedFile $file): void
     {
         $constraint = new Assert\Image(
             maxSize: '10m',
             mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+            maxWidth: self::MAX_DIMENSION,
+            maxHeight: self::MAX_DIMENSION,
+            maxPixels: self::MAX_PIXELS,
         );
 
-        return 0 === $this->validator->validate($file, $constraint)->count();
+        $violations = $this->validator->validate($file, $constraint);
+        if (0 !== $violations->count()) {
+            $translationKey = match ($violations[0]->getCode()) {
+                Assert\File::TOO_LARGE_ERROR => 'category.images.validation.file_size',
+                Assert\File::INVALID_MIME_TYPE_ERROR => 'category.images.validation.format',
+                Assert\Image::TOO_WIDE_ERROR,
+                Assert\Image::TOO_HIGH_ERROR,
+                Assert\Image::TOO_MANY_PIXEL_ERROR => 'category.images.validation.resolution',
+                default => 'category.images.validation.invalid',
+            };
+
+            throw new \InvalidArgumentException($this->translator->trans($translationKey));
+        }
     }
 
     /**

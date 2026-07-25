@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  {{ 'templates.title'|trans }}
@@ -84,7 +85,6 @@
                             <i class="fas fa-edit" aria-hidden="true"></i></a>
                         {% set id = template.id %}
                         {% set targetUrl = path('settings.templates.delete', {'id': template.id}) %}
-                        {% use "common/delete_popover.html.twig" %}
                         <a href="#" title="{{ 'button.delete'|trans }}">
                             <i class="fas fa-trash-alt"
                                 data-popover="delete"

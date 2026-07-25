@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} - {{ 'online_booking.settings.page_title'|trans }}
@@ -336,7 +337,6 @@
                                                 {% set id = override.id %}
                                                 {% set targetUrl = path('settings.online_booking.delete_override', {'id': override.id}) %}
                                                 {% set deletePopoverHint = 'online_booking.settings.override_confirm_delete'|trans %}
-                                                {% use "common/delete_popover.html.twig" %}
                                                 <button type="button"
                                                         class="btn btn-sm btn-link text-danger p-0 border-0 align-baseline"
                                                         title="{{ 'button.delete'|trans }}"

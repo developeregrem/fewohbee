@@ -33,7 +33,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CASHJOURNAL')]
 class BookingJournalController extends AbstractController
 {
-    private const PER_PAGE = 20;
+    private const PER_PAGE = 40;
 
     #[Route('', name: 'journal.overview', methods: ['GET'])]
     public function index(BookingBatchRepository $batchRepo): Response
@@ -211,10 +211,64 @@ class BookingJournalController extends AbstractController
         $entry->setDocumentNumber($docNumber);
 
         $form = $this->createForm(BookingEntryType::class, $entry, [
-            'action' => $this->generateUrl('journal.entry.create', ['filter' => $request->query->get('filter', 'all')]),
+            'action' => $this->generateUrl('journal.entry.create', [
+                'filter' => $request->query->get('filter', 'all'),
+                'page' => $request->query->get('page', 1),
+            ]),
             'cashbook_mode' => $cashbookMode,
             'active_preset' => $settingsService->getActivePreset(),
         ]);
+
+        return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);
+    }
+
+    #[Route('/entry/{id}/duplicate', name: 'journal.entry.duplicate', methods: ['GET'])]
+    public function duplicateEntry(
+        BookingEntry $entry,
+        BookingEntryRepository $entryRepo,
+        Request $request,
+        EntityManagerInterface $em,
+        AccountingSettingsService $settingsService,
+    ): Response {
+        $filter = $request->query->get('filter', 'all');
+        $cashbookMode = 'cashbook' === $filter;
+        $activePreset = $settingsService->getActivePreset();
+        $batch = $entry->getBookingBatch();
+
+        // Prefill a fresh, unpersisted entry with the source entry's values so the
+        // user only has to adjust what changed (e.g. the amount).
+        $copy = new BookingEntry();
+        $copy->setDate(clone $entry->getDate());
+        $copy->setDocumentNumber($entryRepo->getLastDocumentNumber($batch) + 1);
+        $copy->setAmount($entry->getAmount());
+        $copy->setDebitAccount($entry->getDebitAccount());
+        $copy->setCreditAccount($entry->getCreditAccount());
+        $copy->setTaxRate($entry->getTaxRate());
+        $copy->setInvoiceNumber($entry->getInvoiceNumber());
+        $copy->setRemark($entry->getRemark());
+
+        $formOptions = [
+            'action' => $this->generateUrl('journal.entry.create', [
+                'filter' => $filter,
+                'page' => $request->query->get('page', 1),
+            ]),
+            'reference_date' => $copy->getDate(),
+            'cashbook_mode' => $cashbookMode,
+            'active_preset' => $activePreset,
+        ];
+
+        if ($cashbookMode) {
+            $cashAccount = $em->getRepository(AccountingAccount::class)->findCashAccount($activePreset);
+            if ($entry->getDebitAccount() && $entry->getDebitAccount() === $cashAccount) {
+                $formOptions['direction_default'] = 'income';
+                $formOptions['category_default'] = $entry->getCreditAccount();
+            } else {
+                $formOptions['direction_default'] = 'expense';
+                $formOptions['category_default'] = $entry->getDebitAccount();
+            }
+        }
+
+        $form = $this->createForm(BookingEntryType::class, $copy, $formOptions);
 
         return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);
     }
@@ -229,12 +283,13 @@ class BookingJournalController extends AbstractController
     ): Response {
         $batch = $batchRepo->find($request->request->get('batchId'));
         $filter = $request->query->get('filter', 'all');
+        $page = (int) $request->query->get('page', 1);
         $cashbookMode = 'cashbook' === $filter;
 
         if ($batch->isClosed()) {
             $this->addFlash('warning', 'journal.error.journal.closed');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter]);
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
         }
 
         $entry = new BookingEntry();
@@ -257,7 +312,7 @@ class BookingJournalController extends AbstractController
             } catch (\RuntimeException $e) {
                 $this->addFlash('warning', $e->getMessage());
 
-                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter]);
+                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter, 'page' => $page]);
             }
 
             $em->persist($entry);
@@ -266,7 +321,7 @@ class BookingJournalController extends AbstractController
 
             $this->addFlash('success', 'accounting.journal.flash.entry_created');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter]);
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
         }
 
         return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);
@@ -284,7 +339,11 @@ class BookingJournalController extends AbstractController
         $activePreset = $settingsService->getActivePreset();
 
         $formOptions = [
-            'action' => $this->generateUrl('journal.entry.update', ['id' => $entry->getId(), 'filter' => $filter]),
+            'action' => $this->generateUrl('journal.entry.update', [
+                'id' => $entry->getId(),
+                'filter' => $filter,
+                'page' => $request->query->get('page', 1),
+            ]),
             'reference_date' => $entry->getDate() ?? new \DateTime(),
             'cashbook_mode' => $cashbookMode,
             'active_preset' => $activePreset,
@@ -317,12 +376,13 @@ class BookingJournalController extends AbstractController
         $batch = $entry->getBookingBatch();
         $oldYear = $batch->getYear();
         $filter = $request->query->get('filter', 'all');
+        $page = (int) $request->query->get('page', 1);
         $cashbookMode = 'cashbook' === $filter;
 
         if ($batch->isClosed()) {
             $this->addFlash('warning', 'journal.error.journal.closed');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter]);
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
         }
 
         $form = $this->createForm(BookingEntryType::class, $entry, [
@@ -341,7 +401,7 @@ class BookingJournalController extends AbstractController
             } catch (\RuntimeException $e) {
                 $this->addFlash('warning', $e->getMessage());
 
-                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter]);
+                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter, 'page' => $page]);
             }
 
             $em->flush();
@@ -349,7 +409,7 @@ class BookingJournalController extends AbstractController
 
             $this->addFlash('success', 'accounting.journal.flash.entry_updated');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter]);
+            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
         }
 
         return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);

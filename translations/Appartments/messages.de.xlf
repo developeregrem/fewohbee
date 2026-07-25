@@ -1,7 +1,23 @@
 <?xml version="1.0"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
+    <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
         <body>
+            <trans-unit id="appartment.active">
+                <source>appartment.active</source>
+                <target>Aktiv</target>
+            </trans-unit>
+            <trans-unit id="appartment.active.hint">
+                <source>appartment.active.hint</source>
+                <target>Inaktive Zimmer werden bei Reservierungen, Online-Buchung und Kalendersynchronisierung nicht angezeigt.</target>
+            </trans-unit>
+            <trans-unit id="appartment.active.yes">
+                <source>appartment.active.yes</source>
+                <target>Aktiv</target>
+            </trans-unit>
+            <trans-unit id="appartment.active.no">
+                <source>appartment.active.no</source>
+                <target>Inaktiv</target>
+            </trans-unit>
             <trans-unit id="appartment.delete.ask">
                 <source>appartment.delete.ask</source>
                 <target>Dieses Zimmer wirklich löschen?</target>

@@ -42,7 +42,7 @@ class ApartmentServiceController extends AbstractController
     public function index(AppartmentRepository $apartmentRepository): Response
     {
         return $this->render('Apartments/index.html.twig', [
-            'apartments' => $apartmentRepository->findAll(),
+            'apartments' => $apartmentRepository->findAllIncludingInactive(),
         ]);
     }
 

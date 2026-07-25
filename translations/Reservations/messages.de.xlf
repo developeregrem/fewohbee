@@ -118,6 +118,22 @@
                 <source>reservation.flash.update.success</source>
                 <target>Reservierung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="reservation.move.success">
+                <source>reservation.move.success</source>
+                <target>Reservierung wurde erfolgreich verschoben.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.error">
+                <source>reservation.move.error</source>
+                <target>Die Reservierung konnte nicht verschoben werden.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.capacity">
+                <source>reservation.move.capacity</source>
+                <target>Das gewählte Zimmer hat nicht genügend Betten für diese Reservierung.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.hint">
+                <source>reservation.move.hint</source>
+                <target>Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.</target>
+            </trans-unit>
             <trans-unit id="reservation.button.change.customer">
                 <source>reservation.button.change.customer</source>
                 <target>Gast zuweisen</target>
@@ -514,6 +530,10 @@
                 <source>reservation.review.todo</source>
                 <target>Gast hinzufügen und Personenanzahl prüfen.</target>
             </trans-unit>
+            <trans-unit id="reservation.booker.missing.short">
+                <source>reservation.booker.missing.short</source>
+                <target>Kein Gast hinterlegt</target>
+            </trans-unit>
             <trans-unit id="reservation.import.booker.missing">
                 <source>reservation.import.booker.missing</source>
                 <target>Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.</target>
@@ -525,6 +545,162 @@
             <trans-unit id="reservation.kurtaxe.waived.help">
                 <source>reservation.kurtaxe.waived.help</source>
                 <target>Aktivieren, wenn diese Buchung von Beherbergungsabgaben (Kurtaxe, Stadtsteuer) ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).</target>
+            </trans-unit>
+            <trans-unit id="roomblock.title">
+                <source>roomblock.title</source>
+                <target>Zimmer sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.list.title">
+                <source>roomblock.list.title</source>
+                <target>Sperrungen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.list.empty">
+                <source>roomblock.list.empty</source>
+                <target>Keine Sperrungen im gewählten Zeitraum.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.year">
+                <source>roomblock.filter.year</source>
+                <target>Jahr</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.month">
+                <source>roomblock.filter.month</source>
+                <target>Monat</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.all_months">
+                <source>roomblock.filter.all_months</source>
+                <target>Ganzes Jahr</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.subsidiary">
+                <source>roomblock.filter.subsidiary</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.all_subsidiaries">
+                <source>roomblock.filter.all_subsidiaries</source>
+                <target>Alle Niederlassungen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.instead">
+                <source>roomblock.instead</source>
+                <target>Stattdessen sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.rooms">
+                <source>roomblock.rooms</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="roomblock.select_all">
+                <source>roomblock.select_all</source>
+                <target>Alle auswählen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.search.placeholder">
+                <source>roomblock.search.placeholder</source>
+                <target>Zimmer suchen…</target>
+            </trans-unit>
+            <trans-unit id="roomblock.room">
+                <source>roomblock.room</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="roomblock.period">
+                <source>roomblock.period</source>
+                <target>Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="roomblock.from">
+                <source>roomblock.from</source>
+                <target>Gesperrt von</target>
+            </trans-unit>
+            <trans-unit id="roomblock.to">
+                <source>roomblock.to</source>
+                <target>Gesperrt bis</target>
+            </trans-unit>
+            <trans-unit id="roomblock.to.hint">
+                <source>roomblock.to.hint</source>
+                <target>Ab diesem Tag ist das Zimmer wieder frei (wie ein Abreisetag).</target>
+            </trans-unit>
+            <trans-unit id="roomblock.nights">
+                <source>roomblock.nights</source>
+                <target>Nächte</target>
+            </trans-unit>
+            <trans-unit id="roomblock.reason">
+                <source>roomblock.reason</source>
+                <target>Grund</target>
+            </trans-unit>
+            <trans-unit id="roomblock.note">
+                <source>roomblock.note</source>
+                <target>Notiz</target>
+            </trans-unit>
+            <trans-unit id="roomblock.createdby">
+                <source>roomblock.createdby</source>
+                <target>Angelegt von</target>
+            </trans-unit>
+            <trans-unit id="roomblock.actions">
+                <source>roomblock.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.submit">
+                <source>roomblock.submit</source>
+                <target>Sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.source.manual">
+                <source>roomblock.source.manual</source>
+                <target>Manuell</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.create.success">
+                <source>roomblock.flash.create.success</source>
+                <target>Die Sperrung wurde angelegt.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.update.success">
+                <source>roomblock.flash.update.success</source>
+                <target>Die Sperrung wurde aktualisiert.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.delete.success">
+                <source>roomblock.flash.delete.success</source>
+                <target>Die Sperrung wurde gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.bulk_delete.success">
+                <source>roomblock.flash.bulk_delete.success</source>
+                <target>Die ausgewählten Sperrungen wurden aufgehoben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.selected">
+                <source>roomblock.bulk.selected</source>
+                <target>ausgewählt</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.delete">
+                <source>roomblock.bulk.delete</source>
+                <target>Ausgewählte aufheben</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.confirm">
+                <source>roomblock.bulk.confirm</source>
+                <target>Ausgewählte Sperrungen wirklich aufheben?</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.confirm.yes">
+                <source>roomblock.bulk.confirm.yes</source>
+                <target>Ja, aufheben</target>
+            </trans-unit>
+            <trans-unit id="roomblock.delete.ask">
+                <source>roomblock.delete.ask</source>
+                <target>Sperrung wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.heading">
+                <source>roomblock.conflict.heading</source>
+                <target>Sperrung nicht möglich – folgende Konflikte bestehen:</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.reservation.line">
+                <source>roomblock.conflict.reservation.line</source>
+                <target>Zimmer %room%: Buchung vom %from% bis %end%</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.block.line">
+                <source>roomblock.conflict.block.line</source>
+                <target>Zimmer %room%: bestehende Sperrung „%reason%“ vom %from% bis %end%</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.period">
+                <source>roomblock.error.period</source>
+                <target>Bitte einen gültigen Zeitraum von mindestens einer Nacht angeben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.reason">
+                <source>roomblock.error.reason</source>
+                <target>Bitte einen Grund angeben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.rooms">
+                <source>roomblock.error.rooms</source>
+                <target>Bitte mindestens ein Zimmer auswählen.</target>
             </trans-unit>
         </body>
     </file>

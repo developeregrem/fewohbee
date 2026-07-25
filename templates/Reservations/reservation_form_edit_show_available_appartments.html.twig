@@ -15,7 +15,7 @@
         </tr>
         <tr>
             <td colspan="4" id="appartment-{{ appartment.id }}" class="d-none appartment-options">
-                <form id="appartment-options-{{ appartment.id }}">
+                <div id="appartment-options-{{ appartment.id }}">
                     <div class="row">
                         {% include 'Reservations/reservations_form_appartment_options_input_fields.html.twig' %}
                     </div>
@@ -26,7 +26,7 @@
                                 data-appartment-id="{{ appartment.id }}">{{ 'button.save'|trans }}</button>
                         </div>
                     </div>
-                </form>
+                </div>
             </td>
         </tr>
     {% endfor %}

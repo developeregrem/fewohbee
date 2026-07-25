@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} - {{ 'accounting.settings.title'|trans }}
@@ -155,7 +156,6 @@
                                         {% if not account.systemDefault %}
                                             {% set id = account.id %}
                                             {% set targetUrl = path('journal.settings.accounts.delete', {'id': account.id}) %}
-                                            {% use "common/delete_popover.html.twig" %}
                                             <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                                     title="{{ 'button.delete'|trans }}"
                                                     data-popover="delete"
@@ -255,7 +255,6 @@
                                         </button>
                                         {% set id = rate.id %}
                                         {% set targetUrl = path('journal.settings.taxrates.delete', {'id': rate.id}) %}
-                                        {% use "common/delete_popover.html.twig" %}
                                         <button type="button" class="btn btn-sm btn-link p-0 border-0"
                                                 title="{{ 'button.delete'|trans }}"
                                                 data-popover="delete"

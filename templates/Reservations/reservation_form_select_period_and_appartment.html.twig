@@ -139,9 +139,15 @@
 
 
 {% if reservations|length > 0 %}
-<div class="modal-footer">
+<div class="modal-footer justify-content-between">
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-action="click->reservations#openBlockFormAction"
+            data-url="{{ path('reservations.blocks.form', {fromSelection: 1}) }}"
+            title="{{ 'roomblock.instead'|trans }}">
+        <i class="fas fa-ban"></i> {{ 'roomblock.instead'|trans }}
+    </button>
     {% if objectHasAppartments %}
-    <ul class="pagination">
+    <ul class="pagination mb-0">
         <li class="page-item">
             <a class="page-link" href="#"
                data-action="click->reservations#selectCustomerAction"

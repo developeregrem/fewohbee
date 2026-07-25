@@ -43,7 +43,12 @@ category:
     set_primary: Als Hauptbild setzen
     delete: Bild löschen
     no_images: Noch keine Bilder hochgeladen.
-    hint: "Erlaubte Formate: JPEG, PNG, WebP. Maximale Dateigröße: 10 MB. Bilder im Querformat werden empfohlen."
+    hint: "Erlaubte Formate: JPEG, PNG, WebP. Maximal 10 MB und 20 Megapixel; Breite und Höhe dürfen jeweils höchstens 8.000 Pixel betragen. Bilder im Querformat werden empfohlen."
+    validation:
+      invalid: Das Bild konnte nicht verarbeitet werden. Bitte wählen Sie eine gültige Bilddatei.
+      file_size: Die Bilddatei ist zu groß. Erlaubt sind höchstens 10 MB.
+      format: Ungültige Bilddatei. Erlaubt sind JPEG, PNG und WebP.
+      resolution: Das Bild hat eine zu hohe Auflösung. Erlaubt sind höchstens 20 Megapixel; Breite und Höhe dürfen jeweils maximal 8.000 Pixel betragen. Bitte verkleinern Sie das Bild vor dem Upload.
 
 amenity:
   wifi: WLAN

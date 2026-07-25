@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}{{ parent() }} - {{ 'tourist_tax.title'|trans }}{% endblock %}
 {% block description %}{{ parent() }} - {{ 'tourist_tax.description'|trans }}{% endblock %}
@@ -71,7 +72,6 @@
                                    data-enable-edit="true"></i></a>
                             {% set id = tax.id %}
                             {% set targetUrl = path('tourist_tax_delete', {'id': tax.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i class="fas fa-trash-alt"
                                    data-popover="delete"

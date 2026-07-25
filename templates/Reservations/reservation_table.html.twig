@@ -67,11 +67,11 @@
     {% if holidayText|length == 0 and entriesText|length == 0 and col.newEntryUrl %}
         {# Nothing to show but the "add new" link - skip the popover
            step and let the cell link straight to the new-entry form. #}
-        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2">
+        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2" data-day="{{ col.date }}">
             <a href="{{ col.newEntryUrl }}" class="text-reset text-decoration-none d-block js-calendar-entry-link" title="{{ 'calendar_entry.popover.new'|trans }}">{{ label }}</a>
         </th>
     {% else %}
-        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2"
+        <th class="text-center{{ weekendCss }}{{ headerCss }}" colspan="2" data-day="{{ col.date }}"
             style="{{ calendar_accent_marker_style(col.accentColors) }}"
             {% if popoverText|length > 0 %}
                 data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
@@ -84,6 +84,7 @@
 
 <div class="table-responsive js-fit-vh" data-min-height="200">
     <table class="table table-hover table-bordered table-reservation m-0 table-sticky mb-2" id="reservation-table"
+           data-reservation-move-token="{{ csrf_token('reservation_move') }}"
            style="--reservation-name-col: {{ nameColumnChars }}ch; --reservation-day-count: {{ grid.dayColumns|length }};">
         {# Explicit columns because the layout is fixed: without them the month
            row's colspans would decide the widths, and a month covering three
@@ -155,7 +156,7 @@
                 {% endif %}
             {% endif %}
 
-            <tr{% if row.isSubRow %} class="border-top-0"{% endif %}>
+            <tr data-appartment="{{ row.apartment.id }}"{% if row.isSubRow %} class="border-top-0"{% endif %}>
                 {% if row.isSubRow %}
                     <td></td>
                 {% else %}
@@ -183,6 +184,11 @@
                             <div data-action="click->reservations#openReservationAction"
                                  data-reservation-id="{{ cell.reservationId }}"
                                  data-url="{{ path('reservations.get.reservation', {'id': cell.reservationId}) }}"
+                                 {% if is_granted('ROLE_RESERVATIONS') %}
+                                     draggable="true"
+                                     data-move-url="{{ path('reservations.move', {'id': cell.reservationId}) }}"
+                                     aria-description="{{ 'reservation.move.hint'|trans }}"
+                                 {% endif %}
                                  style="background-color: {{ cell.color }}; color: {{ cell.contrastColor }}"
                                  class="reservation-inner text-center"
                                  title="{{ block('popTitle') }}"
@@ -190,9 +196,14 @@
                             >{{ cell.displayName }}</div>
                         </td>
                     {% elseif cell.type == 'blocked' %}
-                        {# Blocked cell #}
-                        <td class="td-blocked" colspan="{{ cell.span }}">
-                            <div class="blocked-inner"></div>
+                        {# Blocked cell (room block / out of order) #}
+                        <td class="td-blocked cell-{{ cell.position }}{{ cell.startsAtDayBoundary ? ' day-start' : '' }}" colspan="{{ cell.span }}">
+                            <div class="blocked-inner"
+                                 data-action="click->reservations#openBlockAction"
+                                 data-url="{{ path('reservations.blocks.get', {'id': cell.blockId}) }}"
+                                 data-bs-container="body" data-bs-toggle="popover" data-bs-placement="top"
+                                 data-bs-trigger="hover" data-bs-content="{{ cell.displayName }}"
+                                 title="{{ cell.displayName }}"></div>
                         </td>
                     {% else %}
                         {# Empty half-day cell #}

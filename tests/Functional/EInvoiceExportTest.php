@@ -10,6 +10,7 @@ use App\Entity\InvoicePosition;
 use App\Entity\InvoiceSettingsData;
 use App\Service\AppSettingsService;
 use App\Service\EInvoice\EInvoiceExportService;
+use App\Service\EInvoice\Validation\EInvoiceValidationException;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use horstoeko\zugferd\ZugferdDocumentPdfReader;
 use horstoeko\zugferd\ZugferdDocumentReader;
@@ -25,7 +26,7 @@ final class EInvoiceExportTest extends KernelTestCase
     {
         $cases = [
             'missing_country' => [
-                'expected' => 'invoice.xrechnung.mandatory.buyerCountry',
+                'expected' => 'buyerCountry',
                 'paymentMeans' => PaymentMeansCode::CASH,
                 'mutateInvoice' => static function (Invoice $invoice): void {
                     $invoice->setCountry(null);
@@ -33,7 +34,7 @@ final class EInvoiceExportTest extends KernelTestCase
                 'mutateSettings' => null,
             ],
             'missing_zip_or_city' => [
-                'expected' => 'invoice.xrechnung.mandatory.buyerPostCodeCity',
+                'expected' => 'buyerPostCodeCity',
                 'paymentMeans' => PaymentMeansCode::CASH,
                 'mutateInvoice' => static function (Invoice $invoice): void {
                     $invoice->setZip(null);
@@ -41,13 +42,63 @@ final class EInvoiceExportTest extends KernelTestCase
                 'mutateSettings' => null,
             ],
             'missing_payment_means' => [
-                'expected' => 'invoice.xrechnung.mandatory.paymentMeans',
+                'expected' => 'paymentMeans',
                 'paymentMeans' => null,
                 'mutateInvoice' => null,
                 'mutateSettings' => null,
             ],
+            'missing_buyer_reference' => [
+                'expected' => 'buyerReference',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => static function (Invoice $invoice): void {
+                    $invoice->setBuyerReference(null);
+                },
+                'mutateSettings' => null,
+            ],
+            'missing_seller_contact' => [
+                'expected' => 'sellerContact',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => null,
+                'mutateSettings' => static function (InvoiceSettingsData $settings): void {
+                    $settings->setContactPhone(null);
+                },
+            ],
+            'tax_number_only_fails_br_co_26' => [
+                'expected' => 'sellerIdentifier',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => null,
+                'mutateSettings' => static function (InvoiceSettingsData $settings): void {
+                    $settings->setVatID(null);
+                    $settings->setRegistrationNumber(null);
+                    $settings->setTaxNumber('12/345/67890');
+                },
+            ],
+            'missing_seller_name' => [
+                'expected' => 'sellerName',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => null,
+                'mutateSettings' => static function (InvoiceSettingsData $settings): void {
+                    $settings->setCompanyName('');
+                },
+            ],
+            'incomplete_seller_address' => [
+                'expected' => 'sellerAddress',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => null,
+                'mutateSettings' => static function (InvoiceSettingsData $settings): void {
+                    $settings->setCompanyCity('');
+                },
+            ],
+            'missing_seller_electronic_address' => [
+                'expected' => 'sellerElectronicAddress',
+                'paymentMeans' => PaymentMeansCode::CASH,
+                'mutateInvoice' => null,
+                'mutateSettings' => static function (InvoiceSettingsData $settings): void {
+                    $settings->setCompanyInvoiceMail('');
+                },
+            ],
             'missing_payment_terms_and_due_days' => [
-                'expected' => 'invoice.settings.paymentterm.error',
+                'expected' => 'paymentTerms',
                 'paymentMeans' => PaymentMeansCode::CASH,
                 'mutateInvoice' => null,
                 'mutateSettings' => static function (InvoiceSettingsData $settings): void {
@@ -56,7 +107,7 @@ final class EInvoiceExportTest extends KernelTestCase
                 },
             ],
             'missing_iban' => [
-                'expected' => 'invoice.xrechnung.mandatory.IBAN',
+                'expected' => 'accountIBAN',
                 'paymentMeans' => PaymentMeansCode::SEPA_CREDIT_TRANSFER,
                 'mutateInvoice' => null,
                 'mutateSettings' => static function (InvoiceSettingsData $settings): void {
@@ -64,7 +115,7 @@ final class EInvoiceExportTest extends KernelTestCase
                 },
             ],
             'missing_iban_bic' => [
-                'expected' => 'invoice.xrechnung.mandatory.IBAN_BIC',
+                'expected' => 'accountIBANBIC',
                 'paymentMeans' => PaymentMeansCode::CREDIT_TRANSFER,
                 'mutateInvoice' => null,
                 'mutateSettings' => static function (InvoiceSettingsData $settings): void {
@@ -72,7 +123,7 @@ final class EInvoiceExportTest extends KernelTestCase
                 },
             ],
             'missing_card_number' => [
-                'expected' => 'invoice.xrechnung.mandatory.cardNumber',
+                'expected' => 'cardNumber',
                 'paymentMeans' => PaymentMeansCode::CARD_PAYMENT,
                 'mutateInvoice' => static function (Invoice $invoice): void {
                     $invoice->setCardNumber(null);
@@ -80,15 +131,23 @@ final class EInvoiceExportTest extends KernelTestCase
                 'mutateSettings' => null,
             ],
             'missing_direct_debit_iban' => [
-                'expected' => 'invoice.xrechnung.mandatory.IBANBuyer',
+                'expected' => 'customerIBAN',
                 'paymentMeans' => PaymentMeansCode::SEPA_DIRECT_DEBIT,
                 'mutateInvoice' => static function (Invoice $invoice): void {
                     $invoice->setCustomerIBAN(null);
                 },
                 'mutateSettings' => null,
             ],
+            'missing_direct_debit_mandate_xrechnung' => [
+                'expected' => 'mandateReference',
+                'paymentMeans' => PaymentMeansCode::SEPA_DIRECT_DEBIT,
+                'mutateInvoice' => static function (Invoice $invoice): void {
+                    $invoice->setMandateReference(null);
+                },
+                'mutateSettings' => null,
+            ],
             'missing_creditor_reference' => [
-                'expected' => 'invoice.xrechnung.mandatory.creditorReference',
+                'expected' => 'creditorReference',
                 'paymentMeans' => PaymentMeansCode::SEPA_DIRECT_DEBIT,
                 'mutateInvoice' => null,
                 'mutateSettings' => static function (InvoiceSettingsData $settings): void {
@@ -97,7 +156,7 @@ final class EInvoiceExportTest extends KernelTestCase
             ],
         ];
 
-        foreach ($cases as $case) {
+        foreach ($cases as $name => $case) {
             $invoice = $this->createValidInvoice($case['paymentMeans']);
             $settings = $this->createSettingsEntity('xrechnung');
             if ($case['mutateInvoice']) {
@@ -109,10 +168,92 @@ final class EInvoiceExportTest extends KernelTestCase
 
             try {
                 $this->getExportService()->generateInvoiceData($invoice, $settings);
-                self::fail('Expected exception for '.$case['expected']);
-            } catch (\InvalidArgumentException $exception) {
-                self::assertSame($case['expected'], $exception->getMessage());
+                self::fail('Expected validation exception for '.$name);
+            } catch (EInvoiceValidationException $exception) {
+                $fields = array_map(
+                    static fn ($violation) => $violation->field,
+                    $exception->result->getViolations()
+                );
+                self::assertContains($case['expected'], $fields, 'Case '.$name);
             }
+
+            // the central pre-check must report the same violation without generating anything
+            $result = $this->getExportService()->validateInvoice($invoice, $settings);
+            self::assertFalse($result->isValid(), 'Case '.$name);
+        }
+    }
+
+    public function testEn16931ProfileAcceptsInvoiceWithoutXRechnungExtras(): void
+    {
+        // no buyer reference, no payment means, no seller contact: fine for ZUGFeRD (EN 16931)
+        $invoice = $this->createValidInvoice(null);
+        $invoice->setBuyerReference(null);
+        $settings = $this->createSettingsEntity('en16931');
+        $settings->setContactName(null);
+        $settings->setContactPhone(null);
+        $settings->setContactMail(null);
+
+        self::assertTrue($this->getExportService()->validateInvoice($invoice, $settings)->isValid());
+        self::assertNotSame('', $this->getExportService()->generateInvoiceData($invoice, $settings));
+    }
+
+    public function testZeroRatedPositionUsesCategoryZAndIsValid(): void
+    {
+        // A 0% line (e.g. Kurtaxe / tourist tax) must be category "Z" (Zero rated), not "S",
+        // otherwise BR-S-05 fails.
+        $settings = $this->createSettingsEntity('xrechnung');
+        $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+
+        $kurtaxe = new InvoicePosition();
+        $kurtaxe->setDescription('Kurtaxe');
+        $kurtaxe->setAmount(3);
+        $kurtaxe->setPrice('2.50');
+        $kurtaxe->setVat(0);
+        $kurtaxe->setIncludesVat(false);
+        $kurtaxe->setIsFlatPrice(false);
+        $kurtaxe->setIsPerRoom(false);
+        $invoice->addPosition($kurtaxe);
+
+        $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+        $xpath = new \DOMXPath($doc);
+        $xpath->registerNamespace('ram', 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100');
+
+        // every category with rate 0 must be "Z", never "S"
+        $zeroRatedS = $xpath->evaluate('count(//ram:ApplicableTradeTax[ram:RateApplicablePercent="0.00" and ram:CategoryCode="S"])');
+        self::assertSame(0.0, $zeroRatedS, 'A 0% line must not use category S');
+
+        $zeroRatedZ = $xpath->evaluate('count(//ram:ApplicableTradeTax[ram:RateApplicablePercent="0.00" and ram:CategoryCode="Z"])');
+        self::assertGreaterThan(0.0, $zeroRatedZ, 'The 0% line must use category Z');
+
+        $document = ZugferdDocumentReader::readAndGuessFromContent($xml);
+        $validator = new ZugferdXsdValidator($document);
+        $validator->validate();
+        self::assertTrue($validator->hasNoValidationErrors(), implode("\n", $validator->validationErrors()));
+    }
+
+    public function testRegistrationNumberOnlySellerProducesValidXml(): void
+    {
+        // Seller without a VAT id but with a legal registration number (BT-30) satisfies BR-CO-26.
+        foreach (['en16931', 'xrechnung'] as $profile) {
+            $settings = $this->createSettingsEntity($profile);
+            $settings->setVatID(null);
+            $settings->setRegistrationNumber('HRB 12345');
+            $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+
+            self::assertTrue($this->getExportService()->validateInvoice($invoice, $settings)->isValid(), 'profile '.$profile);
+
+            $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+            $document = ZugferdDocumentReader::readAndGuessFromContent($xml);
+            $validator = new ZugferdXsdValidator($document);
+            $validator->validate();
+
+            self::assertTrue(
+                $validator->hasNoValidationErrors(),
+                'XSD validation failed for profile '.$profile.': '.implode("\n", $validator->validationErrors())
+            );
         }
     }
 
@@ -315,6 +456,7 @@ final class EInvoiceExportTest extends KernelTestCase
         $invoice->setCountry('DE');
         $invoice->setEmail('max@mustermann.de');
         $invoice->setPhone('0123456789');
+        $invoice->setBuyerReference('04011000-1234512345-06');
         $invoice->setPaymentMeans($paymentMeans);
 
         if ($paymentMeans === PaymentMeansCode::CARD_PAYMENT) {

@@ -1,3 +1,5 @@
+{% use "common/delete_popover.html.twig" %}
+
 <table class="table table-bordered table-hover">
     <thead>
     <tr>
@@ -32,7 +34,6 @@
             <td>
                 {% set id = bookEntry.id %}
                 {% set targetUrl = path('registrationbook.delete.origin', {'id': bookEntry.id}) %}
-                {% use "common/delete_popover.html.twig" %}
                 <button type="button" class="btn btn-sm btn-outline-danger"
                         title="{{ 'button.delete'|trans }}"
                         data-popover="delete"

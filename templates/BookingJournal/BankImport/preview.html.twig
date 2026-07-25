@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} - {{ 'accounting.bank_import.preview.title'|trans }}
@@ -121,7 +122,6 @@
             </a>
             {% set id = state.sessionImportId %}
             {% set targetUrl = path('bank_import.discard', {'sessionImportId': state.sessionImportId}) %}
-            {% use "common/delete_popover.html.twig" %}
             <button type="button" class="btn btn-outline-danger btn-sm"
                     data-popover="delete"
                     data-bs-content='{{ block('deletePopoverContent') }}'>

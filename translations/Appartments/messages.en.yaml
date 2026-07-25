@@ -4,6 +4,10 @@ apartment:
       hint: Occupancy by different guests possible.
       text: Multiple occupancy
 appartment:
+  active: Active
+  active.hint: Inactive rooms are hidden from reservations, online booking and calendar synchronization.
+  active.yes: Active
+  active.no: Inactive
   action: Action
   bedsmax: Max. people
   bedsmin: Normal occupancy

@@ -53,6 +53,13 @@ workflow:
     fallback_credit_account_help: "Used when a tax rate has no revenue account configured"
     booking_entry_remark: "Remark (optional)"
     booking_entry_remark_help: "If left empty, the revenue account name is used as the booking text (e.g. \"Revenue 7% VAT\")."
+    attachment_mode: "Invoice attachment"
+    attachment_mode.einvoice_preferred: "E-invoice PDF if possible, otherwise plain PDF"
+    attachment_mode.einvoice_required: "E-invoice PDF only (skip when data is incomplete)"
+    attachment_mode.pdf_only: "Plain PDF without e-invoice data"
+    attach_xml: "Additionally attach XML file"
+    attach_xml.no: "No"
+    attach_xml.yes: "Yes (recommended for XRechnung)"
 
   trigger:
     online_booking_created: "New online booking received"
@@ -78,6 +85,7 @@ workflow:
     reservation_origin_is: "Origin is"
 
   action:
+    send_invoice_email: "Send invoice by email (with PDF/e-invoice attachment)"
     send_template_email: "Send email using a template"
     send_general_email: "Send general email using a template"
     send_notification_email: "Send notification email"
@@ -123,6 +131,9 @@ workflow:
     example_invoice_reminder:
       name: "Example: Payment reminder (14 days after invoice date)"
       description: "Sends a payment reminder 14 days after the invoice date if the invoice is still open."
+    example_send_invoice_email:
+      name: "Example: Send invoice by email"
+      description: "Sends every new invoice to the invoice email address, with the invoice attached as e-invoice PDF when possible (email template required)."
     example_invoice_paid_reservation_status:
       name: "Example: Change reservation status on payment"
       description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
@@ -143,6 +154,10 @@ workflow:
     skipped_invalid_config: "Skipped: invalid configuration"
     skipped_status_not_found: "Skipped: reservation status not found"
     skipped_no_reservations: "Skipped: invoice has no linked reservations"
+    skipped_no_pdf_template: "Skipped: no default invoice PDF template configured"
+    skipped_einvoice_invalid: "Skipped: e-invoice for invoice %number% not possible – %fields%"
+    invoice_email_sent: "Invoice %number% sent to %recipient% with e-invoice PDF attached"
+    invoice_email_sent_fallback: "Invoice %number% sent to %recipient% with plain PDF attached (e-invoice generation failed)"
     invoice_status_changed: "Invoice %number% status changed to \"%status%\""
     payment_means_changed: "Invoice %number% payment method changed to \"%code%\""
     reservation_status_changed: "%count% reservation(s) status changed to \"%status%\""

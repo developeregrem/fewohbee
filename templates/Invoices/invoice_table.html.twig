@@ -53,17 +53,30 @@
                    data-url="{{ path('invoices.get.invoice', {'id': invoice.id}) }}"
                    data-bs-toggle="modal" data-bs-target="#modalCenter">
                     <i class="fas fa-edit"></i></a>
+                {% set readiness = einvoiceReadiness[invoice.id] ?? null %}
                 <a class="export-link"
                    href="{{ path('invoices.export.pdf', {'id': invoice.id, 'template': templateId }) }}"
-                   title="{{ 'button.export.pdf'|trans }}" target="_blank">
+                   title="{{ readiness and readiness.ready ? 'button.export.einvoicepdf'|trans : 'button.export.pdf'|trans }}" target="_blank">
                     <i class="fas fa-file-pdf"></i></a>
-                <a class="export-link"
-                   href="{{ path('invoices.export.pdfxml', {'id': invoice.id, 'template': templateId }) }}"
-                   title="{{ 'button.export.pdfxml'|trans }}" target="_blank">
-                    <i class="fa-solid fa-file-invoice"></i></a>
+                {% if activeProfileKey == 'xrechnung' %}
                 <a href="{{ path('invoices.export.xrechnung', {'id': invoice.id }) }}"
-                    title="{{ 'button.export.xrechnung'|trans }}">
+                    title="{{ 'button.export.xml'|trans }}">
                      <i class="fa-solid fa-file-code"></i></a>
+                {% endif %}
+                {% if readiness and readiness.configured %}
+                    {% if readiness.ready %}
+                        <span class="text-success" title="{{ 'invoice.einvoice.status.ready'|trans }}">
+                            <i class="fa-solid fa-circle-check"></i></span>
+                    {% elseif invoice.company is not empty %}
+                        {# a company recipient is likely B2B, where the e-invoice matters → warning #}
+                        <span class="text-warning" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
+                            <i class="fa-solid fa-triangle-exclamation"></i></span>
+                    {% else %}
+                        {# no company → likely B2C, where the e-invoice is not mandatory → neutral info #}
+                        <span class="text-info" title="{{ 'invoice.einvoice.status.missing'|trans }}:&#10;{{ readiness.result.messageKeys|map(key => key|trans)|join("\n") }}">
+                            <i class="fa-solid fa-circle-info"></i></span>
+                    {% endif %}
+                {% endif %}
             </td>
         </tr>
     {% endfor %}

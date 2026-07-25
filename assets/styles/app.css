@@ -144,6 +144,14 @@ body {
         var(--feb-border-muted) 4px,
         var(--feb-border-muted) 5px
     );
+    padding: 0 !important;
+}
+
+.blocked-inner {
+    width: 100%;
+    height: 100%;
+    min-height: 1.7rem;
+    cursor: pointer;
 }
 
 .reservation-inner {
@@ -153,6 +161,25 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.reservation-inner[draggable="true"] {
+    cursor: grab;
+}
+
+.reservation-inner.reservation-dragging {
+    cursor: grabbing;
+    opacity: .55;
+}
+
+.reservation-inner.reservation-moving {
+    opacity: .55;
+    pointer-events: none;
+}
+
+#reservation-table .reservation-drop-target {
+    background: var(--feb-ui-selecting-bg) !important;
+    box-shadow: inset 0 0 0 2px var(--bs-primary);
 }
 
 .reservation-confirmed {
@@ -267,6 +294,20 @@ body {
   top: 0;
   bottom: 0;
   right: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
+}
+
+/* The right-edge pseudo-element above supplies the separators between header
+   cells. Since their real borders are disabled, the first cell in each row
+   also needs an explicit left edge to close the table outline. */
+.table.table-sticky thead tr > :first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
   width: 1px;
   background-color: var(--bs-border-color);
   pointer-events: none;
@@ -795,4 +836,13 @@ div .reservation-yearly-day {
 /* add hint to required fields */
 #accordionSettings label.required:after {
     content: " *";
+}
+
+/* compact e-invoice readiness disclosure: hide the default marker, keep the summary clickable */
+details.einvoice-readiness > summary {
+    list-style: none;
+    cursor: pointer;
+}
+details.einvoice-readiness > summary::-webkit-details-marker {
+    display: none;
 }

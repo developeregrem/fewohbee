@@ -47,13 +47,15 @@ class InvoiceCustomerType extends AbstractType
             ])
             ->add('country', CountryType::class, [
                 'label' => 'customer.country',
+                'required' => false,
             ])
             ->add('phone', TextType::class, [
-                'label' => 'invoice.settings.contactPhone',
+                'label' => 'customer.phone',
                 'required' => false,
             ])
             ->add('email', TextType::class, [
                 'label' => 'customer.email',
+                'required' => false,
             ])
              ->add('buyerVatId', TextType::class, [
                 'label' => 'customer.buyerVatId',
