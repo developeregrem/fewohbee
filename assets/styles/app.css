@@ -826,6 +826,66 @@ div .reservation-yearly-day {
 }
 
 /*
+ * Room block (out of order) in the yearly month view - hatched instead of a solid color.
+ * Positioned absolute (filling the day cell) rather than a flex item: on a turnover day
+ * a reservation half-cell already claims the flex row, and a second flex item with
+ * flex-basis 100% would be pushed out of the cell and clipped away by overflow:hidden.
+ * Absolute lets the block overlay its half of the cell independently.
+ *
+ * The hatch lives on the ::before layer, not on this element directly, because start/end
+ * days re-use the reservations' exact skewY(-45deg) transform for a pixel-perfect matching
+ * diagonal (corner-to-corner clip-path would be off by a few degrees since the cell isn't
+ * square). Skewing the element would tilt the hatch too; the ::before counter-skews by the
+ * same angle, cancelling the distortion so the hatch stays parallel to the full-day cells.
+ * It is oversized so the counter-skewed layer still covers the whole skewed box.
+ */
+.month-reservation-blocked {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+/*
+ * Sit one layer below the reservations (which are z-index 1). Where a block and a
+ * reservation meet on a turnover day, their skewed diagonals share an edge with a
+ * sub-pixel overlap - invisible for the reservation's solid fill but noticeable as
+ * hatch spilling over. Painting the opaque reservation on top lets it define that
+ * edge cleanly and hide any spill. The two-class selector outweighs `div .reservation-yearly`.
+ */
+.reservation-yearly.month-reservation-blocked {
+    z-index: 0;
+}
+.month-reservation-blocked::before {
+    content: "";
+    position: absolute;
+    inset: -150%;
+    background-color: rgba(108, 117, 125, 0.08);
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        var(--feb-border-muted) 4px,
+        var(--feb-border-muted) 5px
+    );
+}
+
+/* start/end (half) days: mirror the reservation skew exactly for a matching diagonal */
+.month-reservation-blocked.month-reservation-start,
+.month-reservation-blocked.month-reservation-onlystart {
+    transform: skewY(-45deg);
+    transform-origin: top right;
+}
+.month-reservation-blocked.month-reservation-end {
+    transform: skewY(-45deg);
+    transform-origin: bottom left;
+}
+/* counter-skew the hatch layer so its lines stay parallel with the full-day cells */
+.month-reservation-blocked.month-reservation-start::before,
+.month-reservation-blocked.month-reservation-onlystart::before,
+.month-reservation-blocked.month-reservation-end::before {
+    transform: skewY(45deg);
+}
+
+/*
  * Forms
  */
 /* reduce default font size of labels in modals */

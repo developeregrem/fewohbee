@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Entity\Reservation;
+use App\Entity\RoomBlock;
 use App\Service\AppSettingsService;
 use App\Service\CalendarService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,6 +62,8 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
             new TwigFunction('date_difference', [$this, 'dateDifferenceFilter']),
             new TwigFunction('reservation_date_compare', [$this, 'reservationDateCompareFilter']),
             new TwigFunction('get_reservations_for_period', [$this, 'getReservationsForPeriodFilter']),
+            new TwigFunction('get_room_blocks_for_period', [$this, 'getRoomBlocksForPeriodFilter']),
+            new TwigFunction('getRoomBlocksForDay', [$this, 'getRoomBlocksForDay']),
             new TwigFunction('is_single_reservation_for_day', [$this, 'isSingleReservationForDayFilter']),
             new TwigFunction('get_letter_count_for_display', [$this, 'getLetterCountForDisplayFilter']),
             new TwigFunction('get_date_diff_amount', [$this, 'getDateDiffAmountFilter']),
@@ -109,6 +112,41 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
         $statusMode = $showCanceledOnly ? 'non_blocking' : 'blocking';
 
         return $this->em->getRepository(Reservation::class)->loadReservationsForApartment($start, $end, $apartment, $statusMode);
+    }
+
+    /**
+     * Load room blocks overlapping the given period for one apartment (yearly view).
+     *
+     * @return RoomBlock[]
+     */
+    public function getRoomBlocksForPeriodFilter($today, $intervall, $apartment): array
+    {
+        $start = new \DateTime(date('Y-m-d', $today));
+        $end = new \DateTime(date('Y-m-d', $today + ($intervall * 3600 * 24)));
+
+        return $this->em->getRepository(RoomBlock::class)->findForApartments($start, $end, [$apartment]);
+    }
+
+    /**
+     * Room blocks that cover the given day. endDate is exclusive, but the block is still
+     * shown on its endDate (left half) to mirror the reservation checkout rendering.
+     *
+     * @param RoomBlock[] $blocks
+     *
+     * @return RoomBlock[]
+     */
+    public function getRoomBlocksForDay(\DateTimeInterface $day, array $blocks): array
+    {
+        $result = [];
+        foreach ($blocks as $block) {
+            $start = new \DateTimeImmutable($block->getStartDate()->format('Y-m-d').' UTC');
+            $end = new \DateTimeImmutable($block->getEndDate()->format('Y-m-d').' UTC');
+            if ($day >= $start && $day <= $end) {
+                $result[] = $block;
+            }
+        }
+
+        return $result;
     }
 
     public function isSingleReservationForDayFilter(int $today, int $period, int $reservationIdx, array $reservations, string $type = 'start'): bool

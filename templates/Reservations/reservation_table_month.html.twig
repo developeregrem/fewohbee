@@ -11,6 +11,7 @@
     {% set multipleReservations = getReservationsMultipleOccupancy(reservations) %}
     {% set reservations = attribute(multipleReservations, 0) is defined ? attribute(multipleReservations, 0) : [] %}
 {% endif %}
+{% set roomBlocks = get_room_blocks_for_period(startDate.timestamp, daysInMonth-1, apartment) %}
 {# popover #}                        
 {% use 'Reservations/_resevation_popover.html.twig' %}
 <table class="table table-hover table-bordered table-reservation-year" id="reservation-table-month">
@@ -104,7 +105,23 @@
             
             {% set tdContent = tdContent ~ '<div class="' ~ resCss ~'" style="' ~  style ~'"'~ action|raw ~' title="'~ block('popTitle') ~'" data-bs-content="'~ block('popBody')|raw ~'">&nbsp;</div> ' ~ dummyContent %}
         {% endfor %}
-        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}" 
+
+        {# room blocks (hatched); mirrors the reservation start/end geometry so drag-select and the diagonal turnover look match #}
+        {% for roomBlock in getRoomBlocksForDay(tmpDate, roomBlocks) %}
+            {% set noEvents = ' no-pointer-events' %}
+            {% set blockCss = 'reservation-popover reservation-yearly month-reservation-blocked' %}
+            {% set blockDummy = '' %}
+            {% if tmpDateFormatted == roomBlock.startDate|date('Y-m-d') %}
+                {% set blockCss = blockCss ~ ' month-reservationstartend month-reservation-start month-reservation-onlystart' %}
+                {% set blockDummy = '<div class="month-reservation-end dummy-day">&nbsp;</div>' %}
+            {% elseif tmpDateFormatted == roomBlock.endDate|date('Y-m-d') %}
+                {% set blockCss = blockCss ~ ' month-reservationstartend month-reservation-end' %}
+                {% set blockDummy = '<div class="month-reservation-start dummy-day">&nbsp;</div>' %}
+            {% endif %}
+            {% set blockAction = ' data-action="click->reservations#openBlockAction" data-url="' ~ path('reservations.blocks.get', {'id': roomBlock.id}) ~ '"' %}
+            {% set tdContent = tdContent ~ '<div class="' ~ blockCss ~ '"' ~ blockAction|raw ~ ' title="' ~ ('roomblock.title'|trans) ~ '" data-bs-content="' ~ roomBlock.reason|e('html_attr') ~ '">&nbsp;</div> ' ~ blockDummy %}
+        {% endfor %}
+        <td colspan="2" class="text-center reservation-yearly-parent{{ noEvents }}"
             style="width: {{ 100 / 7}}%" data-day="{{ tmpDate|date("Y-m-d")  }}">
             <div class="d-flex w-100 h-100">{{ tdContent|raw }}</div>
             <div class="reservation-yearly-day">{{ tmpDate|date('d') }}</div>

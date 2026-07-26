@@ -228,6 +228,22 @@ final class RoomBlockControllerTest extends WebTestCase
         self::assertStringNotContainsString('Filter-Match', (string) $client->getResponse()->getContent());
     }
 
+    public function testYearlyViewRendersBlockedCell(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles(['ROLE_RESERVATIONS']));
+        $room = $this->createApartment();
+        $this->createBlock($room, '2037-06-10', '2037-06-14', 'Yearly-Grid');
+
+        $client->request('GET', '/reservation/table', [
+            'year' => 2037,
+            'apartment' => $room->getId(),
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('month-reservation-blocked', (string) $client->getResponse()->getContent());
+    }
+
     public function testReservationTableRendersBlockedCell(): void
     {
         $client = static::createClient();
