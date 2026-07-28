@@ -25,14 +25,21 @@ export default class extends Controller {
 
         if (this.hasContentTarget) {
             // AJAX mode
-            const url = new URL(this.formTarget.action || window.location.href, window.location.origin);
-            const query = httpSerializeForm(this.formTarget);
-            if (query) {
-                url.search = query;
+            // Use the server-rendered route instead of deriving the request
+            // endpoint from document.location. The response is inserted as a
+            // trusted, Twig-escaped HTML partial by the shared HTTP helper.
+            const action = this.formTarget.getAttribute('action');
+            if (!action) {
+                console.warn('[housekeeping] filter form has no action');
+                this.stopSpin();
+                return;
             }
+            const query = httpSerializeForm(this.formTarget);
+            const separator = action.includes('?') ? '&' : '?';
+            const url = query ? `${action}${separator}${query}` : action;
 
             httpRequest({
-                url: url.toString(),
+                url,
                 method: 'GET',
                 target: this.contentTarget,
                 loader: false,

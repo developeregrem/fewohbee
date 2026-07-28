@@ -204,7 +204,7 @@ class TemplatesServiceController extends AbstractController
             return $this->json([
                 'html' => '',
                 'warning' => 'templates.preview.noprovider',
-                'warningText' => (string) $this->container->get('translator')->trans('templates.preview.noprovider'),
+                'warningText' => $translator->trans('templates.preview.noprovider'),
                 'warningVars' => [],
             ]);
         }

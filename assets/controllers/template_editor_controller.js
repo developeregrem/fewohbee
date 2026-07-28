@@ -491,7 +491,15 @@ export default class extends Controller {
             const payload = await response.json();
             if (this.hasPreviewResultTarget) {
                 this.revokePreviewPdfUrl();
-                this.previewResultTarget.innerHTML = payload.html || '';
+                const iframe = document.createElement('iframe');
+                iframe.className = 'template-preview-html-frame';
+                iframe.setAttribute('sandbox', '');
+                iframe.title = 'HTML Preview';
+                iframe.style.width = '100%';
+                iframe.style.height = '75vh';
+                iframe.style.border = '0';
+                iframe.srcdoc = typeof payload.html === 'string' ? payload.html : '';
+                this.previewResultTarget.replaceChildren(iframe);
             }
             this.applyPreviewWarning(payload.warningText);
         } catch (error) {
@@ -531,7 +539,14 @@ export default class extends Controller {
             this.revokePreviewPdfUrl();
             this.previewPdfObjectUrl = URL.createObjectURL(blob);
             if (this.hasPreviewResultTarget) {
-                this.previewResultTarget.innerHTML = `<iframe src="${this.previewPdfObjectUrl}" class="template-preview-pdf-frame" style="width:100%;height:75vh;border:0;" title="PDF Preview"></iframe>`;
+                const iframe = document.createElement('iframe');
+                iframe.src = this.previewPdfObjectUrl;
+                iframe.className = 'template-preview-pdf-frame';
+                iframe.title = 'PDF Preview';
+                iframe.style.width = '100%';
+                iframe.style.height = '75vh';
+                iframe.style.border = '0';
+                this.previewResultTarget.replaceChildren(iframe);
             }
         } catch (error) {
             // ignore

@@ -40,10 +40,11 @@ export default class extends Controller {
                 const link = event.target.closest('a[data-page]');
                 if (!link) return;
                 event.preventDefault();
-                const page = link.dataset.page;
-                const url = new URL(this.logUrlValue, window.location.href);
-                url.searchParams.set('page', page);
-                this._loadLogs(url.toString());
+                const page = Number.parseInt(link.dataset.page, 10);
+                if (!Number.isInteger(page) || page < 1) return;
+                const separator = this.logUrlValue.includes('?') ? '&' : '?';
+                const query = new URLSearchParams({ page: String(page) });
+                this._loadLogs(`${this.logUrlValue}${separator}${query}`);
             });
         }
     }
@@ -375,6 +376,9 @@ export default class extends Controller {
     }
 
     _loadLogs(url) {
+        // `url` is the server-rendered workflow log route (plus a validated
+        // numeric page), never a URL derived from document.location. The
+        // returned fragment is Twig-rendered with autoescaping enabled.
         fetch(url)
             .then(r => r.text())
             .then(html => { this.logContainerTarget.innerHTML = html; })

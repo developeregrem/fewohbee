@@ -2,10 +2,10 @@
 {% block popTitle %}
     {% if reservation is defined and reservation is not null %}
         {% if reservation.booker is defined and reservation.booker is not null %}
-            {% set popTitle = reservation.booker.salutation ~ " " ~ reservation.booker.firstname~ " " ~ reservation.booker.lastname ~
+            {% set popTitle = reservation.booker.salutation|e ~ " " ~ reservation.booker.firstname|e ~ " " ~ reservation.booker.lastname|e ~
                 " (" ~reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
         {% elseif reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
-            {% set popTitle = reservation.calendarSyncImport.name ~ " (" ~ reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
+            {% set popTitle = reservation.calendarSyncImport.name|e ~ " (" ~ reservation.persons ~ "/" ~ reservation.appartment.bedsMax ~ ")" %}
         {% else %}
             {% set popTitle = "-" %}
         {% endif %}
@@ -14,33 +14,36 @@
 {% endblock %}
 {% block popBody %}
     {% if reservation is defined and reservation is not null %}
+        {# Escape user-controlled values before concatenation. The completed
+           block is escaped again for the data attribute; the browser decodes
+           that outer layer before Bootstrap treats the value as HTML. #}
         {% set popBody = reservation.startdate|date('d.m.Y') ~ " - " ~ reservation.enddate|date('d.m.Y') %}
         {% set phones = "" %}{% set mails = "" %}{% set mobiles = "" %}{% set invoiceNumbers = "" %}
         {% set businessCompany = null %}
         {% if reservation.booker is defined and reservation.booker is not null %}
             {% for address in reservation.booker.customerAddresses %} 
                 {% if businessCompany is null and address.type == 'CUSTOMER_ADDRESS_TYPE_BUSINESS' and address.company is not empty %}
-                    {% set businessCompany = address.company %}
+                    {% set businessCompany = address.company|e %}
                 {% endif %}
                 {% if address.phone|length > 0 %}
-                    {% set phones = phones ~ address.phone %}
+                    {% set phones = phones ~ address.phone|e %}
                     {% if not loop.last %}{% set phones = phones ~ ", " %}{% endif %}
                 {% endif %}
                 {% if address.mobilePhone|length > 0 %}
-                    {% set mobiles = mobiles ~ address.mobilePhone %}
+                    {% set mobiles = mobiles ~ address.mobilePhone|e %}
                     {% if not loop.last %}{% set mobiles = mobiles ~ ", " %}{% endif %}
                 {% endif %}
                 {% if address.email|length > 0 %}
-                    {% set mails = mails ~ address.email %}
+                    {% set mails = mails ~ address.email|e %}
                     {% if not loop.last %}{% set mails = mails ~ ", " %}{% endif %}
                 {% endif %}                           
             {% endfor %}
         {% endif %}
         {% for invoice in reservation.invoices %}
-            {% set invoiceNumbers = invoiceNumbers ~ invoice.number %}
+            {% set invoiceNumbers = invoiceNumbers ~ invoice.number|e %}
             {% if not loop.last %}{% set invoiceNumbers = invoiceNumbers ~ ", " %}{% endif %}
         {% endfor %}
-        {% set popBody = popBody ~ " <i>("~ reservation.reservationStatus.name ~")</i>" %}
+        {% set popBody = popBody ~ " <i>(" ~ reservation.reservationStatus.name|e ~ ")</i>" %}
         {% if businessCompany %}
             {% set popBody = businessCompany ~ "<br />" ~ popBody %}
         {% endif %}
@@ -54,9 +57,9 @@
         {% if reservation.departureTime %}
             {% set popBody = popBody ~ " " ~ 'reservation.departureTime'|trans ~ ": " ~ reservation.departureTime|date('H:i') %}
         {% endif %}
-        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|nl2br %}{% endif %}
+        {% if reservation.remark|length > 0 %}{% set popBody = popBody ~ "<br />" ~ reservation.remark|e|nl2br %}{% endif %}
         {% if reservation.calendarSyncImport is defined and reservation.calendarSyncImport is not null %}
-            {% set popBody = popBody ~ "<br /><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name %}
+            {% set popBody = popBody ~ "<br /><i class='fas fa-cloud-download-alt'></i> " ~ reservation.calendarSyncImport.name|e %}
         {% endif %}
         {{ popBody }}
     {% endif %}

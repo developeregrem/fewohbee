@@ -33,6 +33,18 @@ final class TemplatesServiceTest extends TestCase
         self::assertSame('A,B,', preg_replace('/\s+/', '', $output));
     }
 
+    public function testRenderTemplateStringEscapesDynamicHtmlValues(): void
+    {
+        $service = $this->createService();
+
+        $output = $service->renderTemplateString(
+            '<p>[[ value ]]</p>',
+            ['value' => '<img src=x onerror=alert(1)>']
+        );
+
+        self::assertSame('<p>&lt;img src=x onerror=alert(1)&gt;</p>', $output);
+    }
+
     public function testRenderTemplateStringConvertsDataRepeatOnTableRows(): void
     {
         $service = $this->createService();
