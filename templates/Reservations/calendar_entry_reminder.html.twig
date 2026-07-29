@@ -26,7 +26,7 @@
                             </td>
                             <td>
                                 <i class="fas fa-circle me-2" style="color: {{ reminder.calendar.color }}; font-size: 0.6em; vertical-align: middle;"></i>
-                                {{ reminder.title }}
+                                {{ reminder.title }}{% if reminder.time %} <span class="fw-semibold">{{ reminder.time|date('H:i') }}</span>{% endif %}
                                 <span class="text-muted small">({{ reminder.calendar.name }})</span>
                             </td>
                             <td class="text-end">

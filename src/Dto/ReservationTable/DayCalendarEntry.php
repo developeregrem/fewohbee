@@ -20,6 +20,8 @@ final class DayCalendarEntry
         /** Null when the viewer may not manage entries - the popover then shows the title as plain text. */
         public readonly ?string $editUrl,
         public readonly ?string $deleteUrl,
+        /** Preformatted start time, or null for an all-day entry. */
+        public readonly ?string $time = null,
         /**
          * True when this entry belongs to a different calendar than the one
          * before it in the same day. The popover draws its separator rule off

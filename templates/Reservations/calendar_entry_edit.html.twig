@@ -33,6 +33,11 @@
                 <div class="col">{{ form_row(form.calendar, {'label': false}) }}</div>
             {% endif %}
             <div class="col">{{ form_row(form.date, {'label': false}) }}</div>
+            {# Sits with the start date, not with the range: on a multi-day
+               entry only the first day carries the time. A time input needs no
+               placeholder - it renders its own --:-- - so the help text below
+               is what says it may be left empty. #}
+            <div class="col">{{ form_row(form.time, {'label': false, 'attr': {'title': 'calendar_entry.form.time'|trans}}) }}</div>
             {% if isNew %}
                 <div class="col">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans}}) }}</div>
             {% endif %}

@@ -31,6 +31,18 @@ class CalendarEntry
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $date;
 
+    /**
+     * Start time of day, or null for an all-day entry.
+     *
+     * Deliberately a separate column instead of widening `date` to DATETIME:
+     * every consumer keys days by Y-m-d - sync reconciliation, the reservation
+     * table decorations, the reminder query - and each would have to strip a
+     * time component it never asked for. Null is what "all day" means, which
+     * is also what every entry written before this field existed already says.
+     */
+    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $time = null;
+
     /** Free-text label, e.g. "Restmüll", "Sommerferien", "Wartung Heizung". */
     #[ORM\Column(type: Types::STRING, length: 100)]
     #[Assert\NotBlank]
@@ -90,6 +102,24 @@ class CalendarEntry
         $this->date = $date;
 
         return $this;
+    }
+
+    public function getTime(): ?\DateTimeImmutable
+    {
+        return $this->time;
+    }
+
+    public function setTime(?\DateTimeImmutable $time): self
+    {
+        $this->time = $time;
+
+        return $this;
+    }
+
+    /** False for an all-day entry, which is the default and the only kind that existed before. */
+    public function hasTime(): bool
+    {
+        return null !== $this->time;
     }
 
     public function getTitle(): string

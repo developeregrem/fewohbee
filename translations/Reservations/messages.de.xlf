@@ -450,6 +450,14 @@
                 <source>calendar_entry.form.date_to_too_far</source>
                 <target>Der Zeitraum darf nicht mehr als %max% Tage umfassen.</target>
             </trans-unit>
+            <trans-unit id="calendar_entry.form.time">
+                <source>calendar_entry.form.time</source>
+                <target>Uhrzeit</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.time_help">
+                <source>calendar_entry.form.time_help</source>
+                <target>Optional – leer lassen für einen ganztägigen Termin.</target>
+            </trans-unit>
             <trans-unit id="calendar_entry.form.title">
                 <source>calendar_entry.form.title</source>
                 <target>Titel</target>

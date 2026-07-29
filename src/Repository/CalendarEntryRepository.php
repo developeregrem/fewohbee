@@ -35,6 +35,9 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('today', new \DateTimeImmutable('today', new \DateTimeZone('UTC')))
             ->setParameter('tomorrow', new \DateTimeImmutable('tomorrow', new \DateTimeZone('UTC')))
             ->orderBy('e.date', 'ASC')
+            // All-day entries carry a null time and so sort ahead of the timed
+            // ones, which then follow in clock order.
+            ->addOrderBy('e.time', 'ASC')
             ->addOrderBy('e.title', 'ASC')
             ->getQuery()
             ->getResult();
@@ -171,6 +174,9 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->setParameter('to', $to)
             ->orderBy('c.name', 'ASC')
             ->addOrderBy('e.date', 'ASC')
+            // Within one calendar and day: all-day entries first (null time),
+            // then the timed ones in clock order.
+            ->addOrderBy('e.time', 'ASC')
             ->getQuery()
             ->getResult();
     }
