@@ -81,6 +81,41 @@ final class InvoiceServiceGuestSurchargeTest extends TestCase
         self::assertSame(1.4, $result['paymentFee']);
     }
 
+    public function testShowsTheRatesTheReservationWasBookedUnder(): void
+    {
+        // The portal has since raised its commission to 18 %. Showing that to the
+        // guest would name a figure the journal never booked - the deduction goes
+        // by the 12 % the booking was made under.
+        $reservation = $this->reservationWithOrigin('Booking.com', '18.00', '2.50');
+        $reservation->setCommissionPercent('12.00');
+        $reservation->setPaymentFeePercent('1.40');
+
+        $invoice = new Invoice();
+        $invoice->addReservation($reservation);
+
+        $result = $this->resolve($invoice, 115.20);
+
+        self::assertSame(13.82, $result['commission']);
+        self::assertSame(1.61, $result['paymentFee']);
+    }
+
+    public function testFallsBackToTheOriginWhenTheReservationHasNoRatesPinned(): void
+    {
+        // Booked before the rates were pinned, or under an origin that carried
+        // none at the time: the origin is all there is to go on.
+        $reservation = $this->reservationWithOrigin('Booking.com', '12.00', '1.40');
+        $reservation->setCommissionPercent(null);
+        $reservation->setPaymentFeePercent(null);
+
+        $invoice = new Invoice();
+        $invoice->addReservation($reservation);
+
+        $result = $this->resolve($invoice, 115.20);
+
+        self::assertSame(13.82, $result['commission']);
+        self::assertSame(1.61, $result['paymentFee']);
+    }
+
     /**
      * @return array{name: ?string, commission: float, paymentFee: float}
      */

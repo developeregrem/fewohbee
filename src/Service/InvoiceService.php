@@ -272,14 +272,20 @@ class InvoiceService
     /**
      * The extra a guest paid by booking through the reservation's origin rather
      * than directly, split into the portal's commission and payment fee, each a
-     * configured percentage of the gross total. Mirrors the basis the deduction
-     * workflows book on, so the figures shown to the guest match what the portal
-     * actually took.
+     * percentage of the gross total. Mirrors the basis the deduction workflows
+     * book on, so the figures shown to the guest match what the portal actually
+     * took: the rates the reservation was booked under, falling back to the
+     * origin's current ones only where none were pinned. Reading the origin
+     * outright would show a figure the journal never booked as soon as a
+     * contract has been renegotiated.
      *
      * The first reservation carrying an origin with either percentage decides
-     * it; an invoice mixing origins is not a case that arises here. Amounts are
-     * zero rather than null when nothing applies, so templates need no null-guard
-     * beyond a truthiness check.
+     * it. An invoice mixing origins - or one portal at rates that changed in
+     * between - is shown the first of them here, while the deduction skips such
+     * an invoice rather than pick one; a guest-facing note and a journal entry
+     * do not carry the same weight. Amounts are zero rather than null when
+     * nothing applies, so templates need no null-guard beyond a truthiness
+     * check.
      *
      * @return array{name: ?string, commission: float, paymentFee: float}
      */
@@ -293,8 +299,8 @@ class InvoiceService
                 continue;
             }
 
-            $commissionPercent = (float) ($origin->getCommissionPercent() ?? 0.0);
-            $paymentFeePercent = (float) ($origin->getPaymentFeePercent() ?? 0.0);
+            $commissionPercent = (float) ($reservation->getCommissionPercent() ?? $origin->getCommissionPercent() ?? 0.0);
+            $paymentFeePercent = (float) ($reservation->getPaymentFeePercent() ?? $origin->getPaymentFeePercent() ?? 0.0);
             if ($commissionPercent <= 0.0 && $paymentFeePercent <= 0.0) {
                 continue;
             }

@@ -8,7 +8,7 @@ use App\Entity\BookingEntry;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
-use App\Entity\ReservationOrigin;
+use App\Entity\Reservation;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -269,22 +269,40 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
     {
         $source = (string) ($config['percentSource'] ?? self::PERCENT_SOURCE_MANUAL);
 
-        $raw = match ($source) {
-            self::PERCENT_SOURCE_COMMISSION => $this->originOf($invoice)?->getCommissionPercent(),
-            self::PERCENT_SOURCE_PAYMENT_FEE => $this->originOf($invoice)?->getPaymentFeePercent(),
-            default => $config['percent'] ?? '',
-        };
+        // Anything but the two origin sources uses the typed-in field and has no
+        // business looking at the invoice's reservations at all.
+        if (self::PERCENT_SOURCE_COMMISSION !== $source && self::PERCENT_SOURCE_PAYMENT_FEE !== $source) {
+            return $this->toPercent($config['percent'] ?? '');
+        }
 
+        // The rate the reservation was booked under wins over the one the origin
+        // carries today: a portal that renegotiates its commission must not change
+        // what an invoice from last season is charged. Reservations with no rate
+        // recorded - booked before the pinning, or under an origin that carried no
+        // fees yet - fall through to the origin; a pinned rate is an answer
+        // whatever it says, an explicit zero included.
+        $reservation = $this->reservationWithOrigin($invoice);
+        $origin = $reservation?->getReservationOrigin();
+
+        $raw = self::PERCENT_SOURCE_COMMISSION === $source
+            ? $reservation?->getCommissionPercent() ?? $origin?->getCommissionPercent()
+            : $reservation?->getPaymentFeePercent() ?? $origin?->getPaymentFeePercent();
+
+        return $this->toPercent($raw);
+    }
+
+    /** Reads a percentage as it may have been typed or stored, commas included. */
+    private function toPercent(?string $raw): float
+    {
         return (float) str_replace(',', '.', trim((string) $raw));
     }
 
-    /** The origin of the invoice's first reservation that carries one. */
-    private function originOf(Invoice $invoice): ?ReservationOrigin
+    /** The invoice's first reservation that carries an origin. */
+    private function reservationWithOrigin(Invoice $invoice): ?Reservation
     {
-        foreach ($invoice->getReservations() as $reservation) {
-            $origin = $reservation->getReservationOrigin();
-            if (null !== $origin) {
-                return $origin;
+        foreach ($invoice->getReservations() ?? [] as $reservation) {
+            if (null !== $reservation->getReservationOrigin()) {
+                return $reservation;
             }
         }
 

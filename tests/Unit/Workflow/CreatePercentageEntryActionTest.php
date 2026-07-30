@@ -130,6 +130,60 @@ final class CreatePercentageEntryActionTest extends TestCase
         self::assertSame('1.61', $captured['amount']);
     }
 
+    public function testPrefersTheRateTheReservationWasBookedUnder(): void
+    {
+        // The portal renegotiated its commission to 18 % since; an invoice for a
+        // booking made under 12 % must still be charged 12 %.
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $invoice = $this->invoiceWithOrigin(commission: '18', paymentFee: '2.5', pinnedCommission: '12.00', pinnedPaymentFee: '1.40');
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+        $action->execute($config, $invoice, []);
+
+        self::assertSame('13.82', $captured['amount']);
+    }
+
+    public function testPrefersThePinnedPaymentFeeAsWell(): void
+    {
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $invoice = $this->invoiceWithOrigin(commission: '18', paymentFee: '2.5', pinnedCommission: '12.00', pinnedPaymentFee: '1.40');
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_PAYMENT_FEE]);
+        $action->execute($config, $invoice, []);
+
+        self::assertSame('1.61', $captured['amount']);
+    }
+
+    public function testSkipsWhenTheReservationWasBookedUnderNoFee(): void
+    {
+        // A pinned "0.00" says the portal charged nothing at the time, which the
+        // origin's current rate must not override.
+        $action = $this->makeAction(gross: 115.20);
+
+        $invoice = $this->invoiceWithOrigin(commission: '18', paymentFee: '2.5', pinnedCommission: '0.00', pinnedPaymentFee: '0.00');
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $invoice, []);
+    }
+
+    public function testFallsBackToTheOriginForReservationsBookedBeforeRatesWerePinned(): void
+    {
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        // Nothing pinned, as on every reservation that predates the columns.
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+        $action->execute($config, $this->invoiceWithOrigin(commission: '12', paymentFee: '1.4'), []);
+
+        self::assertSame('13.82', $captured['amount']);
+    }
+
     public function testSkipsWhenTheOriginSourceHasNoValue(): void
     {
         // A direct booking, or an origin whose fee is not filled in: nothing to
@@ -282,8 +336,12 @@ final class CreatePercentageEntryActionTest extends TestCase
         return $invoice;
     }
 
-    private function invoiceWithOrigin(?string $commission, ?string $paymentFee): Invoice
-    {
+    private function invoiceWithOrigin(
+        ?string $commission,
+        ?string $paymentFee,
+        ?string $pinnedCommission = null,
+        ?string $pinnedPaymentFee = null,
+    ): Invoice {
         $origin = new ReservationOrigin();
         $origin->setName('Booking.com');
         $origin->setCommissionPercent($commission);
@@ -291,6 +349,10 @@ final class CreatePercentageEntryActionTest extends TestCase
 
         $reservation = new Reservation();
         $reservation->setReservationOrigin($origin);
+        // Overwritten after the assignment, which pins the origin's current rates -
+        // here the reservation is meant to carry what applied when it was booked.
+        $reservation->setCommissionPercent($pinnedCommission);
+        $reservation->setPaymentFeePercent($pinnedPaymentFee);
 
         $invoice = $this->createStub(Invoice::class);
         $invoice->method('getNumber')->willReturn('17730');
