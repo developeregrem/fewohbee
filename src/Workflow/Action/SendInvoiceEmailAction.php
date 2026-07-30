@@ -171,7 +171,12 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         }
 
         $rendered = $this->templatesService->renderTemplate($emailTemplate->getId(), $entity);
-        $subject = $emailTemplate->getName();
+        try {
+            $subject = $this->templatesService->renderTemplateSubject($emailTemplate, $entity);
+        } catch (\Throwable $e) {
+            // A broken placeholder in the subject must never block the mail.
+            $subject = (string) $emailTemplate->getName();
+        }
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachments);
 
@@ -188,7 +193,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
 
             $mail = new MailCorrespondence();
             $mail->setRecipient($recipient)
-                 ->setName($subject)
+                 ->setName($emailTemplate->getName())
                  ->setSubject($subject)
                  ->setText($rendered)
                  ->setTemplate($emailTemplate)

@@ -94,7 +94,6 @@ templates.flash.delete.inuse.reservations: Template cannot be deleted because it
 templates.flash.delete.success: Template successfully deleted.
 templates.flash.edit.success: Template successfully updated.
 templates.name: Name
-templates.name.email_help: For automatically sent messages, the name is also used as the subject. Choose a clear, meaningful label.
 templates.notfound: No template could be found. Please ensure a template exists for the selected action.
 templates.params: PDF layout
 templates.params.help: Orientation and margins for generated PDFs (all margins in mm).
@@ -217,6 +216,7 @@ templates.select.template: Select template
 templates.sendemail.preview: Send message
 templates.sendemail.success: The message was successfully sent.
 templates.subject: Subject
+templates.subject.help: 'Placeholders such as [[ reservation1.booker.lastname ]] are supported. If left empty, the name is used as the subject.'
 templates.title: Templates
 templates.editor.template_includes: Templates
 templates.include.error.circular: "Circular template include detected (ID: %id%)"

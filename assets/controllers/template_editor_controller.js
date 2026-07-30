@@ -346,7 +346,10 @@ export default class extends Controller {
         'rowRepeatKey',
         'rowMetaBadge',
         'pdfParamsPanel',
-        'emailNameHint',
+        'subjectRow',
+        'subjectInputGroup',
+        'subjectInput',
+        'previewSubjectResult',
     ];
 
     connect() {
@@ -381,7 +384,7 @@ export default class extends Controller {
 
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
-        this.updateEmailNameHintVisibility();
+        this.updateSubjectRowVisibility();
         this.showEditTab();
         this.refreshToolbarState();
         this.previewPdfObjectUrl = null;
@@ -489,6 +492,7 @@ export default class extends Controller {
                 return;
             }
             const payload = await response.json();
+            this.applyPreviewSubject(payload);
             if (this.hasPreviewResultTarget) {
                 this.revokePreviewPdfUrl();
                 const iframe = document.createElement('iframe');
@@ -556,9 +560,35 @@ export default class extends Controller {
     buildPreviewFormData() {
         const formData = new FormData();
         formData.append('previewText', this.sourceTarget.value || '');
+        if (this.isCurrentTemplateTypeEmail() && this.hasSubjectInputTarget) {
+            formData.append('previewSubject', this.subjectInputTarget.value || '');
+        }
         this.appendPreviewContextToFormData(formData);
 
         return formData;
+    }
+
+    applyPreviewSubject(payload) {
+        if (!this.hasPreviewSubjectResultTarget) {
+            return;
+        }
+        const target = this.previewSubjectResultTarget;
+        if (payload && payload.subjectError) {
+            target.textContent = payload.subjectError;
+            target.classList.remove('d-none', 'text-body-secondary');
+            target.classList.add('text-danger');
+            return;
+        }
+        const subject = payload && typeof payload.subject === 'string' ? payload.subject : '';
+        if (subject !== '') {
+            const label = this.i18n.i18nSubjectLabel || 'Betreff';
+            target.textContent = `${label}: ${subject}`;
+            target.classList.remove('d-none', 'text-danger');
+            target.classList.add('text-body-secondary');
+        } else {
+            target.textContent = '';
+            target.classList.add('d-none');
+        }
     }
 
     applyPreviewWarning(warningText) {
@@ -916,7 +946,7 @@ export default class extends Controller {
     onTemplateTypeChange() {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
-        this.updateEmailNameHintVisibility();
+        this.updateSubjectRowVisibility();
         this.schemaCache = null;
         // Rebuild CodeMirror with the new template type's schema
         this.rebuildCodeMirror();
@@ -930,11 +960,11 @@ export default class extends Controller {
         this.pdfParamsPanelTarget.classList.toggle('d-none', !isPdf);
     }
 
-    updateEmailNameHintVisibility() {
-        if (!this.hasEmailNameHintTarget) {
+    updateSubjectRowVisibility() {
+        if (!this.hasSubjectRowTarget) {
             return;
         }
-        this.emailNameHintTarget.classList.toggle('d-none', !this.isCurrentTemplateTypeEmail());
+        this.subjectRowTarget.classList.toggle('d-none', !this.isCurrentTemplateTypeEmail());
     }
 
     async refreshSnippets() {
@@ -1337,7 +1367,31 @@ export default class extends Controller {
             return;
         }
 
+        this.variablePickerMode = 'body';
         this.renderVariablePicker(schema);
+    }
+
+    /**
+     * Open the variable picker for the subject field. Inserts into the subject
+     * editor and only offers scalar/date placeholders (no loops/collections).
+     */
+    async openSubjectVariablePicker() {
+        if (!this.hasSubjectInputTarget) {
+            return;
+        }
+
+        if (this.variablePickerEl) {
+            this.closeVariablePicker();
+            return;
+        }
+
+        const schema = await this.fetchSchema();
+        if (!schema || Object.keys(schema).length === 0) {
+            return;
+        }
+
+        this.variablePickerMode = 'subject';
+        this.renderVariablePicker(schema, { scalarsOnly: true, anchor: this.hasSubjectInputGroupTarget ? this.subjectInputGroupTarget : null });
     }
 
     async fetchSchema() {
@@ -1368,7 +1422,8 @@ export default class extends Controller {
         }
     }
 
-    renderVariablePicker(schema) {
+    renderVariablePicker(schema, options = {}) {
+        const scalarsOnly = options.scalarsOnly === true;
         const picker = document.createElement('div');
         picker.className = 'template-editor-variable-picker';
 
@@ -1380,16 +1435,14 @@ export default class extends Controller {
 
         const list = document.createElement('div');
         list.className = 'template-editor-variable-picker-list';
-        this.renderSchemaLevel(list, schema, '');
+        this.renderSchemaLevel(list, schema, '', scalarsOnly);
         picker.appendChild(list);
 
-        // Position picker relative to the toolbar container (not the group, which has overflow:hidden)
-        const toolbar = this.toolbarHostTarget?.closest('.template-editor-toolbar');
-        if (toolbar) {
-            toolbar.style.position = 'relative';
-            toolbar.appendChild(picker);
-        } else {
-            this.toolbarHostTarget?.appendChild(picker);
+        // Anchor the picker to the requested container (subject row) or the toolbar.
+        const anchor = options.anchor || this.toolbarHostTarget?.closest('.template-editor-toolbar') || this.toolbarHostTarget;
+        if (anchor) {
+            anchor.style.position = 'relative';
+            anchor.appendChild(picker);
         }
 
         this.variablePickerEl = picker;
@@ -1403,7 +1456,7 @@ export default class extends Controller {
         setTimeout(() => document.addEventListener('click', this.variablePickerOutsideClick), 0);
     }
 
-    renderSchemaLevel(container, properties, pathPrefix) {
+    renderSchemaLevel(container, properties, pathPrefix, scalarsOnly = false) {
         const typeLabels = {
             scalar: '',
             date: '📅',
@@ -1415,6 +1468,11 @@ export default class extends Controller {
         for (const [name, def] of Object.entries(properties)) {
             const type = def.type || 'scalar';
             const fullPath = pathPrefix ? `${pathPrefix}.${name}` : name;
+
+            // The subject line supports simple expressions only — no loops/collections.
+            if (scalarsOnly && (type === 'collection' || type === 'array')) {
+                continue;
+            }
 
             const item = document.createElement('div');
             item.className = `template-editor-variable-item template-editor-variable-type-${type}`;
@@ -1441,7 +1499,7 @@ export default class extends Controller {
             } else if (type === 'entity' && def.properties) {
                 const childContainer = document.createElement('div');
                 childContainer.className = 'template-editor-variable-children d-none';
-                this.renderSchemaLevel(childContainer, def.properties, fullPath);
+                this.renderSchemaLevel(childContainer, def.properties, fullPath, scalarsOnly);
 
                 label.addEventListener('click', () => {
                     childContainer.classList.toggle('d-none');
@@ -1493,12 +1551,18 @@ export default class extends Controller {
     }
 
     insertVariable(path, type) {
-        if (!this.editorInstance || this.isCodeMode()) {
-            return;
-        }
         const variable = type === 'date'
             ? `[[ ${path}|date('d.m.Y') ]]`
             : `[[ ${path} ]]`;
+
+        if (this.variablePickerMode === 'subject') {
+            this.insertIntoSubjectInput(variable);
+            return;
+        }
+
+        if (!this.editorInstance || this.isCodeMode()) {
+            return;
+        }
         this.editorInstance.chain().focus().insertContent(variable).run();
     }
 
@@ -1525,6 +1589,7 @@ export default class extends Controller {
     }
 
     closeVariablePicker() {
+        this.variablePickerMode = null;
         if (this.variablePickerEl) {
             this.variablePickerEl.remove();
             this.variablePickerEl = null;
@@ -2020,6 +2085,20 @@ export default class extends Controller {
                 changes: { from: 0, to: this.cmEditor.state.doc.length, insert: content },
             });
         }
+    }
+
+    /**
+     * Insert placeholder text at the current cursor position of the subject input.
+     */
+    insertIntoSubjectInput(text) {
+        if (!this.hasSubjectInputTarget) return;
+        const input = this.subjectInputTarget;
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0, start) + text + input.value.slice(end);
+        const caret = start + text.length;
+        input.focus();
+        input.setSelectionRange(caret, caret);
     }
 
     /**

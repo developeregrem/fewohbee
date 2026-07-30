@@ -1441,6 +1441,11 @@ class ReservationServiceController extends AbstractController
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
         $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
+        try {
+            $templateSubject = $ts->renderTemplateSubject($template, $reservations);
+        } catch (\Throwable $e) {
+            $templateSubject = (string) $template->getName();
+        }
         $emailDraft = $requestStack->getSession()->get(self::EMAIL_DRAFT_SESSION_KEY, []);
 
         // add attachments
@@ -1454,6 +1459,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_preview_template.html.twig', [
             'templateOutput' => $templateOutput,
+            'templateSubject' => $templateSubject,
             'template' => $template,
             'reservations' => $reservations,
             'token' => $csrf->getCSRFTokenForForm(),

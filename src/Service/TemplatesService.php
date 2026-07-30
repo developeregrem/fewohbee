@@ -105,6 +105,8 @@ class TemplatesService
         }
         $template->setTemplateType($type);
         $template->setName(trim($request->request->get('name-'.$id)));
+        $subject = trim((string) $request->request->get('subject-'.$id));
+        $template->setSubject('' !== $subject ? $subject : null);
         $template->setText($request->request->get('text-'.$id));
         $template->setParams($this->buildTemplateParamsFromRequest($request, (string) $id));
         if ($request->request->has('default-'.$id)) {
@@ -183,6 +185,53 @@ class TemplatesService
             $templateStr = $this->twig->createTemplate($str);
 
             return $templateStr->render($params);
+        } catch (TwigError|\Throwable $e) {
+            throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
+        } finally {
+            if (!$wasStrictVariables) {
+                $this->twig->disableStrictVariables();
+            }
+        }
+    }
+
+    /**
+     * Render a template's subject line, resolving placeholders against the same
+     * entity context as the body. Falls back to the template name when no subject
+     * is set. Loops/includes are intentionally not supported for subjects.
+     */
+    public function renderTemplateSubject(Template $template, mixed $param): string
+    {
+        $subject = trim((string) $template->getSubject());
+        if ('' === $subject) {
+            return (string) $template->getName();
+        }
+
+        $params = $this->renderParamsResolver->resolve($template, $param);
+
+        return $this->renderSubjectString($subject, $params);
+    }
+
+    /**
+     * Render a one-line subject string with pre-built render params. Applies only the
+     * pseudo-twig variable substitution (no includes, no loops) and enforces strict
+     * variables so unknown placeholders surface a friendly error.
+     *
+     * @param array<string, mixed> $params
+     */
+    public function renderSubjectString(string $subject, array $params): string
+    {
+        $wasStrictVariables = $this->twig->isStrictVariables();
+
+        try {
+            if (!$wasStrictVariables) {
+                $this->twig->enableStrictVariables();
+            }
+
+            $str = $this->replaceTwigSyntax($subject);
+            $templateStr = $this->twig->createTemplate($str);
+
+            // Subjects are single-line; collapse any accidental newlines.
+            return trim(preg_replace('/\s*\R\s*/', ' ', $templateStr->render($params)));
         } catch (TwigError|\Throwable $e) {
             throw new \RuntimeException($this->buildFriendlyTemplateErrorMessage($e), 0, $e);
         } finally {

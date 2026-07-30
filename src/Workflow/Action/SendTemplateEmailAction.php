@@ -136,7 +136,12 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         }
 
         $rendered = $this->templatesService->renderTemplate($templateId, $renderInput);
-        $subject = $template->getName();
+        try {
+            $subject = $this->templatesService->renderTemplateSubject($template, $renderInput);
+        } catch (\Throwable $e) {
+            // A broken placeholder in the subject must never block the mail.
+            $subject = (string) $template->getName();
+        }
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered);
 
@@ -149,7 +154,7 @@ class SendTemplateEmailAction implements WorkflowActionInterface
                 }
                 $mail = new MailCorrespondence();
                 $mail->setRecipient($recipient)
-                     ->setName($subject)
+                     ->setName($template->getName())
                      ->setSubject($subject)
                      ->setText($rendered)
                      ->setTemplate($template)

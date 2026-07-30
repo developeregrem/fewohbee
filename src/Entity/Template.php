@@ -18,6 +18,8 @@ class Template
     private $id;
     #[ORM\Column(type: 'string', length: 100)]
     private $name;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $subject = null;
     #[ORM\Column(type: 'text')]
     private $text;
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
@@ -80,6 +82,26 @@ class Template
     public function getName(): ?string
     {
         return $this->name;
+    }
+
+    /**
+     * Set subject.
+     *
+     * @return Template
+     */
+    public function setSubject(?string $subject): static
+    {
+        $this->subject = $subject;
+
+        return $this;
+    }
+
+    /**
+     * Get subject.
+     */
+    public function getSubject(): ?string
+    {
+        return $this->subject;
     }
 
     /**

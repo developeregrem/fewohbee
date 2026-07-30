@@ -110,7 +110,12 @@ class SendGeneralEmailAction implements WorkflowActionInterface
 
         // Render without an entity — template has no entity variables
         $rendered = $this->templatesService->renderTemplate($templateId, null);
-        $subject = $template->getName();
+        try {
+            $subject = $this->templatesService->renderTemplateSubject($template, null);
+        } catch (\Throwable $e) {
+            // A broken placeholder in the subject must never block the mail.
+            $subject = (string) $template->getName();
+        }
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered);
 

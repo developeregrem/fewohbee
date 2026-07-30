@@ -910,6 +910,16 @@ class PublicBookingService
             ? $this->translator->trans('online_booking.email.subject.booking')
             : $this->translator->trans('online_booking.email.subject.inquiry');
 
+        // Prefer the template's own subject (with placeholders) when one is configured;
+        // otherwise keep the translated default subject.
+        if ('' !== trim((string) $template->getSubject())) {
+            try {
+                $subject = $this->templatesService->renderTemplateSubject($template, $reservations);
+            } catch (\Throwable $e) {
+                // Keep the translated default subject on a broken placeholder.
+            }
+        }
+
         $body = $this->templatesService->renderTemplate((int) $template->getId(), $reservations);
         $this->mailService->sendHTMLMail($email, $subject, $body);
         $this->persistMailCorrespondenceForReservations($reservations, $template, $email, $subject, $body);

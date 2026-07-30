@@ -18,10 +18,6 @@
                 <source>templates.name</source>
                 <target>Name</target>
             </trans-unit>
-            <trans-unit id="templates.name.email_help">
-                <source>templates.name.email_help</source>
-                <target>Bei automatisch versendeten Nachrichten wird der Name auch als Betreff verwendet. Bitte einen aussagekräftigen Namen wählen.</target>
-            </trans-unit>
             <trans-unit id="templates.flash.create.success">
                 <source>templates.flash.create.success</source>
                 <target>Vorlage erfolgreich angelegt.</target>
@@ -581,6 +577,10 @@
             <trans-unit id="templates.subject">
                 <source>templates.subject</source>
                 <target>Betreff</target>
+            </trans-unit>
+            <trans-unit id="templates.subject.help">
+                <source>templates.subject.help</source>
+                <target>Platzhalter wie [[ reservation1.booker.lastname ]] sind möglich. Bleibt das Feld leer, wird der Name als Betreff verwendet.</target>
             </trans-unit>
             <trans-unit id="templates.attachment">
                 <source>templates.attachment</source>
