@@ -6,6 +6,8 @@ namespace App\Workflow\Action;
 
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
+use App\Entity\InvoiceAppartment;
+use App\Entity\InvoicePosition;
 use App\Entity\ReservationOrigin;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
@@ -13,10 +15,11 @@ use App\Service\BookingJournal\BookingJournalService;
 use App\Service\InvoiceService;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Books a percentage of an invoice's gross total as a single entry.
+ * Books a percentage of an invoice as a single entry.
  *
  * Percentage, accounts, tax rate and text all come from the config, so what
  * the deduction represents is a matter of configuration rather than of code.
@@ -26,8 +29,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * Config:
  *   percentSource   string   – where the percentage comes from, see the constants
- *   percent         string   – percentage of the gross total, used when the source
- *                              is manual
+ *   percent         string   – the percentage itself, used when the source is
+ *                              manual
+ *   amountBase      string   – what the percentage is taken of, see the constants.
+ *                              Configured per action, so a commission and a payment
+ *                              fee added to the same workflow can each use their own
+ *                              base - portals rarely charge both on the same amount
  *   debitAccountId  int|null – expense (or reverse-charge) account
  *   creditAccountId int|null – account the deduction is taken from, usually the
  *                              same one the invoice itself was booked against
@@ -46,6 +53,19 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
 
     /** The percentage is the payment fee configured on the invoice's reservation origin. */
     public const PERCENT_SOURCE_PAYMENT_FEE = 'origin_payment_fee';
+
+    /** The percentage is taken of the invoice's full gross total. */
+    public const AMOUNT_BASE_GROSS = 'gross';
+
+    /** The percentage is taken of the gross total less the tourist-tax positions. */
+    public const AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX = 'gross_without_tourist_tax';
+
+    /**
+     * Position group the tourist-tax positions carry, see InvoicePosition::$positionGroup.
+     * They are the pass-through item this code can single out today; anything else
+     * that should stay out of a commission would need its own marker first.
+     */
+    private const POSITION_GROUP_TOURIST_TAX = 'tourist_tax';
 
     public function __construct(
         private readonly BookingJournalService $bookingJournalService,
@@ -103,6 +123,20 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                 // Only relevant when the percentage is typed in, not read from
                 // the origin - so it only shows for the manual source.
                 'showIf' => ['key' => 'percentSource', 'value' => self::PERCENT_SOURCE_MANUAL],
+            ],
+            [
+                'key' => 'amountBase',
+                'type' => 'select',
+                'label' => 'workflow.form.percentage_entry_amount_base',
+                'help' => 'workflow.form.percentage_entry_amount_base_help',
+                'options' => [
+                    ['value' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX, 'label' => 'workflow.form.percentage_entry_amount_base_without_tourist_tax'],
+                    ['value' => self::AMOUNT_BASE_GROSS, 'label' => 'workflow.form.percentage_entry_amount_base_gross'],
+                ],
+                // Offered first and preselected: portals charge commission on what
+                // the house earns, and tourist tax is collected for the municipality.
+                // Existing configs are left alone, see amountBase() below.
+                'default' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
             ],
             [
                 'key' => 'debitAccountId',
@@ -163,7 +197,8 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_percentage'));
         }
 
-        $amount = round($this->grossTotal($entity) * $percent / 100.0, 2);
+        $base = $this->baseAmount($config, $entity);
+        $amount = round($base * $percent / 100.0, 2);
         if (0.0 === $amount) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_amounts'));
         }
@@ -208,10 +243,14 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         // later, and silently dropping the guard would let their month close.
         $entry->setRequiresDocumentNumber('0' !== (string) ($config['requiresDocumentNumber'] ?? '1'));
 
+        // The base goes into the log as a figure: with a configurable base, the
+        // percentage alone no longer explains how the amount came about, and the
+        // log is where that gets checked against the portal's own statement.
         return $this->translator->trans('workflow.log.percentage_entry_created', [
             // Formatted like the amount beside it: "1,40" rather than PHP's "1.4".
             '%percent%' => number_format($percent, 2, ',', '.'),
             '%amount%' => number_format($amount, 2, ',', '.'),
+            '%base%' => number_format($base, 2, ',', '.'),
             '%number%' => (string) $entity->getNumber(),
         ]);
     }
@@ -252,8 +291,38 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         return null;
     }
 
-    /** Gross total of the invoice, the same figure the invoice itself shows. */
-    private function grossTotal(Invoice $invoice): float
+    /**
+     * The amount the percentage is taken of.
+     *
+     * Falls back to the full gross for configs saved before the choice existed:
+     * those were set up against that figure, and quietly moving their base would
+     * change what they book from one release to the next. New actions start on
+     * the narrower base instead, see the schema above.
+     */
+    private function baseAmount(array $config, Invoice $invoice): float
+    {
+        $positions = $invoice->getPositions() ?? new ArrayCollection();
+
+        if (self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX === (string) ($config['amountBase'] ?? self::AMOUNT_BASE_GROSS)) {
+            // Dropped before the sum rather than subtracted afterwards, so the
+            // per-VAT-rate rounding inside calculateSums stays the one the
+            // remaining positions produce on their own.
+            $positions = $positions->filter(
+                fn (InvoicePosition $position): bool => self::POSITION_GROUP_TOURIST_TAX !== $position->getPositionGroup()
+            );
+        }
+
+        return $this->grossTotal($invoice->getAppartments() ?? new ArrayCollection(), $positions);
+    }
+
+    /**
+     * Gross total of the given parts, calculated the same way the invoice itself
+     * calculates the figure it shows.
+     *
+     * @param Collection<int, InvoiceAppartment> $apartments
+     * @param Collection<int, InvoicePosition>   $positions
+     */
+    private function grossTotal(Collection $apartments, Collection $positions): float
     {
         $brutto = 0.0;
         $netto = 0.0;
@@ -262,8 +331,8 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         $vats = [];
 
         $this->invoiceService->calculateSums(
-            $invoice->getAppartments() ?? new ArrayCollection(),
-            $invoice->getPositions() ?? new ArrayCollection(),
+            $apartments,
+            $positions,
             $vats,
             $brutto,
             $netto,

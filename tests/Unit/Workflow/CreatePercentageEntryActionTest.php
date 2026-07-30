@@ -7,10 +7,12 @@ namespace App\Tests\Unit\Workflow;
 use App\Entity\AccountingAccount;
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
+use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\TaxRate;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -140,6 +142,59 @@ final class CreatePercentageEntryActionTest extends TestCase
         $action->execute($config, $this->invoiceWithOrigin(commission: null, paymentFee: null), []);
     }
 
+    public function testLeavesTouristTaxOutOfTheBaseByDefaultForNewActions(): void
+    {
+        // Tourist tax is collected for the municipality, so it is not part of
+        // what a portal charges commission on.
+        $positions = null;
+        $action = $this->makeAction(gross: 115.20, capturePositions: $positions);
+
+        $config = $this->config(['amountBase' => CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX]);
+        $action->execute($config, $this->invoiceWithPositions(), []);
+
+        self::assertSame(['Übernachtung', 'Endreinigung'], $this->descriptionsOf($positions));
+    }
+
+    public function testKeepsTouristTaxInTheBaseWhenTheFullGrossIsConfigured(): void
+    {
+        $positions = null;
+        $action = $this->makeAction(gross: 115.20, capturePositions: $positions);
+
+        $config = $this->config(['amountBase' => CreatePercentageEntryAction::AMOUNT_BASE_GROSS]);
+        $action->execute($config, $this->invoiceWithPositions(), []);
+
+        self::assertSame(['Übernachtung', 'Endreinigung', 'Kurtaxe'], $this->descriptionsOf($positions));
+    }
+
+    public function testFallsBackToTheFullGrossForConfigsSavedBeforeTheChoiceExisted(): void
+    {
+        // Those workflows were set up against that figure; changing what they
+        // book from one release to the next would be a silent correction.
+        $positions = null;
+        $action = $this->makeAction(gross: 115.20, capturePositions: $positions);
+
+        $config = $this->config();
+        unset($config['amountBase']);
+        $action->execute($config, $this->invoiceWithPositions(), []);
+
+        self::assertSame(['Übernachtung', 'Endreinigung', 'Kurtaxe'], $this->descriptionsOf($positions));
+    }
+
+    public function testOffersTheNarrowerBaseAsTheDefaultForNewActions(): void
+    {
+        $action = $this->makeAction(gross: 100.0);
+
+        $field = null;
+        foreach ($action->getConfigSchema() as $entry) {
+            if ('amountBase' === $entry['key']) {
+                $field = $entry;
+            }
+        }
+
+        self::assertNotNull($field);
+        self::assertSame(CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX, $field['default']);
+    }
+
     public function testSkipsWhenTheInvoiceHasNoAmount(): void
     {
         $action = $this->makeAction(gross: 0.0);
@@ -165,11 +220,57 @@ final class CreatePercentageEntryActionTest extends TestCase
     {
         return array_merge([
             'percent' => '12',
+            'amountBase' => CreatePercentageEntryAction::AMOUNT_BASE_GROSS,
             'debitAccountId' => '3',
             'creditAccountId' => '4',
             'taxRateId' => '',
             'remark' => '',
         ], $overrides);
+    }
+
+    /**
+     * An invoice carrying one tourist-tax position among ordinary ones. Only the
+     * position group matters here - which of them end up in the sum is what the
+     * base decides, the arithmetic on them is InvoiceService's job.
+     */
+    private function invoiceWithPositions(): Invoice
+    {
+        $positions = new ArrayCollection([
+            $this->position('Übernachtung', 'apartment'),
+            $this->position('Endreinigung', 'misc'),
+            $this->position('Kurtaxe', 'tourist_tax'),
+        ]);
+
+        $invoice = $this->createStub(Invoice::class);
+        $invoice->method('getNumber')->willReturn('17730');
+        $invoice->method('getDate')->willReturn(new \DateTime('2026-06-26'));
+        $invoice->method('getPositions')->willReturn($positions);
+
+        return $invoice;
+    }
+
+    private function position(string $description, string $group): InvoicePosition
+    {
+        $position = new InvoicePosition();
+        $position->setDescription($description);
+        $position->setPositionGroup($group);
+
+        return $position;
+    }
+
+    /**
+     * @param Collection<int, InvoicePosition>|null $positions
+     *
+     * @return string[]
+     */
+    private function descriptionsOf(?Collection $positions): array
+    {
+        self::assertNotNull($positions);
+
+        return array_values(array_map(
+            static fn (InvoicePosition $position): string => (string) $position->getDescription(),
+            $positions->toArray()
+        ));
     }
 
     private function invoice(string $number = '17730'): Invoice
@@ -199,12 +300,16 @@ final class CreatePercentageEntryActionTest extends TestCase
         return $invoice;
     }
 
-    /** @param array<string, mixed>|null $capture receives the arguments the journal was called with */
-    private function makeAction(float $gross, mixed &$capture = null): CreatePercentageEntryAction
+    /**
+     * @param array<string, mixed>|null              $capture          receives the arguments the journal was called with
+     * @param Collection<int, InvoicePosition>|null  $capturePositions receives the positions the sum was calculated over
+     */
+    private function makeAction(float $gross, mixed &$capture = null, mixed &$capturePositions = null): CreatePercentageEntryAction
     {
         $invoiceService = $this->createStub(InvoiceService::class);
         $invoiceService->method('calculateSums')->willReturnCallback(
-            function ($apartments, $positions, &$vats, &$brutto) use ($gross): void {
+            function ($apartments, $positions, &$vats, &$brutto) use ($gross, &$capturePositions): void {
+                $capturePositions = $positions;
                 $brutto = $gross;
             }
         );
