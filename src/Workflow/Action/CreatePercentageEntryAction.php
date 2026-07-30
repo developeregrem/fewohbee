@@ -8,7 +8,6 @@ use App\Entity\BookingEntry;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
-use App\Entity\Reservation;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
@@ -275,38 +274,61 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             return $this->toPercent($config['percent'] ?? '');
         }
 
-        // The rate the reservation was booked under wins over the one the origin
-        // carries today: a portal that renegotiates its commission must not change
-        // what an invoice from last season is charged. Reservations with no rate
-        // recorded - booked before the pinning, or under an origin that carried no
-        // fees yet - fall through to the origin; a pinned rate is an answer
-        // whatever it says, an explicit zero included.
-        $reservation = $this->reservationWithOrigin($invoice);
-        $origin = $reservation?->getReservationOrigin();
+        $rates = $this->ratesOnInvoice($invoice, $source);
 
-        $raw = self::PERCENT_SOURCE_COMMISSION === $source
-            ? $reservation?->getCommissionPercent() ?? $origin?->getCommissionPercent()
-            : $reservation?->getPaymentFeePercent() ?? $origin?->getPaymentFeePercent();
+        // One entry is booked for the whole invoice, so a single rate has to hold
+        // for all of it. Two portals on one invoice, or two bookings taken under
+        // rates that have changed in between, have no single answer - and the
+        // invoice carries no attribution of its lines to reservations to split it
+        // along. Booking one of the rates on the full amount would be wrong
+        // without ever saying so, so this stops and asks for a manual entry.
+        if (count($rates) > 1) {
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_mixed_rates', [
+                '%rates%' => implode(', ', array_keys($rates)),
+            ]));
+        }
 
-        return $this->toPercent($raw);
+        return 1 === count($rates) ? reset($rates) : 0.0;
+    }
+
+    /**
+     * The distinct rates the invoice's reservations carry for the given source,
+     * keyed by their formatted form so the caller can name them.
+     *
+     * The rate a reservation was booked under wins over the one its origin carries
+     * today: a portal that renegotiates its commission must not change what an
+     * invoice from last season is charged. Reservations with no rate recorded fall
+     * through to the origin - a pinned rate is an answer whatever it says, an
+     * explicit zero included. A reservation without an origin counts as a rate of
+     * zero, which is what makes a direct booking sharing an invoice with a portal
+     * one show up as the disagreement it is.
+     *
+     * @return array<string, float>
+     */
+    private function ratesOnInvoice(Invoice $invoice, string $source): array
+    {
+        $rates = [];
+
+        foreach ($invoice->getReservations() ?? [] as $reservation) {
+            $origin = $reservation->getReservationOrigin();
+
+            $raw = self::PERCENT_SOURCE_COMMISSION === $source
+                ? $reservation->getCommissionPercent() ?? $origin?->getCommissionPercent()
+                : $reservation->getPaymentFeePercent() ?? $origin?->getPaymentFeePercent();
+
+            $rate = $this->toPercent($raw);
+            // Keyed by the formatted figure: it doubles as the label in the log
+            // and keeps "12", "12.00" and 12.0 from counting as three rates.
+            $rates[number_format($rate, 2, ',', '.').' %'] = $rate;
+        }
+
+        return $rates;
     }
 
     /** Reads a percentage as it may have been typed or stored, commas included. */
     private function toPercent(?string $raw): float
     {
         return (float) str_replace(',', '.', trim((string) $raw));
-    }
-
-    /** The invoice's first reservation that carries an origin. */
-    private function reservationWithOrigin(Invoice $invoice): ?Reservation
-    {
-        foreach ($invoice->getReservations() ?? [] as $reservation) {
-            if (null !== $reservation->getReservationOrigin()) {
-                return $reservation;
-            }
-        }
-
-        return null;
     }
 
     /**

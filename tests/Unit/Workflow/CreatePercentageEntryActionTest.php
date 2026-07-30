@@ -184,6 +184,95 @@ final class CreatePercentageEntryActionTest extends TestCase
         self::assertSame('13.82', $captured['amount']);
     }
 
+    public function testSkipsWhenTheInvoiceMixesTwoPortals(): void
+    {
+        // One entry is booked for the whole invoice, and there is no attribution
+        // of invoice lines to reservations to split it along. Charging either
+        // portal's rate on the full amount would be wrong without saying so.
+        $action = $this->makeAction(gross: 115.20);
+
+        $invoice = $this->invoiceWithReservations(
+            $this->reservation(commission: '12', paymentFee: '1.4'),
+            $this->reservation(commission: '18', paymentFee: '2.5'),
+        );
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $invoice, []);
+    }
+
+    public function testSkipsWhenAPortalBookingSharesTheInvoiceWithADirectOne(): void
+    {
+        // The direct booking's share carries no commission, so the portal's rate
+        // does not hold for the invoice as a whole.
+        $action = $this->makeAction(gross: 115.20);
+
+        $invoice = $this->invoiceWithReservations(
+            $this->reservation(commission: '12', paymentFee: '1.4'),
+            new Reservation(),
+        );
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $invoice, []);
+    }
+
+    public function testSkipsWhenTwoBookingsFromOnePortalCarryDifferentPinnedRates(): void
+    {
+        // Same portal, but the contract changed between the two bookings.
+        $action = $this->makeAction(gross: 115.20);
+
+        $origin = $this->origin(commission: '18', paymentFee: '2.5');
+
+        $early = new Reservation();
+        $early->setReservationOrigin($origin);
+        $early->setCommissionPercent('12.00');
+
+        $late = new Reservation();
+        $late->setReservationOrigin($origin);
+        $late->setCommissionPercent('18.00');
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $this->invoiceWithReservations($early, $late), []);
+    }
+
+    public function testBooksWhenSeveralReservationsAgreeOnTheRate(): void
+    {
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $invoice = $this->invoiceWithReservations(
+            $this->reservation(commission: '12', paymentFee: '1.4'),
+            $this->reservation(commission: '12.00', paymentFee: '1.40'),
+        );
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+        $action->execute($config, $invoice, []);
+
+        self::assertSame('13.82', $captured['amount']);
+    }
+
+    public function testDoesNotCheckTheRatesWhenThePercentageIsTypedIn(): void
+    {
+        // A manual percentage says what to book regardless of where the bookings
+        // came from; the origins are none of its business.
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $invoice = $this->invoiceWithReservations(
+            $this->reservation(commission: '12', paymentFee: '1.4'),
+            $this->reservation(commission: '18', paymentFee: '2.5'),
+        );
+
+        $action->execute($this->config(['percent' => '12']), $invoice, []);
+
+        self::assertSame('13.82', $captured['amount']);
+    }
+
     public function testSkipsWhenTheOriginSourceHasNoValue(): void
     {
         // A direct booking, or an origin whose fee is not filled in: nothing to
@@ -342,24 +431,42 @@ final class CreatePercentageEntryActionTest extends TestCase
         ?string $pinnedCommission = null,
         ?string $pinnedPaymentFee = null,
     ): Invoice {
-        $origin = new ReservationOrigin();
-        $origin->setName('Booking.com');
-        $origin->setCommissionPercent($commission);
-        $origin->setPaymentFeePercent($paymentFee);
-
-        $reservation = new Reservation();
-        $reservation->setReservationOrigin($origin);
+        $reservation = $this->reservation($commission, $paymentFee);
         // Overwritten after the assignment, which pins the origin's current rates -
         // here the reservation is meant to carry what applied when it was booked.
         $reservation->setCommissionPercent($pinnedCommission);
         $reservation->setPaymentFeePercent($pinnedPaymentFee);
 
+        return $this->invoiceWithReservations($reservation);
+    }
+
+    private function invoiceWithReservations(Reservation ...$reservations): Invoice
+    {
         $invoice = $this->createStub(Invoice::class);
         $invoice->method('getNumber')->willReturn('17730');
         $invoice->method('getDate')->willReturn(new \DateTime('2026-06-26'));
-        $invoice->method('getReservations')->willReturn(new ArrayCollection([$reservation]));
+        $invoice->method('getReservations')->willReturn(new ArrayCollection($reservations));
 
         return $invoice;
+    }
+
+    /** A reservation booked through a portal, carrying that portal's current rates. */
+    private function reservation(?string $commission, ?string $paymentFee): Reservation
+    {
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($this->origin($commission, $paymentFee));
+
+        return $reservation;
+    }
+
+    private function origin(?string $commission, ?string $paymentFee): ReservationOrigin
+    {
+        $origin = new ReservationOrigin();
+        $origin->setName('Booking.com');
+        $origin->setCommissionPercent($commission);
+        $origin->setPaymentFeePercent($paymentFee);
+
+        return $origin;
     }
 
     /**
