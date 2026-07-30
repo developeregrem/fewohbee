@@ -327,15 +327,43 @@ final class CreatePercentageEntryActionTest extends TestCase
     {
         $action = $this->makeAction(gross: 100.0);
 
-        $field = null;
-        foreach ($action->getConfigSchema() as $entry) {
-            if ('amountBase' === $entry['key']) {
-                $field = $entry;
+        self::assertSame(
+            CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
+            $this->amountBaseField($action)['default'] ?? null
+        );
+    }
+
+    public function testShowsAnOlderConfigTheBaseItIsActuallyBookingOn(): void
+    {
+        // The form fills a field the stored config says nothing about with this
+        // value, and writes every field back on save. If it drifted from the
+        // fallback below, opening an old workflow and saving it would move its
+        // base without anything on screen saying so.
+        $withoutKey = null;
+        $action = $this->makeAction(gross: 115.20, capturePositions: $withoutKey);
+        $config = $this->config();
+        unset($config['amountBase']);
+        $action->execute($config, $this->invoiceWithPositions(), []);
+
+        $asShown = null;
+        $action = $this->makeAction(gross: 115.20, capturePositions: $asShown);
+        $shown = $this->amountBaseField($action)['defaultForExisting'] ?? null;
+        $action->execute($this->config(['amountBase' => $shown]), $this->invoiceWithPositions(), []);
+
+        self::assertNotNull($shown);
+        self::assertSame($this->descriptionsOf($withoutKey), $this->descriptionsOf($asShown));
+    }
+
+    /** @return array<string, mixed>|null */
+    private function amountBaseField(CreatePercentageEntryAction $action): ?array
+    {
+        foreach ($action->getConfigSchema() as $field) {
+            if ('amountBase' === $field['key']) {
+                return $field;
             }
         }
 
-        self::assertNotNull($field);
-        self::assertSame(CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX, $field['default']);
+        return null;
     }
 
     public function testSkipsWhenTheInvoiceHasNoAmount(): void

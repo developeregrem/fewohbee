@@ -134,8 +134,12 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                 ],
                 // Offered first and preselected: portals charge commission on what
                 // the house earns, and tourist tax is collected for the municipality.
-                // Existing configs are left alone, see amountBase() below.
                 'default' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
+                // What a config saved before this field existed is doing, so
+                // editing such a workflow shows what it books rather than the
+                // suggestion for new ones - and saving it does not move its base
+                // as a side effect. Kept in step with the fallback in baseAmount().
+                'defaultForExisting' => self::AMOUNT_BASE_GROSS,
             ],
             [
                 'key' => 'debitAccountId',

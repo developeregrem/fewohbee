@@ -518,7 +518,37 @@ class WorkflowController extends AbstractController
             'workflow' => $workflow,
             'isNew' => $isNew,
             'triggerChoices' => $triggerChoices,
+            'actionConfig' => $isNew ? $workflow->getActionConfig() : $this->configForEditing($workflow),
         ]);
+    }
+
+    /**
+     * The stored action config, with keys added to the action after this workflow
+     * was saved filled in with what it is actually doing without them.
+     *
+     * The form renders a field's default wherever the stored config says nothing,
+     * and writes every field back on save. A field whose default differs from the
+     * behaviour of an older config - because the old behaviour had to be preserved
+     * - would otherwise be switched over by opening the workflow and saving it,
+     * with nothing on screen suggesting anything changed.
+     *
+     * @return array<string, mixed>
+     */
+    private function configForEditing(Workflow $workflow): array
+    {
+        $config = $workflow->getActionConfig();
+
+        if (!$this->actionRegistry->has($workflow->getActionType())) {
+            return $config;
+        }
+
+        foreach ($this->actionRegistry->get($workflow->getActionType())->getConfigSchema() as $field) {
+            if (isset($field['defaultForExisting']) && !array_key_exists($field['key'], $config)) {
+                $config[$field['key']] = $field['defaultForExisting'];
+            }
+        }
+
+        return $config;
     }
 
     private function serializePreviewEntity(object $entity): array
