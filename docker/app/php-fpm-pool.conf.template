@@ -1,0 +1,7 @@
+; Rendered by phpfpm-entrypoint.sh from validated environment values.
+[www]
+pm.max_children = @MAX_CHILDREN@
+pm.start_servers = @START_SERVERS@
+pm.min_spare_servers = 1
+pm.max_spare_servers = @MAX_SPARE_SERVERS@
+request_terminate_timeout = @REQUEST_TERMINATE_TIMEOUT@

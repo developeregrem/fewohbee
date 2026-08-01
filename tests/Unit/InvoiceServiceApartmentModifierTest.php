@@ -170,7 +170,11 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
 
         $priceService = $this->createMock(PriceService::class);
-        $priceService->method('getPriceBreakdownForReservation')->with($r)->willReturn($breakdowns);
+        $priceService
+            ->expects(self::once())
+            ->method('getPriceBreakdownForReservation')
+            ->with($r)
+            ->willReturn($breakdowns);
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(

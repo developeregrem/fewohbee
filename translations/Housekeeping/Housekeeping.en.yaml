@@ -29,5 +29,6 @@ housekeeping.occupancy.stayover: Stayover
 housekeeping.occupancy.arrival: Arrival
 housekeeping.occupancy.departure: Departure
 housekeeping.occupancy.turnover: Turnover
+housekeeping.occupancy.blocked: Blocked
 housekeeping.summary.arrive: Arrival
 housekeeping.summary.depart: Departure

@@ -3,6 +3,16 @@ set -e
 
 cd /var/www/html
 
+# Keep CLI/cron PHP processes on the same Redis configuration as php-fpm. The
+# legacy REDIS_IDX remains the fallback for self-hosted installations.
+export REDIS_HOST="${REDIS_HOST:-redis}"
+export REDIS_PORT="${REDIS_PORT:-6379}"
+export REDIS_IDX="${REDIS_IDX:-1}"
+export REDIS_SYSTEM_IDX="${REDIS_SYSTEM_IDX:-${REDIS_IDX}}"
+export REDIS_SESSION_IDX="${REDIS_SESSION_IDX:-${REDIS_IDX}}"
+export REDIS_PREFIX="${REDIS_PREFIX:-fewohbee_}"
+export SESSION_MAX_LIFETIME="${SESSION_MAX_LIFETIME:-1440}"
+
 # Legacy compatibility — see phpfpm-entrypoint.sh
 if [ "${APP_ENV}" = "redis" ]; then
     export APP_ENV=prod

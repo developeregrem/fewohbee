@@ -118,6 +118,22 @@
                 <source>reservation.flash.update.success</source>
                 <target>Reservierung wurde erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="reservation.move.success">
+                <source>reservation.move.success</source>
+                <target>Reservierung wurde erfolgreich verschoben.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.error">
+                <source>reservation.move.error</source>
+                <target>Die Reservierung konnte nicht verschoben werden.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.capacity">
+                <source>reservation.move.capacity</source>
+                <target>Das gewählte Zimmer hat nicht genügend Betten für diese Reservierung.</target>
+            </trans-unit>
+            <trans-unit id="reservation.move.hint">
+                <source>reservation.move.hint</source>
+                <target>Auf ein freies Feld ziehen, um diese Reservierung zu verschieben.</target>
+            </trans-unit>
             <trans-unit id="reservation.button.change.customer">
                 <source>reservation.button.change.customer</source>
                 <target>Gast zuweisen</target>
@@ -278,6 +294,10 @@
                 <source>reservation.table.settings.showCanceledOnly</source>
                 <target>Nur stornierte/No-Show anzeigen</target>
             </trans-unit>
+            <trans-unit id="reservation.table.settings.showCalendarEntries">
+                <source>reservation.table.settings.showCalendarEntries</source>
+                <target>Kalendereinträge anzeigen</target>
+            </trans-unit>
             <trans-unit id="reservation.table.view.yearly">
                 <source>reservation.table.view.yearly</source>
                 <target>Jahresansicht</target>
@@ -354,6 +374,114 @@
                 <source>reservation.conflict.table.actions</source>
                 <target>Aktionen</target>
             </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.button">
+                <source>reservation.calendar_reminder.button</source>
+                <target>Erinnerungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.title">
+                <source>reservation.calendar_reminder.title</source>
+                <target>Kalender-Erinnerungen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.section.title">
+                <source>reservation.calendar_reminder.section.title</source>
+                <target>Einträge bestätigen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.hint">
+                <source>reservation.calendar_reminder.hint</source>
+                <target>Bestätigte Einträge bleiben dauerhaft erhalten.</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.today">
+                <source>reservation.calendar_reminder.today</source>
+                <target>Heute</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.empty">
+                <source>reservation.calendar_reminder.empty</source>
+                <target>Keine offenen Erinnerungen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.date">
+                <source>reservation.calendar_reminder.table.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.entry">
+                <source>reservation.calendar_reminder.table.entry</source>
+                <target>Eintrag</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.table.actions">
+                <source>reservation.calendar_reminder.table.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="reservation.calendar_reminder.action.confirm.title">
+                <source>reservation.calendar_reminder.action.confirm.title</source>
+                <target>Bestätigen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.title_edit">
+                <source>calendar_entry.title_edit</source>
+                <target>Kalendereintrag bearbeiten</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.title_new">
+                <source>calendar_entry.title_new</source>
+                <target>Kalendereintrag hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.modal.title">
+                <source>calendar_entry.modal.title</source>
+                <target>Kalendereintrag</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.calendar">
+                <source>calendar_entry.calendar</source>
+                <target>Kalender</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.calendar">
+                <source>calendar_entry.form.calendar</source>
+                <target>Kalender</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date">
+                <source>calendar_entry.form.date</source>
+                <target>Datum</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to">
+                <source>calendar_entry.form.date_to</source>
+                <target>Bis</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to_help">
+                <source>calendar_entry.form.date_to_help</source>
+                <target>Enddatum – optional für einen mehrtägigen Termin (z.B. Urlaub). Legt einen Eintrag pro Tag an.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.date_to_too_far">
+                <source>calendar_entry.form.date_to_too_far</source>
+                <target>Der Zeitraum darf nicht mehr als %max% Tage umfassen.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.form.title">
+                <source>calendar_entry.form.title</source>
+                <target>Titel</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.popover.new">
+                <source>calendar_entry.popover.new</source>
+                <target>+ Neuer Termin</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.confirmed_at">
+                <source>calendar_entry.confirmed_at</source>
+                <target>Erinnerung bestätigt am %datetime%</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.sync_warning">
+                <source>calendar_entry.sync_warning</source>
+                <target>Dieser Eintrag stammt aus einer ICS-Quelle. Solange er nicht bestätigt ist, werden Datum und Titel bei jedem Sync wieder auf den Wert aus der Quelle gesetzt.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.delete">
+                <source>calendar_entry.delete</source>
+                <target>Löschen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.unconfirm">
+                <source>calendar_entry.unconfirm</source>
+                <target>Bestätigung rückgängig machen</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.flash.saved">
+                <source>calendar_entry.flash.saved</source>
+                <target>Kalendereintrag gespeichert.</target>
+            </trans-unit>
+            <trans-unit id="calendar_entry.flash.deleted">
+                <source>calendar_entry.flash.deleted</source>
+                <target>Kalendereintrag gelöscht.</target>
+            </trans-unit>
             <trans-unit id="reservation.conflict.action.ignore">
                 <source>reservation.conflict.action.ignore</source>
                 <target>Ignorieren</target>
@@ -402,6 +530,10 @@
                 <source>reservation.review.todo</source>
                 <target>Gast hinzufügen und Personenanzahl prüfen.</target>
             </trans-unit>
+            <trans-unit id="reservation.booker.missing.short">
+                <source>reservation.booker.missing.short</source>
+                <target>Kein Gast hinterlegt</target>
+            </trans-unit>
             <trans-unit id="reservation.import.booker.missing">
                 <source>reservation.import.booker.missing</source>
                 <target>Noch kein Gast hinterlegt. Bitte Gast hinzufügen und die Personenanzahl ggf. anpassen.</target>
@@ -413,6 +545,162 @@
             <trans-unit id="reservation.kurtaxe.waived.help">
                 <source>reservation.kurtaxe.waived.help</source>
                 <target>Aktivieren, wenn diese Buchung von Beherbergungsabgaben (Kurtaxe, Stadtsteuer) ausgenommen ist (z. B. dienstliche Übernachtung mit Befreiung).</target>
+            </trans-unit>
+            <trans-unit id="roomblock.title">
+                <source>roomblock.title</source>
+                <target>Zimmer sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.list.title">
+                <source>roomblock.list.title</source>
+                <target>Sperrungen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.list.empty">
+                <source>roomblock.list.empty</source>
+                <target>Keine Sperrungen im gewählten Zeitraum.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.year">
+                <source>roomblock.filter.year</source>
+                <target>Jahr</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.month">
+                <source>roomblock.filter.month</source>
+                <target>Monat</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.all_months">
+                <source>roomblock.filter.all_months</source>
+                <target>Ganzes Jahr</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.subsidiary">
+                <source>roomblock.filter.subsidiary</source>
+                <target>Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="roomblock.filter.all_subsidiaries">
+                <source>roomblock.filter.all_subsidiaries</source>
+                <target>Alle Niederlassungen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.instead">
+                <source>roomblock.instead</source>
+                <target>Stattdessen sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.rooms">
+                <source>roomblock.rooms</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="roomblock.select_all">
+                <source>roomblock.select_all</source>
+                <target>Alle auswählen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.search.placeholder">
+                <source>roomblock.search.placeholder</source>
+                <target>Zimmer suchen…</target>
+            </trans-unit>
+            <trans-unit id="roomblock.room">
+                <source>roomblock.room</source>
+                <target>Zimmer</target>
+            </trans-unit>
+            <trans-unit id="roomblock.period">
+                <source>roomblock.period</source>
+                <target>Zeitraum</target>
+            </trans-unit>
+            <trans-unit id="roomblock.from">
+                <source>roomblock.from</source>
+                <target>Gesperrt von</target>
+            </trans-unit>
+            <trans-unit id="roomblock.to">
+                <source>roomblock.to</source>
+                <target>Gesperrt bis</target>
+            </trans-unit>
+            <trans-unit id="roomblock.to.hint">
+                <source>roomblock.to.hint</source>
+                <target>Ab diesem Tag ist das Zimmer wieder frei (wie ein Abreisetag).</target>
+            </trans-unit>
+            <trans-unit id="roomblock.nights">
+                <source>roomblock.nights</source>
+                <target>Nächte</target>
+            </trans-unit>
+            <trans-unit id="roomblock.reason">
+                <source>roomblock.reason</source>
+                <target>Grund</target>
+            </trans-unit>
+            <trans-unit id="roomblock.note">
+                <source>roomblock.note</source>
+                <target>Notiz</target>
+            </trans-unit>
+            <trans-unit id="roomblock.createdby">
+                <source>roomblock.createdby</source>
+                <target>Angelegt von</target>
+            </trans-unit>
+            <trans-unit id="roomblock.actions">
+                <source>roomblock.actions</source>
+                <target>Aktionen</target>
+            </trans-unit>
+            <trans-unit id="roomblock.submit">
+                <source>roomblock.submit</source>
+                <target>Sperren</target>
+            </trans-unit>
+            <trans-unit id="roomblock.source.manual">
+                <source>roomblock.source.manual</source>
+                <target>Manuell</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.create.success">
+                <source>roomblock.flash.create.success</source>
+                <target>Die Sperrung wurde angelegt.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.update.success">
+                <source>roomblock.flash.update.success</source>
+                <target>Die Sperrung wurde aktualisiert.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.delete.success">
+                <source>roomblock.flash.delete.success</source>
+                <target>Die Sperrung wurde gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.flash.bulk_delete.success">
+                <source>roomblock.flash.bulk_delete.success</source>
+                <target>Die ausgewählten Sperrungen wurden aufgehoben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.selected">
+                <source>roomblock.bulk.selected</source>
+                <target>ausgewählt</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.delete">
+                <source>roomblock.bulk.delete</source>
+                <target>Ausgewählte aufheben</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.confirm">
+                <source>roomblock.bulk.confirm</source>
+                <target>Ausgewählte Sperrungen wirklich aufheben?</target>
+            </trans-unit>
+            <trans-unit id="roomblock.bulk.confirm.yes">
+                <source>roomblock.bulk.confirm.yes</source>
+                <target>Ja, aufheben</target>
+            </trans-unit>
+            <trans-unit id="roomblock.delete.ask">
+                <source>roomblock.delete.ask</source>
+                <target>Sperrung wirklich löschen?</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.heading">
+                <source>roomblock.conflict.heading</source>
+                <target>Sperrung nicht möglich – folgende Konflikte bestehen:</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.reservation.line">
+                <source>roomblock.conflict.reservation.line</source>
+                <target>Zimmer %room%: Buchung vom %from% bis %end%</target>
+            </trans-unit>
+            <trans-unit id="roomblock.conflict.block.line">
+                <source>roomblock.conflict.block.line</source>
+                <target>Zimmer %room%: bestehende Sperrung „%reason%“ vom %from% bis %end%</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.period">
+                <source>roomblock.error.period</source>
+                <target>Bitte einen gültigen Zeitraum von mindestens einer Nacht angeben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.reason">
+                <source>roomblock.error.reason</source>
+                <target>Bitte einen Grund angeben.</target>
+            </trans-unit>
+            <trans-unit id="roomblock.error.rooms">
+                <source>roomblock.error.rooms</source>
+                <target>Bitte mindestens ein Zimmer auswählen.</target>
             </trans-unit>
         </body>
     </file>

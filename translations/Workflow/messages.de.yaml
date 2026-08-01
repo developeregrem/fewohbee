@@ -53,6 +53,13 @@ workflow:
     fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
     booking_entry_remark: "Bemerkung (optional)"
     booking_entry_remark_help: "Wenn leer, wird die Bezeichnung des Erlöskontos als Buchungstext verwendet (z. B. „Erlöse 7% USt“)."
+    attachment_mode: "Rechnungsanhang"
+    attachment_mode.einvoice_preferred: "E-Rechnungs-PDF wenn möglich, sonst normales PDF"
+    attachment_mode.einvoice_required: "Nur E-Rechnungs-PDF (bei unvollständigen Daten überspringen)"
+    attachment_mode.pdf_only: "Normales PDF ohne E-Rechnungsdaten"
+    attach_xml: "Zusätzlich XML-Datei anhängen"
+    attach_xml.no: "Nein"
+    attach_xml.yes: "Ja (empfohlen bei XRechnung)"
 
   # Trigger labels
   trigger:
@@ -81,6 +88,7 @@ workflow:
 
   # Action labels
   action:
+    send_invoice_email: "Rechnung per E-Mail versenden (mit PDF/E-Rechnung im Anhang)"
     send_template_email: "E-Mail anhand eines Templates versenden"
     send_general_email: "Allgemeine E-Mail anhand eines Templates versenden"
     send_notification_email: "Benachrichtigungs-E-Mail senden"
@@ -128,6 +136,9 @@ workflow:
     example_invoice_reminder:
       name: "Beispiel: Zahlungserinnerung (14 Tage nach Rechnungsdatum)"
       description: "Sendet 14 Tage nach dem Rechnungsdatum eine Zahlungserinnerung, wenn die Rechnung noch offen ist."
+    example_send_invoice_email:
+      name: "Beispiel: Rechnung per E-Mail versenden"
+      description: "Sendet jede neue Rechnung an die Rechnungs-E-Mail-Adresse; die Rechnung wird wenn möglich als E-Rechnungs-PDF angehängt (E-Mail-Vorlage erforderlich)."
     example_invoice_paid_reservation_status:
       name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
       description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
@@ -148,6 +159,10 @@ workflow:
     skipped_invalid_config: "Übersprungen: ungültige Konfiguration"
     skipped_status_not_found: "Übersprungen: Reservierungsstatus nicht gefunden"
     skipped_no_reservations: "Übersprungen: Rechnung hat keine verknüpften Reservierungen"
+    skipped_no_pdf_template: "Übersprungen: keine Standard-Rechnungsvorlage (PDF) konfiguriert"
+    skipped_einvoice_invalid: "Übersprungen: E-Rechnung für Rechnung %number% nicht möglich – %fields%"
+    invoice_email_sent: "Rechnung %number% an %recipient% versendet (Anhang: E-Rechnungs-PDF)"
+    invoice_email_sent_fallback: "Rechnung %number% an %recipient% versendet (Anhang: normales PDF, E-Rechnung fehlgeschlagen)"
     invoice_status_changed: "Rechnungsstatus von Rechnung %number% auf \"%status%\" geändert"
     payment_means_changed: "Zahlungsmethode von Rechnung %number% auf \"%code%\" geändert"
     reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"

@@ -13,7 +13,13 @@
         <td>{{ reservation.appartment.number }}</td>
         <td>{{ reservation.startdate|date('d.m.Y') }}</td>
         <td>{{ reservation.enddate|date('d.m.Y') }}</td>
-        <td>{{ reservation.booker.lastname }}</td>        
+        <td>
+            {% if reservation.booker %}
+                {{ reservation.booker.lastname }}
+            {% else %}
+                <span class="text-muted">{{ 'reservation.booker.missing.short'|trans }}</span>
+            {% endif %}
+        </td>
     </tr>
     {% endfor %}
     </tbody>

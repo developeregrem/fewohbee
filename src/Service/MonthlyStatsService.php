@@ -28,7 +28,8 @@ class MonthlyStatsService
         private readonly StatisticsService $statisticsService,
         private readonly InvoiceService $invoiceService,
         private readonly TranslatorInterface $translator,
-        private readonly PostalCodeDataRepository $postalCodeDataRepository
+        private readonly PostalCodeDataRepository $postalCodeDataRepository,
+        private readonly AvailabilityService $availabilityService,
     ) {
     }
 
@@ -417,6 +418,8 @@ class MonthlyStatsService
             'reservation_origin' => $originStats,
             'warnings' => $warnings,
             'by_status' => $byStatus,
+            // additive bucket: blocked room/bed days; the utilization denominator stays untouched
+            'blocked' => $this->buildBlockedBucket($objectId, $monthStart, $monthEndExclusive),
         ];
         if (null === $subsidiary) {
             /*
@@ -444,6 +447,23 @@ class MonthlyStatsService
             'metrics' => $metrics,
             'warnings' => $warnings,
         ];
+    }
+
+    /**
+     * Sum blocked room-days and bed-days for the month (clipped to the month window).
+     *
+     * @return array{room_days: int, bed_days: int}
+     */
+    private function buildBlockedBucket(string|int $objectId, \DateTimeImmutable $monthStart, \DateTimeImmutable $monthEndExclusive): array
+    {
+        $roomDays = 0;
+        $bedDays = 0;
+        foreach ($this->availabilityService->getBlockedPerDay($objectId, $monthStart, $monthEndExclusive) as $day) {
+            $roomDays += $day['rooms'];
+            $bedDays += $day['beds'];
+        }
+
+        return ['room_days' => $roomDays, 'bed_days' => $bedDays];
     }
 
     /**

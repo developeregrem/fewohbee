@@ -222,9 +222,37 @@
                 <source>invoice.customer.recommendation</source>
                 <target>Vorauswahl</target>
             </trans-unit>
-            <trans-unit id="invoice.button.save.numberanddate">
-                <source>invoice.button.save.numberanddate</source>
-                <target>Rechnungsnummer und Datum Speichern</target>
+            <trans-unit id="invoice.number.missing.error">
+                <source>invoice.number.missing.error</source>
+                <target>Bitte zuerst eine Rechnungsnummer eingeben.</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.section.contact">
+                <source>invoice.customer.section.contact</source>
+                <target>Kontakt</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.section.address">
+                <source>invoice.customer.section.address</source>
+                <target>Adresse</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.section.communication">
+                <source>invoice.customer.section.communication</source>
+                <target>Telefon &amp; E-Mail</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.section.einvoice">
+                <source>invoice.customer.section.einvoice</source>
+                <target>Angaben zur E-Rechnung</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.section.payment">
+                <source>invoice.customer.section.payment</source>
+                <target>Zahlungsangaben</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.einvoice.hint">
+                <source>invoice.customer.einvoice.hint</source>
+                <target>Nur nötig, wenn E-Rechnungen an Behörden (XRechnung) gestellt werden. Für Privat- und Geschäftsgäste sind diese Felder in der Regel nicht erforderlich.</target>
+            </trans-unit>
+            <trans-unit id="invoice.customer.payment.hint">
+                <source>invoice.customer.payment.hint</source>
+                <target>Nur nötig bei Kartenzahlung oder SEPA-Lastschrift.</target>
             </trans-unit>
             <trans-unit id="invoice.status">
                 <source>invoice.status</source>
@@ -285,6 +313,22 @@
             <trans-unit id="invoice.settings.vatID">
                 <source>invoice.settings.vatID</source>
                 <target>USt-IdNr.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.vatID.hint">
+                <source>invoice.settings.vatID.hint</source>
+                <target>Für E-Rechnungen ist eine USt-IdNr. oder eine Registernummer erforderlich (die Steuernummer allein genügt nicht).</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.registrationNumber">
+                <source>invoice.settings.registrationNumber</source>
+                <target>Registernummer</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.registrationNumber.hint">
+                <source>invoice.settings.registrationNumber.hint</source>
+                <target>z. B. Handelsregisternummer (HRB/HRA). Alternative zur USt-IdNr. für E-Rechnungen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.selleridentifier.required">
+                <source>invoice.settings.selleridentifier.required</source>
+                <target>Bitte eine USt-IdNr. oder eine Registernummer angeben – E-Rechnungen benötigen eine davon (die Steuernummer allein genügt nicht).</target>
             </trans-unit>
             <trans-unit id="invoice.settings.contactName">
                 <source>invoice.settings.contactName</source>
@@ -348,11 +392,55 @@
             </trans-unit>
             <trans-unit id="invoice.settings.einvoiceProfile.xrechnung">
                 <source>invoice.settings.einvoiceProfile.xrechnung</source>
-                <target>XRechnung (CIUS DE)</target>
+                <target>XRechnung (B2G)</target>
             </trans-unit>
             <trans-unit id="invoice.settings.einvoiceProfile.en16931">
                 <source>invoice.settings.einvoiceProfile.en16931</source>
-                <target>ZUGFeRD EN 16931 (COMFORT)</target>
+                <target>ZUGFeRD (EN 16931) – empfohlen</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.einvoiceProfile.help">
+                <source>invoice.settings.einvoiceProfile.help</source>
+                <target>ZUGFeRD reicht für die meisten Betriebe und Gäste aus. XRechnung nur wählen, wenn explizit gefordert (z. B. B2G).</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.profile.hint.en16931">
+                <source>invoice.settings.profile.hint.en16931</source>
+                <target>ZUGFeRD: Ihre Rechnungs-PDFs enthalten automatisch maschinenlesbare E-Rechnungsdaten. Über die Felder unten hinaus sind keine weiteren Angaben nötig.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.profile.hint.xrechnung">
+                <source>invoice.settings.profile.hint.xrechnung</source>
+                <target>XRechnung: Kontaktname, Telefon und E-Mail sind Pflicht; jede Rechnung braucht zudem eine Käuferreferenz (Leitweg-ID) und eine Zahlungsart.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.profile">
+                <source>invoice.settings.section.profile</source>
+                <target>E-Rechnungs-Profil</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.company">
+                <source>invoice.settings.section.company</source>
+                <target>Unternehmen</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.contact">
+                <source>invoice.settings.section.contact</source>
+                <target>Kontakt</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.tax">
+                <source>invoice.settings.section.tax</source>
+                <target>Steuer</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.payment">
+                <source>invoice.settings.section.payment</source>
+                <target>Zahlung</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.xrechnung.contact.error">
+                <source>invoice.settings.xrechnung.contact.error</source>
+                <target>Dieses Feld ist beim Profil XRechnung erforderlich.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.form.error">
+                <source>invoice.settings.form.error</source>
+                <target>Es wurde nichts gespeichert. Bitte die markierten Felder unten korrigieren.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.xrechnung.required.hint">
+                <source>invoice.settings.xrechnung.required.hint</source>
+                <target>* Diese Felder sind für das XRechnung-Profil (B2G) erforderlich.</target>
             </trans-unit>
             <trans-unit id="invoice.settings.active">
                 <source>invoice.settings.active</source>
@@ -364,7 +452,7 @@
             </trans-unit>
             <trans-unit id="invoice.settings.help.general">
                 <source>invoice.settings.help.general</source>
-                <target>Die hier eingetragenen Informationen sind für den digitalen Rechnungsexport (XRechnung) erforderlich.</target>
+                <target>Die hier eingetragenen Informationen sind für den digitalen Rechnungsexport (E-Rechnung) erforderlich.</target>
             </trans-unit>
             <trans-unit id="invoice.settings.help.invoiceMail">
                 <source>invoice.settings.help.invoiceMail</source>
@@ -382,8 +470,8 @@
                 <source>invoice.settings.flash.delete.success</source>
                 <target>Einstellungen erfolgreich gelöscht.</target>
             </trans-unit>
-            <trans-unit id="invoice.settings.title.xrechnung">
-                <source>invoice.settings.title.xrechnung</source>
+            <trans-unit id="invoice.settings.title.einvoice">
+                <source>invoice.settings.title.einvoice</source>
                 <target>E-Rechnung</target>
             </trans-unit>
             <trans-unit id="invoice.settings.title.template">
@@ -394,37 +482,129 @@
                 <source>invoice.settings.active.error</source>
                 <target>Es konnten keine als aktiv gekennzeichneten Einstellungen für den Rechnungsexport gefunden werden.</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.buyerCountry">
-                <source>invoice.xrechnung.mandatory.buyerCountry</source>
-                <target>Der Wert für Land muss zur Erstellung der elektronischen Rechnung vorhanden sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.invoiceNumber">
+                <source>invoice.einvoice.violation.invoiceNumber</source>
+                <target>Rechnungsnummer fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.buyerPostCodeCity">
-                <source>invoice.xrechnung.mandatory.buyerPostCodeCity</source>
-                <target>Die Werte für Postleitzahl und Ort müssen zur Erstellung der elektronischen Rechnung vorhanden sein. Bitte die Rechnung bearbeiten und die Werte ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.invoiceDate">
+                <source>invoice.einvoice.violation.invoiceDate</source>
+                <target>Rechnungsdatum fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.paymentMeans">
-                <source>invoice.xrechnung.mandatory.paymentMeans</source>
-                <target>Keine Zahlungsmethode hinterlegt. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerName">
+                <source>invoice.einvoice.violation.buyerName</source>
+                <target>Name oder Firma des Empfängers fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.IBAN">
-                <source>invoice.xrechnung.mandatory.IBAN</source>
-                <target>Das Feld IBAN muss ausgefüllt sein. Bitte die Einstellungen bearbeiten und den Wert ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerStreet">
+                <source>invoice.einvoice.violation.buyerStreet</source>
+                <target>Straße/Anschrift des Empfängers fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.IBAN_BIC">
-                <source>invoice.xrechnung.mandatory.IBAN_BIC</source>
-                <target>Die Felder IBAN und BIC müssen ausgefüllt sein. Bitte die Einstellungen bearbeiten und die Werte ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerCountry">
+                <source>invoice.einvoice.violation.buyerCountry</source>
+                <target>Land des Empfängers fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.IBANBuyer">
-                <source>invoice.xrechnung.mandatory.IBANBuyer</source>
-                <target>Bei Zahlungen via Lastschrift muss die Kunden-IBAN und Mandatsreferenznummer ausgefüllt sein. Bitte die Rechnung bearbeiten und die Werte ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerPostCodeCity">
+                <source>invoice.einvoice.violation.buyerPostCodeCity</source>
+                <target>Postleitzahl oder Ort des Empfängers fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.creditorReference">
-                <source>invoice.xrechnung.mandatory.creditorReference</source>
-                <target>Bei Zahlungen via Lastschrift muss die Gläubiger-ID ausgefüllt sein. Bitte die Einstellungen bearbeiten und den Wert ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerEmail">
+                <source>invoice.einvoice.violation.buyerEmail</source>
+                <target>E-Mail-Adresse des Empfängers fehlt (Rechnung bearbeiten)</target>
             </trans-unit>
-            <trans-unit id="invoice.xrechnung.mandatory.cardNumber">
-                <source>invoice.xrechnung.mandatory.cardNumber</source>
-                <target>Die Kartennummer muss ausgefüllt sein. Bitte die Rechnung bearbeiten und den Wert ergänzen.</target>
+            <trans-unit id="invoice.einvoice.violation.buyerReference">
+                <source>invoice.einvoice.violation.buyerReference</source>
+                <target>Käuferreferenz (Leitweg-ID) fehlt (Rechnung bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.paymentMeans">
+                <source>invoice.einvoice.violation.paymentMeans</source>
+                <target>Keine Zahlungsart ausgewählt (Rechnung bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.paymentTerms">
+                <source>invoice.einvoice.violation.paymentTerms</source>
+                <target>Weder Zahlungsbedingungen noch Zahlungsfrist hinterlegt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.sellerName">
+                <source>invoice.einvoice.violation.sellerName</source>
+                <target>Firmenname fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.sellerAddress">
+                <source>invoice.einvoice.violation.sellerAddress</source>
+                <target>Firmenanschrift (Straße, PLZ, Ort, Land) ist unvollständig (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.sellerIdentifier">
+                <source>invoice.einvoice.violation.sellerIdentifier</source>
+                <target>USt-IdNr. oder Registernummer fehlt – die Steuernummer allein genügt für E-Rechnungen nicht (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.sellerElectronicAddress">
+                <source>invoice.einvoice.violation.sellerElectronicAddress</source>
+                <target>Rechnungs-E-Mail (elektronische Adresse) fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.sellerContact">
+                <source>invoice.einvoice.violation.sellerContact</source>
+                <target>Kontaktname, Telefon oder E-Mail fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.accountIBAN">
+                <source>invoice.einvoice.violation.accountIBAN</source>
+                <target>IBAN fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.accountIBANBIC">
+                <source>invoice.einvoice.violation.accountIBANBIC</source>
+                <target>IBAN oder BIC fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.cardNumber">
+                <source>invoice.einvoice.violation.cardNumber</source>
+                <target>Kartennummer für Kartenzahlung fehlt (Rechnung bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.customerIBAN">
+                <source>invoice.einvoice.violation.customerIBAN</source>
+                <target>Kunden-IBAN für Lastschrift fehlt (Rechnung bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.mandateReference">
+                <source>invoice.einvoice.violation.mandateReference</source>
+                <target>Mandatsreferenz für Lastschrift fehlt (für XRechnung erforderlich; Rechnung bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.creditorReference">
+                <source>invoice.einvoice.violation.creditorReference</source>
+                <target>Gläubiger-ID für Lastschrift fehlt (Einstellungen bearbeiten)</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.violation.positions">
+                <source>invoice.einvoice.violation.positions</source>
+                <target>Die Rechnung enthält keine Positionen</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.fixlocation.invoice">
+                <source>invoice.einvoice.fixlocation.invoice</source>
+                <target>in der Rechnung zu beheben</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.fixlocation.settings">
+                <source>invoice.einvoice.fixlocation.settings</source>
+                <target>in den Rechnungseinstellungen zu beheben</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.status.ready">
+                <source>invoice.einvoice.status.ready</source>
+                <target>E-Rechnung bereit – der PDF-Download enthält maschinenlesbare E-Rechnungsdaten</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.ready.short">
+                <source>invoice.einvoice.ready.short</source>
+                <target>E-Rechnung bereit</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.notready.short">
+                <source>invoice.einvoice.notready.short</source>
+                <target>E-Rechnung: Angaben fehlen</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.status.missing">
+                <source>invoice.einvoice.status.missing</source>
+                <target>E-Rechnung noch nicht möglich, fehlende Angaben</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.status.notconfigured">
+                <source>invoice.einvoice.status.notconfigured</source>
+                <target>E-Rechnung ist nicht eingerichtet</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.export.fallback">
+                <source>invoice.einvoice.export.fallback</source>
+                <target>Die E-Rechnung konnte nicht erstellt werden; stattdessen wurde ein normales PDF erzeugt.</target>
+            </trans-unit>
+            <trans-unit id="invoice.einvoice.attach.auto">
+                <source>invoice.einvoice.attach.auto</source>
+                <target>Wird als E-Rechnung angehängt (PDF mit eingebettetem XML)</target>
             </trans-unit>
             <trans-unit id="invoice.settings.paymentterm.error">
                 <source>invoice.settings.paymentterm.error</source>
@@ -521,10 +701,6 @@
             <trans-unit id="invoice.tourist_tax.no_positions">
                 <source>invoice.tourist_tax.no_positions</source>
                 <target>Für diese Buchung wurden keine Beherbergungsabgaben berechnet.</target>
-            </trans-unit>
-            <trans-unit id="invoice.id.adopt">
-                <source>invoice.id.adopt</source>
-                <target>Rechnungsnummer fortführen</target>
             </trans-unit>
         </body>
     </file>

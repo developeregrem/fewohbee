@@ -5,10 +5,9 @@ parameters:
     fromMail:  '%env(FROM_MAIL)%'
     fromName: '%env(FROM_NAME)%'
     returnPath: '%env(RETURN_PATH)%'
-    webHost: '%env(WEB_HOST)%'
     publicUploadDirectory: 'resources/images/export'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
-    version: '4.9.0'
+    version: '4.10.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
     default_mailcopy: 'true'
@@ -24,8 +23,14 @@ parameters:
     env(MAILER_DSN): 'null://null'
     # define the redis host
     env(REDIS_HOST): 'redis'
-    # define the used redix index
+    # define the legacy/default Redis index
     env(REDIS_IDX): '1'
+    # Optional dedicated Redis databases. Container entrypoints fall back to
+    # REDIS_IDX, preserving compatibility with existing self-hosted setups.
+    env(REDIS_PORT): '6379'
+    env(REDIS_SYSTEM_IDX): '%env(REDIS_IDX)%'
+    env(REDIS_SESSION_IDX): '%env(REDIS_IDX)%'
+    env(REDIS_PREFIX): 'fewohbee_'
     # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
     env(STORAGE_ADAPTER): 'local'
     env(STORAGE_S3_ENDPOINT): ''
@@ -96,7 +101,7 @@ services:
 
     App\Service\TemplatesService:
         arguments:
-            - '%webHost%'
+            $exportStorage: '@images.export.storage'
             
     # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally
     # wires storages that reference this id). Works with any S3-compatible provider

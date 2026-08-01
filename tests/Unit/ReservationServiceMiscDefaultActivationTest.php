@@ -54,6 +54,7 @@ final class ReservationServiceMiscDefaultActivationTest extends TestCase
             $invoiceService,
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(\App\Repository\GuestCategoryRepository::class),
+            $this->createStub(\App\Service\AvailabilityService::class),
         );
 
         $reservationService->getMiscPricesInCreation(

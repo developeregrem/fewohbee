@@ -34,6 +34,10 @@ reservation.flash.update.conflict.persons: >-
 reservation.flash.update.customeralreadyinlist: The guest has already been added to the room.
 reservation.flash.update.success: Reservation has been successfully updated.
 reservation.flash.update.toomuchcustomers: No more guests can be assigned!
+reservation.move.success: Reservation has been moved successfully.
+reservation.move.error: The reservation could not be moved.
+reservation.move.capacity: The selected room does not have enough beds for this reservation.
+reservation.move.hint: Drag to a free cell to move this reservation.
 reservation.invoice: Invoice
 reservation.invoices: Invoices
 reservation.new.reservation.appartments.addmore: Add rooms to the reservation
@@ -70,6 +74,7 @@ reservation.table.settings.displayWeekday: Display weekday names
 reservation.table.settings.general: General
 reservation.table.settings.holidays: Display settings for holidays
 reservation.table.settings.showCanceledOnly: Show only canceled/no-show reservations
+reservation.table.settings.showCalendarEntries: Show calendar entries
 reservation.table.settings.subdivision: Subdivision
 reservation.table.settings.title: Table settings
 reservation.table.view.table: Table View
@@ -106,6 +111,73 @@ reservation.review.empty: No reservations to review.
 reservation.review.table.todo: To do
 reservation.review.table.actions: Actions
 reservation.review.todo: Add a guest and confirm the number of persons.
+reservation.booker.missing.short: No guest assigned
 reservation.import.booker.missing: No guest is assigned yet. Please add a guest and adjust the number of persons if needed.
 reservation.kurtaxe.waived: Waive tourist tax
 reservation.kurtaxe.waived.help: Enable if this booking is exempt from tourist tax (e.g. business stay with exemption).
+roomblock.title: Block rooms
+roomblock.list.title: Blocks
+roomblock.list.empty: No blocks in the selected period.
+roomblock.filter.year: Year
+roomblock.filter.month: Month
+roomblock.filter.all_months: Whole year
+roomblock.filter.subsidiary: Property
+roomblock.filter.all_subsidiaries: All properties
+roomblock.instead: Block instead
+roomblock.rooms: Rooms
+roomblock.select_all: Select all
+roomblock.search.placeholder: Search rooms…
+roomblock.room: Room
+roomblock.period: Period
+roomblock.from: Blocked from
+roomblock.to: Blocked until
+roomblock.to.hint: The room is available again on this day (like a departure day).
+roomblock.nights: Nights
+roomblock.reason: Reason
+roomblock.note: Note
+roomblock.createdby: Created by
+roomblock.actions: Actions
+roomblock.submit: Block
+roomblock.source.manual: Manual
+roomblock.flash.create.success: The block has been created.
+roomblock.flash.update.success: The block has been updated.
+roomblock.flash.delete.success: The block has been deleted.
+roomblock.flash.bulk_delete.success: The selected blocks have been removed.
+roomblock.bulk.selected: selected
+roomblock.bulk.delete: Remove selected
+roomblock.bulk.confirm: Really remove the selected blocks?
+roomblock.bulk.confirm.yes: "Yes, remove"
+roomblock.delete.ask: Really delete this block?
+roomblock.conflict.heading: 'Blocking not possible – the following conflicts exist:'
+roomblock.conflict.reservation.line: 'Room %room%: reservation from %from% to %end%'
+roomblock.conflict.block.line: 'Room %room%: existing block "%reason%" from %from% to %end%'
+roomblock.error.period: Please enter a valid period of at least one night.
+roomblock.error.reason: Please enter a reason.
+roomblock.error.rooms: Please select at least one room.
+reservation.calendar_reminder.button: Reminders
+reservation.calendar_reminder.title: Calendar reminders
+reservation.calendar_reminder.section.title: Confirm entries
+reservation.calendar_reminder.hint: "Confirmed entries are kept permanently."
+reservation.calendar_reminder.today: Today
+reservation.calendar_reminder.empty: No open calendar reminders.
+reservation.calendar_reminder.table.date: Date
+reservation.calendar_reminder.table.entry: Entry
+reservation.calendar_reminder.table.actions: Actions
+reservation.calendar_reminder.action.confirm.title: Confirm
+calendar_entry.title_edit: Edit calendar entry
+calendar_entry.title_new: Add calendar entry
+calendar_entry.modal.title: Calendar entry
+calendar_entry.calendar: Calendar
+calendar_entry.form.calendar: Calendar
+calendar_entry.form.date: Date
+calendar_entry.form.date_to: Until
+calendar_entry.form.date_to_help: "End date – optional, for a multi-day entry (e.g. a vacation period). Creates one entry per day."
+calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
+calendar_entry.form.title: Title
+calendar_entry.popover.new: + New entry
+calendar_entry.confirmed_at: "Reminder confirmed on %datetime%"
+calendar_entry.sync_warning: "This entry comes from an ICS source. Until it's confirmed, its date and title are reset to the source value on every sync."
+calendar_entry.delete: Delete
+calendar_entry.unconfirm: Undo confirmation
+calendar_entry.flash.saved: Calendar entry saved.
+calendar_entry.flash.deleted: Calendar entry deleted.

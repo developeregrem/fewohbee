@@ -37,7 +37,11 @@ final class InvoiceServiceTouristTaxTest extends TestCase
         ];
 
         $touristTaxService = $this->createMock(TouristTaxService::class);
-        $touristTaxService->method('calculateForReservation')->with($r1)->willReturn($rows);
+        $touristTaxService
+            ->expects(self::once())
+            ->method('calculateForReservation')
+            ->with($r1)
+            ->willReturn($rows);
 
         $service = $this->createService($touristTaxService);
         $positions = $service->buildTouristTaxPositions([$r1]);
@@ -164,7 +168,11 @@ final class InvoiceServiceTouristTaxTest extends TestCase
 
         // Service returns empty (TouristTaxService respects kurtaxeWaived itself).
         $touristTaxService = $this->createMock(TouristTaxService::class);
-        $touristTaxService->method('calculateForReservation')->with($r)->willReturn([]);
+        $touristTaxService
+            ->expects(self::once())
+            ->method('calculateForReservation')
+            ->with($r)
+            ->willReturn([]);
 
         $service = $this->createService($touristTaxService);
         self::assertSame([], $service->buildTouristTaxPositions([$r]));

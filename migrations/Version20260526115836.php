@@ -17,13 +17,18 @@ final class Version20260526115836 extends AbstractMigration
         return '';
     }
 
-public function up(Schema $schema): void
-{
-    $this->addSql('ALTER TABLE templates ADD hidden TINYINT(1) NOT NULL DEFAULT 0');
-}
+    public function up(Schema $schema): void
+    {
+        $this->addSql('ALTER TABLE templates ADD hidden TINYINT(1) NOT NULL DEFAULT 0');
+    }
 
-public function down(Schema $schema): void
-{
-    $this->addSql('ALTER TABLE templates DROP COLUMN hidden');
-}
+    public function down(Schema $schema): void
+    {
+        $this->addSql('ALTER TABLE templates DROP COLUMN hidden');
+    }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

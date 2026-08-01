@@ -161,6 +161,7 @@ final class MonthlyStatsServiceCategoryTest extends TestCase
             $this->createStub(InvoiceService::class),
             $translator,
             $postalRepo,
+            $this->createStub(\App\Service\AvailabilityService::class),
         );
 
         $subsidiary = new Subsidiary();

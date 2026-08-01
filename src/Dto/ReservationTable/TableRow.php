@@ -14,6 +14,7 @@ final class TableRow
     public function __construct(
         public readonly Appartment $apartment,
         public readonly array $cells,
+        public readonly string $apartmentLabel,
         public readonly bool $isSubRow = false,
     ) {
     }

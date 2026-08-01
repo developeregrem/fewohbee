@@ -199,6 +199,7 @@ accounting.journal.export.warn.no_input_bukey: "Buchung #%doc%: Aufwandsbuchung 
 # Journal - Entries
 accounting.journal.entry.add: Buchung hinzufügen
 accounting.journal.entry.edit: Buchung bearbeiten
+accounting.journal.entry.duplicate: Buchung duplizieren
 accounting.journal.entry.date: Datum
 accounting.journal.entry.doc_number: Beleg-Nr.
 accounting.journal.entry.amount: Betrag

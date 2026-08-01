@@ -10,6 +10,7 @@ use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
+use App\Service\AvailabilityService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\OnlineBookingRestrictionService;
 use App\Service\PublicAvailabilityService;
@@ -48,6 +49,9 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
         $this->restrictionService->method('isStayLongEnough')->willReturn(true);
         $this->restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
 
+        $availabilityService = $this->createStub(AvailabilityService::class);
+        $availabilityService->method('getBlockedRoomIds')->willReturn([]);
+
         $this->service = new PublicAvailabilityService(
             $this->appartmentRepository,
             $this->reservationRepository,
@@ -56,6 +60,7 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
             $this->pricingService,
             $this->imageService,
             $this->createStub(TranslatorInterface::class),
+            $availabilityService,
         );
     }
 
@@ -74,6 +79,40 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
         $room->setObject($subsidiary);
 
         return $room;
+    }
+
+    /**
+     * A blocked room must not appear as available, even when it has no reservations.
+     */
+    public function testBlockedRoomIsNotAvailable(): void
+    {
+        $category = new RoomCategory();
+        $room = $this->createRoom(1, 3, false, $category);
+
+        $this->appartmentRepository->method('findForPublicBooking')->willReturn([$room]);
+        $this->reservationRepository->method('loadOccupancyByApartmentIdsWithoutStartEnd')->willReturn([]);
+
+        $availabilityService = $this->createStub(AvailabilityService::class);
+        $availabilityService->method('getBlockedRoomIds')->willReturn([1]);
+        $service = new PublicAvailabilityService(
+            $this->appartmentRepository,
+            $this->reservationRepository,
+            $this->configService,
+            $this->restrictionService,
+            $this->pricingService,
+            $this->imageService,
+            $this->createStub(TranslatorInterface::class),
+            $availabilityService,
+        );
+
+        $result = $service->getAvailability(
+            new \DateTimeImmutable('2026-06-01'),
+            new \DateTimeImmutable('2026-06-03'),
+            1,
+            1,
+        );
+
+        self::assertSame([], $result, 'Blocked room should not be available for public booking');
     }
 
     /**

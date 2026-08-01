@@ -50,3 +50,4 @@ statistics:
   snapshot:
     warning:
       persons_mismatch: Persons count differs from guest count; please verify the reservation completeness.
+statistics.blocked.room_days: Blocked room days

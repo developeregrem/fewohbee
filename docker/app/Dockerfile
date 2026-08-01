@@ -20,7 +20,8 @@ FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 ARG PHP_EXTS
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
-    COMPOSER_NO_INTERACTION=1
+    COMPOSER_NO_INTERACTION=1 \
+    SESSION_MAX_LIFETIME=1440
 
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
@@ -35,6 +36,8 @@ RUN apk add --update --no-cache \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY docker/app/conf.ini /usr/local/etc/php/conf.d/conf.ini
+COPY --chown=82:82 docker/app/php-fpm-pool.conf.template /usr/local/etc/php-fpm.d/zz-fewohbee.conf.template
+COPY --chown=82:82 docker/app/php-fpm-pool.conf.template /usr/local/etc/php-fpm.d/zz-fewohbee.conf
 
 WORKDIR /var/www/html
 

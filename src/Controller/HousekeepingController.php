@@ -208,6 +208,7 @@ class HousekeepingController extends AbstractController
             'ARRIVAL' => 'bg-success',
             'DEPARTURE' => 'bg-warning text-dark',
             'TURNOVER' => 'bg-danger',
+            'BLOCKED' => 'bg-dark',
         ];
     }
 }

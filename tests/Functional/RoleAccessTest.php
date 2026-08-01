@@ -153,5 +153,10 @@ final class RoleAccessTest extends WebTestCase
         yield 'reservations ro user on invoices' => ['ROLE_RESERVATIONS_RO', '/invoices/'];
         yield 'customers user on journal' => ['ROLE_CUSTOMERS', '/journal'];
         yield 'cashjournal user on customers' => ['ROLE_CASHJOURNAL', '/customers/'];
+        // Read-only reservations access must not reach calendar-entry
+        // mutation routes - regression coverage for a gap where these
+        // actions were missing the #[IsGranted('ROLE_RESERVATIONS')] check
+        // that every other reservation-mutating action carries.
+        yield 'reservations ro user on new calendar entry' => ['ROLE_RESERVATIONS_RO', '/reservation/calendar-entry/new'];
     }
 }

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Dto\ReservationTable\DayCalendarEntry;
+use App\Dto\ReservationTable\DayDecoration;
 use App\Dto\ReservationTable\TableCell;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomCategory;
 use App\Service\ReservationTableService;
 use PHPUnit\Framework\TestCase;
 
@@ -571,7 +574,150 @@ final class ReservationTableServiceTest extends TestCase
         self::assertSame('right', $cells[2]->side);
     }
 
+    // ── Room Block Tests ──────────────────────────────────────────────
+
+    public function testBlockedCellUsesHalfDaySlots(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $apt = self::makeApartment(1, '101');
+        $block = self::makeBlock(7, $apt, '2024-03-02', '2024-03-04');
+
+        $days = $this->service->buildDays($start, 4);
+        $cells = $this->service->buildCellsForRow($days, [], $start, 4, [$block]);
+
+        // Mar 1: two empty halves, Mar 2 left: empty (block start = right half)
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[0]->type);
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[1]->type);
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[2]->type);
+
+        // Block: right(Mar2) + both(Mar3) + left(Mar4) = 4 half-slots
+        self::assertSame(TableCell::TYPE_BLOCKED, $cells[3]->type);
+        self::assertSame(4, $cells[3]->span);
+        self::assertSame(7, $cells[3]->blockId);
+        self::assertSame('Renovierung', $cells[3]->displayName);
+        self::assertSame(TableCell::POS_FULL, $cells[3]->position);
+
+        // Mar 4 right + Mar 5: empty again
+        self::assertSame(TableCell::TYPE_EMPTY, $cells[4]->type);
+        self::assertSame('right', $cells[4]->side);
+    }
+
+    public function testBlockCoexistsWithCheckoutOnSameDay(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $apt = self::makeApartment(1, '101');
+        $res = self::makeReservation(1, '2024-03-01', '2024-03-03');
+        $block = self::makeBlock(8, $apt, '2024-03-03', '2024-03-05');
+
+        $days = $this->service->buildDays($start, 4);
+        $cells = $this->service->buildCellsForRow($days, [$res], $start, 4, [$block]);
+
+        // reservation occupies Mar1 right .. Mar3 left; block Mar3 right .. Mar5 left
+        $types = array_map(static fn (TableCell $c): string => $c->type, $cells);
+        self::assertContains(TableCell::TYPE_RESERVATION, $types);
+        self::assertContains(TableCell::TYPE_BLOCKED, $types);
+
+        $reservationIndex = array_search(TableCell::TYPE_RESERVATION, $types, true);
+        $blockIndex = array_search(TableCell::TYPE_BLOCKED, $types, true);
+        // block cell directly follows the reservation cell (no empty half between)
+        self::assertSame($reservationIndex + 1, $blockIndex);
+        self::assertSame(4, $cells[$reservationIndex]->span);
+        self::assertSame(4, $cells[$blockIndex]->span);
+    }
+
+    public function testBlocksAttachOnlyToFirstRowForMultipleOccupancy(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $apt = self::makeApartment(1, '101', true);
+        // two overlapping reservations force two rows
+        $res1 = self::makeReservation(1, '2024-03-01', '2024-03-05');
+        $res2 = self::makeReservation(2, '2024-03-02', '2024-03-06');
+        $res1->setAppartment($apt);
+        $res2->setAppartment($apt);
+        $block = self::makeBlock(9, $apt, '2024-03-07', '2024-03-09');
+
+        $grid = $this->service->buildGrid([$apt], $start, 9, [$res1, $res2], false, [$block]);
+
+        self::assertCount(2, $grid->rows);
+        $firstRowTypes = array_map(static fn (TableCell $c): string => $c->type, $grid->rows[0]->cells);
+        $secondRowTypes = array_map(static fn (TableCell $c): string => $c->type, $grid->rows[1]->cells);
+        self::assertContains(TableCell::TYPE_BLOCKED, $firstRowTypes);
+        self::assertNotContains(TableCell::TYPE_BLOCKED, $secondRowTypes);
+    }
+
+    public function testReservationWinsSlotConflictOverBlock(): void
+    {
+        // defensive: should not happen (validation prevents it), but rendering must not break
+        $start = new \DateTimeImmutable('2024-03-01');
+        $apt = self::makeApartment(1, '101');
+        $res = self::makeReservation(1, '2024-03-01', '2024-03-04');
+        $block = self::makeBlock(10, $apt, '2024-03-02', '2024-03-06');
+
+        $days = $this->service->buildDays($start, 6);
+        $cells = $this->service->buildCellsForRow($days, [$res], $start, 6, [$block]);
+
+        $types = array_map(static fn (TableCell $c): string => $c->type, $cells);
+        $reservationIndex = array_search(TableCell::TYPE_RESERVATION, $types, true);
+        self::assertNotFalse($reservationIndex);
+        // reservation keeps its full span; block fills only the remaining slots
+        self::assertSame(6, $cells[$reservationIndex]->span);
+        self::assertContains(TableCell::TYPE_BLOCKED, $types);
+    }
+
+    // ── Apartment Label Tests ─────────────────────────────────────────
+    // The label is prebuilt in the DTO (single source for column-width
+    // calculation and rendered cell); see ReservationTableService::buildApartmentLabel().
+
+    public function testApartmentLabelWithoutRoomCategory(): void
+    {
+        $apt = self::makeApartment(1, '101');
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101', $grid->rows[0]->apartmentLabel);
+    }
+
+    public function testApartmentLabelWithRoomCategoryAcronym(): void
+    {
+        $category = new RoomCategory();
+        $category->setAcronym('DBL');
+        $apt = self::makeApartment(1, '101');
+        $apt->setRoomCategory($category);
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101 (DBL)', $grid->rows[0]->apartmentLabel);
+    }
+
+    public function testApartmentLabelWithEmptyAcronymOmitsParentheses(): void
+    {
+        $category = new RoomCategory();
+        $category->setAcronym('');
+        $apt = self::makeApartment(1, '101');
+        $apt->setRoomCategory($category);
+
+        $start = new \DateTimeImmutable('2024-03-01');
+        $grid = $this->service->buildGrid([$apt], $start, 3, []);
+
+        self::assertSame('101', $grid->rows[0]->apartmentLabel);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────
+
+    private static function makeBlock(int $id, Appartment $apt, string $startDate, string $endDate): \App\Entity\RoomBlock
+    {
+        $block = new \App\Entity\RoomBlock();
+        $block->setAppartment($apt)
+            ->setStartDate(new \DateTimeImmutable($startDate))
+            ->setEndDate(new \DateTimeImmutable($endDate))
+            ->setReason('Renovierung');
+        $ref = new \ReflectionProperty(\App\Entity\RoomBlock::class, 'id');
+        $ref->setValue($block, $id);
+
+        return $block;
+    }
 
     private static function makeReservation(int $id, string $startDate, string $endDate): Reservation
     {
@@ -601,5 +747,66 @@ final class ReservationTableServiceTest extends TestCase
         $apt->setMultipleOccupancy($multipleOccupancy);
 
         return $apt;
+    }
+
+    // ── Day Decorations ───────────────────────────────────────────────
+
+    public function testDayColumnsStayBareWithoutDecorations(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 1);
+        $columns = $this->service->buildDayColumns($days);
+
+        self::assertSame([], $columns[0]->holidays);
+        self::assertSame([], $columns[0]->calendarEntries);
+        self::assertSame([], $columns[0]->accentColors);
+        self::assertNull($columns[0]->newEntryUrl);
+    }
+
+    public function testDayColumnsPickUpDecorationsByDate(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 1);
+        $columns = $this->service->buildDayColumns($days, [
+            '2024-03-02' => new DayDecoration(
+                holidays: ['Karfreitag'],
+                calendarEntries: [self::makeEntry(1, 'Müll', 7, '#ff0000')],
+                newEntryUrl: '/new/2024-03-02',
+            ),
+        ]);
+
+        // Only the decorated day is touched; the other keeps its defaults.
+        self::assertSame([], $columns[0]->holidays);
+        self::assertNull($columns[0]->newEntryUrl);
+
+        self::assertSame(['Karfreitag'], $columns[1]->holidays);
+        self::assertCount(1, $columns[1]->calendarEntries);
+        self::assertSame('Müll', $columns[1]->calendarEntries[0]->title);
+        self::assertSame('/new/2024-03-02', $columns[1]->newEntryUrl);
+    }
+
+    public function testAccentColorsFollowEntryOrder(): void
+    {
+        $days = $this->service->buildDays(new \DateTimeImmutable('2024-03-01'), 0);
+        $columns = $this->service->buildDayColumns($days, [
+            '2024-03-01' => new DayDecoration(calendarEntries: [
+                self::makeEntry(1, 'A', 7, '#ff0000'),
+                self::makeEntry(2, 'B', 8, '#00ff00'),
+                self::makeEntry(3, 'C', 8, '#00ff00'),
+            ]),
+        ]);
+
+        self::assertSame(['#ff0000', '#00ff00', '#00ff00'], $columns[0]->accentColors);
+    }
+
+    private static function makeEntry(int $id, string $title, int $calendarId, string $color): DayCalendarEntry
+    {
+        return new DayCalendarEntry(
+            id: $id,
+            title: $title,
+            calendarId: $calendarId,
+            calendarName: 'Kalender '.$calendarId,
+            color: $color,
+            editUrl: '/edit/'.$id,
+            deleteUrl: '/delete/'.$id,
+        );
     }
 }

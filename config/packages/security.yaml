@@ -1,5 +1,4 @@
 security:
-    erase_credentials: false
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
@@ -26,6 +25,10 @@ security:
             form_login:
                 login_path: login
                 check_path: login
+                # Ignore JSON/empty probe requests to /login instead of treating
+                # them as credential submissions with a missing _username.
+                form_only: true
+                enable_csrf: true
                 default_target_path: /dashboard
             logout:
                 path:   /logout

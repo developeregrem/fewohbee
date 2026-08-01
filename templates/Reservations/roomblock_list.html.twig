@@ -1,0 +1,133 @@
+{% use "common/delete_popover.html.twig" %}
+
+<div class="modal-body" data-controller="reservations"{% if blocksChanged|default(false) %} data-blocks-changed="1"{% endif %}>
+    <div id="flash-message-overlay"></div>
+    {% if successMessage|default(null) %}
+        <div class="alert alert-success">{{ successMessage|trans }}</div>
+    {% endif %}
+
+    {% set filterQuery = {year: filter.year, month: filter.month ?? 0, subsidiary: filter.subsidiaryId ?? ''} %}
+
+    <form class="row g-3 align-items-end mb-3" data-block-list-filter data-url="{{ path('reservations.blocks.list') }}">
+        <div class="col-auto">
+            <label class="form-label small mb-1" for="block-filter-year">{{ 'roomblock.filter.year'|trans }}</label>
+            <select class="form-select" style="min-width: 6rem;" id="block-filter-year" name="year"
+                    data-action="change->reservations#reloadBlockListAction">
+                {% for y in years %}
+                    <option value="{{ y }}"{{ y == filter.year ? ' selected' : '' }}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1" for="block-filter-month">{{ 'roomblock.filter.month'|trans }}</label>
+            <select class="form-select" style="min-width: 10rem;" id="block-filter-month" name="month"
+                    data-action="change->reservations#reloadBlockListAction">
+                <option value="0">{{ 'roomblock.filter.all_months'|trans }}</option>
+                {% for m in 1..12 %}
+                    <option value="{{ m }}"{{ filter.month == m ? ' selected' : '' }}>{{ getLocalizedMonth(m, 'MMMM', app.request.locale) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label small mb-1" for="block-filter-subsidiary">{{ 'roomblock.filter.subsidiary'|trans }}</label>
+            <select class="form-select" style="min-width: 14rem;" id="block-filter-subsidiary" name="subsidiary"
+                    data-action="change->reservations#reloadBlockListAction">
+                <option value="">{{ 'roomblock.filter.all_subsidiaries'|trans }}</option>
+                {% for subsidiary in subsidiaries %}
+                    <option value="{{ subsidiary.id }}"{{ filter.subsidiaryId == subsidiary.id ? ' selected' : '' }}>{{ subsidiary.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% if blocks|length == 0 %}
+        <div class="text-muted">{{ 'roomblock.list.empty'|trans }}</div>
+    {% else %}
+        {% if is_granted('ROLE_RESERVATIONS') %}
+            <div class="d-flex align-items-center gap-2 mb-2" data-block-bulk-bar
+                 data-url="{{ path('reservations.blocks.bulk_delete', filterQuery) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('room_block') }}" data-block-bulk-token>
+                <span class="small text-muted"><span data-block-bulk-count>0</span> {{ 'roomblock.bulk.selected'|trans }}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-block-bulk-delete disabled
+                        data-action="click->reservations#askBulkDeleteBlocks">
+                    <i class="fas fa-trash-alt"></i> {{ 'roomblock.bulk.delete'|trans }}
+                </button>
+                <span class="d-none align-items-center gap-2" data-block-bulk-confirm>
+                    <span class="small">{{ 'roomblock.bulk.confirm'|trans }}</span>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="click->reservations#bulkDeleteBlocksAction">{{ 'roomblock.bulk.confirm.yes'|trans }}</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-action="click->reservations#cancelBulkDeleteBlocks">{{ 'button.cancel'|trans }}</button>
+                </span>
+            </div>
+        {% endif %}
+        <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+            <table class="table table-sm align-middle">
+                <thead class="sticky-top bg-body">
+                    <tr>
+                        {% if is_granted('ROLE_RESERVATIONS') %}
+                            <th style="width: 1%;">
+                                <input type="checkbox" class="form-check-input" data-block-select-all
+                                       data-action="change->reservations#toggleAllBlockSelect"
+                                       title="{{ 'roomblock.select_all'|trans }}">
+                            </th>
+                        {% endif %}
+                        <th>{{ 'roomblock.room'|trans }}</th>
+                        <th>{{ 'roomblock.period'|trans }}</th>
+                        <th>{{ 'roomblock.nights'|trans }}</th>
+                        <th>{{ 'roomblock.reason'|trans }}</th>
+                        <th>{{ 'roomblock.createdby'|trans }}</th>
+                        {% if is_granted('ROLE_RESERVATIONS') %}
+                            <th class="text-end">{{ 'roomblock.actions'|trans }}</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for roomBlock in blocks %}
+                        <tr>
+                            {% if is_granted('ROLE_RESERVATIONS') %}
+                                <td>
+                                    <input type="checkbox" class="form-check-input" value="{{ roomBlock.id }}"
+                                           data-block-select data-action="change->reservations#toggleBlockSelect">
+                                </td>
+                            {% endif %}
+                            <td>{{ roomBlock.appartment.number }}</td>
+                            <td>{{ roomBlock.startDate|date('d.m.Y') }} &ndash; {{ roomBlock.endDate|date('d.m.Y') }}</td>
+                            <td>{{ roomBlock.nights }}</td>
+                            <td>
+                                {{ roomBlock.reason }}
+                                {% if roomBlock.note %}
+                                     <span class="text-muted" title="{{ roomBlock.note }}" aria-label="{{ roomBlock.note }}">
+                                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">
+                                {{ roomBlock.createdBy ? roomBlock.createdBy.username : ('roomblock.source.' ~ roomBlock.source.value)|trans }},
+                                {{ roomBlock.createdAt|date('d.m.Y') }}
+                            </td>
+                            {% if is_granted('ROLE_RESERVATIONS') %}
+                                {% set id = roomBlock.id %}
+                                {% set targetUrl = path('reservations.blocks.delete', {'id': roomBlock.id}|merge(filterQuery)) %}
+                                {% set deletePopoverHint = 'roomblock.delete.ask'|trans %}
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary me-2"
+                                            data-action="click->reservations#openBlockAction"
+                                            data-url="{{ path('reservations.blocks.get', {'id': roomBlock.id}|merge(filterQuery)) }}"
+                                            title="{{ 'button.edit'|trans }}">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-popover="delete"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'
+                                            data-delete-target="#modal-content-ajax"
+                                            title="{{ 'button.delete'|trans }}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>

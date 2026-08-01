@@ -253,6 +253,50 @@ class InvoiceService
     }
 
     /**
+     * Ensures the in-creation invoice always carries a date (default today) and a suggested number,
+     * so no separate submit is needed and the e-invoice readiness reflects the real values.
+     */
+    public function ensureInvoiceCreationMeta(Invoice $invoice, ?string $lastInvoiceNumber): void
+    {
+        // Invoice::getDate() is typed non-nullable and throws when the date is unset.
+        try {
+            $hasDate = $invoice->getDate() instanceof \DateTimeInterface;
+        } catch (\TypeError) {
+            $hasDate = false;
+        }
+        if (!$hasDate) {
+            $invoice->setDate(new \DateTime());
+        }
+
+        if (empty($invoice->getNumber())) {
+            $next = $this->determineNextInvoiceNumber($lastInvoiceNumber);
+            if (null !== $next) {
+                $invoice->setNumber($next);
+            }
+        }
+    }
+
+    /**
+     * Suggests the next invoice number by incrementing the trailing digit group of the last one,
+     * keeping zero-padding and any prefix (e.g. 'RE-0726-0004' -> 'RE-0726-0005').
+     * Returns null when no suggestion is possible (no trailing digits).
+     */
+    public function determineNextInvoiceNumber(?string $lastInvoiceNumber): ?string
+    {
+        if (null === $lastInvoiceNumber || '' === trim($lastInvoiceNumber)) {
+            return null;
+        }
+
+        if (1 !== preg_match('/^(.*?)(\d+)$/', trim($lastInvoiceNumber), $match)) {
+            return null;
+        }
+
+        $next = str_pad((string) ((int) $match[2] + 1), strlen($match[2]), '0', STR_PAD_LEFT);
+
+        return $match[1].$next;
+    }
+
+    /**
      * Builds a sanitized invoice export filename (without extension) from the configured pattern.
      */
     public function buildInvoiceExportFilename(Invoice $invoice, bool $appendEinvoiceSuffix = false): string
@@ -908,7 +952,7 @@ class InvoiceService
                     $result[$customer->getId()] = $customer;
                 }
             }
-            if (!array_key_exists($booker->getId(), $result)) {
+            if (null !== $booker && !array_key_exists($booker->getId(), $result)) {
                 $result[$booker->getId()] = $booker;
             }
         }

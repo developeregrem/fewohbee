@@ -39,3 +39,6 @@ package-lock.json
 ###> phpstan/phpstan ###
 phpstan.neon
 ###< phpstan/phpstan ###
+
+# PHPUnit 10+ cache directory (the bridge block above only covers the old file)
+/.phpunit.cache/

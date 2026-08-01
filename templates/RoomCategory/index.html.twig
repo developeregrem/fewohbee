@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  {{ 'category.title'|trans }}
@@ -51,7 +52,6 @@
                                    data-modal-size="lg"></i></a>
                             {% set id = category.id %}
                             {% set targetUrl = path('room_category_delete', {'id': category.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i class="fas fa-trash-alt"
                                    data-popover="delete"

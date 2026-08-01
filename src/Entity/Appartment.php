@@ -40,6 +40,9 @@ class Appartment
     #[ORM\Column(nullable: true)]
     private ?bool $multipleOccupancy = false;
 
+    #[ORM\Column(options: ['default' => true])]
+    private bool $active = true;
+
     public function __construct()
     {
         $this->reservations = new ArrayCollection();
@@ -189,6 +192,18 @@ class Appartment
     public function setMultipleOccupancy(?bool $multipleOccupancy): self
     {
         $this->multipleOccupancy = $multipleOccupancy;
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    public function setActive(bool $active): self
+    {
+        $this->active = $active;
 
         return $this;
     }

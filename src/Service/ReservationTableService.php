@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\ReservationTable\DayCalendarEntry;
 use App\Dto\ReservationTable\DayColumn;
+use App\Dto\ReservationTable\DayDecoration;
 use App\Dto\ReservationTable\TableCell;
 use App\Dto\ReservationTable\TableGrid;
 use App\Dto\ReservationTable\TableHeader;
 use App\Dto\ReservationTable\TableRow;
 use App\Entity\Appartment;
 use App\Entity\Reservation;
+use App\Entity\RoomBlock;
 
 class ReservationTableService
 {
@@ -22,6 +25,10 @@ class ReservationTableService
      * @param int           $interval number of days in the visible period
      * @param Reservation[] $allReservations all reservations for ALL apartments in the period (pre-loaded)
      * @param bool          $showSubsidiaryHeaders whether to show subsidiary group headers
+     * @param RoomBlock[]   $allBlocks all room blocks for ALL apartments in the period (pre-loaded)
+     * @param array<string, DayDecoration> $decorations holidays/calendar entries per Y-m-d, from
+     *                                                  ReservationTableDecorationService; empty leaves the
+     *                                                  day columns bare
      */
     public function buildGrid(
         array $apartments,
@@ -29,17 +36,25 @@ class ReservationTableService
         int $interval,
         array $allReservations,
         bool $showSubsidiaryHeaders = false,
+        array $allBlocks = [],
+        array $decorations = [],
     ): TableGrid {
         $days = $this->buildDays($startDate, $interval);
         $monthHeaders = $this->buildMonthHeaders($days);
         $weekHeaders = $this->buildWeekHeaders($days);
-        $dayColumns = $this->buildDayColumns($days);
+        $dayColumns = $this->buildDayColumns($days, $decorations);
 
         // Group reservations by apartment ID
         $reservationsByApartment = [];
         foreach ($allReservations as $reservation) {
             $aptId = $reservation->getAppartment()->getId();
             $reservationsByApartment[$aptId][] = $reservation;
+        }
+
+        // Group room blocks by apartment ID
+        $blocksByApartment = [];
+        foreach ($allBlocks as $block) {
+            $blocksByApartment[$block->getAppartment()->getId()][] = $block;
         }
 
         $rows = [];
@@ -59,22 +74,43 @@ class ReservationTableService
             }
 
             $aptReservations = $reservationsByApartment[$apartment->getId()] ?? [];
+            // blocks act on the physical room -> attach them to the first row only
+            $aptBlocks = $blocksByApartment[$apartment->getId()] ?? [];
+            $apartmentLabel = $this->buildApartmentLabel($apartment);
 
             if ($apartment->isMultipleOccupancy() && count($aptReservations) > 0) {
                 $occupancyRows = $this->resolveMultipleOccupancy($aptReservations);
                 $first = true;
                 foreach ($occupancyRows as $rowReservations) {
-                    $cells = $this->buildCellsForRow($days, $rowReservations, $startDate, $interval);
-                    $rows[] = new TableRow($apartment, $cells, !$first);
+                    $cells = $this->buildCellsForRow($days, $rowReservations, $startDate, $interval, $first ? $aptBlocks : []);
+                    $rows[] = new TableRow($apartment, $cells, $apartmentLabel, !$first);
                     $first = false;
                 }
             } else {
-                $cells = $this->buildCellsForRow($days, $aptReservations, $startDate, $interval);
-                $rows[] = new TableRow($apartment, $cells);
+                $cells = $this->buildCellsForRow($days, $aptReservations, $startDate, $interval, $aptBlocks);
+                $rows[] = new TableRow($apartment, $cells, $apartmentLabel);
             }
         }
 
         return new TableGrid($monthHeaders, $weekHeaders, $dayColumns, $rows, $subsidiaryBreaks);
+    }
+
+    /**
+     * Display label for an apartment: its number, plus the room category acronym
+     * in parentheses when present, e.g. "101 (DBL)". Single source of truth for
+     * both the column-width calculation and the rendered cell in the template.
+     */
+    private function buildApartmentLabel(Appartment $apartment): string
+    {
+        $label = $apartment->getNumber();
+        $roomCategory = $apartment->getRoomCategory();
+        $acronym = $roomCategory?->getAcronym();
+
+        if ($acronym !== null && $acronym !== '') {
+            $label .= ' ('.$acronym.')';
+        }
+
+        return $label;
     }
 
     /**
@@ -155,20 +191,29 @@ class ReservationTableService
     }
 
     /**
-     * @param \DateTimeImmutable[] $days
+     * @param \DateTimeImmutable[]         $days
+     * @param array<string, DayDecoration> $decorations keyed by Y-m-d
      *
      * @return DayColumn[]
      */
-    public function buildDayColumns(array $days): array
+    public function buildDayColumns(array $days, array $decorations = []): array
     {
         $columns = [];
         foreach ($days as $day) {
             $dow = (int) $day->format('N');
+            $dateKey = $day->format('Y-m-d');
+            $decoration = $decorations[$dateKey] ?? null;
+            $entries = $decoration?->calendarEntries ?? [];
+
             $columns[] = new DayColumn(
-                date: $day->format('Y-m-d'),
+                date: $dateKey,
                 dayOfMonth: (int) $day->format('j'),
                 isoDayOfWeek: $dow,
                 isWeekend: $dow >= 6,
+                holidays: $decoration?->holidays ?? [],
+                calendarEntries: $entries,
+                accentColors: array_map(static fn (DayCalendarEntry $e) => $e->color, $entries),
+                newEntryUrl: $decoration?->newEntryUrl,
             );
         }
 
@@ -188,10 +233,11 @@ class ReservationTableService
      *
      * @param \DateTimeImmutable[] $days
      * @param Reservation[]        $reservations
+     * @param RoomBlock[]          $blocks
      *
      * @return TableCell[]
      */
-    public function buildCellsForRow(array $days, array $reservations, \DateTimeImmutable $periodStart, int $interval): array
+    public function buildCellsForRow(array $days, array $reservations, \DateTimeImmutable $periodStart, int $interval, array $blocks = []): array
     {
         $periodEnd = $periodStart->modify('+'.$interval.' days');
         $numDays = count($days);
@@ -200,32 +246,34 @@ class ReservationTableService
         // Initialize slots: null = empty
         $slots = array_fill(0, $numSlots, null);
 
-        // Fill slots with reservations
-        foreach ($reservations as $res) {
-            $resStartStr = $res->getStartDate()->format('Y-m-d');
-            $resEndStr = $res->getEndDate()->format('Y-m-d');
+        // Fill slots with reservations first, then blocks into the remaining free slots.
+        // Both use the same half-day rules (start day: right half, exclusive end day: left half),
+        // so a block starting on a departure day shares the day cell with the reservation.
+        foreach (array_merge($reservations, $blocks) as $entry) {
+            $entryStartStr = $entry->getStartDate()->format('Y-m-d');
+            $entryEndStr = $entry->getEndDate()->format('Y-m-d');
 
             foreach ($days as $dayIndex => $day) {
                 $dayStr = $day->format('Y-m-d');
 
-                // Does this reservation cover this day? (string comparison = timezone-safe)
-                if ($resStartStr > $dayStr || $resEndStr < $dayStr) {
+                // Does this entry cover this day? (string comparison = timezone-safe)
+                if ($entryStartStr > $dayStr || $entryEndStr < $dayStr) {
                     continue;
                 }
 
                 $leftSlot = $dayIndex * 2;
                 $rightSlot = $dayIndex * 2 + 1;
 
-                $isResStartDay = ($resStartStr === $dayStr);
-                $isResEndDay = ($resEndStr === $dayStr);
+                $isEntryStartDay = ($entryStartStr === $dayStr);
+                $isEntryEndDay = ($entryEndStr === $dayStr);
 
                 $fillLeft = true;
                 $fillRight = true;
 
-                if ($isResStartDay && !$isResEndDay) {
-                    // Arrival day (multi-day reservation): only right half
+                if ($isEntryStartDay && !$isEntryEndDay) {
+                    // Arrival day (multi-day entry): only right half
                     $fillLeft = false;
-                } elseif ($isResEndDay && !$isResStartDay) {
+                } elseif ($isEntryEndDay && !$isEntryStartDay) {
                     // Departure day: only left half
                     $fillRight = false;
                 }
@@ -233,10 +281,10 @@ class ReservationTableService
                 // Middle day (neither): fill both
 
                 if ($fillLeft && $slots[$leftSlot] === null) {
-                    $slots[$leftSlot] = $res;
+                    $slots[$leftSlot] = $entry;
                 }
                 if ($fillRight && $slots[$rightSlot] === null) {
-                    $slots[$rightSlot] = $res;
+                    $slots[$rightSlot] = $entry;
                 }
             }
         }
@@ -259,28 +307,45 @@ class ReservationTableService
                 );
                 ++$i;
             } else {
-                // Reservation cell — merge consecutive slots with same reservation
-                $res = $slots[$i];
+                // Occupied cell — merge consecutive slots with the same entry
+                $entry = $slots[$i];
                 $startSlot = $i;
-                while ($i < $numSlots && $slots[$i] === $res) {
+                while ($i < $numSlots && $slots[$i] === $entry) {
                     ++$i;
                 }
                 $span = $i - $startSlot;
 
-                $position = $this->determinePosition($res, $periodStart, $periodEnd);
-
-                $cells[] = new TableCell(
-                    date: $dayStr,
-                    type: TableCell::TYPE_RESERVATION,
-                    span: $span,
-                    position: $position,
-                    reservation: $res,
-                    displayName: $this->getDisplayName($res),
-                    color: $res->getReservationStatus()?->getColor(),
-                    contrastColor: $res->getReservationStatus()?->getContrastColor(),
-                    reservationId: $res->getId(),
-                    startsAtDayBoundary: $isLeft,
+                $position = $this->determinePositionFromDates(
+                    $entry->getStartDate()->format('Y-m-d'),
+                    $entry->getEndDate()->format('Y-m-d'),
+                    $periodStart,
+                    $periodEnd
                 );
+
+                if ($entry instanceof RoomBlock) {
+                    $cells[] = new TableCell(
+                        date: $dayStr,
+                        type: TableCell::TYPE_BLOCKED,
+                        span: $span,
+                        position: $position,
+                        displayName: $entry->getReason(),
+                        blockId: $entry->getId(),
+                        startsAtDayBoundary: $isLeft,
+                    );
+                } else {
+                    $cells[] = new TableCell(
+                        date: $dayStr,
+                        type: TableCell::TYPE_RESERVATION,
+                        span: $span,
+                        position: $position,
+                        reservation: $entry,
+                        displayName: $this->getDisplayName($entry),
+                        color: $entry->getReservationStatus()?->getColor(),
+                        contrastColor: $entry->getReservationStatus()?->getContrastColor(),
+                        reservationId: $entry->getId(),
+                        startsAtDayBoundary: $isLeft,
+                    );
+                }
             }
         }
 
@@ -293,10 +358,8 @@ class ReservationTableService
      * Returns POS_FULL when fully visible, POS_START/POS_END when clipped on one side,
      * POS_MIDDLE when clipped on both sides, or POS_SINGLE for single-day reservations.
      */
-    private function determinePosition(Reservation $res, \DateTimeImmutable $periodStart, \DateTimeImmutable $periodEnd): string
+    private function determinePositionFromDates(string $resStartStr, string $resEndStr, \DateTimeImmutable $periodStart, \DateTimeImmutable $periodEnd): string
     {
-        $resStartStr = $res->getStartDate()->format('Y-m-d');
-        $resEndStr = $res->getEndDate()->format('Y-m-d');
         $periodStartStr = $periodStart->format('Y-m-d');
         $periodEndStr = $periodEnd->format('Y-m-d');
 

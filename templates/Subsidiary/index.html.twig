@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  {{ 'object.title'|trans }}
@@ -48,7 +49,6 @@
                                    data-enable-edit="true"></i></a>
                             {% set id = object.id %}
                             {% set targetUrl = path('objects.delete.object', {'id': object.id}) %}
-                            {% use "common/delete_popover.html.twig" %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i class="fas fa-trash-alt"
                                     data-popover="delete"

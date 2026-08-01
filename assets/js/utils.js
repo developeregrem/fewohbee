@@ -97,6 +97,18 @@ function _patchTooltipAllowList() {
     const allowList = window.bootstrap.Tooltip.Default.allowList;
     allowList.form = ['action'];
     allowList.input = ['type', 'name', 'value'];
+    // 'type' only - class/title already pass through the '*' wildcard entry.
+    // Needed so a delete form's submit trigger can carry an icon (<input>
+    // is a void element and can't have an <i> child).
+    // 'button' isn't in Bootstrap's default allowList at all, so without
+    // this the element is dropped outright. The data-* attributes let an
+    // injected button act as a delete-popover trigger in its own right
+    // (see the day-header popovers in reservation_table.html.twig), which
+    // enableDeletePopover() then wires up once the outer popover is shown.
+    allowList.button = ['type', 'title', 'data-popover', 'data-title', 'data-bs-content'];
+    // Icon is colored per-calendar (a template-controlled hex value, not
+    // arbitrary user input), so it needs style - not in the '*' wildcard.
+    allowList.i = ['style'];
     _allowListPatched = true;
 }
 

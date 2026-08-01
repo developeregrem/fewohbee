@@ -12,8 +12,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\Constraints\Image as ImageConstraint;
+use Symfony\Component\Validator\ConstraintViolationInterface;
+use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Tests for the RoomCategoryImageService — URL generation (delegated to ImageUrlGenerator)
@@ -36,6 +41,47 @@ final class RoomCategoryImageServiceTest extends TestCase
         $service = $this->createService(new InMemoryFilesystemAdapter());
         $image = $this->createImageWithCategory(7, 'test.jpg');
         self::assertSame('/resources/images/room-categories/7/medium_test.jpg', $service->getPublicUrl($image));
+    }
+
+    public function testUploadRejectsUnsafeDimensionsBeforeGdDecode(): void
+    {
+        $file = new UploadedFile(__FILE__, 'oversized.jpg', 'image/jpeg', null, true);
+        $message = 'translated-resolution-message';
+
+        $violation = $this->createStub(ConstraintViolationInterface::class);
+        $violation->method('getCode')->willReturn(ImageConstraint::TOO_MANY_PIXEL_ERROR);
+
+        $validator = $this->createMock(ValidatorInterface::class);
+        $validator->expects(self::once())
+            ->method('validate')
+            ->with(
+                $file,
+                self::callback(static fn (mixed $constraint): bool => $constraint instanceof ImageConstraint
+                    && RoomCategoryImageService::MAX_PIXELS === $constraint->maxPixels
+                    && RoomCategoryImageService::MAX_DIMENSION === $constraint->maxWidth
+                    && RoomCategoryImageService::MAX_DIMENSION === $constraint->maxHeight
+                    && ['image/jpeg', 'image/png', 'image/webp'] === $constraint->mimeTypes),
+            )
+            ->willReturn(new ConstraintViolationList([$violation]));
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->with('category.images.validation.resolution')
+            ->willReturn($message);
+
+        $service = new RoomCategoryImageService(
+            new Filesystem(new InMemoryFilesystemAdapter()),
+            $this->createUrlGenerator(),
+            $validator,
+            $translator,
+            $this->createStub(EntityManagerInterface::class),
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        $service->upload($this->createRoomCategoryWithId(5), $file);
     }
 
     public function testDeleteAllForCategoryHandlesEmptyStorage(): void
@@ -81,6 +127,7 @@ final class RoomCategoryImageServiceTest extends TestCase
             new Filesystem($adapter),
             $this->createUrlGenerator(),
             $this->createStub(ValidatorInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $em,
         );
 
@@ -98,6 +145,7 @@ final class RoomCategoryImageServiceTest extends TestCase
             new Filesystem($adapter),
             $this->createUrlGenerator(),
             $this->createStub(ValidatorInterface::class),
+            $this->createStub(TranslatorInterface::class),
             $this->createStub(EntityManagerInterface::class),
         );
     }

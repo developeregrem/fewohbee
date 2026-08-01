@@ -144,6 +144,14 @@ body {
         var(--feb-border-muted) 4px,
         var(--feb-border-muted) 5px
     );
+    padding: 0 !important;
+}
+
+.blocked-inner {
+    width: 100%;
+    height: 100%;
+    min-height: 1.7rem;
+    cursor: pointer;
 }
 
 .reservation-inner {
@@ -153,6 +161,25 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.reservation-inner[draggable="true"] {
+    cursor: grab;
+}
+
+.reservation-inner.reservation-dragging {
+    cursor: grabbing;
+    opacity: .55;
+}
+
+.reservation-inner.reservation-moving {
+    opacity: .55;
+    pointer-events: none;
+}
+
+#reservation-table .reservation-drop-target {
+    background: var(--feb-ui-selecting-bg) !important;
+    box-shadow: inset 0 0 0 2px var(--bs-primary);
 }
 
 .reservation-confirmed {
@@ -181,24 +208,29 @@ body {
     background-color: var(--feb-selection-bg);
 }
 
-/* Fixed apartment-name column width */
-#reservation-table thead th:first-child,
-#reservation-table thead td:first-child,
-#reservation-table tbody td:first-child {
-    min-width: 50px;
-    width: 80px;
-    max-width: 150px;
+/* Column widths come from the colgroup, not from the cells: on a table,
+   min-width/max-width on cells are undefined per spec and ignored, and width
+   is only a suggestion. A table stretched to 100% therefore handed the
+   apartment column a share of the leftover space no matter what it was told,
+   which is what made it needlessly wide on short periods.
+
+   Laid out fixed so the colgroup actually decides, and given an explicit
+   width so that "fixed" doesn't also mean "squeezed": at least the viewport,
+   and 46px per day once there are enough days to exceed it - which is when
+   the container starts scrolling, as before. Both custom properties are set
+   on the table by reservation_table.html.twig. */
+#reservation-table {
+    table-layout: fixed;
+    width: max(
+        100%,
+        calc(var(--reservation-name-col, 8ch) + 1.5rem + var(--reservation-day-count, 30) * 46px)
+    );
 }
 
-/* Equal half-day column widths; table stays scrollable */
-#reservation-table th[colspan="2"] {
-    min-width: 46px;
-    width: 46px;
-}
-
-#reservation-table .td-half {
-    min-width: 23px;
-    width: 23px;
+/* Longest label plus cell padding; the half-day columns are left unsized and
+   split whatever is left in equal parts. */
+#reservation-table > colgroup > col.reservation-name-col {
+    width: calc(var(--reservation-name-col, 8ch) + 1.5rem);
 }
 
 /* Right border on the last cell of each row */
@@ -227,21 +259,58 @@ body {
 
 .table-responsive { position: relative; }
 
+/* With border-collapse the table paints the shared border lines, not the cells,
+   so a sticky header cell has nothing to cover them with - the reservation bars
+   scrolling underneath stayed visible as a coloured line in every border
+   between two day columns.
+
+   The header cells therefore give up their borders entirely, which leaves the
+   table nothing to paint there and nothing to shine through. The background
+   covers the full cell box; the horizontal lines come from an inset shadow on
+   the cell, which sticks with it. */
 .table.table-sticky thead th, .table.table-sticky thead td {
   position: sticky;
   z-index: 3;
-  /* fester Hintergrund, damit nichts durchscheint */
+  border: 0 !important;
   background-color: var(--bs-table-bg, var(--bs-body-bg));
-  /* klare Unterkante auch bei border-collapse */
-  box-shadow: inset 0 -1px 0 var(--bs-border-color);
-  background-clip: padding-box; /* verhindert „Border-Bleeding“ */
+  box-shadow: inset 0 -1px 0 var(--bs-border-color); /* bottom line */
 }
 
 .table.table-sticky thead tr:first-child td{
-  /* top + bottom Schatten kombinieren: */
   box-shadow:
-    inset 0  1px 0 var(--bs-border-color),  /* obere Linie */
-    inset 0 -1px 0 var(--bs-border-color);  /* untere Linie */
+    inset 0  1px 0 var(--bs-border-color),  /* top line */
+    inset 0 -1px 0 var(--bs-border-color);  /* bottom line */
+}
+
+/* The vertical separator sits in a pseudo-element rather than in that shadow:
+   header cells can carry a background or shadow of their own (the calendar
+   entries' accent bars, partly set inline), which would override a shadow
+   declared here. It sits on the inside of the right edge so the neighbouring
+   cell's background cannot paint over it. */
+.table.table-sticky thead th::after,
+.table.table-sticky thead td::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
+}
+
+/* The right-edge pseudo-element above supplies the separators between header
+   cells. Since their real borders are disabled, the first cell in each row
+   also needs an explicit left edge to close the table outline. */
+.table.table-sticky thead tr > :first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background-color: var(--bs-border-color);
+  pointer-events: none;
 }
 
 /* left sticky column in reservation overview*/
@@ -634,10 +703,39 @@ body {
     background-color: var(--feb-weekend-bg) !important;
 }
 
+/* Holiday highlighting must win over the plain weekend background -
+   .reservation-table-weekend uses !important, so only a combined selector
+   (higher specificity) with its own !important can override it. Colors
+   mirror Bootstrap's bg-info bg-opacity-25 utility.
+   Calendar-entry accent lines (box-shadow, see calendar_accent_marker_style)
+   don't need an equivalent override - box-shadow and background-color are
+   different properties and never fight for precedence the way two
+   background-colors do. */
+.reservation-table-weekend.holiday-info {
+    background-color: rgba(var(--bs-info-rgb), .25) !important;
+}
+
 
 /* remove bottom border of tr for multiple reservations of one apartment (select tr where the next tr has border-top-0 class) */
 #reservation-table tr:has( + .border-top-0) {
     border-bottom: 0 !important;
+}
+
+/* Calendar-entry accent bars are rendered in both the weekday and the
+   date-number row (see reservation_table.html.twig / calendar_accent_marker_style);
+   toggleDisplayTableRows() adds .weekday-row-visible once that row is
+   shown, so suppress the duplicate bars on the date row - overriding the
+   inline box-shadow/background-image needs !important since inline styles
+   otherwise win. Restores the plain bottom border (rather than "none") so
+   non-entry cells don't lose theirs too, and clears the background-image
+   layers (the segmented-row gradients) entirely. */
+/* Note that this box-shadow doubles as the bottom line the sticky header
+   otherwise draws for itself - the !important overrides it for this one row.
+   The two have to match: change the header line (colour, width) where it is
+   defined and the date row silently keeps the old one. */
+#reservation-table.weekday-row-visible .table-days th {
+    box-shadow: inset 0 -1px 0 0 var(--bs-border-color) !important;
+    background-image: none !important;
 }
 
 #reservation-table .room-info {
@@ -728,6 +826,66 @@ div .reservation-yearly-day {
 }
 
 /*
+ * Room block (out of order) in the yearly month view - hatched instead of a solid color.
+ * Positioned absolute (filling the day cell) rather than a flex item: on a turnover day
+ * a reservation half-cell already claims the flex row, and a second flex item with
+ * flex-basis 100% would be pushed out of the cell and clipped away by overflow:hidden.
+ * Absolute lets the block overlay its half of the cell independently.
+ *
+ * The hatch lives on the ::before layer, not on this element directly, because start/end
+ * days re-use the reservations' exact skewY(-45deg) transform for a pixel-perfect matching
+ * diagonal (corner-to-corner clip-path would be off by a few degrees since the cell isn't
+ * square). Skewing the element would tilt the hatch too; the ::before counter-skews by the
+ * same angle, cancelling the distortion so the hatch stays parallel to the full-day cells.
+ * It is oversized so the counter-skewed layer still covers the whole skewed box.
+ */
+.month-reservation-blocked {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+/*
+ * Sit one layer below the reservations (which are z-index 1). Where a block and a
+ * reservation meet on a turnover day, their skewed diagonals share an edge with a
+ * sub-pixel overlap - invisible for the reservation's solid fill but noticeable as
+ * hatch spilling over. Painting the opaque reservation on top lets it define that
+ * edge cleanly and hide any spill. The two-class selector outweighs `div .reservation-yearly`.
+ */
+.reservation-yearly.month-reservation-blocked {
+    z-index: 0;
+}
+.month-reservation-blocked::before {
+    content: "";
+    position: absolute;
+    inset: -150%;
+    background-color: rgba(108, 117, 125, 0.08);
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        var(--feb-border-muted) 4px,
+        var(--feb-border-muted) 5px
+    );
+}
+
+/* start/end (half) days: mirror the reservation skew exactly for a matching diagonal */
+.month-reservation-blocked.month-reservation-start,
+.month-reservation-blocked.month-reservation-onlystart {
+    transform: skewY(-45deg);
+    transform-origin: top right;
+}
+.month-reservation-blocked.month-reservation-end {
+    transform: skewY(-45deg);
+    transform-origin: bottom left;
+}
+/* counter-skew the hatch layer so its lines stay parallel with the full-day cells */
+.month-reservation-blocked.month-reservation-start::before,
+.month-reservation-blocked.month-reservation-onlystart::before,
+.month-reservation-blocked.month-reservation-end::before {
+    transform: skewY(45deg);
+}
+
+/*
  * Forms
  */
 /* reduce default font size of labels in modals */
@@ -781,4 +939,13 @@ th[aria-sort="descending"] .sort-icon {
  */
 .table > tbody > tr:nth-child(even of :not(.d-none)) > * {
     --bs-table-bg-type: var(--bs-table-striped-bg);
+}
+
+/* compact e-invoice readiness disclosure: hide the default marker, keep the summary clickable */
+details.einvoice-readiness > summary {
+    list-style: none;
+    cursor: pointer;
+}
+details.einvoice-readiness > summary::-webkit-details-marker {
+    display: none;
 }

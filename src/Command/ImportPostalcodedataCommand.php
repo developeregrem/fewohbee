@@ -14,6 +14,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 #[AsCommand(
     name: 'app:import-postalcodedata',
@@ -23,7 +24,7 @@ class ImportPostalcodedataCommand extends Command
 {
     private const BATCH_SIZE = 500;
 
-    public function __construct(private readonly EntityManagerInterface $geoEntityManager, ?string $name = null)
+    public function __construct(#[Target('geoEntityManager')] private readonly EntityManagerInterface $geoEntityManager, ?string $name = null)
     {
         parent::__construct($name);
     }

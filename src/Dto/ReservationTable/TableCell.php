@@ -33,6 +33,7 @@ final class TableCell
         public readonly ?string $contrastColor = null,
         public readonly ?int $reservationId = null,
         public readonly bool $startsAtDayBoundary = false,
+        public readonly ?int $blockId = null,
     ) {
     }
 }

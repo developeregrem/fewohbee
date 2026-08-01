@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
 
 {% block title %}
     {{ parent() }} -  Profil
@@ -115,7 +116,6 @@
                             <td>
                                 {% set id = credential.id %}
                                 {% set targetUrl = path('profile_delete_credential', {id: credential.id }) %}
-                                {% use "common/delete_popover.html.twig" %}
                                 <a href="#" title="{{ 'button.delete'|trans }}">
                                     <i class="fas fa-trash-alt"
                                         data-popover="delete"

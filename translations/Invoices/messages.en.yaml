@@ -14,10 +14,16 @@ invoice.appartment.position.pricecategory: Price category
 invoice.appartment.position.startdate: From
 invoice.appartment.position.vat: Tax
 invoice.brutto: Gross
-invoice.button.save.numberanddate: Save Invoice number and date
 invoice.company: Company
 invoice.containing.vat: VAT included
 invoice.customer.recommendation: Preselection
+invoice.customer.section.contact: Contact
+invoice.customer.section.address: Address
+invoice.customer.section.communication: Phone & Email
+invoice.customer.section.einvoice: E-invoice details
+invoice.customer.section.payment: Payment details
+invoice.customer.einvoice.hint: Only needed when sending e-invoices to public authorities (XRechnung). Private and business guests usually do not need these fields.
+invoice.customer.payment.hint: Only needed for card payment or SEPA direct debit.
 invoice.date: Invoice Date
 invoice.date2: Date
 invoice.delete.ask: Delete this invoice?
@@ -30,8 +36,8 @@ invoice.flash.delete.success: The invoice was deleted successfully .
 invoice.flash.edit.success: Invoice was processed successfully.
 invoice.guest: Guest
 invoice.id: Invoice ID
-invoice.id.adopt: "Use next invoice number"
 invoice.id.last: 'Latest: '
+invoice.number.missing.error: Please enter an invoice number before continuing.
 invoice.lastname: Last Name
 invoice.miscellaneous: Miscellaneous
 invoice.miscellaneous.position.amount: Number
@@ -73,6 +79,10 @@ invoice.settings.add: Add new settings
 invoice.settings.companyName: Company Name
 invoice.settings.taxNumber: Tax Number
 invoice.settings.vatID: VAT ID
+invoice.settings.vatID.hint: For e-invoices, a VAT ID or a registration number is required (a tax number alone is not sufficient).
+invoice.settings.registrationNumber: Registration number
+invoice.settings.registrationNumber.hint: e.g. commercial register number (HRB/HRA). Alternative to the VAT ID for e-invoices.
+invoice.settings.selleridentifier.required: 'Please enter a VAT ID or a registration number — e-invoices require one of them (a tax number alone is not sufficient).'
 invoice.settings.contactName: Contact Name
 invoice.settings.contactDepartment: Department
 invoice.settings.contactPhone: Phone Number
@@ -88,31 +98,63 @@ invoice.settings.accountBIC: BIC
 invoice.settings.paymentTerms: Payment Terms
 invoice.settings.paymentDueDays: Payment Due Days
 invoice.settings.einvoiceProfile: E-Invoice Profile
-invoice.settings.einvoiceProfile.xrechnung: XRechnung (CIUS DE)
-invoice.settings.einvoiceProfile.en16931: ZUGFeRD EN 16931 (COMFORT)
+invoice.settings.einvoiceProfile.xrechnung: XRechnung (B2G)
+invoice.settings.einvoiceProfile.en16931: ZUGFeRD (EN 16931) – recommended
+invoice.settings.einvoiceProfile.help: ZUGFeRD is sufficient for most businesses and guests. Choose XRechnung only if you specifically need it (e.g. B2G).
+invoice.settings.profile.hint.en16931: 'ZUGFeRD: Your invoice PDFs automatically contain machine-readable e-invoice data. No further details are required beyond the fields below.'
+invoice.settings.profile.hint.xrechnung: 'XRechnung: Contact name, phone and email are mandatory, and each invoice needs a buyer reference (Leitweg-ID) and payment method.'
+invoice.settings.section.profile: E-invoice profile
+invoice.settings.section.company: Company
+invoice.settings.section.contact: Contact
+invoice.settings.section.tax: Tax
+invoice.settings.section.payment: Payment
+invoice.settings.xrechnung.contact.error: This field is required for the XRechnung profile.
+invoice.settings.form.error: Nothing was saved. Please correct the highlighted fields below.
+invoice.settings.xrechnung.required.hint: '* These fields are required for the XRechnung profile (B2G).'
 invoice.settings.active: Active
 invoice.settings.inactive: Inactive
-invoice.settings.help.general: The information entered here is required for the digital invoice export (XRechnung).
+invoice.settings.help.general: The information entered here is required for the digital invoice export (e-invoice).
 invoice.settings.help.invoiceMail: Specifies the email address to which the response to an invoice can be sent.
 invoice.settings.flash.create.success: New settings added successfully.
 invoice.settings.flash.edit.success: Settings edited successfully.
 invoice.settings.flash.delete.success: Settings deleted successfully.
-invoice.settings.title.xrechnung: E-Invoice
+invoice.settings.title.einvoice: E-Invoice
 invoice.settings.title.template: Invoice Template
 invoice.settings.active.error: No settings marked as active for invoice export could be found.
 invoice.settings.creditorReference.label: Creditor ID
 invoice.settings.creditorReference.hint: The unique identifier for SEPA direct debit
-invoice.xrechnung.mandatory.error: >-
-  The value for country of the invoice recipient must be present to create the XRechnung. Please edit the invoice and add the value.
-invoice.xrechnung.mandatory.buyerCountry: The value for country must be present to create the electronic invoice. Please edit the invoice and add the value.
-invoice.xrechnung.mandatory.buyerPostCodeCity: The values for postal code and city must be present to create the electronic invoice. Please edit the invoice and add the values.
-invoice.xrechnung.mandatory.paymentMeans: No payment method provided. Please edit the invoice and add the value.
-invoice.xrechnung.mandatory.IBAN: The IBAN field must be filled. Please edit the settings and add the value.
-invoice.xrechnung.mandatory.IBAN_BIC: The IBAN and BIC fields must be filled. Please edit the settings and add the values.
-invoice.xrechnung.mandatory.IBANBuyer: For payments via direct debit, the customer's IBAN and mandate reference number must be filled. Please edit the invoice and add the values.
-invoice.xrechnung.mandatory.creditorReference: For payments via direct debit, the creditor ID must be filled. Please edit the settings and add the value.
-invoice.xrechnung.mandatory.cardNumber: The card number must be filled. Please edit the invoice and add the value.
 invoice.settings.paymentterm.error: At least one of the fields "Payment Terms" or "Payment Due Days" must be filled.
+invoice.einvoice.violation.invoiceNumber: Invoice number is missing (edit invoice)
+invoice.einvoice.violation.invoiceDate: Invoice date is missing (edit invoice)
+invoice.einvoice.violation.buyerName: Recipient name or company is missing (edit invoice)
+invoice.einvoice.violation.buyerStreet: Recipient street address is missing (edit invoice)
+invoice.einvoice.violation.buyerCountry: Recipient country is missing (edit invoice)
+invoice.einvoice.violation.buyerPostCodeCity: Recipient postal code or city is missing (edit invoice)
+invoice.einvoice.violation.buyerEmail: Recipient email address is missing (edit invoice)
+invoice.einvoice.violation.buyerReference: Buyer reference (Leitweg-ID) is missing (edit invoice)
+invoice.einvoice.violation.paymentMeans: No payment method selected (edit invoice)
+invoice.einvoice.violation.paymentTerms: Neither payment terms nor payment due days are set (edit settings)
+invoice.einvoice.violation.sellerName: Company name is missing (edit settings)
+invoice.einvoice.violation.sellerAddress: Company address (street, postal code, city, country) is incomplete (edit settings)
+invoice.einvoice.violation.sellerIdentifier: VAT ID or registration number is missing — a tax number alone is not sufficient for e-invoices (edit settings)
+invoice.einvoice.violation.sellerElectronicAddress: Company invoice email (electronic address) is missing (edit settings)
+invoice.einvoice.violation.sellerContact: Contact name, phone or email is missing (edit settings)
+invoice.einvoice.violation.accountIBAN: IBAN is missing (edit settings)
+invoice.einvoice.violation.accountIBANBIC: IBAN or BIC is missing (edit settings)
+invoice.einvoice.violation.cardNumber: Card number is missing for card payment (edit invoice)
+invoice.einvoice.violation.customerIBAN: Customer IBAN is missing for direct debit (edit invoice)
+invoice.einvoice.violation.mandateReference: 'Mandate reference is missing for direct debit (required for XRechnung; edit invoice)'
+invoice.einvoice.violation.creditorReference: Creditor ID is missing for direct debit (edit settings)
+invoice.einvoice.violation.positions: The invoice has no positions
+invoice.einvoice.fixlocation.invoice: can be fixed in the invoice
+invoice.einvoice.fixlocation.settings: can be fixed in the invoice settings
+invoice.einvoice.status.ready: E-invoice ready – the PDF download includes machine-readable e-invoice data
+invoice.einvoice.ready.short: E-invoice ready
+invoice.einvoice.notready.short: 'E-invoice: details missing'
+invoice.einvoice.status.missing: 'E-invoice not possible yet, missing information'
+invoice.einvoice.status.notconfigured: E-invoicing is not configured
+invoice.einvoice.export.fallback: The e-invoice could not be created; a plain PDF was generated instead.
+invoice.einvoice.attach.auto: Will be attached as e-invoice (PDF with embedded XML)
 invoice.paymentmeans.label: Payment Method
 CASH: Cash payment
 CHEQUE: Check

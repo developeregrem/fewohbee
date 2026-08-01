@@ -1,0 +1,69 @@
+{% use "common/delete_popover.html.twig" %}
+
+{% set formAction = isNew ? path('settings.calendars.new') : path('settings.calendars.edit', {'id': calendar.id}) %}
+{{ form_start(form, {
+    'attr': {
+        'data-controller': 'settings',
+        'data-action': 'submit->settings#submitFormAction',
+        'data-url': formAction,
+        'data-success-url': path('settings.calendars.index'),
+    },
+    'action': formAction,
+}) }}
+    <div class="modal-body">
+        <div id="flash-message-overlay"></div>
+
+        {{ form_row(form.name) }}
+        {{ form_row(form.color) }}
+        {{ form_row(form.requiresConfirmation) }}
+
+        <hr class="my-3">
+        <p class="text-body-secondary small mb-3">{{ 'calendar.form.source_hint'|trans }}</p>
+        {{ form_row(form.icsUrl) }}
+        {{ form_row(form.icsFile) }}
+
+        {% if not isNew %}
+            {% if calendar.icsUrl %}
+                <p class="text-body-secondary small mb-1">
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    {{ 'calendar.form.current_url'|trans }}
+                </p>
+            {% endif %}
+            {% if calendar.lastSyncedAt %}
+                <p class="text-body-secondary small mb-0">
+                    {{ 'calendar.form.last_sync'|trans({'%datetime%': calendar.lastSyncedAt|date('d.m.Y H:i')}) }}
+                    &ndash;
+                    {% if calendar.lastSyncCount == 0 %}
+                        <span class="text-warning">{{ 'calendar.form.last_sync_empty'|trans }}</span>
+                    {% else %}
+                        {{ 'calendar.form.last_sync_breakdown'|trans({
+                            '%new%': calendar.lastSyncNewCount ?? 0,
+                            '%updated%': calendar.lastSyncUpdatedCount ?? 0,
+                            '%unchanged%': calendar.lastSyncUnchangedCount ?? 0,
+                        }) }}
+                    {% endif %}
+                </p>
+            {% endif %}
+
+            {% if unconfirmedPastCount > 0 %}
+                <hr class="my-3">
+                <div class="text-body-secondary small mb-2">{{ 'calendar.cleanup.hint'|trans }}</div>
+                {# Prefixed id so the popover's csrf_token('delete' ~ id) stays
+                   distinct from this calendar's own delete token. #}
+                {% set id = 'cleanup' ~ calendar.id %}
+                {% set targetUrl = path('settings.calendars.cleanup_unconfirmed', {'id': calendar.id}) %}
+                {% set deletePopoverHint = 'calendar.cleanup.confirm'|trans({'%count%': unconfirmedPastCount}) %}
+                <button type="button" class="btn btn-outline-danger btn-sm"
+                        data-popover="delete"
+                        data-title="{{ 'calendar.cleanup.title'|trans }}"
+                        data-bs-content='{{ block('deletePopoverContent') }}'>
+                    <i class="fas fa-broom me-1"></i>{{ 'calendar.cleanup.button'|trans({'%count%': unconfirmedPastCount}) }}
+                </button>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
+        <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
+    </div>
+{{ form_end(form) }}
