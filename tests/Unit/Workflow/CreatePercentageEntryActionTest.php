@@ -309,10 +309,11 @@ final class CreatePercentageEntryActionTest extends TestCase
         self::assertSame(['Übernachtung', 'Endreinigung', 'Kurtaxe'], $this->descriptionsOf($positions));
     }
 
-    public function testFallsBackToTheFullGrossForConfigsSavedBeforeTheChoiceExisted(): void
+    public function testTreatsAConfigWithoutTheKeyLikeANewOne(): void
     {
-        // Those workflows were set up against that figure; changing what they
-        // book from one release to the next would be a silent correction.
+        // The field ships with the action, so only a workflow configured while
+        // this was still being built can lack it - no reason to keep a second
+        // behaviour around for those.
         $positions = null;
         $action = $this->makeAction(gross: 115.20, capturePositions: $positions);
 
@@ -320,7 +321,7 @@ final class CreatePercentageEntryActionTest extends TestCase
         unset($config['amountBase']);
         $action->execute($config, $this->invoiceWithPositions(), []);
 
-        self::assertSame(['Übernachtung', 'Endreinigung', 'Kurtaxe'], $this->descriptionsOf($positions));
+        self::assertSame(['Übernachtung', 'Endreinigung'], $this->descriptionsOf($positions));
     }
 
     public function testOffersTheNarrowerBaseAsTheDefaultForNewActions(): void
@@ -331,27 +332,6 @@ final class CreatePercentageEntryActionTest extends TestCase
             CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
             $this->amountBaseField($action)['default'] ?? null
         );
-    }
-
-    public function testShowsAnOlderConfigTheBaseItIsActuallyBookingOn(): void
-    {
-        // The form fills a field the stored config says nothing about with this
-        // value, and writes every field back on save. If it drifted from the
-        // fallback below, opening an old workflow and saving it would move its
-        // base without anything on screen saying so.
-        $withoutKey = null;
-        $action = $this->makeAction(gross: 115.20, capturePositions: $withoutKey);
-        $config = $this->config();
-        unset($config['amountBase']);
-        $action->execute($config, $this->invoiceWithPositions(), []);
-
-        $asShown = null;
-        $action = $this->makeAction(gross: 115.20, capturePositions: $asShown);
-        $shown = $this->amountBaseField($action)['defaultForExisting'] ?? null;
-        $action->execute($this->config(['amountBase' => $shown]), $this->invoiceWithPositions(), []);
-
-        self::assertNotNull($shown);
-        self::assertSame($this->descriptionsOf($withoutKey), $this->descriptionsOf($asShown));
     }
 
     /** @return array<string, mixed>|null */
