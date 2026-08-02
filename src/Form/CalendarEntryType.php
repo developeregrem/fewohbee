@@ -10,6 +10,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -31,6 +32,15 @@ class CalendarEntryType extends AbstractType
                 'label' => 'calendar_entry.form.date',
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
+            ])
+            // Optional: left empty the entry stays all-day, which is what every
+            // entry was before this field existed.
+            ->add('time', TimeType::class, [
+                'label' => 'calendar_entry.form.time',
+                'widget' => 'single_text',
+                'input' => 'datetime_immutable',
+                'required' => false,
+                'help' => 'calendar_entry.form.time_help',
             ]);
 
         if ($options['include_date_to']) {

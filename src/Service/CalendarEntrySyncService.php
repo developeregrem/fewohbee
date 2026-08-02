@@ -133,15 +133,23 @@ class CalendarEntrySyncService
                     continue;
                 }
 
+                $time = $this->resolveTime($event);
+
                 $sourceUid = $this->buildSourceUid($calendar, $event, $summary, $dates[0]);
                 $occurrences[$sourceUid]['summary'] = $summary;
-                foreach ($dates as $date) {
-                    $occurrences[$sourceUid]['dates'][$date->format('Y-m-d')] = $date;
+                foreach ($dates as $index => $date) {
+                    $dateKey = $date->format('Y-m-d');
+                    $occurrences[$sourceUid]['dates'][$dateKey] = $date;
+                    // Only the day the event actually starts on carries the
+                    // time; the days it runs through are whole days by
+                    // definition. Tracked per date rather than per event so
+                    // two VEVENTs merging under one UID keep their own.
+                    $occurrences[$sourceUid]['times'][$dateKey] = 0 === $index ? $time : null;
                 }
             }
 
             foreach ($occurrences as $sourceUid => $occurrence) {
-                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates']) as $outcome) {
+                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates'], $occurrence['times'] ?? []) as $outcome) {
                     match ($outcome) {
                         self::OUTCOME_NEW => $new++,
                         self::OUTCOME_UPDATED => $updated++,
@@ -225,6 +233,44 @@ class CalendarEntrySyncService
     }
 
     /**
+     * Compares two optional times by wall clock, so a re-sync does not report
+     * every timed entry as "updated" just because the objects differ.
+     */
+    private function sameTime(?\DateTimeImmutable $a, ?\DateTimeImmutable $b): bool
+    {
+        if (null === $a || null === $b) {
+            return $a === $b;
+        }
+
+        return $a->format('H:i:s') === $b->format('H:i:s');
+    }
+
+    /**
+     * The start time of a timed event, or null when it is an all-day one.
+     *
+     * All-day events are written as a bare date (DTSTART;VALUE=DATE:20260801).
+     * The parser discards the parameters, so the plain Ymd form of the value is
+     * what identifies them - the same shape resolveDates() relies on.
+     *
+     * The wall-clock digits are taken as they stand. A feed writing
+     * DTSTART;TZID=Europe/Berlin:20260801T140000 loses the zone in parsing but
+     * keeps the 14:00 it meant, which is the time that should be displayed.
+     * A feed writing an explicit UTC value (trailing Z) is read as UTC, and
+     * since the application itself runs in UTC that is what gets shown.
+     *
+     * @param array<string, string> $event
+     */
+    private function resolveTime(array $event): ?\DateTimeImmutable
+    {
+        $raw = $event['DTSTART'] ?? null;
+        if (null === $raw || 1 === preg_match('/^\d{8}$/', $raw)) {
+            return null;
+        }
+
+        return $this->icsParser->parseDate($raw);
+    }
+
+    /**
      * Prefixed with the calendar id so the same UID in two different
      * calendars' feeds can't collide.
      *
@@ -270,11 +316,12 @@ class CalendarEntrySyncService
      * date keeps it, one whose date is gone is left alone rather than being
      * reused for another day.
      *
-     * @param array<string, \DateTimeImmutable> $dates keyed by Y-m-d
+     * @param array<string, \DateTimeImmutable>  $dates keyed by Y-m-d
+     * @param array<string, ?\DateTimeImmutable> $times keyed by Y-m-d, null where the day is all-day
      *
      * @return list<string> one OUTCOME_* per entry touched or left in place
      */
-    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates): array
+    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates, array $times = []): array
     {
         ksort($dates);
         $existing = $this->repo->findBySource($calendar, $sourceUid);
@@ -291,19 +338,21 @@ class CalendarEntrySyncService
         }
 
         $outcomes = [];
-        foreach ($matched as $entry) {
-            if ($entry->isConfirmed() || $entry->getTitle() === $summary) {
+        foreach ($matched as $dateKey => $entry) {
+            $time = $times[$dateKey] ?? null;
+            if ($entry->isConfirmed() || ($entry->getTitle() === $summary && $this->sameTime($entry->getTime(), $time))) {
                 $outcomes[] = self::OUTCOME_UNCHANGED;
                 continue;
             }
-            $entry->setTitle($summary);
+            $entry->setTitle($summary)->setTime($time);
             $outcomes[] = self::OUTCOME_UPDATED;
         }
 
-        foreach (array_diff_key($dates, $matched) as $date) {
+        foreach (array_diff_key($dates, $matched) as $dateKey => $date) {
+            $time = $times[$dateKey] ?? null;
             $entry = $this->takeReusable($spare);
             if (null !== $entry) {
-                $entry->setDate($date)->setTitle($summary);
+                $entry->setDate($date)->setTitle($summary)->setTime($time);
                 $outcomes[] = self::OUTCOME_UPDATED;
                 continue;
             }
@@ -312,7 +361,8 @@ class CalendarEntrySyncService
                 ->setCalendar($calendar)
                 ->setSourceUid($sourceUid)
                 ->setDate($date)
-                ->setTitle($summary);
+                ->setTitle($summary)
+                ->setTime($time);
             $this->em->persist($entry);
             $outcomes[] = self::OUTCOME_NEW;
         }

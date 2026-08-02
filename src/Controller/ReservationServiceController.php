@@ -1734,6 +1734,10 @@ class ReservationServiceController extends AbstractController
                 // multi-day ICS event, see CalendarEntrySyncService). They
                 // keep sourceUid null, which is what marks them as manually
                 // created and keeps the sync from ever reconciling them.
+                //
+                // Only the first day keeps the time entered in the form - the
+                // days a range runs through are whole days, so the copies below
+                // deliberately carry no time.
                 for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
                     $entry = $day == $startDate
                         ? $calendarEntry

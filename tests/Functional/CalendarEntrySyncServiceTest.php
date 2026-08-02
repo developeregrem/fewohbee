@@ -340,6 +340,95 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertSame(1, $result->new);
     }
 
+    public function testTimedEventStoresItsStartTime(): void
+    {
+        $calendar = $this->createCalendar('Maintenance '.uniqid());
+
+        $ics = $this->buildTimedIcs('uid-timed-1', '20261001T140000', null, 'Wartung Heizung');
+        $this->service->importIcsString($calendar, $ics);
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(1, $entries);
+        self::assertSame('14:00', $entries[0]->getTime()?->format('H:i'));
+        self::assertTrue($entries[0]->hasTime());
+    }
+
+    public function testAllDayEventStoresNoTime(): void
+    {
+        $calendar = $this->createCalendar('Waste '.uniqid());
+
+        $ics = $this->buildIcs('uid-allday-1', '20261002', null, 'Restmüll');
+        $this->service->importIcsString($calendar, $ics);
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(1, $entries);
+        self::assertNull($entries[0]->getTime());
+        self::assertFalse($entries[0]->hasTime());
+    }
+
+    public function testMultiDayTimedEventPutsTheTimeOnTheFirstDayOnly(): void
+    {
+        $calendar = $this->createCalendar('Seminar '.uniqid());
+
+        // DTEND is exclusive, so this covers Oct 5 and Oct 6.
+        $ics = $this->buildTimedIcs('uid-timed-span', '20261005T090000', '20261007T090000', 'Seminar');
+        $this->service->importIcsString($calendar, $ics);
+
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(2, $entries);
+        self::assertSame('09:00', $entries[0]->getTime()?->format('H:i'));
+        // The day the event merely runs through is a whole day.
+        self::assertNull($entries[1]->getTime());
+    }
+
+    public function testResyncingATimedEventReportsUnchanged(): void
+    {
+        $calendar = $this->createCalendar('Maintenance '.uniqid());
+        $ics = $this->buildTimedIcs('uid-timed-2', '20261010T081500', null, 'Wartung');
+
+        $this->service->importIcsString($calendar, $ics);
+        $this->em->clear();
+        $calendar = $this->em->getRepository(Calendar::class)->find($calendar->getId());
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        // Guards the wall-clock comparison: comparing the objects themselves
+        // would report every timed entry as updated on each run.
+        self::assertSame(0, $result->new);
+        self::assertSame(0, $result->updated);
+        self::assertSame(1, $result->unchanged);
+    }
+
+    public function testChangedTimeUpdatesTheExistingEntry(): void
+    {
+        $calendar = $this->createCalendar('Maintenance '.uniqid());
+
+        $this->service->importIcsString($calendar, $this->buildTimedIcs('uid-timed-3', '20261011T100000', null, 'Wartung'));
+        $this->em->clear();
+        $calendar = $this->em->getRepository(Calendar::class)->find($calendar->getId());
+
+        $result = $this->service->importIcsString($calendar, $this->buildTimedIcs('uid-timed-3', '20261011T113000', null, 'Wartung'));
+
+        self::assertSame(1, $result->updated);
+        $entries = $this->entriesForCalendar($calendar);
+        self::assertCount(1, $entries);
+        self::assertSame('11:30', $entries[0]->getTime()?->format('H:i'));
+    }
+
+    public function testAnEventLosingItsTimeBecomesAllDayAgain(): void
+    {
+        $calendar = $this->createCalendar('Maintenance '.uniqid());
+
+        $this->service->importIcsString($calendar, $this->buildTimedIcs('uid-timed-4', '20261012T100000', null, 'Wartung'));
+        $this->em->clear();
+        $calendar = $this->em->getRepository(Calendar::class)->find($calendar->getId());
+
+        $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-timed-4', '20261012', null, 'Wartung'));
+
+        self::assertSame(1, $result->updated);
+        self::assertNull($this->entriesForCalendar($calendar)[0]->getTime());
+    }
+
     private function createCalendar(string $name): Calendar
     {
         $calendar = new Calendar();
@@ -370,6 +459,30 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         ];
         if (null !== $dtEnd) {
             $lines[] = 'DTEND;VALUE=DATE:'.$dtEnd;
+        }
+        $lines[] = 'SUMMARY:'.$summary;
+        $lines[] = 'END:VEVENT';
+        $lines[] = 'END:VCALENDAR';
+
+        return implode("\r\n", $lines);
+    }
+
+    /**
+     * A timed event, i.e. one whose DTSTART carries a clock time rather than
+     * the bare date buildIcs() writes. Zone-qualified the way calendar
+     * applications publish local appointments.
+     */
+    private function buildTimedIcs(string $uid, string $dtStart, ?string $dtEnd, string $summary): string
+    {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:'.$uid,
+            'DTSTART;TZID=Europe/Berlin:'.$dtStart,
+        ];
+        if (null !== $dtEnd) {
+            $lines[] = 'DTEND;TZID=Europe/Berlin:'.$dtEnd;
         }
         $lines[] = 'SUMMARY:'.$summary;
         $lines[] = 'END:VEVENT';

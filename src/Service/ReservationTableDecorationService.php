@@ -109,6 +109,7 @@ class ReservationTableDecorationService
                 // the popover would only offer links into a 403.
                 editUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.edit', ['id' => $entry->getId()]) : null,
                 deleteUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.delete', ['id' => $entry->getId()]) : null,
+                time: $entry->getTime()?->format('H:i'),
                 startsCalendarGroup: null !== $previous && $previous->calendarId !== $calendar->getId(),
             );
         }
