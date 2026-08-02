@@ -44,6 +44,9 @@ class ReservationOriginService
         }
 
         $origin->setName(trim($request->request->get('name-'.$id)));
+        $color = strtolower(trim((string) $request->request->get('color-'.$id)));
+        $colorEnabled = $request->request->getBoolean('color-enabled-'.$id);
+        $origin->setColor($colorEnabled && 1 === preg_match('/^#[0-9a-f]{6}$/', $color) ? $color : null);
 
         return $origin;
     }

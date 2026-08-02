@@ -30,6 +30,7 @@ final class TableCell
         public readonly ?Reservation $reservation = null,
         public readonly ?string $displayName = null,
         public readonly ?string $color = null,
+        public readonly ?string $originColor = null,
         public readonly ?string $contrastColor = null,
         public readonly ?int $reservationId = null,
         public readonly bool $startsAtDayBoundary = false,

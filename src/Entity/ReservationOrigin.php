@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'reservation_origins')]
@@ -17,6 +18,9 @@ class ReservationOrigin
     private $id;
     #[ORM\Column(type: 'string', length: 100)]
     private $name;
+    #[ORM\Column(type: 'string', length: 7, nullable: true)]
+    #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
+    private $color;
     #[ORM\ManyToMany(targetEntity: 'Price', mappedBy: 'reservationOrigins')]
     private $prices;
     #[ORM\OneToMany(targetEntity: 'Reservation', mappedBy: 'reservationOrigin')]
@@ -77,6 +81,18 @@ class ReservationOrigin
     public function getName()
     {
         return $this->name;
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(?string $color): self
+    {
+        $this->color = $color;
+
+        return $this;
     }
 
     /**
