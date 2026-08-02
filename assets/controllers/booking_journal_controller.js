@@ -21,6 +21,15 @@ export default class extends Controller {
         this._loadBatches();
     }
 
+    // Full-page navigation to another year's view (used where the year is a
+    // standalone selector rather than an in-place batch filter).
+    navigateToYear(event) {
+        const select = event.currentTarget;
+        const template = select.dataset.urlTemplate;
+        if (!template) return;
+        window.location.href = template.replace('__YEAR__', encodeURIComponent(select.value));
+    }
+
     openOpeningBalance(event) {
         event.preventDefault();
         const template = event.currentTarget.dataset.urlTemplate;
@@ -31,6 +40,14 @@ export default class extends Controller {
     }
 
     exportYear(event) {
+        event.preventDefault();
+        const template = event.currentTarget.dataset.urlTemplate;
+        const year = this.hasYearSelectTarget ? this.yearSelectTarget.value : '';
+        if (!template || !year) return;
+        window.location.href = template.replace('__YEAR__', encodeURIComponent(year));
+    }
+
+    openYearView(event) {
         event.preventDefault();
         const template = event.currentTarget.dataset.urlTemplate;
         const year = this.hasYearSelectTarget ? this.yearSelectTarget.value : '';

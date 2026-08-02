@@ -47,6 +47,12 @@
                 </ul>
             </div>
             <button type="button" class="btn btn-outline-secondary btn-sm"
+                    data-action="click->booking-journal#openYearView"
+                    data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
+                    title="{{ 'accounting.journal.year_view.help'|trans }}">
+                <i class="fas fa-table"></i> {{ 'accounting.journal.year_view.title'|trans }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm"
                     data-action="click->booking-journal#exportYear"
                     data-url-template="{{ path('journal.export.year.datev', {'year': '__YEAR__'}) }}"
                     title="{{ 'accounting.journal.export.year.help'|trans }}">

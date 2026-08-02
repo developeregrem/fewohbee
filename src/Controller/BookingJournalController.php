@@ -69,6 +69,19 @@ class BookingJournalController extends AbstractController
         ]);
     }
 
+    #[Route('/year/{year}', name: 'journal.year.entries', methods: ['GET'])]
+    public function yearEntries(
+        int $year,
+        BookingEntryRepository $entryRepo,
+        BookingBatchRepository $batchRepo,
+    ): Response {
+        return $this->render('BookingJournal/year_entries.html.twig', [
+            'year' => $year,
+            'years' => $batchRepo->getAvailableYears(),
+            'entries' => $entryRepo->findAllByYear($year),
+        ]);
+    }
+
     #[Route('/batch/new', name: 'journal.batch.new', methods: ['GET'])]
     public function newBatch(BookingBatchRepository $batchRepo): Response
     {
@@ -335,6 +348,7 @@ class BookingJournalController extends AbstractController
         AccountingSettingsService $settingsService,
     ): Response {
         $filter = $request->query->get('filter', 'all');
+        $return = $request->query->get('return', '');
         $cashbookMode = 'cashbook' === $filter;
         $activePreset = $settingsService->getActivePreset();
 
@@ -342,6 +356,7 @@ class BookingJournalController extends AbstractController
             'action' => $this->generateUrl('journal.entry.update', [
                 'id' => $entry->getId(),
                 'filter' => $filter,
+                'return' => $return,
                 'page' => $request->query->get('page', 1),
             ]),
             'reference_date' => $entry->getDate() ?? new \DateTime(),
@@ -376,13 +391,14 @@ class BookingJournalController extends AbstractController
         $batch = $entry->getBookingBatch();
         $oldYear = $batch->getYear();
         $filter = $request->query->get('filter', 'all');
+        $return = $request->query->get('return', '');
         $page = (int) $request->query->get('page', 1);
         $cashbookMode = 'cashbook' === $filter;
 
         if ($batch->isClosed()) {
             $this->addFlash('warning', 'journal.error.journal.closed');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
+            return $this->redirectAfterEntrySave($return, $batch, $filter, $page);
         }
 
         $form = $this->createForm(BookingEntryType::class, $entry, [
@@ -401,7 +417,7 @@ class BookingJournalController extends AbstractController
             } catch (\RuntimeException $e) {
                 $this->addFlash('warning', $e->getMessage());
 
-                return $this->redirectToRoute('journal.batch.entries', ['id' => $entry->getBookingBatch()->getId(), 'filter' => $filter, 'page' => $page]);
+                return $this->redirectAfterEntrySave($return, $entry->getBookingBatch(), $filter, $page);
             }
 
             $em->flush();
@@ -409,10 +425,25 @@ class BookingJournalController extends AbstractController
 
             $this->addFlash('success', 'accounting.journal.flash.entry_updated');
 
-            return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
+            return $this->redirectAfterEntrySave($return, $batch, $filter, $page);
         }
 
         return $this->render('BookingJournal/_entry_form.html.twig', ['form' => $form, 'batch' => $batch]);
+    }
+
+    /**
+     * After saving an entry, return to wherever the edit was started: the yearly
+     * overview when it opened the form (return=year), the month batch otherwise.
+     * The yearly overview shows the whole year at once and has no pages, so the
+     * page number only matters on the way back to a batch.
+     */
+    private function redirectAfterEntrySave(string $return, BookingBatch $batch, string $filter, int $page = 1): Response
+    {
+        if ('year' === $return) {
+            return $this->redirectToRoute('journal.year.entries', ['year' => $batch->getYear()]);
+        }
+
+        return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId(), 'filter' => $filter, 'page' => $page]);
     }
 
     #[Route('/entry/{id}/delete', name: 'journal.entry.delete', methods: ['DELETE'])]

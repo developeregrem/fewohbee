@@ -54,6 +54,30 @@ class BookingEntryRepository extends ServiceEntityRepository
         return new Paginator($qb->getQuery(), false);
     }
 
+    /**
+     * All entries of a year for the read-only yearly overview, ordered by date
+     * and document number. Eager-loads the accounts, tax rate and batch so the
+     * table renders without a query per row - the whole year is shown at once.
+     *
+     * @return BookingEntry[]
+     */
+    public function findAllByYear(int $year): array
+    {
+        return $this->createQueryBuilder('e')
+            ->addSelect('da', 'ca', 't', 'b')
+            ->join('e.bookingBatch', 'b')
+            ->leftJoin('e.debitAccount', 'da')
+            ->leftJoin('e.creditAccount', 'ca')
+            ->leftJoin('e.taxRate', 't')
+            ->where('b.year = :year')
+            ->setParameter('year', $year)
+            ->orderBy('e.date', 'ASC')
+            ->addOrderBy('e.documentNumber', 'ASC')
+            ->addOrderBy('e.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countByTaxRate(TaxRate $taxRate): int
     {
         return (int) $this->createQueryBuilder('e')
