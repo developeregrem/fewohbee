@@ -324,6 +324,19 @@ final class CreatePercentageEntryActionTest extends TestCase
         self::assertSame(['Übernachtung', 'Endreinigung'], $this->descriptionsOf($positions));
     }
 
+    public function testMarksTheEntryAsComingFromAWorkflow(): void
+    {
+        // createEntryFromStatement() serves the bank import and hands back
+        // something marked manual; a deduction nobody typed in must not stay
+        // that way, or the journal cannot tell the two apart.
+        $capture = null;
+        $action = $this->makeAction(gross: 100.0, capture: $capture);
+
+        $action->execute($this->config(), $this->invoiceWithPositions(), []);
+
+        self::assertSame(BookingEntry::SOURCE_WORKFLOW, $capture['entry']->getSourceType());
+    }
+
     public function testOffersTheNarrowerBaseAsTheDefaultForNewActions(): void
     {
         $action = $this->makeAction(gross: 100.0);
@@ -503,8 +516,14 @@ final class CreatePercentageEntryActionTest extends TestCase
                     'taxRate' => $taxRate,
                 ];
 
-                $entry = $this->createStub(BookingEntry::class);
-                $entry->method('getInvoiceNumber')->willReturn($invoiceNumber);
+                // A real entry, not a stub: the action sets properties on what
+                // it gets back, and a stub would swallow them unseen.
+                $entry = new BookingEntry();
+                $entry->setInvoiceNumber($invoiceNumber);
+                // What the real createEntryFromStatement() leaves behind - the
+                // action is expected to correct it.
+                $entry->setSourceType(BookingEntry::SOURCE_MANUAL);
+                $capture['entry'] = $entry;
 
                 return $entry;
             }
