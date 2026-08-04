@@ -12,6 +12,36 @@ profile:
     auto: Automatisch (System)
     dark: Dunkel
     light: Hell (Standard)
+  apitokens:
+    title: API-Zugänge
+    subtitle: Erstelle persönliche Zugriffstokens, um Daten über die REST-API oder Kalender-Programme abzurufen.
+    name: Bezeichnung
+    token: Token
+    created_at: Angelegt am
+    last_used: Zuletzt genutzt
+    never: nie
+    actions: Aktionen
+    none: Keine API-Zugänge vorhanden.
+    create: API-Zugang anlegen
+    submit: Anlegen
+    created: Der API-Zugang wurde angelegt.
+    deleted: Der API-Zugang wurde gelöscht.
+    created_once_hint: Dein neues Token — es wird nur einmal angezeigt. Kopiere es jetzt und bewahre es sicher auf.
+    copy: Kopieren
+    copied: Kopiert!
+    usage_hint: 'Verwendung: als Header "Authorization: Bearer <Token>" oder in Kalender-Programmen (z. B. Thunderbird) als Passwort zusammen mit deinem Benutzernamen.'
+    expiry:
+      label: Gültigkeit
+      never: unbegrenzt
+      days30: 30 Tage
+      days90: 90 Tage
+      year1: 1 Jahr
+    scopes:
+      label: Berechtigungen
+      min: Wähle mindestens eine Berechtigung aus.
+      reservations_read: Reservierungen lesen
+      calendar_read: Belegungskalender (iCal) lesen
+      statistics_read: Statistiken lesen
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen
