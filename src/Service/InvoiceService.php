@@ -51,6 +51,8 @@ class InvoiceService
         private readonly PriceService $ps,
         private readonly TranslatorInterface $translator,
         private readonly AppSettingsService $appSettingsService,
+        private readonly InvoiceSumCalculator $sums,
+        private readonly OriginFeeCalculator $originFees,
         private readonly ?TouristTaxService $touristTaxService = null,
         private readonly ?InvoiceNumberGenerator $numberGenerator = null,
         // Optional like the two above, so the unit tests that build this service by
@@ -62,65 +64,20 @@ class InvoiceService
     /**
      * Calculates the sums and vats for an invoice.
      *
-     * @param array $apps            The invoice positions for apartment prices
-     * @param array $poss            The invoice positions for miscellaneous prices
-     * @param array $vats            Returns array of all vat values
-     * @param float $brutto          Returns the total price including vat
-     * @param float $netto           Returns the toal price for all vats
-     * @param float $appartmentTotal Returns the total sum for all apartment prices
-     * @param float $miscTotal       Returns the total price for all miscellaneous prices
+     * The arithmetic itself lives in InvoiceSumCalculator; this stays as the
+     * way every existing caller reaches it.
+     *
+     * @param Collection $apps            The invoice positions for apartment prices
+     * @param Collection $poss            The invoice positions for miscellaneous prices
+     * @param array      $vats            Returns array of all vat values
+     * @param float      $brutto          Returns the total price including vat
+     * @param float      $netto           Returns the toal price for all vats
+     * @param float      $appartmentTotal Returns the total sum for all apartment prices
+     * @param float      $miscTotal       Returns the total price for all miscellaneous prices
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
-        $vats = [];
-        $brutto = 0.0;
-        $netto = 0.0;
-        $appartmentTotal = 0.0;
-        $miscTotal = 0.0;
-
-        /* @var $apartment InvoiceAppartment */
-        // $apps = $invoice->getAppartments();
-        // $poss = $invoice->getPositions();
-        foreach ($apps as $apartment) {
-            $apartmentPrice = ($apartment->getIsFlatPrice() ? $apartment->getPrice() : $apartment->getAmount() * $apartment->getPrice());
-
-            if ($apartment->getIncludesVat()) { // price includes vat
-                $vatAmount = (($apartmentPrice * $apartment->getVat()) / (100 + $apartment->getVat()));
-                $bruttoAmount = $apartmentPrice;
-            } else { // price does not include vat
-                $vatAmount = (($apartmentPrice * $apartment->getVat()) / 100);
-                $bruttoAmount = $apartmentPrice + $vatAmount;
-            }
-
-            $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $bruttoAmount;
-            $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
-            $appartmentTotal += $apartmentPrice;
-        }
-
-        foreach ($poss as $pos) {
-            $miscPrice = ($pos->getIsFlatPrice() ? $pos->getPrice() : $pos->getAmount() * $pos->getPrice());
-
-            if ($pos->getIncludesVat()) { // price includes vat
-                $vatAmount = (($miscPrice * $pos->getVat()) / (100 + $pos->getVat()));
-                $bruttoAmount = $miscPrice;
-            } else { // price does not include vat
-                $vatAmount = (($miscPrice * $pos->getVat()) / 100);
-                $bruttoAmount = $miscPrice + $vatAmount;
-            }
-
-            $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $bruttoAmount;
-            $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
-            $miscTotal += $miscPrice;
-        }
-
-        foreach ($vats as $key => $vat) {
-            $brutto += round($vat['brutto'], 2);
-            $netto += round($vat['netto'], 2);
-            $vats[$key]['nettoFormated'] = number_format(round($vat['netto'], 2), 2, ',', '.');
-        }
-        ksort($vats);
+        $this->sums->calculate($apps, $poss, $vats, $brutto, $netto, $appartmentTotal, $miscTotal);
     }
 
     /**
@@ -238,7 +195,7 @@ class InvoiceService
         $periods = $this->getUniqueReservationPeriods($invoice);
         $appartmentNumbers = $this->getUniqueAppartmentsNumber($invoice);
 
-        $surcharge = $this->resolveGuestSurcharge($invoice, $brutto);
+        $originFees = $this->originFees->calculate($invoice);
 
         $params = [
             'invoice' => $invoice,
@@ -255,64 +212,20 @@ class InvoiceService
             // each invoice's own payment period. Null when none is configured.
             'paymentDueDate' => $this->readinessService?->resolveSettingsFor($invoice)?->dueDateFor($invoice->getDate()),
             // The portal's commission and payment fee for a booking through the
-            // reservation's origin. Amounts are zero (not null) when no origin
+            // reservation's origin, worked out by OriginFeeCalculator - the same
+            // one the deduction is booked from, so the guest is shown what the
+            // journal records. Amounts are zero (not null) when no origin
             // applies; originName is null then, so a template can guard with a
             // plain [% if originName %]. A total, if wanted, is originCommission
             // + originPaymentFee - left to the template rather than provided.
-            'originName' => $surcharge['name'],
-            'originCommission' => $surcharge['commission'],
-            'originCommissionFormated' => number_format($surcharge['commission'], 2, ',', '.'),
-            'originPaymentFee' => $surcharge['paymentFee'],
-            'originPaymentFeeFormated' => number_format($surcharge['paymentFee'], 2, ',', '.'),
+            'originName' => $originFees->originName,
+            'originCommission' => $originFees->commission->amount,
+            'originCommissionFormated' => number_format($originFees->commission->amount, 2, ',', '.'),
+            'originPaymentFee' => $originFees->paymentFee->amount,
+            'originPaymentFeeFormated' => number_format($originFees->paymentFee->amount, 2, ',', '.'),
         ];
 
         return $params;
-    }
-
-    /**
-     * The extra a guest paid by booking through the reservation's origin rather
-     * than directly, split into the portal's commission and payment fee, each a
-     * percentage of the gross total. Mirrors the basis the deduction workflows
-     * book on, so the figures shown to the guest match what the portal actually
-     * took: the rates the reservation was booked under, falling back to the
-     * origin's current ones only where none were pinned. Reading the origin
-     * outright would show a figure the journal never booked as soon as a
-     * contract has been renegotiated.
-     *
-     * The first reservation carrying an origin with either percentage decides
-     * it. An invoice mixing origins - or one portal at rates that changed in
-     * between - is shown the first of them here, while the deduction skips such
-     * an invoice rather than pick one; a guest-facing note and a journal entry
-     * do not carry the same weight. Amounts are zero rather than null when
-     * nothing applies, so templates need no null-guard beyond a truthiness
-     * check.
-     *
-     * @return array{name: ?string, commission: float, paymentFee: float}
-     */
-    private function resolveGuestSurcharge(Invoice $invoice, float $brutto): array
-    {
-        $empty = ['name' => null, 'commission' => 0.0, 'paymentFee' => 0.0];
-
-        foreach ($invoice->getReservations() as $reservation) {
-            $origin = $reservation->getReservationOrigin();
-            if (null === $origin) {
-                continue;
-            }
-
-            $commissionPercent = (float) ($reservation->getCommissionPercent() ?? $origin->getCommissionPercent() ?? 0.0);
-            $paymentFeePercent = (float) ($reservation->getPaymentFeePercent() ?? $origin->getPaymentFeePercent() ?? 0.0);
-            if ($commissionPercent <= 0.0 && $paymentFeePercent <= 0.0) {
-                continue;
-            }
-
-            return [
-                'name' => $origin->getName(),
-                'commission' => round($brutto * $commissionPercent / 100.0, 2),
-                'paymentFee' => round($brutto * $paymentFeePercent / 100.0, 2),
-            ];
-        }
-
-        return $empty;
     }
 
     public function generateInvoicePdfXml(TemplatesService $ts, EInvoiceExportService $einvoice, Invoice $invoice, Template $template, InvoiceSettingsData $invoiceSettings): string

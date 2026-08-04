@@ -23,15 +23,16 @@ class ReservationOrigin
     private $color;
 
     /**
-     * The portal's commission for a booking through this origin, as a
-     * percentage of the gross total. Together with the payment fee it makes up
+     * The portal's commission for a booking through this origin, in percent -
+     * of what the invoice marks as commissionable rather than of its gross
+     * total, see OriginFeeCalculator. Together with the payment fee it makes up
      * what the guest carries over the direct price; kept apart so it mirrors
      * the two deductions booked for it. Null when none applies (direct booking).
      */
     #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
     private ?string $commissionPercent = null;
 
-    /** The portal's payment fee, as a percentage of the gross total; see commission. */
+    /** The portal's payment fee in percent, taken of what the portal processed; see commission. */
     #[ORM\Column(type: 'decimal', precision: 5, scale: 2, nullable: true)]
     private ?string $paymentFeePercent = null;
 
@@ -109,7 +110,7 @@ class ReservationOrigin
         return $this;
     }
 
-    /** Portal commission as a percentage of the gross total, null when none applies. */
+    /** Portal commission in percent, null when none applies. */
     public function getCommissionPercent(): ?string
     {
         return $this->commissionPercent;
@@ -122,7 +123,7 @@ class ReservationOrigin
         return $this;
     }
 
-    /** Portal payment fee as a percentage of the gross total, null when none applies. */
+    /** Portal payment fee in percent, null when none applies. */
     public function getPaymentFeePercent(): ?string
     {
         return $this->paymentFeePercent;

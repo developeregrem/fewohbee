@@ -12,6 +12,8 @@ use App\Entity\Reservation;
 use App\Entity\TaxRate;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -194,7 +196,7 @@ final class InvoiceServiceTouristTaxTest extends TestCase
         $appSettingsService = $this->createStub(AppSettingsService::class);
         $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        return new InvoiceService($em, $priceService, $translator, $appSettingsService, $touristTaxService);
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService, new InvoiceSumCalculator(), new OriginFeeCalculator(new InvoiceSumCalculator()), $touristTaxService);
     }
 
     private function makeBreakdown(

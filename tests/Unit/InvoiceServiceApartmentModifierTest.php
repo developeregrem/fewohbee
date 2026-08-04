@@ -15,6 +15,8 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -185,7 +187,7 @@ final class InvoiceServiceApartmentModifierTest extends TestCase
         $appSettingsService = $this->createStub(AppSettingsService::class);
         $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        return new InvoiceService($em, $priceService, $translator, $appSettingsService);
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService, new InvoiceSumCalculator(), new OriginFeeCalculator(new InvoiceSumCalculator()));
     }
 
     /**

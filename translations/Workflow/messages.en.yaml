@@ -82,7 +82,7 @@ workflow:
     percentage_entry_percent: "Percentage (manual)"
     percentage_entry_percent_help: "Share of the selected calculation base, e.g. 12 for a commission or 1.4 for a payment fee. Only used when the source is \"Manual\". Without a condition narrowing it down, every invoice is booked."
     percentage_entry_amount_base: "Calculation base"
-    percentage_entry_amount_base_help: "The amount the percentage is applied to. Lodging levies such as tourist tax are collected on behalf of the municipality and are not commissionable with most portals; every levy shown as such on the invoice is left out. Commission and payment fee can use different bases where the contract says so."
+    percentage_entry_amount_base_help: "The amount a percentage typed in here is applied to. It does not apply to a commission or payment fee taken from the booking origin: what a portal charges those on follows from the booking. Commission then leaves out lodging levies such as tourist tax where the invoice shows them as such, the payment fee does not - the portal processes the full amount."
     percentage_entry_amount_base_without_tourist_tax: "Invoice gross without lodging levies"
     percentage_entry_amount_base_gross: "Full invoice gross"
     percentage_entry_debit_account: "Debit account"

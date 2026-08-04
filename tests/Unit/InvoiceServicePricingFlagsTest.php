@@ -11,6 +11,8 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -258,7 +260,7 @@ final class InvoiceServicePricingFlagsTest extends TestCase
         $appSettingsService = $this->createStub(AppSettingsService::class);
         $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        return new InvoiceService($em, $priceService, $translator, $appSettingsService);
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService, new InvoiceSumCalculator(), new OriginFeeCalculator(new InvoiceSumCalculator()));
     }
 
     private function createRequestStack(): RequestStack

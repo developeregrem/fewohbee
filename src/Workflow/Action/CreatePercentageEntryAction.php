@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Workflow\Action;
 
+use App\Dto\OriginFee;
 use App\Entity\BookingEntry;
 use App\Entity\Invoice;
-use App\Entity\InvoiceAppartment;
-use App\Entity\InvoicePosition;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
-use App\Service\InvoiceService;
+use App\Service\OriginFeeCalculator;
 use App\Workflow\WorkflowSkippedException;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -30,10 +27,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   percentSource   string   – where the percentage comes from, see the constants
  *   percent         string   – the percentage itself, used when the source is
  *                              manual
- *   amountBase      string   – what the percentage is taken of, see the constants.
- *                              Configured per action, so a commission and a payment
- *                              fee added to the same workflow can each use their own
- *                              base - portals rarely charge both on the same amount
+ *   amountBase      string   – what a typed-in percentage is taken of, see the
+ *                              constants. Only read for the manual source: what a
+ *                              portal charges its commission and its payment fee on
+ *                              follows from the booking, not from a setting, and is
+ *                              worked out by OriginFeeCalculator
  *   debitAccountId  int|null – expense (or reverse-charge) account
  *   creditAccountId int|null – account the deduction is taken from, usually the
  *                              same one the invoice itself was booked against
@@ -59,18 +57,11 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
     /** The percentage is taken of the gross total less the tourist-tax positions. */
     public const AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX = 'gross_without_tourist_tax';
 
-    /**
-     * Position group the tourist-tax positions carry, see InvoicePosition::$positionGroup.
-     * They are the pass-through item this code can single out today; anything else
-     * that should stay out of a commission would need its own marker first.
-     */
-    private const POSITION_GROUP_TOURIST_TAX = 'tourist_tax';
-
     public function __construct(
         private readonly BookingJournalService $bookingJournalService,
         private readonly AccountingAccountRepository $accountRepo,
         private readonly TaxRateRepository $taxRateRepo,
-        private readonly InvoiceService $invoiceService,
+        private readonly OriginFeeCalculator $originFees,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -135,6 +126,11 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                 // Offered first and preselected: portals charge commission on what
                 // the house earns, and tourist tax is collected for the municipality.
                 'default' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
+                // Like the percentage above, this only applies to a figure somebody
+                // typed in. What a commission or a payment fee is charged on follows
+                // from the booking (see OriginFeeCalculator), and offering a choice
+                // that is then ignored would be worse than offering none.
+                'showIf' => ['key' => 'percentSource', 'value' => self::PERCENT_SOURCE_MANUAL],
             ],
             [
                 'key' => 'debitAccountId',
@@ -190,13 +186,13 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_unsupported_entity'));
         }
 
-        $percent = $this->resolvePercent($config, $entity);
-        if ($percent <= 0.0) {
+        $fee = $this->resolveFee($config, $entity);
+        if ($fee->percent <= 0.0) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_percentage'));
         }
 
-        $base = $this->baseAmount($config, $entity);
-        $amount = round($base * $percent / 100.0, 2);
+        $base = $fee->base;
+        $amount = $fee->amount;
         if (0.0 === $amount) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_amounts'));
         }
@@ -246,7 +242,7 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         // log is where that gets checked against the portal's own statement.
         return $this->translator->trans('workflow.log.percentage_entry_created', [
             // Formatted like the amount beside it: "1,40" rather than PHP's "1.4".
-            '%percent%' => number_format($percent, 2, ',', '.'),
+            '%percent%' => number_format($fee->percent, 2, ',', '.'),
             '%amount%' => number_format($amount, 2, ',', '.'),
             '%base%' => number_format($base, 2, ',', '.'),
             '%number%' => (string) $entity->getNumber(),
@@ -254,26 +250,39 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
     }
 
     /**
-     * The percentage to book, from wherever the config points it at. Reading it
-     * from the reservation origin keeps commission and payment fee in one place
-     * shared with what the guest is shown, rather than repeated in each
-     * workflow's config where the two could drift apart. An origin source that
+     * The fee to book: its rate, what it is taken of, and the amount that makes.
+     *
+     * For the two origin sources all three come from OriginFeeCalculator, which
+     * is also where the invoice's own figures for the guest come from - a rate
+     * repeated in each workflow's config, or a base picked there, is a rate and
+     * a base that can drift away from what the invoice states. A source that
      * finds no origin or no value yields zero, which the caller treats as
-     * nothing to book - the same as a manual percentage left blank.
+     * nothing to book, the same as a manual percentage left blank.
      *
      * @param array<string, mixed> $config
      */
-    private function resolvePercent(array $config, Invoice $invoice): float
+    private function resolveFee(array $config, Invoice $invoice): OriginFee
     {
         $source = (string) ($config['percentSource'] ?? self::PERCENT_SOURCE_MANUAL);
 
-        // Anything but the two origin sources uses the typed-in field and has no
-        // business looking at the invoice's reservations at all.
+        // Anything but the two origin sources uses the typed-in field, and only
+        // there is the base a matter of configuration: nothing about the booking
+        // says what an arbitrary percentage should be taken of.
         if (self::PERCENT_SOURCE_COMMISSION !== $source && self::PERCENT_SOURCE_PAYMENT_FEE !== $source) {
-            return $this->toPercent($config['percent'] ?? '');
+            return new OriginFee(
+                $this->toPercent($config['percent'] ?? ''),
+                $this->originFees->grossTotal(
+                    $invoice,
+                    // A config that says nothing is treated like a new one. The
+                    // field was part of the action from its first release, so no
+                    // saved workflow predates it.
+                    self::AMOUNT_BASE_GROSS !== (string) ($config['amountBase'] ?? self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX),
+                ),
+            );
         }
 
-        $rates = $this->ratesOnInvoice($invoice, $source);
+        $fees = $this->originFees->calculate($invoice);
+        $fee = self::PERCENT_SOURCE_COMMISSION === $source ? $fees->commission : $fees->paymentFee;
 
         // One entry is booked for the whole invoice, so a single rate has to hold
         // for all of it. Two portals on one invoice, or two bookings taken under
@@ -281,102 +290,18 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
         // invoice carries no attribution of its lines to reservations to split it
         // along. Booking one of the rates on the full amount would be wrong
         // without ever saying so, so this stops and asks for a manual entry.
-        if (count($rates) > 1) {
+        if (!$fee->isAgreedUpon()) {
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_mixed_rates', [
-                '%rates%' => implode(', ', array_keys($rates)),
+                '%rates%' => implode(', ', $fee->rateLabels()),
             ]));
         }
 
-        return 1 === count($rates) ? reset($rates) : 0.0;
+        return $fee;
     }
 
-    /**
-     * The distinct rates the invoice's reservations carry for the given source,
-     * keyed by their formatted form so the caller can name them.
-     *
-     * The rate a reservation was booked under wins over the one its origin carries
-     * today: a portal that renegotiates its commission must not change what an
-     * invoice from last season is charged. Reservations with no rate recorded fall
-     * through to the origin - a pinned rate is an answer whatever it says, an
-     * explicit zero included. A reservation without an origin counts as a rate of
-     * zero, which is what makes a direct booking sharing an invoice with a portal
-     * one show up as the disagreement it is.
-     *
-     * @return array<string, float>
-     */
-    private function ratesOnInvoice(Invoice $invoice, string $source): array
-    {
-        $rates = [];
-
-        foreach ($invoice->getReservations() ?? [] as $reservation) {
-            $origin = $reservation->getReservationOrigin();
-
-            $raw = self::PERCENT_SOURCE_COMMISSION === $source
-                ? $reservation->getCommissionPercent() ?? $origin?->getCommissionPercent()
-                : $reservation->getPaymentFeePercent() ?? $origin?->getPaymentFeePercent();
-
-            $rate = $this->toPercent($raw);
-            // Keyed by the formatted figure: it doubles as the label in the log
-            // and keeps "12", "12.00" and 12.0 from counting as three rates.
-            $rates[number_format($rate, 2, ',', '.').' %'] = $rate;
-        }
-
-        return $rates;
-    }
-
-    /** Reads a percentage as it may have been typed or stored, commas included. */
+    /** Reads a percentage as it may have been typed, commas included. */
     private function toPercent(?string $raw): float
     {
         return (float) str_replace(',', '.', trim((string) $raw));
-    }
-
-    /**
-     * The amount the percentage is taken of.
-     *
-     * A config that says nothing is treated like a new one. The field was part
-     * of the action from its first release, so no saved workflow predates it.
-     */
-    private function baseAmount(array $config, Invoice $invoice): float
-    {
-        $positions = $invoice->getPositions() ?? new ArrayCollection();
-
-        if (self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX === (string) ($config['amountBase'] ?? self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX)) {
-            // Dropped before the sum rather than subtracted afterwards, so the
-            // per-VAT-rate rounding inside calculateSums stays the one the
-            // remaining positions produce on their own.
-            $positions = $positions->filter(
-                fn (InvoicePosition $position): bool => self::POSITION_GROUP_TOURIST_TAX !== $position->getPositionGroup()
-            );
-        }
-
-        return $this->grossTotal($invoice->getAppartments() ?? new ArrayCollection(), $positions);
-    }
-
-    /**
-     * Gross total of the given parts, calculated the same way the invoice itself
-     * calculates the figure it shows.
-     *
-     * @param Collection<int, InvoiceAppartment> $apartments
-     * @param Collection<int, InvoicePosition>   $positions
-     */
-    private function grossTotal(Collection $apartments, Collection $positions): float
-    {
-        $brutto = 0.0;
-        $netto = 0.0;
-        $apartmentTotal = 0.0;
-        $miscTotal = 0.0;
-        $vats = [];
-
-        $this->invoiceService->calculateSums(
-            $apartments,
-            $positions,
-            $vats,
-            $brutto,
-            $netto,
-            $apartmentTotal,
-            $miscTotal,
-        );
-
-        return $brutto;
     }
 }

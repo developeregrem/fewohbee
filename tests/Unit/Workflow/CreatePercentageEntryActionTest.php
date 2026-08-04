@@ -16,7 +16,8 @@ use Doctrine\Common\Collections\Collection;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use App\Service\BookingJournal\BookingJournalService;
-use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Workflow\Action\CreatePercentageEntryAction;
 use App\Workflow\WorkflowSkippedException;
 use PHPUnit\Framework\TestCase;
@@ -496,13 +497,19 @@ final class CreatePercentageEntryActionTest extends TestCase
      */
     private function makeAction(float $gross, mixed &$capture = null, mixed &$capturePositions = null): CreatePercentageEntryAction
     {
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('calculateSums')->willReturnCallback(
-            function ($apartments, $positions, &$vats, &$brutto) use ($gross, &$capturePositions): void {
+        // Stubbed at the sum, so the invoice's own arithmetic stays out of it and
+        // what is left to check is which positions went into the base. The
+        // calculator on top of it is real - picking the base apart is its job,
+        // and stubbing it would leave the action tested against nothing.
+        $sums = $this->createStub(InvoiceSumCalculator::class);
+        $sums->method('grossTotal')->willReturnCallback(
+            function ($apartments, $positions) use ($gross, &$capturePositions): float {
                 $capturePositions = $positions;
-                $brutto = $gross;
+
+                return $gross;
             }
         );
+        $originFees = new OriginFeeCalculator($sums);
 
         $journal = $this->createStub(BookingJournalService::class);
         $journal->method('createEntryFromStatement')->willReturnCallback(
@@ -539,6 +546,6 @@ final class CreatePercentageEntryActionTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturn('ok');
 
-        return new CreatePercentageEntryAction($journal, $accountRepo, $taxRateRepo, $invoiceService, $translator);
+        return new CreatePercentageEntryAction($journal, $accountRepo, $taxRateRepo, $originFees, $translator);
     }
 }
