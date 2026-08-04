@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Dto\OriginFeeBreakdown;
+use App\Entity\Enum\PaymentCollection;
 use App\Entity\Invoice;
+use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
@@ -119,14 +121,14 @@ final class OriginFeeCalculatorTest extends TestCase
 
     // ── the two bases ────────────────────────────────────────────────
 
-    public function testCommissionLeavesTheTouristTaxOutWhileThePaymentFeeKeepsIt(): void
+    public function testCommissionLeavesOutWhatCarriesNoneWhileThePaymentFeeKeepsIt(): void
     {
-        // 100.00 room plus 15.00 tourist tax. Booking.com exempts a separately
-        // billed tourist tax from commission, but processes the money all the
-        // same, so the payment fee is charged on the full amount.
-        $invoice = $this->invoiceWithOrigin('Booking.com', '12.00', '1.40');
-        $invoice->addPosition($this->position('Übernachtung', 'apartment', 100.00));
-        $invoice->addPosition($this->position('Kurtaxe', 'tourist_tax', 15.00));
+        // 100.00 room plus a 15.00 tourist tax the portal collected: exempt from
+        // commission, but the portal handled the money, so its payment fee is
+        // charged on all of it.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addPosition($this->position('Übernachtung', 100.00));
+        $invoice->addPosition($this->position('Kurtaxe', 15.00, commissionable: false));
 
         $fees = $this->calculate($invoice);
 
@@ -136,17 +138,85 @@ final class OriginFeeCalculatorTest extends TestCase
         self::assertSame(1.61, $fees->paymentFee->amount);
     }
 
-    public function testTheBasesAreEqualWhereNoTouristTaxIsBilled(): void
+    public function testWhatTheHouseSellsOnSiteCarriesNeitherFee(): void
+    {
+        // A breakfast ordered at the counter on a portal booking: the portal
+        // neither brokered nor processed it, so it drops out of both bases -
+        // the case a rule about tourist tax alone could never cover.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addPosition($this->position('Übernachtung', 100.00));
+        $invoice->addPosition($this->position('Frühstück vor Ort', 20.00, brokered: false, commissionable: false));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertSame(100.00, $fees->commission->base);
+        self::assertSame(100.00, $fees->paymentFee->base);
+    }
+
+    public function testTheBasesAreEqualWhereEverythingIsBrokeredAndCommissionable(): void
     {
         // The common case, and the reason the split goes unnoticed by most
-        // houses: with no tourist-tax position there is nothing to leave out.
-        $invoice = $this->invoiceWithOrigin('Booking.com', '12.00', '1.40');
-        $invoice->addPosition($this->position('Übernachtung', 'apartment', 115.20));
+        // houses: with nothing exempt there is nothing to leave out.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addPosition($this->position('Übernachtung', 115.20));
 
         $fees = $this->calculate($invoice);
 
         self::assertSame(115.20, $fees->commission->base);
         self::assertSame(115.20, $fees->paymentFee->base);
+    }
+
+    // ── who took the money ───────────────────────────────────────────
+
+    public function testTheStayCarriesNoPaymentFeeWhereTheHouseWasPaidDirectly(): void
+    {
+        // The portal brokered the booking and takes its commission, but it
+        // processed nothing, so there is no payment to charge a fee for.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PROPERTY);
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertSame(200.00, $fees->commission->base);
+        self::assertSame(0.0, $fees->paymentFee->base);
+        self::assertSame(0.0, $fees->paymentFee->amount);
+    }
+
+    public function testTheStayCountsWhereThePortalCollectedThePayment(): void
+    {
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertSame(200.00, $fees->paymentFee->base);
+        self::assertSame(2.80, $fees->paymentFee->amount);
+    }
+
+    public function testWhatWasRecordedOnTheBookingBeatsWhatTheOriginSaysToday(): void
+    {
+        // The portal has since started collecting payments. A booking settled
+        // directly with the house before that must not be charged for it.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->getReservations()->first()->setPaymentCollection(PaymentCollection::PROPERTY);
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertSame(0.0, $fees->paymentFee->base);
+    }
+
+    public function testOneStayPaidToTheHouseSettlesItForTheWholeInvoice(): void
+    {
+        // The base covers the invoice, not a single stay, and charging a payment
+        // fee on money the portal never saw is the error worth avoiding.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addReservation(new Reservation());
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertSame(0.0, $fees->paymentFee->base);
     }
 
     // ── rates that disagree ──────────────────────────────────────────
@@ -205,6 +275,29 @@ final class OriginFeeCalculatorTest extends TestCase
         self::assertSame(12.0, $fees->commission->amount);
     }
 
+    public function testABookingTakenBeforeTheFeesWereSetUpIsChargedThePaymentFeeOnItsStay(): void
+    {
+        // The ordinary order of setting this up: bookings come in through an
+        // origin with nothing configured, and the fees are filled in afterwards.
+        // Such a booking falls back to the origin for its rates, and has to for
+        // who collects as well - or the fee is charged on the extras alone.
+        $origin = new ReservationOrigin();
+        $origin->setName('Booking.com');
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        $origin->setCommissionPercent('12.00');
+        $origin->setPaymentFeePercent('1.40');
+        $origin->setPaymentCollection(PaymentCollection::PORTAL);
+
+        $invoice = $this->invoice();
+        $invoice->addReservation($reservation);
+        $invoice->addAppartment($this->stay(100.0));
+
+        self::assertSame(1.4, $this->calculate($invoice)->paymentFee->amount);
+    }
+
     public function testAnInvoiceWithoutReservationsHasNothingToDisagreeAbout(): void
     {
         $fees = $this->calculate($this->invoice(), gross: 100.0);
@@ -260,16 +353,49 @@ final class OriginFeeCalculatorTest extends TestCase
     }
 
     /** A gross-priced position, VAT included, so its price is its gross. */
-    private function position(string $description, string $group, float $price): InvoicePosition
+    private function position(string $description, float $price, bool $brokered = true, bool $commissionable = true): InvoicePosition
     {
         $position = new InvoicePosition();
         $position->setDescription($description);
-        $position->setPositionGroup($group);
         $position->setPrice($price);
         $position->setVat(7.0);
         $position->setIncludesVat(true);
         $position->setIsFlatPrice(true);
+        $position->setBrokered($brokered);
+        $position->setCommissionable($commissionable);
 
         return $position;
+    }
+
+    /** The room nights, gross-priced, so the stay's price is its gross. */
+    private function stay(float $price): InvoiceAppartment
+    {
+        $stay = new InvoiceAppartment();
+        $stay->setDescription('Doppelzimmer');
+        $stay->setNumber('1');
+        $stay->setStartDate(new \DateTime('2026-06-19'));
+        $stay->setEndDate(new \DateTime('2026-06-21'));
+        $stay->setPersons(2);
+        $stay->setBeds(2);
+        $stay->setPrice($price);
+        $stay->setVat(7.0);
+        $stay->setIncludesVat(true);
+        $stay->setIsFlatPrice(true);
+
+        return $stay;
+    }
+
+    /** An invoice for one 12 % / 1.4 % portal booking, settled as given. */
+    private function invoiceCollectedBy(PaymentCollection $collection): Invoice
+    {
+        $invoice = $this->invoice();
+        $reservation = $this->reservationWithOrigin('Booking.com', '12.00', '1.40');
+        $reservation->getReservationOrigin()->setPaymentCollection($collection);
+        // Assigned after the origin carries its answer - setReservationOrigin()
+        // pins what the origin says at that moment, as it does for the rates.
+        $reservation->setPaymentCollection($collection);
+        $invoice->addReservation($reservation);
+
+        return $invoice;
     }
 }

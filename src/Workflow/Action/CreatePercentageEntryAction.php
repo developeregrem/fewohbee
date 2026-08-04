@@ -54,8 +54,15 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
     /** The percentage is taken of the invoice's full gross total. */
     public const AMOUNT_BASE_GROSS = 'gross';
 
-    /** The percentage is taken of the gross total less the tourist-tax positions. */
-    public const AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX = 'gross_without_tourist_tax';
+    /**
+     * The percentage is taken of the gross total less what carries no commission
+     * - a separately billed tourist tax, and anything the house sells on site.
+     * The stored value still names the tourist tax alone, which is what the
+     * option meant when it was written and what it still amounts to on invoices
+     * from back then; the positions now say it for themselves. It stays as it is
+     * so that workflows saved with it keep their base.
+     */
+    public const AMOUNT_BASE_COMMISSIONABLE = 'gross_without_tourist_tax';
 
     public function __construct(
         private readonly BookingJournalService $bookingJournalService,
@@ -120,12 +127,12 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                 'label' => 'workflow.form.percentage_entry_amount_base',
                 'help' => 'workflow.form.percentage_entry_amount_base_help',
                 'options' => [
-                    ['value' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX, 'label' => 'workflow.form.percentage_entry_amount_base_without_tourist_tax'],
+                    ['value' => self::AMOUNT_BASE_COMMISSIONABLE, 'label' => 'workflow.form.percentage_entry_amount_base_commissionable'],
                     ['value' => self::AMOUNT_BASE_GROSS, 'label' => 'workflow.form.percentage_entry_amount_base_gross'],
                 ],
                 // Offered first and preselected: portals charge commission on what
                 // the house earns, and tourist tax is collected for the municipality.
-                'default' => self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
+                'default' => self::AMOUNT_BASE_COMMISSIONABLE,
                 // Like the percentage above, this only applies to a figure somebody
                 // typed in. What a commission or a payment fee is charged on follows
                 // from the booking (see OriginFeeCalculator), and offering a choice
@@ -276,7 +283,7 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
                     // A config that says nothing is treated like a new one. The
                     // field was part of the action from its first release, so no
                     // saved workflow predates it.
-                    self::AMOUNT_BASE_GROSS !== (string) ($config['amountBase'] ?? self::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX),
+                    self::AMOUNT_BASE_GROSS !== (string) ($config['amountBase'] ?? self::AMOUNT_BASE_COMMISSIONABLE),
                 ),
             );
         }

@@ -293,7 +293,7 @@ final class CreatePercentageEntryActionTest extends TestCase
         $positions = null;
         $action = $this->makeAction(gross: 115.20, capturePositions: $positions);
 
-        $config = $this->config(['amountBase' => CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX]);
+        $config = $this->config(['amountBase' => CreatePercentageEntryAction::AMOUNT_BASE_COMMISSIONABLE]);
         $action->execute($config, $this->invoiceWithPositions(), []);
 
         self::assertSame(['Übernachtung', 'Endreinigung'], $this->descriptionsOf($positions));
@@ -343,7 +343,7 @@ final class CreatePercentageEntryActionTest extends TestCase
         $action = $this->makeAction(gross: 100.0);
 
         self::assertSame(
-            CreatePercentageEntryAction::AMOUNT_BASE_GROSS_WITHOUT_TOURIST_TAX,
+            CreatePercentageEntryAction::AMOUNT_BASE_COMMISSIONABLE,
             $this->amountBaseField($action)['default'] ?? null
         );
     }
@@ -395,8 +395,8 @@ final class CreatePercentageEntryActionTest extends TestCase
 
     /**
      * An invoice carrying one tourist-tax position among ordinary ones. Only the
-     * position group matters here - which of them end up in the sum is what the
-     * base decides, the arithmetic on them is InvoiceService's job.
+     * flags matter here - which of them end up in the sum is what the base
+     * decides, the arithmetic on them is InvoiceSumCalculator's job.
      */
     private function invoiceWithPositions(): Invoice
     {
@@ -419,6 +419,10 @@ final class CreatePercentageEntryActionTest extends TestCase
         $position = new InvoicePosition();
         $position->setDescription($description);
         $position->setPositionGroup($group);
+        // As InvoiceService marks them: a separately billed tourist tax carries
+        // no commission, which is what the narrower base now goes by. The group
+        // is left on for what it is for, telling the invoice how to lay them out.
+        $position->setCommissionable('tourist_tax' !== $group);
 
         return $position;
     }

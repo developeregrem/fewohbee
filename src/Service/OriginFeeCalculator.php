@@ -23,34 +23,25 @@ use Doctrine\Common\Collections\Collection;
  * separately, and the deduction's base was a workflow setting the render path
  * had no way of reading.
  *
- * The bases differ because the fees are charged on different things:
+ * Neither base is a rule about invoices; both are read off what the invoice
+ * records about itself. Every position says whether a portal brokered it and
+ * whether commission is charged on it (see InvoicePosition), and the reservation
+ * says who collected the payment. So:
  *
- * - Commission is taken on what the house earns. Booking.com exempts the
- *   tourist tax from it as long as the tax is entered on their side as a
- *   separate local tax or as payable on arrival, which is how a tax that shows
- *   up as a position of its own here is set up. Tourist tax therefore drops out
- *   of the base.
- * - The payment fee is taken on what the portal actually processed, tourist tax
- *   included when the portal collected it.
+ * - Commission is taken on the stay plus every position marked commissionable.
+ *   A separately billed tourist tax is not one - see
+ *   InvoicePosition::$commissionable for what that rests on - and neither is
+ *   what the house sells on site.
+ * - The payment fee is taken on what the portal actually processed: the brokered
+ *   positions, plus the stay where the portal collected the payment for it. A
+ *   booking the house was paid for directly leaves the portal nothing to charge
+ *   a payment fee on, however much it brokered.
  *
- * That second base is the rough one for now: whether the portal collected the
- * payment at all is not recorded yet, so the full gross stands in for it. It
- * overstates the fee for a stay whose tourist tax the house collects on
- * arrival. The figure is in the workflow log (%base% in
- * workflow.log.percentage_entry_created), so it can be checked against the
- * portal's own statement and corrected. Once a position can say whether the
- * portal brokered it, both bases are read off the positions instead and this is
- * the only place that changes.
+ * The stay itself carries no such flags. It needs none: it is the thing the
+ * portal brokered, and commission on it is the whole point of the arrangement.
  */
 class OriginFeeCalculator
 {
-    /**
-     * Position group the tourist-tax positions carry, see
-     * InvoicePosition::$positionGroup and
-     * InvoiceService::makeTouristTaxPosition().
-     */
-    private const POSITION_GROUP_TOURIST_TAX = 'tourist_tax';
-
     public function __construct(
         private readonly InvoiceSumCalculator $sums,
     ) {
@@ -65,14 +56,22 @@ class OriginFeeCalculator
             $this->fee(
                 $invoice,
                 $shown,
-                $this->grossTotal($invoice, excludeTouristTax: true),
+                $this->baseOf(
+                    $invoice,
+                    static fn (InvoicePosition $p): bool => $p->isCommissionable(),
+                    includeStay: true,
+                ),
                 static fn (Reservation $r): ?string => $r->getCommissionPercent()
                     ?? $r->getReservationOrigin()?->getCommissionPercent(),
             ),
             $this->fee(
                 $invoice,
                 $shown,
-                $this->grossTotal($invoice, excludeTouristTax: false),
+                $this->baseOf(
+                    $invoice,
+                    static fn (InvoicePosition $p): bool => $p->isBrokered(),
+                    includeStay: $this->portalCollectedThePayment($invoice),
+                ),
                 static fn (Reservation $r): ?string => $r->getPaymentFeePercent()
                     ?? $r->getReservationOrigin()?->getPaymentFeePercent(),
             ),
@@ -80,27 +79,75 @@ class OriginFeeCalculator
     }
 
     /**
-     * The gross total of an invoice, optionally without its tourist tax.
+     * The gross total of an invoice, optionally counting only what a commission
+     * would be charged on.
      *
-     * Public for the one caller that still picks its own base: a workflow
-     * booking a percentage somebody typed in, where nothing but the config says
-     * what the percentage is of.
+     * Public for the one caller that picks its own base: a workflow booking a
+     * percentage somebody typed in, where nothing about the booking says what
+     * the percentage is of and only the config can answer.
      */
-    public function grossTotal(Invoice $invoice, bool $excludeTouristTax): float
+    public function grossTotal(Invoice $invoice, bool $commissionableOnly = false): float
     {
-        $positions = $invoice->getPositions() ?? new ArrayCollection();
+        return $this->baseOf(
+            $invoice,
+            static fn (InvoicePosition $p): bool => !$commissionableOnly || $p->isCommissionable(),
+            includeStay: true,
+        );
+    }
 
-        if ($excludeTouristTax) {
-            // Dropped before the sum rather than subtracted afterwards, so the
-            // per-VAT-rate rounding inside the sum stays the one the remaining
-            // positions produce on their own.
-            $positions = $positions->filter(
-                static fn (InvoicePosition $position): bool => self::POSITION_GROUP_TOURIST_TAX !== $position->getPositionGroup()
-            );
+    /**
+     * The sum of the parts a fee is charged on.
+     *
+     * Positions are dropped before the sum rather than subtracted afterwards, so
+     * the per-VAT-rate rounding stays the one the remaining parts produce on
+     * their own.
+     *
+     * @param callable(InvoicePosition): bool $keep
+     */
+    private function baseOf(Invoice $invoice, callable $keep, bool $includeStay): float
+    {
+        /** @var Collection<int, InvoicePosition> $positions */
+        $positions = ($invoice->getPositions() ?? new ArrayCollection())->filter($keep);
+
+        $stay = $includeStay
+            ? $invoice->getAppartments() ?? new ArrayCollection()
+            : new ArrayCollection();
+
+        return $this->sums->grossTotal($stay, $positions);
+    }
+
+    /**
+     * Whether the portal took the money for the stay itself.
+     *
+     * Every reservation has to say so, and one without an origin never does. An
+     * invoice mixing a portal booking with a direct one has no single answer,
+     * and charging a payment fee on a stay the house was paid for directly is
+     * the error worth avoiding - the other way round it costs the house nothing
+     * it cannot correct.
+     *
+     * What was recorded on the reservation wins over what its origin says today,
+     * as with the rates: a portal that starts collecting payments must not
+     * rewrite how older bookings were settled. Where nothing was recorded the
+     * origin answers, and where there is no origin either, nobody but the house
+     * took anything.
+     */
+    private function portalCollectedThePayment(Invoice $invoice): bool
+    {
+        $reservations = $invoice->getReservations() ?? new ArrayCollection();
+        if (0 === count($reservations)) {
+            return false;
         }
 
-        /** @var Collection<int, InvoicePosition> $positions */
-        return $this->sums->grossTotal($invoice->getAppartments() ?? new ArrayCollection(), $positions);
+        foreach ($reservations as $reservation) {
+            $collection = $reservation->getPaymentCollection()
+                ?? $reservation->getReservationOrigin()?->getPaymentCollection();
+
+            if (null === $collection || !$collection->isPortal()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
