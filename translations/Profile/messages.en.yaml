@@ -40,7 +40,7 @@ profile:
       label: Permissions
       min: Select at least one permission.
       reservations_read: Read reservations
-      calendar_read: Read occupancy calendar (iCal)
+      calendar_read: Read calendars (iCal export, holidays, custom calendars)
       statistics_read: Read statistics
   passkeys:
     title: Passwordless sign-in (Passkeys)

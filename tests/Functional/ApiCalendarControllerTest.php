@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\Calendar;
+use App\Entity\CalendarEntry;
 use App\Entity\CalendarSync;
 use App\Entity\Enum\ApiScope;
 use App\Entity\Role;
@@ -82,6 +84,102 @@ final class ApiCalendarControllerTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testHolidaysForCountryAndSubdivision(): void
+    {
+        $client = static::createClient();
+        [$user, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+
+        $client->request('GET', '/api/v1/calendar/holidays?start=2026-10-01&end=2026-10-31&country=DE', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+        $dates = array_column($payload['data'] ?? [], 'date');
+        self::assertContains('2026-10-03', $dates, 'German Unity Day must be included.');
+
+        // Reformationstag is a holiday in Saxony but not nationwide.
+        $client->request('GET', '/api/v1/calendar/holidays?start=2026-10-31&end=2026-10-31&country=DE&subdivision=DE-SN', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertNotEmpty($payload['data'] ?? []);
+        self::assertSame('DE-SN', $payload['meta']['subdivision'] ?? null);
+    }
+
+    public function testHolidaysRejectsUnknownCountryAndForeignSubdivision(): void
+    {
+        $client = static::createClient();
+        [, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+
+        $client->request('GET', '/api/v1/calendar/holidays?country=XX', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseStatusCodeSame(400);
+
+        $client->request('GET', '/api/v1/calendar/holidays?country=DE&subdivision=AT-1', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testCalendarsAndEntries(): void
+    {
+        $client = static::createClient();
+        [, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        $calendar = new Calendar();
+        $calendar->setName('api-test-'.bin2hex(random_bytes(4)));
+        $em->persist($calendar);
+        $entry = new CalendarEntry();
+        $entry->setCalendar($calendar);
+        $entry->setDate(new \DateTimeImmutable('2026-05-10'));
+        $entry->setTitle('Restmüll');
+        $em->persist($entry);
+        $em->flush();
+
+        $client->request('GET', '/api/v1/calendars', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+        $names = array_column($payload['data'] ?? [], 'name');
+        self::assertContains($calendar->getName(), $names);
+
+        $client->request('GET', sprintf('/api/v1/calendars/%d/entries?start=2026-05-01&end=2026-05-31', $calendar->getId()), [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+        self::assertSame(1, $payload['meta']['count'] ?? null);
+        self::assertSame('Restmüll', $payload['data'][0]['title'] ?? null);
+        self::assertSame('2026-05-10', $payload['data'][0]['date'] ?? null);
+        self::assertTrue($payload['data'][0]['isManuallyCreated'] ?? null);
+    }
+
+    public function testEntriesUnknownCalendarReturns404(): void
+    {
+        $client = static::createClient();
+        [, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::CALENDAR_READ->value]);
+
+        $client->request('GET', '/api/v1/calendars/999999/entries', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testHolidaysWithoutCalendarScopeReturns403(): void
+    {
+        $client = static::createClient();
+        [, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::RESERVATIONS_READ->value]);
+
+        $client->request('GET', '/api/v1/calendar/holidays', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$plainToken,
+        ]);
+        self::assertResponseStatusCodeSame(403);
     }
 
     private function getSyncedApartmentId(): int

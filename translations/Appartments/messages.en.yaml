@@ -47,9 +47,9 @@ calendar:
         private_url:
           hint: >-
             This address works even without public sharing. Access requires an
-            API token (permission "Read occupancy calendar (iCal)") which can
-            be created in your profile — e.g. in calendar applications as the
-            password together with your username.
+            API token (permission "Read calendars") which can be created in
+            your profile — e.g. in calendar applications as the password
+            together with your username.
           title: Private address in iCal format
       hint: >-
         Share the booking plan for this room with other applications that

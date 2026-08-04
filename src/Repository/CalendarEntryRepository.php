@@ -174,4 +174,22 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Entries of a single calendar inside the given period, date-ascending.
+     *
+     * @return CalendarEntry[]
+     */
+    public function findForCalendarAndPeriod(Calendar $calendar, \DateTimeInterface $from, \DateTimeInterface $to): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.calendar = :calendar')
+            ->andWhere('e.date BETWEEN :from AND :to')
+            ->setParameter('calendar', $calendar)
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('e.date', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

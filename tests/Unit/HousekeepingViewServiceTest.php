@@ -10,6 +10,7 @@ use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
 use App\Repository\RoomDayStatusRepository;
 use App\Service\HousekeepingViewService;
+use App\Service\ReservationNameResolver;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -67,7 +68,8 @@ final class HousekeepingViewServiceTest extends TestCase
             $this->createStub(ReservationRepository::class),
             $this->createStub(RoomDayStatusRepository::class),
             $this->createStub(TranslatorInterface::class),
-            $this->createStub(RoomBlockRepository::class)
+            $this->createStub(RoomBlockRepository::class),
+            new ReservationNameResolver()
         );
 
         $result = $service->resolveOccupancyForDay($date, $reservations);
@@ -115,7 +117,8 @@ final class HousekeepingViewServiceTest extends TestCase
             $this->createStub(ReservationRepository::class),
             $this->createStub(RoomDayStatusRepository::class),
             $this->createStub(TranslatorInterface::class),
-            $this->createStub(RoomBlockRepository::class)
+            $this->createStub(RoomBlockRepository::class),
+            new ReservationNameResolver()
         );
     }
 

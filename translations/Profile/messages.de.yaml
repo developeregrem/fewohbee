@@ -40,7 +40,7 @@ profile:
       label: Berechtigungen
       min: Wähle mindestens eine Berechtigung aus.
       reservations_read: Reservierungen lesen
-      calendar_read: Belegungskalender (iCal) lesen
+      calendar_read: Kalender lesen (iCal-Export, Feiertage, eigene Kalender)
       statistics_read: Statistiken lesen
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
