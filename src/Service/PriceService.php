@@ -173,6 +173,12 @@ class PriceService
             $price->setIsDefaultActiveInReservationCreation(false);
         }
 
+        // Off means the house sells this on site: a portal neither brokered nor
+        // processed it, so none of its fees are charged on it. On is the ordinary
+        // case and how the switch starts out, so a price saved without touching
+        // it keeps counting towards a portal's fees as it did before.
+        $price->setBrokered(null != $request->request->get('brokered-'.$id));
+
         $mandatoryOnline = 1 == $price->getType() && null != $request->request->get('isMandatoryOnline-'.$id);
         $bookableOnline = 1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id);
         // Pflicht impliziert online verfügbar — auch wenn der Switch im UI gesperrt war.

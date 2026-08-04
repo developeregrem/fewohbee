@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PaymentCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -65,6 +66,19 @@ class Reservation
     /** The portal's payment fee when this reservation was booked; see commission. */
     #[ORM\Column(name: 'payment_fee_percent', type: 'decimal', precision: 5, scale: 2, nullable: true)]
     private ?string $paymentFeePercent = null;
+
+    /**
+     * Who collected the payment for this booking, pinned from the origin the
+     * same way the two rates are - a portal that switches to collecting
+     * payments itself must not change what happened to bookings settled before.
+     *
+     * Null where nothing is recorded: bookings that predate the column, any
+     * without an origin, and any whose origin charged no fee when it was
+     * assigned - the same bookings whose rates are left open. Those fall back to
+     * the origin, which answers for the house where there is none.
+     */
+    #[ORM\Column(name: 'payment_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
+    private ?PaymentCollection $paymentCollection = null;
     #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
     #[ORM\ManyToMany(targetEntity: Price::class)]
@@ -321,6 +335,14 @@ class Reservation
         if ($reservationOrigin !== $this->reservationOrigin) {
             $this->commissionPercent = $this->pinnedRate($reservationOrigin?->getCommissionPercent());
             $this->paymentFeePercent = $this->pinnedRate($reservationOrigin?->getPaymentFeePercent());
+            // Who collects is pinned along with the rates, and like them only
+            // where the origin charges a fee. Without one the origin is not
+            // asked who collects and keeps its default of the house - an answer
+            // nobody gave. Pinning it would leave a booking taken before the
+            // fees were set up with the rates it falls back to, but without the
+            // stay in the payment fee's base, and nothing would say so.
+            $chargesFees = null !== $this->commissionPercent || null !== $this->paymentFeePercent;
+            $this->paymentCollection = $chargesFees ? $reservationOrigin?->getPaymentCollection() : null;
         }
 
         $this->reservationOrigin = $reservationOrigin;
@@ -367,6 +389,22 @@ class Reservation
     public function setPaymentFeePercent(?string $paymentFeePercent): self
     {
         $this->paymentFeePercent = $paymentFeePercent;
+
+        return $this;
+    }
+
+    /**
+     * Who collected the payment for this booking, null when nothing was
+     * recorded - then the origin answers, see the property.
+     */
+    public function getPaymentCollection(): ?PaymentCollection
+    {
+        return $this->paymentCollection;
+    }
+
+    public function setPaymentCollection(?PaymentCollection $paymentCollection): self
+    {
+        $this->paymentCollection = $paymentCollection;
 
         return $this;
     }

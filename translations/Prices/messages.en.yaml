@@ -74,6 +74,8 @@ price.isflatprice: flat rate
 price.perroom: per night (else per person)
 price.defaultactiveinreservationcreation: active by default in reservation creation
 price.bookableonline: Available for online booking
+price.brokered: Part of a portal booking
+price.brokered.hint: Switch off for what the house sells on site, such as a breakfast ordered at the counter. A portal charges neither commission nor payment fee on it.
 price.mandatoryonline: Mandatory in online booking
 price.mandatoryonline.hint: The guest cannot deselect this item.
 price.visibility.label: Visibility & availability

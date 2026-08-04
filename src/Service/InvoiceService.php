@@ -597,7 +597,38 @@ class InvoiceService
             }
         }
 
-        return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row), array_values($aggregates));
+        $brokered = $this->touristTaxIsCollectedByPortal($reservations);
+
+        return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row, $brokered), array_values($aggregates));
+    }
+
+    /**
+     * Whether the portal collects the tourist tax for these reservations, which
+     * decides whether its payment fee is charged on it. Commission is not at
+     * stake here: a separately billed tourist tax carries none either way.
+     *
+     * Every reservation has to agree and carry an origin that says so. The
+     * positions are aggregated across reservations and no longer know which one
+     * they came from, and a stay whose tax the house collects must not be swept
+     * into a portal's payment fee by a booking sharing the invoice with it.
+     *
+     * @param array<Reservation|null> $reservations
+     */
+    private function touristTaxIsCollectedByPortal(array $reservations): bool
+    {
+        $reservations = array_filter($reservations, static fn ($r): bool => $r instanceof Reservation);
+        if ([] === $reservations) {
+            return false;
+        }
+
+        foreach ($reservations as $reservation) {
+            $origin = $reservation->getReservationOrigin();
+            if (null === $origin || !$origin->getTouristTaxCollection()->isPortal()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function touristTaxAggregateKey(TouristTaxBreakdown $row): string
@@ -793,7 +824,7 @@ class InvoiceService
         };
     }
 
-    private function makeTouristTaxPosition(TouristTaxBreakdown $row): InvoicePosition
+    private function makeTouristTaxPosition(TouristTaxBreakdown $row, bool $brokered = false): InvoicePosition
     {
         $position = new InvoicePosition();
         $position->setVat(null !== $row->taxRate ? $row->taxRate->getRateFloat() : 0.0);
@@ -802,6 +833,12 @@ class InvoiceService
         $position->setIsPerRoom(false);
         $position->setRevenueAccount($row->revenueAccount);
         $position->setPositionGroup('tourist_tax');
+        // Billed as a position of its own, which is taken to carry no commission
+        // - an assumption, see InvoicePosition::$commissionable. Whether the
+        // portal processed the money is a separate question, and the one the
+        // caller answers.
+        $position->setCommissionable(false);
+        $position->setBrokered($brokered);
 
         if (TaxCalculationMode::PER_NIGHT_FLAT === $row->calculationMode) {
             $description = $this->translator->trans('invoice.tourist_tax.position', [
@@ -1079,6 +1116,10 @@ class InvoiceService
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($price->getRevenueAccount());
             $position->setPositionGroup('misc');
+            // What a portal brokers is decided per service and recorded here, so
+            // a price whose answer changes next season leaves this invoice as it
+            // was.
+            $position->markBrokered($price->isBrokered());
             $positions[] = $position;
         }
 
@@ -1114,6 +1155,9 @@ class InvoiceService
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($component['component']->getRevenueAccount() ?? $price->getRevenueAccount());
             $position->setPositionGroup('misc');
+            // The package is what was booked, so its answer covers the components
+            // it is broken into.
+            $position->markBrokered($price->isBrokered());
             $positions[] = $position;
         }
 

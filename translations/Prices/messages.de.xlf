@@ -222,6 +222,14 @@
                 <source>price.defaultactiveinreservationcreation</source>
                 <target>Bei Reservierungs-Neuanlage standardmäßig aktiv</target>
             </trans-unit>
+            <trans-unit id="price.brokered">
+                <source>price.brokered</source>
+                <target>Teil einer Portalbuchung</target>
+            </trans-unit>
+            <trans-unit id="price.brokered.hint">
+                <source>price.brokered.hint</source>
+                <target>Ausschalten für Leistungen, die das Haus vor Ort verkauft, etwa ein an der Rezeption bestelltes Frühstück. Darauf berechnet ein Portal weder Kommission noch Zahlungsgebühr.</target>
+            </trans-unit>
             <trans-unit id="price.bookableonline">
                 <source>price.bookableonline</source>
                 <target>Für Online-Buchung verfügbar</target>

@@ -42,6 +42,26 @@
                 <source>reservationorigin.payment_fee_percent</source>
                 <target>Zahlungsgebühr</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.payment_collection">
+                <source>reservationorigin.payment_collection</source>
+                <target>Zahlung wird eingezogen von</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.tourist_tax_collection">
+                <source>reservationorigin.tourist_tax_collection</source>
+                <target>Kurtaxe wird eingezogen von</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.tourist_tax_collection.hint">
+                <source>reservationorigin.tourist_tax_collection.hint</source>
+                <target>Die Zahlungsgebühr berechnet ein Portal auf den Betrag, den es abgewickelt hat. Auf die Kommission wirkt sich das nicht aus: eine separat ausgewiesene Kurtaxe wird als kommissionsfrei behandelt. Voraussetzung ist, dass sie auch beim Portal getrennt eingerichtet ist - steckt sie im Zimmerpreis, ist sie für das Portal keine eigene Kurtaxe.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.collection.property">
+                <source>reservationorigin.collection.property</source>
+                <target>dem Haus</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.collection.portal">
+                <source>reservationorigin.collection.portal</source>
+                <target>dem Portal</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>

@@ -126,6 +126,11 @@
                                 <input type="checkbox" name="isDefaultActiveInReservationCreation-{{ price.id }}" id="isDefaultActiveInReservationCreation-{{ price.id }}" class="form-check-input"{% if price.isDefaultActiveInReservationCreation == 1 %} checked{% endif %}{% if not isMiscPriceType %} disabled{% endif %} value="1">
                                 <label class="form-check-label" for="isDefaultActiveInReservationCreation-{{ price.id }}">{{ 'price.defaultactiveinreservationcreation'|trans }}</label>
                             </div>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="brokered-{{ price.id }}" id="brokered-{{ price.id }}" class="form-check-input"{% if price.brokered %} checked{% endif %} value="1">
+                                <label class="form-check-label" for="brokered-{{ price.id }}">{{ 'price.brokered'|trans }}</label>
+                                <div class="form-text small"><i class="fas fa-info-circle"></i> {{ 'price.brokered.hint'|trans }}</div>
+                            </div>
                             <div class="form-check form-switch{% if not isMiscPriceType %} d-none{% endif %}" id="bookable-online-wrap-{{ price.id }}">
                                 <input type="checkbox" name="isBookableOnline-{{ price.id }}" id="isBookableOnline-{{ price.id }}" class="form-check-input"
                                        data-action="change->prices#bookableOnlineChangeAction"

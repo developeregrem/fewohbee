@@ -8,6 +8,8 @@ import {
     getLocalStorageItem,
     updatePDFExportLinks,
     enableDeletePopover,
+    enableTooltips,
+    disposeTooltips,
     setModalTitle
 } from '../js/utils.js';
 
@@ -23,6 +25,10 @@ const debounce = (fn, delay = 300) => {
 
 export default class extends Controller {
     connect() {
+        // Every form loaded into the modal connects anew, while the bootstrapping
+        // below runs once per page - so tooltips are set up before that guard.
+        this.initTooltips();
+
         this.modalContent = document.getElementById('modal-content-ajax');
         const invoicesBootstrapped = this.modalContent.hasAttribute('data-invoices-bootstrapped');
         if (invoicesBootstrapped) {
@@ -38,6 +44,14 @@ export default class extends Controller {
         if (templateId) {
             updatePDFExportLinks(templateId);
         }
+    }
+
+    async initTooltips() {
+        await enableTooltips(this.element);
+    }
+
+    disconnect() {
+        disposeTooltips(this.element);
     }
 
     // Actions
@@ -249,6 +263,10 @@ export default class extends Controller {
         if (includesVat) includesVat.checked = values[3] === '1';
         if (isFlatPrice) isFlatPrice.checked = values[4] === '1';
         if (isPerRoom) isPerRoom.checked = values[5] === '1';
+        // Carried over from the price like the switches above; a package passes
+        // its answer on to the components it is broken into.
+        const brokered = document.getElementById('invoice_misc_position_brokered');
+        if (brokered && selected) brokered.checked = selected.dataset.brokered !== '0';
         if (isFlatPrice && !isPackage) {
             this.applyFlatPriceState(isFlatPrice, isPerRoom);
         }

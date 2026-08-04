@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Enum\PaymentCollection;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use PHPUnit\Framework\TestCase;
@@ -93,6 +94,45 @@ final class ReservationOriginRatePinningTest extends TestCase
 
         self::assertNull($reservation->getCommissionPercent());
         self::assertNull($reservation->getPaymentFeePercent());
+    }
+
+    public function testPinsWhoCollectsThePaymentAlongWithTheRates(): void
+    {
+        $origin = $this->origin('12.00', '1.40');
+        $origin->setPaymentCollection(PaymentCollection::PORTAL);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        self::assertSame(PaymentCollection::PORTAL, $reservation->getPaymentCollection());
+    }
+
+    public function testKeepsWhoCollectedWhenTheOriginLaterSwitches(): void
+    {
+        // A portal that starts collecting payments itself says nothing about the
+        // bookings it merely passed on before.
+        $origin = $this->origin('12.00', '1.40');
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        $origin->setPaymentCollection(PaymentCollection::PORTAL);
+
+        self::assertSame(PaymentCollection::PROPERTY, $reservation->getPaymentCollection());
+    }
+
+    public function testRecordsNoCollectionForABookingWithoutAnOrigin(): void
+    {
+        // Unlike the rates there is no blank to guard against - an origin always
+        // answers - so only its absence leaves this unrecorded.
+        $origin = $this->origin('12.00', '1.40');
+        $origin->setPaymentCollection(PaymentCollection::PORTAL);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+        $reservation->setReservationOrigin(null);
+
+        self::assertNull($reservation->getPaymentCollection());
     }
 
     private function origin(?string $commission, ?string $paymentFee): ReservationOrigin

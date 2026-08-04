@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Enum\PaymentCollection;
 use App\Entity\ReservationOrigin;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,12 +58,25 @@ class ReservationOriginService
 
             $paymentFee = str_replace(',', '.', trim((string) $request->request->get('payment-fee-'.$id, '')));
             $origin->setPaymentFeePercent('' === $paymentFee ? null : $paymentFee);
+
+            // Who collects the money is only asked where fees are charged, since
+            // that is all it decides. An unreadable value falls back to the
+            // house, which is the answer that charges nothing.
+            $origin->setPaymentCollection($this->collectionFromForm($request, 'payment-collection-'.$id));
+            $origin->setTouristTaxCollection($this->collectionFromForm($request, 'tourist-tax-collection-'.$id));
         } else {
             $origin->setCommissionPercent(null);
             $origin->setPaymentFeePercent(null);
+            $origin->setPaymentCollection(PaymentCollection::PROPERTY);
+            $origin->setTouristTaxCollection(PaymentCollection::PROPERTY);
         }
 
         return $origin;
+    }
+
+    private function collectionFromForm(Request $request, string $field): PaymentCollection
+    {
+        return PaymentCollection::tryFrom((string) $request->request->get($field, '')) ?? PaymentCollection::PROPERTY;
     }
 
     /**

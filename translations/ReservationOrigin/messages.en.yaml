@@ -15,5 +15,10 @@ reservationorigin.name: Description
 reservationorigin.guest_surcharge_enabled: OTA fees
 reservationorigin.commission_percent: Commission
 reservationorigin.payment_fee_percent: Payment fee
+reservationorigin.payment_collection: Payment collected by
+reservationorigin.tourist_tax_collection: Tourist tax collected by
+reservationorigin.tourist_tax_collection.hint: A portal charges its payment fee on what it processed. Commission is not affected - a tourist tax billed separately is treated as carrying none. That assumes it is set up as a separate item at the portal as well; one buried in the room rate is no separate tourist tax as far as the portal is concerned.
+reservationorigin.collection.property: The property
+reservationorigin.collection.portal: The portal
 reservationorigin.private: Private
 reservationorigin.title: Reservation origin

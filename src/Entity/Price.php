@@ -68,6 +68,20 @@ class Price
     private bool $isPerRoom;
     #[ORM\Column(type: 'boolean')]
     private bool $isDefaultActiveInReservationCreation;
+
+    /**
+     * Whether this service is part of what a portal brokers when it is billed on
+     * a booking that came through one.
+     *
+     * False for what the house sells on site - a breakfast the guest orders at
+     * the counter, a late checkout paid in cash - which a portal neither
+     * brokered nor processed and charges no commission or payment fee on. True
+     * for everything booked along with the stay, which is the ordinary case and
+     * the default. Handed on to every invoice position made from this price,
+     * which is where it is then recorded for good.
+     */
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $brokered = true;
     #[ORM\Column(type: 'boolean')]
     private bool $isBookableOnline;
     #[ORM\Column(type: 'boolean')]
@@ -402,6 +416,19 @@ class Price
     public function setIsPerRoom(bool $isPerRoom): self
     {
         $this->isPerRoom = $isPerRoom;
+
+        return $this;
+    }
+
+    /** Whether a portal brokers this service along with the stay, see the property. */
+    public function isBrokered(): bool
+    {
+        return $this->brokered;
+    }
+
+    public function setBrokered(bool $brokered): self
+    {
+        $this->brokered = $brokered;
 
         return $this;
     }

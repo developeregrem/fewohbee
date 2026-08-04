@@ -62,6 +62,31 @@
                 </div>
             </div>
         </div>
+        {# Who takes the money decides what the payment fee is charged on - a
+           portal charges it for processing a payment, so an amount it never
+           handled carries none. Asked twice because a portal can collect the
+           stay while the tourist tax is paid on arrival. #}
+        <div class="row mt-2">
+            <label for="payment-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.payment_collection'|trans }}</label>
+
+            <div class="col-sm-8">
+                <select id="payment-collection-{{ origin.id }}" name="payment-collection-{{ origin.id }}" class="form-select">
+                    <option value="property"{% if origin.paymentCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
+                    <option value="portal"{% if origin.paymentCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <label for="tourist-tax-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.tourist_tax_collection'|trans }}</label>
+
+            <div class="col-sm-8">
+                <select id="tourist-tax-collection-{{ origin.id }}" name="tourist-tax-collection-{{ origin.id }}" class="form-select">
+                    <option value="property"{% if origin.touristTaxCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
+                    <option value="portal"{% if origin.touristTaxCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
+                </select>
+                <div class="form-text small"><i class="fas fa-info-circle"></i> {{ 'reservationorigin.tourist_tax_collection.hint'|trans }}</div>
+            </div>
+        </div>
     </div>
 </fieldset>
 
