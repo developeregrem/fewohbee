@@ -941,6 +941,49 @@ div .reservation-yearly-day {
     content: " *";
 }
 
+/*
+ * Sortable table headers (generic sortable-table Stimulus controller)
+ */
+.sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    padding: 0;
+    text-align: inherit;
+    white-space: nowrap;
+}
+.sort-header:hover,
+.sort-header:focus {
+    color: var(--bs-primary);
+}
+.sort-header .sort-icon {
+    display: inline-flex;
+    justify-content: center;
+    min-width: .75rem;
+    opacity: .45;
+}
+th[aria-sort="ascending"] .sort-icon,
+th[aria-sort="descending"] .sort-icon {
+    opacity: 1;
+}
+
+/*
+ * Zebra striping that counts only the visible rows, so the pattern stays
+ * correct while a filter hides rows (Bootstrap's .table-striped counts hidden
+ * rows via nth-of-type and would break). Mirrors .table-striped's mechanism so
+ * hover and contextual colours keep working. The `of :not(.d-none)` selector
+ * needs a modern browser (Chrome/Edge 111+, Firefox 113+, Safari 9+); older
+ * browsers simply show no striping.
+ */
+.table > tbody > tr:nth-child(even of :not(.d-none)) > * {
+    --bs-table-bg-type: var(--bs-table-striped-bg);
+}
+
 /* compact e-invoice readiness disclosure: hide the default marker, keep the summary clickable */
 details.einvoice-readiness > summary {
     list-style: none;

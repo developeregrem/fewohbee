@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'accounting.journal.year_view.title'|trans }} {{ year }}
+{% endblock %}
+
+{% macro sortth(label, type, extraClass, alignEnd) %}
+    <th{% if extraClass %} class="{{ extraClass }}"{% endif %} aria-sort="none"
+        data-sortable-table-target="header" data-sort-type="{{ type }}">
+        <button type="button" class="sort-header{% if alignEnd %} ms-auto{% endif %}"
+                data-action="click->sortable-table#sort">
+            <span>{{ label }}</span>
+            <span class="sort-icon"><i class="fas fa-sort" aria-hidden="true"></i></span>
+        </button>
+    </th>
+{% endmacro %}
+
+{% macro filterth(index, type, extraClass) %}
+    {% set compare = type in ['number', 'date'] %}
+    {# Date and number columns support comparison operators, but the hint differs:
+       only date columns talk about a "range", numbers get a plain number example. #}
+    {% set placeholderKey = compare ? 'accounting.journal.year_view.filter_compare_placeholder_' ~ type : 'accounting.journal.year_view.filter_placeholder' %}
+    {% set hintKey = 'accounting.journal.year_view.filter_compare_hint_' ~ type %}
+    <th{% if extraClass %} class="{{ extraClass }}"{% endif %}>
+        <input type="search" class="form-control form-control-sm" data-journal-year-table-target="columnFilter"
+               data-column-index="{{ index }}" data-column-type="{{ type }}" data-action="input->journal-year-table#filter"
+               placeholder="{{ placeholderKey|trans }}"
+               {% if compare %}title="{{ hintKey|trans }}"{% endif %}
+               aria-label="{{ 'accounting.journal.year_view.filter_placeholder'|trans }}">
+    </th>
+{% endmacro %}
+
+{% block content %}
+{% import _self as m %}
+<div class="container-fluid px-4" data-controller="sortable-table journal-year-table booking-journal"
+     data-sortable-table-locale-value="{{ app.request.locale|default(app.locale)|replace({'_': '-'}) }}">
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col-auto">
+            <h4 class="mb-0 d-flex align-items-center gap-2">
+                {{ 'accounting.journal.year_view.title'|trans }}
+                {{ 'accounting.journal.batch.year'|trans }}
+                {# Pick the year when more than one is available, otherwise just show it. #}
+                {% if years|length > 1 %}
+                    <select class="form-select" style="width: auto; font-size: inherit; border: 0; box-shadow: none; background-color: transparent; padding-left: .25rem; padding-right: 1.4rem; background-position: right .35rem center"
+                            data-action="change->booking-journal#navigateToYear"
+                            data-url-template="{{ path('journal.year.entries', {'year': '__YEAR__'}) }}"
+                            aria-label="{{ 'accounting.journal.batch.year'|trans }}">
+                        {% for y in years %}
+                            <option value="{{ y.year }}" style="font-size: 1rem; font-weight: 400" {% if y.year == year %}selected{% endif %}>{{ y.year }}</option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    {{ year }}
+                {% endif %}
+            </h4>
+        </div>
+        <div class="col-auto d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm" aria-pressed="false"
+                    data-action="click->journal-year-table#toggleFilters"
+                    title="{{ 'accounting.journal.year_view.toggle_filters'|trans }}">
+                <i class="fas fa-filter"></i> {{ 'accounting.journal.year_view.toggle_filters'|trans }}
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover table-sm align-middle">
+            <thead>
+            <tr>
+                {{ m.sortth('accounting.journal.entry.date'|trans, 'date') }}
+                {{ m.sortth('accounting.journal.entry.doc_number'|trans, 'number') }}
+                {{ m.sortth('accounting.journal.entry.amount'|trans, 'number', 'text-end', true) }}
+                {{ m.sortth('accounting.journal.entry.debit'|trans, 'text') }}
+                {{ m.sortth('accounting.journal.entry.credit'|trans, 'text') }}
+                {{ m.sortth('accounting.journal.entry.tax_rate'|trans, 'text', 'd-none d-md-table-cell') }}
+                {{ m.sortth('accounting.journal.entry.invoice'|trans, 'text', 'd-none d-md-table-cell') }}
+                {{ m.sortth('accounting.journal.entry.remark'|trans, 'text') }}
+            </tr>
+            <tr class="d-none" data-journal-year-table-target="filterRow">
+                {{ m.filterth(0, 'date') }}
+                {{ m.filterth(1, 'number') }}
+                {{ m.filterth(2, 'number', 'text-end') }}
+                {{ m.filterth(3, 'text') }}
+                {{ m.filterth(4, 'text') }}
+                {{ m.filterth(5, 'text', 'd-none d-md-table-cell') }}
+                {{ m.filterth(6, 'text', 'd-none d-md-table-cell') }}
+                {{ m.filterth(7, 'text') }}
+            </tr>
+            </thead>
+            <tbody data-sortable-table-target="tbody" data-journal-year-table-target="tbody">
+            {% for entry in entries %}
+                {% set batch = entry.bookingBatch %}
+                {% if batch.closed %}
+                    <tr class="text-muted" title="{{ 'accounting.journal.year_view.closed_month'|trans }}">
+                {% else %}
+                    <tr role="button" style="cursor: pointer"
+                        data-action="click->booking-journal#openOffcanvas"
+                        data-url="{{ path('journal.entry.edit', {'id': entry.id, 'return': 'year'}) }}"
+                        data-offcanvas-title="{{ 'accounting.journal.entry.edit'|trans }}">
+                {% endif %}
+                    <td data-sort-value="{{ entry.date|date('Y-m-d') }}">
+                        {{ entry.date|date('d.m.Y') }}
+                        {%- if batch.closed %} <i class="fas fa-lock text-muted small"></i>{% endif %}
+                    </td>
+                    <td data-sort-value="{{ entry.documentNumber }}">{{ '%04d'|format(entry.documentNumber) }}</td>
+                    <td class="text-end" data-sort-value="{{ entry.amountFloat }}">{{ entry.amount|number_format(2, ',', '.') }}</td>
+                    <td>{{ entry.debitAccount ? entry.debitAccount.label : (entry.counterAccountLegacy ?? '-') }}</td>
+                    <td>{{ entry.creditAccount ? entry.creditAccount.label : '-' }}</td>
+                    <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
+                    <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                    <td>{{ entry.remark ?? '' }}</td>
+                </tr>
+            {% else %}
+                <tr data-empty-row><td colspan="8" class="text-center text-muted">{{ 'accounting.journal.entry.empty'|trans }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Offcanvas for the entry edit form ───────────────────── #}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="journalOffcanvas"
+         data-booking-journal-target="offcanvas">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" data-booking-journal-target="offcanvasTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" data-booking-journal-target="offcanvasBody">
+        </div>
+    </div>
+</div>
+{% endblock %}

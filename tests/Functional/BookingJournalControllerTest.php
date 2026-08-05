@@ -218,6 +218,88 @@ final class BookingJournalControllerTest extends WebTestCase
         self::assertResponseRedirects();
     }
 
+    // ── Yearly view ─────────────────────────────────────────────────
+
+    public function testYearViewShowsEntriesOfThatYear(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $em = $this->getEntityManager();
+        $em->createQuery('DELETE FROM App\Entity\BookingEntry e WHERE e.bookingBatch IN (SELECT b.id FROM App\Entity\BookingBatch b WHERE b.year = 2097)')->execute();
+        $em->createQuery('DELETE FROM App\Entity\BookingBatch b WHERE b.year = 2097')->execute();
+
+        $batch = new BookingBatch();
+        $batch->setYear(2097);
+        $batch->setMonth(3);
+        $batch->setIsClosed(false);
+        $batch->setCashStart(0);
+        $batch->setCashEnd(0);
+        $em->persist($batch);
+
+        $entry = new BookingEntry();
+        $entry->setBookingBatch($batch);
+        $entry->setDate(new \DateTime('2097-03-15'));
+        $entry->setDocumentNumber(1);
+        $entry->setAmount('42.00');
+        $entry->setRemark('Jahresansicht-Testbuchung');
+        $em->persist($entry);
+        $em->flush();
+
+        $client->request('GET', '/journal/year/2097');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Jahresansicht-Testbuchung');
+        // Open-batch rows open the edit offcanvas and return to the yearly view.
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('booking-journal#openOffcanvas', $content);
+        self::assertStringContainsString('return=year', $content);
+    }
+
+    public function testYearViewDoesNotOfferEditingForClosedMonths(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $em = $this->getEntityManager();
+        $em->createQuery('DELETE FROM App\Entity\BookingEntry e WHERE e.bookingBatch IN (SELECT b.id FROM App\Entity\BookingBatch b WHERE b.year = 2096)')->execute();
+        $em->createQuery('DELETE FROM App\Entity\BookingBatch b WHERE b.year = 2096')->execute();
+
+        $batch = new BookingBatch();
+        $batch->setYear(2096);
+        $batch->setMonth(5);
+        $batch->setIsClosed(true);
+        $batch->setCashStart(0);
+        $batch->setCashEnd(0);
+        $em->persist($batch);
+
+        $entry = new BookingEntry();
+        $entry->setBookingBatch($batch);
+        $entry->setDate(new \DateTime('2096-05-10'));
+        $entry->setDocumentNumber(1);
+        $entry->setAmount('7.00');
+        $entry->setRemark('Geschlossen-Testbuchung');
+        $em->persist($entry);
+        $em->flush();
+
+        $client->request('GET', '/journal/year/2096');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Geschlossen-Testbuchung');
+        // No edit trigger for the closed month.
+        self::assertStringNotContainsString('booking-journal#openOffcanvas', (string) $client->getResponse()->getContent());
+    }
+
+    public function testYearViewIsForbiddenWithoutRole(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createUserWithRoles([]));
+
+        $client->request('GET', '/journal/year/2097');
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────
 
     private function getEntityManager(): EntityManagerInterface
