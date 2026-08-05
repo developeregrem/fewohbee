@@ -118,30 +118,34 @@ final class ApiInvoicesControllerTest extends WebTestCase
 
     public function testReservationsExposeInvoiceRefsOnlyWithInvoiceScope(): void
     {
-        $invoice = $this->getInvoiceWithReservation();
-        $reservation = $invoice->getReservations()->first();
-        $day = $reservation->getStartDate()->format('Y-m-d');
-        $uri = sprintf('/api/v1/reservations?start=%s&end=%s', $day, $day);
-
         // With both scopes: the linked invoice shows up as a compact reference.
         $client = static::createClient();
         [, $bothToken] = $this->createUserWithToken(
             ['ROLE_RESERVATIONS_RO', 'ROLE_INVOICES'],
             [ApiScope::RESERVATIONS_READ->value, ApiScope::INVOICES_READ->value]
         );
+
+        // Read everything needed up front: the second half of this test restarts
+        // the kernel, which detaches the entity from its entity manager.
+        $invoice = $this->getInvoiceWithReservation();
+        $invoiceId = (int) $invoice->getId();
+        $invoiceNumber = $invoice->getNumber();
+        $day = $invoice->getReservations()->first()->getStartDate()->format('Y-m-d');
+        $uri = sprintf('/api/v1/reservations?start=%s&end=%s', $day, $day);
+
         $this->requestWithBearer($client, $uri, $bothToken);
         self::assertResponseIsSuccessful();
         $payload = json_decode((string) $client->getResponse()->getContent(), true);
         $found = null;
         foreach ($payload['data'] as $row) {
             foreach ($row['invoices'] ?? [] as $ref) {
-                if ($ref['id'] === $invoice->getId()) {
+                if ($ref['id'] === $invoiceId) {
                     $found = $ref;
                 }
             }
         }
         self::assertNotNull($found, 'Linked invoice must be listed on the reservation.');
-        self::assertSame($invoice->getNumber(), $found['number']);
+        self::assertSame($invoiceNumber, $found['number']);
         self::assertArrayHasKey('code', $found['status']);
         self::assertArrayNotHasKey('totals', $found, 'Reservation refs must stay metadata-only.');
 

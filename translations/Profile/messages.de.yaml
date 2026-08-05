@@ -27,6 +27,11 @@ profile:
     created: Der API-Zugang wurde angelegt.
     deleted: Der API-Zugang wurde gelöscht.
     created_once_hint: Dein neues Token — es wird nur einmal angezeigt. Kopiere es jetzt und bewahre es sicher auf.
+    openapi: API-Beschreibung herunterladen
+    openapi_hint: >-
+      — beschreibt alle Endpunkte und lässt sich z. B. in Postman oder
+      editor.swagger.io importieren. Mit einem Token ist sie auch direkt unter
+      /api/v1/openapi.yaml abrufbar.
     copy: Kopieren
     copied: Kopiert!
     usage_hint: 'Verwendung: als Header "Authorization: Bearer <Token>" oder in Kalender-Programmen (z. B. Thunderbird) als Passwort zusammen mit deinem Benutzernamen.'
