@@ -737,15 +737,23 @@ body {
 }
 
 /* Holiday highlighting must win over the plain weekend background -
-   .reservation-table-weekend uses !important, so only a combined selector
-   (higher specificity) with its own !important can override it. Colors
-   mirror Bootstrap's bg-info bg-opacity-25 utility.
-   Calendar-entry accent lines (box-shadow, see calendar_accent_marker_style)
-   don't need an equivalent override - box-shadow and background-color are
-   different properties and never fight for precedence the way two
-   background-colors do. */
+   .reservation-table-weekend uses !important, so only an equally !important
+   rule further down (or the combined selector, kept here to state the
+   precedence outright) can override it.
+
+   The tint is mixed into an opaque color instead of being laid over the cell
+   as a translucent one: these are sticky header cells, and a translucent
+   background there lets the body rows scrolling underneath show through the
+   header. color-mix reproduces what Bootstrap's bg-info bg-opacity-25 painted
+   before - 25% info over the cell background - and follows the theme through
+   --bs-body-bg. Doing the same with a translucent layer in background-image
+   is not an option: calendar-entry accents already set one inline, see
+   calendar_accent_marker_style.
+   Their accent lines (box-shadow) need no equivalent override - box-shadow
+   and background-color are different properties and never fight for
+   precedence the way two background-colors do. */
 .reservation-table-weekend.holiday-info {
-    background-color: rgba(var(--bs-info-rgb), .25) !important;
+    background-color: color-mix(in srgb, rgb(var(--bs-info-rgb)) 25%, var(--bs-body-bg)) !important;
 }
 
 
