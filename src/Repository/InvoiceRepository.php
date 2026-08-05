@@ -79,6 +79,71 @@ class InvoiceRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Invoices issued within the period, with line items eager-loaded so that
+     * totals can be computed without extra queries.
+     *
+     * @param int[] $status empty = no status filter
+     *
+     * @return Invoice[]
+     */
+    public function findForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, array $status = []): array
+    {
+        $qb = $this
+            ->createQueryBuilder('i')
+            ->select('i', 'ip', 'ia')
+            ->leftJoin('i.positions', 'ip')
+            ->leftJoin('i.appartments', 'ia')
+            ->andWhere('i.date >= :start')
+            ->andWhere('i.date <= :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('i.date', 'ASC')
+            ->addOrderBy('i.id', 'ASC')
+        ;
+
+        if ([] !== $status) {
+            $qb->andWhere('i.status IN (:status)')
+                ->setParameter('status', $status, ArrayParameterType::INTEGER);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Compact invoice data for the given reservations, grouped by reservation id.
+     * Avoids lazy-loading the invoice collection per reservation (N+1).
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, list<array{id: int, number: string, date: \DateTimeInterface, status: int}>>
+     */
+    public function findSummariesByReservationIds(array $reservationIds): array
+    {
+        if ([] === $reservationIds) {
+            return [];
+        }
+
+        $rows = $this
+            ->createQueryBuilder('i')
+            ->select('r.id AS reservationId', 'i.id AS id', 'i.number AS number', 'i.date AS date', 'i.status AS status')
+            ->join('i.reservations', 'r')
+            ->andWhere('r.id IN (:ids)')
+            ->setParameter('ids', $reservationIds, ArrayParameterType::INTEGER)
+            ->orderBy('i.date', 'ASC')
+            ->addOrderBy('i.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[(int) $row['reservationId']][] = $row;
+        }
+
+        return $grouped;
+    }
+
     public function findOneByNumber(string $number): ?Invoice
     {
         return $this->findOneBy(['number' => $number]);

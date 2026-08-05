@@ -18,6 +18,7 @@ final readonly class ReservationDto
      * @param array{id: int|null, number: string|null, description: string|null} $apartment
      * @param array{id: int|null, name: string|null}    $object
      * @param list<'arrival'|'departure'|'inhouse'>     $types
+     * @param list<array<string, mixed>>|null           $invoices null when the token lacks the invoices scope
      */
     public function __construct(
         public ?string $uuid,
@@ -38,13 +39,15 @@ final readonly class ReservationDto
         public string $reservationDate,
         public array $types,
         public bool $isImported,
+        public ?array $invoices,
     ) {
     }
 
     /**
      * @param list<'arrival'|'departure'|'inhouse'> $types
+     * @param list<array<string, mixed>>|null       $invoices
      */
-    public static function fromEntity(Reservation $reservation, array $types, string $bookerName): self
+    public static function fromEntity(Reservation $reservation, array $types, string $bookerName, ?array $invoices = null): self
     {
         $apartment = $reservation->getAppartment();
         $object = $apartment?->getObject();
@@ -73,6 +76,7 @@ final readonly class ReservationDto
             reservationDate: $reservation->getReservationDate()->format(\DateTimeInterface::ATOM),
             types: $types,
             isImported: null !== $reservation->getCalendarSyncImport(),
+            invoices: $invoices,
         );
     }
 }

@@ -143,6 +143,37 @@ class ReservationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * Reservation references for the given invoices, grouped by invoice id.
+     * Avoids lazy-loading the reservation collection per invoice (N+1).
+     *
+     * @param int[] $invoiceIds
+     *
+     * @return array<int, list<array{id: int, uuid: mixed}>>
+     */
+    public function findRefsByInvoiceIds(array $invoiceIds): array
+    {
+        if ([] === $invoiceIds) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('r')
+            ->select('i.id AS invoiceId', 'r.id AS id', 'r.uuid AS uuid')
+            ->join('r.invoices', 'i')
+            ->andWhere('i.id IN (:ids)')
+            ->setParameter('ids', $invoiceIds, ArrayParameterType::INTEGER)
+            ->orderBy('r.startDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[(int) $row['invoiceId']][] = $row;
+        }
+
+        return $grouped;
+    }
+
     public function supportsClass($class)
     {
         return $this->getEntityName() === $class

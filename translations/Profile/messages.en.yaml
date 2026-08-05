@@ -42,6 +42,7 @@ profile:
       reservations_read: Read reservations
       calendar_read: Read calendars (iCal export, holidays, custom calendars)
       statistics_read: Read statistics
+      invoices_read: Read invoices
   passkeys:
     title: Passwordless sign-in (Passkeys)
     create: Add passkey

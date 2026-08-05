@@ -21,11 +21,13 @@ class ApiScopeVoter extends Voter
     public const RESERVATIONS_READ = 'API_SCOPE_RESERVATIONS_READ';
     public const CALENDAR_READ = 'API_SCOPE_CALENDAR_READ';
     public const STATISTICS_READ = 'API_SCOPE_STATISTICS_READ';
+    public const INVOICES_READ = 'API_SCOPE_INVOICES_READ';
 
     private const ATTRIBUTE_SCOPES = [
         self::RESERVATIONS_READ => ApiScope::RESERVATIONS_READ,
         self::CALENDAR_READ => ApiScope::CALENDAR_READ,
         self::STATISTICS_READ => ApiScope::STATISTICS_READ,
+        self::INVOICES_READ => ApiScope::INVOICES_READ,
     ];
 
     public function __construct(

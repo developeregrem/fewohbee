@@ -15,8 +15,11 @@ namespace App\Controller\Api;
 
 use App\Dto\Api\ReservationDto;
 use App\Entity\Appartment;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\ReservationStatus;
+use App\Repository\InvoiceRepository;
 use App\Repository\ReservationRepository;
+use App\Security\Voter\ApiScopeVoter;
 use App\Service\Api\ReservationTypeClassifier;
 use App\Service\HousekeepingViewService;
 use App\Service\OperationsFilterService;
@@ -37,6 +40,7 @@ class ReservationApiController extends AbstractController
 
     public function __construct(
         private readonly ReservationRepository $reservationRepository,
+        private readonly InvoiceRepository $invoiceRepository,
         private readonly OperationsFilterService $operationsFilterService,
         private readonly HousekeepingViewService $housekeepingViewService,
         private readonly ReservationTypeClassifier $typeClassifier,
@@ -97,7 +101,7 @@ class ReservationApiController extends AbstractController
             $statusIds
         );
 
-        $dtos = [];
+        $matched = [];
         foreach ($reservations as $reservation) {
             if (null !== $apartment && $reservation->getAppartment()?->getId() !== $apartment->getId()) {
                 continue;
@@ -106,7 +110,28 @@ class ReservationApiController extends AbstractController
             if (null !== $type && !\in_array($type, $types, true)) {
                 continue;
             }
-            $dtos[] = ReservationDto::fromEntity($reservation, $types, $this->nameResolver->resolve($reservation));
+            $matched[] = [$reservation, $types];
+        }
+
+        // Linked invoices are only disclosed to tokens that may read invoices;
+        // null (instead of an empty list) tells the caller the scope is missing.
+        $invoicesByReservation = null;
+        if ($this->isGranted(ApiScopeVoter::INVOICES_READ)) {
+            $invoicesByReservation = $this->invoiceRepository->findSummariesByReservationIds(
+                array_map(static fn (array $row): int => (int) $row[0]->getId(), $matched)
+            );
+        }
+
+        $dtos = [];
+        foreach ($matched as [$reservation, $types]) {
+            $dtos[] = ReservationDto::fromEntity(
+                $reservation,
+                $types,
+                $this->nameResolver->resolve($reservation),
+                null === $invoicesByReservation
+                    ? null
+                    : $this->mapInvoiceSummaries($invoicesByReservation[(int) $reservation->getId()] ?? [])
+            );
         }
 
         return JsonResponse::fromJsonString($this->serializer->serialize([
@@ -117,6 +142,27 @@ class ReservationApiController extends AbstractController
                 'count' => \count($dtos),
             ],
         ], 'json'));
+    }
+
+    /**
+     * @param list<array{id: int, number: string, date: \DateTimeInterface, status: int}> $rows
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function mapInvoiceSummaries(array $rows): array
+    {
+        $result = [];
+        foreach ($rows as $row) {
+            $statusId = (int) $row['status'];
+            $result[] = [
+                'id' => (int) $row['id'],
+                'number' => $row['number'],
+                'date' => $row['date']->format('Y-m-d'),
+                'status' => ['id' => $statusId, 'code' => InvoiceStatus::fromStatus($statusId)?->name],
+            ];
+        }
+
+        return $result;
     }
 
     private function parseDate(?string $value, string $paramName): ?\DateTimeImmutable
