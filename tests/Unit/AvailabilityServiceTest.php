@@ -94,6 +94,60 @@ final class AvailabilityServiceTest extends TestCase
         self::assertFalse($service->isRoomAvailable($room, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-05'), 3));
     }
 
+    public function testMultipleOccupancyCountsOnlySimultaneouslyOverlappingReservations(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setMultipleOccupancy(true);
+        $room->setBedsMax(5);
+
+        $first = self::makeReservation(10, '2026-08-07', '2026-08-09');
+        $first->setPersons(1);
+        $second = self::makeReservation(11, '2026-08-09', '2026-08-11');
+        $second->setPersons(2);
+        $service = $this->makeService([$first, $second], []);
+
+        self::assertTrue($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            3,
+        ));
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            4,
+        ));
+    }
+
+    public function testMultipleOccupancyUsesPeakAcrossConcurrentReservations(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setMultipleOccupancy(true);
+        $room->setBedsMax(6);
+
+        $spanning = self::makeReservation(10, '2026-08-07', '2026-08-11');
+        $spanning->setPersons(1);
+        $first = self::makeReservation(11, '2026-08-07', '2026-08-09');
+        $first->setPersons(2);
+        $second = self::makeReservation(12, '2026-08-09', '2026-08-11');
+        $second->setPersons(4);
+        $service = $this->makeService([$spanning, $first, $second], []);
+
+        self::assertTrue($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            1,
+        ));
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            2,
+        ));
+    }
+
     public function testCountAvailablePerDayMixesReservationsAndBlocksDeduplicated(): void
     {
         $roomA = self::makeRoom(1);

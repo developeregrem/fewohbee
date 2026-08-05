@@ -58,13 +58,47 @@ class AvailabilityService
                 return false;
             }
 
-            foreach ($reservations as $reservation) {
-                $numberOfPersons += $reservation->getPersons();
-            }
-            return $numberOfPersons <= $room->getBedsMax();
+            return $numberOfPersons + $this->getMaximumConcurrentOccupancy($reservations, $start, $end)
+                <= $room->getBedsMax();
         }
 
         return true;
+    }
+
+    /**
+     * Maximum number of beds occupied at the same time in the requested period.
+     * Reservation periods are treated as half-open intervals: a departure and
+     * another arrival at the same instant do not overlap.
+     *
+     * @param Reservation[] $reservations
+     */
+    private function getMaximumConcurrentOccupancy(array $reservations, \DateTimeInterface $start, \DateTimeInterface $end): int
+    {
+        $periodStart = $start->getTimestamp();
+        $periodEnd = $end->getTimestamp();
+        $occupancyChanges = [];
+
+        foreach ($reservations as $reservation) {
+            $overlapStart = max($periodStart, $reservation->getStartDate()->getTimestamp());
+            $overlapEnd = min($periodEnd, $reservation->getEndDate()->getTimestamp());
+            if ($overlapStart >= $overlapEnd) {
+                continue;
+            }
+
+            $persons = max(0, $reservation->getPersons());
+            $occupancyChanges[$overlapStart] = ($occupancyChanges[$overlapStart] ?? 0) + $persons;
+            $occupancyChanges[$overlapEnd] = ($occupancyChanges[$overlapEnd] ?? 0) - $persons;
+        }
+
+        ksort($occupancyChanges, SORT_NUMERIC);
+        $currentOccupancy = 0;
+        $maximumOccupancy = 0;
+        foreach ($occupancyChanges as $change) {
+            $currentOccupancy += $change;
+            $maximumOccupancy = max($maximumOccupancy, $currentOccupancy);
+        }
+
+        return $maximumOccupancy;
     }
 
     /**
