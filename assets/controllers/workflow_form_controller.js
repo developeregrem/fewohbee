@@ -124,15 +124,25 @@ export default class extends Controller {
     }
 
     _gatherConfig(container) {
-        const inputs = container.querySelectorAll('[data-config-key]');
-        if (inputs.length === 0) return '{}';
+        return JSON.stringify(this._gatherConfigObject(container));
+    }
+
+    /** Serializes all [data-config-key] controls of a container into a plain object. */
+    _gatherConfigObject(container) {
         const config = {};
-        inputs.forEach(input => {
+        container.querySelectorAll('[data-config-key]').forEach(input => {
             const key = input.dataset.configKey;
-            const val = input.type === 'number' ? Number(input.value) : input.value;
-            config[key] = val;
+            // List fields are wrapper elements without a value; their rows carry the data.
+            if (input.dataset.configList !== undefined) {
+                config[key] = Array.from(input.querySelectorAll('[data-attachment-row] select'))
+                    .map(select => select.selectedOptions[0]?.dataset.attachmentItem)
+                    .filter(Boolean)
+                    .map(json => JSON.parse(json));
+                return;
+            }
+            config[key] = input.type === 'number' ? Number(input.value) : input.value;
         });
-        return JSON.stringify(config);
+        return config;
     }
 
     _gatherConditions() {
@@ -142,13 +152,7 @@ export default class extends Controller {
             const select = row.querySelector('[data-condition-type-select]');
             if (!select || !select.value) return;
             const configContainer = row.querySelector('[data-condition-config]');
-            const config = {};
-            if (configContainer) {
-                configContainer.querySelectorAll('[data-config-key]').forEach(input => {
-                    const key = input.dataset.configKey;
-                    config[key] = input.type === 'number' ? Number(input.value) : input.value;
-                });
-            }
+            const config = configContainer ? this._gatherConfigObject(configContainer) : {};
             conditions.push({ type: select.value, config });
         });
         return JSON.stringify(conditions);
@@ -293,6 +297,21 @@ export default class extends Controller {
                 div.classList.add('d-none'); // hidden by default; evaluated after render
             }
 
+            // Visible only while the referenced list field holds at least one entry
+            if (field.showIfAny) {
+                div.dataset.showIfAnyKey = field.showIfAny;
+                div.classList.add('d-none');
+            }
+
+            if (field.type === 'attachment_list') {
+                div.innerHTML = `
+                    <label class="form-label">${field.label || field.key}</label>
+                    ${field.help ? `<div class="form-text mt-0 mb-2">${field.help}</div>` : ''}`;
+                div.appendChild(this._buildAttachmentList(field, id));
+                container.appendChild(div);
+                return;
+            }
+
             if (field.type === 'number') {
                 div.innerHTML = `
                     <label for="${id}" class="form-label">${field.label || field.key}</label>
@@ -333,16 +352,142 @@ export default class extends Controller {
         container.addEventListener('change', () => this._updateShowIf(container));
     }
 
+    /**
+     * Builds the repeatable attachment rows. The wrapper carries data-config-key so
+     * _gatherConfigObject finds it; the option groups are kept on the element itself
+     * because rows are added lazily (via the add button or when restoring a config).
+     */
+    _buildAttachmentList(field, id) {
+        const box = document.createElement('div');
+        box.dataset.configKey = field.key;
+        box.dataset.configList = '';
+        box._attachmentGroups = field.groups || [];
+        box._attachmentLabels = {
+            select: field.selectLabel || '--',
+            stale: field.staleLabel || '--',
+            remove: field.removeLabel || '',
+        };
+
+        if (box._attachmentGroups.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'text-body-secondary small';
+            empty.textContent = field.emptyText || '';
+            box.appendChild(empty);
+            return box;
+        }
+
+        const rows = document.createElement('div');
+        rows.dataset.attachmentRows = '';
+        box.appendChild(rows);
+
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'btn btn-sm btn-outline-primary';
+        add.id = `${id}-add`;
+        add.innerHTML = '<i class="fas fa-plus me-1"></i>';
+        add.append(field.addLabel || '+');
+        add.addEventListener('click', () => this._addAttachmentRow(box, null));
+        box.appendChild(add);
+
+        return box;
+    }
+
+    /** Adds one attachment row; `preselectedKey` restores a stored item. */
+    _addAttachmentRow(box, preselectedKey) {
+        const rows = box.querySelector('[data-attachment-rows]');
+        if (!rows) return null;
+
+        const labels = box._attachmentLabels || {};
+        const row = document.createElement('div');
+        row.dataset.attachmentRow = '';
+        // Same layout as the condition rows so both lists look alike.
+        row.className = 'd-flex align-items-center justify-content-between mb-2';
+
+        // Built via DOM APIs on purpose: template names are user-authored and
+        // data-attachment-item carries JSON with quotes.
+        const select = document.createElement('select');
+        select.className = 'form-select form-select-sm';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = labels.select || '--';
+        select.appendChild(placeholder);
+
+        let matched = false;
+        (box._attachmentGroups || []).forEach(group => {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = group.label;
+            (group.items || []).forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.key;
+                option.textContent = item.label;
+                option.dataset.attachmentItem = JSON.stringify(item.item);
+                if (item.key === preselectedKey) {
+                    option.selected = true;
+                    matched = true;
+                }
+                optgroup.appendChild(option);
+            });
+            select.appendChild(optgroup);
+        });
+
+        // The stored document no longer exists (template deleted or hidden). Keep the
+        // row visible so the loss is obvious; it has no item and drops out on save.
+        if (preselectedKey && !matched) {
+            const stale = document.createElement('option');
+            stale.value = '';
+            stale.disabled = true;
+            stale.selected = true;
+            stale.textContent = labels.stale || '--';
+            select.insertBefore(stale, select.firstChild);
+        }
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-sm btn-outline-danger ms-2 flex-shrink-0';
+        remove.title = labels.remove || '';
+        remove.innerHTML = '<i class="fas fa-times"></i>';
+        remove.addEventListener('click', () => {
+            row.remove();
+            // Removal fires no change event of its own, but fields depending on this
+            // list (showIfAny) have to be re-evaluated.
+            box.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        row.append(select, remove);
+        rows.appendChild(row);
+
+        return row;
+    }
+
+    /** Maps a stored attachment item back to the option key emitted by the server. */
+    _attachmentKey(item) {
+        if (!item || typeof item !== 'object') return '';
+        return item.type === 'pdf_template' ? `pdf_template:${item.templateId}` : (item.type || '');
+    }
+
     /** Show/hide fields with data-show-if-* based on current sibling select values. */
     _updateShowIf(container) {
         const conditionalFields = container.querySelectorAll('[data-show-if-key]');
         conditionalFields.forEach(div => {
             const key = div.dataset.showIfKey;
             const expectedValue = div.dataset.showIfValue;
-            const control = container.querySelector(`[data-config-key="${key}"]`);
+            // A list wrapper has no value and can never be a showIf source.
+            const control = container.querySelector(`[data-config-key="${key}"]:not([data-config-list])`);
             const currentValue = control ? control.value : '';
             div.classList.toggle('d-none', currentValue !== expectedValue);
         });
+
+        container.querySelectorAll('[data-show-if-any-key]').forEach(div => {
+            const list = container.querySelector(`[data-config-key="${div.dataset.showIfAnyKey}"][data-config-list]`);
+            div.classList.toggle('d-none', !this._hasListEntries(list));
+        });
+    }
+
+    /** True when the list holds at least one row with an actual selection. */
+    _hasListEntries(list) {
+        if (!list) return false;
+        return Array.from(list.querySelectorAll('[data-attachment-row] select'))
+            .some(select => select.selectedOptions[0]?.dataset.attachmentItem);
     }
 
     _restoreConfig(container, jsonStr) {
@@ -351,7 +496,15 @@ export default class extends Controller {
             const config = JSON.parse(jsonStr);
             Object.entries(config).forEach(([key, value]) => {
                 const input = container.querySelector(`[data-config-key="${key}"]`);
-                if (input) input.value = value;
+                if (!input) return;
+                if (input.dataset.configList !== undefined) {
+                    input.querySelectorAll('[data-attachment-row]').forEach(row => row.remove());
+                    (Array.isArray(value) ? value : []).forEach(
+                        item => this._addAttachmentRow(input, this._attachmentKey(item))
+                    );
+                    return;
+                }
+                input.value = value;
             });
             // Re-evaluate showIf after values are restored
             this._updateShowIf(container);

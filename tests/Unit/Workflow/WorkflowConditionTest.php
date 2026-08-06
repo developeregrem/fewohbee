@@ -9,11 +9,13 @@ use App\Entity\CustomerAddresses;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\Enum\InvoiceStatus;
 use App\Entity\Enum\PaymentMeansCode;
 use App\Workflow\Condition\HasBookerEmailCondition;
 use App\Workflow\Condition\InvoiceHasEmailCondition;
 use App\Workflow\Condition\InvoiceStatusCondition;
 use App\Workflow\Condition\PaymentMeansCodeCondition;
+use App\Workflow\Condition\ReservationHasInvoiceCondition;
 use App\Workflow\Condition\ReservationStatusCondition;
 use PHPUnit\Framework\TestCase;
 
@@ -256,5 +258,89 @@ final class WorkflowConditionTest extends TestCase
         $invoice->method('getPaymentMeans')->willReturn(PaymentMeansCode::CASH);
 
         self::assertFalse($condition->evaluate([], $invoice, []));
+    }
+
+    // -------------------------------------------------------------------------
+    // ReservationHasInvoiceCondition
+    // -------------------------------------------------------------------------
+
+    private function reservationWithInvoices(int ...$statuses): Reservation
+    {
+        $reservation = new Reservation();
+        foreach ($statuses as $status) {
+            $invoice = new Invoice();
+            $invoice->setStatus($status);
+            $reservation->addInvoice($invoice);
+        }
+
+        return $reservation;
+    }
+
+    public function testHasInvoiceConditionFailsForAFreshOnlineBooking(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+
+        self::assertFalse($condition->evaluate(['status' => 'any'], new Reservation(), []));
+    }
+
+    public function testHasInvoiceConditionMatchesAnyNonCancelledInvoice(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $reservation = $this->reservationWithInvoices(InvoiceStatus::PAID->value);
+
+        self::assertTrue($condition->evaluate(['status' => 'any'], $reservation, []));
+    }
+
+    public function testHasInvoiceConditionIgnoresCancelledInvoices(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $reservation = $this->reservationWithInvoices(InvoiceStatus::CANCELED->value);
+
+        self::assertFalse($condition->evaluate(['status' => 'any'], $reservation, []));
+    }
+
+    public function testHasInvoiceConditionOpenModeIgnoresPaidInvoices(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $reservation = $this->reservationWithInvoices(InvoiceStatus::PAID->value, InvoiceStatus::PREPAID->value);
+
+        self::assertFalse($condition->evaluate(['status' => 'open'], $reservation, []));
+        self::assertTrue($condition->evaluate(['status' => 'any'], $reservation, []));
+    }
+
+    public function testHasInvoiceConditionOpenModeMatchesUnpaidInvoice(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $reservation = $this->reservationWithInvoices(InvoiceStatus::PAID->value, InvoiceStatus::OPEN->value);
+
+        self::assertTrue($condition->evaluate(['status' => 'open'], $reservation, []));
+    }
+
+    public function testHasInvoiceConditionDefaultsToAnyWhenConfigMissing(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $reservation = $this->reservationWithInvoices(InvoiceStatus::PAID->value);
+
+        self::assertTrue($condition->evaluate([], $reservation, []));
+    }
+
+    public function testHasInvoiceConditionChecksTheWholeBookingGroup(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+        $withoutInvoice = new Reservation();
+        $withInvoice = $this->reservationWithInvoices(InvoiceStatus::OPEN->value);
+
+        self::assertTrue($condition->evaluate(
+            ['status' => 'any'],
+            $withoutInvoice,
+            ['allReservations' => [$withoutInvoice, $withInvoice]]
+        ));
+    }
+
+    public function testHasInvoiceConditionReturnsFalseForWrongEntityType(): void
+    {
+        $condition = new ReservationHasInvoiceCondition();
+
+        self::assertFalse($condition->evaluate(['status' => 'any'], new Invoice(), []));
     }
 }

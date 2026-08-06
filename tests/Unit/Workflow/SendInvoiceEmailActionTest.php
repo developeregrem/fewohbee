@@ -22,6 +22,8 @@ use App\Repository\TemplateRepository;
 use App\Service\MailService;
 use App\Service\TemplatesService;
 use App\Workflow\Action\SendInvoiceEmailAction;
+use App\Workflow\Attachment\ResolvedAttachmentSet;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +36,7 @@ final class SendInvoiceEmailActionTest extends TestCase
     private InvoiceService $invoiceService;
     private EInvoiceReadinessService $readinessService;
     private EInvoiceExportService $exportService;
+    private WorkflowAttachmentResolver $attachmentResolver;
     private EntityManagerInterface $em;
     private TranslatorInterface $translator;
     private InvoiceSettingsData $settings;
@@ -60,6 +63,8 @@ final class SendInvoiceEmailActionTest extends TestCase
         $this->invoiceService = $this->createStub(InvoiceService::class);
         $this->readinessService = $this->createStub(EInvoiceReadinessService::class);
         $this->exportService = $this->createStub(EInvoiceExportService::class);
+        $this->attachmentResolver = $this->createStub(WorkflowAttachmentResolver::class);
+        $this->attachmentResolver->method('resolve')->willReturn(new ResolvedAttachmentSet());
         $this->em = $this->createStub(EntityManagerInterface::class);
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->translator->method('trans')->willReturnCallback(
@@ -109,6 +114,7 @@ final class SendInvoiceEmailActionTest extends TestCase
             $this->invoiceService,
             $this->readinessService,
             $this->exportService,
+            $this->attachmentResolver,
             $this->em,
             $this->translator,
         );

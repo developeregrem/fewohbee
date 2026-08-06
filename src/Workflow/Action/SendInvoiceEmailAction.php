@@ -14,6 +14,7 @@ use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\MailService;
 use App\Service\TemplatesService;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -30,6 +31,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   customRecipient string – used when recipientType === 'custom'
  *   attachmentMode  string – einvoice_preferred | einvoice_required | pdf_only
  *   attachXml       string – yes | no; additionally attach the raw e-invoice XML (useful for XRechnung)
+ *   attachments     array  – extra documents, see WorkflowAttachmentResolver (best-effort;
+ *                            "what if it fails" is already covered by attachmentMode)
  */
 class SendInvoiceEmailAction implements WorkflowActionInterface
 {
@@ -39,6 +42,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         private readonly InvoiceService $invoiceService,
         private readonly EInvoiceReadinessService $readinessService,
         private readonly EInvoiceExportService $einvoiceExportService,
+        private readonly WorkflowAttachmentResolver $attachmentResolver,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
     ) {
@@ -107,6 +111,14 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
                     ['value' => 'yes', 'label' => 'workflow.form.attach_xml.yes'],
                 ],
             ],
+            [
+                // The invoice itself is already attached above, so only extra documents here.
+                'key' => 'attachments',
+                'type' => 'attachment_list',
+                'label' => 'workflow.form.attachments',
+                'help' => 'workflow.form.attachments_help',
+                'includeInvoice' => false,
+            ],
         ];
     }
 
@@ -170,6 +182,14 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
             $attachments[] = new MailAttachment($xml, $filenameBase.'.xml', 'text/xml');
         }
 
+        $reservations = $entity->getReservations()->toArray();
+        $extraAttachments = $this->attachmentResolver->resolve(
+            is_array($config['attachments'] ?? null) ? $config['attachments'] : [],
+            $entity,
+            $reservations
+        );
+        $attachments = array_merge($attachments, $extraAttachments->mailAttachments());
+
         $rendered = $this->templatesService->renderTemplate($emailTemplate->getId(), $entity);
         try {
             $subject = $this->templatesService->renderTemplateSubject($emailTemplate, $entity);
@@ -181,7 +201,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachments);
 
         // Persist the email and the attached invoice file for every linked reservation.
-        foreach ($entity->getReservations() as $reservation) {
+        foreach ($reservations as $reservation) {
             $file = new FileCorrespondence();
             $file->setFileName($filenameBase)
                  ->setName($filenameBase)
@@ -199,6 +219,15 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
                  ->setTemplate($emailTemplate)
                  ->setReservation($reservation)
                  ->addChild($file);
+
+            foreach ($extraAttachments->attachments as $attachment) {
+                $extraFile = $this->attachmentResolver->createFileCorrespondence($attachment, $reservation);
+                if (null !== $extraFile) {
+                    $this->em->persist($extraFile);
+                    $mail->addChild($extraFile);
+                }
+            }
+
             $this->em->persist($mail);
         }
         $this->em->flush();

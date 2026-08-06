@@ -60,6 +60,20 @@ workflow:
     attach_xml: "Zusätzlich XML-Datei anhängen"
     attach_xml.no: "Nein"
     attach_xml.yes: "Ja (empfohlen bei XRechnung)"
+    attachments: "Anhänge"
+    attachments_help: "Diese Dokumente werden automatisch an die E-Mail angehängt."
+    attachments_add: "Anhang hinzufügen"
+    attachments_empty: "Es sind noch keine passenden PDF-Vorlagen vorhanden. Lege zuerst unter Einstellungen → Vorlagen ein PDF-Dokument an (z. B. AGB oder Hausordnung)."
+    attachments_select: "Dokument auswählen …"
+    attachments_stale: "Nicht mehr verfügbar"
+    attachments.group_documents: "Dokumentvorlagen"
+    attachments.group_invoice: "Rechnung"
+    attachments.invoice_pdf: "Rechnung als PDF (alle außer stornierten)"
+    attachments.invoice_pdf_open: "Rechnung als PDF (nur offene)"
+    attachment_policy: "Wenn ein Anhang nicht erstellt werden kann"
+    attachment_policy_help: "Zum Beispiel, wenn zu einer Reservierung noch gar keine Rechnung existiert."
+    attachment_policy.skip_missing: "E-Mail trotzdem senden (ohne den fehlenden Anhang)"
+    attachment_policy.require_all: "E-Mail nicht senden"
 
   # Trigger labels
   trigger:
@@ -85,6 +99,10 @@ workflow:
     invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
     invoice_payment_means_is: "Zahlungsmethode ist"
     reservation_origin_is: "Herkunft ist"
+    reservation_has_invoice: "Rechnung vorhanden"
+    has_invoice.label: "Welche Rechnung muss es geben?"
+    has_invoice.any: "Irgendeine Rechnung (ohne stornierte)"
+    has_invoice.open: "Mindestens eine offene Rechnung"
 
   # Action labels
   action:
@@ -166,6 +184,16 @@ workflow:
     invoice_status_changed: "Rechnungsstatus von Rechnung %number% auf \"%status%\" geändert"
     payment_means_changed: "Zahlungsmethode von Rechnung %number% auf \"%code%\" geändert"
     reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"
+    attachment_template_not_found: "Anhang übersprungen: Vorlage #%id% wurde nicht gefunden"
+    attachment_template_incompatible: "Anhang übersprungen: \"%name%\" ist keine PDF-Vorlage"
+    attachment_no_reservation: "Anhang übersprungen: \"%name%\" benötigt eine Reservierung"
+    attachment_render_failed: "Anhang \"%name%\" konnte nicht erstellt werden: %error%"
+    attachment_no_invoice: "Anhang übersprungen: es existiert keine Rechnung"
+    attachment_no_open_invoice: "Anhang übersprungen: es existiert keine offene Rechnung"
+    attachment_warnings: "Hinweis: %warnings%"
+    skipped_attachment_missing: "Übersprungen: ein benötigter Anhang fehlt – %reason%"
+    skipped_attachments_too_large: "Übersprungen: die Anhänge sind mit %size% MB zu groß für den E-Mail-Versand"
+    email_sent_with_attachments: "E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhang)|E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhänge)"
 
   error:
     name_required: "Bitte gib eine Bezeichnung ein."

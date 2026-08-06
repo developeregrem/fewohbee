@@ -60,6 +60,20 @@ workflow:
     attach_xml: "Additionally attach XML file"
     attach_xml.no: "No"
     attach_xml.yes: "Yes (recommended for XRechnung)"
+    attachments: "Attachments"
+    attachments_help: "These documents are attached to the email automatically."
+    attachments_add: "Add attachment"
+    attachments_empty: "No suitable PDF templates exist yet. Create a PDF document under Settings → Templates first (e.g. terms and conditions or house rules)."
+    attachments_select: "Select document …"
+    attachments_stale: "No longer available"
+    attachments.group_documents: "Document templates"
+    attachments.group_invoice: "Invoice"
+    attachments.invoice_pdf: "Invoice as PDF (all except cancelled)"
+    attachments.invoice_pdf_open: "Invoice as PDF (unpaid only)"
+    attachment_policy: "If an attachment cannot be created"
+    attachment_policy_help: "For example when a reservation does not have an invoice yet."
+    attachment_policy.skip_missing: "Send the email anyway (without the missing attachment)"
+    attachment_policy.require_all: "Do not send the email"
 
   trigger:
     online_booking_created: "New online booking received"
@@ -83,6 +97,10 @@ workflow:
     invoice_has_email: "Invoice has an email address"
     invoice_payment_means_is: "Payment method is"
     reservation_origin_is: "Origin is"
+    reservation_has_invoice: "Invoice exists"
+    has_invoice.label: "Which invoice has to exist?"
+    has_invoice.any: "Any invoice (excluding cancelled)"
+    has_invoice.open: "At least one unpaid invoice"
 
   action:
     send_invoice_email: "Send invoice by email (with PDF/e-invoice attachment)"
@@ -161,6 +179,16 @@ workflow:
     invoice_status_changed: "Invoice %number% status changed to \"%status%\""
     payment_means_changed: "Invoice %number% payment method changed to \"%code%\""
     reservation_status_changed: "%count% reservation(s) status changed to \"%status%\""
+    attachment_template_not_found: "Attachment skipped: template #%id% was not found"
+    attachment_template_incompatible: "Attachment skipped: \"%name%\" is not a PDF template"
+    attachment_no_reservation: "Attachment skipped: \"%name%\" requires a reservation"
+    attachment_render_failed: "Attachment \"%name%\" could not be created: %error%"
+    attachment_no_invoice: "Attachment skipped: no invoice exists"
+    attachment_no_open_invoice: "Attachment skipped: no unpaid invoice exists"
+    attachment_warnings: "Note: %warnings%"
+    skipped_attachment_missing: "Skipped: a required attachment is missing – %reason%"
+    skipped_attachments_too_large: "Skipped: the attachments are too large for email delivery (%size% MB)"
+    email_sent_with_attachments: "Email sent to %recipient% (template: \"%template%\", %count% attachment)|Email sent to %recipient% (template: \"%template%\", %count% attachments)"
 
   error:
     name_required: "Please enter a name."
