@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Enum\PublicBookingTheme;
+use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
 use App\Service\OnlineBookingRestrictionService;
@@ -32,6 +34,7 @@ class PublicBookingController extends AbstractController
     ): Response
     {
         $config = $configService->getConfig();
+        $template = $this->resolveTemplate($config, $request);
         $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
         $error = $publicBookingService->validateEnabledConfig();
         $countries = Countries::getNames($request->getLocale());
@@ -107,7 +110,7 @@ class PublicBookingController extends AbstractController
         ];
 
         if ('POST' !== $request->getMethod() || null !== $error) {
-            return $this->render('PublicBooking/book.html.twig', $view);
+            return $this->render($template, $view);
         }
 
         $intent = (string) $request->request->get('intent', 'availability');
@@ -238,14 +241,14 @@ class PublicBookingController extends AbstractController
                     $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview, $guestCounts ?? []);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
-                    $view['extras'] = $fallbackPreview['extras'] ?? [];
-                    if ('submit' === $intent && isset($fallbackPreview['roomTotalFormatted'])) {
+                    $view['extras'] = $fallbackPreview['extras'];
+                    if ('submit' === $intent) {
                         $view['roomTotalFormatted'] = $fallbackPreview['roomTotalFormatted'];
-                        $view['roomPriceBreakdown'] = $fallbackPreview['roomPriceBreakdown'] ?? [];
+                        $view['roomPriceBreakdown'] = $fallbackPreview['roomPriceBreakdown'];
                         $view['selectedExtras'] = $extrasSelection;
-                        $view['extrasTotalFormatted'] = $fallbackPreview['extrasTotalFormatted'] ?? null;
-                        $view['extrasBreakdown'] = $fallbackPreview['extrasBreakdown'] ?? [];
-                        $view['grandTotalFormatted'] = $fallbackPreview['grandTotalFormatted'] ?? null;
+                        $view['extrasTotalFormatted'] = $fallbackPreview['extrasTotalFormatted'];
+                        $view['extrasBreakdown'] = $fallbackPreview['extrasBreakdown'];
+                        $view['grandTotalFormatted'] = $fallbackPreview['grandTotalFormatted'];
                     }
                 } catch (\Throwable) {
                 }
@@ -264,7 +267,25 @@ class PublicBookingController extends AbstractController
             }
         }
 
-        return $this->render('PublicBooking/book.html.twig', $view);
+        return $this->render($template, $view);
+    }
+
+    /**
+     * Resolve the booking page template for the configured theme.
+     *
+     * Administrators may preview the other theme with `?previewTheme=`. The parameter is
+     * ignored for everyone else, and the enum keeps the resulting path a fixed whitelist.
+     */
+    private function resolveTemplate(OnlineBookingConfig $config, Request $request): string
+    {
+        $theme = $config->getTheme();
+
+        $preview = (string) $request->query->get('previewTheme', '');
+        if ('' !== $preview && $this->isGranted('ROLE_ADMIN')) {
+            $theme = PublicBookingTheme::tryFrom($preview) ?? $theme;
+        }
+
+        return $theme->bookTemplate();
     }
 
     /**

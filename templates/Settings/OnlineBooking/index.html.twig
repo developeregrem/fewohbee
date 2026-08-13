@@ -13,7 +13,7 @@
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
 {% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
-<script>window.addEventListener("message",function(e){if(e.data&&e.data.type==="fhb-resize"){document.getElementById("fhb-booking").style.height=e.data.height+"px"}});</script>{% endset %}
+<script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
 <div class="container" data-controller="settings online-booking-settings online-booking-restrictions"
      data-online-booking-restrictions-restore-hash-value="online-booking-overrides">
     <div class="row justify-content-center">
@@ -169,6 +169,35 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_theme_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
+                    {# Design picker: one selectable card per theme with a preview link.
+                       Rendered without form_row/form_label because the horizontal form theme
+                       would right-align the label into its own grid column. #}
+                    <div class="border rounded mb-3">
+                        <div class="px-3 py-2 bg-body-secondary border-bottom">
+                            <p class="fw-semibold small mb-0">{{ 'online_booking.settings.theme'|trans }}</p>
+                            <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.theme_help'|trans }}</p>
+                        </div>
+                        <div class="p-3 row row-cols-1 row-cols-md-2 g-2">
+                            {% for choice in form.theme %}
+                                {% set themeValue = choice.vars.value %}
+                                <div class="col">
+                                    <div class="border rounded h-100 p-3">
+                                        {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
+                                        <p class="small text-body-secondary mb-1 mt-1">
+                                            {{ ('online_booking.settings.theme_' ~ themeValue ~ '_help')|trans }}
+                                        </p>
+                                        <a class="small text-decoration-none" target="_blank" rel="noopener"
+                                           href="{{ path('public.booking', {'previewTheme': themeValue}) }}">
+                                            <i class="fas fa-arrow-up-right-from-square me-1"></i>{{ 'online_booking.settings.theme_preview'|trans }}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="px-3 pb-2">
+                            {{ form_errors(form.theme) }}
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
                         <div class="col-md-6">{{ form_row(form.themeBackgroundColor) }}</div>

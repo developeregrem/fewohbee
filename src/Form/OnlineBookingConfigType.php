@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
@@ -17,6 +18,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -106,6 +108,14 @@ class OnlineBookingConfigType extends AbstractType
                 'expanded' => true,
                 'choice_translation_domain' => false,
                 'choices' => $this->buildRoomChoices($rooms),
+            ])
+            ->add('theme', EnumType::class, [
+                'class' => PublicBookingTheme::class,
+                'label' => 'online_booking.settings.theme',
+                'help' => 'online_booking.settings.theme_help',
+                'expanded' => true,
+                'multiple' => false,
+                'choice_label' => static fn (PublicBookingTheme $theme): string => 'online_booking.settings.theme_'.$theme->value,
             ])
             ->add('themePrimaryColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_primary',

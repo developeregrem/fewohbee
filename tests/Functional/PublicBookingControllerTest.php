@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Template;
 use App\Entity\TemplateType;
@@ -78,7 +79,7 @@ final class PublicBookingControllerTest extends WebTestCase
             ->method('buildSelectionPreview')
             ->willReturn([
                 'availability' => $availability,
-                'selected' => ['category:1' => 1],
+                'selected' => ['category:1' => [1 => 1]],
                 'roomTotal' => 80.0,
                 'roomTotalFormatted' => '80,00',
                 'roomPriceBreakdown' => [[
@@ -88,6 +89,16 @@ final class PublicBookingControllerTest extends WebTestCase
                     'totalFormatted' => '80,00',
                 ]],
                 'roomReservations' => [],
+                'touristTaxTotal' => 0.0,
+                'touristTaxTotalFormatted' => '0,00',
+                'touristTaxLines' => [],
+                'extras' => [],
+                'selectedExtras' => [],
+                'extrasTotal' => 0.0,
+                'extrasTotalFormatted' => '0,00',
+                'extrasBreakdown' => [],
+                'grandTotal' => 80.0,
+                'grandTotalFormatted' => '80,00',
             ]);
         $publicBookingService->expects(self::once())
             ->method('createBooking')
@@ -101,7 +112,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'dateTo' => '2099-05-12',
             'persons' => 1,
             'roomsCount' => 1,
-            'qty_category:1' => 1,
+            'occ_category:1_p1' => 1,
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
             'email' => 'max@example.com',
@@ -153,7 +164,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'dateTo' => '2099-05-12',
             'persons' => 1,
             'roomsCount' => 1,
-            'qty_category:1' => 1,
+            'occ_category:1_p1' => 1,
             'salutation' => 'Mr',
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
@@ -173,6 +184,81 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringContainsString('alert alert-success', $content);
         self::assertStringContainsString('Danke fuer Ihre Anfrage.', $content);
         self::assertStringNotContainsString('<form method="post"', $content);
+    }
+
+    /** Ensure the classic theme keeps rendering its own frozen templates. */
+    public function testClassicThemeRendersLegacyTemplates(): void
+    {
+        $client = self::createClient();
+        $config = $this->createEnabledConfig();
+        $config->setTheme(PublicBookingTheme::CLASSIC);
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $config,
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('--fhb-primary', $content);
+        self::assertStringContainsString('class="fhb-booking-root"', $content);
+        self::assertStringNotContainsString('public-booking-modern.css', $content);
+    }
+
+    /** Ensure the modern theme is used by default and loads its dedicated stylesheet. */
+    public function testModernThemeIsDefaultAndLoadsItsStylesheet(): void
+    {
+        $client = self::createClient();
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('public-booking-modern.css', $content);
+        self::assertStringContainsString('--fhb-primary', $content);
+        self::assertStringContainsString('class="fhb-steps"', $content);
+    }
+
+    /** Ensure anonymous visitors cannot switch the theme through the preview parameter. */
+    public function testPreviewThemeParameterIsIgnoredForAnonymousVisitors(): void
+    {
+        $client = self::createClient();
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book?previewTheme=classic');
+
+        self::assertResponseIsSuccessful();
+        // Configured theme is modern, so the preview request must not fall back to classic.
+        self::assertStringContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
+    }
+
+    /** Ensure administrators can preview the other theme without changing the configuration. */
+    public function testPreviewThemeParameterAppliesForAdmins(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $client->loginUser($this->getAdminUser(), 'main');
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book?previewTheme=classic');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
     }
 
     /** Create a persisted template of the given type for settings form option assertions. */
@@ -241,6 +327,15 @@ final class PublicBookingControllerTest extends WebTestCase
         $config->setBookingMode(OnlineBookingConfig::BOOKING_MODE_INQUIRY);
 
         return $config;
+    }
+
+    /** Booking service stub that reports a valid, enabled configuration. */
+    private function createEnabledBookingService(): PublicBookingService
+    {
+        $service = $this->createStub(PublicBookingService::class);
+        $service->method('validateEnabledConfig')->willReturn(null);
+
+        return $service;
     }
 
     /** Create a no-op abuse protection service mock so controller tests can focus on flow behavior. */

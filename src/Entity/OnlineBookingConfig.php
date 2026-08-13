@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PublicBookingTheme;
 use App\Repository\OnlineBookingConfigRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -55,6 +56,9 @@ class OnlineBookingConfig
     #[ORM\Column(type: Types::STRING, length: 7, nullable: true)]
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private ?string $themeBackgroundColor = null;
+
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: PublicBookingTheme::class, options: ['default' => 'modern'])]
+    private PublicBookingTheme $theme = PublicBookingTheme::MODERN;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $confirmationEmailTemplateId = null;
@@ -206,6 +210,18 @@ class OnlineBookingConfig
     public function setThemeBackgroundColor(?string $themeBackgroundColor): self
     {
         $this->themeBackgroundColor = $themeBackgroundColor ?: null;
+
+        return $this;
+    }
+
+    public function getTheme(): PublicBookingTheme
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(PublicBookingTheme $theme): self
+    {
+        $this->theme = $theme;
 
         return $this;
     }
