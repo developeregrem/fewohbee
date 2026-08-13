@@ -1,4 +1,4 @@
-{% extends 'PublicBooking/base.html.twig' %}
+{% extends 'PublicBooking/themes/classic/base.html.twig' %}
 
 {% block body %}
 {% set autoScrollTarget = null %}
@@ -238,6 +238,15 @@
                                                     {{ 'online_booking.public.view_photos'|trans({'%count%': row.images|length}) }}
                                                 </a>
                                             {% endif %}
+                                            {# Row that carries the "+ baby"-icons: the option matching the party's
+                                               occupancy-counted total, or the largest priced option when that exact
+                                               count has no price category (options are capped at the searched
+                                               persons count, so they never exceed it). #}
+                                            {% set nonOccupancyRowPersons = 0 %}
+                                            {% if mixOccupancyTotal|default(0) > 0 and nonOccupancyIcons|default([])|length > 0 and row.occupancyOptions is not empty %}
+                                                {% set optionPersons = row.occupancyOptions|map(o => o.persons) %}
+                                                {% set nonOccupancyRowPersons = mixOccupancyTotal in optionPersons ? mixOccupancyTotal : max(optionPersons) %}
+                                            {% endif %}
                                             <div class="list-group list-group-flush">
                                                 {% for option in row.occupancyOptions %}
                                                     {% set fieldName = 'occ_' ~ row.typeKey ~ '_p' ~ option.persons %}
@@ -246,7 +255,7 @@
                                                         <div class="d-flex align-items-center gap-2 flex-grow-1">
                                                             <span title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}" style="letter-spacing:.1em">
                                                                 {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
-                                                                {% if mixOccupancyTotal|default(0) == option.persons and nonOccupancyIcons|default([])|length > 0 %}
+                                                                {% if nonOccupancyRowPersons > 0 and nonOccupancyRowPersons == option.persons %}
                                                                     <span class="ms-1 text-muted">
                                                                         +
                                                                         {% for ico in nonOccupancyIcons %}<i class="fa-solid {{ ico.icon }} fhb-occupancy-icon" title="{{ ico.label }}"></i>{% endfor %}

@@ -48,7 +48,8 @@ class PublicBookingService
      *
      * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1, 1 => 0]]
      * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array{availability: array, selected: array<string,array<int,int>>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, roomReservations: Reservation[], extras: array, selectedExtras: array<int,int>, extrasTotal: float, extrasTotalFormatted: string, grandTotal: float, grandTotalFormatted: string}
+     * @param array<int, int> $guestCounts Map of guest category ID => count
+     * @return array{availability: array<int, array<string, mixed>>, selected: array<string,array<int,int>>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, roomReservations: Reservation[], touristTaxTotal: float, touristTaxTotalFormatted: string, touristTaxLines: array<int, array{label: string, total: float, totalFormatted: string}>, extras: array<int, array<string, mixed>>, selectedExtras: array<int,int>, extrasTotal: float, extrasTotalFormatted: string, extrasBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, grandTotal: float, grandTotalFormatted: string}
      */
     public function buildSelectionPreview(
         \DateTimeImmutable $dateFrom,
@@ -118,7 +119,8 @@ class PublicBookingService
      * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1]]
      * @param array<string, string> $booker
      * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array{reservations: Reservation[], bookingGroupUuid: Uuid, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
+     * @param array<int, int> $guestCounts Map of guest category ID => count
+     * @return array{reservations: Reservation[], bookingGroupUuid: Uuid, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, touristTaxTotal: float, touristTaxTotalFormatted: string, extrasTotal: float, extrasTotalFormatted: string, grandTotal: float, grandTotalFormatted: string}
      */
     public function createBooking(
         \DateTimeImmutable $dateFrom,
@@ -197,16 +199,21 @@ class PublicBookingService
         $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
         $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
 
+        // Grand total must match the preview: room rates + extras + tourist tax.
+        $grandTotal = $pricing['roomTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
+
         return [
             'reservations' => $reservations,
             'bookingGroupUuid' => $bookingGroupUuid,
             'roomTotal' => $pricing['roomTotal'],
             'roomTotalFormatted' => $pricing['roomTotalFormatted'],
             'roomPriceBreakdown' => $pricing['roomPriceBreakdown'],
+            'touristTaxTotal' => $pricing['touristTaxTotal'],
+            'touristTaxTotalFormatted' => $pricing['touristTaxTotalFormatted'],
             'extrasTotal' => $extrasResult['extrasTotal'],
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
-            'grandTotal' => $pricing['roomTotal'] + $extrasResult['extrasTotal'],
-            'grandTotalFormatted' => number_format($pricing['roomTotal'] + $extrasResult['extrasTotal'], 2, ',', '.'),
+            'grandTotal' => $grandTotal,
+            'grandTotalFormatted' => number_format($grandTotal, 2, ',', '.'),
         ];
     }
 
