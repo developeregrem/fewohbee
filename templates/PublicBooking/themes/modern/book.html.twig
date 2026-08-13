@@ -232,11 +232,11 @@
                                         {% if row.amenities is defined and row.amenities.items is not empty %}
                                             <div class="fhb-amenity-row">
                                                 {% for amenity in row.amenities.items %}
-                                                    <span title="{{ amenity.label }}"><i class="{{ amenity.iconClass }}"></i></span>
+                                                    <span class="fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
                                                 {% endfor %}
                                                 {% if row.amenities.remaining is not empty %}
                                                     {% for amenity in row.amenities.remaining %}
-                                                        <span class="fhb-amenity-hidden" title="{{ amenity.label }}"><i class="{{ amenity.iconClass }}"></i></span>
+                                                        <span class="fhb-amenity-hidden fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
                                                     {% endfor %}
                                                     <span class="fhb-amenity-more" role="button" tabindex="0"
                                                           onclick="this.parentNode.classList.add('fhb-amenity-expanded');this.remove()">

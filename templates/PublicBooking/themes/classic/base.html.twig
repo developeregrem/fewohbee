@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}{{ 'online_booking.public.page_title'|trans }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
     <style>
         :root {
             --fhb-primary: {{ config.themePrimaryColor|default('#1f6feb') }};
@@ -58,7 +60,6 @@
 </head>
 <body>
 {% block body %}{% endblock %}
-<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/fas-7.1.0.min.js"></script>
 <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
 {% if embed %}
 <script>

@@ -1,19 +1,23 @@
 /**
- * Guest-count wiring for the public booking page (modern theme).
+ * Behaviour for the public booking page (modern theme).
  *
  * Plain JS on purpose: the public booking page is served without AssetMapper,
  * so no Stimulus controller is available here.
  *
- * Handles two number inputs (adults + children), renders one age select per
- * child by cloning a <template>, keeps the hidden `persons` field in sync for
- * capacity filtering, and blocks submitting while no adult is selected.
- *
- * Expected markup: a container with `data-pgc-root` and the age-label pattern
- * in `data-pgc-age-label` using `__N__` as the child-number placeholder.
+ * Covers the guest-count steppers and, in embed mode, the position of the image
+ * gallery lightbox.
  */
 (function () {
     'use strict';
 
+    /**
+     * Guest counts: two number inputs (adults + children), one age select per
+     * child cloned from a <template>, the hidden `persons` field kept in sync for
+     * capacity filtering, and submitting blocked while no adult is selected.
+     *
+     * Expected markup: a container with `data-pgc-root` and the age-label pattern
+     * in `data-pgc-age-label` using `__N__` as the child-number placeholder.
+     */
     function init(root) {
         var adultsInput = root.querySelector('[data-pgc-target="adultsInput"]');
         var childrenInput = root.querySelector('[data-pgc-target="childrenInput"]');
@@ -98,9 +102,40 @@
         });
     }
 
+    /**
+     * Anchor the gallery lightbox to the image that opened it.
+     *
+     * Bootstrap modals are position:fixed and centre themselves in the viewport.
+     * An embedded booking page has no viewport of its own — the host resizes the
+     * iframe to the full content height — so a centred lightbox lands halfway
+     * down the whole page, often far outside what the guest is looking at.
+     */
+    function initGalleryPosition() {
+        var root = document.querySelector('.fhb-booking-root');
+        if (!root || !root.classList.contains('fhb-embed')) {
+            return;
+        }
+
+        document.addEventListener('show.bs.modal', function (event) {
+            var modal = event.target;
+            if (!modal || !modal.classList || !modal.classList.contains('modal')) {
+                return;
+            }
+
+            var trigger = event.relatedTarget;
+            var top = 0;
+            if (trigger && typeof trigger.getBoundingClientRect === 'function') {
+                top = trigger.getBoundingClientRect().top + (window.pageYOffset || 0);
+            }
+
+            modal.style.top = Math.max(0, Math.round(top) - 12) + 'px';
+        });
+    }
+
     function boot() {
         document.querySelectorAll('[data-pgc-root]').forEach(init);
         initSteppers(document);
+        initGalleryPosition();
     }
 
     if (document.readyState === 'loading') {

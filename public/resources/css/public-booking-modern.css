@@ -329,12 +329,18 @@
     border: 1px solid var(--fhb-border);
     border-radius: var(--fhb-radius);
     margin-bottom: var(--fhb-space);
-    overflow: hidden;
+    /* Deliberately not overflow:hidden — amenity tooltips must be able to leave
+       the card. The image corners are clipped by their own wrapper instead. */
 }
 
 .fhb-room-layout {
     display: flex;
     flex-direction: column;
+}
+
+.fhb-room-media-wrap {
+    border-radius: var(--fhb-radius) var(--fhb-radius) 0 0;
+    overflow: hidden;
 }
 
 .fhb-room-media {
@@ -397,12 +403,111 @@
     margin-top: 0.65rem;
 }
 
-.fhb-amenity-hidden {
+/* Scoped to the row so these outrank the .fhb-tip display further down the
+   file — otherwise the collapsed amenities would show and the "+N" toggle
+   would appear to do nothing. */
+.fhb-amenity-row .fhb-amenity-hidden {
     display: none;
 }
 
-.fhb-amenity-expanded .fhb-amenity-hidden {
-    display: inline;
+.fhb-amenity-row.fhb-amenity-expanded .fhb-amenity-hidden {
+    display: inline-flex;
+}
+
+/* ── Gallery lightbox ──────────────────────────────────────────────────── */
+
+/* Embedded: the iframe is sized to its full content, so viewport-centred
+   positioning would drop the lightbox in the middle of the entire page. It is
+   anchored to the clicked image by public-booking.js instead. */
+.fhb-embed .modal {
+    bottom: auto;
+    height: auto;
+    position: absolute;
+}
+
+.fhb-embed .modal .modal-dialog-centered {
+    align-items: flex-start;
+    min-height: auto;
+}
+
+.fhb-embed .modal .modal-dialog {
+    margin-bottom: var(--fhb-space);
+    margin-top: var(--fhb-space);
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────────────── */
+
+/* CSS-only on purpose: the native title attribute appears only after a browser
+   delay of about a second, and the vendored Bootstrap build ships without
+   Popper, so its tooltip component is unavailable here. */
+.fhb-tip {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+}
+
+.fhb-tip:focus {
+    outline: none;
+}
+
+.fhb-tip:focus-visible {
+    border-radius: 3px;
+    outline: 2px solid var(--fhb-primary);
+    outline-offset: 3px;
+}
+
+.fhb-tip::after {
+    background: var(--fhb-text);
+    border-radius: var(--fhb-radius-sm);
+    bottom: calc(100% + 8px);
+    color: var(--fhb-surface);
+    content: attr(data-fhb-tip);
+    font-size: 0.8125rem;
+    left: 50%;
+    line-height: 1.3;
+    opacity: 0;
+    padding: 0.3rem 0.55rem;
+    pointer-events: none;
+    position: absolute;
+    text-align: center;
+    transform: translateX(-50%);
+    transition: opacity 0.1s ease-in-out;
+    /* Wrap rather than run off the side: the bubble is centred on its icon and
+       has no collision detection, so a long label on a narrow screen would
+       otherwise overflow the viewport. */
+    max-width: min(220px, 60vw);
+    width: max-content;
+    z-index: 20;
+}
+
+/* Arrow */
+.fhb-tip::before {
+    border: 5px solid transparent;
+    border-top-color: var(--fhb-text);
+    bottom: calc(100% + 3px);
+    content: "";
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    transition: opacity 0.1s ease-in-out;
+    z-index: 20;
+}
+
+.fhb-tip:hover::after,
+.fhb-tip:hover::before,
+.fhb-tip:focus::after,
+.fhb-tip:focus::before {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fhb-tip::after,
+    .fhb-tip::before {
+        transition: none;
+    }
 }
 
 .fhb-amenity-more {
@@ -433,6 +538,10 @@
 }
 
 .fhb-occupancy-icons {
+    /* Without this the flex default (stretch) pulls the guest icons to the top
+       while the nested "+ infant" group centres its own — the two icon rows
+       would sit at different heights. */
+    align-items: center;
     display: inline-flex;
     flex-wrap: wrap;
     gap: 0.2rem;
@@ -441,6 +550,7 @@
 
 .fhb-occupancy-icon {
     color: var(--fhb-occupancy-icon-color);
+    line-height: 1;
 }
 
 .fhb-occupancy-extra-guests {
@@ -614,6 +724,7 @@
     }
 
     .fhb-room-media-wrap {
+        border-radius: var(--fhb-radius) 0 0 var(--fhb-radius);
         flex-shrink: 0;
         width: 240px;
     }
