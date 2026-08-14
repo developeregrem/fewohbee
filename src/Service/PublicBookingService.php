@@ -60,9 +60,10 @@ class PublicBookingService
         Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
+        ?Appartment $calendarRoom = null,
     ): array {
         $config = $this->configService->getConfig();
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
+        $availability = $this->resolveAvailability($calendarRoom, $dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
         if ([] === $selection && [] !== $occupancySelection) {
@@ -132,12 +133,13 @@ class PublicBookingService
         Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
+        ?Appartment $calendarRoom = null,
     ): array {
         $config = $this->configService->getConfig();
         $this->assertConfigReady($config);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
+        $availability = $this->resolveAvailability($calendarRoom, $dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
         $this->validateOccupancySelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
 
         $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
@@ -233,6 +235,33 @@ class PublicBookingService
         }
 
         return null;
+    }
+
+    /**
+     * Offer rows for the current entry point.
+     *
+     * The calendar path already knows the room, so it asks for that one room only;
+     * the search path runs the full availability query. Both return the same row
+     * shape, which is why everything downstream of this call is mode-agnostic.
+     *
+     * @param array<int, int> $guestCounts
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveAvailability(
+        ?Appartment $calendarRoom,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        int $persons,
+        int $roomsCount,
+        OnlineBookingConfig $config,
+        array $guestCounts,
+    ): array {
+        if ($calendarRoom instanceof Appartment) {
+            return $this->availabilityService->getAvailabilityForRoom($calendarRoom, $dateFrom, $dateTo, $guestCounts, $persons);
+        }
+
+        return $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
     }
 
     /** Guard booking execution against incomplete or invalid online booking configuration. */

@@ -209,6 +209,90 @@ class PublicAvailabilityService
     }
 
     /**
+     * Offer for the one room a guest picked in the availability calendar.
+     *
+     * None of the search machinery applies here: no grouping across categories, no
+     * feasibility check, and above all no reduction of the published count — there is
+     * nothing left to conceal once the guest selected the accommodation themselves.
+     * Occupancy options run up to the room's capacity because the party size is chosen
+     * from them in the next step rather than stated up front.
+     *
+     * @param array<int, int> $guestCounts guest category id => count; empty until the guest states them
+     *
+     * @return array<int, array<string, mixed>> zero or one row, shaped like getAvailability()
+     */
+    public function getAvailabilityForRoom(
+        Appartment $room,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        array $guestCounts = [],
+        int $persons = 0,
+    ): array {
+        if ($dateFrom >= $dateTo) {
+            return [];
+        }
+
+        // The guest may submit a stale range, so re-check rather than trust the calendar.
+        if (!$this->availabilityService->isRoomAvailable($room, $dateFrom, $dateTo)) {
+            return [];
+        }
+
+        $category = $room->getRoomCategory();
+        $nights = (int) $dateFrom->diff($dateTo)->days;
+        if ($category instanceof RoomCategory && !$this->restrictionService->isStayLongEnough($category, $dateFrom, $nights)) {
+            return [];
+        }
+
+        $capacity = (int) $room->getBedsMax();
+        $occupancyOptions = $this->pricingService->getOccupancyPrices(
+            $category,
+            $room,
+            $dateFrom,
+            $dateTo,
+            $capacity,
+            $guestCounts,
+            $persons,
+        );
+
+        if ($category instanceof RoomCategory) {
+            $minOccupancy = $this->restrictionService->getMinOccupancyForCategory($category);
+            if (null !== $minOccupancy) {
+                $occupancyOptions = array_filter(
+                    $occupancyOptions,
+                    static fn (array $option): bool => $option['persons'] >= $minOccupancy,
+                );
+            }
+        }
+
+        if ([] === $occupancyOptions) {
+            return [];
+        }
+
+        $roomId = (int) $room->getId();
+
+        return [[
+            'typeKey' => $category instanceof RoomCategory ? 'category:'.$category->getId() : 'apartment:'.$roomId,
+            'typeLabel' => $category instanceof RoomCategory
+                ? (string) ($category->getName() ?? $category->getAcronym() ?? 'Room')
+                : trim(sprintf('%s - %s', (string) $room->getNumber(), (string) $room->getDescription())),
+            'typeDescription' => $category instanceof RoomCategory ? $this->buildCategoryDescription($category) : null,
+            'maxGuests' => $capacity,
+            'availableCount' => 1,
+            'roomIds' => [$roomId],
+            'roomCapacities' => [$roomId => $capacity],
+            'subsidiaryIds' => [(int) $room->getObject()->getId()],
+            'occupancyOptions' => $occupancyOptions,
+            'occupancyAvailableCounts' => array_fill_keys(
+                array_map(static fn (array $option): int => (int) $option['persons'], $occupancyOptions),
+                1
+            ),
+            'amenities' => $category instanceof RoomCategory ? $this->buildAmenityData($category) : [],
+            'primaryImage' => $category instanceof RoomCategory ? $this->buildPrimaryImageData($category) : null,
+            'images' => $category instanceof RoomCategory ? $this->buildImageData($category) : [],
+        ]];
+    }
+
+    /**
      * Reduce public output to only room types that are relevant for the current request.
      *
      * Caps the displayed availability per type to the highest count that can actually

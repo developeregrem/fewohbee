@@ -1,0 +1,94 @@
+{# Calendar entry point: the guest picks accommodation and period here.
+   The date inputs below stay in the DOM — the widget writes into them, and a
+   visitor without JavaScript uses them directly. #}
+<input type="hidden" name="room" value="{{ selectedRoomUuid|default('') }}" data-fhb-room-input>
+{% set calendarLabels = {
+    'loading': 'online_booking.public.calendar.loading'|trans,
+    'unavailable': 'online_booking.public.calendar.unavailable'|trans,
+    'pickArrival': 'online_booking.public.calendar.pick_arrival'|trans,
+    'pickDeparture': 'online_booking.public.calendar.pick_departure'|trans,
+    'selectedOne': 'online_booking.public.calendar.selected_one'|trans,
+    'selectedMany': 'online_booking.public.calendar.selected_many'|trans
+} %}
+<div class="fhb-calendar"
+     data-fhb-calendar="{{ path('public.booking.calendar_data') }}"
+     data-fhb-calendar-labels="{{ calendarLabels|json_encode }}"
+     data-fhb-calendar-locale="{{ app.request.locale }}"
+     data-fhb-calendar-months="{{ calendarHorizonMonths|default(12) }}">
+    <div class="fhb-cal-head">
+        <span class="fhb-section-title mb-0">
+            {{ 'online_booking.public.calendar.title'|trans }}
+            {% if calendarRooms|length == 1 %}
+                <span class="fhb-cal-capacity">{{ calendarRooms[0].label }} · {{ 'online_booking.public.calendar.up_to_guests'|trans({'%count%': calendarRooms[0].maxGuests}) }}</span>
+            {% endif %}
+        </span>
+        <span class="fhb-cal-legend">
+            <span class="fhb-cal-legend-item"><i class="fhb-cal-swatch is-free"></i>{{ 'online_booking.public.calendar.legend_free'|trans }}</span>
+            <span class="fhb-cal-legend-item"><i class="fhb-cal-swatch is-busy"></i>{{ 'online_booking.public.calendar.legend_busy'|trans }}</span>
+        </span>
+    </div>
+
+    {% if calendarRooms|length > 1 %}
+        {% if calendarRooms|length <= 4 %}
+            <div class="fhb-cal-rooms" role="group" aria-label="{{ 'online_booking.public.calendar.room_label'|trans }}">
+                {% for room in calendarRooms %}
+                    <button type="button" class="fhb-cal-room" data-fhb-room="{{ room.uuid }}" data-fhb-capacity="{{ room.maxGuests }}" aria-pressed="false">
+                        {{ room.label }}
+                        <span class="fhb-cal-room-capacity">{{ 'online_booking.public.calendar.up_to_guests'|trans({'%count%': room.maxGuests}) }}</span>
+                    </button>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="fhb-field fhb-cal-room-select">
+                <label class="fhb-label" for="fhb-cal-room">{{ 'online_booking.public.calendar.room_label'|trans }}</label>
+                <select class="form-select" id="fhb-cal-room" data-fhb-room-select>
+                    {# Same data contract as the pill buttons above, so the widget finds
+                       and restores the selected room regardless of the variant. #}
+                    {% for room in calendarRooms %}
+                        <option value="{{ room.uuid }}" data-fhb-room="{{ room.uuid }}" data-fhb-capacity="{{ room.maxGuests }}">{{ room.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+    {% else %}
+        {# Single released room: no switcher, but the widget still needs its id. #}
+        <span hidden data-fhb-room="{{ calendarRooms[0].uuid }}" data-fhb-capacity="{{ calendarRooms[0].maxGuests }}"></span>
+    {% endif %}
+
+    {# Paging rather than appending: the window is replaced, so the widget keeps a
+       constant height and a date a year out is one pick instead of twelve clicks.
+       The month list is filled by the widget from the booking horizon. #}
+    <div class="fhb-cal-nav">
+        <button type="button" class="fhb-cal-nav-btn" data-fhb-calendar-prev
+                aria-label="{{ 'online_booking.public.calendar.previous_months'|trans }}">&lsaquo;</button>
+        <select class="form-select form-select-sm fhb-cal-jump" data-fhb-calendar-jump
+                aria-label="{{ 'online_booking.public.calendar.jump_to_month'|trans }}"></select>
+        <button type="button" class="fhb-cal-nav-btn" data-fhb-calendar-next
+                aria-label="{{ 'online_booking.public.calendar.next_months'|trans }}">&rsaquo;</button>
+    </div>
+
+    <div class="fhb-cal-grid" data-fhb-calendar-grid></div>
+    <div class="fhb-cal-foot">
+        <span class="fhb-cal-status" data-fhb-calendar-status role="status" aria-live="polite"></span>
+    </div>
+</div>
+
+{# One accommodation per calendar booking, so the count is never a question. #}
+<input type="hidden" name="roomsCount" value="1">
+<div class="fhb-search-grid" data-fhb-date-fallback>
+    <div class="fhb-field">
+        <label class="fhb-label" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
+        <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
+    </div>
+    <div class="fhb-field">
+        <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
+        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
+    </div>
+</div>
+
+{# Who is coming belongs next to the accommodation, where its bed count is on
+   screen — that is where a party that does not fit must be caught. #}
+{% set guestCapacity = selectedRoomCapacity|default(0) > 0
+    ? selectedRoomCapacity
+    : (calendarRooms|length == 1 ? calendarRooms[0].maxGuests : 0) %}
+{{ include('PublicBooking/themes/modern/_guests.html.twig') }}

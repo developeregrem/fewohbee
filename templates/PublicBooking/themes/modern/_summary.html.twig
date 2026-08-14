@@ -1,0 +1,105 @@
+{# ── Summary ── #}
+<div class="fhb-summary">
+    <div class="fhb-summary-title">{{ 'online_booking.public.summary_title'|trans }}</div>
+    <div class="fhb-summary-facts">
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom }}</span>
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo }}</span>
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.persons'|trans }}:</strong> {{ search.persons }}</span>
+        <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.rooms'|trans }}:</strong> {{ search.roomsCount }}</span>
+    </div>
+    <div class="fhb-summary-selection">
+        {% set renderedSelection = false %}
+        {% for row in availability %}
+            {% set typeSelection = selectedQty[row.typeKey]|default({}) %}
+            {% for persons, qty in typeSelection %}
+                {% if qty > 0 %}
+                    {% if renderedSelection %}, {% endif %}
+                    {{ qty }}&times; {{ row.typeLabel }} ({{ persons }} {{ persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }})
+                    {% set renderedSelection = true %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+{% if roomTotalFormatted %}
+    <div class="fhb-summary">
+        {% if roomPriceBreakdown is not empty %}
+            {% for priceRow in roomPriceBreakdown %}
+                <div class="fhb-summary-row">
+                    <span>{{ priceRow.label }}{% if priceRow.quantity > 1 %} &times; {{ priceRow.quantity }}{% endif %}</span>
+                    <span>{{ priceRow.totalFormatted }} {{ currency_symbol }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if extrasBreakdown is not empty %}
+            <div class="fhb-summary-group">
+                <div class="fhb-summary-group-title">{{ 'online_booking.public.extras_title'|trans }}</div>
+                {% for extraRow in extrasBreakdown %}
+                    <div class="fhb-summary-row">
+                        <span>{{ extraRow.label }}{% if extraRow.quantity|default(1) > 1 %} &times; {{ extraRow.quantity }}{% endif %}</span>
+                        <span>{{ extraRow.totalFormatted }} {{ currency_symbol }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
+            <div class="fhb-summary-group">
+                <div class="fhb-summary-group-title">{{ 'invoice.tourist_tax.heading'|trans }}</div>
+                {% for taxRow in touristTaxLines %}
+                    <div class="fhb-summary-row">
+                        <span>{{ taxRow.label }}</span>
+                        <span>{{ taxRow.totalFormatted }} {{ currency_symbol }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if grandTotalFormatted and (extrasBreakdown is not empty or (touristTaxLines is defined and touristTaxLines|length > 0)) %}
+            <div class="fhb-summary-group">
+                <div class="fhb-summary-row fhb-summary-subtle">
+                    <span>{{ 'online_booking.public.room_total'|trans }}</span>
+                    <span>{{ roomTotalFormatted }} {{ currency_symbol }}</span>
+                </div>
+                {% if extrasBreakdown is not empty %}
+                    <div class="fhb-summary-row fhb-summary-subtle">
+                        <span>{{ 'online_booking.public.extras_total'|trans }}</span>
+                        <span>{{ extrasTotalFormatted }} {{ currency_symbol }}</span>
+                    </div>
+                {% endif %}
+                {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
+                    <div class="fhb-summary-row fhb-summary-subtle">
+                        <span>{{ 'invoice.tourist_tax.heading'|trans }}</span>
+                        <span>{{ touristTaxTotalFormatted }} {{ currency_symbol }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="fhb-summary-total">
+                <span>{{ 'online_booking.public.grand_total'|trans }}</span>
+                <strong>{{ grandTotalFormatted }} {{ currency_symbol }}</strong>
+            </div>
+        {% else %}
+            <div class="fhb-summary-total">
+                <span>{{ 'online_booking.public.room_total'|trans }}</span>
+                <strong>{{ roomTotalFormatted }} {{ currency_symbol }}</strong>
+            </div>
+            <div class="fhb-hint">{{ 'online_booking.public.room_total_hint'|trans }}</div>
+        {% endif %}
+    </div>
+{% endif %}
+
+{% if config.paymentTerms %}
+    <div class="fhb-summary">
+        <div class="fhb-summary-title">{{ 'online_booking.public.payment_terms'|trans }}</div>
+        <div class="fhb-terms">{{ config.paymentTerms|raw }}</div>
+    </div>
+{% endif %}
+
+{% if config.cancellationTerms %}
+    <div class="fhb-summary">
+        <div class="fhb-summary-title">{{ 'online_booking.public.cancellation_terms'|trans }}</div>
+        <div class="fhb-terms">{{ config.cancellationTerms|raw }}</div>
+    </div>
+{% endif %}

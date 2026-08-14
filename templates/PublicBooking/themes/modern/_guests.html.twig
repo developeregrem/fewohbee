@@ -1,0 +1,116 @@
+{# Party size, shared by both entry points.
+   Search mode asks for it up front because it filters which rooms qualify.
+   Calendar mode asks later — with one known room the party size changes the price,
+   not the availability, so it belongs next to the occupancy options. #}
+{% if hasCategories %}
+    {# The age-to-category mapping is pure data (min/max age, sort order, whether the
+       category occupies a bed), so the browser can reproduce it exactly instead of
+       guessing. This is what makes the live bed count correct for guests who take no
+       bed of their own, and it mirrors GuestCategoryAgeMapper. #}
+    {% set categoryRules = [] %}
+    {% for category in guestCategories %}
+        {% set categoryRules = categoryRules|merge([{
+            'id': category.id,
+            'name': category.name,
+            'minAge': category.minAge,
+            'maxAge': category.maxAge,
+            'sortOrder': category.sortOrder,
+            'adult': category.statisticalGroup.value == 'adult',
+            'occupies': category.isCountedInOccupancy
+        }]) %}
+    {% endfor %}
+    <div class="fhb-guests"
+         data-pgc-root
+         data-pgc-age-label="{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}"
+         data-pgc-categories="{{ categoryRules|json_encode }}"
+         {% if guestCapacity|default(0) > 0 %}data-pgc-capacity="{{ guestCapacity }}"{% endif %}
+         data-pgc-labels="{{ {
+             'noBed': 'online_booking.public.guests.no_bed'|trans,
+             'bedsUsed': 'online_booking.public.guests.beds_used'|trans({'%used%': '__USED__', '%max%': '__MAX__'}),
+             'overCapacity': 'online_booking.public.guests.over_capacity'|trans({'%max%': '__MAX__'})
+         }|json_encode }}">
+        <div class="fhb-search-grid">
+            <div class="fhb-field">
+                <label class="fhb-label" for="adults">{{ 'online_booking.public.guests.adults'|trans }}</label>
+                <div class="fhb-stepper">
+                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="adults" data-fhb-step-delta="-1"
+                            aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
+                    <input class="form-control" type="number" min="1" id="adults" name="adults"
+                           value="{{ search.adults|default(1) }}"
+                           data-pgc-target="adultsInput"
+                           data-pgc-min="1"
+                           onwheel="this.blur()">
+                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="adults" data-fhb-step-delta="1"
+                            aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
+                </div>
+            </div>
+        </div>
+
+        {% if hasChildCategory %}
+            <a class="fhb-children-toggle{% if initialChildAges|length == 0 %} collapsed{% endif %}"
+               data-bs-toggle="collapse" href="#publicChildren"
+               role="button" aria-expanded="{{ initialChildAges|length > 0 ? 'true' : 'false' }}" aria-controls="publicChildren">
+                <i class="fa-solid fa-chevron-right fhb-chevron"></i>
+                {{ 'online_booking.public.guests.add_children'|trans }}
+            </a>
+            <div class="collapse{% if initialChildAges|length > 0 %} show{% endif %}" id="publicChildren">
+                <div class="fhb-field" style="max-width:220px;margin-top:0.75rem">
+                    <label class="fhb-label" for="children">{{ 'online_booking.public.guests.children'|trans }}</label>
+                    <div class="fhb-stepper">
+                        <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="children" data-fhb-step-delta="-1"
+                                aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
+                        <input class="form-control" type="number" min="0" id="children" name="children"
+                               value="{{ initialChildAges|length }}"
+                               data-pgc-target="childrenInput"
+                               data-pgc-min="0"
+                               onwheel="this.blur()">
+                        <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="children" data-fhb-step-delta="1"
+                                aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
+                    </div>
+                </div>
+                <div class="fhb-child-ages" data-pgc-target="childAges">
+                    {% for age in initialChildAges %}
+                        <div class="fhb-field" data-pgc-child-row>
+                            <label class="fhb-label">{{ 'online_booking.public.guests.age_label'|trans({'%n%': loop.index}) }}</label>
+                            <select class="form-select" name="childAges[]">
+                                {% for a in 0..17 %}
+                                    <option value="{{ a }}"{% if a == age %} selected{% endif %}>{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="alert alert-warning d-none" style="margin-top:1rem" data-pgc-target="adultWarning">
+            {{ 'online_booking.public.guests.adult_required'|trans }}
+        </div>
+
+        {# Plain-language read-out of who is coming and how many beds that occupies —
+           replaces guessing from icons next to a price row. #}
+        <p class="fhb-guest-summary" data-pgc-target="summary" role="status" aria-live="polite"></p>
+        <div class="alert alert-warning py-2 small d-none" data-pgc-target="capacityWarning"></div>
+
+        {# Hidden persons input — synced by JS as adults + children for capacity filtering. #}
+        <input type="hidden" name="persons" value="{{ search.persons|default(1) }}" data-pgc-target="personsInput">
+        {# Inline template used by JS to clone new age-select rows. #}
+        <template data-pgc-target="childAgeTemplate">
+            <div class="fhb-field" data-pgc-child-row>
+                <label class="fhb-label" data-pgc-child-label>{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}</label>
+                <select class="form-select" name="childAges[]">
+                    {% for a in 0..17 %}
+                        <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </template>
+    </div>
+{% else %}
+    <div class="fhb-search-grid">
+        <div class="fhb-field">
+            <label class="fhb-label" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
+            <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
+        </div>
+    </div>
+{% endif %}

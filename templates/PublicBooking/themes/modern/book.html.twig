@@ -1,5 +1,16 @@
 {% extends 'PublicBooking/themes/modern/base.html.twig' %}
 
+{#
+  Public booking page, modern theme.
+
+  Two entry points share one form and one flow. Step 1 differs per mode — the
+  search asks for dates and party size, the calendar lets the guest pick an
+  accommodation and period — and from step 2 on both continue identically with
+  occupancy, extras, price and guest details. Each step lives in its own partial
+  so the split between the modes is visible in the file list, not buried in
+  nested conditions.
+#}
+
 {% block body %}
 {% set autoScrollTarget = null %}
 {% if successMessage %}
@@ -19,6 +30,7 @@
     {% set autoScrollTarget = 'fhb-availability-results' %}
 {% endif %}
 {% set currentStep = step|default(1) %}
+{% set isCalendarMode = calendarActive|default(false) and calendarRooms|default([])|length > 0 %}
 <div class="fhb-booking-root{{ embed ? ' fhb-embed' : '' }}">
     <div class="fhb-shell">
         <div class="fhb-booking-card">
@@ -26,26 +38,8 @@
                 <h1 class="fhb-title">{{ config.bookingMode == 'BOOKING' ? 'online_booking.public.page_title'|trans : 'online_booking.public.page_title_inquiry'|trans }}</h1>
             {% endif %}
 
-            {# ── Step indicator ── #}
             {% if not successMessage %}
-                {% set steps = [
-                    'online_booking.public.step_search'|trans,
-                    'online_booking.public.step_select'|trans,
-                    'online_booking.public.step_details'|trans
-                ] %}
-                <ol class="fhb-steps" aria-label="{{ 'online_booking.public.progress'|trans }}">
-                    {% for label in steps %}
-                        {% set stepNum = loop.index %}
-                        <li class="fhb-step{{ currentStep == stepNum ? ' is-active' : (currentStep > stepNum ? ' is-done' : '') }}"
-                            {% if currentStep == stepNum %}aria-current="step"{% endif %}>
-                            <span class="fhb-step-marker">
-                                {%- if currentStep > stepNum %}<i class="fa-solid fa-check"></i>{% else %}{{ stepNum }}{% endif -%}
-                            </span>
-                            <span class="fhb-step-label">{{ label }}</span>
-                            {% if not loop.last %}<span class="fhb-step-line" aria-hidden="true"></span>{% endif %}
-                        </li>
-                    {% endfor %}
-                </ol>
+                {{ include('PublicBooking/themes/modern/_step_indicator.html.twig') }}
             {% endif %}
 
             {% if submitFallbackNotice %}
@@ -66,9 +60,7 @@
                         {{ 'online_booking.public.start_new'|trans }}
                     </a>
                 </div>
-            {% endif %}
-
-            {% if not successMessage %}
+            {% else %}
             <form method="post" action="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
                 <input type="hidden" name="embed" value="{{ embed ? 1 : 0 }}">
                 <input type="hidden" name="form_started_at" value="{{ formState.formStartedAt }}">
@@ -80,117 +72,25 @@
                     <input type="text" id="website" name="website" value="" tabindex="-1" autocomplete="off">
                 </div>
 
-                {# ── Step 1: Search ── #}
+                {# Guest-category flags used by the guests partial in both modes. #}
                 {% set hasCategories = guestCategories|default([])|length > 0 %}
                 {% set hasChildCategory = hasCategories and (guestCategories|filter(c => c.statisticalGroup.value != 'adult')|length > 0) %}
                 {% set initialChildAges = search.childAges|default([]) %}
-                {# Booking.com pattern: two steppers (adults + children), one age select per child.
-                   The server maps each age onto the matching guest category via GuestCategoryAgeMapper. #}
 
-                <div{% if hasCategories %} data-pgc-root data-pgc-age-label="{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}"{% endif %}>
-                    <div class="fhb-search-grid">
-                        <div class="fhb-field">
-                            <label class="fhb-label" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
-                            <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
-                        </div>
-                        <div class="fhb-field">
-                            <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
-                            <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
-                        </div>
-                        <div class="fhb-field">
-                            <label class="fhb-label" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
-                            <div class="fhb-stepper">
-                                <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="-1"
-                                        aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
-                                <input class="form-control" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
-                                <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="1"
-                                        aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
-                            </div>
-                        </div>
-
-                        {% if hasCategories %}
-                            <div class="fhb-field">
-                                <label class="fhb-label" for="adults">{{ 'online_booking.public.guests.adults'|trans }}</label>
-                                <div class="fhb-stepper">
-                                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="adults" data-fhb-step-delta="-1"
-                                            aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
-                                    <input class="form-control" type="number" min="1" id="adults" name="adults"
-                                           value="{{ search.adults|default(1) }}"
-                                           data-pgc-target="adultsInput"
-                                           data-pgc-min="1"
-                                           onwheel="this.blur()">
-                                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="adults" data-fhb-step-delta="1"
-                                            aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="fhb-field">
-                                <label class="fhb-label" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
-                                <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    {% if hasChildCategory %}
-                        <a class="fhb-children-toggle{% if initialChildAges|length == 0 %} collapsed{% endif %}"
-                           data-bs-toggle="collapse" href="#publicChildren"
-                           role="button" aria-expanded="{{ initialChildAges|length > 0 ? 'true' : 'false' }}" aria-controls="publicChildren">
-                            <i class="fa-solid fa-chevron-right fhb-chevron"></i>
-                            {{ 'online_booking.public.guests.add_children'|trans }}
-                        </a>
-                        <div class="collapse{% if initialChildAges|length > 0 %} show{% endif %}" id="publicChildren">
-                            <div class="fhb-field" style="max-width:220px;margin-top:0.75rem">
-                                <label class="fhb-label" for="children">{{ 'online_booking.public.guests.children'|trans }}</label>
-                                <div class="fhb-stepper">
-                                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="children" data-fhb-step-delta="-1"
-                                            aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
-                                    <input class="form-control" type="number" min="0" id="children" name="children"
-                                           value="{{ initialChildAges|length }}"
-                                           data-pgc-target="childrenInput"
-                                           data-pgc-min="0"
-                                           onwheel="this.blur()">
-                                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="children" data-fhb-step-delta="1"
-                                            aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
-                                </div>
-                            </div>
-                            <div class="fhb-child-ages" data-pgc-target="childAges">
-                                {% for age in initialChildAges %}
-                                    <div class="fhb-field" data-pgc-child-row>
-                                        <label class="fhb-label">{{ 'online_booking.public.guests.age_label'|trans({'%n%': loop.index}) }}</label>
-                                        <select class="form-select" name="childAges[]">
-                                            {% for a in 0..17 %}
-                                                <option value="{{ a }}"{% if a == age %} selected{% endif %}>{{ a }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    {% if hasCategories %}
-                        <div class="alert alert-warning d-none" style="margin-top:1rem" data-pgc-target="adultWarning">
-                            {{ 'online_booking.public.guests.adult_required'|trans }}
-                        </div>
-
-                        {# Hidden persons input — synced by JS as adults + children for capacity filtering. #}
-                        <input type="hidden" name="persons" value="{{ search.persons|default(1) }}" data-pgc-target="personsInput">
-                        {# Inline template used by JS to clone new age-select rows. #}
-                        <template data-pgc-target="childAgeTemplate">
-                            <div class="fhb-field" data-pgc-child-row>
-                                <label class="fhb-label" data-pgc-child-label>{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}</label>
-                                <select class="form-select" name="childAges[]">
-                                    {% for a in 0..17 %}
-                                        <option value="{{ a }}">{{ a }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </template>
-                    {% endif %}
-                </div>
+                {# ── Step 1 — entry point ── #}
+                {% if isCalendarMode %}
+                    {{ include('PublicBooking/themes/modern/_step1_calendar.html.twig') }}
+                {% else %}
+                    {{ include('PublicBooking/themes/modern/_step1_search.html.twig') }}
+                {% endif %}
 
                 <div class="fhb-actions">
-                    <button type="submit" name="intent" value="availability" class="btn btn-outline-primary">{{ 'online_booking.public.check_availability'|trans }}</button>
+                    {# Once the calendar is live the guest has already seen the availability,
+                       so the button leads on to prices instead of promising another check. #}
+                    <button type="submit" name="intent" value="availability" class="btn btn-outline-primary">
+                        <span data-fhb-label-default>{{ 'online_booking.public.check_availability'|trans }}</span>
+                        <span data-fhb-label-calendar hidden>{{ 'online_booking.public.calendar.continue'|trans }}</span>
+                    </button>
                 </div>
 
                 {% if availabilityChecked and availability is empty and not errorMessage %}
@@ -199,385 +99,28 @@
                     </div>
                 {% endif %}
 
-                {# ── Step 2: Room selection with occupancy options ── #}
+                {# ── Step 2 — occupancy, extras and price ── #}
                 {% if availability is not empty %}
                     <hr class="fhb-divider">
-                    <div class="fhb-section fhb-scroll-target" id="fhb-availability-results" tabindex="-1">
-                        <h2 class="fhb-section-title">{{ 'online_booking.public.available_room_types'|trans }}</h2>
-                        {% for row in availability %}
-                            {% set galleryId = 'gallery-' ~ row.typeKey|replace({':': '-'}) %}
-                            <div class="fhb-room-card">
-                                <div class="fhb-room-layout">
-                                    {% if row.primaryImage is defined and row.primaryImage %}
-                                        <div class="fhb-room-media-wrap">
-                                            <img src="{{ row.primaryImage.mediumUrl }}"
-                                                 alt="{{ row.typeLabel }}"
-                                                 class="fhb-room-media"
-                                                 {% if row.images|length > 1 %}
-                                                     role="button"
-                                                     data-bs-toggle="modal"
-                                                     data-bs-target="#{{ galleryId }}"
-                                                 {% endif %}>
-                                        </div>
-                                    {% endif %}
-                                    <div class="fhb-room-body">
-                                        <h3 class="fhb-room-title">{{ row.typeLabel }}</h3>
-                                        <div class="fhb-room-meta">{{ 'online_booking.public.table.available'|trans }}: {{ row.availableCount }}</div>
-
-                                        {% if row.typeDescription is not empty %}
-                                            <p class="fhb-room-desc">{{ row.typeDescription }}</p>
-                                        {% endif %}
-
-                                        {# Amenity icons (max 6) + "+N" toggle to expand remaining #}
-                                        {% if row.amenities is defined and row.amenities.items is not empty %}
-                                            <div class="fhb-amenity-row">
-                                                {% for amenity in row.amenities.items %}
-                                                    <span class="fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
-                                                {% endfor %}
-                                                {% if row.amenities.remaining is not empty %}
-                                                    {% for amenity in row.amenities.remaining %}
-                                                        <span class="fhb-amenity-hidden fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
-                                                    {% endfor %}
-                                                    <span class="fhb-amenity-more" role="button" tabindex="0"
-                                                          onclick="this.parentNode.classList.add('fhb-amenity-expanded');this.remove()">
-                                                        +{{ row.amenities.remaining|length }}
-                                                    </span>
-                                                {% endif %}
-                                            </div>
-                                        {% endif %}
-
-                                        {% if row.images is defined and row.images|length > 1 %}
-                                            <a href="#" class="fhb-gallery-link" data-bs-toggle="modal" data-bs-target="#{{ galleryId }}">
-                                                {{ 'online_booking.public.view_photos'|trans({'%count%': row.images|length}) }}
-                                            </a>
-                                        {% endif %}
-
-                                        {# Row that carries the "+ baby"-icons: the option matching the party's
-                                           occupancy-counted total, or the largest priced option when that exact
-                                           count has no price category (options are capped at the searched
-                                           persons count, so they never exceed it). #}
-                                        {% set nonOccupancyRowPersons = 0 %}
-                                        {% if mixOccupancyTotal|default(0) > 0 and nonOccupancyIcons|default([])|length > 0 and row.occupancyOptions is not empty %}
-                                            {% set optionPersons = row.occupancyOptions|map(o => o.persons) %}
-                                            {% set nonOccupancyRowPersons = mixOccupancyTotal in optionPersons ? mixOccupancyTotal : max(optionPersons) %}
-                                        {% endif %}
-
-                                        <div class="fhb-occupancy">
-                                            {% for option in row.occupancyOptions %}
-                                                {% set fieldName = 'occ_' ~ row.typeKey ~ '_p' ~ option.persons %}
-                                                {% set selectedVal = selectedQty[row.typeKey][option.persons]|default(0) %}
-                                                <div class="fhb-occupancy-row">
-                                                    <span class="fhb-occupancy-icons"
-                                                          title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}">
-                                                        {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
-                                                        {% if nonOccupancyRowPersons > 0 and nonOccupancyRowPersons == option.persons %}
-                                                            <span class="fhb-occupancy-extra-guests">
-                                                                +
-                                                                {% for ico in nonOccupancyIcons %}<i class="fa-solid {{ ico.icon }} fhb-occupancy-icon" title="{{ ico.label }}"></i>{% endfor %}
-                                                            </span>
-                                                        {% endif %}
-                                                    </span>
-                                                    <span class="fhb-occupancy-price">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
-                                                    <div class="fhb-qty">
-                                                        <input class="form-control" type="number" min="0" max="{{ row.availableCount }}"
-                                                               name="{{ fieldName }}" value="{{ selectedVal }}"
-                                                               aria-label="{{ row.typeLabel }} — {{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}"
-                                                               onwheel="this.blur()">
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    {# ── Extras (bookable miscellaneous prices) ── #}
-                    {% if extras is not empty %}
-                        <div class="fhb-section">
-                            <h2 class="fhb-section-title">{{ 'online_booking.public.extras_title'|trans }}</h2>
-                            <div class="fhb-extras">
-                                {% for extra in extras %}
-                                    {% set extraFieldName = 'extra_' ~ extra.id %}
-                                    {% set isMandatoryExtra = extra.isMandatory|default(false) %}
-                                    {% set isAutoQuantity = extra.autoQuantity|default(false) %}
-                                    {% set selectedQtyVal = selectedExtras[extra.id]|default(isMandatoryExtra ? 1 : 0) %}
-                                    {% set needsQuantity = not isAutoQuantity and extra.calculationType != 'per_person_night' and extra.maxQuantity > 1 %}
-                                    <div class="fhb-extra-row">
-                                        <div class="fhb-extra-info">
-                                            <div class="fhb-extra-name">
-                                                {{ extra.description }}
-                                                {% if isAutoQuantity and extra.categoryName %}
-                                                    <span class="fhb-extra-badge">{{ extra.categoryName }}</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="fhb-extra-price">
-                                                {{ extra.unitPriceFormatted }}&nbsp;{{ currency_symbol }}
-                                                {% if extra.calculationType == 'per_person_night' %}
-                                                    {{ 'online_booking.public.per_person_night'|trans }}
-                                                {% elseif extra.calculationType == 'per_room_night' %}
-                                                    {{ 'online_booking.public.per_room_night'|trans }}
-                                                {% else %}
-                                                    {{ 'online_booking.public.flat_price'|trans }}{% if isAutoQuantity %} {{ 'online_booking.public.per_room_suffix'|trans }}{% endif %}
-                                                {% endif %}
-                                                {% if not isAutoQuantity %}
-                                                    <span>(= {{ extra.pricePerUnitFormatted }}&nbsp;{{ currency_symbol }})</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        {% if isMandatoryExtra %}
-                                            {# Hidden input carries the value even though the visible control is disabled. #}
-                                            <input type="hidden" name="{{ extraFieldName }}" value="{{ needsQuantity ? selectedQtyVal : 1 }}">
-                                        {% endif %}
-                                        {% if needsQuantity %}
-                                            <div class="fhb-qty">
-                                                <select class="form-select"
-                                                        {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
-                                                        {% if isMandatoryExtra %}disabled{% endif %}
-                                                        aria-label="{{ extra.description }}"
-                                                        onwheel="this.blur()">
-                                                    {% if not isMandatoryExtra %}
-                                                        <option value="0" {% if selectedQtyVal == 0 %}selected{% endif %}>–</option>
-                                                    {% endif %}
-                                                    {% for q in 1..extra.maxQuantity %}
-                                                        <option value="{{ q }}" {% if selectedQtyVal == q %}selected{% endif %}>{{ q }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        {% else %}
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input" type="checkbox" role="switch"
-                                                       id="{{ extraFieldName }}"
-                                                       {% if not isMandatoryExtra %}name="{{ extraFieldName }}"{% endif %}
-                                                       value="1"
-                                                       aria-label="{{ extra.description }}"
-                                                       {% if selectedQtyVal > 0 or isMandatoryExtra %}checked{% endif %}
-                                                       {% if isMandatoryExtra %}disabled{% endif %}>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endif %}
+                    {{ include('PublicBooking/themes/modern/_offer.html.twig') }}
+                    {{ include('PublicBooking/themes/modern/_extras.html.twig') }}
 
                     <div class="fhb-actions">
                         <button type="submit" name="intent" value="preview" class="btn btn-primary">{{ 'online_booking.public.continue'|trans }}</button>
                     </div>
 
-                    {# Image gallery modals (Bootstrap carousel lightbox) #}
-                    {% for row in availability %}
-                        {% if row.images is defined and row.images|length > 1 %}
-                            {% set galleryId = 'gallery-' ~ row.typeKey|replace({':': '-'}) %}
-                            {% set carouselId = 'carousel-' ~ row.typeKey|replace({':': '-'}) %}
-                            <div class="modal fade" id="{{ galleryId }}" tabindex="-1">
-                                <div class="modal-dialog modal-lg modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header py-2">
-                                            <h6 class="modal-title">{{ row.typeLabel }}</h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body p-0">
-                                            <div id="{{ carouselId }}" class="carousel slide">
-                                                <div class="carousel-inner">
-                                                    {% for img in row.images %}
-                                                        <div class="carousel-item {{ loop.first ? 'active' : '' }}">
-                                                            <img src="{{ img.mediumUrl }}" class="d-block w-100" alt="">
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                                <button class="carousel-control-prev" type="button"
-                                                        data-bs-target="#{{ carouselId }}" data-bs-slide="prev">
-                                                    <span class="carousel-control-prev-icon"></span>
-                                                </button>
-                                                <button class="carousel-control-next" type="button"
-                                                        data-bs-target="#{{ carouselId }}" data-bs-slide="next">
-                                                    <span class="carousel-control-next-icon"></span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
+                    {{ include('PublicBooking/themes/modern/_gallery_modals.html.twig') }}
                 {% endif %}
 
-                {# ── Step 3: Booker details + summary ── #}
+                {# ── Step 3 — booker details and summary ── #}
                 {% if step >= 3 and availability is not empty %}
-                    {# No hidden fields needed for occ_/extra_ — the visible Step 2
+                    {# No hidden fields needed for occ_/extra_ — the visible step 2
                        inputs are still in the DOM and carry the current values.
                        Duplicating them as hidden fields would override user changes. #}
                     <hr class="fhb-divider">
                     <div class="fhb-section fhb-scroll-target" id="fhb-booker-details" tabindex="-1">
-                        <h2 class="fhb-section-title">{{ 'online_booking.public.booker_details'|trans }}</h2>
-
-                        <div class="row g-3">
-                            <div class="col-12 col-md-3">
-                                <label class="fhb-label" for="salutation">{{ 'customer.salutation'|trans }}</label>
-                                <select class="form-select" id="salutation" name="salutation" required>
-                                    <option value="">--</option>
-                                    {% for salutation in customer_salutations %}
-                                        {% set translatedSalutation = salutation|trans %}
-                                        <option value="{{ translatedSalutation }}" {% if booker.salutation == translatedSalutation %}selected{% endif %}>{{ translatedSalutation }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-6 col-md">
-                                <label class="fhb-label" for="firstname">{{ 'customer.firstname'|trans }}</label>
-                                <input class="form-control" type="text" id="firstname" name="firstname" required value="{{ booker.firstname }}">
-                            </div>
-                            <div class="col-6 col-md">
-                                <label class="fhb-label" for="lastname">{{ 'customer.lastname'|trans }}</label>
-                                <input class="form-control" type="text" id="lastname" name="lastname" required value="{{ booker.lastname }}">
-                            </div>
-
-                            <div class="col-12 col-md-4">
-                                <label class="fhb-label" for="email">{{ 'online_booking.public.email'|trans }}</label>
-                                <input class="form-control" type="email" id="email" name="email" required value="{{ booker.email }}">
-                            </div>
-                            <div class="col-6 col-md-4">
-                                <label class="fhb-label" for="phone">{{ 'online_booking.public.phone'|trans }}</label>
-                                <input class="form-control" type="tel" id="phone" name="phone" value="{{ booker.phone }}">
-                            </div>
-                            <div class="col-6 col-md-4">
-                                <label class="fhb-label" for="company">{{ 'customer.company'|trans }}</label>
-                                <input class="form-control" type="text" id="company" name="company" value="{{ booker.company }}">
-                            </div>
-
-                            <div class="col-12 col-md-5">
-                                <label class="fhb-label" for="address">{{ 'customer.address'|trans }}</label>
-                                <input class="form-control" type="text" id="address" name="address" required value="{{ booker.address }}">
-                            </div>
-                            <div class="col-4 col-md-2">
-                                <label class="fhb-label" for="zip">{{ 'customer.zip'|trans }}</label>
-                                <input class="form-control" type="text" id="zip" name="zip" required value="{{ booker.zip }}">
-                            </div>
-                            <div class="col-8 col-md-3">
-                                <label class="fhb-label" for="city">{{ 'customer.city'|trans }}</label>
-                                <input class="form-control" type="text" id="city" name="city" required value="{{ booker.city }}">
-                            </div>
-                            <div class="col-12 col-md-2">
-                                <label class="fhb-label" for="country">{{ 'customer.country'|trans }}</label>
-                                <select class="form-select" id="country" name="country" required>
-                                    {% for key, country in countries %}
-                                        <option value="{{ key }}" {% if booker.country == key %}selected{% endif %}>{{ country }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="fhb-label" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
-                                <textarea class="form-control" id="comment" name="comment" rows="3">{{ booker.comment }}</textarea>
-                            </div>
-                        </div>
-
-                        {# ── Summary ── #}
-                        <div class="fhb-summary">
-                            <div class="fhb-summary-title">{{ 'online_booking.public.summary_title'|trans }}</div>
-                            <div class="fhb-summary-facts">
-                                <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.arrival'|trans }}:</strong> {{ search.dateFrom }}</span>
-                                <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.departure'|trans }}:</strong> {{ search.dateTo }}</span>
-                                <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.persons'|trans }}:</strong> {{ search.persons }}</span>
-                                <span class="fhb-summary-fact"><strong>{{ 'online_booking.public.rooms'|trans }}:</strong> {{ search.roomsCount }}</span>
-                            </div>
-                            <div class="fhb-summary-selection">
-                                {% set renderedSelection = false %}
-                                {% for row in availability %}
-                                    {% set typeSelection = selectedQty[row.typeKey]|default({}) %}
-                                    {% for persons, qty in typeSelection %}
-                                        {% if qty > 0 %}
-                                            {% if renderedSelection %}, {% endif %}
-                                            {{ qty }}&times; {{ row.typeLabel }} ({{ persons }} {{ persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }})
-                                            {% set renderedSelection = true %}
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        {% if roomTotalFormatted %}
-                            <div class="fhb-summary">
-                                {% if roomPriceBreakdown is not empty %}
-                                    {% for priceRow in roomPriceBreakdown %}
-                                        <div class="fhb-summary-row">
-                                            <span>{{ priceRow.label }}{% if priceRow.quantity > 1 %} &times; {{ priceRow.quantity }}{% endif %}</span>
-                                            <span>{{ priceRow.totalFormatted }} {{ currency_symbol }}</span>
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
-
-                                {% if extrasBreakdown is not empty %}
-                                    <div class="fhb-summary-group">
-                                        <div class="fhb-summary-group-title">{{ 'online_booking.public.extras_title'|trans }}</div>
-                                        {% for extraRow in extrasBreakdown %}
-                                            <div class="fhb-summary-row">
-                                                <span>{{ extraRow.label }}{% if extraRow.quantity|default(1) > 1 %} &times; {{ extraRow.quantity }}{% endif %}</span>
-                                                <span>{{ extraRow.totalFormatted }} {{ currency_symbol }}</span>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-
-                                {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
-                                    <div class="fhb-summary-group">
-                                        <div class="fhb-summary-group-title">{{ 'invoice.tourist_tax.heading'|trans }}</div>
-                                        {% for taxRow in touristTaxLines %}
-                                            <div class="fhb-summary-row">
-                                                <span>{{ taxRow.label }}</span>
-                                                <span>{{ taxRow.totalFormatted }} {{ currency_symbol }}</span>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-
-                                {% if grandTotalFormatted and (extrasBreakdown is not empty or (touristTaxLines is defined and touristTaxLines|length > 0)) %}
-                                    <div class="fhb-summary-group">
-                                        <div class="fhb-summary-row fhb-summary-subtle">
-                                            <span>{{ 'online_booking.public.room_total'|trans }}</span>
-                                            <span>{{ roomTotalFormatted }} {{ currency_symbol }}</span>
-                                        </div>
-                                        {% if extrasBreakdown is not empty %}
-                                            <div class="fhb-summary-row fhb-summary-subtle">
-                                                <span>{{ 'online_booking.public.extras_total'|trans }}</span>
-                                                <span>{{ extrasTotalFormatted }} {{ currency_symbol }}</span>
-                                            </div>
-                                        {% endif %}
-                                        {% if touristTaxLines is defined and touristTaxLines|length > 0 %}
-                                            <div class="fhb-summary-row fhb-summary-subtle">
-                                                <span>{{ 'invoice.tourist_tax.heading'|trans }}</span>
-                                                <span>{{ touristTaxTotalFormatted }} {{ currency_symbol }}</span>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="fhb-summary-total">
-                                        <span>{{ 'online_booking.public.grand_total'|trans }}</span>
-                                        <strong>{{ grandTotalFormatted }} {{ currency_symbol }}</strong>
-                                    </div>
-                                {% else %}
-                                    <div class="fhb-summary-total">
-                                        <span>{{ 'online_booking.public.room_total'|trans }}</span>
-                                        <strong>{{ roomTotalFormatted }} {{ currency_symbol }}</strong>
-                                    </div>
-                                    <div class="fhb-hint">{{ 'online_booking.public.room_total_hint'|trans }}</div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-
-                        {% if config.paymentTerms %}
-                            <div class="fhb-summary">
-                                <div class="fhb-summary-title">{{ 'online_booking.public.payment_terms'|trans }}</div>
-                                <div class="fhb-terms">{{ config.paymentTerms|raw }}</div>
-                            </div>
-                        {% endif %}
-
-                        {% if config.cancellationTerms %}
-                            <div class="fhb-summary">
-                                <div class="fhb-summary-title">{{ 'online_booking.public.cancellation_terms'|trans }}</div>
-                                <div class="fhb-terms">{{ config.cancellationTerms|raw }}</div>
-                            </div>
-                        {% endif %}
+                        {{ include('PublicBooking/themes/modern/_booker.html.twig') }}
+                        {{ include('PublicBooking/themes/modern/_summary.html.twig') }}
 
                         <div class="fhb-actions">
                             <button type="submit" name="intent" value="submit" class="btn btn-primary">

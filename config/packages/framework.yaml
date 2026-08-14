@@ -36,6 +36,13 @@ framework:
             limit: 5
             interval: '15 minutes'
             cache_pool: cache.app
+        # Each "load more months" in the booking calendar is one request, so this
+        # sits well above the form limits while still capping occupancy scraping.
+        public_booking_calendar:
+            policy: 'sliding_window'
+            limit: 40
+            interval: '5 minutes'
+            cache_pool: cache.app
         api:
             policy: 'sliding_window'
             limit: 300

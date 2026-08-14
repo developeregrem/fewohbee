@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}{{ 'online_booking.public.page_title'|trans }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
-    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/public-booking-modern.css?v=6">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/public-booking-modern.css?v=12">
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
     <style>
@@ -26,7 +26,10 @@
 <body>
 {% block body %}{% endblock %}
 <script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
-<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/public-booking.js?v=2" defer></script>
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/public-booking.js?v=4" defer></script>
+{% if config.calendarActive %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/public-booking-calendar.js?v=7" defer></script>
+{% endif %}
 {% if embed %}
 <script>
 (function(){

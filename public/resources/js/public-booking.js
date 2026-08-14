@@ -4,8 +4,9 @@
  * Plain JS on purpose: the public booking page is served without AssetMapper,
  * so no Stimulus controller is available here.
  *
- * Covers the guest-count steppers and, in embed mode, the position of the image
- * gallery lightbox.
+ * Covers the guest-count steppers — including the age-to-category mapping that
+ * decides how many beds a party actually occupies — and, in embed mode, the
+ * position of the image gallery lightbox.
  */
 (function () {
     'use strict';
@@ -18,6 +19,83 @@
      * Expected markup: a container with `data-pgc-root` and the age-label pattern
      * in `data-pgc-age-label` using `__N__` as the child-number placeholder.
      */
+    /**
+     * Mirror of GuestCategoryAgeMapper::matchByAge(): the category whose age range
+     * contains the age, ties broken by sort order and then id.
+     */
+    function categoryForAge(categories, age) {
+        var best = null;
+        categories.forEach(function (category) {
+            if (category.adult) {
+                return;
+            }
+            if (category.minAge !== null && age < category.minAge) {
+                return;
+            }
+            if (category.maxAge !== null && age > category.maxAge) {
+                return;
+            }
+            if (best === null
+                || category.sortOrder < best.sortOrder
+                || (category.sortOrder === best.sortOrder && category.id < best.id)) {
+                best = category;
+            }
+        });
+        return best;
+    }
+
+    /**
+     * Break a party down the same way the server does.
+     *
+     * Returns the counts per category plus the two numbers that must not be
+     * confused: how many guests occupy a bed, and how many come along without one
+     * (an infant in a cot). Capacity and the price tier follow the former; only the
+     * summary mentions the latter.
+     */
+    function describeParty(categories, adults, childAges) {
+        var adultCategory = null;
+        categories.forEach(function (category) {
+            if (category.adult && (adultCategory === null || category.sortOrder < adultCategory.sortOrder)) {
+                adultCategory = category;
+            }
+        });
+
+        var counts = [];
+        function add(category, amount) {
+            if (!category) {
+                return;
+            }
+            for (var i = 0; i < counts.length; i++) {
+                if (counts[i].category.id === category.id) {
+                    counts[i].count += amount;
+                    return;
+                }
+            }
+            counts.push({ category: category, count: amount });
+        }
+
+        if (adults > 0) {
+            add(adultCategory, adults);
+        }
+        childAges.forEach(function (age) {
+            if (age >= 0) {
+                add(categoryForAge(categories, age), 1);
+            }
+        });
+
+        var occupying = 0;
+        var withoutBed = 0;
+        counts.forEach(function (entry) {
+            if (entry.category.occupies) {
+                occupying += entry.count;
+            } else {
+                withoutBed += entry.count;
+            }
+        });
+
+        return { counts: counts, occupying: occupying, withoutBed: withoutBed };
+    }
+
     function init(root) {
         var adultsInput = root.querySelector('[data-pgc-target="adultsInput"]');
         var childrenInput = root.querySelector('[data-pgc-target="childrenInput"]');
@@ -25,8 +103,14 @@
         var childAgesContainer = root.querySelector('[data-pgc-target="childAges"]');
         var childTemplate = root.querySelector('[data-pgc-target="childAgeTemplate"]');
         var warning = root.querySelector('[data-pgc-target="adultWarning"]');
+        var summaryEl = root.querySelector('[data-pgc-target="summary"]');
+        var capacityWarning = root.querySelector('[data-pgc-target="capacityWarning"]');
         var form = root.closest('form');
         var ageLabelTemplate = root.dataset.pgcAgeLabel || '__N__';
+        var categories = JSON.parse(root.dataset.pgcCategories || '[]');
+        var labels = JSON.parse(root.dataset.pgcLabels || '{}');
+        // Bed count of the accommodation, when one is known (calendar mode).
+        var capacity = parseInt(root.dataset.pgcCapacity || '0', 10);
 
         if (!adultsInput) {
             return;
@@ -60,16 +144,60 @@
             }
         }
 
+        function childAges() {
+            var ages = [];
+            root.querySelectorAll('[data-pgc-child-row] select').forEach(function (select) {
+                ages.push(parseInt(select.value, 10));
+            });
+            return ages;
+        }
+
+        function describe(party) {
+            if (!summaryEl) {
+                return;
+            }
+            if (party.counts.length === 0) {
+                summaryEl.textContent = '';
+                return;
+            }
+
+            var parts = party.counts.map(function (entry) {
+                var text = entry.count + ' \u00d7 ' + entry.category.name;
+                return entry.category.occupies ? text : text + ' (' + (labels.noBed || '') + ')';
+            });
+
+            var text = parts.join(', ');
+            if (capacity > 0) {
+                text += ' \u00b7 ' + (labels.bedsUsed || '')
+                    .replace('__USED__', String(party.occupying))
+                    .replace('__MAX__', String(capacity));
+            }
+            summaryEl.textContent = text;
+        }
+
         function recompute() {
             var adults = clamp(adultsInput);
             var children = childrenInput ? clamp(childrenInput) : 0;
             syncChildAgeRows(children);
+
+            // Guests without a bed of their own must not count towards capacity or
+            // the price tier, so derive both from the category rules rather than
+            // from the raw head count.
+            var party = describeParty(categories, adults, childAges());
             if (personsInput) {
-                personsInput.value = String(Math.max(1, adults + children));
+                personsInput.value = String(Math.max(1, party.occupying));
             }
-            var valid = adults > 0;
+            describe(party);
+
+            var overCapacity = capacity > 0 && party.occupying > capacity;
+            if (capacityWarning) {
+                capacityWarning.classList.toggle('d-none', !overCapacity);
+                capacityWarning.textContent = (labels.overCapacity || '').replace('__MAX__', String(capacity));
+            }
+
+            var valid = adults > 0 && !overCapacity;
             if (warning) {
-                warning.classList.toggle('d-none', valid);
+                warning.classList.toggle('d-none', adults > 0);
             }
             if (form) {
                 form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (btn) {
@@ -82,6 +210,17 @@
         if (childrenInput) {
             childrenInput.addEventListener('input', recompute);
         }
+        // Child ages are cloned in at runtime, so listen on the container.
+        root.addEventListener('change', function (event) {
+            if (event.target.closest('[data-pgc-child-row]')) {
+                recompute();
+            }
+        });
+        // The calendar announces the capacity of whichever room is selected.
+        document.addEventListener('fhb:room-changed', function (event) {
+            capacity = parseInt(event.detail && event.detail.capacity, 10) || 0;
+            recompute();
+        });
         recompute();
     }
 

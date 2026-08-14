@@ -1,0 +1,20 @@
+{% if not successMessage %}
+    {% set steps = [
+        'online_booking.public.step_search'|trans,
+        'online_booking.public.step_select'|trans,
+        'online_booking.public.step_details'|trans
+    ] %}
+    <ol class="fhb-steps" aria-label="{{ 'online_booking.public.progress'|trans }}">
+        {% for label in steps %}
+            {% set stepNum = loop.index %}
+            <li class="fhb-step{{ currentStep == stepNum ? ' is-active' : (currentStep > stepNum ? ' is-done' : '') }}"
+                {% if currentStep == stepNum %}aria-current="step"{% endif %}>
+                <span class="fhb-step-marker">
+                    {%- if currentStep > stepNum %}<i class="fa-solid fa-check"></i>{% else %}{{ stepNum }}{% endif -%}
+                </span>
+                <span class="fhb-step-label">{{ label }}</span>
+                {% if not loop.last %}<span class="fhb-step-line" aria-hidden="true"></span>{% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+{% endif %}

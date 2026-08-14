@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PublicBookingMode;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Repository\OnlineBookingConfigRepository;
 use Doctrine\DBAL\Types\Types;
@@ -59,6 +60,10 @@ class OnlineBookingConfig
 
     #[ORM\Column(type: Types::STRING, length: 20, enumType: PublicBookingTheme::class, options: ['default' => 'modern'])]
     private PublicBookingTheme $theme = PublicBookingTheme::MODERN;
+
+    /** How guests find their stay: classic search or availability calendar. Calendar requires the modern theme. */
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: PublicBookingMode::class, options: ['default' => 'search'])]
+    private PublicBookingMode $mode = PublicBookingMode::SEARCH;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $confirmationEmailTemplateId = null;
@@ -224,6 +229,29 @@ class OnlineBookingConfig
         $this->theme = $theme;
 
         return $this;
+    }
+
+    public function getMode(): PublicBookingMode
+    {
+        return $this->mode;
+    }
+
+    public function setMode(PublicBookingMode $mode): self
+    {
+        $this->mode = $mode;
+
+        return $this;
+    }
+
+    /**
+     * Whether the calendar entry point is actually in effect.
+     *
+     * The calendar relies on markup and styling that only the modern theme provides,
+     * so a classic installation always falls back to the search.
+     */
+    public function isCalendarActive(): bool
+    {
+        return PublicBookingMode::CALENDAR === $this->mode && PublicBookingTheme::MODERN === $this->theme;
     }
 
     public function getConfirmationEmailTemplateId(): ?int

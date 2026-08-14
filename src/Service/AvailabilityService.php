@@ -194,6 +194,45 @@ class AvailabilityService
     }
 
     /**
+     * Occupied nights of a single room, for the public availability calendar.
+     *
+     * Half-open like every other availability query: a departure day is not an
+     * occupied night, so it stays selectable as the next guest's arrival day.
+     *
+     * @return array<string, true> set of occupied nights (Y-m-d) within [$from, $toExclusive)
+     */
+    public function getOccupiedNightsForRoom(Appartment $room, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    {
+        $roomId = (int) $room->getId();
+        // Scoping to the room's own property keeps the query small; the spans are
+        // filtered down to this room anyway, so the wider fallback stays correct.
+        $objectId = $room->getObject()->getId() ?? 'all';
+
+        $spans = array_values(array_filter(
+            $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId),
+            static fn (array $span): bool => (int) $span['appartmentId'] === $roomId
+        ));
+
+        foreach ($this->roomBlockRepository->findForPeriod($from, $toExclusive, $objectId) as $block) {
+            if ((int) $block->getAppartment()->getId() !== $roomId) {
+                continue;
+            }
+            $spans[] = [
+                'appartmentId' => $roomId,
+                'startDate' => $block->getStartDate()->format('Y-m-d'),
+                'endDate' => $block->getEndDate()->format('Y-m-d'),
+            ];
+        }
+
+        $occupied = [];
+        foreach (array_keys($this->expandSpansPerDay($spans, $from, $toExclusive, [$roomId => true])) as $night) {
+            $occupied[$night] = true;
+        }
+
+        return $occupied;
+    }
+
+    /**
      * Blocked room and bed counts per night for the statistics module.
      *
      * @return array<string, array{rooms: int, beds: int}> keyed by Y-m-d

@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
+import { enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -10,12 +11,14 @@ export default class extends Controller {
         this.htmlEditors = [];
         this.refresh();
         this.initHtmlEditors();
+        enableTooltips(this.element);
         this.element.addEventListener('change', this.onChange);
     }
 
     disconnect() {
         this.element.removeEventListener('change', this.onChange);
         this.destroyHtmlEditors();
+        disposeTooltips(this.element);
     }
 
     onChange = () => {

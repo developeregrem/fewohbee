@@ -243,7 +243,17 @@
 .fhb-search-grid {
     display: grid;
     gap: var(--fhb-space);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* The calendar owns the date choice once it is running. The inputs stay in the
+   DOM — they carry the values and are what a visitor without JavaScript uses. */
+.fhb-calendar-active [data-fhb-date-fallback] {
+    display: none;
+}
+
+.fhb-cal-status {
+    font-weight: 500;
 }
 
 .fhb-field {
@@ -320,6 +330,201 @@
     gap: 0.75rem;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     margin-top: 0.75rem;
+}
+
+/* ── Availability calendar ─────────────────────────────────────────────── */
+
+.fhb-calendar {
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    margin-bottom: calc(var(--fhb-space) * 1.5);
+    padding: calc(var(--fhb-space) * 1.1);
+}
+
+.fhb-cal-head {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: space-between;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-legend {
+    color: var(--fhb-text-muted);
+    display: flex;
+    font-size: 0.8125rem;
+    gap: 0.9rem;
+}
+
+.fhb-cal-legend-item {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.fhb-cal-swatch {
+    border: 1px solid var(--fhb-border);
+    border-radius: 4px;
+    display: inline-block;
+    height: 12px;
+    width: 12px;
+}
+
+.fhb-cal-swatch.is-free {
+    background: var(--fhb-surface);
+}
+
+.fhb-cal-swatch.is-busy {
+    background: var(--fhb-surface-muted);
+    position: relative;
+    overflow: hidden;
+}
+
+.fhb-cal-swatch.is-busy::after {
+    background: var(--fhb-text-muted);
+    content: "";
+    height: 1px;
+    left: -2px;
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: rotate(-45deg);
+}
+
+.fhb-cal-rooms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-room {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: 999px;
+    color: var(--fhb-text);
+    font-size: 0.875rem;
+    padding: 0.35rem 0.9rem;
+}
+
+.fhb-cal-room:hover {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-cal-room.is-active {
+    background: var(--fhb-primary);
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary-contrast);
+}
+
+.fhb-cal-room-select {
+    margin-bottom: var(--fhb-space);
+    max-width: 320px;
+}
+
+/* Breakpoint-free: the embed width is set by the host page and rarely matches a
+   device width, so the number of month columns follows the actual space. */
+.fhb-cal-grid {
+    display: grid;
+    gap: calc(var(--fhb-space) * 1.25);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Without a ceiling, a single month stretched across a wide column would blow the
+   square day cells up to touch-target-gone-wrong proportions. */
+.fhb-cal-month {
+    margin: 0 auto;
+    max-width: 340px;
+    width: 100%;
+}
+
+.fhb-cal-caption {
+    font-weight: var(--fhb-heading-weight);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.fhb-cal-weekdays,
+.fhb-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.fhb-cal-weekdays {
+    color: var(--fhb-text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    text-align: center;
+}
+
+.fhb-cal-day {
+    aspect-ratio: 1 / 1;
+    background: var(--fhb-surface);
+    border: 1px solid transparent;
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+}
+
+.fhb-cal-day.is-empty {
+    visibility: hidden;
+}
+
+.fhb-cal-day:not(:disabled):hover {
+    border-color: var(--fhb-primary);
+}
+
+/* Occupied nights keep the number readable but are struck through, so the guest
+   sees the shape of the occupancy rather than a wall of blank cells. */
+.fhb-cal-day.is-busy {
+    background: var(--fhb-surface-muted);
+    color: var(--fhb-text-muted);
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.fhb-cal-day.is-between {
+    background: color-mix(in srgb, var(--fhb-primary) 14%, transparent);
+    border-radius: 0;
+}
+
+.fhb-cal-day.is-start,
+.fhb-cal-day.is-end {
+    background: var(--fhb-primary);
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary-contrast);
+    font-weight: 600;
+}
+
+.fhb-cal-foot {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-top: var(--fhb-space);
+}
+
+.fhb-cal-status {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+}
+
+@media (min-width: 576px) {
+    .fhb-cal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (pointer: coarse) {
+    .fhb-cal-day {
+        font-size: 0.9375rem;
+    }
 }
 
 /* ── Room cards ────────────────────────────────────────────────────────── */
@@ -762,4 +967,58 @@
     .fhb-stepper-btn {
         min-height: 44px;
     }
+}
+
+.fhb-cal-capacity {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: 0.4rem;
+}
+
+.fhb-cal-room-capacity {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+/* Plain-language read-out of the party under the guest inputs. */
+.fhb-guest-summary {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    margin: 0.6rem 0 0;
+}
+
+/* Month paging: keeps the calendar at a constant height, which matters most in an
+   auto-sized iframe where a growing widget would make the host page jump. */
+.fhb-cal-nav {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-nav-btn {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    font-size: 1.25rem;
+    line-height: 1;
+    min-height: 38px;
+    width: 42px;
+}
+
+.fhb-cal-nav-btn:hover:not(:disabled) {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-cal-nav-btn:disabled {
+    opacity: 0.4;
+}
+
+.fhb-cal-jump {
+    max-width: 220px;
 }

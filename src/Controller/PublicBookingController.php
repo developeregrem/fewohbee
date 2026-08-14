@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Appartment;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
 use App\Service\OnlineBookingConfigService;
 use App\Service\OnlineBookingRestrictionService;
 use App\Service\PublicBookingAbuseProtectionService;
+use App\Service\PublicBookingCalendarService;
 use App\Service\PublicBookingService;
 use App\Repository\GuestCategoryRepository;
 use App\Service\GuestCategoryAgeMapper;
 use Symfony\Component\Intl\Countries;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,10 +34,17 @@ class PublicBookingController extends AbstractController
         OnlineBookingRestrictionService $restrictionService,
         GuestCategoryRepository $guestCategoryRepository,
         GuestCategoryAgeMapper $ageMapper,
+        PublicBookingCalendarService $calendarService,
     ): Response
     {
         $config = $configService->getConfig();
         $template = $this->resolveTemplate($config, $request);
+        // In calendar mode the guest has already chosen the accommodation, so the
+        // room travels with every step. Resolving it through the service enforces
+        // the release scope — the request identifier is never trusted directly.
+        $calendarRoom = $config->isCalendarActive()
+            ? $calendarService->findBookableRoom((string) $request->request->get('room', ''), $config)
+            : null;
         $embed = '1' === (string) $request->query->get('embed', $request->request->get('embed', '0'));
         $error = $publicBookingService->validateEnabledConfig();
         $countries = Countries::getNames($request->getLocale());
@@ -107,6 +117,12 @@ class PublicBookingController extends AbstractController
             'mixOccupancyTotal' => 0,
             'nonOccupancyIcons' => [],
             'bookingResult' => null,
+            'calendarActive' => $config->isCalendarActive(),
+            'selectedRoomUuid' => null !== $calendarRoom ? (string) $calendarRoom->getUuid() : '',
+            'selectedRoomCapacity' => null !== $calendarRoom ? (int) $calendarRoom->getBedsMax() : 0,
+            'calendarRooms' => $calendarService->getSelectableRooms($config),
+            'calendarHorizonMonths' => $this->monthsUntil($calendarService->getHorizonEnd()),
+            'bookableRoomCount' => $configService->countBookableRooms($config),
         ];
 
         if ('POST' !== $request->getMethod() || null !== $error) {
@@ -160,23 +176,32 @@ class PublicBookingController extends AbstractController
                 if ($derived > 0) {
                     $persons = $derived;
                 }
-                $view['mixOccupancyTotal'] = $persons;
             }
+            // The effective occupancy — what the guest is actually booked for. The
+            // calendar path prices exactly this number, so it must be set whether or
+            // not guest categories are configured.
+            $view['mixOccupancyTotal'] = $persons;
 
             $maxDeparture = $restrictionService->getMaxDepartureDate();
             if (null !== $maxDeparture && $dateTo > $maxDeparture) {
                 throw new PublicBookingException('online_booking.error.booking_horizon_exceeded');
             }
 
+            // Calendar mode has no occupancy control; the booked occupancy follows
+            // from the guest counts once the guest has stated them.
+            if (null !== $calendarRoom && 'availability' !== $intent) {
+                $occupancySelection = $this->deriveCalendarSelection($calendarRoom, $persons);
+            }
+
             if ('availability' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request, [], $guestCounts);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, [], $request, [], $guestCounts, $calendarRoom);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 2;
                 $view['availability'] = $preview['availability'];
                 $view['extras'] = $preview['extras'];
                 $view['formState'] = $abuseProtectionService->createFormState(false);
             } elseif ('preview' === $intent) {
-                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection, $guestCounts);
+                $preview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $occupancySelection, $request, $extrasSelection, $guestCounts, $calendarRoom);
                 $view['availabilityChecked'] = true;
                 $view['step'] = 3;
                 $view['availability'] = $preview['availability'];
@@ -203,6 +228,7 @@ class PublicBookingController extends AbstractController
                     $request,
                     $extrasSelection,
                     $guestCounts,
+                    $calendarRoom,
                 );
 
                 $view['step'] = 4;
@@ -238,7 +264,7 @@ class PublicBookingController extends AbstractController
                 try {
                     $selectedForPreview = 'submit' === $intent ? $occupancySelection : [];
                     $selectedExtrasForPreview = 'submit' === $intent ? $extrasSelection : [];
-                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview, $guestCounts ?? []);
+                    $fallbackPreview = $publicBookingService->buildSelectionPreview($dateFrom, $dateTo, $persons, $roomsCount, $selectedForPreview, $request, $selectedExtrasForPreview, $guestCounts ?? [], $calendarRoom);
                     $view['availabilityChecked'] = true;
                     $view['availability'] = $fallbackPreview['availability'];
                     $view['extras'] = $fallbackPreview['extras'];
@@ -268,6 +294,76 @@ class PublicBookingController extends AbstractController
         }
 
         return $this->render($template, $view);
+    }
+
+    /**
+     * Per-night availability of a single released room, for the booking calendar.
+     *
+     * Public on purpose, so it lives under /book where the firewall rule and the
+     * embedding CSP already apply. Everything unusable — calendar switched off, a
+     * room the hotelier did not release, a malformed window — answers 404, so the
+     * endpoint never confirms what exists. Rooms are addressed by UUID; the reply
+     * carries per-night booleans only.
+     */
+    #[Route('/book/calendar-data', name: 'public.booking.calendar_data', methods: ['GET'])]
+    public function calendarData(
+        Request $request,
+        PublicBookingCalendarService $calendarService,
+        PublicBookingAbuseProtectionService $abuseProtectionService,
+    ): JsonResponse {
+        try {
+            $abuseProtectionService->validateCalendarRequest($request);
+        } catch (PublicBookingException) {
+            return new JsonResponse(['error' => 'rate_limited'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $availability = $calendarService->getAvailability(
+            (string) $request->query->get('room', ''),
+            (string) $request->query->get('from', ''),
+            (int) $request->query->get('months', 2),
+        );
+
+        if (null === $availability) {
+            return new JsonResponse(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $response = new JsonResponse($availability->toArray());
+        // Availability is already conservative; a short private cache keeps month
+        // paging responsive without letting the data go stale for long.
+        $response->setPrivate();
+        $response->setMaxAge(60);
+
+        return $response;
+    }
+
+    /**
+     * The room and occupancy to book in calendar mode.
+     *
+     * There is no room choice left to make — the guest picked the accommodation in
+     * the calendar, and a party of a given size occupies it in exactly one way — so
+     * the occupancy follows from the guest counts instead of being asked for twice.
+     *
+     * @return array<string, array<int, int>>
+     */
+    private function deriveCalendarSelection(Appartment $room, int $persons): array
+    {
+        if ($persons < 1) {
+            return [];
+        }
+
+        $category = $room->getRoomCategory();
+        $typeKey = null !== $category ? 'category:'.$category->getId() : 'apartment:'.$room->getId();
+
+        return [$typeKey => [$persons => 1]];
+    }
+
+    /** Whole months the calendar may page through, counted from the current month. */
+    private function monthsUntil(\DateTimeImmutable $end): int
+    {
+        $firstOfThisMonth = (new \DateTimeImmutable('today'))->modify('first day of this month');
+        $diff = $firstOfThisMonth->diff($end->modify('first day of this month'));
+
+        return max(1, $diff->y * 12 + $diff->m + 1);
     }
 
     /**

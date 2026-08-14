@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\PublicBookingMode;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
@@ -116,6 +117,13 @@ class OnlineBookingConfigType extends AbstractType
                 'expanded' => true,
                 'multiple' => false,
                 'choice_label' => static fn (PublicBookingTheme $theme): string => 'online_booking.settings.theme_'.$theme->value,
+            ])
+            ->add('mode', EnumType::class, [
+                'class' => PublicBookingMode::class,
+                'label' => 'online_booking.settings.mode',
+                'expanded' => true,
+                'multiple' => false,
+                'choice_label' => static fn (PublicBookingMode $mode): string => 'online_booking.settings.mode_'.$mode->value,
             ])
             ->add('themePrimaryColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_primary',

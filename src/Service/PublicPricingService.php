@@ -52,7 +52,9 @@ class PublicPricingService
      *         Indexed by persons count. Only entries with a non-zero price are returned.
      */
     public function getOccupancyPrices(
-        RoomCategory $category,
+        // Not used for the calculation — kept so callers stay explicit about the
+        // type they are pricing. Nullable because rooms without a category exist.
+        ?RoomCategory $category,
         Appartment $sampleRoom,
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,

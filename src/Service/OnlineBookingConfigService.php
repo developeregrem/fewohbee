@@ -91,6 +91,20 @@ class OnlineBookingConfigService
         return $this->appartmentRepository->loadExistingIds($config->getSelectedRoomIds());
     }
 
+    /**
+     * How many rooms are actually bookable online (released, active, in an allowed
+     * subsidiary). A single-room property has no use for a "number of rooms" field.
+     */
+    public function countBookableRooms(?OnlineBookingConfig $config = null): int
+    {
+        $config ??= $this->getConfig();
+
+        return count($this->appartmentRepository->findForPublicBooking(
+            $this->getAllowedRoomIds($config),
+            $this->getAllowedSubsidiaryIds($config),
+        ));
+    }
+
     /** Return the configured confirmation template only if it is a reservation email template. */
     public function getConfirmationEmailTemplate(?OnlineBookingConfig $config = null): ?Template
     {
