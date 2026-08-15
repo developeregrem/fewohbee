@@ -11,7 +11,6 @@ use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
-use App\Entity\Template;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -43,8 +42,6 @@ class OnlineBookingConfigType extends AbstractType
         $rooms = $this->em->getRepository(Appartment::class)->findAll();
         $statuses = $this->em->getRepository(ReservationStatus::class)->findAll();
         $origins = $this->em->getRepository(ReservationOrigin::class)->findAll();
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_RESERVATION_EMAIL']) ?? [];
-
         $builder
             ->add('enabled', CheckboxType::class, [
                 'required' => false,
@@ -134,13 +131,6 @@ class OnlineBookingConfigType extends AbstractType
                 'required' => false,
                 'html5' => true,
             ])
-            ->add('confirmationEmailTemplateId', ChoiceType::class, [
-                'label' => 'online_booking.settings.confirmation_email_template',
-                'required' => false,
-                'placeholder' => 'online_booking.placeholder.select_template',
-                'choice_translation_domain' => false,
-                'choices' => $this->buildTemplateChoices($templates),
-            ])
             ->add('inquiryReservationStatusId', ChoiceType::class, [
                 'label' => 'online_booking.settings.inquiry_status',
                 'required' => false,
@@ -214,23 +204,11 @@ class OnlineBookingConfigType extends AbstractType
         ]);
     }
 
-    /** Validate required MVP fields when online booking is enabled. */
+    /** Validate required reservation defaults when online booking is enabled. */
     public function validateConfig(OnlineBookingConfig $config, ExecutionContextInterface $context): void
     {
         if (!$config->isEnabled()) {
             return;
-        }
-
-        if (null === $config->getConfirmationEmailTemplateId()) {
-            $context->buildViolation('online_booking.validation.confirmation_template_required')
-                ->atPath('confirmationEmailTemplateId')
-                ->setTranslationDomain('messages')
-                ->addViolation();
-        } elseif (null === $this->configService->getConfirmationEmailTemplate($config)) {
-            $context->buildViolation('online_booking.validation.confirmation_template_invalid_type')
-                ->atPath('confirmationEmailTemplateId')
-                ->setTranslationDomain('messages')
-                ->addViolation();
         }
 
         if (null === $config->getInquiryReservationStatusId() || null === $this->configService->getInquiryStatus($config)) {
@@ -345,22 +323,6 @@ class OnlineBookingConfigType extends AbstractType
         $choices = [];
         foreach ($origins as $origin) {
             $choices[(string) $origin->getName()] = (int) $origin->getId();
-        }
-
-        return $choices;
-    }
-
-    /**
-     * Build template choices already filtered to reservation email templates.
-     *
-     * @param Template[] $templates
-     * @return array<string, int>
-     */
-    private function buildTemplateChoices(array $templates): array
-    {
-        $choices = [];
-        foreach ($templates as $template) {
-            $choices[(string) $template->getName()] = (int) $template->getId();
         }
 
         return $choices;

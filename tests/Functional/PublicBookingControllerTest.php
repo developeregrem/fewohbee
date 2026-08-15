@@ -6,10 +6,9 @@ namespace App\Tests\Functional;
 
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
-use App\Entity\Template;
-use App\Entity\TemplateType;
 use App\Entity\User;
 use App\Exception\PublicBookingException;
+use App\Repository\WorkflowRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
@@ -38,21 +37,23 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringContainsString('--fhb-primary', (string) $client->getResponse()->getContent());
     }
 
-    /** Ensure the settings form only lists reservation email templates in the confirmation template dropdown. */
-    public function testSettingsTemplateDropdownIsFilteredToReservationEmailTemplates(): void
+    /** Ensure online-booking settings expose the canonical confirmation workflow via its compact edit button. */
+    public function testSettingsLinkToBookingConfirmationWorkflow(): void
     {
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $reservationEmailTemplate = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'Online Booking Email Template');
-        $invoiceTemplate = $this->createTemplate('TEMPLATE_INVOICE_PDF', 'Should Not Be Listed');
+        $workflow = self::getContainer()->get(WorkflowRepository::class)->findBySystemCode('confirm_online_booking');
+        self::assertNotNull($workflow);
 
-        $client->request('GET', '/settings/online-booking');
+        $crawler = $client->request('GET', '/settings/online-booking');
 
         self::assertResponseIsSuccessful();
-        $content = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString($reservationEmailTemplate->getName(), $content);
-        self::assertStringNotContainsString($invoiceTemplate->getName(), $content);
+        self::assertCount(1, $crawler->filter(sprintf(
+            'a[href="/settings/workflows/%d/edit"] i.fa-pen',
+            (int) $workflow->getId(),
+        )));
+        self::assertCount(0, $crawler->filter('[name="online_booking_config[confirmationEmailTemplateId]"]'));
     }
 
     /** Ensure submit validation errors keep the user on step three with availability and form input intact. */
@@ -259,26 +260,6 @@ final class PublicBookingControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertStringNotContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
-    }
-
-    /** Create a persisted template of the given type for settings form option assertions. */
-    private function createTemplate(string $typeName, string $name): Template
-    {
-        $em = $this->getEntityManager();
-        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => $typeName]);
-        if (!$type instanceof TemplateType) {
-            self::fail(sprintf('TemplateType "%s" not found in test database.', $typeName));
-        }
-
-        $template = new Template();
-        $template->setName($name);
-        $template->setText('[[ reservation1.booker.lastname ]]');
-        $template->setTemplateType($type);
-        $template->setIsDefault(false);
-        $em->persist($template);
-        $em->flush();
-
-        return $template;
     }
 
     /** Return the shared admin user from test fixtures. */

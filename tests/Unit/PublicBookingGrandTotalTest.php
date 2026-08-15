@@ -8,6 +8,7 @@ use App\Dto\TouristTaxBreakdown;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\Enum\GuestStatisticalGroup;
+use App\Event\OnlineBookingCreatedEvent;
 use App\Entity\GuestCategory;
 use App\Entity\InvoiceAppartment;
 use App\Entity\OnlineBookingConfig;
@@ -16,24 +17,19 @@ use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
-use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
-use App\Repository\TemplateRepository;
 use App\Service\InvoiceService;
-use App\Service\MailService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
 use App\Service\PublicPricingService;
-use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Regression tests for the public booking grand total: the total returned by
@@ -62,6 +58,32 @@ final class PublicBookingGrandTotalTest extends TestCase
         self::assertSame('12,00', $booking['grandTotalFormatted']);
     }
 
+    public function testCreateBookingDispatchesWorkflowEventInsteadOfSendingMailDirectly(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static function (object $event): bool {
+                return $event instanceof OnlineBookingCreatedEvent
+                    && 1 === count($event->reservations)
+                    && 'Muster' === $event->booker?->getLastname();
+            }))
+            ->willReturnArgument(0);
+
+        $service = $this->makeService($eventDispatcher);
+        $service->createBooking(
+            new \DateTimeImmutable('2026-06-01'),
+            new \DateTimeImmutable('2026-06-03'),
+            2,
+            1,
+            ['category:1' => [2 => 1]],
+            $this->booker(),
+            new Request(),
+            [],
+            [1 => 2],
+        );
+    }
+
     /** @return array<string, string> */
     private function booker(): array
     {
@@ -77,7 +99,7 @@ final class PublicBookingGrandTotalTest extends TestCase
         ];
     }
 
-    private function makeService(): PublicBookingService
+    private function makeService(?EventDispatcherInterface $eventDispatcher = null): PublicBookingService
     {
         $config = new OnlineBookingConfig();
         $config->setEnabled(true);
@@ -87,8 +109,6 @@ final class PublicBookingGrandTotalTest extends TestCase
         $configService->method('getReservationOrigin')->willReturn(new ReservationOrigin());
         $configService->method('getInquiryStatus')->willReturn(new ReservationStatus());
         $configService->method('getBookingStatus')->willReturn(new ReservationStatus());
-        $configService->method('getConfirmationEmailTemplate')->willReturn(null);
-
         $invoiceService = $this->createStub(InvoiceService::class);
         $invoiceService->method('buildAppartmentPositions')->willReturn([new InvoiceAppartment()]);
         $invoiceService->method('buildApartmentModifierPositions')->willReturn([]);
@@ -127,14 +147,10 @@ final class PublicBookingGrandTotalTest extends TestCase
         $customerRepo = $this->createStub(CustomerRepository::class);
         $customerRepo->method('findOneByEmailCaseInsensitive')->willReturn(null);
 
-        $templateRepo = $this->createStub(TemplateRepository::class);
-        $templateRepo->method('loadByTypeName')->willReturn([]);
-
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')->willReturnCallback(
             fn (string $class) => match ($class) {
                 Customer::class => $customerRepo,
-                Template::class => $templateRepo,
                 default => throw new \LogicException('Unexpected repository request: '.$class),
             }
         );
@@ -169,10 +185,7 @@ final class PublicBookingGrandTotalTest extends TestCase
             $configService,
             $availabilityService,
             $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
             $catRepo,
             $touristTaxService,

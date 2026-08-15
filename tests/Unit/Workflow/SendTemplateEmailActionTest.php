@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Workflow;
 
 use App\Entity\Correspondence;
+use App\Entity\Customer;
+use App\Entity\CustomerAddresses;
 use App\Entity\FileCorrespondence;
 use App\Entity\Invoice;
 use App\Entity\MailAttachment;
@@ -144,6 +146,39 @@ final class SendTemplateEmailActionTest extends TestCase
         self::assertStringNotContainsString('with_attachments', $message);
     }
 
+    public function testBookerRecipientSendsOnlyToBookerEmail(): void
+    {
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+
+        $this->mailService = $this->createMock(MailService::class);
+        $this->mailService->expects(self::once())
+            ->method('sendHTMLMail')
+            ->with('guest@example.com', 'Willkommen!', '<html>body</html>', []);
+
+        $this->buildAction()->execute(
+            $this->baseConfig(['recipientType' => 'booker_email']),
+            $reservation,
+            [],
+        );
+    }
+
+    public function testNotificationRecipientDoesNotSendToBookerEmail(): void
+    {
+        $reservation = $this->reservationWithBookerEmail('guest@example.com');
+        $this->settingsService->method('getNotificationEmail')->willReturn('owner@example.com');
+
+        $this->mailService = $this->createMock(MailService::class);
+        $this->mailService->expects(self::once())
+            ->method('sendHTMLMail')
+            ->with('owner@example.com', 'Willkommen!', '<html>body</html>', []);
+
+        $this->buildAction()->execute(
+            $this->baseConfig(['recipientType' => 'notification_email']),
+            $reservation,
+            [],
+        );
+    }
+
     public function testAttachmentsArePersistedAsCorrespondenceChildren(): void
     {
         $attachment = $this->buildAttachment();
@@ -237,5 +272,19 @@ final class SendTemplateEmailActionTest extends TestCase
         $message = $this->buildAction()->execute($this->baseConfig(), new Reservation(), []);
 
         self::assertStringContainsString('attachment_warnings', $message);
+    }
+
+    private function reservationWithBookerEmail(string $email): Reservation
+    {
+        $address = new CustomerAddresses();
+        $address->setEmail($email);
+
+        $booker = new Customer();
+        $booker->addCustomerAddress($address);
+
+        $reservation = new Reservation();
+        $reservation->setBooker($booker);
+
+        return $reservation;
     }
 }

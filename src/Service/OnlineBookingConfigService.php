@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
-use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\OnlineBookingConfigRepository;
 use App\Repository\SubsidiaryRepository;
@@ -103,28 +102,6 @@ class OnlineBookingConfigService
             $this->getAllowedRoomIds($config),
             $this->getAllowedSubsidiaryIds($config),
         ));
-    }
-
-    /** Return the configured confirmation template only if it is a reservation email template. */
-    public function getConfirmationEmailTemplate(?OnlineBookingConfig $config = null): ?Template
-    {
-        $config ??= $this->getConfig();
-        $templateId = $config->getConfirmationEmailTemplateId();
-        if (null === $templateId) {
-            return null;
-        }
-
-        $template = $this->em->getRepository(Template::class)->find($templateId);
-        if (!$template instanceof Template) {
-            return null;
-        }
-
-        $type = $template->getTemplateType();
-        if (null === $type || 'TEMPLATE_RESERVATION_EMAIL' !== $type->getName()) {
-            return null;
-        }
-
-        return $template;
     }
 
     /** Resolve the configured inquiry reservation status or null if missing/invalid. */

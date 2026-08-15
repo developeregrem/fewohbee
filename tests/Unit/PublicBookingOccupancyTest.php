@@ -14,13 +14,10 @@ use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
 use App\Service\PublicPricingService;
-use App\Service\MailService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Tests for the occupancy-based selection and validation in PublicBookingService.
@@ -45,9 +42,6 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $this->createStub(InvoiceService::class),
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
         );
@@ -251,9 +245,6 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
         );
@@ -365,9 +356,6 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
         );

@@ -7,13 +7,11 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use App\Entity\MailCorrespondence;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Price;
 use App\Exception\PublicBookingException;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
-use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
@@ -23,7 +21,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicBookingService
 {
@@ -33,9 +30,6 @@ class PublicBookingService
         private readonly OnlineBookingConfigService $configService,
         private readonly PublicAvailabilityService $availabilityService,
         private readonly InvoiceService $invoiceService,
-        private readonly TemplatesService $templatesService,
-        private readonly MailService $mailService,
-        private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PublicPricingService $pricingService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
@@ -198,7 +192,6 @@ class PublicBookingService
         $pricing = $this->calculateRoomTotal($reservations);
         $extrasResult = $this->summarizeExtras($resolvedExtras);
 
-        $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
         $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
 
         // Grand total must match the preview: room rates + extras + tourist tax.
@@ -274,8 +267,6 @@ class PublicBookingService
         if (null === $this->configService->getReservationOrigin($config)) {
             throw new PublicBookingException('online_booking.error.reservation_origin_missing');
         }
-
-        // Template validity is checked in settings validation. Runtime can fall back to the default template.
 
         if (!$this->configService->getInquiryStatus($config) instanceof ReservationStatus) {
             throw new PublicBookingException('online_booking.error.invalid_status_config');
@@ -911,76 +902,6 @@ class PublicBookingService
         }
 
         return $updated;
-    }
-
-    /**
-     * Send a confirmation mail with the configured template and fallback to the default reservation email template.
-     *
-     * @param Reservation[] $reservations
-     */
-    private function sendConfirmationMailIfPossible(OnlineBookingConfig $config, Customer $customer, array $reservations): void
-    {
-        $email = null;
-        foreach ($customer->getCustomerAddresses() as $address) {
-            if ($address instanceof CustomerAddresses && null !== $address->getEmail() && '' !== trim($address->getEmail())) {
-                $email = trim($address->getEmail());
-                break;
-            }
-        }
-
-        if (null === $email) {
-            return;
-        }
-
-        $template = $this->configService->getConfirmationEmailTemplate($config);
-        if (!$template instanceof Template) {
-            $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_RESERVATION_EMAIL']);
-            $template = $this->templatesService->getDefaultTemplate($templates ?? []);
-        }
-
-        if (!$template instanceof Template) {
-            return;
-        }
-
-        $subject = OnlineBookingConfig::BOOKING_MODE_BOOKING === $config->getBookingMode()
-            ? $this->translator->trans('online_booking.email.subject.booking')
-            : $this->translator->trans('online_booking.email.subject.inquiry');
-
-        // Prefer the template's own subject (with placeholders) when one is configured;
-        // otherwise keep the translated default subject.
-        if ('' !== trim((string) $template->getSubject())) {
-            try {
-                $subject = $this->templatesService->renderTemplateSubject($template, $reservations);
-            } catch (\Throwable $e) {
-                // Keep the translated default subject on a broken placeholder.
-            }
-        }
-
-        $body = $this->templatesService->renderTemplate((int) $template->getId(), $reservations);
-        $this->mailService->sendHTMLMail($email, $subject, $body);
-        $this->persistMailCorrespondenceForReservations($reservations, $template, $email, $subject, $body);
-    }
-
-    /**
-     * Persist sent confirmation mail as reservation correspondence entries.
-     *
-     * @param Reservation[] $reservations
-     */
-    private function persistMailCorrespondenceForReservations(array $reservations, Template $template, string $recipient, string $subject, string $body): void
-    {
-        foreach ($reservations as $reservation) {
-            $mail = new MailCorrespondence();
-            $mail->setRecipient($recipient)
-                ->setName($subject)
-                ->setSubject($subject)
-                ->setText($body)
-                ->setTemplate($template)
-                ->setReservation($reservation);
-
-            $this->em->persist($mail);
-        }
-
-        $this->em->flush();
     }
 
     /**

@@ -14,18 +14,15 @@ use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Service\InvoiceService;
-use App\Service\MailService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
 use App\Service\PublicPricingService;
-use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class PublicBookingGuestCountsTest extends TestCase
 {
@@ -281,9 +278,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             $configService,
             $availabilityService,
             $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
             $catRepo,

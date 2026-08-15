@@ -66,9 +66,6 @@ class OnlineBookingConfig
     private PublicBookingMode $mode = PublicBookingMode::SEARCH;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $confirmationEmailTemplateId = null;
-
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $inquiryReservationStatusId = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
@@ -252,18 +249,6 @@ class OnlineBookingConfig
     public function isCalendarActive(): bool
     {
         return PublicBookingMode::CALENDAR === $this->mode && PublicBookingTheme::MODERN === $this->theme;
-    }
-
-    public function getConfirmationEmailTemplateId(): ?int
-    {
-        return $this->confirmationEmailTemplateId;
-    }
-
-    public function setConfirmationEmailTemplateId(?int $confirmationEmailTemplateId): self
-    {
-        $this->confirmationEmailTemplateId = $confirmationEmailTemplateId;
-
-        return $this;
     }
 
     public function getInquiryReservationStatusId(): ?int

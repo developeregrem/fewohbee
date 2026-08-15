@@ -51,7 +51,6 @@
                     <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
                     <div class="small">
                         {{ form_errors(form.enabled) }}
-                        {{ form_errors(form.confirmationEmailTemplateId) }}
                         {{ form_errors(form.inquiryReservationStatusId) }}
                         {{ form_errors(form.bookingReservationStatusId) }}
                         {{ form_errors(form.reservationOriginId) }}
@@ -263,14 +262,25 @@
                 </div>
             </div>
 
-            {# ── Templates & Status ── #}
+            {# ── Confirmation workflow & status ── #}
             <div class="card mb-3">
                 <div class="card-header">
                     <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope-open-text text-primary me-2"></i>{{ 'online_booking.settings.section_templates_status'|trans }}</h5>
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_templates_status_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
-                    {{ form_row(form.confirmationEmailTemplateId) }}
+                    <p class="text-body-secondary small mb-2">
+                        {{ 'online_booking.settings.confirmation_workflow_help'|trans }}
+                    </p>
+                    {% if bookingConfirmationWorkflow %}
+                        {% include 'Settings/Workflow/_workflow_card.html.twig' with {
+                            workflow: bookingConfirmationWorkflow,
+                        } only %}
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ 'online_booking.settings.confirmation_workflow_missing'|trans }}
+                        </div>
+                    {% endif %}
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.inquiryReservationStatusId) }}</div>
                         <div class="col-md-6">{{ form_row(form.bookingReservationStatusId) }}</div>

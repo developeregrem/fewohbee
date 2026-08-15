@@ -134,6 +134,9 @@ workflow:
     status_error: "Error"
 
   system:
+    confirm_online_booking:
+      name: "Booking confirmation to the guest"
+      description: "Sends a configurable confirmation to the booker's email address after an online booking."
     notify_online_booking:
       name: "Email notification for online bookings"
       description: "Sends a notification email when a new online booking is received."

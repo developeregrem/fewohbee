@@ -13,6 +13,7 @@ use App\Repository\OnlineBookingMinStayRepository;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
 use App\Repository\PriceRepository;
 use App\Repository\RoomCategoryRepository;
+use App\Repository\WorkflowRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicBookingCalendarService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +38,7 @@ class OnlineBookingSettingsController extends AbstractController
         OnlineBookingMinStayOverrideRepository $overrideRepository,
         PriceRepository $priceRepository,
         PublicBookingCalendarService $calendarService,
+        WorkflowRepository $workflowRepository,
     ): Response {
         $config = $configService->getConfig();
         $form = $this->createForm(OnlineBookingConfigType::class, $config, [
@@ -84,6 +86,7 @@ class OnlineBookingSettingsController extends AbstractController
             'overrides' => $overrides,
             'restrictionOverrideWarning' => $restrictionOverrideWarning,
             'priceOverview' => $priceOverview,
+            'bookingConfirmationWorkflow' => $workflowRepository->findBySystemCode('confirm_online_booking'),
             // Lets the theme card explain a calendar that stays empty because every
             // released room uses multiple occupancy.
             'calendarEligibleRoomCount' => $calendarService->countEligibleRooms($config),

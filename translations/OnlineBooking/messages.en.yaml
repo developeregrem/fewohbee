@@ -7,7 +7,6 @@ online_booking:
     all: "All"
     selected: "Selected"
   placeholder:
-    select_template: "Select template"
     select_status: "Select status"
     select_origin: "Select origin"
     unlimited: "unlimited"
@@ -20,10 +19,6 @@ online_booking:
     override_deleted: "Special period deleted."
     override_invalid: "Please fill in all required fields correctly."
     invalid_token: "Invalid security token. Please try again."
-  email:
-    subject:
-      inquiry: "Booking inquiry confirmation"
-      booking: "Booking confirmation"
   error:
     disabled: "Online booking is disabled."
     invalid_status_config: "Online booking status configuration is invalid."
@@ -52,8 +47,6 @@ online_booking:
     extra_not_bookable_online: "A selected extra is not available for online booking."
     extra_no_valid_price: "A selected extra has no valid price for the chosen period."
   validation:
-    confirmation_template_required: "Confirmation email template is required when online booking is enabled."
-    confirmation_template_invalid_type: "Confirmation email template must be a reservation email template."
     inquiry_status_required: "Inquiry status is required."
     booking_status_required: "Booking status is required."
     reservation_origin_required: "Please select a valid reservation origin for online bookings."
@@ -97,15 +90,16 @@ online_booking:
     calendar_many_rooms: "%count% rooms are released for the calendar. Guests can only pick one accommodation per booking there — with several rooms the search is usually the better choice."
     custom_css: "Custom CSS"
     custom_css_help: "Advanced: Custom CSS rules loaded after the default styles. Use this to override fonts, colors, spacing, etc. Prefix selectors with <code>.fhb-booking-root</code>. The \"Modern\" design additionally exposes the variables <code>--fhb-primary</code>, <code>--fhb-bg</code>, <code>--fhb-surface</code>, <code>--fhb-text</code>, <code>--fhb-border</code>, <code>--fhb-radius</code>, <code>--fhb-shadow</code>, <code>--fhb-font-family</code> and <code>--fhb-space</code>."
-    confirmation_email_template: "Confirmation email template"
+    confirmation_workflow_help: "The confirmation to the guest is handled as an automation. Configure its template, attachments and additional conditions there, or disable delivery entirely."
+    confirmation_workflow_missing: "The guest confirmation automation is missing. Run the outstanding database migrations."
     inquiry_status: "Inquiry status"
     booking_status: "Booking status"
     section_availability_scope: "Availability Scope"
     section_availability_scope_desc: "Define which subsidiaries and rooms are allowed to appear in public availability searches."
     section_theme: "Theme"
     section_theme_desc: "Colors and shaping for the public booking page and embed/iframe mode."
-    section_templates_status: "Templates & Status"
-    section_templates_status_desc: "Choose the confirmation template and the target statuses of the reservation for inquiry/booking mode."
+    section_templates_status: "Email automation & status"
+    section_templates_status_desc: "Configure the guest confirmation and the target statuses of the reservation for inquiry/booking mode."
     section_booking_texts: "Checkout Texts"
     section_booking_texts_desc: "These texts are shown in the final step before the form is submitted."
     section_embed: "Embed"
@@ -150,7 +144,7 @@ online_booking:
     price_overview_none: "No room prices found – guests cannot book any rooms."
     price_overview_no_extras: "No extras enabled for online booking."
     form_invalid_title: "Cannot save settings"
-    form_invalid_hint: "When enabling online booking, you must set a confirmation template, inquiry status, booking status, and reservation origin."
+    form_invalid_hint: "When enabling online booking, you must set an inquiry status, booking status, and reservation origin."
   public:
     page_title: "Online Booking"
     page_title_inquiry: "Online Inquiry"
