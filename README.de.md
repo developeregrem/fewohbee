@@ -1,74 +1,349 @@
+# FewohBee — Pensionsverwaltung & Hotelsoftware
 
-# Pensionsverwaltung FewohBee
+**Die Open-Source-Buchungs- und Verwaltungssoftware für kleine und mittlere Pensionen,
+Ferienwohnungen, Gästehäuser und Hotels.**
 
-Die Hotelsoftware für kleine bis mittelgroße Pensionen und Hotels - Open Source und kostenlos.
+[![Lizenz: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4.svg)](https://www.php.net/)
+[![Symfony](https://img.shields.io/badge/Symfony-8.1-000000.svg)](https://symfony.com/)
 
-Das Pensionsverwaltungtool, oder auch Property Management System (PMS) im allgemeinen genannt, ist ein PHP-Projekt, das auf dem PHP-Framework Symfony basiert.
-Kleine Pensionen oder Unterkünfte verwalten ihre Zimmer oder Appartements in der Regel auf die alte Art und Weise mit einem Stift und einem Blatt Papier oder mit einem Tabellenverwaltungsprogramm. 
+*English version: [README.md](README.md) · Dokumentation: [Wiki](https://github.com/developeregrem/fewohbee/wiki) · Website: [fewohbee.app](https://fewohbee.app)*
 
-Das Ziel dieses Open-Source-Tools ist es, kleineren Unterkünften zu helfen, den handgeschriebenen Ansatz zur Raumverwaltung zu ersetzen und die Produktivität durch das Zusammenführen aller Informationen zu verbessern, was schließlich in einer Zeitersparnis bei der Verwaltung des Gästehauses oder Pension resultiert.
+---
 
-*Für eine ausführliche Dokumentation nutzen sie bitte das [Wiki](https://github.com/developeregrem/fewohbee/wiki).*
+Kleinere Unterkünfte verwalten ihre Zimmer in der Regel noch auf die alte Art — mit Stift und
+Papier oder einer Tabellenkalkulation. Genau daraus ist dieses Projekt 2014 entstanden, und
+mittlerweile ist ein vollständiges Property Management System (PMS) daraus geworden:
+Reservierungen, Gästedaten, Rechnungen, Buchhaltung, Korrespondenz und Kalender-Sync mit den
+Buchungsportalen — alles an einem Ort und auf dem eigenen Server.
+
+Entwickelt **von Hoteliers für Hoteliers** — geprägt vom Alltag in einer echten Pension und nicht
+von einer Feature-Liste. Themen wie doppelte Buchführung oder E-Rechnung lassen sich heute nicht
+mehr umgehen, deshalb ist das Ziel, sie so zu verpacken, dass man sie ohne Fachausbildung bedienen
+kann.
+
+- 🔓 **Kostenlos und quelloffen** (GPL-3.0) — selbst hosten, forken, anpassen
+- 🇩🇪 🇬🇧 **Zweisprachig** — vollständig auf Deutsch und Englisch verfügbar
+- 🐳 **Docker-ready** — in wenigen Minuten einsatzbereit
+- 🧾 **E-Rechnung integriert** — EN 16931, XRechnung, ZUGFeRD
+- 🔐 **Moderne Anmeldung** — Passwort, Passkeys (WebAuthn), API-Token mit Scopes
+
+Neugierig, wie das aussieht? Auf [fewohbee.app](https://fewohbee.app) gibt es eine Feature-Tour,
+und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles im Detail.
+
+---
 
 ## Funktionen
 
- - Reservierungsübersicht (einfache Möglichkeit, Reservierungen hinzuzufügen und zu verwalten)
- - Verwaltung Ihrer Gästedaten (inkl. DSGVO-Exportfunktion)
- - umfangreiche Einstellungen zur Verwaltung der
-	 - Zimmer, Unterkünfte, Preise, Reservierungsherkunft, Vorlagen, etc.
- - Rechnungen erstellen (PDF)
- - Gästekommunikation (Mails aus dem Tool heraus schreiben), Rechnungen, Reservierungsbestätigungen oder andere relevante Informationen an den Gast senden.
- - Statistiken
- - Meldebuch
- - Kassenbuch zur Verwaltung Ihrer Einnahmen und Ausgaben
- - Kalenderexport für andere Anwendungen (iCal Synchronisierung)
+### Reservierungen & Gäste
+
+- **Reservierungsübersicht** — Reservierungen im Kalenderraster sehen, anlegen und bearbeiten
+- **Verfügbarkeitsprüfung** — Kapazitäten, Mehrfachbelegung, Zimmersperrungen
+- **Gästeverwaltung** — Gästeprofile, Adressen, Firmen, Gästekategorien, DSGVO-Export
+- **Zimmersperrungen** — Zimmer für Renovierung oder Eigennutzung aus dem Verkauf nehmen
+- **Reservierungsherkunft & -status** — nachvollziehen, woher eine Buchung kam und wo sie steht
+
+### Online-Buchung
+
+- **Direktbuchung über die eigene Website** — Gäste buchen oder fragen rund um die Uhr an, voll
+  integriert
+- **Konfigurierbare Buchungsregeln** — Mindestaufenthalt, Vorlaufzeit, Buchungszeiträume
+- **Missbrauchsschutz** — Rate-Limiting und Bot-Schutz auf allen öffentlichen Endpunkten
+
+### Rechnungen & E-Rechnung
+
+- **Rechnungen aus Reservierungen** mit flexiblen Positionen und Steuersätzen
+- **PDF-Export** für die klassische Rechnungsstellung
+- **Elektronische Rechnungen** nach **EN 16931**, **XRechnung** und **ZUGFeRD** — Pflicht im
+  B2B-Bereich
+- **Zahlungsbedingungen und Statusverfolgung**
+
+### Buchhaltung & Zahlungen
+
+- **Buchungsjournal** — doppelte Buchführung, zugeschnitten auf Beherbergungsbetriebe, mit
+  geführtem Kontenrahmen
+- **DATEV-Export** zur Übergabe an die Steuerberatung
+- **Bankimport (CSV)** — konfigurierbare Bankprofile, regelbasierte Zuordnung,
+  Rechnungsabgleich und Dublettenerkennung
+- **Kassenbuch** für Einnahmen und Ausgaben
+
+### Täglicher Betrieb
+
+- **Rezeptionsansicht** — An- und Abreisen sowie Aufenthalte des Tages auf einen Blick
+- **Housekeeping** — Reinigungslisten je Zimmer mit Statusverfolgung und Export
+- **Betriebsberichte** — druckfertige Tageslisten
+
+### Automatisierung (Workflows)
+
+- **Regelwerk** aus Auslösern, Bedingungen und Aktionen — ganz ohne Programmierung
+- **Ereignisbasiert**: bei neuer Reservierung, Online-Buchung, Kalenderimport, erstellter Rechnung
+  oder Statuswechsel einer Rechnung
+- **Zeitbasiert**: X Tage vor Anreise, X Tage nach Abreise, X Tage nach Rechnungsdatum, monatlich
+- **Aktionen**: Vorlagen-Mails versenden, Reservierungs- oder Rechnungsstatus ändern,
+  Buchungssätze anlegen, Benachrichtigungen senden — inklusive Anhängen
+
+### Korrespondenz & Vorlagen
+
+- **Mails direkt aus der Anwendung** — Bestätigungen, Rechnungen, Infos vor der Anreise
+- **Visueller Vorlagen-Editor** für Rechnungen, Bestätigungen, Briefe und Mails
+- **Vorlagen-Variablen mit Autovervollständigung** und Live-Vorschau
+
+### Kalender-Synchronisierung
+
+- **iCal/ICS-Sync** mit Buchungsportalen wie Airbnb, Booking.com und anderen
+- **In beide Richtungen**: eigene Belegung exportieren, externe Buchungen importieren
+- **Automatischer Abgleich** über geplante Kommandos
+
+### Statistiken & Auswertungen
+
+- **Belegungs- und Auslastungsstatistiken**
+- **Monatliche Snapshots** für den Vorjahresvergleich
+- **Kurtaxe** — Berechnung und Auswertung
+
+### Verwaltung
+
+- **Mehrere Betriebsstätten** in einer Installation verwalten
+- **Feingranulare Rollen** — Reservierungen (auch nur lesend), Kunden, Rechnungen, Statistiken,
+  Kassenbuch, Betrieb, Administration
+- **Passkeys / WebAuthn** zusätzlich zur Passwortanmeldung
+- **Lesende REST-API** mit persönlichen Zugriffstoken und Scopes
+- **Umfangreiche Einstellungen** — Zimmer, Zimmerkategorien, Preise und Preiszeiträume, Vorlagen,
+  Reservierungsherkünfte und -status und vieles mehr
+
+<!--
+  Screenshots können unter docs/img/ abgelegt und hier eingebunden werden, z.B.:
+  ![Reservierungsübersicht](docs/img/reservation-overview.png)
+  Bis dahin: Feature-Tour unter https://fewohbee.app
+-->
+
+---
 
 ## Anforderungen
 
-Um das Tool nutzen zu können, benötigt man einen kleinen Webserver, der die Anforderungen von Symfony [requirements](https://symfony.com/doc/current/setup.html#technical-requirements) erfüllt:
+- **PHP 8.4 oder höher** (das offizielle Docker-Image läuft auf PHP 8.5)
+  - Erweiterungen: `intl` (mit vollständigen ICU-Daten), `gd`, `pdo_mysql`, `exif`, `ctype`,
+    `iconv`
+- Ein Webserver — nginx oder Apache
+- **MySQL 8.0+** oder **MariaDB** — `DB_SERVER_VERSION` in der `.env` passend zum Server setzen
+- [Composer](https://getcomposer.org/download/)
 
- - PHP 8.4 oder höher
- - php-intl extension
- - einen Webserver z.B. nginx oder apache
- - einen Datenbankserver (empfohlen wird mysql oder mariadb)
+Optional:
 
-## Quick Start
+- **Redis** — für Cache und Sessions (`USE_REDIS_CACHE=true`). Nicht zwingend nötig; für eine
+  einzelne Instanz reicht der Dateisystem-Cache.
+- **HTTPS und eine konfigurierte `RELYING_PARTY_ID`** — Voraussetzung für die Anmeldung per
+  Passkey (`PASSKEY_ENABLED=true`).
+- **S3-kompatibler Speicher** — alternativ zur lokalen Dateiablage (`STORAGE_ADAPTER`).
 
-> Es wird empfohlen das docker-compose Setup zu verwenden: [fewohbee-dockerized](https://github.com/developeregrem/fewohbee-dockerized)
+Die allgemeine Grundlage beschreiben die
+[technischen Anforderungen von Symfony](https://symfony.com/doc/current/setup.html#technical-requirements).
 
-Erstellen einer Datenbank für das Tool:
+---
 
-    CREATE DATABASE fewohbee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+## Schnellstart
 
- Kopiere die Datei `.env.dist` und benenne die kopierte Datei in `.env` um.
+### Variante A: Docker (empfohlen)
 
-Bearbeite die Datei `.env` und passe den Wert für `DATABASE_URL` an, um den eigenen Datenbankeinstellungen zu entsprechen.
+Ein vorkonfiguriertes Docker-Compose-Setup wird separat gepflegt:
 
-Erzeuge einen zufällig und sicheren Wert für `APP_SECRET` (man kann einen Wert [hier](http://nux.net/secret) erzeugen lassen).
+👉 **[fewohbee-dockerized](https://github.com/developeregrem/fewohbee-dockerized)**
 
-Wenn noch nicht vorhanden, lade den PHP dependency manager [composer](https://getcomposer.org/download/) herunter, um die Pensionsverwaltungstool Abhängigkeiten installieren zu können. Führe anschließend den folgenden Befehl im root-Ordner des Projekts aus:
+Es bringt Anwendung, Webserver und Datenbank mit und ist der schnellste Weg zu einer laufenden
+Installation. Die Anleitung dazu steht im
+[Docker-Setup-Guide](https://github.com/developeregrem/fewohbee/wiki/Docker-Setup) im Wiki.
 
-    composer install
+### Variante B: Manuelle Installation
 
-Führe den folgenden Befehl aus, um die Datenbank und die Anwendung zu initialisieren:
+**1. Datenbank anlegen**
 
-    php bin/console doctrine:migration:migrate
-    php bin/console asset-map:compile
-    php bin/console app:first-run
+```sql
+CREATE DATABASE fewohbee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-Anschließend kann mit einem Webbrowser zu dem Installationsordner gewechselt werden  z.B.
-http://localhost/fewohbee/public/index.php
-um sich mit den zuvor angelegten Logindaten anzumelden.
+**2. Anwendung konfigurieren**
 
-## i18n
+Die Datei `.env.dist` nach `.env` kopieren und anpassen:
 
-Das Tool ist grundlegend mehrsprachige aufgebaut und ist derzeit in deutsch und englisch verfügbar. Wenn eine neue Sprache unterstützt werden soll, bitte ein Ticket anlegen.
+- `DATABASE_URL` — die eigenen Datenbank-Zugangsdaten
+- `APP_SECRET` — ein zufälliger Wert, z.B. `php -r 'echo bin2hex(random_bytes(16));'`
+- `APP_ENV=prod` für Produktivinstallationen
 
-## Author
+**3. Abhängigkeiten installieren**
 
-Alexander Elchlepp
+```bash
+composer install --no-dev --optimize-autoloader
+```
 
-Das Projekt wird durch mich seit 2014 in der Freizeit entwickelt. Wenn Fragen aufkommen, kann ein Ticket angelegt oder mich direkt per mail kontaktiert werden (info (at) fewohbee.de)
+**4. Datenbank und Anwendung initialisieren**
 
-Wenn Sie dieses Projekt unterstützen wollen und Sie denken, dass das Projekt für Sie nützlich ist, würde ich mich über eine kleine Spende sehr freuen :)
-[![Spenden](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=ZQPG864PB4TBE)
+```bash
+php bin/console doctrine:migrations:migrate
+php bin/console asset-map:compile
+php bin/console app:first-run
+```
+
+`app:first-run` führt durch das Anlegen des ersten Administrators und der eigenen Unterkunft.
+Mit `--load-sample-data` werden zusätzlich Beispieldaten zum Ausprobieren angelegt.
+
+**5. Anmelden**
+
+Das Document-Root des Webservers auf `public/` zeigen lassen, die Anwendung im Browser öffnen und
+mit dem soeben angelegten Benutzer anmelden.
+
+### Nicht vergessen: geplante Aufgaben
+
+Kalender-Sync und zeitbasierte Automatisierungen funktionieren nur, wenn ihre Kommandos regelmäßig
+laufen. Das Docker-Setup bringt dafür einen eigenen Cron-Container mit; bei einer manuellen
+Installation gehört Folgendes in die Crontab:
+
+```bash
+# Kalender-Synchronisierung mit den Buchungsportalen (beide Richtungen)
+*/15 * * * * cd /pfad/zu/fewohbee && php bin/console calendar:import:sync --force
+*/15 * * * * cd /pfad/zu/fewohbee && php bin/console calendars:sync
+
+# Zeitbasierte Workflows (Erinnerungen, Nachfassen, geplante Mails)
+*/15 * * * * cd /pfad/zu/fewohbee && php bin/console workflow:process-scheduled
+
+# Aufbewahrung von Logs
+0 3 * * * cd /pfad/zu/fewohbee && php bin/console app:purge-logs --days=90
+```
+
+Die Referenz-Zeitplanung steht in [`docker/app/crontab`](docker/app/crontab) — ein Blick dorthin
+lohnt sich, um mit den Standardwerten gleichzuziehen.
+
+Das Statistikmodul kann außerdem monatliche Snapshots für den Vorjahresvergleich vorhalten. Wer das
+nutzt, plant es einmal im Monat ein:
+
+```bash
+5 0 1 * * cd /pfad/zu/fewohbee && php bin/console stats:snapshot:month
+```
+
+---
+
+## Aktualisierung
+
+**Vor jedem Update ein Datenbank-Backup anlegen** und einen Blick in die
+[Release Notes](https://github.com/developeregrem/fewohbee/releases) werfen — dort stehen
+versionsspezifische Hinweise.
+
+### Docker
+
+Das Setup [fewohbee-dockerized](https://github.com/developeregrem/fewohbee-dockerized) bringt ein
+Update-Skript mit, das die ganze Arbeit übernimmt:
+
+```bash
+./update-docker.sh
+```
+
+Es lädt die neuen Images, startet den Stack neu und übernimmt neu hinzugekommene
+Umgebungsvariablen automatisch in die `.env` und beide Compose-Dateien. Diese neuen Variablen
+danach kurz durchsehen — manche brauchen noch einen passenden Wert.
+
+### Manuelle Installation
+
+```bash
+git pull
+composer install --no-dev --optimize-autoloader
+php bin/console doctrine:migrations:migrate
+php bin/console asset-map:compile
+php bin/console cache:clear
+```
+
+---
+
+## REST-API
+
+FewohBee stellt eine **lesende REST-API** für Reservierungen, Kalenderdaten, Rechnungen und
+Statistiken bereit.
+
+- Die Authentifizierung erfolgt über **persönliche Zugriffstoken** aus dem Benutzerprofil (Präfix
+  `fwb_`), übergeben als `Authorization: Bearer <token>` oder — für Clients, die nur
+  Benutzername/Passwort unterstützen (z.B. Kalenderanwendungen) — als Passwort per HTTP Basic Auth.
+- Jedes Token trägt **Scopes**, und ein Scope greift nur, wenn der Token-Inhaber auch die
+  zugehörige Anwendungsrolle besitzt — ein Token kann also nie mehr erlauben als sein Inhaber darf.
+- Die vollständige Spezifikation liegt in [`docs/openapi.yaml`](docs/openapi.yaml).
+
+📖 **Anleitung und Beispiele:
+[REST-API-Dokumentation im Wiki](https://github.com/developeregrem/fewohbee/wiki/REST-API)**
+
+---
+
+## Gehostete Version
+
+Nicht jeder möchte einen eigenen Server betreiben, ihn aktuell halten und sich um Backups kümmern.
+Für diesen Fall gibt es unter **[fewohbee.app](https://fewohbee.app)** eine gehostete Variante —
+dieselbe Anwendung, betrieben und gewartet, deren Erlöse die Entwicklung dieses Open-Source-Projekts
+finanzieren.
+
+Selbst hosten bleibt kostenlos und vollwertig unterstützt. Beide Wege nutzen dieselbe Codebasis.
+
+---
+
+## Mehrsprachigkeit
+
+FewohBee ist von Grund auf mehrsprachig angelegt und wird **vollständig auf Deutsch und Englisch**
+ausgeliefert. Beide Sprachen werden gemeinsam gepflegt — kein Feature erscheint nur in einer
+Sprache.
+
+Eine weitere Sprache gewünscht? Gerne ein
+[Issue anlegen](https://github.com/developeregrem/fewohbee/issues) — Beiträge sind sehr willkommen.
+
+---
+
+## Mitwirken
+
+Beiträge sind willkommen — ob Fehlermeldung, Übersetzung, Dokumentation oder neues Feature.
+
+- 📋 **Zuerst [AGENTS.md](AGENTS.md) lesen.** Dort stehen Architektur, Sicherheitsanforderungen,
+  Regeln zur Mehrsprachigkeit, Test-Erwartungen und Coding-Standards des Projekts. Die Datei ist
+  für KI-Coding-Agents geschrieben, gilt aber genauso als verbindlicher Leitfaden für Menschen.
+- 🐛 **Fehler und Ideen:** [Issue anlegen](https://github.com/developeregrem/fewohbee/issues)
+- 🔀 **Pull Requests:** möglichst fokussiert halten, Tests beilegen und darauf achten, dass die
+  deutschen *und* englischen Übersetzungen vollständig sind
+
+**Tests ausführen:**
+
+```bash
+php bin/phpunit tests/Unit    # Unit-Tests — schnell, ohne Datenbank
+bin/run-tests.sh              # gesamte Suite — setzt die Testdatenbank zurück
+vendor/bin/phpstan analyse    # statische Analyse, Level 6
+```
+
+---
+
+## Sicherheit
+
+Wer eine Sicherheitslücke entdeckt, sollte **kein öffentliches Issue anlegen**, sondern sie
+vertraulich an **info (at) fewohbee.app** melden, damit sie vor der Veröffentlichung behoben werden
+kann.
+
+Sicherheit hat in diesem Projekt hohe Priorität — Gästedaten sind personenbezogene Daten im Sinne
+der DSGVO, Rechnungen sind Finanzunterlagen. Welche Standards für jeden Beitrag gelten, steht im
+Sicherheitsabschnitt der [AGENTS.md](AGENTS.md).
+
+---
+
+## Lizenz
+
+FewohBee steht unter der **[GNU General Public License v3.0](LICENSE)**.
+
+Die Software darf frei genutzt, untersucht, verändert und weitergegeben werden. Wird eine
+veränderte Fassung weitergegeben, muss sie ebenfalls unter der GPL-3.0 stehen und der Quellcode
+verfügbar gemacht werden.
+
+---
+
+## Autor & Unterstützung
+
+Entwickelt von **Alexander Elchlepp** seit 2014.
+
+Das Projekt entsteht größtenteils in Einzelarbeit und in der Freizeit. Über Fragen, Rückmeldungen
+und Beiträge freue ich mich jederzeit — einfach ein
+[Issue anlegen](https://github.com/developeregrem/fewohbee/issues) oder eine Mail an
+info (at) fewohbee.app.
+
+Wenn dir FewohBee nützt und du die Entwicklung unterstützen möchtest:
+
+[![Spenden](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=ZQPG864PB4TBE)
+
+⭐ Ein Stern für das Repository hilft ebenfalls, damit andere das Projekt finden.
