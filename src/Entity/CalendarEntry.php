@@ -31,6 +31,34 @@ class CalendarEntry
     #[ORM\Column(type: Types::DATE_IMMUTABLE)]
     private \DateTimeImmutable $date;
 
+    /**
+     * Start time of day, or null for an all-day entry.
+     *
+     * Deliberately a separate column instead of widening `date` to DATETIME:
+     * every consumer keys days by Y-m-d - sync reconciliation, the reservation
+     * table decorations, the reminder query - and each would have to strip a
+     * time component it never asked for. Null is what "all day" means, which
+     * is also what every entry written before this field existed already says.
+     */
+    #[ORM\Column(type: Types::TIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $time = null;
+
+    /**
+     * End time of day, or null when the entry has no defined end.
+     *
+     * On an entry spanning several days the start time sits on the first day
+     * and the end time on the last, with the days between carrying neither -
+     * they genuinely run all day. That keeps one row per day (see $date) while
+     * still letting the last day say when the event stops, instead of showing
+     * nothing at all and leaving the reader to guess.
+     *
+     * A value of 00:00 means midnight *closing* the day, not opening it - see
+     * CalendarEntryTimeRules, which is where that rule lives for the import,
+     * the form and the validation alike.
+     */
+    #[ORM\Column(name: 'end_time', type: Types::TIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $endTime = null;
+
     /** Free-text label, e.g. "Restmüll", "Sommerferien", "Wartung Heizung". */
     #[ORM\Column(type: Types::STRING, length: 100)]
     #[Assert\NotBlank]
@@ -90,6 +118,36 @@ class CalendarEntry
         $this->date = $date;
 
         return $this;
+    }
+
+    public function getTime(): ?\DateTimeImmutable
+    {
+        return $this->time;
+    }
+
+    public function setTime(?\DateTimeImmutable $time): self
+    {
+        $this->time = $time;
+
+        return $this;
+    }
+
+    public function getEndTime(): ?\DateTimeImmutable
+    {
+        return $this->endTime;
+    }
+
+    public function setEndTime(?\DateTimeImmutable $endTime): self
+    {
+        $this->endTime = $endTime;
+
+        return $this;
+    }
+
+    /** False for an all-day entry, which is the default and the only kind that existed before. */
+    public function hasTime(): bool
+    {
+        return null !== $this->time || null !== $this->endTime;
     }
 
     public function getTitle(): string

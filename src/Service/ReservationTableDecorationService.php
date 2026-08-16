@@ -25,6 +25,7 @@ class ReservationTableDecorationService
         private readonly CalendarRepository $calendarRepo,
         private readonly CalendarService $calendarService,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly CalendarEntryTimeFormatter $timeFormatter,
     ) {
     }
 
@@ -109,6 +110,7 @@ class ReservationTableDecorationService
                 // the popover would only offer links into a 403.
                 editUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.edit', ['id' => $entry->getId()]) : null,
                 deleteUrl: $canManageEntries ? $this->urlGenerator->generate('reservations.calendar_entry.delete', ['id' => $entry->getId()]) : null,
+                time: $this->timeFormatter->format($entry),
                 startsCalendarGroup: null !== $previous && $previous->calendarId !== $calendar->getId(),
             );
         }
