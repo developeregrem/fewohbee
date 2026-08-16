@@ -116,6 +116,49 @@ final class CalendarEntryServiceTest extends TestCase
         self::assertSame('14:00', $persisted[2]->getEndTime()?->format('H:i'));
     }
 
+    /**
+     * A period ending at midnight used to store a lone "- 00:00" on its
+     * closing day - an entry the edit form then refused to save. The closing
+     * day runs to its own end anyway, which is what all-day already means.
+     */
+    public function testAPeriodEndingAtMidnightLeavesItsClosingDayAllDay(): void
+    {
+        $entry = $this->entry('2026-08-14', '18:00', '00:00');
+        $persisted = [];
+
+        $this->service($persisted)->createRange($entry, new \DateTimeImmutable('2026-08-16'));
+
+        self::assertCount(3, $persisted);
+        self::assertSame('18:00', $persisted[0]->getTime()?->format('H:i'));
+        self::assertNull($persisted[2]->getTime());
+        self::assertNull($persisted[2]->getEndTime());
+    }
+
+    /** Everything createRange() writes must survive a round trip through the edit form. */
+    public function testEveryDayOfAMidnightPeriodValidatesOnItsOwn(): void
+    {
+        $entry = $this->entry('2026-08-14', '18:00', '00:00');
+        $persisted = [];
+
+        $service = $this->service($persisted);
+        $service->createRange($entry, new \DateTimeImmutable('2026-08-16'));
+
+        foreach ($persisted as $day) {
+            self::assertSame([], $service->validateSingle($day), 'a created entry fails its own validation');
+        }
+    }
+
+    public function testASingleDayKeepsAMidnightEndTime(): void
+    {
+        $entry = $this->entry('2026-08-14', '18:00', '00:00');
+        $persisted = [];
+
+        $this->service($persisted)->createRange($entry, null);
+
+        self::assertCount(1, $persisted);
+        self::assertSame('00:00', $persisted[0]->getEndTime()?->format('H:i'));
+    }
+
     public function testAnEndDateNotAfterTheStartMeansASingleDay(): void
     {
         $entry = $this->entry('2026-08-14');

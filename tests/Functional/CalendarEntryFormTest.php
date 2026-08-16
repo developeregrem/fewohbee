@@ -115,6 +115,57 @@ final class CalendarEntryFormTest extends WebTestCase
         self::assertSame('00:00', $entries[0]->getEndTime()?->format('H:i'));
     }
 
+    /**
+     * A period ending at midnight stored a lone "- 00:00" on its closing day,
+     * which the edit form then refused to save unchanged. The closing day runs
+     * to its own end anyway, so it is stored all-day.
+     */
+    public function testAPeriodEndingAtMidnightLeavesItsClosingDayAllDay(): void
+    {
+        $client = $this->loggedInClient();
+        $calendar = $this->createCalendar();
+
+        $this->submitEntry($client, $calendar, [
+            'date' => '2026-09-28',
+            'dateTo' => '2026-09-30',
+            'time' => '18:00',
+            'endTime' => '00:00',
+            'title' => 'Nachtschicht',
+        ]);
+
+        $entries = $this->entriesOf($calendar);
+        self::assertCount(3, $entries);
+        self::assertSame('18:00', $entries[0]->getTime()?->format('H:i'));
+        self::assertNull($entries[2]->getTime());
+        self::assertNull($entries[2]->getEndTime());
+    }
+
+    /** Whatever the creation form writes, the edit form has to accept back. */
+    public function testTheClosingDayOfAMidnightPeriodCanBeSavedAgainUnchanged(): void
+    {
+        $client = $this->loggedInClient();
+        $calendar = $this->createCalendar();
+
+        $this->submitEntry($client, $calendar, [
+            'date' => '2026-10-05',
+            'dateTo' => '2026-10-06',
+            'time' => '18:00',
+            'endTime' => '00:00',
+            'title' => 'Nachtschicht',
+        ]);
+
+        $closingDay = $this->entriesOf($calendar)[1];
+
+        $crawler = $client->request('GET', '/reservation/calendar-entry/'.$closingDay->getId().'/edit');
+        self::assertResponseIsSuccessful();
+        $client->submit($crawler->filter('form')->form());
+
+        // A rejected entry re-renders the form with the error; a saved one
+        // redirects to the overview.
+        self::assertResponseRedirects();
+        self::assertNull($this->entriesOf($calendar)[1]->getEndTime());
+    }
+
     public function testAnEndBeforeTheStartIsRejectedAndNothingIsSaved(): void
     {
         $client = $this->loggedInClient();

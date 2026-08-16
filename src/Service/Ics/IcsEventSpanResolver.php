@@ -70,6 +70,9 @@ final class IcsEventSpanResolver
         if (null === $start) {
             return null;
         }
+        // Normalised before anything compares them, so the checks below, the
+        // day loop and the stored value all work on the same resolution.
+        $start = $this->toWholeMinutes($start);
         $startDay = $start->setTime(0, 0);
 
         $dtEndRaw = $event['DTEND'] ?? null;
@@ -83,6 +86,10 @@ final class IcsEventSpanResolver
         if (null !== $dtEndRaw && null === $end) {
             return null;
         }
+        $end = null !== $end ? $this->toWholeMinutes($end) : null;
+        // Checked after normalising, so an event shorter than a minute counts
+        // as the zero-length period it becomes rather than slipping through
+        // on seconds the rest of the application cannot represent.
         if (null !== $end && $end <= $start) {
             return null;
         }
@@ -148,10 +155,21 @@ final class IcsEventSpanResolver
         }
 
         $lastDay = $dates[array_key_last($dates)];
-        if ($this->timeRules->endsAtMidnight($end) && $lastDay != $startDay) {
-            return null;
-        }
 
-        return $end;
+        return $this->timeRules->endTimeForClosingDay($end, $lastDay == $startDay);
+    }
+
+    /**
+     * Drops seconds from a parsed value.
+     *
+     * The entry form works in whole minutes, so an imported time has to as
+     * well - otherwise the two halves of the application disagree about the
+     * same instant. A feed's 00:00:30 in particular is midnight to
+     * CalendarEntryTimeRules but not to the day loop below, which would then
+     * cover an extra calendar day for those thirty seconds.
+     */
+    private function toWholeMinutes(\DateTimeImmutable $value): \DateTimeImmutable
+    {
+        return $value->setTime((int) $value->format('H'), (int) $value->format('i'));
     }
 }

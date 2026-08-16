@@ -113,6 +113,37 @@ final class IcsEventSpanResolverTest extends TestCase
         self::assertNull($span->endTime);
     }
 
+    public function testSecondsAreDroppedFromImportedTimes(): void
+    {
+        $span = $this->resolve(['DTSTART' => '20260814T130045', 'DTEND' => '20260814T144030']);
+
+        self::assertNotNull($span);
+        self::assertSame('13:00:00', $span->startTime?->format('H:i:s'));
+        self::assertSame('14:40:00', $span->endTime?->format('H:i:s'));
+    }
+
+    /**
+     * Without normalising, 00:00:30 is midnight to CalendarEntryTimeRules but
+     * not to the day loop, which would cover a further calendar day for those
+     * thirty seconds.
+     */
+    public function testAnEndJustAfterMidnightDoesNotClaimAnExtraDay(): void
+    {
+        $span = $this->resolve(['DTSTART' => '20260814T180000', 'DTEND' => '20260815T000030']);
+
+        self::assertNotNull($span);
+        self::assertSame(['2026-08-14'], $this->dateKeys($span->dates));
+        self::assertSame('00:00', $span->endTime?->format('H:i'));
+    }
+
+    public function testAnEventShorterThanAMinuteIsDiscarded(): void
+    {
+        // Both ends normalise to 13:00, leaving a zero-length period - handled
+        // like any other, rather than slipping through on seconds the rest of
+        // the application cannot represent.
+        self::assertNull($this->resolve(['DTSTART' => '20260814T130010', 'DTEND' => '20260814T130045']));
+    }
+
     public function testEventWithoutDtEndIsASingleDay(): void
     {
         $span = $this->resolve(['DTSTART' => '20260814T130000']);

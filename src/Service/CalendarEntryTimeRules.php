@@ -45,6 +45,28 @@ final class CalendarEntryTimeRules
      * end of 00:00 standing alone: "ends at the end of the day" says nothing
      * without a start, and such an entry is an all-day one.
      */
+    /**
+     * The end time to store on the day an entry finishes on.
+     *
+     * A midnight end means the entry runs to the end of that day. On a day
+     * that has no start time of its own - any closing day other than the one
+     * the entry starts on - that is exactly what an all-day entry already
+     * says, so nothing is stored: a lone "- 00:00" would read as ending at
+     * the day's *beginning*, and isValidRange() rejects it for that reason.
+     * Storing it anyway would produce an entry the edit form then refuses to
+     * save.
+     *
+     * @param bool $isStartDay whether the closing day is also the day the entry starts on
+     */
+    public function endTimeForClosingDay(?\DateTimeImmutable $endTime, bool $isStartDay): ?\DateTimeImmutable
+    {
+        if (!$isStartDay && $this->endsAtMidnight($endTime)) {
+            return null;
+        }
+
+        return $endTime;
+    }
+
     public function isValidRange(?\DateTimeImmutable $start, ?\DateTimeImmutable $end): bool
     {
         if ($this->endsAtMidnight($end)) {

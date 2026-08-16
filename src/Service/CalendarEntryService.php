@@ -93,7 +93,12 @@ final class CalendarEntryService
         $startDate = $entry->getDate();
         $endDate = $this->resolveEndDate($startDate, $dateTo);
 
-        $endTime = $entry->getEndTime();
+        // Read off the bound entity before the loop overwrites it: over a
+        // period the end time belongs to the closing day, not to the first.
+        // CalendarEntryTimeRules decides whether that day may carry it at all,
+        // the same call the ICS import makes - otherwise a period ending at
+        // 00:00 would store a lone "- 00:00" the edit form then rejects.
+        $endTime = $this->timeRules->endTimeForClosingDay($entry->getEndTime(), $endDate == $startDate);
         if ($endDate != $startDate) {
             $entry->setEndTime(null);
         }
