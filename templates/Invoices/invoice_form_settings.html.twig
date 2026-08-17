@@ -27,6 +27,11 @@
 				</div>
 			</div>
 			<div class="tab-pane fade{{ einvoiceTabActive ? ' show active' : '' }}" id="nav-einvoice" role="tabpanel" aria-labelledby="nav-einvoice-tab" tabindex="0">
+				{# Without a default record every branch that has none of its own is left without
+				   issuer data — better said here than at export time. #}
+				{% if settings|length > 0 and not hasDefaultSetting %}
+					<div class="alert alert-warning py-2 mt-3">{{ 'invoice.settings.no_default.hint'|trans }}</div>
+				{% endif %}
 				<div class="row">
 					<div class="accordion" id="accordionSettings">
 						{% for form in forms %}

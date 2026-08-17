@@ -38,6 +38,22 @@
                 <source>object.flash.delete.error.still.in.use</source>
                 <target>Niederlassung kann nicht gelöscht werden, da ihr noch Zimmer zugeordnet sind.</target>
             </trans-unit>
+            <trans-unit id="object.invoice_number_pattern">
+                <source>object.invoice_number_pattern</source>
+                <target>Eigener Rechnungsnummern-Kreis</target>
+            </trans-unit>
+            <trans-unit id="object.invoice_number_pattern.placeholder">
+                <source>object.invoice_number_pattern.placeholder</source>
+                <target>z.B. RE-&lt;year&gt;-&lt;number:4&gt;</target>
+            </trans-unit>
+            <trans-unit id="object.invoice_number_pattern.help">
+                <source>object.invoice_number_pattern.help</source>
+                <target>Leer lassen, um den Standard-Nummernkreis aus den Einstellungen zu verwenden. Platzhalter: &lt;code&gt;&amp;lt;year&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;year2&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;month&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;day&amp;gt;&lt;/code&gt;, &lt;code&gt;&amp;lt;number:4&amp;gt;&lt;/code&gt;. Rechnungen zu Zimmern dieser Niederlassung bekommen dann eine eigene, fortlaufende Nummer.</target>
+            </trans-unit>
+            <trans-unit id="object.flash.invoice_number_pattern.invalid">
+                <source>object.flash.invoice_number_pattern.invalid</source>
+                <target>Der Rechnungsnummern-Kreis ist ungültig. Er braucht genau einen &lt;number&gt;-Platzhalter und darf nur bekannte Platzhalter verwenden.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

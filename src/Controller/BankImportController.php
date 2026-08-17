@@ -17,7 +17,7 @@ use App\Form\BankStatementUploadType;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\BankStatementImportRepository;
 use App\Repository\TaxRateRepository;
-use App\Service\BookingJournal\AccountingSettingsService;
+use App\Service\InvoiceNumberGenerator;
 use App\Service\BookingJournal\BankImport\BankImportDraftSession;
 use App\Service\BookingJournal\BankImport\BankImportRuleMatcher;
 use App\Service\BookingJournal\BankImport\BankStatementCommitter;
@@ -200,7 +200,7 @@ class BankImportController extends AbstractController
         BankImportDraftSession $drafts,
         AccountingAccountRepository $accountRepo,
         TaxRateRepository $taxRateRepo,
-        AccountingSettingsService $settingsService,
+        InvoiceNumberGenerator $numberGenerator,
     ): Response {
         $state = $drafts->load($sessionImportId);
         if (null === $state) {
@@ -227,7 +227,7 @@ class BankImportController extends AbstractController
             'counts' => $state->countByStatus(),
             'accounts' => $accounts,
             'taxRates' => $taxRates,
-            'invoiceMatchingDisabled' => [] === $settingsService->getSettings()->getInvoiceNumberSamples(),
+            'invoiceMatchingDisabled' => !$numberGenerator->hasConfiguredPattern(),
         ]);
     }
 

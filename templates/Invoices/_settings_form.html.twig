@@ -4,10 +4,15 @@
     <h2 class="accordion-header">
         <button class="accordion-button {% if not setting.isActive and setting.id != null %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ idx }}"
             aria-expanded="true" aria-controls="collapse{{ idx }}">
-            {% if setting.isActive %}
-                {{ 'invoice.settings.active'|trans }}
+            {# Show where the record applies — "active/inactive" alone was misleading once a
+               branch-specific record could be in use without carrying the default flag. #}
+            <span class="me-2">{{ setting.companyName ?: 'invoice.settings.scope.new'|trans }}</span>
+            {% if setting.subsidiary %}
+                <span class="badge bg-info">{{ setting.subsidiary.name }}</span>
+            {% elseif setting.isActive %}
+                <span class="badge bg-success">{{ 'invoice.settings.scope.default'|trans }}</span>
             {% else %}
-                <span class="text-muted fst-italic">{{ 'invoice.settings.inactive'|trans }}</span>
+                <span class="badge bg-secondary">{{ 'invoice.settings.scope.unused'|trans }}</span>
             {% endif %}
         </button>
     </h2>
@@ -15,7 +20,12 @@
         <div class="accordion-body">
             {{ form_start(form, {'attr': {'data-action': 'submit->invoices#submitFormAction', 'id': 'sttings-form-'~idx, 'data-controller': 'einvoice-settings' }}) }}
                 {% if form.vars.submitted and not form.vars.valid %}
-                    <div class="alert alert-danger py-2">{{ 'invoice.settings.form.error'|trans }}</div>
+                    <div class="alert alert-danger py-2">
+                        {{ 'invoice.settings.form.error'|trans }}
+                        {# Entity-level violations (e.g. two records claiming the same branch)
+                           have no field to attach to and would otherwise stay invisible. #}
+                        {{ form_errors(form) }}
+                    </div>
                 {% endif %}
                 <h5>{{ 'invoice.settings.section.profile'|trans }}</h5>
                 {{ form_row(form.einvoiceProfile) }}
@@ -51,7 +61,8 @@
                 {{ form_row(form.creditorReference) }}
 
                 <hr>
-                {{ form_row(form.isActive) }}
+                <h5>{{ 'invoice.settings.section.scope'|trans }}</h5>
+                {{ form_row(form.scope) }}
                 <div class="row text-end">
                     <div class="col-md">
                         {% if setting.id != null %}

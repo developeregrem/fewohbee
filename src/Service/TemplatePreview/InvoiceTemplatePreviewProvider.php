@@ -16,6 +16,7 @@ namespace App\Service\TemplatePreview;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
+use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Service\InvoiceService;
@@ -277,6 +278,13 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         $invoice->setZip('12345');
         $invoice->setCity('Musterstadt');
         $invoice->setRemark('Vielen Dank für Ihren Aufenthalt.');
+
+        // Invoice::$subsidiary is auto-exposed to the template editor, so the preview needs
+        // a sample branch — otherwise [[ invoice.subsidiary.name ]] renders blank.
+        $subsidiary = new Subsidiary();
+        $subsidiary->setName('Haupthaus');
+        $subsidiary->setDescription('Musterstadt');
+        $invoice->setSubsidiary($subsidiary);
 
         $appartment = new InvoiceAppartment();
         $appartment->setNumber('1');

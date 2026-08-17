@@ -257,10 +257,12 @@ class WorkflowAttachmentResolver
             return [];
         }
 
-        $settings = $this->readinessService->getActiveSettings();
         $resolved = [];
 
         foreach ($invoices as $invoice) {
+            // Resolved per invoice: with per-branch issuers the company can differ between
+            // the invoices of a single workflow run.
+            $settings = $this->readinessService->resolveSettingsFor($invoice);
             $attachment = $this->resolveInvoice($invoice, $pdfTemplate, $settings, $warnings);
             if (null !== $attachment) {
                 $resolved[] = $attachment;

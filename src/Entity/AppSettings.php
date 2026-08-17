@@ -33,6 +33,17 @@ class AppSettings
     #[Assert\NotBlank]
     private string $invoiceFilenamePattern = 'Invoice-<number>';
 
+    /**
+     * Default invoice number range, e.g. '<year>-<number:4>'. Branches without their own
+     * pattern use this one.
+     *
+     * Deliberately nullable with no default: null means "not configured", which keeps
+     * existing installations on the previous behaviour of incrementing the most recent
+     * number instead of forcing a format onto them during the upgrade.
+     */
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    private ?string $invoiceNumberPattern = null;
+
     /** @var string[] */
     #[ORM\Column(type: Types::JSON)]
     private array $customerSalutations = ['Ms', 'Mr', 'Family'];
@@ -124,6 +135,23 @@ class AppSettings
     public function setInvoiceFilenamePattern(string $invoiceFilenamePattern): self
     {
         $this->invoiceFilenamePattern = $invoiceFilenamePattern;
+
+        return $this;
+    }
+
+    public function getInvoiceNumberPattern(): ?string
+    {
+        return $this->invoiceNumberPattern;
+    }
+
+    /**
+     * An empty string is stored as null so "not configured" has exactly one
+     * representation. Clearing the field reverts to the legacy increment behaviour.
+     */
+    public function setInvoiceNumberPattern(?string $invoiceNumberPattern): self
+    {
+        $invoiceNumberPattern = null === $invoiceNumberPattern ? null : trim($invoiceNumberPattern);
+        $this->invoiceNumberPattern = '' === $invoiceNumberPattern ? null : $invoiceNumberPattern;
 
         return $this;
     }

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\InvoiceSettingsData;
+use App\Entity\Subsidiary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -28,5 +29,23 @@ class InvoiceSettingsDataRepository extends ServiceEntityRepository
             ->setParameter('id', $id)
             ->getQuery()
             ->execute();
+    }
+
+    /**
+     * Issuer configured specifically for this branch, or null when the branch has none
+     * and the globally active row should be used instead.
+     */
+    public function findForSubsidiary(Subsidiary $subsidiary): ?InvoiceSettingsData
+    {
+        return $this->findOneBy(['subsidiary' => $subsidiary]);
+    }
+
+    /**
+     * The globally active issuer — the fallback for invoices without a branch and for
+     * branches that have no issuer of their own.
+     */
+    public function findActive(): ?InvoiceSettingsData
+    {
+        return $this->findOneBy(['isActive' => true]);
     }
 }

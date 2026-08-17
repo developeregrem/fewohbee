@@ -320,7 +320,8 @@
         <a href="{{ path('invoices.export.pdf', {'id': invoice.id, 'template': templateId }) }}" class="btn btn-secondary export-link" target="_blank"
            title="{{ readiness is defined and readiness and readiness.ready ? 'button.export.einvoicepdf'|trans : 'button.export.pdf'|trans }}">
             <i class="fas fa-file-pdf"></i></a>
-        {% if activeProfileKey is defined and activeProfileKey == 'xrechnung' %}
+        {# Per invoice, not list-wide: with per-branch issuers the profile can differ. #}
+        {% if readiness is defined and readiness and readiness.profileKey == 'xrechnung' %}
         <a href="{{ path('invoices.export.xrechnung', {'id': invoice.id }) }}" class="btn btn-secondary" title="{{ 'button.export.xml'|trans }}">
             <i class="fa-solid fa-file-code"></i></a>
         {% endif %}

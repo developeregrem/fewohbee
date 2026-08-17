@@ -140,7 +140,9 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         $fallbackUsed = false;
 
         $mode = $config['attachmentMode'] ?? 'einvoice_preferred';
-        $settings = $this->readinessService->getActiveSettings();
+        // Issuer data follows the invoice's branch, so a two-company setup sends each
+        // invoice under the right company.
+        $settings = $this->readinessService->resolveSettingsFor($entity);
         $readiness = $this->readinessService->check($entity, $settings);
 
         if ('einvoice_required' === $mode && !$readiness->ready) {

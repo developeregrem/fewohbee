@@ -90,6 +90,7 @@ final class SendInvoiceEmailActionTest extends TestCase
         );
 
         $this->readinessService->method('getActiveSettings')->willReturn($this->settings);
+        $this->readinessService->method('resolveSettingsFor')->willReturn($this->settings);
     }
 
     private function buildTemplate(string $name, string $typeName, int $id = 1): Template

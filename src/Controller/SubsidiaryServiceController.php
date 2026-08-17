@@ -15,14 +15,17 @@ namespace App\Controller;
 
 use App\Entity\Subsidiary;
 use App\Service\CSRFProtectionService;
+use App\Service\InvoiceNumberPatternService;
 use App\Service\SubsidiaryService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/settings/objects')]
+#[IsGranted('ROLE_ADMIN')]
 class SubsidiaryServiceController extends AbstractController
 {
     #[Route('/', name: 'objects.overview', methods: ['GET'])]
@@ -71,7 +74,7 @@ class SubsidiaryServiceController extends AbstractController
     }
 
     #[Route('/create', name: 'objects.create.object', methods: ['POST'])]
-    public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request)
+    public function createObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, InvoiceNumberPatternService $patternService, Request $request)
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
@@ -82,6 +85,9 @@ class SubsidiaryServiceController extends AbstractController
             if (0 == strlen($object->getName()) || 0 == strlen($object->getDescription())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
+            } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($object);
@@ -101,7 +107,7 @@ class SubsidiaryServiceController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'objects.edit.object', methods: ['POST'], defaults: ['id' => '0'])]
-    public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, Request $request, $id)
+    public function editObjectAction(ManagerRegistry $doctrine, SubsidiaryService $sub, CSRFProtectionService $csrf, InvoiceNumberPatternService $patternService, Request $request, $id)
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
@@ -114,6 +120,10 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
+                $em->clear(Subsidiary::class);
+            } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
                 $em->clear(Subsidiary::class);
             } else {
                 $em->persist($object);

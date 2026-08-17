@@ -76,6 +76,7 @@ final class WorkflowAttachmentResolverTest extends TestCase
         );
 
         $this->readinessService->method('getActiveSettings')->willReturn($this->settings);
+        $this->readinessService->method('resolveSettingsFor')->willReturn($this->settings);
     }
 
     private function buildResolver(): WorkflowAttachmentResolver

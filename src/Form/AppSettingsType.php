@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\AppSettings;
+use App\Service\InvoiceNumberPatternService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -14,9 +15,16 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class AppSettingsType extends AbstractType
 {
+    public function __construct(
+        private readonly InvoiceNumberPatternService $patternService,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -32,6 +40,25 @@ class AppSettingsType extends AbstractType
                 'label' => 'app_settings.form.invoice_filename_pattern',
                 'help' => 'app_settings.form.invoice_filename_pattern_help',
                 'help_html' => true,
+            ])
+            ->add('invoiceNumberPattern', TextType::class, [
+                'label' => 'app_settings.form.invoice_number_pattern',
+                'help' => 'app_settings.form.invoice_number_pattern_help',
+                'help_html' => true,
+                'required' => false,
+                'attr' => ['maxlength' => 100, 'placeholder' => '<year>-<number:4>'],
+                'constraints' => [
+                    new Assert\Callback(function (?string $pattern, ExecutionContextInterface $context): void {
+                        foreach ($this->patternService->validate((string) $pattern) as $finding) {
+                            // Warnings are informational; only errors block saving.
+                            if ('error' === $finding['severity']) {
+                                $context->buildViolation($finding['key'])
+                                    ->setParameters($finding['params'])
+                                    ->addViolation();
+                            }
+                        }
+                    }),
+                ],
             ])
             ->add('customerSalutations', TextType::class, [
                 'label' => 'app_settings.form.customer_salutations',

@@ -77,6 +77,20 @@ class Invoice
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $buyerVatId = null;
 
+    /**
+     * Branch this invoice was issued for, derived from its reservations at creation time.
+     * Drives the number range and the issuer (company) data.
+     *
+     * This is a snapshot on purpose: moving a room to another branch later must not
+     * retroactively change which company issued an existing invoice, so this value and
+     * the current Reservation -> Appartment -> Subsidiary chain may legitimately differ.
+     * Null means the invoice has no branch — cross-branch or reservation-less invoices —
+     * and the global number range and issuer apply.
+     */
+    #[ORM\ManyToOne(targetEntity: Subsidiary::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Subsidiary $subsidiary = null;
+
     public function __construct()
     {
         $this->positions = new ArrayCollection();
@@ -178,6 +192,16 @@ class Invoice
     public function setNumber($number): void
     {
         $this->number = $number;
+    }
+
+    public function getSubsidiary(): ?Subsidiary
+    {
+        return $this->subsidiary;
+    }
+
+    public function setSubsidiary(?Subsidiary $subsidiary): void
+    {
+        $this->subsidiary = $subsidiary;
     }
 
     public function setDate($date): void

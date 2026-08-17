@@ -30,6 +30,38 @@
                 <source>form.vatid.invalid_country</source>
                 <target>Die USt-IdNr. muss mit einem gültigen Ländercode beginnen.</target>
             </trans-unit>
+            <trans-unit id="invoice_number_pattern.missing_number">
+                <source>invoice_number_pattern.missing_number</source>
+                <target>Das Muster braucht einen &lt;number&gt;-Platzhalter, sonst bekäme jede Rechnung dieselbe Nummer.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.duplicate_number">
+                <source>invoice_number_pattern.duplicate_number</source>
+                <target>Das Muster darf nur einen &lt;number&gt;-Platzhalter enthalten.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.unknown_placeholder">
+                <source>invoice_number_pattern.unknown_placeholder</source>
+                <target>Unbekannter Platzhalter %placeholder%. Erlaubt sind &lt;year&gt;, &lt;year2&gt;, &lt;month&gt;, &lt;day&gt; und &lt;number&gt;.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.invalid_width">
+                <source>invoice_number_pattern.invalid_width</source>
+                <target>Die Stellenzahl der laufenden Nummer muss zwischen 1 und %max% liegen.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.width_not_allowed">
+                <source>invoice_number_pattern.width_not_allowed</source>
+                <target>Der Platzhalter %placeholder% hat eine feste Länge und akzeptiert keine Stellenangabe.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.month_without_year">
+                <source>invoice_number_pattern.month_without_year</source>
+                <target>Ohne Jahresangabe beginnt die Nummerierung jeden Monat von vorn und wiederholt sich in den Folgejahren.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.too_long">
+                <source>invoice_number_pattern.too_long</source>
+                <target>Die erzeugte Rechnungsnummer darf höchstens %max% Zeichen lang sein.</target>
+            </trans-unit>
+            <trans-unit id="invoice_number_pattern.empty">
+                <source>invoice_number_pattern.empty</source>
+                <target>Bitte ein Muster angeben.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -20,6 +20,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
+use App\Service\AppSettingsService;
 use App\Service\CalendarSyncService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
@@ -28,11 +29,20 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class SettingsFixtures extends Fixture implements FixtureGroupInterface
 {
+    /**
+     * Invoice number range the sample data is configured with. Shared with
+     * {@see ReservationFixtures}, which renders its sample invoice numbers from it.
+     */
+    public const SAMPLE_INVOICE_NUMBER_PATTERN = 'RE-<year>-<number:4>';
+
     private $translator;
     private $syncService;
 
-    public function __construct(TranslatorInterface $translator, CalendarSyncService $css)
-    {
+    public function __construct(
+        TranslatorInterface $translator,
+        CalendarSyncService $css,
+        private readonly AppSettingsService $appSettingsService,
+    ) {
         $this->translator = $translator;
         $this->syncService = $css;
     }
@@ -62,7 +72,21 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
 
         $this->createReservationStatus($manager);
 
+        $this->configureInvoiceNumberRange();
+
         $manager->flush();
+    }
+
+    /**
+     * Sample data is meant to show a fully configured system, so it ships with an invoice
+     * number range. ReservationFixtures renders its sample invoice numbers from this very
+     * pattern, which keeps the demo consistent and lets the next invoice continue the series.
+     */
+    private function configureInvoiceNumberRange(): void
+    {
+        $settings = $this->appSettingsService->getSettings();
+        $settings->setInvoiceNumberPattern(self::SAMPLE_INVOICE_NUMBER_PATTERN);
+        $this->appSettingsService->saveSettings($settings);
     }
 
     private function createRoomCategories(ObjectManager $manager): void

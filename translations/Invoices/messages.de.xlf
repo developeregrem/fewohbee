@@ -226,6 +226,50 @@
                 <source>invoice.number.missing.error</source>
                 <target>Bitte zuerst eine Rechnungsnummer eingeben.</target>
             </trans-unit>
+            <trans-unit id="invoice.number.duplicate.error">
+                <source>invoice.number.duplicate.error</source>
+                <target>Diese Rechnungsnummer ist bereits vergeben. Bitte wähle eine andere.</target>
+            </trans-unit>
+            <trans-unit id="invoice.number.range.hint">
+                <source>invoice.number.range.hint</source>
+                <target>Nummernkreis: %range%</target>
+            </trans-unit>
+            <trans-unit id="invoice.number.range.global">
+                <source>invoice.number.range.global</source>
+                <target>Standard</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.section.scope">
+                <source>invoice.settings.section.scope</source>
+                <target>Gültigkeit</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.scope">
+                <source>invoice.settings.scope</source>
+                <target>Diese Rechnungsdaten gelten für</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.scope.help">
+                <source>invoice.settings.scope.help</source>
+                <target>Hier werden ausschließlich die Absenderdaten für die elektronische Rechnung (XML) festgelegt. Was auf der PDF-Rechnung steht, kommt aus der Rechnungsvorlage und bleibt davon unberührt. Betreibst du mehrere Niederlassungen unter verschiedenen Firmen, lege je Niederlassung einen eigenen Datensatz an.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.scope.default">
+                <source>invoice.settings.scope.default</source>
+                <target>Standard – alle Niederlassungen ohne eigene Rechnungsdaten</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.scope.unused">
+                <source>invoice.settings.scope.unused</source>
+                <target>Wird nicht verwendet</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.no_default.hint">
+                <source>invoice.settings.no_default.hint</source>
+                <target>Kein Datensatz ist als Standard gekennzeichnet. Niederlassungen ohne eigene Rechnungsdaten – und Rechnungen ohne Niederlassung – können damit keine elektronische Rechnung erzeugen.</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.scope.new">
+                <source>invoice.settings.scope.new</source>
+                <target>Neue Rechnungsdaten</target>
+            </trans-unit>
+            <trans-unit id="invoice.settings.subsidiary.taken">
+                <source>invoice.settings.subsidiary.taken</source>
+                <target>Für diese Niederlassung sind bereits Rechnungsdaten hinterlegt. Es kann je Niederlassung nur einen Datensatz geben.</target>
+            </trans-unit>
             <trans-unit id="invoice.customer.section.contact">
                 <source>invoice.customer.section.contact</source>
                 <target>Kontakt</target>
@@ -442,14 +486,6 @@
                 <source>invoice.settings.xrechnung.required.hint</source>
                 <target>* Diese Felder sind für das XRechnung-Profil (B2G) erforderlich.</target>
             </trans-unit>
-            <trans-unit id="invoice.settings.active">
-                <source>invoice.settings.active</source>
-                <target>Aktiv</target>
-            </trans-unit>
-            <trans-unit id="invoice.settings.inactive">
-                <source>invoice.settings.inactive</source>
-                <target>Inaktiv</target>
-            </trans-unit>
             <trans-unit id="invoice.settings.help.general">
                 <source>invoice.settings.help.general</source>
                 <target>Die hier eingetragenen Informationen sind für den digitalen Rechnungsexport (E-Rechnung) erforderlich.</target>
@@ -480,7 +516,7 @@
             </trans-unit>
             <trans-unit id="invoice.settings.active.error">
                 <source>invoice.settings.active.error</source>
-                <target>Es konnten keine als aktiv gekennzeichneten Einstellungen für den Rechnungsexport gefunden werden.</target>
+                <target>Für diese Rechnung sind keine Rechnungsdaten hinterlegt. Lege unter den Rechnungseinstellungen einen Standard-Datensatz oder einen Datensatz für die Niederlassung an.</target>
             </trans-unit>
             <trans-unit id="invoice.einvoice.violation.invoiceNumber">
                 <source>invoice.einvoice.violation.invoiceNumber</source>

@@ -51,4 +51,37 @@ class SubsidiaryRepository extends ServiceEntityRepository
 
         return array_map(static fn (array $row): int => (int) $row['id'], $rows);
     }
+
+    /**
+     * Invoice number patterns configured on branches, without the global default.
+     *
+     * @return list<string>
+     */
+    public function findConfiguredPatterns(): array
+    {
+        $rows = $this->createQueryBuilder('s')
+            ->select('s.invoiceNumberPattern')
+            ->where('s.invoiceNumberPattern IS NOT NULL')
+            ->andWhere("s.invoiceNumberPattern <> ''")
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): string => (string) $row['invoiceNumberPattern'], $rows);
+    }
+
+    /**
+     * Branches that define their own number range, keyed by nothing in particular —
+     * used by the bank import settings screen to label each pattern with its branch.
+     *
+     * @return list<Subsidiary>
+     */
+    public function findWithInvoiceNumberPattern(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.invoiceNumberPattern IS NOT NULL')
+            ->andWhere("s.invoiceNumberPattern <> ''")
+            ->orderBy('s.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }
