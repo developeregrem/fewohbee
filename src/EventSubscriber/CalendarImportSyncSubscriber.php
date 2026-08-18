@@ -9,15 +9,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 
 /** Trigger a fallback hourly calendar import during app usage. */
 class CalendarImportSyncSubscriber implements EventSubscriberInterface
 {
     /** Configure dependencies for the calendar import fallback. */
     public function __construct(
-        private readonly CacheInterface $cache,
         private readonly AuthorizationCheckerInterface $auth,
         private readonly CalendarImportService $calendarImportService
     ) {
@@ -42,12 +39,6 @@ class CalendarImportSyncSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $key = CalendarImportService::buildThrottleCacheKey(time());
-        $this->cache->get($key, function (ItemInterface $item) {
-            $item->expiresAfter(CalendarImportService::SYNC_THROTTLE_SECONDS);
-            $this->calendarImportService->syncActiveImports();
-
-            return true;
-        });
+        $this->calendarImportService->syncActiveImports();
     }
 }

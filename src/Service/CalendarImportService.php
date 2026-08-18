@@ -24,6 +24,8 @@ class CalendarImportService
 {
     public const SYNC_THROTTLE_SECONDS = 3600;
 
+    private const SYNC_THROTTLE_CACHE_KEY = 'calendar_import_sync_all';
+
     private const SYNC_OK = 'ok';
     private const SYNC_SKIP_MISSING = 'skip_missing';
     private const SYNC_SKIP_PAST = 'skip_past';
@@ -99,13 +101,16 @@ class CalendarImportService
         $this->em->flush();
     }
 
-    /** Run synchronization for all active imports. */
-    /** Run synchronization for all active imports with optional throttling. */
+    /**
+     * Synchronize all active imports, throttling regular calls for one hour.
+     * Forced calls always run and refresh the throttle marker for fallback requests.
+     */
     public function syncActiveImports(bool $force = false): void
     {
-        if (!$force && !$this->shouldRunSync()) {
+        if (!$this->claimSyncWindow($force)) {
             return;
         }
+
         $imports = $this->em->getRepository(CalendarSyncImport::class)->findBy(['isActive' => true]);
         foreach ($imports as $import) {
             $this->syncImport($import);
@@ -129,27 +134,22 @@ class CalendarImportService
         ]);
     }
 
-    /** Ensure full import sync runs at most once per hour. */
-    private function shouldRunSync(): bool
+    /**
+     * Claim the shared sync window, forcing a marker refresh for scheduled runs.
+     * Disabling early recomputation keeps the fallback interval at a strict hour.
+     */
+    private function claimSyncWindow(bool $force): bool
     {
-        $key = self::buildThrottleCacheKey(time());
-        $executed = false;
-        $this->cache->get($key, function (ItemInterface $item) use (&$executed) {
+        $claimed = false;
+        $this->cache->get(self::SYNC_THROTTLE_CACHE_KEY, function (ItemInterface $item) use (&$claimed) {
             $item->expiresAfter(self::SYNC_THROTTLE_SECONDS);
-            $executed = true;
+            $claimed = true;
 
             return true;
-        });
+        }, $force ? INF : 0.0);
 
-        return $executed;
-    }
-
-    /** Build a cache key for throttled sync execution. */
-    public static function buildThrottleCacheKey(int $timestamp): string
-    {
-        $bucket = (int) floor($timestamp / self::SYNC_THROTTLE_SECONDS);
-
-        return sprintf('calendar_import_sync_all_%d', $bucket);
+        // A cache outage must never prevent an explicitly forced cron run.
+        return $force || $claimed;
     }
 
     /** Persist a single event, respecting conflict strategy and updates. */
