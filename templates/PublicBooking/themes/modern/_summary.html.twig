@@ -33,6 +33,18 @@
             {% endfor %}
         {% endif %}
 
+        {% if modifierBreakdown is defined and modifierBreakdown is not empty %}
+            <div class="fhb-summary-group">
+                <div class="fhb-summary-group-title">{{ 'online_booking.public.guest_adjustments_title'|trans }}</div>
+                {% for adjustmentRow in modifierBreakdown %}
+                    <div class="fhb-summary-row">
+                        <span>{{ adjustmentRow.label }}</span>
+                        <span>{{ adjustmentRow.totalFormatted }}&nbsp;{{ currency_symbol }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         {% if extrasBreakdown is not empty %}
             <div class="fhb-summary-group">
                 <div class="fhb-summary-group-title">{{ 'online_booking.public.extras_title'|trans }}</div>

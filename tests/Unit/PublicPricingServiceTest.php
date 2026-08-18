@@ -8,6 +8,8 @@ use App\Entity\Appartment;
 use App\Entity\InvoiceAppartment;
 use App\Entity\Price;
 use App\Entity\RoomCategory;
+use App\Repository\GuestCategoryModifierRepository;
+use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
@@ -23,7 +25,14 @@ final class PublicPricingServiceTest extends TestCase
         $priceService = $this->createStub(PriceService::class);
         $priceRepo = $this->createStub(PriceRepository::class);
 
-        return new PublicPricingService($invoiceService, $configService, $priceService, $priceRepo);
+        return new PublicPricingService(
+            $invoiceService,
+            $configService,
+            $priceService,
+            $priceRepo,
+            $this->createStub(GuestCategoryRepository::class),
+            $this->createStub(GuestCategoryModifierRepository::class),
+        );
     }
 
     /** Only occupancy levels with non-zero prices should be returned. */
@@ -168,19 +177,15 @@ final class PublicPricingServiceTest extends TestCase
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
-        // User picked 2 adults + 1 child = 3 persons total (all occupancy-counted).
-        $guestCounts = [1 => 2, 2 => 1];
-        $mixOccupancyPersons = 3;
-
         $service = $this->createService($invoiceService, $configService);
-        $options = $service->getOccupancyPrices($category, $room, $dateFrom, $dateTo, 3, $guestCounts, $mixOccupancyPersons);
+        $options = $service->getOccupancyPrices($category, $room, $dateFrom, $dateTo, 3);
 
-        // Option 1 (no mix match) → adult-only: 2 nights × 1 person × 50 = 100
+        // Plain list prices throughout: 2 nights × N persons × 50. No row carries a
+        // guest mix, so the modifier stub never fires — which room a discounted guest
+        // ends up in is not decided until the next step.
         self::assertSame(100.0, $options[1]['totalPrice']);
-        // Option 2 (no mix match) → adult-only: 2 × 2 × 50 = 200
         self::assertSame(200.0, $options[2]['totalPrice']);
-        // Option 3 (matches mix) → 2 × 3 × 50 = 300, minus modifier 2 × −25 = −50 → 250
-        self::assertSame(250.0, $options[3]['totalPrice']);
+        self::assertSame(300.0, $options[3]['totalPrice']);
     }
 
     /** When no occupancy level has a price, an empty array is returned. */

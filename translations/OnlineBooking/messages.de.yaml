@@ -185,6 +185,15 @@ online_booking:
     room_total: "Zimmerpreis gesamt"
     room_total_hint: "Nur Zimmerpreise (ohne Zusatzpreise)."
     extras_title: "Zusatzleistungen"
+    guest_adjustments_title: "Ermäßigungen und Aufschläge"
+    price_adjustment:
+        reduction: "Für %categories% gilt ein ermäßigter Preis. Der Abzug erscheint in der Übersicht im nächsten Schritt, sobald feststeht, wer welches Zimmer bewohnt."
+        surcharge: "Für %categories% gilt ein abweichender Preis mit Aufschlag. Der Betrag erscheint in der Übersicht im nächsten Schritt, sobald feststeht, wer welches Zimmer bewohnt."
+        mixed: "Für %categories% gilt ein abweichender Preis. Der Betrag erscheint in der Übersicht im nächsten Schritt, sobald feststeht, wer welches Zimmer bewohnt."
+        short:
+            reduction: "Ermäßigung möglich"
+            surcharge: "Aufschlag möglich"
+            mixed: "Abweichender Preis möglich"
     per_person_night: "pro Person/Nacht"
     per_room_night: "pro Zimmer/Nacht"
     flat_price: "einmalig"

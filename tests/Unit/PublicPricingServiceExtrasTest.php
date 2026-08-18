@@ -9,6 +9,8 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Repository\GuestCategoryModifierRepository;
+use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
@@ -108,7 +110,14 @@ final class PublicPricingServiceExtrasTest extends TestCase
 
         $invoiceService = $this->createStub(InvoiceService::class);
 
-        return new PublicPricingService($invoiceService, $configService, $priceService, $priceRepo);
+        return new PublicPricingService(
+            $invoiceService,
+            $configService,
+            $priceService,
+            $priceRepo,
+            $this->createStub(GuestCategoryRepository::class),
+            $this->createStub(GuestCategoryModifierRepository::class),
+        );
     }
 
     /** @return array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> */
@@ -276,6 +285,8 @@ final class PublicPricingServiceExtrasTest extends TestCase
             $configService,
             $this->createStub(PriceService::class),
             $this->createStub(PriceRepository::class),
+            $this->createStub(GuestCategoryRepository::class),
+            $this->createStub(GuestCategoryModifierRepository::class),
         );
 
         self::assertSame([], $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, []));

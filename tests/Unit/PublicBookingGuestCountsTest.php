@@ -15,6 +15,7 @@ use App\Repository\GuestCategoryRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Dto\PublicBooking\RoomTotal;
 use App\Service\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -259,7 +260,7 @@ final class PublicBookingGuestCountsTest extends TestCase
             $configService,
             $availabilityService,
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
             $catRepo,
             $touristTaxService,
         );
@@ -310,5 +311,17 @@ final class PublicBookingGuestCountsTest extends TestCase
         (new \ReflectionProperty(GuestCategory::class, 'id'))->setValue($c, $id);
 
         return $c;
+    }
+
+    /**
+     * Room pricing is exercised in PublicPricingServiceTest; here it only has to be
+     * silent, so every reservation costs nothing and carries no adjustment.
+     */
+    private function zeroPricingService(): PublicPricingService
+    {
+        $pricingService = $this->createStub(PublicPricingService::class);
+        $pricingService->method('calculateReservationRoomTotal')->willReturn(new RoomTotal(0.0, 0.0));
+
+        return $pricingService;
     }
 }

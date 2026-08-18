@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\PublicBooking\RoomTotal;
 use App\Entity\Appartment;
+use App\Entity\Enum\ModifierType;
+use App\Entity\GuestCategoryModifier;
 use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
+use App\Repository\GuestCategoryModifierRepository;
+use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -17,11 +22,22 @@ use Doctrine\Common\Collections\ArrayCollection;
  */
 class PublicPricingService
 {
+    /** Every adjustment on this room lowers the price. */
+    public const ADJUSTMENT_REDUCTION = 'reduction';
+
+    /** Every adjustment on this room raises it. */
+    public const ADJUSTMENT_SURCHARGE = 'surcharge';
+
+    /** Direction is not decidable before the guests are assigned to rooms. */
+    public const ADJUSTMENT_MIXED = 'mixed';
+
     public function __construct(
         private readonly InvoiceService $invoiceService,
         private readonly OnlineBookingConfigService $configService,
         private readonly PriceService $priceService,
         private readonly PriceRepository $priceRepository,
+        private readonly GuestCategoryRepository $guestCategoryRepository,
+        private readonly GuestCategoryModifierRepository $modifierRepository,
     ) {
     }
 
@@ -29,24 +45,15 @@ class PublicPricingService
      * For a given room category, date range and max occupancy, compute the total stay price
      * for each valid number-of-persons (1..maxGuests) that has a matching price category.
      *
-     * When `guestCounts` is supplied (pattern from the public wizard) and its
-     * occupancy-counted total matches the option's persons count, the option is priced with
-     * the *actual* category mix — i.e. apartment-modifier deltas (children's discount etc.)
-     * are reflected in the displayed step-2 price, so the guest sees the same number in
-     * step 2 and step 3. Other occupancy options (1..maxGuests except the matching one) keep
-     * the legacy adult-only fallback because the wizard hasn't asked for those mixes.
+     * Every option is priced as the plain list price for that many guests. Per-guest
+     * adjustments are deliberately left out: which room a discounted child ends up in
+     * is only decided one step later, so pricing a row with the party's mix would be a
+     * guess that changes the moment the guest picks differently. The wizard signals the
+     * pending adjustment instead (see {@see describeGuestPriceAdjustment()}) and shows
+     * the concrete amount as its own line in the summary.
      *
      * Tourist tax is intentionally **not** applied here — it is shown as a separate line at
      * the end of the booking flow, not bundled into the room rate.
-     *
-     * @param array<int, int> $guestCounts        category-id => count from the wizard search step
-     * @param int             $mixOccupancyPersons sum of occupancy-counted entries in $guestCounts;
-     *                                             used to decide which occupancy option matches the
-     *                                             user's mix and should reflect the modifier-aware
-     *                                             price. The caller already knows this value
-     *                                             (controller derives it from `isCountedInOccupancy`)
-     *                                             — passing it here avoids re-injecting the
-     *                                             GuestCategoryRepository into this service.
      *
      * @return array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
      *         Indexed by persons count. Only entries with a non-zero price are returned.
@@ -59,21 +66,14 @@ class PublicPricingService
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
         int $maxGuests,
-        array $guestCounts = [],
-        int $mixOccupancyPersons = 0,
     ): array {
         $origin = $this->configService->getReservationOrigin();
         $options = [];
 
         for ($persons = 1; $persons <= $maxGuests; ++$persons) {
-            // Apply the user's actual mix only on the option that matches the
-            // occupancy-counted total of the mix. For other rows we keep the
-            // adult-only baseline so the table still reflects "what would N
-            // adults cost in this room".
-            $mixForThisRow = ($mixOccupancyPersons > 0 && $mixOccupancyPersons === $persons) ? $guestCounts : [];
-            $reservation = $this->buildSampleReservation($sampleRoom, $persons, $dateFrom, $dateTo, $origin, $mixForThisRow);
+            $reservation = $this->buildSampleReservation($sampleRoom, $persons, $dateFrom, $dateTo, $origin);
 
-            $singleTotal = $this->calculateReservationRoomTotal($reservation);
+            $singleTotal = $this->calculateReservationRoomTotal($reservation)->total();
             if ($singleTotal <= 0.0) {
                 continue;
             }
@@ -316,6 +316,119 @@ class PublicPricingService
     }
 
     /**
+     * Whether the party carries guests whose price differs from the plain per-head rate,
+     * so the room list can say so before the concrete amount is known.
+     *
+     * The amount stays out of reach on purpose: it depends on which room each discounted
+     * guest ends up in, and that is decided one step later. Everything else *is* knowable
+     * here, because a modifier hangs off a guest category rather than off a room:
+     *
+     *  - a room priced flat or per room is never touched by modifiers → no hint at all;
+     *  - `DISCOUNT_PERCENT` and `FREE` always reduce, `SURCHARGE_ABSOLUTE` always adds;
+     *  - `FLAT_RATE` depends on this room's per-head rate — 14 € against a 30 € rate is a
+     *    reduction, against a 12 € rate it is a surcharge;
+     *  - with `minFullPayers` set, the first guests pay full fare regardless, so whether the
+     *    adjustment applies at all depends on the allocation → the direction is left open.
+     *
+     * @param array<int, int> $guestCounts guest category id => count
+     *
+     * @return array{direction: string, labels: array<int, string>}|null null when nothing applies
+     */
+    public function describeGuestPriceAdjustment(
+        Appartment $sampleRoom,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        array $guestCounts,
+    ): ?array {
+        if ([] === $guestCounts) {
+            return null;
+        }
+
+        $basePerHead = $this->resolvePerHeadRate($sampleRoom, $dateFrom, $dateTo);
+        if (null === $basePerHead) {
+            return null;
+        }
+
+        $directions = [];
+        $labels = [];
+        foreach ($this->guestCategoryRepository->findActiveOrdered() as $category) {
+            $count = (int) ($guestCounts[(int) $category->getId()] ?? 0);
+            if ($count <= 0 || !$category->isCountedInOccupancy()) {
+                continue;
+            }
+
+            $modifier = $this->modifierRepository->findApplicable($category, $dateFrom);
+            if (null === $modifier) {
+                continue;
+            }
+
+            $direction = $this->resolveAdjustmentDirection($modifier, $basePerHead, $sampleRoom);
+            if (null === $direction) {
+                continue;
+            }
+
+            $directions[$direction] = true;
+            $labels[] = $category->getName();
+        }
+
+        if ([] === $labels) {
+            return null;
+        }
+
+        return [
+            'direction' => 1 === count($directions) ? array_key_first($directions) : self::ADJUSTMENT_MIXED,
+            'labels' => $labels,
+        ];
+    }
+
+    /**
+     * The per-head rate this room is sold at, or null when the room is not priced per head.
+     *
+     * Flat and per-room rates are paid once for the whole room, so a per-guest modifier
+     * has nothing to attach to — {@see InvoiceService::buildApartmentModifierPositions()}
+     * skips them for exactly that reason.
+     */
+    private function resolvePerHeadRate(Appartment $room, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo): ?float
+    {
+        $origin = $this->configService->getReservationOrigin();
+        $reservation = $this->buildSampleReservation($room, 1, $dateFrom, $dateTo, $origin);
+
+        foreach ($this->priceService->getPricesForReservationDays($reservation, 2) as $pricesOfDay) {
+            $price = is_array($pricesOfDay) ? ($pricesOfDay[0] ?? null) : null;
+            if (!$price instanceof Price) {
+                continue;
+            }
+            if ($price->getIsFlatPrice() || $price->getIsPerRoom()) {
+                return null;
+            }
+
+            return (float) $price->getPrice();
+        }
+
+        return null;
+    }
+
+    /** Which way a modifier moves this room's price, or null when it changes nothing. */
+    private function resolveAdjustmentDirection(GuestCategoryModifier $modifier, float $basePerHead, Appartment $room): ?string
+    {
+        // The room type may reserve the first seats for full-fare guests. Whether the
+        // adjustment survives that then depends on who shares the room — unknowable here.
+        if (($room->getRoomCategory()?->getMinFullPayers() ?? 0) > 0) {
+            return self::ADJUSTMENT_MIXED;
+        }
+
+        return match ($modifier->getType()) {
+            ModifierType::DISCOUNT_PERCENT, ModifierType::FREE => self::ADJUSTMENT_REDUCTION,
+            ModifierType::SURCHARGE_ABSOLUTE => self::ADJUSTMENT_SURCHARGE,
+            ModifierType::FLAT_RATE => match (true) {
+                $modifier->getValueAsFloat() < $basePerHead => self::ADJUSTMENT_REDUCTION,
+                $modifier->getValueAsFloat() > $basePerHead => self::ADJUSTMENT_SURCHARGE,
+                default => null,
+            },
+        };
+    }
+
+    /**
      * The one factory for the throw-away reservations the public pricing works on.
      *
      * Never persisted — it only carries enough state for the price engine to answer
@@ -347,15 +460,17 @@ class PublicPricingService
     }
 
     /**
-     * What one reservation costs in room money — the single definition used by the
-     * price table, the preview and the finished booking alike.
+     * What one reservation costs — the single definition used by the price table,
+     * the preview and the finished booking alike.
      *
-     * Modifier deltas net into the room total, the same scope the booking journal
-     * uses (apartment_modifier groups with apartment). A period without an
-     * applicable price yields no positions and hence no modifiers either, so the
-     * result is 0.0 and callers can treat that as "not bookable".
+     * Room rate and modifier deltas come back separately. Both belong to the same
+     * scope the booking journal uses (apartment_modifier groups with apartment), so
+     * {@see RoomTotal::total()} is the figure to bill; the split exists so the guest
+     * can be shown *why* their total differs from the room's list price. A period
+     * without an applicable price yields no positions and hence no modifiers either,
+     * so the total is 0.0 and callers can treat that as "not bookable".
      */
-    public function calculateReservationRoomTotal(Reservation $reservation): float
+    public function calculateReservationRoomTotal(Reservation $reservation): RoomTotal
     {
         $positions = $this->invoiceService->buildAppartmentPositions($reservation);
         $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
@@ -375,7 +490,7 @@ class PublicPricingService
             $miscTotal,
         );
 
-        return $singleTotal + $miscTotal;
+        return new RoomTotal($singleTotal, $miscTotal, $modifierPositions);
     }
 
     /**

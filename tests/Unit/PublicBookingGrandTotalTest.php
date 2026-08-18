@@ -22,6 +22,8 @@ use App\Repository\GuestCategoryRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Dto\PublicBooking\RoomTotal;
+use App\Entity\InvoicePosition;
 use App\Service\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,6 +55,35 @@ final class PublicBookingGrandTotalTest extends TestCase
         self::assertSame($preview['grandTotalFormatted'], $booking['grandTotalFormatted']);
         self::assertSame(12.0, $booking['grandTotal']);
         self::assertSame('12,00', $booking['grandTotalFormatted']);
+    }
+
+    /**
+     * Per-guest adjustments live on their own summary line, which means they are no
+     * longer part of the room total — and therefore have to be added to the grand
+     * total explicitly. Dropping that addition would quietly overcharge the guest.
+     */
+    public function testGrandTotalIncludesGuestAdjustmentsThatLeftTheRoomTotal(): void
+    {
+        $position = $this->createStub(InvoicePosition::class);
+        $position->method('getDescription')->willReturn('Kind 6–17 — Pauschalpreis 14,00 (2 Nächte × 1 Person)');
+        $position->method('getAmount')->willReturn(2);
+        $position->method('getPrice')->willReturn('-16.00');
+
+        $service = $this->makeService(roomTotal: new RoomTotal(270.0, -32.0, [$position]));
+
+        $dateFrom = new \DateTimeImmutable('2026-06-01');
+        $dateTo = new \DateTimeImmutable('2026-06-03');
+        $preview = $service->buildSelectionPreview($dateFrom, $dateTo, 2, 1, ['category:1' => [2 => 1]], [], [1 => 2]);
+
+        self::assertSame(270.0, $preview['roomTotal'], 'the room line keeps the advertised list price');
+        self::assertSame(-32.0, $preview['modifierTotal']);
+        self::assertSame([[
+            'label' => 'Kind 6–17 — Pauschalpreis 14,00 (2 Nächte × 1 Person)',
+            'total' => -32.0,
+            'totalFormatted' => '-32,00',
+        ]], $preview['modifierBreakdown']);
+        // 270 room − 32 adjustment + 12 tourist tax
+        self::assertSame(250.0, $preview['grandTotal']);
     }
 
     public function testCreateBookingDispatchesWorkflowEventInsteadOfSendingMailDirectly(): void
@@ -95,7 +126,7 @@ final class PublicBookingGrandTotalTest extends TestCase
         ];
     }
 
-    private function makeService(?EventDispatcherInterface $eventDispatcher = null): PublicBookingService
+    private function makeService(?EventDispatcherInterface $eventDispatcher = null, ?RoomTotal $roomTotal = null): PublicBookingService
     {
         $config = new OnlineBookingConfig();
         $config->setEnabled(true);
@@ -171,9 +202,21 @@ final class PublicBookingGrandTotalTest extends TestCase
             $configService,
             $availabilityService,
             $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService($roomTotal),
             $catRepo,
             $touristTaxService,
         );
+    }
+
+    /**
+     * Room pricing is exercised in PublicPricingServiceTest; here it only has to be
+     * silent, so every reservation costs nothing and carries no adjustment.
+     */
+    private function zeroPricingService(?RoomTotal $roomTotal = null): PublicPricingService
+    {
+        $pricingService = $this->createStub(PublicPricingService::class);
+        $pricingService->method('calculateReservationRoomTotal')->willReturn($roomTotal ?? new RoomTotal(0.0, 0.0));
+
+        return $pricingService;
     }
 }

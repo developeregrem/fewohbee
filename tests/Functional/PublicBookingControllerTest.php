@@ -89,6 +89,8 @@ final class PublicBookingControllerTest extends WebTestCase
                     'total' => 80.0,
                     'totalFormatted' => '80,00',
                 ]],
+                'modifierTotal' => 0.0,
+                'modifierBreakdown' => [],
                 'roomReservations' => [],
                 'touristTaxTotal' => 0.0,
                 'touristTaxTotalFormatted' => '0,00',
@@ -154,6 +156,8 @@ final class PublicBookingControllerTest extends WebTestCase
                 'roomTotal' => 80.0,
                 'roomTotalFormatted' => '80,00',
                 'roomPriceBreakdown' => [],
+                'modifierTotal' => 0.0,
+                'modifierBreakdown' => [],
             ]);
 
         $this->overrideBookingServices($publicBookingService, $config, $this->createNoopAbuseProtectionService());

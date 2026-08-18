@@ -185,6 +185,15 @@ online_booking:
     room_total: "Room total"
     room_total_hint: "Room prices only (no extra prices included)."
     extras_title: "Extras"
+    guest_adjustments_title: "Reductions and surcharges"
+    price_adjustment:
+        reduction: "A reduced rate applies to %categories%. The deduction appears in the summary in the next step, once it is clear who stays in which room."
+        surcharge: "A different rate with a surcharge applies to %categories%. The amount appears in the summary in the next step, once it is clear who stays in which room."
+        mixed: "A different rate applies to %categories%. The amount appears in the summary in the next step, once it is clear who stays in which room."
+        short:
+            reduction: "Reduction possible"
+            surcharge: "Surcharge possible"
+            mixed: "Different rate possible"
     per_person_night: "per person/night"
     per_room_night: "per room/night"
     flat_price: "one-time"

@@ -81,6 +81,7 @@ class PublicBookingViewModelFactory
             'booker' => $this->requestMapper->mapBooker($request, mb_strtoupper($request->getLocale()))->toArray(),
             'roomTotalFormatted' => null,
             'roomPriceBreakdown' => [],
+            'modifierBreakdown' => [],
             'extras' => [],
             'selectedExtras' => [],
             'extrasTotalFormatted' => null,
@@ -159,6 +160,7 @@ class PublicBookingViewModelFactory
         $view['selectedExtras'] = $preview['selectedExtras'];
         $view['roomTotalFormatted'] = $preview['roomTotalFormatted'];
         $view['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
+        $view['modifierBreakdown'] = $preview['modifierBreakdown'];
         $view['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
         $view['extrasBreakdown'] = $preview['extrasBreakdown'];
         $view['grandTotalFormatted'] = $preview['grandTotalFormatted'];
@@ -265,6 +267,7 @@ class PublicBookingViewModelFactory
         if ($isSubmit) {
             $recovered['roomTotalFormatted'] = $preview['roomTotalFormatted'];
             $recovered['roomPriceBreakdown'] = $preview['roomPriceBreakdown'];
+            $recovered['modifierBreakdown'] = $preview['modifierBreakdown'];
             $recovered['selectedExtras'] = $booking->extrasSelection;
             $recovered['extrasTotalFormatted'] = $preview['extrasTotalFormatted'];
             $recovered['extrasBreakdown'] = $preview['extrasBreakdown'];

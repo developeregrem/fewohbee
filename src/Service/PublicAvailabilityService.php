@@ -42,13 +42,13 @@ class PublicAvailabilityService
      *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[],
      *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
-     *   occupancyAvailableCounts: array<int, int>
+     *   occupancyAvailableCounts: array<int, int>,
+     *   priceAdjustment: array{direction: string, labels: array<int, string>}|null
      * }>
      *
-     * @param array<int, int> $guestCounts category-id => count from the wizard,
-     *   forwarded to per-occupancy pricing so the option that matches the
-     *   user's mix reflects modifier deltas (children's discount etc.) already
-     *   in step 2.
+     * @param array<int, int> $guestCounts category-id => count from the wizard. Not part of
+     *   the pricing — the rows carry list prices — but it decides whether a room type gets
+     *   the "this party's price differs" hint.
      */
     public function getAvailability(
         \DateTimeImmutable $dateFrom,
@@ -161,10 +161,16 @@ class PublicAvailabilityService
                 $dateFrom,
                 $dateTo,
                 min((int) $row['maxGuests'], $persons),
+            );
+
+            // The prices above are plain list prices. If the party carries guests whose
+            // rate differs, say so here — the amount only becomes known once the guest
+            // has distributed them over the rooms in the next step.
+            $row['priceAdjustment'] = $this->pricingService->describeGuestPriceAdjustment(
+                $sampleRoom,
+                $dateFrom,
+                $dateTo,
                 $guestCounts,
-                // `$persons` is already the occupancy-counted total derived by
-                // the controller from the user's guestCounts mix.
-                $persons,
             );
 
             // Apply minimum occupancy restriction: remove occupancy options below threshold
@@ -225,7 +231,6 @@ class PublicAvailabilityService
         \DateTimeImmutable $dateFrom,
         \DateTimeImmutable $dateTo,
         array $guestCounts = [],
-        int $persons = 0,
     ): array {
         if ($dateFrom >= $dateTo) {
             return [];
@@ -249,8 +254,6 @@ class PublicAvailabilityService
             $dateFrom,
             $dateTo,
             $capacity,
-            $guestCounts,
-            $persons,
         );
 
         if ($category instanceof RoomCategory) {
@@ -281,6 +284,7 @@ class PublicAvailabilityService
             'roomCapacities' => [$roomId => $capacity],
             'subsidiaryIds' => [(int) $room->getObject()->getId()],
             'occupancyOptions' => $occupancyOptions,
+            'priceAdjustment' => $this->pricingService->describeGuestPriceAdjustment($room, $dateFrom, $dateTo, $guestCounts),
             'occupancyAvailableCounts' => array_fill_keys(
                 array_map(static fn (array $option): int => (int) $option['persons'], $occupancyOptions),
                 1
@@ -309,7 +313,8 @@ class PublicAvailabilityService
      *   roomIds: int[],
      *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[],
-     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
+     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
+     *   priceAdjustment: array{direction: string, labels: array<int, string>}|null
      * }> $grouped
      * @return array<int, array{
      *   typeKey: string,
@@ -321,6 +326,7 @@ class PublicAvailabilityService
      *   roomCapacities: array<int, int>,
      *   subsidiaryIds: int[],
      *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
+     *   priceAdjustment: array{direction: string, labels: array<int, string>}|null,
      *   occupancyAvailableCounts: array<int, int>
      * }>
      */

@@ -46,6 +46,19 @@
                             </div>
                         {% endif %}
 
+                        {# The listed prices are plain list prices: which room a guest with a
+                           differing rate ends up in is only decided in the next step, so the
+                           amount cannot be shown here — only that it is coming. #}
+                        {% if row.priceAdjustment is defined and row.priceAdjustment %}
+                            {% set adjustmentText = ('online_booking.public.price_adjustment.' ~ row.priceAdjustment.direction)|trans({
+                                '%categories%': row.priceAdjustment.labels|join(', ')
+                            }) %}
+                            <div class="fhb-room-adjustment">
+                                <span class="fhb-tip" data-fhb-tip="{{ adjustmentText }}" tabindex="0" role="img" aria-label="{{ adjustmentText }}"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>
+                                <span>{{ ('online_booking.public.price_adjustment.short.' ~ row.priceAdjustment.direction)|trans }}</span>
+                            </div>
+                        {% endif %}
+
                         {% if row.images is defined and row.images|length > 1 %}
                             <a href="#" class="fhb-gallery-link" data-bs-toggle="modal" data-bs-target="#{{ galleryId }}">
                                 {{ 'online_booking.public.view_photos'|trans({'%count%': row.images|length}) }}

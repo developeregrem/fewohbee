@@ -101,6 +101,7 @@ class PublicBookingController extends AbstractController
                 $view['step'] = 4;
                 $view['roomTotalFormatted'] = $result['roomTotalFormatted'];
                 $view['roomPriceBreakdown'] = $result['roomPriceBreakdown'];
+                $view['modifierBreakdown'] = $result['modifierBreakdown'];
                 $view['bookingResult'] = $result;
 
                 $abuseProtectionService->clearSubmitFailures($request);

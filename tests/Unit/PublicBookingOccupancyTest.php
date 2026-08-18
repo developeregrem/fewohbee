@@ -12,6 +12,7 @@ use App\Repository\AppartmentRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Dto\PublicBooking\RoomTotal;
 use App\Service\PublicPricingService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,7 +41,7 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
     }
 
@@ -232,7 +233,7 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
 
         // Select: 1x with 1 person, 1x with 3 persons = 4 total, 2 rooms
@@ -335,7 +336,7 @@ final class PublicBookingOccupancyTest extends TestCase
             $configService,
             $this->availabilityService,
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
 
         $result = $service->buildSelectionPreview(
@@ -355,5 +356,17 @@ final class PublicBookingOccupancyTest extends TestCase
         self::assertSame(2, $reservations[1]->getPersons());
         self::assertSame(10, $reservations[0]->getAppartment()->getId());
         self::assertSame(20, $reservations[1]->getAppartment()->getId());
+    }
+
+    /**
+     * Room pricing is exercised in PublicPricingServiceTest; here it only has to be
+     * silent, so every reservation costs nothing and carries no adjustment.
+     */
+    private function zeroPricingService(): PublicPricingService
+    {
+        $pricingService = $this->createStub(PublicPricingService::class);
+        $pricingService->method('calculateReservationRoomTotal')->willReturn(new RoomTotal(0.0, 0.0));
+
+        return $pricingService;
     }
 }
