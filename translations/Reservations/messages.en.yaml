@@ -171,8 +171,16 @@ calendar_entry.calendar: Calendar
 calendar_entry.form.calendar: Calendar
 calendar_entry.form.date: Date
 calendar_entry.form.date_to: Until
-calendar_entry.form.date_to_help: "End date – optional, for a multi-day entry (e.g. a vacation period). Creates one entry per day."
+calendar_entry.form.date_to_help: "Until – one entry per day"
 calendar_entry.form.date_to_too_far: "The range may not span more than %max% days."
+calendar_entry.form.end_time: End time
+calendar_entry.form.end_time_before_start: "The end time must be after the start time. 00:00 is allowed as the end of the day."
+calendar_entry.form.end_time_midnight_without_start: "An end time of 00:00 means the end of the day and therefore needs a start time. Without one, leave the entry all-day."
+calendar_entry.form.end_time_help: "Optional"
+calendar_entry.form.time: Time
+calendar_entry.form.time_help: "Empty = all day"
+calendar_entry.time.range: "%start% - %end%"
+calendar_entry.time.until: "- %end%"
 calendar_entry.form.title: Title
 calendar_entry.popover.new: + New entry
 calendar_entry.confirmed_at: "Reminder confirmed on %datetime%"

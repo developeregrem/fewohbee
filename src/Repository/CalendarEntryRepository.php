@@ -12,6 +12,22 @@ use Doctrine\Persistence\ManagerRegistry;
 
 class CalendarEntryRepository extends ServiceEntityRepository
 {
+    /**
+     * Orders entries within one day by the clock time they actually happen at.
+     *
+     * An entry has a start time, an end time, or neither. The closing day of a
+     * multi-day entry carries only the end time (see CalendarEntry::$endTime),
+     * and belongs at that hour rather than lumped in with the all-day entries
+     * that a plain "ORDER BY e.time" would sort it among. All-day entries have
+     * neither time, stay NULL and so sort first.
+     *
+     * Selected as a HIDDEN alias rather than written straight into ORDER BY:
+     * DQL only accepts a plain field or an alias there, not an expression.
+     * HIDDEN keeps it out of the result, so callers still get entities.
+     */
+    private const TIME_OF_DAY_SELECT = 'COALESCE(e.time, e.endTime) AS HIDDEN timeOfDay';
+    private const TIME_OF_DAY_ORDER = 'timeOfDay';
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, CalendarEntry::class);
@@ -34,7 +50,9 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->andWhere('e.confirmedAt IS NULL')
             ->setParameter('today', new \DateTimeImmutable('today', new \DateTimeZone('UTC')))
             ->setParameter('tomorrow', new \DateTimeImmutable('tomorrow', new \DateTimeZone('UTC')))
+            ->addSelect(self::TIME_OF_DAY_SELECT)
             ->orderBy('e.date', 'ASC')
+            ->addOrderBy(self::TIME_OF_DAY_ORDER, 'ASC')
             ->addOrderBy('e.title', 'ASC')
             ->getQuery()
             ->getResult();
@@ -169,8 +187,10 @@ class CalendarEntryRepository extends ServiceEntityRepository
             ->andWhere('e.date BETWEEN :from AND :to')
             ->setParameter('from', $from)
             ->setParameter('to', $to)
+            ->addSelect(self::TIME_OF_DAY_SELECT)
             ->orderBy('c.name', 'ASC')
             ->addOrderBy('e.date', 'ASC')
+            ->addOrderBy(self::TIME_OF_DAY_ORDER, 'ASC')
             ->getQuery()
             ->getResult();
     }

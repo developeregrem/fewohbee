@@ -26,6 +26,7 @@ use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Event\ReservationCreatedEvent;
+use App\Dto\CalendarEntryViolation;
 use App\Entity\CalendarEntry;
 use App\Entity\User;
 use App\Form\ReservationMetaType;
@@ -33,6 +34,7 @@ use App\Form\CalendarEntryType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
 use App\Service\AvailabilityService;
+use App\Service\CalendarEntryService;
 use App\Service\CalendarImportService;
 use App\Service\CalendarService;
 use App\Service\CSRFProtectionService;
@@ -51,6 +53,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -68,15 +71,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class ReservationServiceController extends AbstractController
 {
     private const EMAIL_DRAFT_SESSION_KEY = 'reservationEmailDraft';
-
-    /**
-     * Upper bound on how many days a manually created calendar entry's
-     * date/dateTo range is expanded into - mirrors
-     * CalendarEntrySyncService::MAX_EVENT_SPAN_DAYS for the same reason: a
-     * fat-fingered end date years out must not be able to create thousands
-     * of rows.
-     */
-    private const MAX_MANUAL_ENTRY_RANGE_DAYS = 366;
 
     private $perPage = 15;
 
@@ -1713,7 +1707,7 @@ class ReservationServiceController extends AbstractController
      * Reached from the "+ new entry" link in the year overview popover,
      * which passes the clicked day via the date query param.
      */
-    public function newCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarRepository $calendarRepository, TranslatorInterface $translator): Response
+    public function newCalendarEntryAction(Request $request, CalendarRepository $calendarRepository, CalendarEntryService $calendarEntryService, TranslatorInterface $translator): Response
     {
         $calendars = $calendarRepository->findAllOrdered();
         if ([] === $calendars) {
@@ -1735,28 +1729,12 @@ class ReservationServiceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $startDate = $calendarEntry->getDate();
             $dateTo = $form->get('dateTo')->getData();
-            $endDate = ($dateTo instanceof \DateTimeImmutable && $dateTo > $startDate) ? $dateTo : $startDate;
+            $violations = $calendarEntryService->validateRange($calendarEntry, $dateTo instanceof \DateTimeImmutable ? $dateTo : null);
+            $this->addViolationsToForm($form, $violations, $translator);
 
-            if ($startDate->diff($endDate)->days > self::MAX_MANUAL_ENTRY_RANGE_DAYS) {
-                $form->get('dateTo')->addError(new FormError($translator->trans('calendar_entry.form.date_to_too_far', [
-                    '%max%' => self::MAX_MANUAL_ENTRY_RANGE_DAYS,
-                ])));
-            } else {
-                $em = $doctrine->getManager();
-                // A range is just N independent single-day rows (same as a
-                // multi-day ICS event, see CalendarEntrySyncService). They
-                // keep sourceUid null, which is what marks them as manually
-                // created and keeps the sync from ever reconciling them.
-                for ($day = $startDate; $day <= $endDate; $day = $day->modify('+1 day')) {
-                    $entry = $day == $startDate
-                        ? $calendarEntry
-                        : (new CalendarEntry())->setCalendar($calendarEntry->getCalendar())->setTitle($calendarEntry->getTitle());
-                    $entry->setDate($day);
-                    $em->persist($entry);
-                }
-                $em->flush();
+            if ([] === $violations) {
+                $calendarEntryService->createRange($calendarEntry, $dateTo instanceof \DateTimeImmutable ? $dateTo : null);
 
                 if ($request->isXmlHttpRequest()) {
                     return new Response('', Response::HTTP_NO_CONTENT);
@@ -1781,20 +1759,25 @@ class ReservationServiceController extends AbstractController
      * year overview - opened in the shared reservation modal, same as
      * "+ Reservierung hinzufügen".
      */
-    public function editCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry): Response
+    public function editCalendarEntryAction(Request $request, ManagerRegistry $doctrine, CalendarEntry $calendarEntry, CalendarEntryService $calendarEntryService, TranslatorInterface $translator): Response
     {
         $form = $this->createForm(CalendarEntryType::class, $calendarEntry);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $doctrine->getManager()->flush();
+            $violations = $calendarEntryService->validateSingle($calendarEntry);
+            $this->addViolationsToForm($form, $violations, $translator);
 
-            if ($request->isXmlHttpRequest()) {
-                return new Response('', Response::HTTP_NO_CONTENT);
+            if ([] === $violations) {
+                $doctrine->getManager()->flush();
+
+                if ($request->isXmlHttpRequest()) {
+                    return new Response('', Response::HTTP_NO_CONTENT);
+                }
+                $this->addFlash('success', 'calendar_entry.flash.saved');
+
+                return $this->redirectToRoute('start');
             }
-            $this->addFlash('success', 'calendar_entry.flash.saved');
-
-            return $this->redirectToRoute('start');
         }
 
         return $this->render('Reservations/calendar_entry_edit.html.twig', [
@@ -1802,6 +1785,21 @@ class ReservationServiceController extends AbstractController
             'calendarEntry' => $calendarEntry,
             'isNew' => false,
         ]);
+    }
+
+    /**
+     * Attaches the service's rule violations to the form fields they name, so
+     * each message appears under the input that caused it.
+     *
+     * @param list<CalendarEntryViolation> $violations
+     */
+    private function addViolationsToForm(FormInterface $form, array $violations, TranslatorInterface $translator): void
+    {
+        foreach ($violations as $violation) {
+            $form->get($violation->field)->addError(new FormError(
+                $translator->trans($violation->messageKey, $violation->parameters),
+            ));
+        }
     }
 
     #[Route('/calendar-entry/{id}/delete', name: 'reservations.calendar_entry.delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]

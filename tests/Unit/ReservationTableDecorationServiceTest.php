@@ -11,7 +11,10 @@ use App\Repository\CalendarRepository;
 use App\Service\CalendarService;
 use App\Service\ReservationTableDecorationService;
 use PHPUnit\Framework\TestCase;
+use App\Service\CalendarEntryTimeFormatter;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Translation\Loader\ArrayLoader;
+use Symfony\Component\Translation\Translator;
 
 /**
  * What the day headers offer depends on who is looking and on whether there
@@ -95,7 +98,20 @@ final class ReservationTableDecorationServiceTest extends TestCase
             static fn (string $route, array $params = []) => '/'.$route.'/'.implode('-', $params)
         );
 
-        $service = new ReservationTableDecorationService($entryRepo, $calendarRepo, $calendarService, $urlGenerator);
+        $translator = new Translator('de');
+        $translator->addLoader('array', new ArrayLoader());
+        $translator->addResource('array', [
+            'calendar_entry.time.range' => '%start% - %end%',
+            'calendar_entry.time.until' => '- %end%',
+        ], 'de');
+
+        $service = new ReservationTableDecorationService(
+            $entryRepo,
+            $calendarRepo,
+            $calendarService,
+            $urlGenerator,
+            new CalendarEntryTimeFormatter($translator),
+        );
 
         return $service->buildForDays(
             [new \DateTimeImmutable(self::DAY)],
