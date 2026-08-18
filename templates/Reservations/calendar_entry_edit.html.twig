@@ -28,16 +28,33 @@
 
     {% set formAction = isNew ? path('reservations.calendar_entry.new') : path('reservations.calendar_entry.edit', {'id': calendarEntry.id}) %}
     {{ form_start(form, {'attr': {'data-action': 'submit->reservations#saveCalendarEntryAction'}, 'action': formAction}) }}
-        <div class="row">
-            {% if isNew %}
-                <div class="col">{{ form_row(form.calendar, {'label': false}) }}</div>
-            {% endif %}
-            <div class="col">{{ form_row(form.date, {'label': false}) }}</div>
-            {% if isNew %}
-                <div class="col">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans}}) }}</div>
-            {% endif %}
-            <div class="col">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
-        </div>
+        {# Six fields do not fit one row of a modal-lg without squeezing the
+           date and time inputs below what their own text needs. Creating an
+           entry therefore puts what it is on the first row and when it happens
+           on the second; editing has neither the calendar picker nor the end
+           date and stays on one row. #}
+        {% if isNew %}
+            <div class="row">
+                <div class="col-12 col-md-5">{{ form_row(form.calendar, {'label': false}) }}</div>
+                <div class="col-12 col-md-7">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
+            </div>
+            {# Ordered as the entry reads: from date and time, to date and
+               time. The end time belongs to the closing day, so it follows the
+               field that names that day rather than preceding it. #}
+            <div class="row">
+                <div class="col-6 col-md-3">{{ form_row(form.date, {'label': false, 'attr': {'title': 'calendar_entry.form.date'|trans}}) }}</div>
+                <div class="col-6 col-md-3">{{ form_row(form.time, {'label': false, 'attr': {'title': 'calendar_entry.form.time'|trans}}) }}</div>
+                <div class="col-6 col-md-3">{{ form_row(form.dateTo, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.date_to'|trans, 'title': 'calendar_entry.form.date_to'|trans}}) }}</div>
+                <div class="col-6 col-md-3">{{ form_row(form.endTime, {'label': false, 'attr': {'title': 'calendar_entry.form.end_time'|trans}}) }}</div>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-6 col-md-3">{{ form_row(form.date, {'label': false, 'attr': {'title': 'calendar_entry.form.date'|trans}}) }}</div>
+                <div class="col-3 col-md-2">{{ form_row(form.time, {'label': false, 'attr': {'title': 'calendar_entry.form.time'|trans}}) }}</div>
+                <div class="col-3 col-md-2">{{ form_row(form.endTime, {'label': false, 'attr': {'title': 'calendar_entry.form.end_time'|trans}}) }}</div>
+                <div class="col-12 col-md-5">{{ form_row(form.title, {'label': false, 'attr': {'placeholder': 'calendar_entry.form.title'|trans}}) }}</div>
+            </div>
+        {% endif %}
 
         <div class="d-flex justify-content-end mt-3">
             {% if not isNew and calendarEntry.confirmedAt %}

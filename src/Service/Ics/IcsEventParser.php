@@ -18,6 +18,17 @@ class IcsEventParser
     }
 
     /**
+     * Suffix under which a property's parameters are kept alongside its value,
+     * e.g. DTSTART;TZID=Europe/Berlin:20260814T130000 yields both
+     * `DTSTART` => '20260814T130000' and `DTSTART;PARAMS` => 'TZID=Europe/Berlin'.
+     *
+     * Stored under a separate key rather than changing the shape of the value
+     * so consumers that only ever want the value (CalendarImportService) keep
+     * reading it unchanged.
+     */
+    public const PARAMS_SUFFIX = ';PARAMS';
+
+    /**
      * @return array<int, array<string, string>> flat property => value maps, one per VEVENT
      */
     public function parseEvents(string $content): array
@@ -58,8 +69,12 @@ class IcsEventParser
                 continue;
             }
             [$name, $value] = $parts;
-            $name = strtoupper(explode(';', $name, 2)[0]);
+            $nameParts = explode(';', $name, 2);
+            $name = strtoupper($nameParts[0]);
             $current[$name] = $value;
+            if (isset($nameParts[1]) && '' !== $nameParts[1]) {
+                $current[$name.self::PARAMS_SUFFIX] = $nameParts[1];
+            }
         }
 
         return $events;
@@ -76,6 +91,66 @@ class IcsEventParser
 
         try {
             return new \DateTimeImmutable($value);
+        } catch (\Exception $exception) {
+            return null;
+        }
+    }
+
+    /** Whether a property value is a bare date (VALUE=DATE), i.e. an all-day one. */
+    public function isDateOnly(string $value): bool
+    {
+        return 1 === preg_match('/^\d{8}$/', $value);
+    }
+
+    /**
+     * Parses a date-time property into the instant it actually denotes, then
+     * expresses it in $display.
+     *
+     * RFC 5545 knows three forms, and only the first was handled correctly
+     * before: a trailing Z is UTC, a TZID parameter names the zone, and a bare
+     * value is "floating" local time. Reading a UTC value and then showing its
+     * UTC digits is what made a 13:00 event from a Google feed appear as 11:00.
+     *
+     * @param string $params the property's raw parameter string, if any
+     */
+    public function parseDateTimeInZone(string $value, ?string $params, \DateTimeZone $display): ?\DateTimeImmutable
+    {
+        if ($this->isDateOnly($value)) {
+            $date = \DateTimeImmutable::createFromFormat('!Ymd', $value, $display);
+
+            return $date ?: null;
+        }
+
+        // A trailing Z carries its own zone, so a TZID alongside it is ignored
+        // (and would be invalid per RFC 5545 anyway).
+        $zone = $display;
+        if (!str_ends_with($value, 'Z')) {
+            $tzid = $this->extractTzid($params);
+            if (null !== $tzid) {
+                $zone = $tzid;
+            }
+        }
+
+        try {
+            return (new \DateTimeImmutable($value, $zone))->setTimezone($display);
+        } catch (\Exception $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * The zone named by a TZID parameter, or null when absent or unknown to
+     * PHP - an unrecognised zone falls back to the caller's display zone
+     * rather than dropping the event.
+     */
+    private function extractTzid(?string $params): ?\DateTimeZone
+    {
+        if (null === $params || 1 !== preg_match('/(?:^|;)TZID=([^;]+)/i', $params, $matches)) {
+            return null;
+        }
+
+        try {
+            return new \DateTimeZone(trim($matches[1], '"'));
         } catch (\Exception $exception) {
             return null;
         }

@@ -21,6 +21,12 @@ final class DayCalendarEntry
         public readonly ?string $editUrl,
         public readonly ?string $deleteUrl,
         /**
+         * Preformatted times ("13:00", "13:00 - 14:00", "- 14:00"), or null
+         * for an all-day entry. Phrased by CalendarEntryTimeFormatter so
+         * every consumer reads the same way, in the viewer's locale.
+         */
+        public readonly ?string $time = null,
+        /**
          * True when this entry belongs to a different calendar than the one
          * before it in the same day. The popover draws its separator rule off
          * this instead of comparing neighbours while rendering.

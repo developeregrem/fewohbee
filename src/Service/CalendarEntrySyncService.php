@@ -9,6 +9,7 @@ use App\Entity\CalendarEntry;
 use App\Repository\CalendarEntryRepository;
 use App\Service\Exception\CalendarSyncException;
 use App\Service\Ics\IcsEventParser;
+use App\Service\Ics\IcsEventSpanResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -27,21 +28,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * events are skipped and counted, so the caller can tell the user why a
  * birthday or holiday feed produced nothing, rather than storing one entry
  * on the original DTSTART where it would never be seen.
+ *
+ * Events whose period cannot be read at all (see IcsEventSpanResolver) are
+ * discarded and counted the same way - a feed is untrusted input, and a
+ * guessed date is worse than a reported skip.
  */
 class CalendarEntrySyncService
 {
     private const OUTCOME_NEW = 'new';
     private const OUTCOME_UPDATED = 'updated';
     private const OUTCOME_UNCHANGED = 'unchanged';
-
-    /**
-     * Upper bound on how many days a single VEVENT's DTSTART..DTEND span is
-     * expanded into - a malformed or absurd DTEND in an external ICS feed
-     * (untrusted input) must not be able to spawn an unbounded number of
-     * rows. No real waste/vacation/maintenance calendar needs a single
-     * event longer than a year.
-     */
-    private const MAX_EVENT_SPAN_DAYS = 366;
 
     /**
      * Column widths of CalendarEntry::$title and ::$sourceUid. A feed is
@@ -58,6 +54,7 @@ class CalendarEntrySyncService
         private readonly CalendarEntryRepository $repo,
         private readonly IcsEventParser $icsParser,
         private readonly HttpClientInterface $httpClient,
+        private readonly IcsEventSpanResolver $spanResolver,
     ) {
     }
 
@@ -98,6 +95,13 @@ class CalendarEntrySyncService
         $updated = 0;
         $unchanged = 0;
         $skippedRecurring = 0;
+        $skippedInvalid = 0;
+
+        // The zone a feed's instants are expressed in for storage. It comes
+        // from PHP's date.timezone, which is the application's one timezone
+        // source - the same one Doctrine hydrates zone-less DATETIME columns
+        // in and Twig's date filter renders through.
+        $zone = new \DateTimeZone(date_default_timezone_get());
 
         try {
             // Collect the whole feed first, grouped by source event, so each
@@ -128,20 +132,44 @@ class CalendarEntrySyncService
                 // would keep seeing a "changed" title.
                 $summary = mb_substr($summary, 0, self::MAX_TITLE_LENGTH);
 
-                $dates = $this->resolveDates($event);
-                if ([] === $dates) {
+                // An event whose period cannot be read - no DTSTART, a DTEND
+                // not after it, an absurd span - is discarded rather than
+                // filed under a guessed day, and counted so the caller can
+                // say so instead of leaving the user with entries that
+                // silently never appeared.
+                $span = $this->spanResolver->resolve($event, $zone);
+                if (null === $span || [] === $span->dates) {
+                    ++$skippedInvalid;
                     continue;
                 }
+                $lastIndex = array_key_last($span->dates);
 
-                $sourceUid = $this->buildSourceUid($calendar, $event, $summary, $dates[0]);
+                $sourceUid = $this->buildSourceUid($calendar, $event, $summary, $span->dates[0]);
+                $occurrences[$sourceUid] ??= ['summary' => $summary, 'dates' => [], 'times' => [], 'endTimes' => []];
                 $occurrences[$sourceUid]['summary'] = $summary;
-                foreach ($dates as $date) {
-                    $occurrences[$sourceUid]['dates'][$date->format('Y-m-d')] = $date;
+
+                // What earlier VEVENTs sharing this UID already recorded. Read
+                // out first so the loop below can fall back to it: a later
+                // event must not blank out a time an earlier one already put
+                // on the same day.
+                $knownTimes = $occurrences[$sourceUid]['times'];
+                $knownEndTimes = $occurrences[$sourceUid]['endTimes'];
+
+                foreach ($span->dates as $index => $date) {
+                    $dateKey = $date->format('Y-m-d');
+                    $occurrences[$sourceUid]['dates'][$dateKey] = $date;
+                    // The day the event starts on carries the start time and
+                    // the day it ends on the end time; the days in between run
+                    // all day by definition.
+                    $occurrences[$sourceUid]['times'][$dateKey] = (0 === $index ? $span->startTime : null)
+                        ?? ($knownTimes[$dateKey] ?? null);
+                    $occurrences[$sourceUid]['endTimes'][$dateKey] = ($index === $lastIndex ? $span->endTime : null)
+                        ?? ($knownEndTimes[$dateKey] ?? null);
                 }
             }
 
             foreach ($occurrences as $sourceUid => $occurrence) {
-                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates']) as $outcome) {
+                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates'], $occurrence['times'], $occurrence['endTimes']) as $outcome) {
                     match ($outcome) {
                         self::OUTCOME_NEW => $new++,
                         self::OUTCOME_UPDATED => $updated++,
@@ -150,7 +178,7 @@ class CalendarEntrySyncService
                 }
             }
 
-            $result = new CalendarEntrySyncResult($new, $updated, $unchanged, $skippedRecurring);
+            $result = new CalendarEntrySyncResult($new, $updated, $unchanged, $skippedRecurring, $skippedInvalid);
 
             // Recorded here (not by callers) so both the admin-form save path
             // and the calendars:sync cron command keep this in sync consistently.
@@ -174,54 +202,16 @@ class CalendarEntrySyncService
     }
 
     /**
-     * Every day a single VEVENT covers.
-     *
-     * Multi-day events (DTSTART..DTEND) are expanded into one day each, the
-     * same way an RRULE-recurring source is expected to list one VEVENT per
-     * occurrence - every other consumer of CalendarEntry (reminders,
-     * cleanup, the year-overview popover, confirmation) already thinks in
-     * single days, so this keeps that true instead of teaching each of them
-     * about ranges.
-     *
-     * @param array<string, string> $event
-     *
-     * @return list<\DateTimeImmutable> empty if the event has no usable
-     *                                  DTSTART, or a DTEND implying a span
-     *                                  over MAX_EVENT_SPAN_DAYS
+     * Compares two optional times by wall clock, so a re-sync does not report
+     * every timed entry as "updated" just because the objects differ.
      */
-    private function resolveDates(array $event): array
+    private function sameTime(?\DateTimeImmutable $a, ?\DateTimeImmutable $b): bool
     {
-        $dtStartRaw = $event['DTSTART'] ?? null;
-        if (null === $dtStartRaw) {
-            return [];
+        if (null === $a || null === $b) {
+            return $a === $b;
         }
 
-        $dtStart = $this->icsParser->parseDate($dtStartRaw);
-        if (null === $dtStart) {
-            return [];
-        }
-        $start = $dtStart->setTime(0, 0);
-
-        // DTEND is exclusive for all-day events per RFC 5545 - a 3-day event
-        // Aug 1-3 has DTSTART=20260801, DTEND=20260804. Falls back to a
-        // single day when DTEND is absent, unparseable, or not after DTSTART.
-        $dtEndRaw = $event['DTEND'] ?? null;
-        $dtEnd = null !== $dtEndRaw ? $this->icsParser->parseDate($dtEndRaw) : null;
-        $end = null !== $dtEnd ? $dtEnd->setTime(0, 0) : $start->modify('+1 day');
-        if ($end <= $start) {
-            $end = $start->modify('+1 day');
-        }
-
-        if ($start->diff($end)->days > self::MAX_EVENT_SPAN_DAYS) {
-            return [];
-        }
-
-        $dates = [];
-        for ($date = $start; $date < $end; $date = $date->modify('+1 day')) {
-            $dates[] = $date;
-        }
-
-        return $dates;
+        return $a->format('H:i:s') === $b->format('H:i:s');
     }
 
     /**
@@ -270,11 +260,13 @@ class CalendarEntrySyncService
      * date keeps it, one whose date is gone is left alone rather than being
      * reused for another day.
      *
-     * @param array<string, \DateTimeImmutable> $dates keyed by Y-m-d
+     * @param array<string, \DateTimeImmutable>  $dates    keyed by Y-m-d
+     * @param array<string, ?\DateTimeImmutable> $times    keyed by Y-m-d, null where the day has no start time
+     * @param array<string, ?\DateTimeImmutable> $endTimes keyed by Y-m-d, null where the day has no end time
      *
      * @return list<string> one OUTCOME_* per entry touched or left in place
      */
-    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates): array
+    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates, array $times = [], array $endTimes = []): array
     {
         ksort($dates);
         $existing = $this->repo->findBySource($calendar, $sourceUid);
@@ -291,19 +283,27 @@ class CalendarEntrySyncService
         }
 
         $outcomes = [];
-        foreach ($matched as $entry) {
-            if ($entry->isConfirmed() || $entry->getTitle() === $summary) {
+        foreach ($matched as $dateKey => $entry) {
+            $time = $times[$dateKey] ?? null;
+            $endTime = $endTimes[$dateKey] ?? null;
+            if ($entry->isConfirmed()
+                || ($entry->getTitle() === $summary
+                    && $this->sameTime($entry->getTime(), $time)
+                    && $this->sameTime($entry->getEndTime(), $endTime))
+            ) {
                 $outcomes[] = self::OUTCOME_UNCHANGED;
                 continue;
             }
-            $entry->setTitle($summary);
+            $entry->setTitle($summary)->setTime($time)->setEndTime($endTime);
             $outcomes[] = self::OUTCOME_UPDATED;
         }
 
-        foreach (array_diff_key($dates, $matched) as $date) {
+        foreach (array_diff_key($dates, $matched) as $dateKey => $date) {
+            $time = $times[$dateKey] ?? null;
+            $endTime = $endTimes[$dateKey] ?? null;
             $entry = $this->takeReusable($spare);
             if (null !== $entry) {
-                $entry->setDate($date)->setTitle($summary);
+                $entry->setDate($date)->setTitle($summary)->setTime($time)->setEndTime($endTime);
                 $outcomes[] = self::OUTCOME_UPDATED;
                 continue;
             }
@@ -312,7 +312,9 @@ class CalendarEntrySyncService
                 ->setCalendar($calendar)
                 ->setSourceUid($sourceUid)
                 ->setDate($date)
-                ->setTitle($summary);
+                ->setTitle($summary)
+                ->setTime($time)
+                ->setEndTime($endTime);
             $this->em->persist($entry);
             $outcomes[] = self::OUTCOME_NEW;
         }
