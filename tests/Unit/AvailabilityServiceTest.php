@@ -291,6 +291,71 @@ final class AvailabilityServiceTest extends TestCase
         return new AvailabilityService($reservationRepo, $blockRepo, $this->createStub(AppartmentRepository::class));
     }
 
+    public function testPreloadedOccupancyTreatsRoomWithoutReservationsAsFree(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1);
+
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy($room, []));
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy($room, [1 => ['reservationCount' => 0, 'persons' => 0]]));
+    }
+
+    public function testPreloadedOccupancyBlocksSingleOccupancyRoomOnAnyReservation(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1);
+
+        self::assertFalse($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
+    }
+
+    public function testPreloadedOccupancyLetsMultipleOccupancyRoomKeepFreeBeds(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1)->setMultipleOccupancy(true);
+
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
+        self::assertFalse($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 2]],
+        ));
+    }
+
+    /**
+     * The two predicates answer different questions and must keep doing so.
+     *
+     * `isRoomAvailable()` is asked with the party size and rejects a shared room
+     * that could not fit them; the preloaded variant is evaluated while the room
+     * list is being built, before any party size is known, and only asks whether a
+     * bed is left at all. Collapsing the two would silently change what the public
+     * search lists.
+     */
+    public function testPreloadedPredicateIgnoresRequestedPartySizeUnlikeFullCheck(): void
+    {
+        $room = self::makeRoom(1)->setMultipleOccupancy(true);
+        $reservation = self::makeReservation(1, '2026-08-01', '2026-08-05');
+        $reservation->setPersons(1);
+        $service = $this->makeService([$reservation], []);
+
+        // One bed left, two more guests requested: the full check says no …
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-01'),
+            new \DateTimeImmutable('2026-08-05'),
+            2,
+        ));
+        // … while the room still qualifies for the public list.
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
+    }
+
     private static function makeRoom(int $id): Appartment
     {
         $room = new Appartment();

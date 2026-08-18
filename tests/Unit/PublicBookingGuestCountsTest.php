@@ -7,13 +7,11 @@ namespace App\Tests\Unit;
 use App\Entity\Appartment;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\GuestCategory;
-use App\Entity\InvoiceAppartment;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\GuestCategoryRepository;
-use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
@@ -21,7 +19,6 @@ use App\Service\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class PublicBookingGuestCountsTest extends TestCase
@@ -54,7 +51,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             3,
             1,
             ['category:1' => [3 => 1]],
-            new Request(),
             [],
             [1 => 2, 2 => 1],
         );
@@ -92,7 +88,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             4,
             2,
             ['category:1' => [2 => 2]],
-            new Request(),
             [],
             [1 => 2, 2 => 2],
         );
@@ -130,7 +125,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             2,
             ['category:1' => [1 => 2]],
-            new Request(),
             [],
             [1 => 2, 3 => 1],
         );
@@ -180,7 +174,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             1,
             ['category:1' => [2 => 1]],
-            new Request(),
             [],
             [1 => 2],
         );
@@ -231,7 +224,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             2,
             ['category:1' => [1 => 2]],
-            new Request(),
             [],
             [1 => 2],
         );
@@ -255,17 +247,6 @@ final class PublicBookingGuestCountsTest extends TestCase
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('buildAppartmentPositions')->willReturn([new InvoiceAppartment()]);
-        $invoiceService->method('buildApartmentModifierPositions')->willReturn([]);
-        // calculateSums fills the by-ref outputs; emulate by writing zero totals.
-        $invoiceService->method('calculateSums')->willReturnCallback(
-            function ($apps, $poss, &$vats, &$brutto, &$netto, &$apartmentTotal, &$miscTotal) {
-                $vats = [];
-                $brutto = $netto = $apartmentTotal = $miscTotal = 0.0;
-            }
-        );
-
         $catRepo = $this->createStub(GuestCategoryRepository::class);
         $catRepo->method('findAll')->willReturn($categories);
 
@@ -277,7 +258,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             $appartmentRepo,
             $configService,
             $availabilityService,
-            $invoiceService,
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
             $catRepo,

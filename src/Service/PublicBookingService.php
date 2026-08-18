@@ -16,9 +16,7 @@ use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Event\OnlineBookingCreatedEvent;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -29,7 +27,6 @@ class PublicBookingService
         private readonly AppartmentRepository $appartmentRepository,
         private readonly OnlineBookingConfigService $configService,
         private readonly PublicAvailabilityService $availabilityService,
-        private readonly InvoiceService $invoiceService,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PublicPricingService $pricingService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
@@ -51,7 +48,6 @@ class PublicBookingService
         int $persons,
         int $roomsCount,
         array $occupancySelection,
-        Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
         ?Appartment $calendarRoom = null,
@@ -104,7 +100,7 @@ class PublicBookingService
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'extrasBreakdown' => $extrasResult['extrasBreakdown'],
             'grandTotal' => $grandTotal,
-            'grandTotalFormatted' => number_format($grandTotal, 2, ',', '.'),
+            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
         ];
     }
 
@@ -124,7 +120,6 @@ class PublicBookingService
         int $roomsCount,
         array $occupancySelection,
         array $booker,
-        Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
         ?Appartment $calendarRoom = null,
@@ -208,7 +203,7 @@ class PublicBookingService
             'extrasTotal' => $extrasResult['extrasTotal'],
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'grandTotal' => $grandTotal,
-            'grandTotalFormatted' => number_format($grandTotal, 2, ',', '.'),
+            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
         ];
     }
 
@@ -628,26 +623,7 @@ class PublicBookingService
         $touristTaxLines = [];
 
         foreach ($reservations as $reservation) {
-            $positions = $this->invoiceService->buildAppartmentPositions($reservation);
-            $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
-
-            $vatSums = [];
-            $brutto = 0.0;
-            $netto = 0.0;
-            $singleTotal = 0.0;
-            $miscTotal = 0.0;
-            $this->invoiceService->calculateSums(
-                new ArrayCollection($positions),
-                new ArrayCollection($modifierPositions),
-                $vatSums,
-                $brutto,
-                $netto,
-                $singleTotal,
-                $miscTotal
-            );
-            // Modifier deltas net into apartment total — semantically they're
-            // adjustments to the room rate (same scope as the journal routing).
-            $singleTotal += $miscTotal;
+            $singleTotal = $this->pricingService->calculateReservationRoomTotal($reservation);
 
             $label = $this->buildReservationTypeLabel($reservation);
             if (!isset($breakdown[$label])) {
@@ -681,22 +657,22 @@ class PublicBookingService
         }
 
         $formattedBreakdown = array_map(static function (array $row): array {
-            $row['totalFormatted'] = number_format((float) $row['total'], 2, ',', '.');
+            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
 
             return $row;
         }, array_values($breakdown));
         $formattedTouristTaxLines = array_map(static function (array $row): array {
-            $row['totalFormatted'] = number_format((float) $row['total'], 2, ',', '.');
+            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
 
             return $row;
         }, array_values($touristTaxLines));
 
         return [
             'roomTotal' => $apartmentTotal,
-            'roomTotalFormatted' => number_format($apartmentTotal, 2, ',', '.'),
+            'roomTotalFormatted' => PublicPricingService::formatAmount($apartmentTotal),
             'roomPriceBreakdown' => $formattedBreakdown,
             'touristTaxTotal' => $touristTaxTotal,
-            'touristTaxTotalFormatted' => number_format($touristTaxTotal, 2, ',', '.'),
+            'touristTaxTotalFormatted' => PublicPricingService::formatAmount($touristTaxTotal),
             'touristTaxLines' => $formattedTouristTaxLines,
         ];
     }
@@ -1000,7 +976,7 @@ class PublicBookingService
 
         return [
             'extrasTotal' => $extrasTotal,
-            'extrasTotalFormatted' => number_format($extrasTotal, 2, ',', '.'),
+            'extrasTotalFormatted' => PublicPricingService::formatAmount($extrasTotal),
             'extrasBreakdown' => $breakdown,
         ];
     }

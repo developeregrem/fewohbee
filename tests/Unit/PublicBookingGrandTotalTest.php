@@ -10,7 +10,6 @@ use App\Entity\Customer;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Entity\GuestCategory;
-use App\Entity\InvoiceAppartment;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
@@ -20,7 +19,6 @@ use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
-use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
@@ -28,7 +26,6 @@ use App\Service\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -46,8 +43,8 @@ final class PublicBookingGrandTotalTest extends TestCase
         $selection = ['category:1' => [2 => 1]];
         $guestCounts = [1 => 2];
 
-        $preview = $service->buildSelectionPreview($dateFrom, $dateTo, 2, 1, $selection, new Request(), [], $guestCounts);
-        $booking = $service->createBooking($dateFrom, $dateTo, 2, 1, $selection, $this->booker(), new Request(), [], $guestCounts);
+        $preview = $service->buildSelectionPreview($dateFrom, $dateTo, 2, 1, $selection, [], $guestCounts);
+        $booking = $service->createBooking($dateFrom, $dateTo, 2, 1, $selection, $this->booker(), [], $guestCounts);
 
         // 3.0 per night × 2 nights × 2 guests = 12.0 tourist tax; room/extras totals are zero-stubbed.
         self::assertSame(12.0, $preview['touristTaxTotal']);
@@ -78,7 +75,6 @@ final class PublicBookingGrandTotalTest extends TestCase
             1,
             ['category:1' => [2 => 1]],
             $this->booker(),
-            new Request(),
             [],
             [1 => 2],
         );
@@ -109,16 +105,6 @@ final class PublicBookingGrandTotalTest extends TestCase
         $configService->method('getReservationOrigin')->willReturn(new ReservationOrigin());
         $configService->method('getInquiryStatus')->willReturn(new ReservationStatus());
         $configService->method('getBookingStatus')->willReturn(new ReservationStatus());
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('buildAppartmentPositions')->willReturn([new InvoiceAppartment()]);
-        $invoiceService->method('buildApartmentModifierPositions')->willReturn([]);
-        $invoiceService->method('calculateSums')->willReturnCallback(
-            function ($apps, $poss, &$vats, &$brutto, &$netto, &$apartmentTotal, &$miscTotal) {
-                $vats = [];
-                $brutto = $netto = $apartmentTotal = $miscTotal = 0.0;
-            }
-        );
-
         $touristTaxService = $this->createStub(TouristTaxService::class);
         $touristTaxService->method('calculateForReservation')->willReturnCallback(
             function (Reservation $r) {
@@ -184,7 +170,6 @@ final class PublicBookingGrandTotalTest extends TestCase
             $appartmentRepo,
             $configService,
             $availabilityService,
-            $invoiceService,
             $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
             $this->createStub(PublicPricingService::class),
             $catRepo,

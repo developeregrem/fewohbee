@@ -10,6 +10,7 @@ use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
+use App\Repository\RoomBlockRepository;
 use App\Service\AvailabilityService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\OnlineBookingRestrictionService;
@@ -49,8 +50,15 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
         $this->restrictionService->method('isStayLongEnough')->willReturn(true);
         $this->restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
 
-        $availabilityService = $this->createStub(AvailabilityService::class);
-        $availabilityService->method('getBlockedRoomIds')->willReturn([]);
+        // The multipleOccupancy rule itself lives in AvailabilityService, so this
+        // uses the real service (its bed predicate is pure) with empty repositories.
+        $roomBlockRepository = $this->createStub(RoomBlockRepository::class);
+        $roomBlockRepository->method('findOverlappingByApartmentIds')->willReturn([]);
+        $availabilityService = new AvailabilityService(
+            $this->reservationRepository,
+            $roomBlockRepository,
+            $this->appartmentRepository,
+        );
 
         $this->service = new PublicAvailabilityService(
             $this->appartmentRepository,

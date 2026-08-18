@@ -44,8 +44,7 @@ class PublicAvailabilityService
      *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
      *   occupancyAvailableCounts: array<int, int>
      * }>
-     */
-    /**
+     *
      * @param array<int, int> $guestCounts category-id => count from the wizard,
      *   forwarded to per-occupancy pricing so the option that matches the
      *   user's mix reflects modifier deltas (children's discount etc.) already
@@ -86,7 +85,7 @@ class PublicAvailabilityService
             if (in_array((int) $room->getId(), $blockedRoomIds, true)) {
                 continue;
             }
-            if (!$this->isRoomAvailableForPublicBooking($room, $occupancyByRoomId)) {
+            if (!$this->availabilityService->isRoomAvailableFromPreloadedOccupancy($room, $occupancyByRoomId)) {
                 continue;
             }
 
@@ -205,7 +204,7 @@ class PublicAvailabilityService
         }
         unset($row);
 
-        return $this->reduceAvailabilityForPublicOutput($grouped, $persons, $roomsCount);
+        return $this->reduceAvailabilityForPublicOutput($grouped, $roomsCount);
     }
 
     /**
@@ -293,10 +292,13 @@ class PublicAvailabilityService
     }
 
     /**
-     * Reduce public output to only room types that are relevant for the current request.
+     * Trim the public output to what the current request can actually use.
      *
-     * Caps the displayed availability per type to the highest count that can actually
-     * participate in a valid selection for the requested guests/rooms (DP feasibility check).
+     * The displayed availability per type is capped at the number of rooms the guest
+     * asked for — offering "8 available" when they want two rooms tells anonymous
+     * visitors more about the house than they need to know. Whether a particular
+     * combination adds up to the party size is not decided here: an impossible pick
+     * is rejected by the selection validation, with a message the guest can act on.
      *
      * @param array<string, array{
      *   typeKey: string,
@@ -306,7 +308,8 @@ class PublicAvailabilityService
      *   availableCount: int,
      *   roomIds: int[],
      *   roomCapacities: array<int, int>,
-     *   subsidiaryIds: int[]
+     *   subsidiaryIds: int[],
+     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>
      * }> $grouped
      * @return array<int, array{
      *   typeKey: string,
@@ -316,30 +319,22 @@ class PublicAvailabilityService
      *   availableCount: int,
      *   roomIds: int[],
      *   roomCapacities: array<int, int>,
-     *   subsidiaryIds: int[]
+     *   subsidiaryIds: int[],
+     *   occupancyOptions: array<int, array{persons: int, totalPrice: float, totalPriceFormatted: string}>,
+     *   occupancyAvailableCounts: array<int, int>
      * }>
      */
-    private function reduceAvailabilityForPublicOutput(array $grouped, int $persons, int $roomsCount): array
+    private function reduceAvailabilityForPublicOutput(array $grouped, int $roomsCount): array
     {
-        if ([] === $grouped) {
-            return [];
-        }
-
-        $rows = array_values($grouped);
-
-        if ([] === $rows) {
-            return [];
-        }
-
         $filtered = [];
-        foreach ($rows as $index => $row) {
-            $maxFeasibleCount = $this->findMaximumFeasibleCountForType($rows, $index, $persons, $roomsCount);
-            if ($maxFeasibleCount < 1) {
+        foreach ($grouped as $row) {
+            $cappedCount = min((int) $row['availableCount'], $roomsCount);
+            if ($cappedCount < 1) {
                 continue;
             }
 
-            $row['availableCount'] = $maxFeasibleCount;
-            $row['roomIds'] = array_slice($row['roomIds'], 0, $maxFeasibleCount);
+            $row['availableCount'] = $cappedCount;
+            $row['roomIds'] = array_slice($row['roomIds'], 0, $cappedCount);
             $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
             $row['occupancyAvailableCounts'] = $this->buildOccupancyAvailableCounts(
                 $row['roomCapacities'],
@@ -389,25 +384,6 @@ class PublicAvailabilityService
         return $counts;
     }
 
-    /**
-     * Apply the current public-booking availability rule using preloaded occupancy.
-     *
-     * @param array<int, array{reservationCount: int, persons: int}> $occupancyByRoomId
-     */
-    private function isRoomAvailableForPublicBooking(Appartment $room, array $occupancyByRoomId): bool
-    {
-        $occupancy = $occupancyByRoomId[(int) $room->getId()] ?? null;
-        if (null === $occupancy || 0 === $occupancy['reservationCount']) {
-            return true;
-        }
-
-        if (!$room->isMultipleOccupancy()) {
-            return false;
-        }
-
-        return $occupancy['persons'] < (int) $room->getBedsMax();
-    }
-
     /** Return the optional public-facing room category description. */
     private function buildCategoryDescription(RoomCategory $category): ?string
     {
@@ -418,65 +394,6 @@ class PublicAvailabilityService
         }
 
         return $details;
-    }
-
-    /**
-     * Compute the highest count for one room type that can still be part of a valid selection.
-     *
-     * @param array<int, array{maxGuests: int, availableCount: int}> $rows
-     */
-    private function findMaximumFeasibleCountForType(array $rows, int $targetIndex, int $persons, int $roomsCount): int
-    {
-        $targetCapacity = (int) $rows[$targetIndex]['maxGuests'];
-        $targetMaxCount = min((int) $rows[$targetIndex]['availableCount'], $roomsCount);
-        $otherCapacities = $this->buildMaxCapacityByRoomCount($rows, $targetIndex, $roomsCount);
-
-        for ($targetCount = $targetMaxCount; $targetCount >= 1; --$targetCount) {
-            $remainingRooms = $roomsCount - $targetCount;
-            $requiredCapacity = $persons - ($targetCount * $targetCapacity);
-            $otherCapacity = $otherCapacities[$remainingRooms] ?? PHP_INT_MIN;
-
-            if ($otherCapacity >= $requiredCapacity) {
-                return $targetCount;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * Build a DP table with the maximum reachable guest capacity for an exact number of rooms.
-     *
-     * @param array<int, array{maxGuests: int, availableCount: int}> $rows
-     * @return array<int, int>
-     */
-    private function buildMaxCapacityByRoomCount(array $rows, int $excludedIndex, int $roomsCount): array
-    {
-        $maxCapacity = array_fill(0, $roomsCount + 1, PHP_INT_MIN);
-        $maxCapacity[0] = 0;
-
-        foreach ($rows as $index => $row) {
-            if ($index === $excludedIndex) {
-                continue;
-            }
-
-            $capacity = (int) $row['maxGuests'];
-            $availableCount = min((int) $row['availableCount'], $roomsCount);
-            for ($copy = 0; $copy < $availableCount; ++$copy) {
-                for ($usedRooms = $roomsCount; $usedRooms >= 1; --$usedRooms) {
-                    if (PHP_INT_MIN === $maxCapacity[$usedRooms - 1]) {
-                        continue;
-                    }
-
-                    $maxCapacity[$usedRooms] = max(
-                        $maxCapacity[$usedRooms],
-                        $maxCapacity[$usedRooms - 1] + $capacity
-                    );
-                }
-            }
-        }
-
-        return $maxCapacity;
     }
 
     /**

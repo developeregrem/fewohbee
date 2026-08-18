@@ -66,48 +66,14 @@ class PublicPricingService
         $options = [];
 
         for ($persons = 1; $persons <= $maxGuests; ++$persons) {
-            $reservation = new Reservation();
-            $reservation->setAppartment($sampleRoom);
-            $reservation->setStartDate(new \DateTime($dateFrom->format('Y-m-d')));
-            $reservation->setEndDate(new \DateTime($dateTo->format('Y-m-d')));
-            $reservation->setPersons($persons);
-            if (null !== $origin) {
-                $reservation->setReservationOrigin($origin);
-            }
-
             // Apply the user's actual mix only on the option that matches the
             // occupancy-counted total of the mix. For other rows we keep the
             // adult-only baseline so the table still reflects "what would N
             // adults cost in this room".
-            if ($mixOccupancyPersons > 0 && $mixOccupancyPersons === $persons && [] !== $guestCounts) {
-                $reservation->setGuestCounts($guestCounts);
-            }
+            $mixForThisRow = ($mixOccupancyPersons > 0 && $mixOccupancyPersons === $persons) ? $guestCounts : [];
+            $reservation = $this->buildSampleReservation($sampleRoom, $persons, $dateFrom, $dateTo, $origin, $mixForThisRow);
 
-            $positions = $this->invoiceService->buildAppartmentPositions($reservation);
-            if ([] === $positions) {
-                continue;
-            }
-
-            $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
-
-            $vatSums = [];
-            $brutto = 0.0;
-            $netto = 0.0;
-            $singleTotal = 0.0;
-            $miscTotal = 0.0;
-            $this->invoiceService->calculateSums(
-                new ArrayCollection($positions),
-                new ArrayCollection($modifierPositions),
-                $vatSums,
-                $brutto,
-                $netto,
-                $singleTotal,
-                $miscTotal,
-            );
-            // Modifier deltas net into the room total (same scope as the
-            // booking-journal routing: apartment_modifier groups with apartment).
-            $singleTotal += $miscTotal;
-
+            $singleTotal = $this->calculateReservationRoomTotal($reservation);
             if ($singleTotal <= 0.0) {
                 continue;
             }
@@ -115,7 +81,7 @@ class PublicPricingService
             $options[$persons] = [
                 'persons' => $persons,
                 'totalPrice' => $singleTotal,
-                'totalPriceFormatted' => number_format($singleTotal, 2, ',', '.'),
+                'totalPriceFormatted' => self::formatAmount($singleTotal),
             ];
         }
 
@@ -181,9 +147,9 @@ class PublicPricingService
                     'categoryName' => $isGlobal ? null : ($sample['categoryName'] ?? $price->getRoomCategory()?->getName()),
                     'calculationType' => $calculationType,
                     'unitPrice' => $unitPrice,
-                    'unitPriceFormatted' => number_format($unitPrice, 2, ',', '.'),
+                    'unitPriceFormatted' => self::formatAmount($unitPrice),
                     'pricePerUnit' => $perUnit,
-                    'pricePerUnitFormatted' => number_format($perUnit, 2, ',', '.'),
+                    'pricePerUnitFormatted' => self::formatAmount($perUnit),
                     'maxQuantity' => $isGlobal ? max(1, $totalRooms) : 1,
                     'isMandatory' => $price->getIsMandatoryOnline(),
                     'autoQuantity' => !$isGlobal,
@@ -302,7 +268,7 @@ class PublicPricingService
                 'quantity' => $quantity,
                 'pricePerUnit' => $perUnit,
                 'lineTotal' => $lineTotal,
-                'lineTotalFormatted' => number_format($lineTotal, 2, ',', '.'),
+                'lineTotalFormatted' => self::formatAmount($lineTotal),
                 'price' => $price,
             ];
         }
@@ -349,15 +315,77 @@ class PublicPricingService
         return $validDays;
     }
 
-    private function buildSampleReservation(Appartment $room, int $persons, \DateTimeImmutable $dateFrom, \DateTimeImmutable $dateTo, ReservationOrigin $origin): Reservation
-    {
+    /**
+     * The one factory for the throw-away reservations the public pricing works on.
+     *
+     * Never persisted — it only carries enough state for the price engine to answer
+     * "what would this room cost for this party in this period".
+     *
+     * @param array<int, int> $guestCounts guest category id => count, empty for the adult-only baseline
+     */
+    public function buildSampleReservation(
+        Appartment $room,
+        int $persons,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        ?ReservationOrigin $origin,
+        array $guestCounts = [],
+    ): Reservation {
         $reservation = new Reservation();
         $reservation->setAppartment($room);
         $reservation->setStartDate(new \DateTime($dateFrom->format('Y-m-d')));
         $reservation->setEndDate(new \DateTime($dateTo->format('Y-m-d')));
         $reservation->setPersons($persons);
-        $reservation->setReservationOrigin($origin);
+        if (null !== $origin) {
+            $reservation->setReservationOrigin($origin);
+        }
+        if ([] !== $guestCounts) {
+            $reservation->setGuestCounts($guestCounts);
+        }
 
         return $reservation;
+    }
+
+    /**
+     * What one reservation costs in room money — the single definition used by the
+     * price table, the preview and the finished booking alike.
+     *
+     * Modifier deltas net into the room total, the same scope the booking journal
+     * uses (apartment_modifier groups with apartment). A period without an
+     * applicable price yields no positions and hence no modifiers either, so the
+     * result is 0.0 and callers can treat that as "not bookable".
+     */
+    public function calculateReservationRoomTotal(Reservation $reservation): float
+    {
+        $positions = $this->invoiceService->buildAppartmentPositions($reservation);
+        $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
+
+        $vatSums = [];
+        $brutto = 0.0;
+        $netto = 0.0;
+        $singleTotal = 0.0;
+        $miscTotal = 0.0;
+        $this->invoiceService->calculateSums(
+            new ArrayCollection($positions),
+            new ArrayCollection($modifierPositions),
+            $vatSums,
+            $brutto,
+            $netto,
+            $singleTotal,
+            $miscTotal,
+        );
+
+        return $singleTotal + $miscTotal;
+    }
+
+    /**
+     * Money as the public booking pages print it (German grouping).
+     *
+     * One definition so every total on the page reads the same; a locale-aware
+     * format would replace this single call site.
+     */
+    public static function formatAmount(float $amount): string
+    {
+        return number_format($amount, 2, ',', '.');
     }
 }
