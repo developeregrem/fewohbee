@@ -1,28 +1,30 @@
-{# Search entry point: dates and party size up front, because both filter which
-   rooms qualify. #}
-<div class="fhb-search-grid">
-    <div class="fhb-field">
-        <label class="fhb-label" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
-        <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
-    </div>
-    <div class="fhb-field">
-        <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
-        <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
-    </div>
-    {% if bookableRoomCount|default(2) > 1 %}
+{# Search entry point: dates, rooms and party size share one grid row, so the whole
+   query reads as a single line. The guests partial owns the row and the wiring; this
+   only fills in the fields that come first. #}
+{% embed 'PublicBooking/themes/modern/_guests.html.twig' %}
+    {% block leadingFields %}
         <div class="fhb-field">
-            <label class="fhb-label" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
-            <div class="fhb-stepper">
-                <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="-1"
-                        aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
-                <input class="form-control" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
-                <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="1"
-                        aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
-            </div>
+            <label class="fhb-label" for="dateFrom">{{ 'online_booking.public.arrival'|trans }}</label>
+            <input class="form-control" type="date" id="dateFrom" name="dateFrom" min="{{ minArrivalDate }}" value="{{ search.dateFrom }}">
         </div>
-    {% else %}
-        {# Single bookable room: the count can only ever be one. #}
-        <input type="hidden" name="roomsCount" value="1">
-    {% endif %}
-</div>
-{{ include('PublicBooking/themes/modern/_guests.html.twig') }}
+        <div class="fhb-field">
+            <label class="fhb-label" for="dateTo">{{ 'online_booking.public.departure'|trans }}</label>
+            <input class="form-control" type="date" id="dateTo" name="dateTo" min="{{ minArrivalDate }}" value="{{ search.dateTo }}">
+        </div>
+        {% if bookableRoomCount|default(2) > 1 %}
+            <div class="fhb-field">
+                <label class="fhb-label" for="roomsCount">{{ 'online_booking.public.rooms'|trans }}</label>
+                <div class="fhb-stepper">
+                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="-1"
+                            aria-label="{{ 'online_booking.public.decrease'|trans }}">&minus;</button>
+                    <input class="form-control" type="number" min="1" id="roomsCount" name="roomsCount" value="{{ search.roomsCount|default(1) }}" onwheel="this.blur()">
+                    <button class="fhb-stepper-btn" type="button" data-fhb-step-btn="roomsCount" data-fhb-step-delta="1"
+                            aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
+                </div>
+            </div>
+        {% else %}
+            {# Single bookable room: the count can only ever be one. #}
+            <input type="hidden" name="roomsCount" value="1">
+        {% endif %}
+    {% endblock %}
+{% endembed %}

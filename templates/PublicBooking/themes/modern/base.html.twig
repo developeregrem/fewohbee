@@ -9,10 +9,16 @@
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
     <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
     <style>
+{% if embed %}
+        /* The iframe document paints its own background — Bootstrap gives the body a
+           solid colour — so it has to be cleared as well, or the host page never
+           shows through no matter what the booking card does. */
+        html, body { background: transparent; }
+{% endif %}
         .fhb-booking-root {
             --fhb-primary: {{ config.themePrimaryColor|default('#1f6feb') }};
-            {# Embedded pages stay transparent by default so the host site's own
-               background shows through; a configured colour always wins. #}
+            {# Embedded pages stay transparent unless a background colour is configured,
+               so the host site's own design shows through. #}
             --fhb-bg: {{ config.themeBackgroundColor ?: (embed ? 'transparent' : '#f6f8fb') }};
             {{ embed ? '' : 'min-height: 100vh;' }}
         }

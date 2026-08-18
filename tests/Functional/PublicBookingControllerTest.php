@@ -262,6 +262,55 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringNotContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
     }
 
+    /**
+     * A colour input can never submit an empty value, so a checkbox decides whether the
+     * background colour applies at all. Both directions must survive a save.
+     */
+    public function testBackgroundColourFollowsItsCheckbox(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+
+        // Switch it on with a colour …
+        $crawler = $client->request('GET', '/settings/online-booking');
+        $form = $crawler->filter('form[name="online_booking_config"]')->form();
+        $form['online_booking_config[useBackgroundColor]']->tick();
+        $form['online_booking_config[themeBackgroundColor]']->setValue('#123456');
+        $client->submit($form);
+
+        self::assertSame('#123456', $this->readConfig()->getThemeBackgroundColor());
+
+        // Reloading must show the switch as on — otherwise the next save would clear
+        // the colour again without the user touching anything.
+        $crawler = $client->request('GET', '/settings/online-booking');
+        self::assertNotEmpty(
+            $crawler->filter('#online_booking_config_useBackgroundColor[checked]'),
+            'The switch must be ticked while a colour is stored.'
+        );
+
+        // … and off again, which must clear it despite the colour still being submitted.
+        $crawler = $client->request('GET', '/settings/online-booking');
+        $form = $crawler->filter('form[name="online_booking_config"]')->form();
+        $form['online_booking_config[useBackgroundColor]']->untick();
+        $client->submit($form);
+
+        self::assertNull($this->readConfig()->getThemeBackgroundColor());
+    }
+
+    /** Read the singleton config straight from the database. */
+    private function readConfig(): OnlineBookingConfig
+    {
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        $config = $em->getRepository(OnlineBookingConfig::class)->findOneBy([]);
+        if (!$config instanceof OnlineBookingConfig) {
+            self::fail('Online booking config not found.');
+        }
+
+        return $config;
+    }
+
     /** Return the shared admin user from test fixtures. */
     private function getAdminUser(): User
     {

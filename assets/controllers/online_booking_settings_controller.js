@@ -5,7 +5,7 @@ import { enableTooltips, disposeTooltips } from '../js/utils.js';
 /* stimulusFetch: 'lazy' */
 
 export default class extends Controller {
-    static targets = ['subsidiariesWrap', 'roomsWrap', 'subsidiariesCount', 'roomsCount'];
+    static targets = ['subsidiariesWrap', 'roomsWrap', 'subsidiariesCount', 'roomsCount', 'backgroundColorWrap'];
 
     connect() {
         this.htmlEditors = [];
@@ -25,7 +25,17 @@ export default class extends Controller {
         this.refresh();
     };
 
+    /** The colour picker is only meaningful while a custom background is switched on. */
+    refreshBackgroundColor() {
+        if (!this.hasBackgroundColorWrapTarget) {
+            return;
+        }
+        const toggle = this.element.querySelector('[name$="[useBackgroundColor]"]');
+        this.backgroundColorWrapTarget.hidden = !(toggle && toggle.checked);
+    }
+
     refresh() {
+        this.refreshBackgroundColor();
         this.toggleVisibility();
         this.updateCounts();
     }

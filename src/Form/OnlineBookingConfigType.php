@@ -22,6 +22,8 @@ use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -126,6 +128,13 @@ class OnlineBookingConfigType extends AbstractType
                 'label' => 'online_booking.settings.theme_primary',
                 'html5' => true,
             ])
+            ->add('useBackgroundColor', CheckboxType::class, [
+                'label' => 'online_booking.settings.theme_background_use',
+                'required' => false,
+                // Not stored: a colour input can never submit an empty value, so this
+                // is the only way to clear the colour and fall back to transparency.
+                'mapped' => false,
+            ])
             ->add('themeBackgroundColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_background',
                 'required' => false,
@@ -191,6 +200,24 @@ class OnlineBookingConfigType extends AbstractType
                 ],
             ])
         ;
+
+        // Reflect the stored state in the checkbox. POST_SET_DATA, because only then is
+        // the form's data settled — setting an unmapped child earlier does not survive.
+        $builder->addEventListener(FormEvents::POST_SET_DATA, static function (FormEvent $event): void {
+            $config = $event->getData();
+            $event->getForm()->get('useBackgroundColor')->setData(
+                $config instanceof OnlineBookingConfig && null !== $config->getThemeBackgroundColor()
+            );
+        });
+
+        // … and clear the colour when it is switched off. The browser always submits a
+        // colour, so without this the value could never be removed again.
+        $builder->addEventListener(FormEvents::POST_SUBMIT, static function (FormEvent $event): void {
+            $config = $event->getData();
+            if ($config instanceof OnlineBookingConfig && true !== $event->getForm()->get('useBackgroundColor')->getData()) {
+                $config->setThemeBackgroundColor(null);
+            }
+        });
     }
 
     /** Attach the form to the config entity and register conditional validation rules. */

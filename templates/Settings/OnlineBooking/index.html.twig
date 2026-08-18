@@ -247,7 +247,29 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
-                        <div class="col-md-6">{{ form_row(form.themeBackgroundColor) }}</div>
+                        {# One row for the background: the switch and the picker sit side by
+                           side under a single label, since the picker only matters while the
+                           switch is on. Rendered by hand because the horizontal form theme
+                           would otherwise stack them as two separate rows. #}
+                        <div class="col-md-6">
+                            <div class="row mb-3">
+                                <label class="col-sm-4 text-end col-form-label" for="{{ form.themeBackgroundColor.vars.id }}">
+                                    {{ 'online_booking.settings.theme_background'|trans }}
+                                </label>
+                                <div class="col-sm-8">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {# form_widget renders the checkbox together with its
+                                           label, so adding one here would show it twice. #}
+                                        {{ form_widget(form.useBackgroundColor) }}
+                                        <div data-online-booking-settings-target="backgroundColorWrap">
+                                            {{ form_widget(form.themeBackgroundColor) }}
+                                        </div>
+                                    </div>
+                                    <div class="form-text">{{ 'online_booking.settings.theme_background_help'|trans }}</div>
+                                    {{ form_errors(form.themeBackgroundColor) }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mt-2">
                         <a class="small text-body-secondary text-decoration-none" data-bs-toggle="collapse" href="#customCssCollapse" role="button" aria-expanded="{{ form.vars.value.customCss ? 'true' : 'false' }}" aria-controls="customCssCollapse">

@@ -1,13 +1,16 @@
 {# Party size, shared by both entry points.
-   Search mode asks for it up front because it filters which rooms qualify.
-   Calendar mode asks later — with one known room the party size changes the price,
-   not the availability, so it belongs next to the occupancy options. #}
-{% if hasCategories %}
-    {# The age-to-category mapping is pure data (min/max age, sort order, whether the
+   Search mode asks for it up front because it filters which rooms qualify; the
+   calendar asks alongside the accommodation, where its bed count is on screen.
+
+   Callers may embed this and fill the `leadingFields` block to put their own fields
+   into the same grid row — that is how the search keeps dates, rooms and guests on
+   one line while `data-pgc-root` stays defined in a single place. #}
+{# The age-to-category mapping is pure data (min/max age, sort order, whether the
        category occupies a bed), so the browser can reproduce it exactly instead of
        guessing. This is what makes the live bed count correct for guests who take no
        bed of their own, and it mirrors GuestCategoryAgeMapper. #}
-    {% set categoryRules = [] %}
+{% set categoryRules = [] %}
+{% if hasCategories %}
     {% for category in guestCategories %}
         {% set categoryRules = categoryRules|merge([{
             'id': category.id,
@@ -19,7 +22,9 @@
             'occupies': category.isCountedInOccupancy
         }]) %}
     {% endfor %}
-    <div class="fhb-guests"
+{% endif %}
+<div class="fhb-guests"
+     {% if hasCategories %}
          data-pgc-root
          data-pgc-age-label="{{ 'online_booking.public.guests.age_label'|trans({'%n%': '__N__'}) }}"
          data-pgc-categories="{{ categoryRules|json_encode }}"
@@ -28,8 +33,11 @@
              'noBed': 'online_booking.public.guests.no_bed'|trans,
              'bedsUsed': 'online_booking.public.guests.beds_used'|trans({'%used%': '__USED__', '%max%': '__MAX__'}),
              'overCapacity': 'online_booking.public.guests.over_capacity'|trans({'%max%': '__MAX__'})
-         }|json_encode }}">
-        <div class="fhb-search-grid">
+         }|json_encode }}"
+     {% endif %}>
+    <div class="fhb-search-grid">
+        {% block leadingFields %}{% endblock %}
+        {% if hasCategories %}
             <div class="fhb-field">
                 <label class="fhb-label" for="adults">{{ 'online_booking.public.guests.adults'|trans }}</label>
                 <div class="fhb-stepper">
@@ -44,8 +52,16 @@
                             aria-label="{{ 'online_booking.public.increase'|trans }}">+</button>
                 </div>
             </div>
-        </div>
+        {% else %}
+            {# No guest categories configured: a single plain person count. #}
+            <div class="fhb-field">
+                <label class="fhb-label" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
+                <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
+            </div>
+        {% endif %}
+    </div>
 
+    {% if hasCategories %}
         {% if hasChildCategory %}
             <a class="fhb-children-toggle{% if initialChildAges|length == 0 %} collapsed{% endif %}"
                data-bs-toggle="collapse" href="#publicChildren"
@@ -105,12 +121,5 @@
                 </select>
             </div>
         </template>
-    </div>
-{% else %}
-    <div class="fhb-search-grid">
-        <div class="fhb-field">
-            <label class="fhb-label" for="persons">{{ 'online_booking.public.persons'|trans }}</label>
-            <input class="form-control" type="number" min="1" id="persons" name="persons" value="{{ search.persons|default(1) }}" onwheel="this.blur()">
-        </div>
-    </div>
-{% endif %}
+    {% endif %}
+</div>
