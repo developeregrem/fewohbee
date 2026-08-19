@@ -35,85 +35,22 @@ Curious what it looks like? There's a feature tour at [fewohbee.app](https://few
 
 ## Features
 
-### Reservations & Guests
+| | |
+|---|---|
+| 🛏️ **Reservations** | Visual calendar grid, availability and capacity checks, room blocks, configurable origins and statuses |
+| 👥 **Guests** | Guest profiles, companies, guest categories for age-based pricing, GDPR export |
+| 🌐 **Online booking** | Direct booking from your website — search or calendar mode, embeddable, with abuse protection |
+| 🧾 **Invoices** | PDF invoices, configurable number ranges, and e-invoicing via EN 16931 / XRechnung / ZUGFeRD |
+| 📒 **Accounting** | Double-entry booking journal with guided chart of accounts, DATEV export, CSV bank import with automatic invoice matching, cash book |
+| 📋 **Operations** | Front desk view, housekeeping lists, printable daily reports |
+| ⚡ **Automation** | Rules engine with triggers, conditions and actions — send emails, change statuses, create bookings, all without code |
+| ✉️ **Correspondence** | Send email from the app, with a visual template editor and live preview |
+| 📅 **Calendar sync** | Two-way iCal/ICS sync with Airbnb, Booking.com and others |
+| 📊 **Statistics** | Occupancy and utilization, monthly snapshots, tourist tax reporting |
+| ⚙️ **Administration** | Multiple branches, granular roles, passkeys, read-only REST API |
 
-- **Reservation overview** — see, create and edit reservations on a visual calendar grid
-- **Availability management** — capacity checks, multiple occupancy, room blocks for maintenance
-- **Guest management** — guest profiles, addresses, companies, guest categories, GDPR export
-- **Room blocks** — take rooms out of sale for renovation or private use
-- **Reservation origins & statuses** — track where a booking came from and where it stands
-
-### Online Booking
-
-- **Direct booking on your website** — guests book or request around the clock, fully integrated
-- **Configurable booking rules** — minimum stay, lead time, availability windows
-- **Abuse protection** — rate limiting and bot protection on all public endpoints
-
-### Invoicing & E-Invoicing
-
-- **Invoices from reservations** with flexible positions and tax rates
-- **PDF export** for classic invoicing
-- **Electronic invoices** according to **EN 16931**, **XRechnung** and **ZUGFeRD** — mandatory for
-  B2B invoicing in Germany
-- **Payment terms and status tracking**
-
-### Accounting & Payments
-
-- **Accounting journal** — double-entry bookkeeping designed for accommodation businesses,
-  with a guided chart of accounts
-- **DATEV export** for handover to your tax advisor
-- **Bank statement import (CSV)** — configurable bank profiles, automatic rule-based assignment,
-  invoice matching and duplicate detection
-- **Cash book** for income and expenses
-
-### Daily Operations
-
-- **Front desk view** — arrivals, departures and stays of the day at a glance
-- **Housekeeping** — cleaning lists per room with status tracking and export
-- **Operations reports** — ready-to-print daily lists
-
-### Automation (Workflows)
-
-- **Rules engine** with triggers, conditions and actions — no code required
-- **Event-based**: on new reservation, online booking, calendar import, invoice created or invoice
-  status changed
-- **Time-based**: X days before arrival, X days after departure, X days after invoice date, monthly
-- **Actions**: send templated emails, change reservation or invoice status, create booking entries,
-  send notifications — with attachments
-
-### Correspondence & Templates
-
-- **Send emails from within the application** — confirmations, invoices, pre-arrival information
-- **Visual template editor** for invoices, confirmations, letters and emails
-- **Template variables with autocomplete** and live preview
-
-### Calendar Synchronization
-
-- **iCal/ICS sync** with booking portals such as Airbnb, Booking.com and others
-- **Two-way**: export your occupancy, import external bookings
-- **Automatic sync** via scheduled commands
-
-### Statistics & Reporting
-
-- **Occupancy and utilization statistics**
-- **Monthly snapshots** for year-over-year comparison
-- **Tourist tax (Kurtaxe)** calculation and reporting
-
-### Administration
-
-- **Multi-property support** — manage several subsidiaries in one installation
-- **Granular roles** — reservations (incl. read-only), customers, invoices, statistics, cash
-  journal, operations, admin
-- **Passkeys / WebAuthn** in addition to password login
-- **Read-only REST API** with scoped personal access tokens
-- **Extensive settings** — rooms, room categories, prices and price periods, templates, reservation
-  origins and statuses, and more
-
-<!--
-  To add screenshots, place them under docs/img/ and reference them here, e.g.:
-  ![Reservation overview](docs/img/reservation-overview.png)
-  Until then, see the feature tour at https://fewohbee.app
--->
+📖 **[Full feature overview in the Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**
+ · **[User manual](https://www.fewohbee.app/en/documentation/documentation.html)**
 
 ---
 

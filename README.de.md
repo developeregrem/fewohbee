@@ -35,86 +35,22 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 
 ## Funktionen
 
-### Reservierungen & Gäste
+| | |
+|---|---|
+| 🛏️ **Reservierungen** | Kalenderraster, Verfügbarkeits- und Kapazitätsprüfung, Zimmersperrungen, konfigurierbare Herkünfte und Status |
+| 👥 **Gäste** | Gästeprofile, Firmen, Gästekategorien für altersabhängige Preise, DSGVO-Export |
+| 🌐 **Online-Buchung** | Direktbuchung über die eigene Website — Suche oder Kalendermodus, einbettbar, mit Missbrauchsschutz |
+| 🧾 **Rechnungen** | PDF-Rechnungen, konfigurierbare Nummernkreise und E-Rechnung nach EN 16931 / XRechnung / ZUGFeRD |
+| 📒 **Buchhaltung** | Doppelte Buchführung mit geführtem Kontenrahmen, DATEV-Export, CSV-Bankimport mit automatischem Rechnungsabgleich, Kassenbuch |
+| 📋 **Betrieb** | Rezeptionsansicht, Housekeeping-Listen, druckfertige Tagesberichte |
+| ⚡ **Automatisierung** | Regelwerk aus Auslösern, Bedingungen und Aktionen — Mails versenden, Status ändern, Buchungen anlegen, ganz ohne Code |
+| ✉️ **Korrespondenz** | Mailversand aus der Anwendung, mit visuellem Vorlagen-Editor und Live-Vorschau |
+| 📅 **Kalender-Sync** | iCal/ICS in beide Richtungen mit Airbnb, Booking.com und anderen |
+| 📊 **Statistiken** | Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
+| ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, lesende REST-API |
 
-- **Reservierungsübersicht** — Reservierungen im Kalenderraster sehen, anlegen und bearbeiten
-- **Verfügbarkeitsprüfung** — Kapazitäten, Mehrfachbelegung, Zimmersperrungen
-- **Gästeverwaltung** — Gästeprofile, Adressen, Firmen, Gästekategorien, DSGVO-Export
-- **Zimmersperrungen** — Zimmer für Renovierung oder Eigennutzung aus dem Verkauf nehmen
-- **Reservierungsherkunft & -status** — nachvollziehen, woher eine Buchung kam und wo sie steht
-
-### Online-Buchung
-
-- **Direktbuchung über die eigene Website** — Gäste buchen oder fragen rund um die Uhr an, voll
-  integriert
-- **Konfigurierbare Buchungsregeln** — Mindestaufenthalt, Vorlaufzeit, Buchungszeiträume
-- **Missbrauchsschutz** — Rate-Limiting und Bot-Schutz auf allen öffentlichen Endpunkten
-
-### Rechnungen & E-Rechnung
-
-- **Rechnungen aus Reservierungen** mit flexiblen Positionen und Steuersätzen
-- **PDF-Export** für die klassische Rechnungsstellung
-- **Elektronische Rechnungen** nach **EN 16931**, **XRechnung** und **ZUGFeRD** — Pflicht im
-  B2B-Bereich
-- **Zahlungsbedingungen und Statusverfolgung**
-
-### Buchhaltung & Zahlungen
-
-- **Buchungsjournal** — doppelte Buchführung, zugeschnitten auf Beherbergungsbetriebe, mit
-  geführtem Kontenrahmen
-- **DATEV-Export** zur Übergabe an die Steuerberatung
-- **Bankimport (CSV)** — konfigurierbare Bankprofile, regelbasierte Zuordnung,
-  Rechnungsabgleich und Dublettenerkennung
-- **Kassenbuch** für Einnahmen und Ausgaben
-
-### Täglicher Betrieb
-
-- **Rezeptionsansicht** — An- und Abreisen sowie Aufenthalte des Tages auf einen Blick
-- **Housekeeping** — Reinigungslisten je Zimmer mit Statusverfolgung und Export
-- **Betriebsberichte** — druckfertige Tageslisten
-
-### Automatisierung (Workflows)
-
-- **Regelwerk** aus Auslösern, Bedingungen und Aktionen — ganz ohne Programmierung
-- **Ereignisbasiert**: bei neuer Reservierung, Online-Buchung, Kalenderimport, erstellter Rechnung
-  oder Statuswechsel einer Rechnung
-- **Zeitbasiert**: X Tage vor Anreise, X Tage nach Abreise, X Tage nach Rechnungsdatum, monatlich
-- **Aktionen**: Vorlagen-Mails versenden, Reservierungs- oder Rechnungsstatus ändern,
-  Buchungssätze anlegen, Benachrichtigungen senden — inklusive Anhängen
-
-### Korrespondenz & Vorlagen
-
-- **Mails direkt aus der Anwendung** — Bestätigungen, Rechnungen, Infos vor der Anreise
-- **Visueller Vorlagen-Editor** für Rechnungen, Bestätigungen, Briefe und Mails
-- **Vorlagen-Variablen mit Autovervollständigung** und Live-Vorschau
-
-### Kalender-Synchronisierung
-
-- **iCal/ICS-Sync** mit Buchungsportalen wie Airbnb, Booking.com und anderen
-- **In beide Richtungen**: eigene Belegung exportieren, externe Buchungen importieren
-- **Automatischer Abgleich** über geplante Kommandos
-
-### Statistiken & Auswertungen
-
-- **Belegungs- und Auslastungsstatistiken**
-- **Monatliche Snapshots** für den Vorjahresvergleich
-- **Kurtaxe** — Berechnung und Auswertung
-
-### Verwaltung
-
-- **Mehrere Betriebsstätten** in einer Installation verwalten
-- **Feingranulare Rollen** — Reservierungen (auch nur lesend), Kunden, Rechnungen, Statistiken,
-  Kassenbuch, Betrieb, Administration
-- **Passkeys / WebAuthn** zusätzlich zur Passwortanmeldung
-- **Lesende REST-API** mit persönlichen Zugriffstoken und Scopes
-- **Umfangreiche Einstellungen** — Zimmer, Zimmerkategorien, Preise und Preiszeiträume, Vorlagen,
-  Reservierungsherkünfte und -status und vieles mehr
-
-<!--
-  Screenshots können unter docs/img/ abgelegt und hier eingebunden werden, z.B.:
-  ![Reservierungsübersicht](docs/img/reservation-overview.png)
-  Bis dahin: Feature-Tour unter https://fewohbee.app
--->
+📖 **[Vollständige Funktionsübersicht im Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**
+ · **[Benutzerhandbuch](https://www.fewohbee.app/documentation/documentation.html)**
 
 ---
 
