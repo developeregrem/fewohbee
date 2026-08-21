@@ -16,6 +16,7 @@
         "league/flysystem-aws-s3-v3": "^3",
         "mpdf/mpdf": "^8.2",
         "oneup/flysystem-bundle": "*",
+        "sabre/vobject": "^5.0",
         "symfony/asset": "8.1.*",
         "symfony/asset-mapper": "8.1.*",
         "symfony/console": "8.1.*",

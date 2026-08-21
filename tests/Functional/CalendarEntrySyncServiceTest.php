@@ -11,10 +11,20 @@ use App\Service\CalendarEntrySyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\Test\ClockSensitiveTrait;
 
 /** Verify that CalendarEntrySyncService expands multi-day (DTSTART..DTEND) VEVENTs into one CalendarEntry per day. */
 final class CalendarEntrySyncServiceTest extends KernelTestCase
 {
+    use ClockSensitiveTrait;
+
+    /**
+     * The import files nothing behind the current day, so every fixed date in
+     * this file has to sit ahead of it. Pinning the clock keeps that true
+     * instead of letting these tests expire the moment real time passes them.
+     */
+    private const TODAY = '2025-12-01 09:00:00';
+
     private EntityManagerInterface $em;
     private CalendarEntrySyncService $service;
     private string $originalTimezone;
@@ -22,6 +32,7 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        self::mockTime(new \DateTimeImmutable(self::TODAY, new \DateTimeZone('Europe/Berlin')));
         self::bootKernel();
         $this->em = static::getContainer()->get(ManagerRegistry::class)->getManager();
         $this->service = static::getContainer()->get(CalendarEntrySyncService::class);
@@ -292,13 +303,13 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertNotSame($entries[0]->getSourceUid(), $entries[1]->getSourceUid());
     }
 
-    public function testRecurringEventIsSkippedAndCountedInsteadOfLandingOnItsFirstDate(): void
+    public function testRecurringEventIsExpandedIntoOneEntryPerOccurrence(): void
     {
         $calendar = $this->createCalendar('Geburtstage '.uniqid());
 
         // How a birthday actually looks in an exported feed: one VEVENT on the
-        // year of birth, repeating via RRULE. Importing DTSTART alone would
-        // file it decades in the past, where nobody would ever see it.
+        // year of birth, repeating via RRULE. The entries have to land on the
+        // coming 15 March, not on the year of birth.
         $ics = implode("\r\n", [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -313,12 +324,17 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
 
         $result = $this->service->importIcsString($calendar, $ics);
 
-        self::assertSame(1, $result->skippedRecurring);
-        self::assertSame(0, $result->total());
-        self::assertCount(0, $this->entriesForCalendar($calendar));
+        self::assertSame(0, $result->skippedInvalid);
+
+        // Two years ahead of the pinned day, so 2026 and 2027 - and nothing
+        // from 1980, which is the whole point.
+        self::assertSame(['2026-03-15', '2027-03-15'], array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        ));
     }
 
-    public function testANonRecurringEventInTheSameFeedStillImports(): void
+    public function testARecurringAndAPlainEventInOneFeedBothImport(): void
     {
         $calendar = $this->createCalendar('Gemischt '.uniqid());
 
@@ -341,18 +357,139 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
 
         $result = $this->service->importIcsString($calendar, $ics);
 
-        self::assertSame(1, $result->skippedRecurring);
-        self::assertSame(1, $result->new);
-        self::assertSame('Restmüll', $this->entriesForCalendar($calendar)[0]->getTitle());
+        self::assertSame(0, $result->skippedInvalid);
+
+        $titles = array_map(
+            static fn (CalendarEntry $e) => $e->getTitle(),
+            $this->entriesForCalendar($calendar),
+        );
+        self::assertContains('Restmüll', $titles);
+        self::assertContains('Geburtstag Anna', $titles);
     }
 
-    public function testAFeedWithoutRecurrenceReportsNothingSkipped(): void
+    public function testDatesAlreadyPastAreNotImported(): void
+    {
+        $calendar = $this->createCalendar('Vergangenes '.uniqid());
+
+        // One date behind the pinned day, one ahead of it, in the same feed.
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:schon-vorbei',
+            'DTSTART;VALUE=DATE:20251120',
+            'SUMMARY:Schon vorbei',
+            'END:VEVENT',
+            'BEGIN:VEVENT',
+            'UID:kommt-noch',
+            'DTSTART;VALUE=DATE:20251215',
+            'SUMMARY:Kommt noch',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(1, $result->new);
+        self::assertSame(['Kommt noch'], array_map(
+            static fn (CalendarEntry $e) => $e->getTitle(),
+            $this->entriesForCalendar($calendar),
+        ));
+    }
+
+    public function testAMultiDayEventAlreadyRunningKeepsTheDaysItHasLeft(): void
+    {
+        $calendar = $this->createCalendar('Laufend '.uniqid());
+
+        // Started before the pinned day and still running. Reading it whole is
+        // what keeps its remaining days; only the days behind today drop out.
+        $ics = $this->buildIcs('urlaub', '20251129', '20251204', 'Urlaub');
+        $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(['2025-12-01', '2025-12-02', '2025-12-03'], array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        ));
+    }
+
+    public function testAPastEntryOfAStillRunningSeriesIsLeftAlone(): void
+    {
+        $calendar = $this->createCalendar('Bestand '.uniqid());
+
+        // What an earlier sync left behind: a row for an occurrence that has
+        // since passed. The series still runs, so reconcile() does look at this
+        // source event - and has to leave the old row alone rather than reuse
+        // it for one of the coming dates. Removing it is the user's decision.
+        $entry = (new CalendarEntry())
+            ->setCalendar($calendar)
+            ->setSourceUid('cal'.$calendar->getId().'-woechentlich')
+            ->setDate(new \DateTimeImmutable('2025-11-24'))
+            ->setTitle('Restmüll');
+        $this->em->persist($entry);
+        $this->em->flush();
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:woechentlich',
+            'DTSTART;VALUE=DATE:20251124',
+            'RRULE:FREQ=WEEKLY;COUNT=6',
+            'SUMMARY:Restmüll',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $this->service->importIcsString($calendar, $ics);
+
+        $dates = array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        );
+
+        // The stored 24 November survives, nothing new is filed behind today,
+        // and the remaining occurrences of the series are imported.
+        self::assertSame(['2025-11-24', '2025-12-01', '2025-12-08', '2025-12-15', '2025-12-22', '2025-12-29'], $dates);
+    }
+
+    public function testAnUnusableRecurrenceIsCountedWithoutLosingTheRestOfTheFeed(): void
+    {
+        $calendar = $this->createCalendar('Kaputte Regel '.uniqid());
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:unsinn',
+            'DTSTART;VALUE=DATE:20251215',
+            'RRULE:FREQ=BLUBB',
+            'SUMMARY:Unsinnige Regel',
+            'END:VEVENT',
+            'BEGIN:VEVENT',
+            'UID:heil',
+            'DTSTART;VALUE=DATE:20251216',
+            'SUMMARY:Heiler Termin',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+
+        self::assertSame(1, $result->skippedInvalid);
+        self::assertSame(1, $result->new);
+        self::assertSame(['Heiler Termin'], array_map(
+            static fn (CalendarEntry $e) => $e->getTitle(),
+            $this->entriesForCalendar($calendar),
+        ));
+    }
+
+    public function testAReadableFeedReportsNothingSkipped(): void
     {
         $calendar = $this->createCalendar('Ohne Serie '.uniqid());
 
         $result = $this->service->importIcsString($calendar, $this->buildIcs('uid-plain', '20260911', null, 'Papier'));
 
-        self::assertSame(0, $result->skippedRecurring);
+        self::assertSame(0, $result->skippedInvalid);
         self::assertSame(1, $result->new);
     }
 

@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Dto\Ics\IcsOccurrence;
 use App\Service\CalendarEntryTimeRules;
-use App\Service\Ics\IcsEventParser;
 use App\Service\Ics\IcsEventSpanResolver;
+use App\Service\Ics\IcsOccurrenceReader;
 use PHPUnit\Framework\TestCase;
 
 final class IcsEventSpanResolverTest extends TestCase
 {
     private IcsEventSpanResolver $resolver;
+    private IcsOccurrenceReader $reader;
     private \DateTimeZone $berlin;
 
     protected function setUp(): void
     {
-        $this->resolver = new IcsEventSpanResolver(new IcsEventParser(), new CalendarEntryTimeRules());
+        $this->resolver = new IcsEventSpanResolver(new CalendarEntryTimeRules());
+        $this->reader = new IcsOccurrenceReader();
         $this->berlin = new \DateTimeZone('Europe/Berlin');
     }
 
@@ -180,9 +183,59 @@ final class IcsEventSpanResolverTest extends TestCase
     }
 
     /** @param array<string, string> $event */
+    /**
+     * Wraps the properties into a one-event feed and takes it through the real
+     * reader, so these cases cover both halves of the import: reading a
+     * property into an instant, and turning that into the days it covers.
+     *
+     * @param array<string, string> $event
+     */
     private function resolve(array $event): ?\App\Dto\Ics\IcsEventSpan
     {
-        return $this->resolver->resolve($event, $this->berlin);
+        $occurrence = $this->read($event);
+
+        return null === $occurrence ? null : $this->resolver->resolve($occurrence);
+    }
+
+    /**
+     * @param array<string, string> $event
+     */
+    private function read(array $event): ?IcsOccurrence
+    {
+        $properties = '';
+        foreach (['DTSTART', 'DTEND'] as $name) {
+            if (!isset($event[$name])) {
+                continue;
+            }
+
+            $value = $event[$name];
+            $params = $event[$name.';PARAMS'] ?? null;
+            // A bare eight-digit value is a date without a time, which RFC 5545
+            // only treats as such when VALUE=DATE says so.
+            if (null === $params && 8 === \strlen($value) && ctype_digit($value)) {
+                $params = 'VALUE=DATE';
+            }
+
+            $properties .= $name.(null !== $params ? ';'.$params : '').':'.$value."\r\n";
+        }
+
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//test//test//EN\r\n"
+            ."BEGIN:VEVENT\r\nUID:test\r\nSUMMARY:Test\r\n".$properties."END:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        // Deliberately wide, so a case is never discarded for sitting outside
+        // the window when what it means to check is the span arithmetic.
+        try {
+            $result = $this->reader->read(
+                $ics,
+                $this->berlin,
+                new \DateTimeImmutable('2000-01-01', $this->berlin),
+                new \DateTimeImmutable('2100-01-01', $this->berlin),
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $result->occurrences[0] ?? null;
     }
 
     /**

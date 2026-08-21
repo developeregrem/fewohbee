@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Ics;
 
 use App\Dto\Ics\IcsEventSpan;
+use App\Dto\Ics\IcsOccurrence;
 use App\Service\CalendarEntryTimeRules;
 
 /**
@@ -33,60 +34,36 @@ final class IcsEventSpanResolver
     public const MAX_EVENT_SPAN_DAYS = 366;
 
     public function __construct(
-        private readonly IcsEventParser $parser,
         private readonly CalendarEntryTimeRules $timeRules,
     ) {
     }
 
     /**
-     * Resolves a VEVENT property map, or returns null when the event is not
-     * usable and must be discarded.
+     * Resolves one occurrence, or returns null when it is not usable and must
+     * be discarded.
      *
-     * Everything is resolved in $zone first, because the zone decides the
-     * calendar day as much as the clock time: a feed's 20260814T230000Z is the
-     * 15th in Europe/Berlin, not the 14th.
+     * The occurrence already carries its instants in the target zone, because
+     * the zone decides the calendar day as much as the clock time: a feed's
+     * 20260814T230000Z is the 15th in Europe/Berlin, not the 14th.
      *
      * Discarded (null) when:
-     * - DTSTART is missing or unparseable - there is no day to file it under;
      * - DTEND is not after DTSTART - RFC 5545 requires it to be later, so such
      *   an event carries no usable period. A same-value DTEND is rejected too:
      *   feeds write it both for a zero-length event and, wrongly, for a
      *   single all-day one, and guessing which was meant would silently
      *   invent a day the source never stated;
      * - the span exceeds MAX_EVENT_SPAN_DAYS.
-     *
-     * @param array<string, string> $event flat property => value map, as produced by IcsEventParser
      */
-    public function resolve(array $event, \DateTimeZone $zone): ?IcsEventSpan
+    public function resolve(IcsOccurrence $occurrence): ?IcsEventSpan
     {
-        $dtStartRaw = $event['DTSTART'] ?? null;
-        if (null === $dtStartRaw) {
-            return null;
-        }
+        $allDay = $occurrence->allDay;
 
-        $allDay = $this->parser->isDateOnly($dtStartRaw);
-
-        $start = $this->parser->parseDateTimeInZone($dtStartRaw, $event['DTSTART'.IcsEventParser::PARAMS_SUFFIX] ?? null, $zone);
-        if (null === $start) {
-            return null;
-        }
         // Normalised before anything compares them, so the checks below, the
         // day loop and the stored value all work on the same resolution.
-        $start = $this->toWholeMinutes($start);
+        $start = $this->toWholeMinutes($occurrence->start);
         $startDay = $start->setTime(0, 0);
 
-        $dtEndRaw = $event['DTEND'] ?? null;
-        $end = null !== $dtEndRaw
-            ? $this->parser->parseDateTimeInZone($dtEndRaw, $event['DTEND'.IcsEventParser::PARAMS_SUFFIX] ?? null, $zone)
-            : null;
-
-        // An unparseable DTEND is not the same as an absent one: the event did
-        // state a period and we failed to read it, so filing it as a single
-        // day would put a made-up period in the calendar.
-        if (null !== $dtEndRaw && null === $end) {
-            return null;
-        }
-        $end = null !== $end ? $this->toWholeMinutes($end) : null;
+        $end = null !== $occurrence->end ? $this->toWholeMinutes($occurrence->end) : null;
         // Checked after normalising, so an event shorter than a minute counts
         // as the zero-length period it becomes rather than slipping through
         // on seconds the rest of the application cannot represent.

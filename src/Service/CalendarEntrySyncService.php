@@ -8,9 +8,10 @@ use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
 use App\Repository\CalendarEntryRepository;
 use App\Service\Exception\CalendarSyncException;
-use App\Service\Ics\IcsEventParser;
 use App\Service\Ics\IcsEventSpanResolver;
+use App\Service\Ics\IcsOccurrenceReader;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -23,15 +24,15 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * project's unrelated apartment-calendar export/subscription feature
  * (CalendarSync entity).
  *
- * Only single VEVENTs are supported (one per occurrence) - a source that
- * expresses its dates via an RRULE-recurring VEVENT isn't expanded. Such
- * events are skipped and counted, so the caller can tell the user why a
- * birthday or holiday feed produced nothing, rather than storing one entry
- * on the original DTSTART where it would never be seen.
+ * RRULE-recurring events are expanded into one entry per occurrence by
+ * IcsOccurrenceReader. Because such a rule can be unbounded, the import runs
+ * against a window: nothing is filed further ahead than EXPAND_YEARS_AHEAD,
+ * and nothing is filed in the past at all - see reconcile() for why entries
+ * that have merely aged into the past are nevertheless kept.
  *
- * Events whose period cannot be read at all (see IcsEventSpanResolver) are
- * discarded and counted the same way - a feed is untrusted input, and a
- * guessed date is worse than a reported skip.
+ * Events whose period cannot be read (see IcsEventSpanResolver) or whose
+ * recurrence cannot be evaluated are discarded and counted - a feed is
+ * untrusted input, and a guessed date is worse than a reported skip.
  */
 class CalendarEntrySyncService
 {
@@ -49,12 +50,20 @@ class CalendarEntrySyncService
     private const MAX_TITLE_LENGTH = 100;
     private const MAX_SOURCE_UID_LENGTH = 255;
 
+    /**
+     * How far ahead a recurrence is materialised. An RRULE without UNTIL or
+     * COUNT never ends, so the rows have to stop somewhere; the window moves
+     * with every sync, which is what keeps a series topped up.
+     */
+    private const EXPAND_YEARS_AHEAD = 2;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
-        private readonly IcsEventParser $icsParser,
+        private readonly IcsOccurrenceReader $icsReader,
         private readonly HttpClientInterface $httpClient,
         private readonly IcsEventSpanResolver $spanResolver,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -87,14 +96,13 @@ class CalendarEntrySyncService
 
     public function importIcsString(Calendar $calendar, string $icsData): CalendarEntrySyncResult
     {
-        if (!$this->icsParser->isValidCalendar($icsData)) {
+        if (!$this->icsReader->isValidCalendar($icsData)) {
             throw new CalendarSyncException('ICS-Datei konnte nicht gelesen werden.');
         }
 
         $new = 0;
         $updated = 0;
         $unchanged = 0;
-        $skippedRecurring = 0;
         $skippedInvalid = 0;
 
         // The zone a feed's instants are expressed in for storage. It comes
@@ -104,28 +112,27 @@ class CalendarEntrySyncService
         $zone = new \DateTimeZone(date_default_timezone_get());
 
         try {
-            // Collect the whole feed first, grouped by source event, so each
-            // event is reconciled against the database once with all of its
-            // dates known - two VEVENTs sharing a UID (or a UID-less feed
-            // repeating a summary) then merge instead of fighting over the
-            // same rows.
+            $today = $this->clock->now()->setTimezone($zone)->setTime(0, 0);
+            $windowEnd = $today->modify('+'.self::EXPAND_YEARS_AHEAD.' years');
+
+            // From today, not from the feed's own beginning: an occurrence
+            // entirely in the past is not read at all, so it cannot create a
+            // row. One still running is - fastForward() goes by the end - so a
+            // multi-day event keeps the days it has left.
+            $read = $this->icsReader->read($icsData, $zone, $today, $windowEnd);
+            $skippedInvalid += $read->skipped;
+
+            // Collected grouped by source event, so each event is reconciled
+            // against the database once with all of its dates known - two
+            // VEVENTs sharing a UID (or a UID-less feed repeating a summary)
+            // then merge instead of fighting over the same rows.
             $occurrences = [];
-            foreach ($this->icsParser->parseEvents($icsData) as $event) {
-                $summary = trim((string) ($event['SUMMARY'] ?? ''));
+            foreach ($read->occurrences as $occurrence) {
+                $summary = trim($occurrence->summary);
                 if ('' === $summary) {
                     continue;
                 }
 
-                // A recurring event carries its repetition in the RRULE, which
-                // is not expanded here. Importing it anyway would store a
-                // single entry on DTSTART - for a birthday feed that is the
-                // year of birth, decades in the past, where nobody will ever
-                // see it while the import cheerfully reports success. Skipped
-                // and counted instead, so the caller can name the reason.
-                if ('' !== trim((string) ($event['RRULE'] ?? ''))) {
-                    ++$skippedRecurring;
-                    continue;
-                }
                 // Truncated here rather than at the assignment sites so the
                 // stored title and the value hashed into a UID-less feed's
                 // source id stay the same string - otherwise a re-import
@@ -137,14 +144,14 @@ class CalendarEntrySyncService
                 // filed under a guessed day, and counted so the caller can
                 // say so instead of leaving the user with entries that
                 // silently never appeared.
-                $span = $this->spanResolver->resolve($event, $zone);
+                $span = $this->spanResolver->resolve($occurrence);
                 if (null === $span || [] === $span->dates) {
                     ++$skippedInvalid;
                     continue;
                 }
                 $lastIndex = array_key_last($span->dates);
 
-                $sourceUid = $this->buildSourceUid($calendar, $event, $summary, $span->dates[0]);
+                $sourceUid = $this->buildSourceUid($calendar, $occurrence->uid, $summary, $span->dates[0]);
                 $occurrences[$sourceUid] ??= ['summary' => $summary, 'dates' => [], 'times' => [], 'endTimes' => []];
                 $occurrences[$sourceUid]['summary'] = $summary;
 
@@ -168,8 +175,8 @@ class CalendarEntrySyncService
                 }
             }
 
-            foreach ($occurrences as $sourceUid => $occurrence) {
-                foreach ($this->reconcile($calendar, $sourceUid, $occurrence['summary'], $occurrence['dates'], $occurrence['times'], $occurrence['endTimes']) as $outcome) {
+            foreach ($occurrences as $sourceUid => $grouped) {
+                foreach ($this->reconcile($calendar, $sourceUid, $grouped['summary'], $grouped['dates'], $grouped['times'], $grouped['endTimes'], $today) as $outcome) {
                     match ($outcome) {
                         self::OUTCOME_NEW => $new++,
                         self::OUTCOME_UPDATED => $updated++,
@@ -178,7 +185,7 @@ class CalendarEntrySyncService
                 }
             }
 
-            $result = new CalendarEntrySyncResult($new, $updated, $unchanged, $skippedRecurring, $skippedInvalid);
+            $result = new CalendarEntrySyncResult($new, $updated, $unchanged, $skippedInvalid);
 
             // Recorded here (not by callers) so both the admin-form save path
             // and the calendars:sync cron command keep this in sync consistently.
@@ -224,12 +231,10 @@ class CalendarEntrySyncService
      * no way to tell a moved occurrence from an unrelated one, and the
      * date-independent identity below would then make every occurrence of a
      * repeating summary look like one event whose dates keep changing.
-     *
-     * @param array<string, string> $event
      */
-    private function buildSourceUid(Calendar $calendar, array $event, string $summary, \DateTimeImmutable $start): string
+    private function buildSourceUid(Calendar $calendar, string $rawUid, string $summary, \DateTimeImmutable $start): string
     {
-        $rawUid = trim((string) ($event['UID'] ?? ''));
+        $rawUid = trim($rawUid);
         $suffix = '' !== $rawUid ? $rawUid : md5($summary.'-'.$start->format('Ymd'));
 
         $sourceUid = 'cal'.$calendar->getId().'-'.$suffix;
@@ -266,14 +271,33 @@ class CalendarEntrySyncService
      *
      * @return list<string> one OUTCOME_* per entry touched or left in place
      */
-    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates, array $times = [], array $endTimes = []): array
+    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates, array $times, array $endTimes, \DateTimeImmutable $today): array
     {
         ksort($dates);
         $existing = $this->repo->findBySource($calendar, $sourceUid);
 
+        // Nothing is filed behind today. A still-running multi-day event is
+        // read whole - it has to be, or its remaining days would be lost - so
+        // the days of it that have passed are dropped here rather than turned
+        // into rows nobody asked for.
+        foreach ($dates as $dateKey => $date) {
+            if ($date < $today) {
+                unset($dates[$dateKey], $times[$dateKey], $endTimes[$dateKey]);
+            }
+        }
+
         $matched = [];
         $spare = [];
         foreach ($existing as $entry) {
+            // A row for a day that has passed is left alone entirely: neither
+            // matched, nor reused for another date, nor removed. It was filed
+            // when it was still ahead, and clearing it out is the user's
+            // decision through deleteUnconfirmedPast() - not something a sync
+            // does behind their back an hour later.
+            if ($entry->getDate() < $today) {
+                continue;
+            }
+
             $key = $entry->getDate()->format('Y-m-d');
             if (isset($dates[$key]) && !isset($matched[$key])) {
                 $matched[$key] = $entry;
