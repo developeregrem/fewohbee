@@ -38,6 +38,9 @@ invoice.guest: Guest
 invoice.id: Invoice ID
 invoice.id.last: 'Latest: '
 invoice.number.missing.error: Please enter an invoice number before continuing.
+invoice.number.duplicate.error: This invoice number is already in use. Please choose a different one.
+invoice.number.range.hint: 'Number range: %range%'
+invoice.number.range.global: Default
 invoice.lastname: Last Name
 invoice.miscellaneous: Miscellaneous
 invoice.miscellaneous.position.amount: Number
@@ -111,8 +114,6 @@ invoice.settings.section.payment: Payment
 invoice.settings.xrechnung.contact.error: This field is required for the XRechnung profile.
 invoice.settings.form.error: Nothing was saved. Please correct the highlighted fields below.
 invoice.settings.xrechnung.required.hint: '* These fields are required for the XRechnung profile (B2G).'
-invoice.settings.active: Active
-invoice.settings.inactive: Inactive
 invoice.settings.help.general: The information entered here is required for the digital invoice export (e-invoice).
 invoice.settings.help.invoiceMail: Specifies the email address to which the response to an invoice can be sent.
 invoice.settings.flash.create.success: New settings added successfully.
@@ -120,7 +121,15 @@ invoice.settings.flash.edit.success: Settings edited successfully.
 invoice.settings.flash.delete.success: Settings deleted successfully.
 invoice.settings.title.einvoice: E-Invoice
 invoice.settings.title.template: Invoice Template
-invoice.settings.active.error: No settings marked as active for invoice export could be found.
+invoice.settings.active.error: No invoice details are configured for this invoice. Create a default record, or one for its branch, in the invoice settings.
+invoice.settings.section.scope: Scope
+invoice.settings.scope: These invoice details apply to
+invoice.settings.scope.help: These details are used for the electronic invoice (XML) only. What appears on the PDF invoice comes from the invoice template and is not affected. If you run several branches under different companies, create one record per branch.
+invoice.settings.scope.default: Default – all branches without their own invoice details
+invoice.settings.scope.unused: Not in use
+invoice.settings.no_default.hint: No record is marked as the default. Branches without invoice details of their own – and invoices without a branch – therefore cannot produce an electronic invoice.
+invoice.settings.scope.new: New invoice details
+invoice.settings.subsidiary.taken: This branch already has invoice details assigned. There can only be one record per branch.
 invoice.settings.creditorReference.label: Creditor ID
 invoice.settings.creditorReference.hint: The unique identifier for SEPA direct debit
 invoice.settings.paymentterm.error: At least one of the fields "Payment Terms" or "Payment Due Days" must be filled.

@@ -24,6 +24,7 @@ use App\Entity\InvoicePosition;
 use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Entity\Enum\InvoiceStatus;
 use App\Service\EInvoice\EInvoiceExportService;
@@ -37,12 +38,20 @@ use App\Service\AppSettingsService;
 
 class InvoiceService
 {
+    /**
+     * Session key holding the number this service last suggested. Comparing against it is
+     * how {@see prepareInCreationInvoice()} tells an untouched suggestion — which may be
+     * regenerated — from a number the user typed, which must never be overwritten.
+     */
+    public const SESSION_SUGGESTED_NUMBER = 'newInvoiceSuggestedNumber';
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly PriceService $ps,
         private readonly TranslatorInterface $translator,
         private readonly AppSettingsService $appSettingsService,
         private readonly ?TouristTaxService $touristTaxService = null,
+        private readonly ?InvoiceNumberGenerator $numberGenerator = null,
     ) {
     }
 
@@ -250,6 +259,83 @@ class InvoiceService
         return (new ZugferdDocumentPdfMerger($xml, $pdfOutput))
             ->generateDocument()
             ->downloadString();
+    }
+
+    /**
+     * Prepares the invoice held in the session during creation: defaults the date to today,
+     * assigns the branch derived from the selected reservations and fills in the next free
+     * number of that branch's range. A number the user has already typed is never overwritten.
+     *
+     * Falls back to incrementing the most recent invoice number when no range is configured,
+     * so installations that never set a pattern keep behaving exactly as before.
+     *
+     * Re-runs on every render of the positions screen, so going back and swapping to a
+     * reservation of another branch moves the number into that branch's range. A number the
+     * user edited by hand is recognised by differing from the last suggestion and is kept.
+     *
+     * @param list<Reservation> $reservations
+     */
+    public function prepareInCreationInvoice(Invoice $invoice, array $reservations, RequestStack $requestStack): void
+    {
+        // Date first — the number range renders year and month from it. Passing null keeps
+        // this call to the date default; the number is resolved below.
+        $this->ensureInvoiceCreationMeta($invoice, null);
+        $invoice->setSubsidiary($this->resolveSubsidiary($reservations));
+
+        $session = $requestStack->getSession();
+        $current = trim((string) $invoice->getNumber());
+        $lastSuggestion = (string) $session->get(self::SESSION_SUGGESTED_NUMBER, '');
+
+        // Anything the user typed themselves wins and is never regenerated.
+        if ('' !== $current && $current !== $lastSuggestion) {
+            return;
+        }
+
+        $suggestion = $this->numberGenerator?->generateNext($invoice->getSubsidiary(), $invoice->getDate());
+        if (null === $suggestion) {
+            // No range configured: keep incrementing the most recent number as before.
+            $suggestion = $this->determineNextInvoiceNumber(
+                $this->em->getRepository(Invoice::class)->getLastInvoiceId()
+            );
+        }
+
+        if (null !== $suggestion) {
+            $invoice->setNumber($suggestion);
+            $session->set(self::SESSION_SUGGESTED_NUMBER, $suggestion);
+        }
+    }
+
+    /**
+     * Branch the given reservations belong to, via Reservation -> Appartment -> Subsidiary.
+     *
+     * Returns null when there are no reservations, when none of them carries a room, or when
+     * they span more than one branch. In all three cases the caller falls back to the global
+     * number range and the global issuer settings — a cross-branch invoice is a legitimate
+     * operation and must not be blocked.
+     *
+     * @param list<Reservation> $reservations
+     */
+    public function resolveSubsidiary(array $reservations): ?Subsidiary
+    {
+        $found = null;
+
+        foreach ($reservations as $reservation) {
+            $subsidiary = $reservation?->getAppartment()?->getObject();
+            if (!$subsidiary instanceof Subsidiary) {
+                continue;
+            }
+
+            if (null === $found) {
+                $found = $subsidiary;
+                continue;
+            }
+
+            if ($found->getId() !== $subsidiary->getId()) {
+                return null;
+            }
+        }
+
+        return $found;
     }
 
     /**
@@ -911,6 +997,7 @@ class InvoiceService
         $requestStack->getSession()->remove('new-invoice-id');
         $requestStack->getSession()->remove('invoiceDate');
         $requestStack->getSession()->remove('newInvoice');
+        $requestStack->getSession()->remove(self::SESSION_SUGGESTED_NUMBER);
     }
 
     /**

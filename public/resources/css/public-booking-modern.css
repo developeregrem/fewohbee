@@ -1,0 +1,1037 @@
+/*
+ * Public booking — "modern" theme.
+ *
+ * Every visual value is driven by a `--fhb-*` custom property so hoteliers can
+ * restyle the whole page from the custom CSS field without fighting Bootstrap
+ * selectors. The base template only assigns the properties that are configurable
+ * in the settings (primary colour, background); all remaining defaults live here.
+ *
+ * The classic theme is a separate, frozen stylesheet-in-template — never load both.
+ */
+
+.fhb-booking-root {
+    /* Palette */
+    --fhb-primary: #1f6feb;
+    --fhb-primary-contrast: #fff;
+    --fhb-bg: #f6f8fb;
+    --fhb-surface: #fff;
+    --fhb-surface-muted: #f7f8fa;
+    --fhb-text: #14181f;
+    --fhb-text-muted: #5c6672;
+    --fhb-border: rgba(16, 24, 40, 0.1);
+    --fhb-danger: #b42318;
+    --fhb-success: #067647;
+    --fhb-occupancy-icon-color: var(--fhb-primary);
+
+    /* Shape & rhythm */
+    --fhb-radius: 14px;
+    --fhb-radius-sm: 9px;
+    --fhb-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px rgba(16, 24, 40, 0.06);
+    --fhb-space: 1rem;
+    --fhb-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --fhb-heading-weight: 600;
+    --fhb-max-width: 760px;
+
+    background: var(--fhb-bg);
+    color: var(--fhb-text);
+    font-family: var(--fhb-font-family);
+    font-size: 1rem;
+    line-height: 1.55;
+    padding: calc(var(--fhb-space) * 2) var(--fhb-space);
+}
+
+.fhb-booking-root.fhb-embed {
+    /* Embedded in a host page: stay transparent so the surrounding design shows
+       through, unless the hotelier picked an explicit background colour. */
+    padding: 0;
+}
+
+/* Map the design tokens onto the Bootstrap components we still use
+   (form controls, alerts, modal, carousel, collapse). */
+.fhb-booking-root {
+    --bs-body-font-family: var(--fhb-font-family);
+    --bs-body-color: var(--fhb-text);
+    --bs-border-radius: var(--fhb-radius-sm);
+    --bs-border-color: var(--fhb-border);
+}
+
+.fhb-booking-root .btn-primary {
+    --bs-btn-bg: var(--fhb-primary);
+    --bs-btn-border-color: var(--fhb-primary);
+    --bs-btn-color: var(--fhb-primary-contrast);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--fhb-primary) 86%, black);
+    --bs-btn-hover-border-color: color-mix(in srgb, var(--fhb-primary) 86%, black);
+    --bs-btn-hover-color: var(--fhb-primary-contrast);
+    --bs-btn-active-bg: color-mix(in srgb, var(--fhb-primary) 76%, black);
+    --bs-btn-active-border-color: color-mix(in srgb, var(--fhb-primary) 76%, black);
+    --bs-btn-disabled-bg: color-mix(in srgb, var(--fhb-primary) 45%, white);
+    --bs-btn-disabled-border-color: color-mix(in srgb, var(--fhb-primary) 45%, white);
+}
+
+.fhb-booking-root .btn-outline-primary {
+    --bs-btn-color: var(--fhb-primary);
+    --bs-btn-border-color: var(--fhb-primary);
+    --bs-btn-hover-bg: var(--fhb-primary);
+    --bs-btn-hover-border-color: var(--fhb-primary);
+    --bs-btn-hover-color: var(--fhb-primary-contrast);
+    --bs-btn-active-bg: var(--fhb-primary);
+    --bs-btn-active-border-color: var(--fhb-primary);
+}
+
+.fhb-booking-root .text-primary {
+    color: var(--fhb-primary) !important;
+}
+
+.fhb-booking-root .btn {
+    border-radius: var(--fhb-radius-sm);
+    font-weight: 500;
+    padding: 0.6rem 1.25rem;
+}
+
+.fhb-booking-root .form-control,
+.fhb-booking-root .form-select {
+    border-color: var(--fhb-border);
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    padding: 0.55rem 0.75rem;
+}
+
+.fhb-booking-root .form-control:focus,
+.fhb-booking-root .form-select:focus {
+    border-color: var(--fhb-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--fhb-primary) 18%, transparent);
+}
+
+.fhb-booking-root .alert {
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius-sm);
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.fhb-shell {
+    margin: 0 auto;
+    max-width: var(--fhb-max-width);
+}
+
+.fhb-booking-card {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    box-shadow: var(--fhb-shadow);
+    padding: calc(var(--fhb-space) * 1.75);
+}
+
+.fhb-embed .fhb-booking-card {
+    box-shadow: none;
+}
+
+.fhb-title {
+    font-size: 1.5rem;
+    font-weight: var(--fhb-heading-weight);
+    letter-spacing: -0.015em;
+    margin: 0 0 calc(var(--fhb-space) * 1.25);
+}
+
+.fhb-section {
+    margin-top: calc(var(--fhb-space) * 1.75);
+}
+
+.fhb-section-title {
+    font-size: 1.0625rem;
+    font-weight: var(--fhb-heading-weight);
+    margin: 0 0 calc(var(--fhb-space) * 0.75);
+}
+
+.fhb-divider {
+    background: var(--fhb-border);
+    border: 0;
+    height: 1px;
+    margin: calc(var(--fhb-space) * 1.75) 0 0;
+}
+
+.fhb-scroll-target {
+    scroll-margin-top: 1rem;
+}
+
+/* The auto-scroll script focuses this element to move screen readers along.
+   It is not keyboard-reachable (tabindex="-1"), so the focus ring would only
+   ever be visual noise after submitting a step. */
+.fhb-scroll-target:focus {
+    outline: none;
+}
+
+.fhb-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(var(--fhb-space) * 1.25);
+}
+
+.fhb-hint {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+}
+
+/* ── Step indicator ────────────────────────────────────────────────────── */
+
+.fhb-steps {
+    display: flex;
+    gap: 0;
+    list-style: none;
+    margin: 0 0 calc(var(--fhb-space) * 1.5);
+    padding: 0;
+}
+
+.fhb-step {
+    align-items: center;
+    display: flex;
+    flex: 1 1 0;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.fhb-step-marker {
+    align-items: center;
+    background: var(--fhb-surface-muted);
+    border: 1px solid var(--fhb-border);
+    border-radius: 50%;
+    color: var(--fhb-text-muted);
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    height: 28px;
+    justify-content: center;
+    width: 28px;
+}
+
+.fhb-step-label {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fhb-step-line {
+    background: var(--fhb-border);
+    flex: 1 1 auto;
+    height: 1px;
+    margin: 0 0.5rem;
+    min-width: 0.5rem;
+}
+
+.fhb-step.is-active .fhb-step-marker {
+    background: var(--fhb-primary);
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary-contrast);
+}
+
+.fhb-step.is-active .fhb-step-label {
+    color: var(--fhb-text);
+    font-weight: 500;
+}
+
+.fhb-step.is-done .fhb-step-marker {
+    background: color-mix(in srgb, var(--fhb-primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--fhb-primary) 35%, transparent);
+    color: var(--fhb-primary);
+}
+
+/* ── Search ────────────────────────────────────────────────────────────── */
+
+.fhb-search-grid {
+    display: grid;
+    gap: var(--fhb-space);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* The calendar owns the date choice once it is running. The inputs stay in the
+   DOM — they carry the values and are what a visitor without JavaScript uses. */
+.fhb-calendar-active [data-fhb-date-fallback] {
+    display: none;
+}
+
+.fhb-cal-status {
+    font-weight: 500;
+}
+
+.fhb-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.fhb-label {
+    color: var(--fhb-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.fhb-stepper {
+    align-items: stretch;
+    display: flex;
+    gap: 0.35rem;
+}
+
+.fhb-stepper .form-control {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    text-align: center;
+}
+
+.fhb-stepper .form-control::-webkit-outer-spin-button,
+.fhb-stepper .form-control::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.fhb-stepper-btn {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    width: 42px;
+}
+
+.fhb-stepper-btn:hover {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-children-toggle {
+    align-items: center;
+    color: var(--fhb-primary);
+    display: inline-flex;
+    font-size: 0.9rem;
+    gap: 0.5rem;
+    margin-top: var(--fhb-space);
+    text-decoration: none;
+}
+
+.fhb-children-toggle:hover {
+    text-decoration: underline;
+}
+
+.fhb-children-toggle .fhb-chevron {
+    transition: transform 0.15s ease-in-out;
+}
+
+.fhb-children-toggle[aria-expanded="true"] .fhb-chevron {
+    transform: rotate(90deg);
+}
+
+.fhb-child-ages {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    margin-top: 0.75rem;
+}
+
+/* ── Availability calendar ─────────────────────────────────────────────── */
+
+.fhb-calendar {
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    margin-bottom: calc(var(--fhb-space) * 1.5);
+    padding: calc(var(--fhb-space) * 1.1);
+}
+
+.fhb-cal-head {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: space-between;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-legend {
+    color: var(--fhb-text-muted);
+    display: flex;
+    font-size: 0.8125rem;
+    gap: 0.9rem;
+}
+
+.fhb-cal-legend-item {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.fhb-cal-swatch {
+    border: 1px solid var(--fhb-border);
+    border-radius: 4px;
+    display: inline-block;
+    height: 12px;
+    width: 12px;
+}
+
+.fhb-cal-swatch.is-free {
+    background: var(--fhb-surface);
+}
+
+.fhb-cal-swatch.is-busy {
+    background: var(--fhb-surface-muted);
+    position: relative;
+    overflow: hidden;
+}
+
+.fhb-cal-swatch.is-busy::after {
+    background: var(--fhb-text-muted);
+    content: "";
+    height: 1px;
+    left: -2px;
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: rotate(-45deg);
+}
+
+.fhb-cal-rooms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-room {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: 999px;
+    color: var(--fhb-text);
+    font-size: 0.875rem;
+    padding: 0.35rem 0.9rem;
+}
+
+.fhb-cal-room:hover {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-cal-room.is-active {
+    background: var(--fhb-primary);
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary-contrast);
+}
+
+.fhb-cal-room-select {
+    margin-bottom: var(--fhb-space);
+    max-width: 320px;
+}
+
+/* Breakpoint-free: the embed width is set by the host page and rarely matches a
+   device width, so the number of month columns follows the actual space. */
+.fhb-cal-grid {
+    display: grid;
+    gap: calc(var(--fhb-space) * 1.25);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Without a ceiling, a single month stretched across a wide column would blow the
+   square day cells up to touch-target-gone-wrong proportions. */
+.fhb-cal-month {
+    margin: 0 auto;
+    max-width: 340px;
+    width: 100%;
+}
+
+.fhb-cal-caption {
+    font-weight: var(--fhb-heading-weight);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.fhb-cal-weekdays,
+.fhb-cal-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.fhb-cal-weekdays {
+    color: var(--fhb-text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    text-align: center;
+}
+
+.fhb-cal-day {
+    aspect-ratio: 1 / 1;
+    background: var(--fhb-surface);
+    border: 1px solid transparent;
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0;
+}
+
+.fhb-cal-day.is-empty {
+    visibility: hidden;
+}
+
+.fhb-cal-day:not(:disabled):hover {
+    border-color: var(--fhb-primary);
+}
+
+/* Occupied nights keep the number readable but are struck through, so the guest
+   sees the shape of the occupancy rather than a wall of blank cells. */
+.fhb-cal-day.is-busy {
+    background: var(--fhb-surface-muted);
+    color: var(--fhb-text-muted);
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.fhb-cal-day.is-between {
+    background: color-mix(in srgb, var(--fhb-primary) 14%, transparent);
+    border-radius: 0;
+}
+
+.fhb-cal-day.is-start,
+.fhb-cal-day.is-end {
+    background: var(--fhb-primary);
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary-contrast);
+    font-weight: 600;
+}
+
+.fhb-cal-foot {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-top: var(--fhb-space);
+}
+
+.fhb-cal-status {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+}
+
+@media (min-width: 576px) {
+    .fhb-cal-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (pointer: coarse) {
+    .fhb-cal-day {
+        font-size: 0.9375rem;
+    }
+}
+
+/* ── Room cards ────────────────────────────────────────────────────────── */
+
+.fhb-room-card {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    margin-bottom: var(--fhb-space);
+    /* Deliberately not overflow:hidden — amenity tooltips must be able to leave
+       the card. The image corners are clipped by their own wrapper instead. */
+}
+
+.fhb-room-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+.fhb-room-media-wrap {
+    border-radius: var(--fhb-radius) var(--fhb-radius) 0 0;
+    overflow: hidden;
+}
+
+.fhb-room-media {
+    aspect-ratio: 16 / 9;
+    background: var(--fhb-surface-muted);
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.fhb-room-media[role="button"] {
+    cursor: zoom-in;
+}
+
+.fhb-room-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: calc(var(--fhb-space) * 1.1);
+}
+
+.fhb-room-title {
+    font-size: 1.0625rem;
+    font-weight: var(--fhb-heading-weight);
+    margin: 0;
+}
+
+.fhb-room-meta {
+    color: var(--fhb-text-muted);
+    font-size: 0.8125rem;
+    margin-top: 0.15rem;
+}
+
+.fhb-room-desc {
+    color: var(--fhb-text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.fhb-gallery-link {
+    align-self: flex-start;
+    color: var(--fhb-primary);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    text-decoration: none;
+}
+
+.fhb-gallery-link:hover {
+    text-decoration: underline;
+}
+
+/* Amenity icon row — class names kept compatible with the classic theme. */
+.fhb-amenity-row {
+    align-items: center;
+    color: var(--fhb-text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.65rem;
+}
+
+/* Scoped to the row so these outrank the .fhb-tip display further down the
+   file — otherwise the collapsed amenities would show and the "+N" toggle
+   would appear to do nothing. */
+.fhb-amenity-row .fhb-amenity-hidden {
+    display: none;
+}
+
+.fhb-amenity-row.fhb-amenity-expanded .fhb-amenity-hidden {
+    display: inline-flex;
+}
+
+/* ── Gallery lightbox ──────────────────────────────────────────────────── */
+
+/* Embedded: the iframe is sized to its full content, so viewport-centred
+   positioning would drop the lightbox in the middle of the entire page. It is
+   anchored to the clicked image by public-booking.js instead. */
+.fhb-embed .modal {
+    bottom: auto;
+    height: auto;
+    position: absolute;
+}
+
+.fhb-embed .modal .modal-dialog-centered {
+    align-items: flex-start;
+    min-height: auto;
+}
+
+.fhb-embed .modal .modal-dialog {
+    margin-bottom: var(--fhb-space);
+    margin-top: var(--fhb-space);
+}
+
+/* ── Tooltip ───────────────────────────────────────────────────────────── */
+
+.fhb-room-adjustment {
+    align-items: center;
+    color: var(--fhb-text-muted);
+    display: flex;
+    font-size: 0.875rem;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.fhb-room-adjustment .fhb-tip {
+    color: var(--fhb-primary);
+}
+
+/* CSS-only on purpose: the native title attribute appears only after a browser
+   delay of about a second, and the vendored Bootstrap build ships without
+   Popper, so its tooltip component is unavailable here. */
+.fhb-tip {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    position: relative;
+}
+
+.fhb-tip:focus {
+    outline: none;
+}
+
+.fhb-tip:focus-visible {
+    border-radius: 3px;
+    outline: 2px solid var(--fhb-primary);
+    outline-offset: 3px;
+}
+
+.fhb-tip::after {
+    background: var(--fhb-text);
+    border-radius: var(--fhb-radius-sm);
+    bottom: calc(100% + 8px);
+    color: var(--fhb-surface);
+    content: attr(data-fhb-tip);
+    font-size: 0.8125rem;
+    left: 50%;
+    line-height: 1.3;
+    opacity: 0;
+    padding: 0.3rem 0.55rem;
+    pointer-events: none;
+    position: absolute;
+    text-align: center;
+    transform: translateX(-50%);
+    transition: opacity 0.1s ease-in-out;
+    /* Wrap rather than run off the side: the bubble is centred on its icon and
+       has no collision detection, so a long label on a narrow screen would
+       otherwise overflow the viewport. */
+    max-width: min(220px, 60vw);
+    width: max-content;
+    z-index: 20;
+}
+
+/* Arrow */
+.fhb-tip::before {
+    border: 5px solid transparent;
+    border-top-color: var(--fhb-text);
+    bottom: calc(100% + 3px);
+    content: "";
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    transition: opacity 0.1s ease-in-out;
+    z-index: 20;
+}
+
+.fhb-tip:hover::after,
+.fhb-tip:hover::before,
+.fhb-tip:focus::after,
+.fhb-tip:focus::before {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fhb-tip::after,
+    .fhb-tip::before {
+        transition: none;
+    }
+}
+
+.fhb-amenity-more {
+    cursor: pointer;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-decoration: underline dotted;
+}
+
+/* ── Occupancy options ─────────────────────────────────────────────────── */
+
+.fhb-occupancy {
+    border-top: 1px solid var(--fhb-border);
+    margin-top: var(--fhb-space);
+}
+
+.fhb-occupancy-row {
+    align-items: center;
+    border-bottom: 1px solid var(--fhb-border);
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+}
+
+.fhb-occupancy-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.fhb-occupancy-icons {
+    /* Without this the flex default (stretch) pulls the guest icons to the top
+       while the nested "+ infant" group centres its own — the two icon rows
+       would sit at different heights. */
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.fhb-occupancy-icon {
+    color: var(--fhb-occupancy-icon-color);
+    line-height: 1;
+}
+
+.fhb-occupancy-extra-guests {
+    align-items: center;
+    color: var(--fhb-text-muted);
+    display: inline-flex;
+    gap: 0.2rem;
+    margin-left: 0.35rem;
+}
+
+.fhb-occupancy-price {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.fhb-qty {
+    flex-shrink: 0;
+    width: 76px;
+}
+
+/* ── Extras ────────────────────────────────────────────────────────────── */
+
+.fhb-extras {
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    overflow: hidden;
+}
+
+.fhb-extra-row {
+    align-items: center;
+    border-bottom: 1px solid var(--fhb-border);
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem calc(var(--fhb-space) * 0.9);
+}
+
+.fhb-extra-row:last-child {
+    border-bottom: 0;
+}
+
+.fhb-extra-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.fhb-extra-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.fhb-extra-price {
+    color: var(--fhb-text-muted);
+    font-size: 0.8125rem;
+}
+
+.fhb-extra-badge {
+    background: var(--fhb-surface-muted);
+    border: 1px solid var(--fhb-border);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.5rem;
+}
+
+/* ── Summary & terms ───────────────────────────────────────────────────── */
+
+.fhb-booking-summary,
+.fhb-summary {
+    background: var(--fhb-surface-muted);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius);
+    margin-top: var(--fhb-space);
+    padding: calc(var(--fhb-space) * 1.1);
+}
+
+.fhb-summary-title {
+    color: var(--fhb-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fhb-summary-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    font-size: 0.9rem;
+}
+
+.fhb-summary-fact strong {
+    font-weight: 600;
+}
+
+.fhb-summary-selection {
+    color: var(--fhb-text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.fhb-summary-row {
+    display: flex;
+    font-size: 0.9rem;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.2rem 0;
+}
+
+.fhb-summary-row span:last-child {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.fhb-summary-group {
+    border-top: 1px solid var(--fhb-border);
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+}
+
+.fhb-summary-group-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.fhb-summary-subtle {
+    color: var(--fhb-text-muted);
+}
+
+.fhb-summary-total {
+    align-items: baseline;
+    border-top: 2px solid var(--fhb-border);
+    display: flex;
+    font-size: 1.05rem;
+    font-weight: 600;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+}
+
+.fhb-summary-total strong {
+    color: var(--fhb-primary);
+    font-size: 1.2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.fhb-terms {
+    font-size: 0.875rem;
+}
+
+.fhb-terms :last-child {
+    margin-bottom: 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (min-width: 576px) {
+    .fhb-search-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 768px) {
+    .fhb-room-layout {
+        flex-direction: row;
+    }
+
+    .fhb-room-media-wrap {
+        border-radius: var(--fhb-radius) 0 0 var(--fhb-radius);
+        flex-shrink: 0;
+        width: 240px;
+    }
+
+    .fhb-room-media {
+        aspect-ratio: auto;
+        min-height: 100%;
+    }
+
+    .fhb-room-body {
+        flex-grow: 1;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .fhb-booking-card {
+        padding: var(--fhb-space);
+    }
+
+    .fhb-step-label {
+        display: none;
+    }
+
+    .fhb-step {
+        flex: 0 0 auto;
+    }
+
+    .fhb-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Touch targets stay comfortable on coarse pointers. */
+@media (pointer: coarse) {
+    .fhb-stepper-btn {
+        min-height: 44px;
+    }
+}
+
+.fhb-cal-capacity {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-left: 0.4rem;
+}
+
+.fhb-cal-room-capacity {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+/* Plain-language read-out of the party under the guest inputs. */
+.fhb-guest-summary {
+    color: var(--fhb-text-muted);
+    font-size: 0.875rem;
+    margin: 0.6rem 0 0;
+}
+
+/* Month paging: keeps the calendar at a constant height, which matters most in an
+   auto-sized iframe where a growing widget would make the host page jump. */
+.fhb-cal-nav {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: var(--fhb-space);
+}
+
+.fhb-cal-nav-btn {
+    background: var(--fhb-surface);
+    border: 1px solid var(--fhb-border);
+    border-radius: var(--fhb-radius-sm);
+    color: var(--fhb-text);
+    font-size: 1.25rem;
+    line-height: 1;
+    min-height: 38px;
+    width: 42px;
+}
+
+.fhb-cal-nav-btn:hover:not(:disabled) {
+    border-color: var(--fhb-primary);
+    color: var(--fhb-primary);
+}
+
+.fhb-cal-nav-btn:disabled {
+    opacity: 0.4;
+}
+
+.fhb-cal-jump {
+    max-width: 220px;
+}

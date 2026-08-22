@@ -13,7 +13,7 @@
 {% set standAloneUrl = absolute_url(path('public.booking')) %}
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
 {% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
-<script>window.addEventListener("message",function(e){if(e.data&&e.data.type==="fhb-resize"){document.getElementById("fhb-booking").style.height=e.data.height+"px"}});</script>{% endset %}
+<script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
 <div class="container" data-controller="settings online-booking-settings online-booking-restrictions"
      data-online-booking-restrictions-restore-hash-value="online-booking-overrides">
     <div class="row justify-content-center">
@@ -51,7 +51,6 @@
                     <div class="small mb-2">{{ 'online_booking.settings.form_invalid_hint'|trans }}</div>
                     <div class="small">
                         {{ form_errors(form.enabled) }}
-                        {{ form_errors(form.confirmationEmailTemplateId) }}
                         {{ form_errors(form.inquiryReservationStatusId) }}
                         {{ form_errors(form.bookingReservationStatusId) }}
                         {{ form_errors(form.reservationOriginId) }}
@@ -73,6 +72,54 @@
                     </div>
                     <div class="row mt-2">
                         <div class="col-md-6">{{ form_row(form.bookingHorizonMonths) }}</div>
+                    </div>
+
+                    {# Entry point for guests. Rendered like the design picker so the
+                       trade-off between both modes is visible at a glance. #}
+                    {% set isCalendarMode = form.vars.value.mode.value == 'calendar' %}
+                    <div class="border rounded mb-3">
+                        <div class="px-3 py-2 bg-body-secondary border-bottom">
+                            <p class="fw-semibold small mb-0">{{ 'online_booking.settings.mode'|trans }}</p>
+                            <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.mode_help'|trans }}</p>
+                        </div>
+                        <div class="p-3 row row-cols-1 row-cols-md-2 g-2">
+                            {% for choice in form.mode %}
+                                {% set modeValue = choice.vars.value %}
+                                <div class="col">
+                                    <div class="border rounded h-100 p-3">
+                                        {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
+                                        <p class="small text-body-secondary mb-0 mt-1">
+                                            {{ ('online_booking.settings.mode_' ~ modeValue ~ '_help')|trans }}
+                                            {% if modeValue == 'calendar' %}
+                                                <span class="ms-1 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+                                                      title="{{ 'online_booking.settings.mode_calendar_limits'|trans }}">
+                                                    <i class="fas fa-circle-question"></i>
+                                                </span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if isCalendarMode %}
+                            <div class="px-3 pb-3">
+                                {% if form.vars.value.theme.value != 'modern' %}
+                                    <div class="alert alert-warning py-2 small mb-2">
+                                        <i class="fas fa-triangle-exclamation me-1"></i>{{ 'online_booking.settings.calendar_needs_modern'|trans }}
+                                    </div>
+                                {% endif %}
+                                {% if calendarEligibleRoomCount == 0 %}
+                                    <div class="alert alert-warning py-2 small mb-0">
+                                        <i class="fas fa-triangle-exclamation me-1"></i>{{ 'online_booking.settings.calendar_no_rooms'|trans }}
+                                    </div>
+                                {% elseif calendarEligibleRoomCount > 1 %}
+                                    <div class="alert alert-info py-2 small mb-0">
+                                        <i class="fas fa-circle-info me-1"></i>{{ 'online_booking.settings.calendar_many_rooms'|trans({'%count%': calendarEligibleRoomCount}) }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {{ form_errors(form.mode) }}
                     </div>
                     <hr class="my-3">
                     {{ form_row(form.allowedEmbeddingOrigins) }}
@@ -169,9 +216,60 @@
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_theme_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
+                    {# Design picker: one selectable card per theme with a preview link.
+                       Rendered without form_row/form_label because the horizontal form theme
+                       would right-align the label into its own grid column. #}
+                    <div class="border rounded mb-3">
+                        <div class="px-3 py-2 bg-body-secondary border-bottom">
+                            <p class="fw-semibold small mb-0">{{ 'online_booking.settings.theme'|trans }}</p>
+                            <p class="text-body-secondary small mb-0">{{ 'online_booking.settings.theme_help'|trans }}</p>
+                        </div>
+                        <div class="p-3 row row-cols-1 row-cols-md-2 g-2">
+                            {% for choice in form.theme %}
+                                {% set themeValue = choice.vars.value %}
+                                <div class="col">
+                                    <div class="border rounded h-100 p-3">
+                                        {{ form_widget(choice, {'label_attr': {'class': 'fw-semibold'}}) }}
+                                        <p class="small text-body-secondary mb-1 mt-1">
+                                            {{ ('online_booking.settings.theme_' ~ themeValue ~ '_help')|trans }}
+                                        </p>
+                                        <a class="small text-decoration-none" target="_blank" rel="noopener"
+                                           href="{{ path('public.booking', {'previewTheme': themeValue}) }}">
+                                            <i class="fas fa-arrow-up-right-from-square me-1"></i>{{ 'online_booking.settings.theme_preview'|trans }}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="px-3 pb-2">
+                            {{ form_errors(form.theme) }}
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.themePrimaryColor) }}</div>
-                        <div class="col-md-6">{{ form_row(form.themeBackgroundColor) }}</div>
+                        {# One row for the background: the switch and the picker sit side by
+                           side under a single label, since the picker only matters while the
+                           switch is on. Rendered by hand because the horizontal form theme
+                           would otherwise stack them as two separate rows. #}
+                        <div class="col-md-6">
+                            <div class="row mb-3">
+                                <label class="col-sm-4 text-end col-form-label" for="{{ form.themeBackgroundColor.vars.id }}">
+                                    {{ 'online_booking.settings.theme_background'|trans }}
+                                </label>
+                                <div class="col-sm-8">
+                                    <div class="d-flex align-items-center gap-3">
+                                        {# form_widget renders the checkbox together with its
+                                           label, so adding one here would show it twice. #}
+                                        {{ form_widget(form.useBackgroundColor) }}
+                                        <div data-online-booking-settings-target="backgroundColorWrap">
+                                            {{ form_widget(form.themeBackgroundColor) }}
+                                        </div>
+                                    </div>
+                                    <div class="form-text">{{ 'online_booking.settings.theme_background_help'|trans }}</div>
+                                    {{ form_errors(form.themeBackgroundColor) }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="mt-2">
                         <a class="small text-body-secondary text-decoration-none" data-bs-toggle="collapse" href="#customCssCollapse" role="button" aria-expanded="{{ form.vars.value.customCss ? 'true' : 'false' }}" aria-controls="customCssCollapse">
@@ -186,14 +284,25 @@
                 </div>
             </div>
 
-            {# ── Templates & Status ── #}
+            {# ── Confirmation workflow & status ── #}
             <div class="card mb-3">
                 <div class="card-header">
                     <h5 class="card-title fs-6 mb-0"><i class="fas fa-envelope-open-text text-primary me-2"></i>{{ 'online_booking.settings.section_templates_status'|trans }}</h5>
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_templates_status_desc'|trans }}</p>
                 </div>
                 <div class="card-body">
-                    {{ form_row(form.confirmationEmailTemplateId) }}
+                    <p class="text-body-secondary small mb-2">
+                        {{ 'online_booking.settings.confirmation_workflow_help'|trans }}
+                    </p>
+                    {% if bookingConfirmationWorkflow %}
+                        {% include 'Settings/Workflow/_workflow_card.html.twig' with {
+                            workflow: bookingConfirmationWorkflow,
+                        } only %}
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ 'online_booking.settings.confirmation_workflow_missing'|trans }}
+                        </div>
+                    {% endif %}
                     <div class="row">
                         <div class="col-md-6">{{ form_row(form.inquiryReservationStatusId) }}</div>
                         <div class="col-md-6">{{ form_row(form.bookingReservationStatusId) }}</div>

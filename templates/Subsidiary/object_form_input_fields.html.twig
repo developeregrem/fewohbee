@@ -15,5 +15,16 @@
                    value="{{ object.description }}" required>
         </div>
     </div>
+    <div class="row mt-2">
+        <label for="invoice-number-pattern-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.invoice_number_pattern'|trans }}</label>
+
+        <div class="col-sm-8">
+            <input type="text" class="form-control" name="invoice-number-pattern-{{ object.id }}"
+                   id="invoice-number-pattern-{{ object.id }}" maxlength="100"
+                   placeholder="{{ 'object.invoice_number_pattern.placeholder'|trans }}"
+                   value="{{ object.invoiceNumberPattern }}">
+            <small class="form-text text-muted">{{ 'object.invoice_number_pattern.help'|trans|raw }}</small>
+        </div>
+    </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">

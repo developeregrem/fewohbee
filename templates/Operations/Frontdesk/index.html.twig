@@ -33,7 +33,7 @@
         </a>
     </div>
 
-    <form method="get" class="mb-3"
+    <form method="get" action="{{ path('operations.frontdesk') }}" class="mb-3"
           data-housekeeping-target="form"
           data-action="change->housekeeping#submitFilters">
         <div class="row g-2 align-items-end">
@@ -97,7 +97,7 @@
                                            value="{{ status.id }}"{% if status.id in selectedStatusIds or (statusDefault and status.isBlocking) %} checked{% endif %}>
                                     <span class="badge"
                                           style="background-color: {{ status.color }}; color: {{ status.contrastColor }};">
-                                        {{ status.name }}
+                                        {{ status|display_name }}
                                     </span>
                                 </label>
                             {% endfor %}

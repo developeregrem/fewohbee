@@ -1,28 +1,41 @@
 import { Controller } from '@hotwired/stimulus';
 import { createSimpleHtmlEditor } from '../js/simple-html-editor.js';
+import { enableTooltips, disposeTooltips } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
 export default class extends Controller {
-    static targets = ['subsidiariesWrap', 'roomsWrap', 'subsidiariesCount', 'roomsCount'];
+    static targets = ['subsidiariesWrap', 'roomsWrap', 'subsidiariesCount', 'roomsCount', 'backgroundColorWrap'];
 
     connect() {
         this.htmlEditors = [];
         this.refresh();
         this.initHtmlEditors();
+        enableTooltips(this.element);
         this.element.addEventListener('change', this.onChange);
     }
 
     disconnect() {
         this.element.removeEventListener('change', this.onChange);
         this.destroyHtmlEditors();
+        disposeTooltips(this.element);
     }
 
     onChange = () => {
         this.refresh();
     };
 
+    /** The colour picker is only meaningful while a custom background is switched on. */
+    refreshBackgroundColor() {
+        if (!this.hasBackgroundColorWrapTarget) {
+            return;
+        }
+        const toggle = this.element.querySelector('[name$="[useBackgroundColor]"]');
+        this.backgroundColorWrapTarget.hidden = !(toggle && toggle.checked);
+    }
+
     refresh() {
+        this.refreshBackgroundColor();
         this.toggleVisibility();
         this.updateCounts();
     }

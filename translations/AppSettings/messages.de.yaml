@@ -24,6 +24,8 @@ app_settings:
     currency_symbol: "Währungssymbol"
     invoice_filename_pattern: "Dateiname Rechnungsexport"
     invoice_filename_pattern_help: "Platzhalter: <code>&lt;company&gt;</code>, <code>&lt;lastname&gt;</code>, <code>&lt;firstname&gt;</code>, <code>&lt;status&gt;</code>, <code>&lt;payment&gt;</code>, <code>&lt;number&gt;</code>, <code>&lt;date&gt;</code>. Fallback-Syntax: <code>&lt;company|lastname&gt;</code>"
+    invoice_number_pattern: "Rechnungsnummern-Kreis (Standard)"
+    invoice_number_pattern_help: "Platzhalter: <code>&lt;year&gt;</code> (2026), <code>&lt;year2&gt;</code> (26), <code>&lt;month&gt;</code> (08), <code>&lt;day&gt;</code> (17), <code>&lt;number&gt;</code> (laufende Nummer, Stellenzahl über <code>&lt;number:4&gt;</code>). Beispiel: <code>RE-&lt;year&gt;-&lt;number:4&gt;</code> ergibt <code>RE-2026-0001</code>. Niederlassungen können einen eigenen Kreis festlegen. Leer lassen, um die Nummer wie bisher aus der zuletzt vergebenen hochzuzählen."
     customer_salutations: "Anreden"
     customer_salutations_help: "Kommagetrennte Liste der verfügbaren Anreden (z.B. Frau, Herr, Familie)."
     notification_email: "Empfänger-E-Mail"

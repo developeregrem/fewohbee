@@ -128,7 +128,7 @@ accounting:
       matched_invoice: Erkannte Rechnung anhand des Verwendungszwecks.
       invoice_matching_disabled:
         title: Automatische Rechnungserkennung ist deaktiviert.
-        help: In den Journal-Einstellungen sind keine Beispiel-Rechnungsnummern hinterlegt. Trage dort Beispiele ein, damit Rechnungen im Verwendungszweck erkannt werden können.
+        help: Es ist noch kein Nummernkreis konfiguriert. Lege unter Einstellungen → Allgemein einen Standard-Nummernkreis fest, damit Rechnungen im Verwendungszweck erkannt werden können.
       invoice_accounts:
         label: aus Rechnung
         help: Die Haben-Konten werden aus den Rechnungspositionen, Steuersätzen und Erlöskonten gebildet.

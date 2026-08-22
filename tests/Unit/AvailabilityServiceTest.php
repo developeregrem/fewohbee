@@ -7,6 +7,7 @@ namespace App\Tests\Unit;
 use App\Entity\Appartment;
 use App\Entity\Reservation;
 use App\Entity\RoomBlock;
+use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
@@ -94,6 +95,60 @@ final class AvailabilityServiceTest extends TestCase
         self::assertFalse($service->isRoomAvailable($room, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-05'), 3));
     }
 
+    public function testMultipleOccupancyCountsOnlySimultaneouslyOverlappingReservations(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setMultipleOccupancy(true);
+        $room->setBedsMax(5);
+
+        $first = self::makeReservation(10, '2026-08-07', '2026-08-09');
+        $first->setPersons(1);
+        $second = self::makeReservation(11, '2026-08-09', '2026-08-11');
+        $second->setPersons(2);
+        $service = $this->makeService([$first, $second], []);
+
+        self::assertTrue($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            3,
+        ));
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            4,
+        ));
+    }
+
+    public function testMultipleOccupancyUsesPeakAcrossConcurrentReservations(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setMultipleOccupancy(true);
+        $room->setBedsMax(6);
+
+        $spanning = self::makeReservation(10, '2026-08-07', '2026-08-11');
+        $spanning->setPersons(1);
+        $first = self::makeReservation(11, '2026-08-07', '2026-08-09');
+        $first->setPersons(2);
+        $second = self::makeReservation(12, '2026-08-09', '2026-08-11');
+        $second->setPersons(4);
+        $service = $this->makeService([$spanning, $first, $second], []);
+
+        self::assertTrue($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            1,
+        ));
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-08'),
+            new \DateTimeImmutable('2026-08-10'),
+            2,
+        ));
+    }
+
     public function testCountAvailablePerDayMixesReservationsAndBlocksDeduplicated(): void
     {
         $roomA = self::makeRoom(1);
@@ -171,6 +226,56 @@ final class AvailabilityServiceTest extends TestCase
         self::assertSame(['rooms' => 0, 'beds' => 0], $result['2026-08-04']);
     }
 
+    public function testOccupiedNightsForRoomTreatsDepartureDayAsFree(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setObject(new Subsidiary());
+
+        $reservationRepo = $this->createStub(ReservationRepository::class);
+        $reservationRepo->method('loadBlockingSpansForPeriod')->willReturn([
+            ['appartmentId' => 1, 'startDate' => '2026-08-02', 'endDate' => '2026-08-04'],
+        ]);
+
+        $service = new AvailabilityService(
+            $reservationRepo,
+            $this->createStub(RoomBlockRepository::class),
+            $this->createStub(AppartmentRepository::class)
+        );
+
+        $occupied = $service->getOccupiedNightsForRoom($room, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-06'));
+
+        self::assertArrayNotHasKey('2026-08-01', $occupied);
+        self::assertArrayHasKey('2026-08-02', $occupied);
+        self::assertArrayHasKey('2026-08-03', $occupied);
+        // Departure day: not an occupied night, so the next guest may arrive.
+        self::assertArrayNotHasKey('2026-08-04', $occupied);
+    }
+
+    public function testOccupiedNightsForRoomIncludesBlocksAndIgnoresOtherRooms(): void
+    {
+        $room = self::makeRoom(1);
+        $room->setObject(new Subsidiary());
+        $otherRoom = self::makeRoom(2);
+        $otherRoom->setObject(new Subsidiary());
+
+        $reservationRepo = $this->createStub(ReservationRepository::class);
+        $reservationRepo->method('loadBlockingSpansForPeriod')->willReturn([
+            ['appartmentId' => 2, 'startDate' => '2026-08-01', 'endDate' => '2026-08-05'],
+        ]);
+
+        $blockRepo = $this->createStub(RoomBlockRepository::class);
+        $blockRepo->method('findForPeriod')->willReturn([
+            self::makeBlock($room, '2026-08-03', '2026-08-04'),
+            self::makeBlock($otherRoom, '2026-08-01', '2026-08-05'),
+        ]);
+
+        $service = new AvailabilityService($reservationRepo, $blockRepo, $this->createStub(AppartmentRepository::class));
+
+        $occupied = $service->getOccupiedNightsForRoom($room, new \DateTimeImmutable('2026-08-01'), new \DateTimeImmutable('2026-08-06'));
+
+        self::assertSame(['2026-08-03'], array_keys($occupied));
+    }
+
     /**
      * @param Reservation[] $overlappingReservations
      * @param RoomBlock[]   $overlappingBlocks
@@ -184,6 +289,71 @@ final class AvailabilityServiceTest extends TestCase
         $blockRepo->method('findOverlappingForApartment')->willReturn($overlappingBlocks);
 
         return new AvailabilityService($reservationRepo, $blockRepo, $this->createStub(AppartmentRepository::class));
+    }
+
+    public function testPreloadedOccupancyTreatsRoomWithoutReservationsAsFree(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1);
+
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy($room, []));
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy($room, [1 => ['reservationCount' => 0, 'persons' => 0]]));
+    }
+
+    public function testPreloadedOccupancyBlocksSingleOccupancyRoomOnAnyReservation(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1);
+
+        self::assertFalse($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
+    }
+
+    public function testPreloadedOccupancyLetsMultipleOccupancyRoomKeepFreeBeds(): void
+    {
+        $service = $this->makeService([], []);
+        $room = self::makeRoom(1)->setMultipleOccupancy(true);
+
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
+        self::assertFalse($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 2]],
+        ));
+    }
+
+    /**
+     * The two predicates answer different questions and must keep doing so.
+     *
+     * `isRoomAvailable()` is asked with the party size and rejects a shared room
+     * that could not fit them; the preloaded variant is evaluated while the room
+     * list is being built, before any party size is known, and only asks whether a
+     * bed is left at all. Collapsing the two would silently change what the public
+     * search lists.
+     */
+    public function testPreloadedPredicateIgnoresRequestedPartySizeUnlikeFullCheck(): void
+    {
+        $room = self::makeRoom(1)->setMultipleOccupancy(true);
+        $reservation = self::makeReservation(1, '2026-08-01', '2026-08-05');
+        $reservation->setPersons(1);
+        $service = $this->makeService([$reservation], []);
+
+        // One bed left, two more guests requested: the full check says no …
+        self::assertFalse($service->isRoomAvailable(
+            $room,
+            new \DateTimeImmutable('2026-08-01'),
+            new \DateTimeImmutable('2026-08-05'),
+            2,
+        ));
+        // … while the room still qualifies for the public list.
+        self::assertTrue($service->isRoomAvailableFromPreloadedOccupancy(
+            $room,
+            [1 => ['reservationCount' => 1, 'persons' => 1]],
+        ));
     }
 
     private static function makeRoom(int $id): Appartment

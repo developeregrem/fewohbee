@@ -79,9 +79,146 @@ class InvoiceRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Invoices issued within the period, with line items eager-loaded so that
+     * totals can be computed without extra queries.
+     *
+     * @param int[] $status empty = no status filter
+     *
+     * @return Invoice[]
+     */
+    public function findForPeriod(\DateTimeInterface $start, \DateTimeInterface $end, array $status = []): array
+    {
+        $qb = $this
+            ->createQueryBuilder('i')
+            ->select('i', 'ip', 'ia')
+            ->leftJoin('i.positions', 'ip')
+            ->leftJoin('i.appartments', 'ia')
+            ->andWhere('i.date >= :start')
+            ->andWhere('i.date <= :end')
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->orderBy('i.date', 'ASC')
+            ->addOrderBy('i.id', 'ASC')
+        ;
+
+        if ([] !== $status) {
+            $qb->andWhere('i.status IN (:status)')
+                ->setParameter('status', $status, ArrayParameterType::INTEGER);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Compact invoice data for the given reservations, grouped by reservation id.
+     * Avoids lazy-loading the invoice collection per reservation (N+1).
+     *
+     * @param int[] $reservationIds
+     *
+     * @return array<int, list<array{id: int, number: string, date: \DateTimeInterface, status: int}>>
+     */
+    public function findSummariesByReservationIds(array $reservationIds): array
+    {
+        if ([] === $reservationIds) {
+            return [];
+        }
+
+        $rows = $this
+            ->createQueryBuilder('i')
+            ->select('r.id AS reservationId', 'i.id AS id', 'i.number AS number', 'i.date AS date', 'i.status AS status')
+            ->join('i.reservations', 'r')
+            ->andWhere('r.id IN (:ids)')
+            ->setParameter('ids', $reservationIds, ArrayParameterType::INTEGER)
+            ->orderBy('i.date', 'ASC')
+            ->addOrderBy('i.id', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[(int) $row['reservationId']][] = $row;
+        }
+
+        return $grouped;
+    }
+
     public function findOneByNumber(string $number): ?Invoice
     {
         return $this->findOneBy(['number' => $number]);
+    }
+
+    /**
+     * Invoice numbers already issued within one rendered number range, e.g. '2026-%'.
+     *
+     * Ordered so the highest running sequence comes first: by length before value,
+     * because a sequence that outgrew its padding ('2026-10000') is longer than
+     * '2026-9999' but would sort *before* it lexically. Within a single LIKE expression
+     * every segment except the sequence has a fixed width, so this ordering is exact.
+     *
+     * Capped at $limit because the caller only needs the highest parseable entry;
+     * hand-edited noise inside the range is skipped there.
+     *
+     * @return list<string>
+     */
+    public function findNumbersInRange(string $likePattern, int $limit = 25): array
+    {
+        $rows = $this->createQueryBuilder('i')
+            ->select('i.number')
+            ->andWhere('i.number LIKE :likePattern')
+            ->setParameter('likePattern', $likePattern)
+            ->orderBy('LENGTH(i.number)', 'DESC')
+            ->addOrderBy('i.number', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(static fn (array $row): string => (string) $row['number'], $rows);
+    }
+
+    /**
+     * The most recently issued invoice numbers, newest first.
+     *
+     * Shown as orientation where a number range has to be written: the existing numbers say
+     * more about the format actually in use — prefix, separators, how many digits — than any
+     * example could. Migration output cannot serve that purpose, since updates usually run
+     * unattended.
+     *
+     * @return list<string>
+     */
+    public function findRecentNumbers(int $limit = 3): array
+    {
+        $rows = $this->createQueryBuilder('i')
+            ->select('i.number')
+            ->andWhere("i.number <> ''")
+            ->orderBy('i.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(static fn (array $row): string => (string) $row['number'], $rows);
+    }
+
+    /**
+     * How many invoices already carry this exact number.
+     *
+     * $excludeInvoiceId skips one invoice, which is what re-numbering an existing
+     * invoice needs so it does not collide with itself.
+     */
+    public function countByNumber(string $number, ?int $excludeInvoiceId = null): int
+    {
+        $qb = $this->createQueryBuilder('i')
+            ->select('COUNT(i.id)')
+            ->andWhere('i.number = :number')
+            ->setParameter('number', $number);
+
+        if (null !== $excludeInvoiceId) {
+            $qb->andWhere('i.id <> :excludeId')
+                ->setParameter('excludeId', $excludeInvoiceId);
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**

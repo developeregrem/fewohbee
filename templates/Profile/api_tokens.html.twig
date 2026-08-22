@@ -1,0 +1,110 @@
+{% use "common/delete_popover.html.twig" %}
+{% trans_default_domain 'messages' %}
+<div class="row mb-4">
+    <div class="col-lg">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h4 class="card-tittle">{{ 'profile.apitokens.title'|trans }}</h4>
+                <p class="card-subtitle text-muted">{{ 'profile.apitokens.subtitle'|trans }}</p>
+
+                {% if newApiToken %}
+                    <div class="alert alert-success mt-3" data-controller="copy">
+                        <p class="mb-2"><strong>{{ 'profile.apitokens.created_once_hint'|trans }}</strong></p>
+                        <div class="input-group">
+                            <input type="text" class="form-control font-monospace" readonly value="{{ newApiToken }}" data-copy-target="input">
+                            <button type="button" class="btn btn-outline-secondary shadow-none" data-action="copy#copy" data-copy-hint-value="{{ 'profile.apitokens.copied'|trans }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <p class="mb-0 mt-2 small text-muted">{{ 'profile.apitokens.usage_hint'|trans }}</p>
+                    </div>
+                {% endif %}
+
+                <table class="table table-bordered table-hover mt-3">
+                    <thead>
+                        <tr>
+                            <th>{{ 'profile.apitokens.name'|trans }}</th>
+                            <th>{{ 'profile.apitokens.token'|trans }}</th>
+                            <th>{{ 'profile.apitokens.scopes.label'|trans }}</th>
+                            <th>{{ 'profile.apitokens.created_at'|trans }}</th>
+                            <th>{{ 'profile.apitokens.last_used'|trans }}</th>
+                            <th>{{ 'profile.apitokens.expiry.label'|trans }}</th>
+                            <th>{{ 'profile.apitokens.actions'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for apiToken in apiTokens %}
+                            <tr>
+                                <td>{{ apiToken.name }}</td>
+                                <td class="font-monospace">{{ apiToken.tokenPrefix }}&hellip;</td>
+                                <td>
+                                    {% for scope in apiToken.scopes %}
+                                        <span class="badge text-bg-secondary">{{ scope }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>{{ apiToken.createdAt|date('Y-m-d H:i') }}</td>
+                                <td>
+                                    {% if apiToken.lastUsedAt %}
+                                        {{ apiToken.lastUsedAt|date('Y-m-d H:i') }}
+                                    {% else %}
+                                        <span class="text-muted">{{ 'profile.apitokens.never'|trans }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if apiToken.expiresAt %}
+                                        {{ apiToken.expiresAt|date('Y-m-d') }}
+                                    {% else %}
+                                        <span class="text-muted">{{ 'profile.apitokens.expiry.never'|trans }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set id = apiToken.id %}
+                                    {% set formId = 'apitoken-' ~ apiToken.id %}
+                                    {% set targetUrl = path('profile.apitokens.delete', {id: apiToken.id}) %}
+                                    <a href="#" title="{{ 'button.delete'|trans }}">
+                                        <i class="fas fa-trash-alt"
+                                            data-popover="delete"
+                                            data-title="{{ 'registrationbook.delete.ask'|trans }}"
+                                            data-bs-content='{{ block('deletePopoverContent') }}'></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-400">{{ 'profile.apitokens.none'|trans }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="offcanvas" data-bs-target="#apiTokenOffcanvas">
+                        <i class="fas fa-plus"></i> {{ 'profile.apitokens.create'|trans }}
+                    </button>
+                </div>
+                <p class="form-text mb-0 mt-3">
+                    <a href="{{ path('profile.apitokens.openapi') }}">{{ 'profile.apitokens.openapi'|trans }}</a>
+                    {{ 'profile.apitokens.openapi_hint'|trans }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="apiTokenOffcanvas" aria-labelledby="apiTokenOffcanvasLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="apiTokenOffcanvasLabel">{{ 'profile.apitokens.create'|trans }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        {{ form_start(apiTokenForm, {attr: {'data-turbo': 'false'}}) }}
+        {{ form_errors(apiTokenForm) }}
+        {{ form_row(apiTokenForm.name) }}
+        {{ form_row(apiTokenForm.expiresIn) }}
+        {{ form_row(apiTokenForm.scopes) }}
+        <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-primary">{{ 'profile.apitokens.submit'|trans }}</button>
+        </div>
+        {{ form_end(apiTokenForm) }}
+    </div>
+</div>

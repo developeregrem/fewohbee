@@ -37,7 +37,7 @@
         {% for tab in [
             {'id': 'tab-rules', 'label': 'accounting.bank_import.rules.title'},
             {'id': 'tab-profiles', 'label': 'accounting.bank_import.profile.title'},
-            {'id': 'tab-invoice-matching', 'label': 'accounting.settings.invoice_number_samples.title'},
+            {'id': 'tab-invoice-matching', 'label': 'accounting.settings.invoice_number_patterns.title'},
         ] %}
             <li class="nav-item" role="presentation">
                 <button class="nav-link{% if activeTab == tab.id %} active{% endif %}" type="button" role="tab"
@@ -63,28 +63,66 @@
         <div class="tab-pane fade{% if activeTab == 'tab-invoice-matching' %} show active{% endif %}" id="tab-invoice-matching" role="tabpanel">
             <div class="card mb-4">
                 <div class="card-header d-flex align-items-center">
-                    <h5 class="mb-0">{{ 'accounting.settings.invoice_number_samples.title'|trans }}</h5>
+                    <h5 class="mb-0">{{ 'accounting.settings.invoice_number_patterns.title'|trans }}</h5>
                     <span class="ms-2 text-muted" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="{{ 'accounting.settings.invoice_number_samples.help'|trans }}">
+                          title="{{ 'accounting.settings.invoice_number_patterns.help'|trans }}">
                         <i class="fas fa-circle-question"></i>
                     </span>
                 </div>
                 <div class="card-body">
-                    <p class="form-text mb-3">{{ 'accounting.settings.invoice_number_samples.intro'|trans }}</p>
+                    <p class="form-text mb-3">{{ 'accounting.settings.invoice_number_patterns.intro'|trans }}</p>
 
-                    {{ form_start(form) }}
-                        <div class="row g-2">
-                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample1) }}</div>
-                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample2) }}</div>
-                            <div class="col-md-4">{{ form_row(form.invoiceNumberSample3) }}</div>
+                    {% if invoiceNumberRanges is empty %}
+                        <div class="alert alert-warning mb-0">
+                            {{ 'accounting.settings.invoice_number_patterns.none'|trans }}
+                            {% if recentInvoiceNumbers is not empty %}
+                                {# The numbers issued so far show the format in use better than
+                                   any generic example — helpful when writing the pattern. #}
+                                <div class="mt-2">
+                                    {{ 'accounting.settings.invoice_number_patterns.recent'|trans }}
+                                    {% for number in recentInvoiceNumbers %}
+                                        <code>{{ number }}</code>{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{ 'accounting.settings.invoice_number_patterns.scope'|trans }}</th>
+                                        <th>{{ 'accounting.settings.invoice_number_patterns.pattern'|trans }}</th>
+                                        <th>{{ 'accounting.settings.invoice_number_patterns.example'|trans }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for range in invoiceNumberRanges %}
+                                        <tr>
+                                            <td>
+                                                {% if range.isGlobal %}
+                                                    <span class="badge bg-secondary">{{ 'accounting.settings.invoice_number_patterns.global'|trans }}</span>
+                                                {% else %}
+                                                    {{ range.scope }}
+                                                {% endif %}
+                                            </td>
+                                            <td><code>{{ range.pattern }}</code></td>
+                                            <td><code>{{ range.example }}</code></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> {{ 'button.save'|trans }}
-                            </button>
-                        </div>
-                    {{ form_end(form) }}
+                    <div class="mt-3">
+                        <a href="{{ path('settings.general.index') }}" class="btn btn-outline-secondary btn-sm">
+                            {{ 'accounting.settings.invoice_number_patterns.link_global'|trans }}
+                        </a>
+                        <a href="{{ path('objects.overview') }}" class="btn btn-outline-secondary btn-sm">
+                            {{ 'accounting.settings.invoice_number_patterns.link_branch'|trans }}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -10,3 +10,12 @@ form:
     na: 'The selected login name {{ string }} is already taken.'
   vatid:
     invalid_country: The VAT ID must start with a valid country code.
+invoice_number_pattern:
+  missing_number: The pattern needs a <number> placeholder, otherwise every invoice would get the same number.
+  duplicate_number: The pattern may contain only one <number> placeholder.
+  unknown_placeholder: 'Unknown placeholder %placeholder%. Allowed are <year>, <year2>, <month>, <day> and <number>.'
+  invalid_width: The width of the running number must be between 1 and %max%.
+  width_not_allowed: The placeholder %placeholder% has a fixed length and does not accept a width.
+  month_without_year: Without a year the numbering restarts every month and repeats in later years.
+  too_long: The generated invoice number must not exceed %max% characters.
+  empty: Please enter a pattern.

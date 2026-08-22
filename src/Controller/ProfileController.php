@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Form\ApiTokenType;
 use App\Form\ProfilePersonalDataType;
+use App\Repository\ApiTokenRepository;
 use App\Repository\WebauthnCredentialRepository;
 use App\Service\UserService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,6 +23,7 @@ final class ProfileController extends AbstractController
 {
     public function __construct(
         private readonly WebauthnCredentialRepository $credentialRepository,
+        private readonly ApiTokenRepository $apiTokenRepository,
     ) {
     }
 
@@ -51,10 +54,19 @@ final class ProfileController extends AbstractController
             $credentials = $this->credentialRepository->findByUserHandle((string) $user->getId());
         }
 
+        // Consume the one-time token flash here: the global flash loop in base.html.twig
+        // would otherwise render (and thereby consume) it as a plain alert.
+        $newApiToken = $request->getSession()->getFlashBag()->get('api_token_plain');
+
         return $this->render('Profile/index.html.twig', [
             'token' => $tokenStorage->getToken(),
             'credentials' => $credentials,
             'personalDataForm' => $form->createView(),
+            'apiTokens' => $this->apiTokenRepository->findByUser($user),
+            'newApiToken' => $newApiToken[0] ?? null,
+            'apiTokenForm' => $this->createForm(ApiTokenType::class, null, [
+                'action' => $this->generateUrl('profile.apitokens.create'),
+            ])->createView(),
         ]);
     }
 

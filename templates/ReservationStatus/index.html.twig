@@ -35,7 +35,7 @@
                 {% for status in reservation_status %}
                     <tr>
                         <td>
-                            <div class="reservation-inner" style="hight:100%; background-color: {{ status.color}}; color: {{ status.contrastColor }}">{{ status.name }}</div>
+                            <div class="reservation-inner" style="hight:100%; background-color: {{ status.color}}; color: {{ status.contrastColor }}">{{ status|display_name }}</div>
                         </td>
                         <td>
                             <a href="#" title="{{ 'button.details'|trans }}" data-bs-toggle="modal" data-bs-target="#modalCenter">

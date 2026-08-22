@@ -32,6 +32,7 @@ class CalendarService
     public function __construct(
         private TranslatorInterface $translator,
         private readonly RoomBlockRepository $roomBlockRepository,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -196,11 +197,13 @@ class CalendarService
         $endDate = clone $resevation->getEndDate();
         // $endDate->add(new \DateInterval('P1D'));
 
+        $statusLabel = $this->displayNameResolver->resolve($resevation->getReservationStatus());
+
         if ($sync->getExportGuestName()) {
             $title = $resevation->getBooker()->getSalutation().' '.$resevation->getBooker()->getFirstname().' '.
-                    $resevation->getBooker()->getLastname().' ('.$title = $resevation->getReservationStatus()->getName().')';
+                    $resevation->getBooker()->getLastname().' ('.$statusLabel.')';
         } else {
-            $title = $resevation->getReservationStatus()->getName();
+            $title = $statusLabel;
         }
 
         return "BEGIN:VEVENT\r\n".

@@ -341,6 +341,7 @@ class ReservationTableService
                         reservation: $entry,
                         displayName: $this->getDisplayName($entry),
                         color: $entry->getReservationStatus()?->getColor(),
+                        originColor: $entry->getReservationOrigin()?->getColor(),
                         contrastColor: $entry->getReservationStatus()?->getContrastColor(),
                         reservationId: $entry->getId(),
                         startsAtDayBoundary: $isLeft,

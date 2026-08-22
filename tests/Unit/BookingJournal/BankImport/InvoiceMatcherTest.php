@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Tests\Unit\BookingJournal\BankImport;
 
 use App\Dto\BookingJournal\BankImport\ImportState;
-use App\Entity\AccountingSettings;
+use App\Entity\AppSettings;
 use App\Entity\Invoice;
 use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Repository\InvoiceRepository;
-use App\Service\BookingJournal\AccountingSettingsService;
+use App\Repository\SubsidiaryRepository;
+use App\Service\AppSettingsService;
+use App\Service\BookingJournal\BankImport\CompiledMatcher;
 use App\Service\BookingJournal\BankImport\InvoiceMatcher;
 use App\Service\BookingJournal\BankImport\InvoiceNumberPatternBuilder;
+use App\Service\InvoiceNumberGenerator;
+use App\Service\InvoiceNumberPatternService;
 use App\Service\InvoiceService;
 use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
@@ -23,9 +27,9 @@ final class InvoiceMatcherTest extends TestCase
 {
     public function testReturnsNullWhenNoCandidatesFound(): void
     {
-        $matcher = $this->createMatcher(['RE-12345'], []);
+        $matcher = $this->createMatcher(['RE-<number:5>'], []);
 
-        $result = $matcher->matchPurpose('Beliebiger Verwendungszweck ohne Treffer', '-99.00', $this->buildPattern(['RE-12345']));
+        $result = $matcher->matchPurpose('Beliebiger Verwendungszweck ohne Treffer', '-99.00', $this->buildPattern(['RE-<number:5>']));
 
         self::assertNull($result);
     }
@@ -33,9 +37,9 @@ final class InvoiceMatcherTest extends TestCase
     public function testReturnsSingleCandidateWhenInvoiceExists(): void
     {
         $invoice = $this->createInvoice('RE-12345');
-        $matcher = $this->createMatcher(['RE-12345'], [$invoice]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoice]);
 
-        $result = $matcher->matchPurpose('Zahlung Rechnung RE-12345 vielen Dank', '-100.00', $this->buildPattern(['RE-12345']));
+        $result = $matcher->matchPurpose('Zahlung Rechnung RE-12345 vielen Dank', '-100.00', $this->buildPattern(['RE-<number:5>']));
 
         self::assertSame($invoice, $result);
     }
@@ -46,9 +50,9 @@ final class InvoiceMatcherTest extends TestCase
         $invoiceA = $this->createInvoice('RE-12345', appartmentBrutto: 50.0);
         $invoiceB = $this->createInvoice('RE-12399', appartmentBrutto: 100.0);
 
-        $matcher = $this->createMatcher(['RE-12345'], [$invoiceA, $invoiceB]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoiceA, $invoiceB]);
 
-        $result = $matcher->matchPurpose('Sammel RE-12345 und RE-12399', '-100.00', $this->buildPattern(['RE-12345']));
+        $result = $matcher->matchPurpose('Sammel RE-12345 und RE-12399', '-100.00', $this->buildPattern(['RE-<number:5>']));
 
         self::assertSame($invoiceB, $result);
     }
@@ -58,10 +62,10 @@ final class InvoiceMatcherTest extends TestCase
         $invoiceA = $this->createInvoice('RE-12345', appartmentBrutto: 30.0);
         $invoiceB = $this->createInvoice('RE-12399', appartmentBrutto: 40.0);
 
-        $matcher = $this->createMatcher(['RE-12345'], [$invoiceA, $invoiceB]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoiceA, $invoiceB]);
 
         // Neither invoice's brutto (30 / 40) matches the line amount (99).
-        $result = $matcher->matchPurpose('Sammel RE-12345 und RE-12399', '-99.00', $this->buildPattern(['RE-12345']));
+        $result = $matcher->matchPurpose('Sammel RE-12345 und RE-12399', '-99.00', $this->buildPattern(['RE-<number:5>']));
 
         self::assertSame($invoiceA, $result, 'Without amount match, the first textual candidate wins.');
     }
@@ -69,9 +73,9 @@ final class InvoiceMatcherTest extends TestCase
     public function testIncomingAmountMatchesByAbsoluteValue(): void
     {
         $invoice = $this->createInvoice('RE-12345', appartmentBrutto: 250.0);
-        $matcher = $this->createMatcher(['RE-12345'], [$invoice]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoice]);
 
-        $result = $matcher->matchPurpose('Eingang Rechnung RE-12345', '250.00', $this->buildPattern(['RE-12345']));
+        $result = $matcher->matchPurpose('Eingang Rechnung RE-12345', '250.00', $this->buildPattern(['RE-<number:5>']));
 
         self::assertSame($invoice, $result);
     }
@@ -79,7 +83,7 @@ final class InvoiceMatcherTest extends TestCase
     public function testAnnotateMarksExactIncomingInvoiceMatchReady(): void
     {
         $invoice = $this->createInvoice('RE-12345', appartmentBrutto: 250.0);
-        $matcher = $this->createMatcher(['RE-12345'], [$invoice]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoice]);
         $state = $this->createState('Zahlung Rechnung RE-12345', '250.00');
         $state->lines[0]['userDebitAccountId'] = 12;
 
@@ -94,7 +98,7 @@ final class InvoiceMatcherTest extends TestCase
     public function testAnnotateKeepsAmountMismatchPending(): void
     {
         $invoice = $this->createInvoice('RE-12345', appartmentBrutto: 250.0);
-        $matcher = $this->createMatcher(['RE-12345'], [$invoice]);
+        $matcher = $this->createMatcher(['RE-<number:5>'], [$invoice]);
         $state = $this->createState('Zahlung Rechnung RE-12345', '200.00');
         $state->lines[0]['userDebitAccountId'] = 12;
 
@@ -107,22 +111,28 @@ final class InvoiceMatcherTest extends TestCase
 
     // ── Test helpers ─────────────────────────────────────────────────
 
-    private function buildPattern(array $samples): \App\Service\BookingJournal\BankImport\CompiledMatcher
+    /**
+     * @param list<string> $patterns
+     */
+    private function buildPattern(array $patterns): CompiledMatcher
     {
-        return (new InvoiceNumberPatternBuilder())->buildFromSamples($samples);
+        return (new InvoiceNumberPatternBuilder(new InvoiceNumberPatternService()))->buildFromPatterns($patterns);
     }
 
     /**
-     * @param list<string>  $samples
+     * @param list<string>  $patterns
      * @param list<Invoice> $existingInvoices
      */
-    private function createMatcher(array $samples, array $existingInvoices): InvoiceMatcher
+    private function createMatcher(array $patterns, array $existingInvoices): InvoiceMatcher
     {
-        $settings = new AccountingSettings();
-        $settings->setInvoiceNumberSamples($samples);
+        // InvoiceNumberGenerator is final; drive the real one through stubbed collaborators.
+        $appSettings = new AppSettings();
+        $appSettings->setInvoiceNumberPattern($patterns[0] ?? null);
+        $appSettingsService = $this->createStub(AppSettingsService::class);
+        $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        $settingsService = $this->createMock(AccountingSettingsService::class);
-        $settingsService->method('getSettings')->willReturn($settings);
+        $subsidiaryRepo = $this->createStub(SubsidiaryRepository::class);
+        $subsidiaryRepo->method('findConfiguredPatterns')->willReturn(array_slice($patterns, 1));
 
         $invoiceRepo = $this->createMock(InvoiceRepository::class);
         $invoiceRepo->method('findByNumbers')->willReturnCallback(
@@ -150,8 +160,13 @@ final class InvoiceMatcherTest extends TestCase
         );
 
         return new InvoiceMatcher(
-            $settingsService,
-            new InvoiceNumberPatternBuilder(),
+            new InvoiceNumberGenerator(
+                $appSettingsService,
+                $subsidiaryRepo,
+                $invoiceRepo,
+                new InvoiceNumberPatternService(),
+            ),
+            new InvoiceNumberPatternBuilder(new InvoiceNumberPatternService()),
             $invoiceRepo,
             $invoiceService,
         );

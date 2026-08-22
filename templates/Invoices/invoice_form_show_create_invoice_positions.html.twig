@@ -10,7 +10,12 @@
                     value="{{ invoiceid }}"
                     id="invoiceidInput"
                     data-action="input->invoices#updateInvoiceMetaAction">
-                {% if lastinvoiceid is not empty %}
+                {% if numberRangeConfigured %}
+                    {# Shows which number range produced the suggestion, so a wrong branch is spotted before saving. #}
+                    <small class="form-text text-muted">
+                        {{ 'invoice.number.range.hint'|trans({'%range%': numberRangeSubsidiary ? numberRangeSubsidiary.name : 'invoice.number.range.global'|trans}) }}
+                    </small>
+                {% elseif lastinvoiceid is not empty %}
                     <small class="form-text text-muted">{{ 'invoice.id.last'|trans }} {{ lastinvoiceid }}</small>
                 {% endif %}
             </div>

@@ -52,8 +52,20 @@
                         <button type="submit" class="btn btn-primary btn-sm">{{ 'button.save'|trans }}</button>
                     </div>
                 </div>
-                <div class="form-text small mt-2 d-none" data-template-editor-target="emailNameHint">
-                    <i class="fas fa-info-circle" aria-hidden="true"></i> {{ 'templates.name.email_help'|trans }}
+                <div class="mt-3 d-none" data-template-editor-target="subjectRow">
+                    <label for="subject-{{ template.id }}" class="form-label small mb-1">{{ 'templates.subject'|trans }}</label>
+                    <div class="input-group input-group-sm" style="max-width:600px" data-template-editor-target="subjectInputGroup">
+                        <input type="text" class="form-control" id="subject-{{ template.id }}" name="subject-{{ template.id }}" value="{{ template.subject }}" data-template-editor-target="subjectInput" autocomplete="off">
+                        <button type="button"
+                            class="btn btn-outline-secondary shadow-none"
+                            data-action="click->template-editor#openSubjectVariablePicker"
+                            data-template-command="variable"
+                            title="{{ 'templates.editor.toolbar.variable'|trans }}"
+                            aria-label="{{ 'templates.editor.toolbar.variable'|trans }}">
+                            <i class="fas fa-code-branch" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="form-text small">{{ 'templates.subject.help'|trans }}</div>
                 </div>
             </div>
         </div>
@@ -152,7 +164,8 @@
                              data-i18n-variable-picker-title="{{ 'templates.editor.variable_picker.title'|trans }}"
                              data-i18n-variable-insert-loop="{{ 'templates.editor.variable_picker.insert_loop'|trans }}"
                              data-i18n-template-includes="{{ 'templates.editor.template_includes'|trans }}"
-                             data-i18n-preview-render-error="{{ 'templates.preview.render.error.generic'|trans }}"></div>
+                             data-i18n-preview-render-error="{{ 'templates.preview.render.error.generic'|trans }}"
+                             data-i18n-subject-label="{{ 'templates.subject'|trans }}"></div>
                         <div class="template-editor-toolbar-group ms-auto" role="group">
                             <button type="button"
                                 class="btn btn-secondary btn-sm template-editor-btn"
@@ -290,6 +303,7 @@
                             <div class="card-header">{{ 'templates.preview.result'|trans }}</div>
                             <div class="card-body">
                                 <div class="alert alert-warning d-none" data-template-editor-target="previewWarning"></div>
+                                <div class="small mb-2 d-none" data-template-editor-target="previewSubjectResult"></div>
                                 <div data-template-editor-target="previewResult" class="template-preview"></div>
                             </div>
                         </div>

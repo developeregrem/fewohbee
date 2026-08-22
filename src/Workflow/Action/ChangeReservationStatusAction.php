@@ -7,6 +7,7 @@ namespace App\Workflow\Action;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Service\DisplayNameResolver;
 use App\Service\ReservationService;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,6 +25,7 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
         private readonly ReservationService $reservationService,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -97,7 +99,7 @@ class ChangeReservationStatusAction implements WorkflowActionInterface
 
         return $this->translator->trans('workflow.log.reservation_status_changed', [
             '%count%' => count($reservations),
-            '%status%' => $status->getName(),
+            '%status%' => $this->displayNameResolver->resolve($status),
         ]);
     }
 }

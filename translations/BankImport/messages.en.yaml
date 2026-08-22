@@ -128,7 +128,7 @@ accounting:
       matched_invoice: Detected invoice from the purpose text.
       invoice_matching_disabled:
         title: Automatic invoice matching is disabled.
-        help: No sample invoice numbers are configured in the journal settings. Add examples there so invoices can be detected in payment purpose text.
+        help: No invoice number range is configured yet. Set a default range under Settings → General so invoices can be detected in payment purpose text.
       invoice_accounts:
         label: from invoice
         help: Credit accounts are derived from the invoice positions, tax rates, and revenue accounts.

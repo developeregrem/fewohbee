@@ -9,18 +9,14 @@ use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Exception\PublicBookingException;
 use App\Repository\AppartmentRepository;
-use App\Service\InvoiceService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Dto\PublicBooking\RoomTotal;
 use App\Service\PublicPricingService;
-use App\Service\MailService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Tests for the occupancy-based selection and validation in PublicBookingService.
@@ -44,12 +40,8 @@ final class PublicBookingOccupancyTest extends TestCase
             $this->appartmentRepository,
             $configService,
             $this->availabilityService,
-            $this->createStub(InvoiceService::class),
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
     }
 
@@ -79,8 +71,7 @@ final class PublicBookingOccupancyTest extends TestCase
             new \DateTimeImmutable('2026-06-03'),
             2,
             1,
-            [],
-            new Request()
+            []
         );
 
         self::assertSame($availability, $result['availability']);
@@ -117,8 +108,7 @@ final class PublicBookingOccupancyTest extends TestCase
             new \DateTimeImmutable('2026-06-03'),
             3,
             1,
-            ['category:1' => [2 => 1]],
-            new Request()
+            ['category:1' => [2 => 1]]
         );
     }
 
@@ -151,8 +141,7 @@ final class PublicBookingOccupancyTest extends TestCase
             new \DateTimeImmutable('2026-06-03'),
             1,
             1,
-            ['category:1' => [1 => 1]], // persons=1 has no price
-            new Request()
+            ['category:1' => [1 => 1]] // persons=1 has no price
         );
     }
 
@@ -184,8 +173,7 @@ final class PublicBookingOccupancyTest extends TestCase
             new \DateTimeImmutable('2026-06-03'),
             2,
             2,
-            ['category:1' => [1 => 2]], // only 1 available
-            new Request()
+            ['category:1' => [1 => 2]] // only 1 available
         );
     }
 
@@ -235,13 +223,7 @@ final class PublicBookingOccupancyTest extends TestCase
         $this->appartmentRepository->method('findByIdsWithRelations')
             ->willReturn([$room1, $room2]);
 
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('buildAppartmentPositions')->willReturn([]);
-        $invoiceService->method('calculateSums')->willReturnCallback(function ($apps, $poss, &$vats, &$brutto, &$netto, &$singleTotal, &$miscTotal) {
-            $singleTotal = 0.0;
-        });
-
-        // Rebuild service with this invoice service
+        // Rebuild service with a fresh config stub
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
@@ -250,12 +232,8 @@ final class PublicBookingOccupancyTest extends TestCase
             $this->appartmentRepository,
             $configService,
             $this->availabilityService,
-            $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
 
         // Select: 1x with 1 person, 1x with 3 persons = 4 total, 2 rooms
@@ -264,8 +242,7 @@ final class PublicBookingOccupancyTest extends TestCase
             new \DateTimeImmutable('2026-06-03'),
             4,
             2,
-            ['category:1' => [1 => 1, 3 => 1]],
-            new Request()
+            ['category:1' => [1 => 1, 3 => 1]]
         );
 
         $reservations = $result['roomReservations'];
@@ -350,12 +327,6 @@ final class PublicBookingOccupancyTest extends TestCase
         $this->appartmentRepository->method('findByIdsWithRelations')
             ->willReturn([$singleRoom, $doubleRoom, $doublePlusRoom]);
 
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('buildAppartmentPositions')->willReturn([]);
-        $invoiceService->method('calculateSums')->willReturnCallback(function ($apps, $poss, &$vats, &$brutto, &$netto, &$singleTotal, &$miscTotal) {
-            $singleTotal = 0.0;
-        });
-
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
@@ -364,12 +335,8 @@ final class PublicBookingOccupancyTest extends TestCase
             $this->appartmentRepository,
             $configService,
             $this->availabilityService,
-            $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
         );
 
         $result = $service->buildSelectionPreview(
@@ -380,8 +347,7 @@ final class PublicBookingOccupancyTest extends TestCase
             [
                 'category:1' => [1 => 1],
                 'category:2' => [2 => 1],
-            ],
-            new Request()
+            ]
         );
 
         $reservations = $result['roomReservations'];
@@ -390,5 +356,17 @@ final class PublicBookingOccupancyTest extends TestCase
         self::assertSame(2, $reservations[1]->getPersons());
         self::assertSame(10, $reservations[0]->getAppartment()->getId());
         self::assertSame(20, $reservations[1]->getAppartment()->getId());
+    }
+
+    /**
+     * Room pricing is exercised in PublicPricingServiceTest; here it only has to be
+     * silent, so every reservation costs nothing and carries no adjustment.
+     */
+    private function zeroPricingService(): PublicPricingService
+    {
+        $pricingService = $this->createStub(PublicPricingService::class);
+        $pricingService->method('calculateReservationRoomTotal')->willReturn(new RoomTotal(0.0, 0.0));
+
+        return $pricingService;
     }
 }

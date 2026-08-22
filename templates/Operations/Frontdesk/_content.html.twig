@@ -63,7 +63,7 @@
                             data-token="{{ csrf_token('reservation-status-update') }}">
                         {% for status in reservationStatuses %}
                             <option value="{{ status.id }}"{% if reservation.reservationStatus and reservation.reservationStatus.id == status.id %} selected{% endif %}>
-                                {{ status.name }}
+                                {{ status|display_name }}
                             </option>
                         {% endfor %}
                     </select>
@@ -202,7 +202,7 @@
                             data-token="{{ csrf_token('reservation-status-update') }}">
                         {% for status in reservationStatuses %}
                             <option value="{{ status.id }}"{% if reservation.reservationStatus and reservation.reservationStatus.id == status.id %} selected{% endif %}>
-                                {{ status.name }}
+                                {{ status|display_name }}
                             </option>
                         {% endfor %}
                     </select>

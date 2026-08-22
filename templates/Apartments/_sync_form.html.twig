@@ -43,6 +43,19 @@
         </div>
         <p class="form-text mb-0">{{ 'calendar.sync.export.access.url.hint'|trans }}</p>
     </div>
+    <div class="mb-3 mx-auto">
+        <div>{{ 'calendar.sync.export.access.private_url.title'|trans }}</div>
+        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+            <input type="text" class="form-control border-end-0 pt-0 pb-1" placeholder="{{ 'calendar.sync.export.access.private_url.title'|trans }}" autocomplete="off"
+                value="{{ url('api.apartments.calendar', { 'id': sync.apartment.id }) }}" data-copy-target="input">
+            <span class="input-group-append">
+                <button class="btn btn-outline-secondary border-start-0 border-0 shadow-none" type="button" title="{{ 'copy.text'|trans }}" data-action="click->copy#copy">
+                    <i class="fa-solid fa-copy prefix"></i>
+                </button>
+            </span>
+        </div>
+        <p class="form-text mb-0">{{ 'calendar.sync.export.access.private_url.hint'|trans }}</p>
+    </div>
     <div class="row mb-4">
         <div class="col">
             <div>{{ 'calendar.sync.export.access.last'|trans }}</div>

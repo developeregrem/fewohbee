@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PublicBookingMode;
+use App\Entity\Enum\PublicBookingTheme;
 use App\Repository\OnlineBookingConfigRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -56,8 +58,12 @@ class OnlineBookingConfig
     #[Assert\Regex('/^#[0-9a-f]{6}$/i')]
     private ?string $themeBackgroundColor = null;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    private ?int $confirmationEmailTemplateId = null;
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: PublicBookingTheme::class, options: ['default' => 'modern'])]
+    private PublicBookingTheme $theme = PublicBookingTheme::MODERN;
+
+    /** How guests find their stay: classic search or availability calendar. Calendar requires the modern theme. */
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: PublicBookingMode::class, options: ['default' => 'search'])]
+    private PublicBookingMode $mode = PublicBookingMode::SEARCH;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
     private ?int $inquiryReservationStatusId = null;
@@ -210,16 +216,39 @@ class OnlineBookingConfig
         return $this;
     }
 
-    public function getConfirmationEmailTemplateId(): ?int
+    public function getTheme(): PublicBookingTheme
     {
-        return $this->confirmationEmailTemplateId;
+        return $this->theme;
     }
 
-    public function setConfirmationEmailTemplateId(?int $confirmationEmailTemplateId): self
+    public function setTheme(PublicBookingTheme $theme): self
     {
-        $this->confirmationEmailTemplateId = $confirmationEmailTemplateId;
+        $this->theme = $theme;
 
         return $this;
+    }
+
+    public function getMode(): PublicBookingMode
+    {
+        return $this->mode;
+    }
+
+    public function setMode(PublicBookingMode $mode): self
+    {
+        $this->mode = $mode;
+
+        return $this;
+    }
+
+    /**
+     * Whether the calendar entry point is actually in effect.
+     *
+     * The calendar relies on markup and styling that only the modern theme provides,
+     * so a classic installation always falls back to the search.
+     */
+    public function isCalendarActive(): bool
+    {
+        return PublicBookingMode::CALENDAR === $this->mode && PublicBookingTheme::MODERN === $this->theme;
     }
 
     public function getInquiryReservationStatusId(): ?int

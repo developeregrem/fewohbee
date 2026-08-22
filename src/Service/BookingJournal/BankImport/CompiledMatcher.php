@@ -8,23 +8,18 @@ namespace App\Service\BookingJournal\BankImport;
  * Result of {@see InvoiceNumberPatternBuilder} — knows how to extract candidate
  * invoice numbers from arbitrary text (typically a bank statement purpose line).
  *
- * Built from one or more user-supplied example numbers. The user never sees regex.
+ * Built from the configured invoice number ranges, so what it recognises is exactly
+ * what the application issues. The user never sees a regex.
  */
 final class CompiledMatcher
 {
     /**
-     * @param list<string> $regexes  PCRE alternatives, each with capture group 1 returning the bare number
-     * @param list<string> $samples  Original sample inputs (for diagnostics / UI preview)
+     * @param list<string> $regexes  PCRE alternatives; the whole match is the candidate number
+     * @param list<string> $examples One rendered example per pattern, for the settings UI
      */
     public function __construct(
         public readonly array $regexes,
-        public readonly array $samples,
-        /**
-         * If true, every digit-only candidate must additionally pass a strict
-         * existence check against the invoice repository — otherwise we'd match
-         * any 5+ digit number in the purpose line (VISA refs, mandate IDs, …).
-         */
-        public readonly bool $requiresStrictExistenceCheck = false,
+        public readonly array $examples,
     ) {
     }
 

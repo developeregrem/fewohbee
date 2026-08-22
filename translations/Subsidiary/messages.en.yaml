@@ -5,5 +5,9 @@ object.flash.create.success: Branch was created successfully.
 object.flash.delete.error.still.in.use: Branch cannot be deleted because it still has rooms assigned to it.
 object.flash.delete.success: Branch has been successfully deleted.
 object.flash.edit.success: Branch has been updated successfully.
+object.flash.invoice_number_pattern.invalid: The invoice number range is invalid. It needs exactly one <number> placeholder and may only use known placeholders.
+object.invoice_number_pattern: Own invoice number range
+object.invoice_number_pattern.help: 'Leave empty to use the default range from the settings. Placeholders: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>, <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>. Invoices for rooms of this branch then get their own running number.'
+object.invoice_number_pattern.placeholder: 'e.g. RE-<year>-<number:4>'
 object.name: Branch
 object.title: Branch management

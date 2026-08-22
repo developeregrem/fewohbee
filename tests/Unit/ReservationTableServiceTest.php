@@ -11,6 +11,7 @@ use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
 use App\Entity\Reservation;
+use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\RoomCategory;
 use App\Service\ReservationTableService;
@@ -138,6 +139,24 @@ final class ReservationTableServiceTest extends TestCase
         self::assertSame(TableCell::TYPE_EMPTY, $cells[6]->type);
         self::assertSame(TableCell::TYPE_EMPTY, $cells[7]->type);
         self::assertSame(TableCell::TYPE_EMPTY, $cells[8]->type);
+    }
+
+    public function testReservationCellUsesItsOriginColor(): void
+    {
+        $start = new \DateTimeImmutable('2024-03-01');
+        $reservation = self::makeReservation(1, '2024-03-01', '2024-03-03');
+        $origin = new ReservationOrigin();
+        $origin->setName('Direct')->setColor('#336699');
+        $reservation->setReservationOrigin($origin);
+
+        $cells = $this->service->buildCellsForRow(
+            $this->service->buildDays($start, 2),
+            [$reservation],
+            $start,
+            2
+        );
+
+        self::assertSame('#336699', $cells[1]->originColor);
     }
 
     public function testReservationStartsBeforePeriod(): void

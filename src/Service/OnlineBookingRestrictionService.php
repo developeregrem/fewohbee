@@ -4,14 +4,32 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\OnlineBookingMinStay;
 use App\Entity\OnlineBookingMinStayOverride;
+use App\Entity\OnlineBookingRoomCategoryLimit;
 use App\Entity\RoomCategory;
 use App\Repository\OnlineBookingMinStayOverrideRepository;
 use App\Repository\OnlineBookingMinStayRepository;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
+use Symfony\Contracts\Service\ResetInterface;
 
-class OnlineBookingRestrictionService
+class OnlineBookingRestrictionService implements ResetInterface
 {
+    /**
+     * Availability builds a room list per category and asks for min stay, max rooms
+     * and min occupancy on every single row — the underlying tables are tiny and
+     * change only through the settings UI, so one read per request is enough.
+     *
+     * @var array<int, OnlineBookingMinStay>|null
+     */
+    private ?array $minStayByCategory = null;
+
+    /** @var array<int, OnlineBookingRoomCategoryLimit>|null */
+    private ?array $limitsByCategory = null;
+
+    /** @var array<string, OnlineBookingMinStayOverride[]> keyed by arrival date (Y-m-d) */
+    private array $overridesByArrival = [];
+
     public function __construct(
         private readonly OnlineBookingMinStayRepository $minStayRepository,
         private readonly OnlineBookingMinStayOverrideRepository $overrideRepository,
@@ -32,7 +50,7 @@ class OnlineBookingRestrictionService
      */
     public function getEffectiveMinNights(RoomCategory $category, \DateTimeImmutable $arrivalDate): int
     {
-        $overrides = $this->overrideRepository->findActiveForArrival($arrivalDate);
+        $overrides = $this->loadOverridesForArrival($arrivalDate);
         $maxOverride = $this->resolveHighestOverride($overrides, $category);
 
         if (null !== $maxOverride) {
@@ -49,7 +67,7 @@ class OnlineBookingRestrictionService
      */
     public function getDefaultMinNights(RoomCategory $category, \DateTimeImmutable $arrivalDate): int
     {
-        $indexed = $this->minStayRepository->findAllIndexedByCategory();
+        $indexed = $this->minStayByCategory ??= $this->minStayRepository->findAllIndexedByCategory();
         $minStay = $indexed[$category->getId()] ?? null;
 
         if (null === $minStay) {
@@ -69,7 +87,7 @@ class OnlineBookingRestrictionService
      */
     public function getMaxRoomsForCategory(RoomCategory $category): ?int
     {
-        $indexed = $this->limitRepository->findAllIndexedByCategory();
+        $indexed = $this->limitsByCategory ??= $this->limitRepository->findAllIndexedByCategory();
         $limit = $indexed[$category->getId()] ?? null;
 
         return $limit?->getMaxRooms();
@@ -82,7 +100,7 @@ class OnlineBookingRestrictionService
      */
     public function getMinOccupancyForCategory(RoomCategory $category): ?int
     {
-        $indexed = $this->limitRepository->findAllIndexedByCategory();
+        $indexed = $this->limitsByCategory ??= $this->limitRepository->findAllIndexedByCategory();
         $limit = $indexed[$category->getId()] ?? null;
 
         return $limit?->getMinOccupancy();
@@ -122,6 +140,29 @@ class OnlineBookingRestrictionService
         $isoDay = (int) $date->format('N');
 
         return $isoDay >= 5;
+    }
+
+    /**
+     * Overrides are looked up per arrival date, so the memo is keyed by that date.
+     *
+     * @return OnlineBookingMinStayOverride[]
+     */
+    private function loadOverridesForArrival(\DateTimeImmutable $arrivalDate): array
+    {
+        $key = $arrivalDate->format('Y-m-d');
+
+        return $this->overridesByArrival[$key] ??= $this->overrideRepository->findActiveForArrival($arrivalDate);
+    }
+
+    /**
+     * Drop the per-request memo so a long-running worker never serves settings
+     * that the hotelier has changed in the meantime.
+     */
+    public function reset(): void
+    {
+        $this->minStayByCategory = null;
+        $this->limitsByCategory = null;
+        $this->overridesByArrival = [];
     }
 
     /**

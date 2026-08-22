@@ -7,7 +7,7 @@ namespace App\Service\BookingJournal\BankImport;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\Invoice;
 use App\Repository\InvoiceRepository;
-use App\Service\BookingJournal\AccountingSettingsService;
+use App\Service\InvoiceNumberGenerator;
 use App\Service\InvoiceService;
 use Doctrine\Common\Collections\ArrayCollection;
 
@@ -16,8 +16,8 @@ use Doctrine\Common\Collections\ArrayCollection;
  *
  * Two-step strategy:
  *  1. Extract candidate numbers from the line's purpose text via the
- *     {@see InvoiceNumberPatternBuilder} (driven by the user's example
- *     invoice numbers).
+ *     {@see InvoiceNumberPatternBuilder}, driven by the configured invoice
+ *     number ranges.
  *  2. Tie-break on amount when several candidates resolve to invoices.
  *
  * The matcher only annotates the line; nothing is committed yet.
@@ -25,7 +25,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 final class InvoiceMatcher
 {
     public function __construct(
-        private readonly AccountingSettingsService $settingsService,
+        private readonly InvoiceNumberGenerator $numberGenerator,
         private readonly InvoiceNumberPatternBuilder $patternBuilder,
         private readonly InvoiceRepository $invoiceRepo,
         private readonly InvoiceService $invoiceService,
@@ -34,8 +34,7 @@ final class InvoiceMatcher
 
     public function annotate(ImportState $state): void
     {
-        $samples = $this->settingsService->getSettings()->getInvoiceNumberSamples();
-        $matcher = $this->patternBuilder->buildFromSamples($samples);
+        $matcher = $this->patternBuilder->buildFromPatterns($this->numberGenerator->allConfiguredPatterns());
 
         if ($matcher->isEmpty()) {
             return;

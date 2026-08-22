@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
-use App\Entity\Template;
-use App\Entity\TemplateType;
 use App\Entity\User;
 use App\Exception\PublicBookingException;
+use App\Repository\WorkflowRepository;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicBookingAbuseProtectionService;
 use App\Service\PublicBookingService;
@@ -37,21 +37,23 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringContainsString('--fhb-primary', (string) $client->getResponse()->getContent());
     }
 
-    /** Ensure the settings form only lists reservation email templates in the confirmation template dropdown. */
-    public function testSettingsTemplateDropdownIsFilteredToReservationEmailTemplates(): void
+    /** Ensure online-booking settings expose the canonical confirmation workflow via its compact edit button. */
+    public function testSettingsLinkToBookingConfirmationWorkflow(): void
     {
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
 
-        $reservationEmailTemplate = $this->createTemplate('TEMPLATE_RESERVATION_EMAIL', 'Online Booking Email Template');
-        $invoiceTemplate = $this->createTemplate('TEMPLATE_INVOICE_PDF', 'Should Not Be Listed');
+        $workflow = self::getContainer()->get(WorkflowRepository::class)->findBySystemCode('confirm_online_booking');
+        self::assertNotNull($workflow);
 
-        $client->request('GET', '/settings/online-booking');
+        $crawler = $client->request('GET', '/settings/online-booking');
 
         self::assertResponseIsSuccessful();
-        $content = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString($reservationEmailTemplate->getName(), $content);
-        self::assertStringNotContainsString($invoiceTemplate->getName(), $content);
+        self::assertCount(1, $crawler->filter(sprintf(
+            'a[href="/settings/workflows/%d/edit"] i.fa-pen',
+            (int) $workflow->getId(),
+        )));
+        self::assertCount(0, $crawler->filter('[name="online_booking_config[confirmationEmailTemplateId]"]'));
     }
 
     /** Ensure submit validation errors keep the user on step three with availability and form input intact. */
@@ -78,7 +80,7 @@ final class PublicBookingControllerTest extends WebTestCase
             ->method('buildSelectionPreview')
             ->willReturn([
                 'availability' => $availability,
-                'selected' => ['category:1' => 1],
+                'selected' => ['category:1' => [1 => 1]],
                 'roomTotal' => 80.0,
                 'roomTotalFormatted' => '80,00',
                 'roomPriceBreakdown' => [[
@@ -87,7 +89,19 @@ final class PublicBookingControllerTest extends WebTestCase
                     'total' => 80.0,
                     'totalFormatted' => '80,00',
                 ]],
+                'modifierTotal' => 0.0,
+                'modifierBreakdown' => [],
                 'roomReservations' => [],
+                'touristTaxTotal' => 0.0,
+                'touristTaxTotalFormatted' => '0,00',
+                'touristTaxLines' => [],
+                'extras' => [],
+                'selectedExtras' => [],
+                'extrasTotal' => 0.0,
+                'extrasTotalFormatted' => '0,00',
+                'extrasBreakdown' => [],
+                'grandTotal' => 80.0,
+                'grandTotalFormatted' => '80,00',
             ]);
         $publicBookingService->expects(self::once())
             ->method('createBooking')
@@ -101,7 +115,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'dateTo' => '2099-05-12',
             'persons' => 1,
             'roomsCount' => 1,
-            'qty_category:1' => 1,
+            'occ_category:1_p1' => 1,
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
             'email' => 'max@example.com',
@@ -142,6 +156,8 @@ final class PublicBookingControllerTest extends WebTestCase
                 'roomTotal' => 80.0,
                 'roomTotalFormatted' => '80,00',
                 'roomPriceBreakdown' => [],
+                'modifierTotal' => 0.0,
+                'modifierBreakdown' => [],
             ]);
 
         $this->overrideBookingServices($publicBookingService, $config, $this->createNoopAbuseProtectionService());
@@ -153,7 +169,7 @@ final class PublicBookingControllerTest extends WebTestCase
             'dateTo' => '2099-05-12',
             'persons' => 1,
             'roomsCount' => 1,
-            'qty_category:1' => 1,
+            'occ_category:1_p1' => 1,
             'salutation' => 'Mr',
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
@@ -175,24 +191,128 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringNotContainsString('<form method="post"', $content);
     }
 
-    /** Create a persisted template of the given type for settings form option assertions. */
-    private function createTemplate(string $typeName, string $name): Template
+    /** Ensure the classic theme keeps rendering its own frozen templates. */
+    public function testClassicThemeRendersLegacyTemplates(): void
+    {
+        $client = self::createClient();
+        $config = $this->createEnabledConfig();
+        $config->setTheme(PublicBookingTheme::CLASSIC);
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $config,
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('--fhb-primary', $content);
+        self::assertStringContainsString('class="fhb-booking-root"', $content);
+        self::assertStringNotContainsString('public-booking-modern.css', $content);
+    }
+
+    /** Ensure the modern theme is used by default and loads its dedicated stylesheet. */
+    public function testModernThemeIsDefaultAndLoadsItsStylesheet(): void
+    {
+        $client = self::createClient();
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book');
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('public-booking-modern.css', $content);
+        self::assertStringContainsString('--fhb-primary', $content);
+        self::assertStringContainsString('class="fhb-steps"', $content);
+    }
+
+    /** Ensure anonymous visitors cannot switch the theme through the preview parameter. */
+    public function testPreviewThemeParameterIsIgnoredForAnonymousVisitors(): void
+    {
+        $client = self::createClient();
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book?previewTheme=classic');
+
+        self::assertResponseIsSuccessful();
+        // Configured theme is modern, so the preview request must not fall back to classic.
+        self::assertStringContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
+    }
+
+    /** Ensure administrators can preview the other theme without changing the configuration. */
+    public function testPreviewThemeParameterAppliesForAdmins(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $client->loginUser($this->getAdminUser(), 'main');
+        $this->overrideBookingServices(
+            $this->createEnabledBookingService(),
+            $this->createEnabledConfig(),
+            $this->createNoopAbuseProtectionService(),
+        );
+
+        $client->request('GET', '/book?previewTheme=classic');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('public-booking-modern.css', (string) $client->getResponse()->getContent());
+    }
+
+    /**
+     * A colour input can never submit an empty value, so a checkbox decides whether the
+     * background colour applies at all. Both directions must survive a save.
+     */
+    public function testBackgroundColourFollowsItsCheckbox(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+
+        // Switch it on with a colour …
+        $crawler = $client->request('GET', '/settings/online-booking');
+        $form = $crawler->filter('form[name="online_booking_config"]')->form();
+        $form['online_booking_config[useBackgroundColor]']->tick();
+        $form['online_booking_config[themeBackgroundColor]']->setValue('#123456');
+        $client->submit($form);
+
+        self::assertSame('#123456', $this->readConfig()->getThemeBackgroundColor());
+
+        // Reloading must show the switch as on — otherwise the next save would clear
+        // the colour again without the user touching anything.
+        $crawler = $client->request('GET', '/settings/online-booking');
+        self::assertNotEmpty(
+            $crawler->filter('#online_booking_config_useBackgroundColor[checked]'),
+            'The switch must be ticked while a colour is stored.'
+        );
+
+        // … and off again, which must clear it despite the colour still being submitted.
+        $crawler = $client->request('GET', '/settings/online-booking');
+        $form = $crawler->filter('form[name="online_booking_config"]')->form();
+        $form['online_booking_config[useBackgroundColor]']->untick();
+        $client->submit($form);
+
+        self::assertNull($this->readConfig()->getThemeBackgroundColor());
+    }
+
+    /** Read the singleton config straight from the database. */
+    private function readConfig(): OnlineBookingConfig
     {
         $em = $this->getEntityManager();
-        $type = $em->getRepository(TemplateType::class)->findOneBy(['name' => $typeName]);
-        if (!$type instanceof TemplateType) {
-            self::fail(sprintf('TemplateType "%s" not found in test database.', $typeName));
+        $em->clear();
+
+        $config = $em->getRepository(OnlineBookingConfig::class)->findOneBy([]);
+        if (!$config instanceof OnlineBookingConfig) {
+            self::fail('Online booking config not found.');
         }
 
-        $template = new Template();
-        $template->setName($name);
-        $template->setText('[[ reservation1.booker.lastname ]]');
-        $template->setTemplateType($type);
-        $template->setIsDefault(false);
-        $em->persist($template);
-        $em->flush();
-
-        return $template;
+        return $config;
     }
 
     /** Return the shared admin user from test fixtures. */
@@ -241,6 +361,15 @@ final class PublicBookingControllerTest extends WebTestCase
         $config->setBookingMode(OnlineBookingConfig::BOOKING_MODE_INQUIRY);
 
         return $config;
+    }
+
+    /** Booking service stub that reports a valid, enabled configuration. */
+    private function createEnabledBookingService(): PublicBookingService
+    {
+        $service = $this->createStub(PublicBookingService::class);
+        $service->method('validateEnabledConfig')->willReturn(null);
+
+        return $service;
     }
 
     /** Create a no-op abuse protection service mock so controller tests can focus on flow behavior. */

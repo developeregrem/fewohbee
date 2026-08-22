@@ -28,6 +28,24 @@ class WorkflowSeeder
     public function seedInternalWorkflows(): void
     {
         $this->createOrUpdate(
+            systemCode: 'confirm_online_booking',
+            name: 'workflow.system.confirm_online_booking.name',
+            description: 'workflow.system.confirm_online_booking.description',
+            triggerType: 'online_booking.created',
+            actionType: 'send_template_email',
+            defaultEnabled: false,
+            conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
+            actionConfig: [
+                'recipientType' => 'booker_email',
+                'templateId' => 0,
+                'customRecipient' => '',
+                'attachments' => [],
+                'attachmentPolicy' => 'skip_missing',
+            ],
+            isSystem: true,
+        );
+
+        $this->createOrUpdate(
             systemCode: 'notify_online_booking',
             name: 'workflow.system.notify_online_booking.name',
             description: 'workflow.system.notify_online_booking.description',
@@ -120,6 +138,10 @@ class WorkflowSeeder
     /**
      * Create a system workflow if it does not exist yet, or update its name/description
      * if it already exists. The is_enabled flag is only set on initial creation.
+     *
+     * @param list<array{type: string, config: array<string, mixed>}> $conditions
+     * @param array<string, mixed>                                    $actionConfig
+     * @param array<string, mixed>                                    $triggerConfig
      */
     private function createOrUpdate(
         string $systemCode,

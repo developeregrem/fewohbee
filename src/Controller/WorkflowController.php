@@ -11,6 +11,7 @@ use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\AppSettingsService;
+use App\Service\DisplayNameResolver;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Action\WorkflowActionRegistry;
@@ -39,6 +40,7 @@ class WorkflowController extends AbstractController
         private readonly AppSettingsService $settingsService,
         private readonly AccountingSettingsService $accountingSettingsService,
         private readonly AccountingAccountRepository $accountRepo,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -225,6 +227,16 @@ class WorkflowController extends AbstractController
             } elseif ($type === 'accounting_account_select') {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadAccountingAccountOptions();
+            } elseif ($type === 'attachment_list') {
+                // Unlike the *_select pseudo types this keeps its own type: the client
+                // renders repeatable rows instead of a plain select.
+                $field['groups'] = $this->loadAttachmentGroups($entityClass, (bool) ($field['includeInvoice'] ?? true));
+                $field['emptyText'] = $this->translator->trans('workflow.form.attachments_empty');
+                $field['addLabel'] = $this->translator->trans('workflow.form.attachments_add');
+                $field['selectLabel'] = $this->translator->trans('workflow.form.attachments_select');
+                $field['staleLabel'] = $this->translator->trans('workflow.form.attachments_stale');
+                $field['removeLabel'] = $this->translator->trans('workflow.form.remove_condition');
+                unset($field['includeInvoice']);
             }
 
             $field = $this->translateField($field);
@@ -256,10 +268,14 @@ class WorkflowController extends AbstractController
     /** @return array<int, array{value: int, label: string}> */
     private function loadReservationStatusOptions(): array
     {
-        $statuses = $this->em->getRepository(ReservationStatus::class)->findBy([], ['name' => 'ASC']);
+        // Ordering by the stored name would order by the seed-time locale;
+        // system statuses are labelled from a translation key at render time.
+        $statuses = $this->displayNameResolver->sortByDisplayName(
+            $this->em->getRepository(ReservationStatus::class)->findAll(),
+        );
         $options = [['value' => 0, 'label' => '–']];
         foreach ($statuses as $status) {
-            $options[] = ['value' => $status->getId(), 'label' => $status->getName()];
+            $options[] = ['value' => $status->getId(), 'label' => $this->displayNameResolver->resolve($status)];
         }
 
         return $options;
@@ -345,6 +361,62 @@ class WorkflowController extends AbstractController
         }
 
         return $options;
+    }
+
+    /**
+     * Builds the grouped list of documents that can be attached to a workflow email.
+     *
+     * TEMPLATE_INVOICE_PDF is deliberately not offered as a pickable template – the
+     * invoice options below use its default template internally, so the user picks
+     * "the invoice" rather than "the invoice PDF template".
+     *
+     * @return array<int, array{label: string, items: array<int, array{key: string, label: string, item: array<string, mixed>}>}>
+     */
+    private function loadAttachmentGroups(string $entityClass, bool $includeInvoice): array
+    {
+        $templateTypes = match ($entityClass) {
+            \App\Entity\Reservation::class => ['TEMPLATE_FILE_PDF', 'TEMPLATE_RESERVATION_PDF'],
+            default => ['TEMPLATE_FILE_PDF'],
+        };
+
+        $groups = [];
+
+        $templates = $this->em->getRepository(Template::class)->loadByTypeName($templateTypes);
+        if (count($templates) > 0) {
+            $items = [];
+            foreach ($templates as $template) {
+                $items[] = [
+                    'key' => 'pdf_template:' . $template->getId(),
+                    'label' => (string) $template->getName(),
+                    'item' => ['type' => 'pdf_template', 'templateId' => $template->getId()],
+                ];
+            }
+            $groups[] = [
+                'label' => $this->translator->trans('workflow.form.attachments.group_documents'),
+                'items' => $items,
+            ];
+        }
+
+        $supportsInvoice = in_array($entityClass, [\App\Entity\Reservation::class, \App\Entity\Invoice::class], true);
+        if ($includeInvoice && $supportsInvoice) {
+            $groups[] = [
+                'label' => $this->translator->trans('workflow.form.attachments.group_invoice'),
+                'items' => [
+                    [
+                        'key' => 'invoice_pdf',
+                        'label' => $this->translator->trans('workflow.form.attachments.invoice_pdf'),
+                        'item' => ['type' => 'invoice_pdf'],
+                    ],
+                    [
+                        'key' => 'invoice_pdf_open',
+                        'label' => $this->translator->trans('workflow.form.attachments.invoice_pdf_open'),
+                        'item' => ['type' => 'invoice_pdf_open'],
+                    ],
+                ],
+            ];
+        }
+
+        return $groups;
     }
 
     private function handleForm(Request $request, Workflow $workflow, bool $isNew): Response

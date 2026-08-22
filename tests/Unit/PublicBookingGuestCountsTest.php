@@ -7,25 +7,20 @@ namespace App\Tests\Unit;
 use App\Entity\Appartment;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\GuestCategory;
-use App\Entity\InvoiceAppartment;
 use App\Entity\Reservation;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\GuestCategoryRepository;
-use App\Service\InvoiceService;
-use App\Service\MailService;
 use App\Service\OnlineBookingConfigService;
 use App\Service\PublicAvailabilityService;
 use App\Service\PublicBookingService;
+use App\Dto\PublicBooking\RoomTotal;
 use App\Service\PublicPricingService;
-use App\Service\TemplatesService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class PublicBookingGuestCountsTest extends TestCase
 {
@@ -57,7 +52,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             3,
             1,
             ['category:1' => [3 => 1]],
-            new Request(),
             [],
             [1 => 2, 2 => 1],
         );
@@ -95,7 +89,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             4,
             2,
             ['category:1' => [2 => 2]],
-            new Request(),
             [],
             [1 => 2, 2 => 2],
         );
@@ -133,7 +126,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             2,
             ['category:1' => [1 => 2]],
-            new Request(),
             [],
             [1 => 2, 3 => 1],
         );
@@ -183,7 +175,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             1,
             ['category:1' => [2 => 1]],
-            new Request(),
             [],
             [1 => 2],
         );
@@ -234,7 +225,6 @@ final class PublicBookingGuestCountsTest extends TestCase
             2,
             2,
             ['category:1' => [1 => 2]],
-            new Request(),
             [],
             [1 => 2],
         );
@@ -258,17 +248,6 @@ final class PublicBookingGuestCountsTest extends TestCase
         $configService = $this->createStub(OnlineBookingConfigService::class);
         $configService->method('getReservationOrigin')->willReturn(null);
 
-        $invoiceService = $this->createStub(InvoiceService::class);
-        $invoiceService->method('buildAppartmentPositions')->willReturn([new InvoiceAppartment()]);
-        $invoiceService->method('buildApartmentModifierPositions')->willReturn([]);
-        // calculateSums fills the by-ref outputs; emulate by writing zero totals.
-        $invoiceService->method('calculateSums')->willReturnCallback(
-            function ($apps, $poss, &$vats, &$brutto, &$netto, &$apartmentTotal, &$miscTotal) {
-                $vats = [];
-                $brutto = $netto = $apartmentTotal = $miscTotal = 0.0;
-            }
-        );
-
         $catRepo = $this->createStub(GuestCategoryRepository::class);
         $catRepo->method('findAll')->willReturn($categories);
 
@@ -280,12 +259,8 @@ final class PublicBookingGuestCountsTest extends TestCase
             $appartmentRepo,
             $configService,
             $availabilityService,
-            $invoiceService,
-            $this->createStub(TemplatesService::class),
-            $this->createStub(MailService::class),
-            $this->createStub(TranslatorInterface::class),
             $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(PublicPricingService::class),
+            $this->zeroPricingService(),
             $catRepo,
             $touristTaxService,
         );
@@ -336,5 +311,17 @@ final class PublicBookingGuestCountsTest extends TestCase
         (new \ReflectionProperty(GuestCategory::class, 'id'))->setValue($c, $id);
 
         return $c;
+    }
+
+    /**
+     * Room pricing is exercised in PublicPricingServiceTest; here it only has to be
+     * silent, so every reservation costs nothing and carries no adjustment.
+     */
+    private function zeroPricingService(): PublicPricingService
+    {
+        $pricingService = $this->createStub(PublicPricingService::class);
+        $pricingService->method('calculateReservationRoomTotal')->willReturn(new RoomTotal(0.0, 0.0));
+
+        return $pricingService;
     }
 }

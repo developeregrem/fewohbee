@@ -39,6 +39,7 @@ class SubsidiaryService
 
         $object->setName($request->request->get('name-'.$id));
         $object->setDescription($request->request->get('description-'.$id));
+        $object->setInvoiceNumberPattern($request->request->get('invoice-number-pattern-'.$id));
 
         return $object;
     }

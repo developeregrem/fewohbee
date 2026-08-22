@@ -1,0 +1,35 @@
+{% for row in availability %}
+    {% if row.images is defined and row.images|length > 1 %}
+        {% set galleryId = 'gallery-' ~ row.typeKey|replace({':': '-'}) %}
+        {% set carouselId = 'carousel-' ~ row.typeKey|replace({':': '-'}) %}
+        <div class="modal fade" id="{{ galleryId }}" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header py-2">
+                        <h6 class="modal-title">{{ row.typeLabel }}</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <div id="{{ carouselId }}" class="carousel slide">
+                            <div class="carousel-inner">
+                                {% for img in row.images %}
+                                    <div class="carousel-item {{ loop.first ? 'active' : '' }}">
+                                        <img src="{{ img.mediumUrl }}" class="d-block w-100" alt="">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <button class="carousel-control-prev" type="button"
+                                    data-bs-target="#{{ carouselId }}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button"
+                                    data-bs-target="#{{ carouselId }}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endfor %}

@@ -27,6 +27,7 @@ class HousekeepingViewService
         private readonly RoomDayStatusRepository $roomDayStatusRepository,
         private readonly TranslatorInterface $translator,
         private readonly RoomBlockRepository $roomBlockRepository,
+        private readonly ReservationNameResolver $reservationNameResolver,
     ) {
     }
 
@@ -530,52 +531,10 @@ class HousekeepingViewService
 
     /**
      * Resolve a display name for a reservation from booker/import data.
-     *
-     * @return string
      */
     private function resolveReservationName(Reservation $reservation): string
     {
-        $booker = $reservation->getBooker();
-        if ($booker instanceof \App\Entity\Customer) {
-            $business = $this->resolveBusinessCompany($booker);
-            if (null !== $business) {
-                $lastname = trim((string) $booker->getLastname());
-                if ('' !== $lastname) {
-                    return sprintf('%s (%s)', $business, $lastname);
-                }
-
-                return $business;
-            }
-
-            return trim(sprintf('%s %s', (string) $booker->getLastname(), (string) $booker->getFirstname()));
-        }
-
-        $import = $reservation->getCalendarSyncImport();
-        if ($import instanceof \App\Entity\CalendarSyncImport) {
-            $name = trim($import->getName());
-            if ('' !== $name) {
-                return $name;
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * Resolve the business company name for a customer if available.
-     */
-    private function resolveBusinessCompany(\App\Entity\Customer $customer): ?string
-    {
-        foreach ($customer->getCustomerAddresses() as $address) {
-            if ('CUSTOMER_ADDRESS_TYPE_BUSINESS' === $address->getType()) {
-                $company = trim((string) $address->getCompany());
-                if ('' !== $company) {
-                    return $company;
-                }
-            }
-        }
-
-        return null;
+        return $this->reservationNameResolver->resolve($reservation);
     }
 
 

@@ -58,13 +58,78 @@ class AvailabilityService
                 return false;
             }
 
-            foreach ($reservations as $reservation) {
-                $numberOfPersons += $reservation->getPersons();
-            }
-            return $numberOfPersons <= $room->getBedsMax();
+            return $numberOfPersons + $this->getMaximumConcurrentOccupancy($reservations, $start, $end)
+                <= $room->getBedsMax();
         }
 
         return true;
+    }
+
+    /**
+     * The same bed math as {@see isRoomAvailable()}, but fed from occupancy that was
+     * already loaded for a whole batch of rooms.
+     *
+     * The public booking lists every released room at once, so asking
+     * {@see isRoomAvailable()} per room would turn one batched query into an N+1.
+     * Callers are expected to have handled the two checks this predicate leaves out:
+     * whether the room is active at all, and whether a room block covers the period.
+     *
+     * It also answers a narrower question than {@see isRoomAvailable()}: the batched
+     * query aggregates the whole period instead of tracking concurrency per night,
+     * and the requested party size is not yet known when the room list is built — so
+     * it asks "is there a free bed at all", not "do N more guests still fit".
+     *
+     * @param array<int, array{reservationCount: int, persons: int}> $occupancyByRoomId
+     *        result of ReservationRepository::loadOccupancyByApartmentIdsWithoutStartEnd()
+     */
+    public function isRoomAvailableFromPreloadedOccupancy(Appartment $room, array $occupancyByRoomId): bool
+    {
+        $occupancy = $occupancyByRoomId[(int) $room->getId()] ?? null;
+        if (null === $occupancy || 0 === $occupancy['reservationCount']) {
+            return true;
+        }
+
+        if (!$room->isMultipleOccupancy()) {
+            return false;
+        }
+
+        return $occupancy['persons'] < (int) $room->getBedsMax();
+    }
+
+    /**
+     * Maximum number of beds occupied at the same time in the requested period.
+     * Reservation periods are treated as half-open intervals: a departure and
+     * another arrival at the same instant do not overlap.
+     *
+     * @param Reservation[] $reservations
+     */
+    private function getMaximumConcurrentOccupancy(array $reservations, \DateTimeInterface $start, \DateTimeInterface $end): int
+    {
+        $periodStart = $start->getTimestamp();
+        $periodEnd = $end->getTimestamp();
+        $occupancyChanges = [];
+
+        foreach ($reservations as $reservation) {
+            $overlapStart = max($periodStart, $reservation->getStartDate()->getTimestamp());
+            $overlapEnd = min($periodEnd, $reservation->getEndDate()->getTimestamp());
+            if ($overlapStart >= $overlapEnd) {
+                continue;
+            }
+
+            $persons = max(0, $reservation->getPersons());
+            $occupancyChanges[$overlapStart] = ($occupancyChanges[$overlapStart] ?? 0) + $persons;
+            $occupancyChanges[$overlapEnd] = ($occupancyChanges[$overlapEnd] ?? 0) - $persons;
+        }
+
+        ksort($occupancyChanges, SORT_NUMERIC);
+        $currentOccupancy = 0;
+        $maximumOccupancy = 0;
+        foreach ($occupancyChanges as $change) {
+            $currentOccupancy += $change;
+            $maximumOccupancy = max($maximumOccupancy, $currentOccupancy);
+        }
+
+        return $maximumOccupancy;
     }
 
     /**
@@ -157,6 +222,45 @@ class AvailabilityService
         }
 
         return $result;
+    }
+
+    /**
+     * Occupied nights of a single room, for the public availability calendar.
+     *
+     * Half-open like every other availability query: a departure day is not an
+     * occupied night, so it stays selectable as the next guest's arrival day.
+     *
+     * @return array<string, true> set of occupied nights (Y-m-d) within [$from, $toExclusive)
+     */
+    public function getOccupiedNightsForRoom(Appartment $room, \DateTimeImmutable $from, \DateTimeImmutable $toExclusive): array
+    {
+        $roomId = (int) $room->getId();
+        // Scoping to the room's own property keeps the query small; the spans are
+        // filtered down to this room anyway, so the wider fallback stays correct.
+        $objectId = $room->getObject()->getId() ?? 'all';
+
+        $spans = array_values(array_filter(
+            $this->reservationRepository->loadBlockingSpansForPeriod($from, $toExclusive, $objectId),
+            static fn (array $span): bool => (int) $span['appartmentId'] === $roomId
+        ));
+
+        foreach ($this->roomBlockRepository->findForPeriod($from, $toExclusive, $objectId) as $block) {
+            if ((int) $block->getAppartment()->getId() !== $roomId) {
+                continue;
+            }
+            $spans[] = [
+                'appartmentId' => $roomId,
+                'startDate' => $block->getStartDate()->format('Y-m-d'),
+                'endDate' => $block->getEndDate()->format('Y-m-d'),
+            ];
+        }
+
+        $occupied = [];
+        foreach (array_keys($this->expandSpansPerDay($spans, $from, $toExclusive, [$roomId => true])) as $night) {
+            $occupied[$night] = true;
+        }
+
+        return $occupied;
     }
 
     /**

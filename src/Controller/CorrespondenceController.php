@@ -333,7 +333,7 @@ class CorrespondenceController extends AbstractController
                     $defaultTemplate = $ts->getDefaultTemplate($templates);
                     if (null !== $defaultTemplate) {
                         try {
-                            $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->getActiveSettings());
+                            $binaryPayload = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $defaultTemplate, $readinessService->resolveSettingsFor($invoice));
                             $asEInvoice = true;
                         } catch (\Throwable $e) {
                             $this->addFlash('warning', 'invoice.einvoice.export.fallback');

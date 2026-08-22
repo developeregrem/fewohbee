@@ -63,15 +63,6 @@ class AccountingSettings
     #[Assert\Length(max: 60)]
     private ?string $miscPositionLabel = null;
 
-    /**
-     * Up to three example invoice numbers from which {@see InvoiceNumberPatternBuilder}
-     * derives the matcher used during bank statement import.
-     *
-     * @var list<string>|null
-     */
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $invoiceNumberSamples = null;
-
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -193,35 +184,4 @@ class AccountingSettings
         return $this;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function getInvoiceNumberSamples(): array
-    {
-        return $this->invoiceNumberSamples ?? [];
-    }
-
-    /**
-     * @param list<string>|null $samples
-     */
-    public function setInvoiceNumberSamples(?array $samples): self
-    {
-        if (null === $samples) {
-            $this->invoiceNumberSamples = null;
-
-            return $this;
-        }
-
-        $clean = [];
-        foreach ($samples as $sample) {
-            $value = trim((string) $sample);
-            if ('' !== $value) {
-                $clean[] = $value;
-            }
-        }
-
-        $this->invoiceNumberSamples = [] === $clean ? null : array_values(array_slice($clean, 0, 3));
-
-        return $this;
-    }
 }

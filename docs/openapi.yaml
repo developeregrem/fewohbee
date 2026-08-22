@@ -1,0 +1,777 @@
+openapi: 3.1.0
+info:
+  title: FewohBee REST API
+  version: '1.0'
+  description: |
+    Read-only REST API of the FewohBee property management system.
+
+    Authentication uses personal access tokens created in the user profile
+    ("API access"). A token always starts with `fwb_` and can be sent either as
+    `Authorization: Bearer <token>` or — for clients that only support
+    username/password, such as calendar applications — as the password in HTTP
+    Basic auth together with the token owner's username. The actual login
+    password is never accepted by the API.
+
+    Every token carries scopes. A scope only takes effect when the token owner
+    also holds the underlying application role, so a token can never grant more
+    than its owner has.
+
+    | Scope | Required role |
+    |---|---|
+    | `reservations:read` | ROLE_RESERVATIONS_RO |
+    | `calendar:read` | ROLE_RESERVATIONS_RO |
+    | `statistics:read` | ROLE_STATISTICS |
+    | `invoices:read` | ROLE_INVOICES |
+
+    Requests are rate limited to 300 per 5 minutes per token.
+  license:
+    name: AGPL-3.0
+    url: https://github.com/developeregrem/fewohbee/blob/master/LICENSE
+
+servers:
+  - url: '{baseUrl}/api/v1'
+    description: Your FewohBee installation
+    variables:
+      baseUrl:
+        default: https://your-installation
+        description: >-
+          Base URL of the installation, including a subdirectory if the app is
+          not served from the domain root (e.g. https://example.com/fewohbee).
+
+security:
+  - bearerAuth: []
+  - basicAuth: []
+
+tags:
+  - name: Reservations
+  - name: Invoices
+  - name: Calendars
+  - name: Statistics
+  - name: Meta
+
+paths:
+  /reservations:
+    get:
+      tags: [Reservations]
+      operationId: listReservations
+      summary: List reservations in a date range
+      description: |
+        Requires the `reservations:read` scope.
+
+        `types` describes each reservation relative to the requested range:
+        `arrival` if the arrival day falls inside it, `departure` if the
+        departure day does, and `inhouse` if at least one day of the range lies
+        strictly between arrival and departure. Over a multi-day range several
+        types can apply at once; when querying a single day exactly one type is
+        returned.
+      parameters:
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - $ref: '#/components/parameters/ObjectId'
+        - name: apartmentId
+          in: query
+          description: Restrict to a single room.
+          schema: { type: integer }
+        - $ref: '#/components/parameters/ReservationStatusId'
+        - name: type
+          in: query
+          description: Only reservations that have this type within the range.
+          schema:
+            type: string
+            enum: [arrival, departure, inhouse]
+      responses:
+        '200':
+          description: Matching reservations. The range must not exceed 180 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Reservation' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string, format: date }
+                      end: { type: string, format: date }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /invoices:
+    get:
+      tags: [Invoices]
+      operationId: listInvoices
+      summary: List invoices in a date range
+      description: |
+        Requires the `invoices:read` scope.
+
+        Invoices contain the recipient's name and address. Payment credentials
+        (IBAN, card number, card holder, mandate reference) are never returned.
+      parameters:
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - name: status
+          in: query
+          description: >-
+            Invoice status IDs (1 = open, 2 = paid, 3 = prepaid, 4 = canceled).
+            Repeatable or comma-separated. Default: all.
+          schema:
+            oneOf:
+              - type: string
+              - type: array
+                items: { type: integer, enum: [1, 2, 3, 4] }
+            examples: ['1,2']
+      responses:
+        '200':
+          description: Matching invoices. The range must not exceed 366 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Invoice' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string, format: date }
+                      end: { type: string, format: date }
+                      status:
+                        type: array
+                        items: { type: integer }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /invoices/{id}:
+    get:
+      tags: [Invoices]
+      operationId: getInvoice
+      summary: Get a single invoice
+      description: Requires the `invoices:read` scope.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: The invoice.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Invoice' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /apartments/{id}/calendar.ics:
+    get:
+      tags: [Calendars]
+      operationId: getApartmentCalendar
+      summary: Occupancy calendar of a room in iCal format
+      description: |
+        Requires the `calendar:read` scope.
+
+        Unlike the public calendar URL (which contains an unguessable UUID and
+        requires the calendar to be shared publicly), this endpoint works for
+        any active room with calendar synchronisation configured. Calendar
+        applications such as Thunderbird can subscribe to it using HTTP Basic
+        auth with the username and an API token as the password.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Room (apartment) ID.
+          schema: { type: integer }
+      responses:
+        '200':
+          description: The calendar.
+          content:
+            text/calendar:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /calendar/holidays:
+    get:
+      tags: [Calendars]
+      operationId: listHolidays
+      summary: Public holidays for a country / subdivision
+      description: |
+        Requires the `calendar:read` scope.
+
+        Without a subdivision the holidays of the whole country including all of
+        its subdivisions are returned; with a subdivision only the ones valid
+        there.
+      parameters:
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+        - name: country
+          in: query
+          description: 'ISO 3166-1 country code. Default: DE.'
+          schema: { type: string, default: DE, examples: [DE] }
+        - name: subdivision
+          in: query
+          description: ISO 3166-2 subdivision code belonging to the country.
+          schema: { type: string, examples: [DE-SN] }
+        - name: locale
+          in: query
+          description: 'Language of the holiday names. Default: request language.'
+          schema: { type: string, examples: [de] }
+      responses:
+        '200':
+          description: Holidays in the range. The range must not exceed 731 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Holiday' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string, format: date }
+                      end: { type: string, format: date }
+                      country: { type: string }
+                      subdivision: { type: [string, 'null'] }
+                      locale: { type: string }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /calendars:
+    get:
+      tags: [Calendars]
+      operationId: listCalendars
+      summary: List the user-defined calendars
+      description: Requires the `calendar:read` scope.
+      responses:
+        '200':
+          description: All configured calendars.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Calendar' }
+                  meta:
+                    type: object
+                    properties:
+                      count: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /calendars/{id}/entries:
+    get:
+      tags: [Calendars]
+      operationId: listCalendarEntries
+      summary: Entries of a calendar in a date range
+      description: Requires the `calendar:read` scope.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - $ref: '#/components/parameters/StartDate'
+        - $ref: '#/components/parameters/EndDate'
+      responses:
+        '200':
+          description: Entries in the range. The range must not exceed 731 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CalendarEntry' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string, format: date }
+                      end: { type: string, format: date }
+                      calendar:
+                        type: object
+                        properties:
+                          id: { type: integer }
+                          name: { type: string }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /statistics/utilization:
+    get:
+      tags: [Statistics]
+      operationId: getUtilizationStatistics
+      summary: Bed utilization per month
+      description: |
+        Requires the `statistics:read` scope. Utilization is given in percent of
+        the available beds.
+      parameters:
+        - $ref: '#/components/parameters/StartMonth'
+        - $ref: '#/components/parameters/EndMonth'
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/ReservationStatusId'
+      responses:
+        '200':
+          description: One entry per month. The range must not exceed 60 months.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month: { type: string, examples: ['2026-08'] }
+                        utilization: { type: number, format: float }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      objectId: { type: [integer, 'null'] }
+                      beds: { type: integer }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /statistics/origins:
+    get:
+      tags: [Statistics]
+      operationId: getOriginStatistics
+      summary: Reservation counts per booking origin
+      description: Requires the `statistics:read` scope.
+      parameters:
+        - $ref: '#/components/parameters/StartMonth'
+        - $ref: '#/components/parameters/EndMonth'
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/ReservationStatusId'
+      responses:
+        '200':
+          description: One entry per origin. The range must not exceed 60 months.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        name: { type: [string, 'null'] }
+                        count: { type: integer }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      objectId: { type: [integer, 'null'] }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /statistics/turnover:
+    get:
+      tags: [Statistics]
+      operationId: getTurnoverStatistics
+      summary: Turnover per year or month
+      description: |
+        Requires the `statistics:read` scope. Turnover is the gross amount based
+        on invoices.
+      parameters:
+        - name: start
+          in: query
+          description: 'First year (YYYY). Default: current year.'
+          schema: { type: string, pattern: '^\d{4}$', examples: ['2026'] }
+        - name: end
+          in: query
+          description: 'Last year (YYYY). Default: same as start.'
+          schema: { type: string, pattern: '^\d{4}$', examples: ['2026'] }
+        - name: granularity
+          in: query
+          schema: { type: string, enum: [year, month], default: year }
+        - name: invoiceStatus
+          in: query
+          description: >-
+            Invoice status IDs to include (1 = open, 2 = paid, 3 = prepaid,
+            4 = canceled). Repeatable or comma-separated.
+            Default: 1,2,3 (everything except canceled).
+          schema:
+            oneOf:
+              - type: string
+              - type: array
+                items: { type: integer, enum: [1, 2, 3, 4] }
+      responses:
+        '200':
+          description: >-
+            One entry per year or month, depending on granularity. The range must
+            not exceed 5 years.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        year: { type: integer, description: Only with granularity=year. }
+                        month: { type: string, description: 'Only with granularity=month, e.g. 2026-08.' }
+                        turnover: { type: number, format: float }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: integer }
+                      end: { type: integer }
+                      granularity: { type: string }
+                      invoiceStatus:
+                        type: array
+                        items: { type: integer }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /openapi.yaml:
+    get:
+      tags: [Meta]
+      operationId: getOpenApiSpec
+      summary: This API description
+      description: |
+        Returns this OpenAPI document. Any valid token is accepted; no
+        particular scope is required. Signed-in users can also download it from
+        the "API access" section of their profile.
+      responses:
+        '200':
+          description: The OpenAPI document.
+          content:
+            application/yaml:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'Send the personal access token: `Authorization: Bearer fwb_...`'
+    basicAuth:
+      type: http
+      scheme: basic
+      description: >-
+        Username of the token owner plus the personal access token as the
+        password. Intended for clients that cannot send custom headers, such as
+        calendar applications. The real login password is never accepted.
+
+  parameters:
+    StartDate:
+      name: start
+      in: query
+      description: 'Start date (YYYY-MM-DD). Default: today.'
+      schema: { type: string, format: date }
+    EndDate:
+      name: end
+      in: query
+      description: 'End date (YYYY-MM-DD). Default: same as start.'
+      schema: { type: string, format: date }
+    StartMonth:
+      name: start
+      in: query
+      description: 'First month (YYYY-MM). Default: current month.'
+      schema: { type: string, pattern: '^\d{4}-\d{2}$', examples: ['2026-01'] }
+    EndMonth:
+      name: end
+      in: query
+      description: 'Last month (YYYY-MM). Default: same as start.'
+      schema: { type: string, pattern: '^\d{4}-\d{2}$', examples: ['2026-12'] }
+    ObjectId:
+      name: objectId
+      in: query
+      description: 'Restrict to a single property/branch. Default: all.'
+      schema: { type: integer }
+    ReservationStatusId:
+      name: statusId
+      in: query
+      description: >-
+        Reservation status IDs, repeatable or comma-separated.
+        Default: all blocking statuses.
+      schema:
+        oneOf:
+          - type: string
+          - type: array
+            items: { type: integer }
+
+  responses:
+    BadRequest:
+      description: Invalid parameters.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid token.
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            examples: ['Bearer realm="fewohbee-api", Basic realm="fewohbee-api"']
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: The token lacks the required scope, or its owner lacks the role.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit exceeded (300 requests per 5 minutes per token).
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: integer }
+            message: { type: string }
+      examples:
+        - error:
+            code: 400
+            message: "Invalid parameter 'start': expected format Y-m-d."
+
+    Reservation:
+      type: object
+      properties:
+        uuid: { type: [string, 'null'], format: uuid }
+        bookingGroupUuid:
+          type: [string, 'null']
+          format: uuid
+          description: Groups reservations that were booked together.
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        arrivalTime: { type: [string, 'null'], examples: ['15:00'] }
+        departureTime: { type: [string, 'null'], examples: ['10:00'] }
+        persons: { type: integer }
+        guestCounts:
+          type: object
+          description: Number of guests per guest category ID.
+          additionalProperties: { type: integer }
+        status:
+          type: object
+          properties:
+            id: { type: [integer, 'null'] }
+            name: { type: [string, 'null'] }
+        apartment:
+          type: object
+          properties:
+            id: { type: [integer, 'null'] }
+            number: { type: [string, 'null'] }
+            description: { type: [string, 'null'] }
+        object:
+          type: object
+          description: The property/branch the room belongs to.
+          properties:
+            id: { type: [integer, 'null'] }
+            name: { type: [string, 'null'] }
+        origin: { type: [string, 'null'], description: Booking origin/channel. }
+        bookerName: { type: string }
+        remark: { type: [string, 'null'] }
+        optionDate: { type: [string, 'null'], format: date }
+        reservationDate: { type: string, format: date-time }
+        types:
+          type: array
+          items: { type: string, enum: [arrival, departure, inhouse] }
+        isImported:
+          type: boolean
+          description: Whether the reservation came from a calendar import.
+        invoices:
+          type: [array, 'null']
+          description: >-
+            Linked invoices as metadata only. Filled only when the token also
+            carries the `invoices:read` scope; `null` otherwise, so callers can
+            tell "not permitted" apart from "no invoices" (`[]`).
+          items: { $ref: '#/components/schemas/InvoiceRef' }
+
+    InvoiceRef:
+      type: object
+      properties:
+        id: { type: integer }
+        number: { type: string }
+        date: { type: string, format: date }
+        status: { $ref: '#/components/schemas/InvoiceStatus' }
+
+    InvoiceStatus:
+      type: object
+      properties:
+        id: { type: integer, enum: [1, 2, 3, 4] }
+        code:
+          type: [string, 'null']
+          enum: [OPEN, PAID, PREPAID, CANCELED, null]
+
+    Invoice:
+      type: object
+      properties:
+        id: { type: [integer, 'null'] }
+        number: { type: [string, 'null'] }
+        date: { type: string, format: date }
+        status: { $ref: '#/components/schemas/InvoiceStatus' }
+        paymentMeans:
+          type: [object, 'null']
+          description: UNTDID 4461 payment means code.
+          properties:
+            code: { type: integer, examples: [58] }
+            name: { type: string, examples: [SEPA_CREDIT_TRANSFER] }
+        payment: { type: [string, 'null'], description: Free-text payment note. }
+        recipient:
+          type: object
+          properties:
+            salutation: { type: [string, 'null'] }
+            firstname: { type: [string, 'null'] }
+            lastname: { type: [string, 'null'] }
+            company: { type: [string, 'null'] }
+            address: { type: [string, 'null'] }
+            zip: { type: [string, 'null'] }
+            city: { type: [string, 'null'] }
+            country: { type: [string, 'null'] }
+            email: { type: [string, 'null'] }
+            phone: { type: [string, 'null'] }
+            buyerReference: { type: [string, 'null'] }
+            buyerVatId: { type: [string, 'null'] }
+        remark: { type: [string, 'null'] }
+        totals:
+          type: object
+          description: 'gross = net + vat.'
+          properties:
+            gross: { type: number, format: float }
+            net: { type: number, format: float }
+            vat: { type: number, format: float }
+        vatRates:
+          type: array
+          description: The same amounts broken down per VAT rate.
+          items:
+            type: object
+            properties:
+              rate: { type: number, format: float, examples: [19] }
+              gross: { type: number, format: float }
+              net: { type: number, format: float }
+              vat: { type: number, format: float }
+        apartments:
+          type: array
+          description: >-
+            Accommodation lines - a snapshot of room, period and price at the
+            time of invoicing.
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              number: { type: [string, 'null'] }
+              description: { type: [string, 'null'] }
+              startDate: { type: string, format: date }
+              endDate: { type: string, format: date }
+              beds: { type: integer }
+              persons: { type: integer }
+              amount: { type: integer, description: Number of nights charged. }
+              price: { type: number, format: float }
+              vat: { type: number, format: float }
+              includesVat: { type: boolean }
+              isFlatPrice: { type: boolean }
+              isPerRoom: { type: boolean }
+              total: { type: number, format: float }
+        positions:
+          type: array
+          description: All other invoice lines.
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              description: { type: [string, 'null'] }
+              amount: { type: integer }
+              price: { type: number, format: float }
+              vat: { type: number, format: float }
+              includesVat: { type: boolean }
+              isFlatPrice: { type: boolean }
+              positionGroup: { type: [string, 'null'] }
+              total: { type: number, format: float }
+        reservations:
+          type: array
+          description: The reservations this invoice was created for.
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              uuid: { type: [string, 'null'], format: uuid }
+
+    Holiday:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        name: { type: string }
+
+    Calendar:
+      type: object
+      properties:
+        id: { type: [integer, 'null'] }
+        name: { type: string }
+        color: { type: string, examples: ['#ffc107'] }
+        requiresConfirmation:
+          type: boolean
+          description: Whether entries need a day-before confirmation.
+        hasIcsSource: { type: boolean }
+        lastSyncedAt: { type: [string, 'null'], format: date-time }
+
+    CalendarEntry:
+      type: object
+      properties:
+        id: { type: [integer, 'null'] }
+        date: { type: string, format: date }
+        title: { type: string }
+        isManuallyCreated:
+          type: boolean
+          description: False when the entry came from an ICS sync.
+        isConfirmed: { type: boolean }

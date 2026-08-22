@@ -23,6 +23,7 @@ use App\Entity\Price;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Service\InvoiceNumberPatternService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -34,8 +35,10 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
 {
     private $translator;
 
-    public function __construct(TranslatorInterface $translator)
-    {
+    public function __construct(
+        TranslatorInterface $translator,
+        private readonly InvoiceNumberPatternService $patternService,
+    ) {
         $this->translator = $translator;
     }
 
@@ -102,7 +105,12 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
         $res = $manager->getRepository(Reservation::class)->findAll();
         /* @var $bPrice Price */
         $bPrice = $manager->getRepository(Price::class)->findOneBy(['type' => 1]);
-        $invoiceId = 100;
+
+        // Sample invoices follow the number range the sample data configures, so the demo
+        // looks like a system that has been set up — and the next invoice created in the
+        // demo simply continues the series.
+        $numberPattern = $this->patternService->tryCompile(SettingsFixtures::SAMPLE_INVOICE_NUMBER_PATTERN);
+        $sequence = 1;
         /* @var $re Reservation */
         foreach ($res as $re) {
             /* @var $aPrice Price */
@@ -137,15 +145,24 @@ class ReservationFixtures extends Fixture implements FixtureGroupInterface, Depe
 
             /* @var $address CustomerAddresses */
             $address = $re->getBooker()->getCustomerAddresses()[0];
+            $invoiceDate = new \DateTime();
             $invoice->setAddress($address->getAddress());
             $invoice->setCity($address->getCity());
-            $invoice->setDate(new \DateTime());
+            $invoice->setDate($invoiceDate);
             $invoice->setFirstname($re->getBooker()->getFirstname());
             $invoice->setLastname($re->getBooker()->getLastname());
-            $invoice->setNumber($invoiceId++);
+            $invoice->setNumber(
+                null !== $numberPattern
+                    ? $numberPattern->render($invoiceDate, $sequence)
+                    : (string) (99 + $sequence)
+            );
+            ++$sequence;
             $invoice->setSalutation($re->getBooker()->getSalutation());
             $invoice->setZip($address->getZip());
             $invoice->setStatus(1);
+            // Same branch the application would derive from the booked room, so sample
+            // invoices behave like real ones for number ranges and issuer resolution.
+            $invoice->setSubsidiary($re->getAppartment()?->getObject());
 
             $manager->persist($invoice);
 

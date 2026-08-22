@@ -6,6 +6,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\InvoiceSettingsData;
 use App\Entity\Role;
+use App\Entity\Subsidiary;
 use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -121,7 +122,7 @@ final class InvoiceSettingsSaveTest extends WebTestCase
         self::assertSame('Changed Name GmbH', $reloaded->getCompanyName(), 'Save must persist when a registration number is provided');
     }
 
-    public function testActivatingSettingDeactivatesOthers(): void
+    public function testMakingASettingTheDefaultDemotesTheOthers(): void
     {
         $client = static::createClient();
         $client->loginUser($this->createInvoiceUser());
@@ -143,15 +144,92 @@ final class InvoiceSettingsSaveTest extends WebTestCase
         $crawler = $client->request('GET', '/invoices/settings');
         self::assertResponseIsSuccessful();
 
-        // the previously active one is rendered first (ordered by isActive DESC) → form 1 is active, form 2 inactive
+        // the current default is rendered first (ordered by isActive DESC) → form 1 is the
+        // default, form 2 is the parked one we now promote
         $form = $crawler->filter('form#sttings-form-2')->form();
-        $form['invoice_settings[isActive]']->tick();
+        $form['invoice_settings[scope]'] = 'default';
         $client->submit($form);
         self::assertResponseIsSuccessful();
 
         $em->clear();
-        self::assertFalse($em->getRepository(InvoiceSettingsData::class)->find($activeId)->isActive(), 'Previously active setting must become inactive');
-        self::assertTrue($em->getRepository(InvoiceSettingsData::class)->find($inactiveId)->isActive(), 'Newly activated setting must be active');
+        self::assertFalse($em->getRepository(InvoiceSettingsData::class)->find($activeId)->isActive(), 'Previous default must be demoted');
+        self::assertTrue($em->getRepository(InvoiceSettingsData::class)->find($inactiveId)->isActive(), 'Newly chosen default must be active');
+    }
+
+    public function testAssigningABranchDoesNotMakeTheRecordTheDefault(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        foreach ($em->getRepository(InvoiceSettingsData::class)->findAll() as $existing) {
+            $em->remove($existing);
+        }
+        $em->flush();
+
+        $subsidiary = new Subsidiary();
+        $subsidiary->setName('Nord-'.bin2hex(random_bytes(3)));
+        $subsidiary->setDescription('Testniederlassung');
+        $em->persist($subsidiary);
+
+        $setting = $this->buildSetting('en16931', true);
+        $em->persist($setting);
+        $em->flush();
+        $settingId = $setting->getId();
+
+        $crawler = $client->request('GET', '/invoices/settings');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form#sttings-form-1')->form();
+        $form['invoice_settings[scope]'] = 'subsidiary:'.$subsidiary->getId();
+        $client->submit($form);
+        self::assertResponseIsSuccessful();
+
+        $em->clear();
+        $reloaded = $em->getRepository(InvoiceSettingsData::class)->find($settingId);
+        self::assertSame($subsidiary->getId(), $reloaded->getSubsidiary()?->getId(), 'Branch assignment must persist');
+        self::assertFalse($reloaded->isActive(), 'A branch-specific record is never the global default');
+    }
+
+    public function testTwoRecordsCannotClaimTheSameBranch(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        foreach ($em->getRepository(InvoiceSettingsData::class)->findAll() as $existing) {
+            $em->remove($existing);
+        }
+        $em->flush();
+
+        $subsidiary = new Subsidiary();
+        $subsidiary->setName('Sued-'.bin2hex(random_bytes(3)));
+        $subsidiary->setDescription('Testniederlassung');
+        $em->persist($subsidiary);
+
+        $taken = $this->buildSetting('en16931', false);
+        $taken->setSubsidiary($subsidiary);
+        $other = $this->buildSetting('en16931', true);
+        $em->persist($taken);
+        $em->persist($other);
+        $em->flush();
+        $otherId = $other->getId();
+
+        $crawler = $client->request('GET', '/invoices/settings');
+        self::assertResponseIsSuccessful();
+
+        // form 1 is the default record (ordered by isActive DESC); point it at the branch
+        // that the other record already covers
+        $form = $crawler->filter('form#sttings-form-1')->form();
+        $form['invoice_settings[scope]'] = 'subsidiary:'.$subsidiary->getId();
+        $client->submit($form);
+        self::assertResponseIsSuccessful();
+
+        $em->clear();
+        self::assertNull(
+            $em->getRepository(InvoiceSettingsData::class)->find($otherId)->getSubsidiary(),
+            'A branch that is already covered must be rejected'
+        );
     }
 
     private function buildSetting(string $profile, bool $active): InvoiceSettingsData

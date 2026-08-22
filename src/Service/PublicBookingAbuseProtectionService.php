@@ -27,6 +27,8 @@ class PublicBookingAbuseProtectionService
         private readonly RateLimiterFactoryInterface $availabilityLimiter,
         #[Autowire(service: 'limiter.public_booking_submit')]
         private readonly RateLimiterFactoryInterface $submitLimiter,
+        #[Autowire(service: 'limiter.public_booking_calendar')]
+        private readonly RateLimiterFactoryInterface $calendarLimiter,
         // Server-side, cookie-independent token store. Using the shared cache
         // pool (not the session) is essential for the embedded booking form:
         // when the iframe lives on a third-party domain, the session cookie is
@@ -45,6 +47,19 @@ class PublicBookingAbuseProtectionService
         $this->assertHoneypotIsEmpty($request);
         $this->assertMinimumElapsedTime($request);
         $this->consumeToken($this->availabilityLimiter, $this->buildLimiterKey($request, 'availability'), 'online_booking.error.try_again_later');
+    }
+
+    /**
+     * Rate-limit the public availability calendar.
+     *
+     * Only the limiter applies here: the calendar is a GET fetch made by the page
+     * itself, so it carries neither the honeypot field nor the form timestamp that
+     * guard the form steps. The limiter is what keeps the endpoint from being used
+     * to walk a property's occupancy month by month.
+     */
+    public function validateCalendarRequest(Request $request): void
+    {
+        $this->consumeToken($this->calendarLimiter, $this->buildLimiterKey($request, 'calendar'), 'online_booking.error.try_again_later');
     }
 
     /**

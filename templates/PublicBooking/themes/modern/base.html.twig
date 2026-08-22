@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}{{ 'online_booking.public.page_title'|trans }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/bootstrap.materia.min.5.3.8.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/css/public-booking-modern.css?v=12">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/fontawesome.min.css">
+    <link rel="stylesheet" href="{{ app.request.basepath }}/resources/fas/7.3.1/css/solid.min.css">
+    <style>
+{% if embed %}
+        /* The iframe document paints its own background — Bootstrap gives the body a
+           solid colour — so it has to be cleared as well, or the host page never
+           shows through no matter what the booking card does. */
+        html, body { background: transparent; }
+{% endif %}
+        .fhb-booking-root {
+            --fhb-primary: {{ config.themePrimaryColor|default('#1f6feb') }};
+            {# Embedded pages stay transparent unless a background colour is configured,
+               so the host site's own design shows through. #}
+            --fhb-bg: {{ config.themeBackgroundColor ?: (embed ? 'transparent' : '#f6f8fb') }};
+            {{ embed ? '' : 'min-height: 100vh;' }}
+        }
+    </style>
+{% if config.customCss %}
+    {# Hotelier-provided CSS, ROLE_ADMIN only, intentionally raw so it can style the page.
+       Injected last so it overrides the theme defaults on equal specificity. #}
+    <style>{{ config.customCss|raw }}</style>
+{% endif %}
+</head>
+<body>
+{% block body %}{% endblock %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/bootstrap.min.5.3.8.js" defer></script>
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/public-booking.js?v=4" defer></script>
+{% if config.calendarActive %}
+<script type="text/javascript" src="{{ app.request.basepath }}/resources/js/public-booking-calendar.js?v=7" defer></script>
+{% endif %}
+{% if embed %}
+<script>
+(function(){
+    var root = document.querySelector('.fhb-booking-root');
+    if (!root || !window.parent || window.parent === window) return;
+    var lastHeight = 0;
+    var scheduled = false;
+    function notify() {
+        scheduled = false;
+        var height = Math.ceil(root.getBoundingClientRect().height);
+        // Report real changes only. Every message makes the host resize the iframe,
+        // and re-laying out an iframe closes an open native select popup — so a
+        // observer that keeps firing would make the dropdowns unusable.
+        if (Math.abs(height - lastHeight) < 2) return;
+        lastHeight = height;
+        window.parent.postMessage({type:'fhb-resize',height:height},'*');
+    }
+    function schedule() {
+        if (scheduled) return;
+        scheduled = true;
+        (window.requestAnimationFrame || window.setTimeout)(notify, 0);
+    }
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(schedule).observe(root);
+    } else {
+        schedule();
+        window.addEventListener('load', schedule);
+    }
+{% if successMessage %}
+    // The confirmation page is far shorter than the form, so the host page is
+    // still scrolled to where that form used to be. Ask it to bring the iframe
+    // back into view once the new height has been applied.
+    window.addEventListener('load', function () {
+        window.parent.postMessage({type: 'fhb-scroll'}, '*');
+    });
+{% endif %}
+})();
+</script>
+{% endif %}
+</body>
+</html>

@@ -13,7 +13,7 @@ use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Role;
 use App\Entity\User;
-use App\Service\BookingJournal\AccountingSettingsService;
+use App\Service\AppSettingsService;
 use App\Service\BookingJournal\BankImport\BankImportDraftSession;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -402,9 +402,10 @@ final class BankImportControllerTest extends WebTestCase
     {
         $this->removeInvoices(['2026-0101']);
 
-        $settingsService = static::getContainer()->get(AccountingSettingsService::class);
+        // The fixture number 2026-0101 is exactly what this range issues.
+        $settingsService = static::getContainer()->get(AppSettingsService::class);
         $settings = $settingsService->getSettings();
-        $settings->setInvoiceNumberSamples(['2026-0101']);
+        $settings->setInvoiceNumberPattern('<year>-<number:4>');
         $settingsService->saveSettings($settings);
     }
 

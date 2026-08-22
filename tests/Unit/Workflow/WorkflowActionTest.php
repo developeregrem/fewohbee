@@ -9,6 +9,7 @@ use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Service\DisplayNameResolver;
 use App\Service\ReservationService;
 use App\Workflow\Action\ChangeInvoiceStatusAction;
 use App\Workflow\Action\ChangePaymentMeansAction;
@@ -25,6 +26,7 @@ final class WorkflowActionTest extends TestCase
     private TranslatorInterface $translator;
     private EventDispatcherInterface $eventDispatcher;
     private ReservationService $reservationService;
+    private DisplayNameResolver $displayNameResolver;
 
     protected function setUp(): void
     {
@@ -32,6 +34,7 @@ final class WorkflowActionTest extends TestCase
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->translator->method('trans')->willReturnArgument(0);
         $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->displayNameResolver = new DisplayNameResolver($this->translator);
         $this->reservationService = $this->createStub(ReservationService::class);
         $this->reservationService->method('changeStatus')->willReturnCallback(
             static function (Reservation $reservation, ?ReservationStatus $status): void {
@@ -159,7 +162,7 @@ final class WorkflowActionTest extends TestCase
 
         $reservation = new Reservation();
 
-        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
         $result = $action->execute(['statusId' => 5], $reservation, []);
 
         self::assertSame($status, $reservation->getReservationStatus());
@@ -186,7 +189,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
         $result = $action->execute(['statusId' => 5], $invoice, []);
 
         self::assertSame($status, $res1->getReservationStatus());
@@ -203,7 +206,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 5], new Invoice(), []);
@@ -214,7 +217,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn(null);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 999], new Reservation(), []);
@@ -229,7 +232,7 @@ final class WorkflowActionTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('find')->willReturn($status);
 
-        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($em, $this->translator, $this->reservationService, $this->displayNameResolver);
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute(['statusId' => 5], new \stdClass(), []);
@@ -237,7 +240,7 @@ final class WorkflowActionTest extends TestCase
 
     public function testChangeReservationStatusConfigSchemaUsesReservationStatusSelect(): void
     {
-        $action = new ChangeReservationStatusAction($this->em, $this->translator, $this->reservationService);
+        $action = new ChangeReservationStatusAction($this->em, $this->translator, $this->reservationService, $this->displayNameResolver);
         $schema = $action->getConfigSchema();
 
         self::assertCount(1, $schema);

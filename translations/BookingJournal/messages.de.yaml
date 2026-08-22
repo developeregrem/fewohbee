@@ -42,12 +42,17 @@ accounting.settings.misc_position_label: Sonstige Leistungen
 accounting.settings.misc_position_label.placeholder: "z.B. Sonstige Leistungen, Zusatzleistungen"
 
 # Rechnungsnummer-Erkennung im Bank-Import
-accounting.settings.invoice_number_samples.title: Rechnungsnummern erkennen
-accounting.settings.invoice_number_samples.help: 'Trage 1–3 Beispielnummern ein, die typisch für deine Rechnungen sind. Beim Import von Kontoauszügen wird im Verwendungszweck nach Nummern in derselben Form gesucht.'
-accounting.settings.invoice_number_samples.intro: "Beispiele genügen — daraus wird automatisch ein Erkennungsmuster abgeleitet."
-accounting.settings.invoice_number_sample.1: "Beispiel 1"
-accounting.settings.invoice_number_sample.2: "Beispiel 2 (optional)"
-accounting.settings.invoice_number_sample.3: "Beispiel 3 (optional)"
+accounting.settings.invoice_number_patterns.title: Rechnungsnummern erkennen
+accounting.settings.invoice_number_patterns.help: 'Beim Import von Kontoauszügen wird im Verwendungszweck nach Nummern gesucht, die zu deinen Nummernkreisen passen. Erkannt wird also genau das, was du auch ausstellst.'
+accounting.settings.invoice_number_patterns.intro: "Diese Nummernkreise werden erkannt. Geändert werden sie dort, wo sie gelten — global in den Einstellungen, je Niederlassung in der Niederlassungsverwaltung."
+accounting.settings.invoice_number_patterns.none: "Du hast noch keinen Nummernkreis konfiguriert. Solange das so ist, können Kontoumsätze nicht automatisch Rechnungen zugeordnet werden."
+accounting.settings.invoice_number_patterns.recent: "Deine zuletzt vergebenen Rechnungsnummern:"
+accounting.settings.invoice_number_patterns.scope: Gilt für
+accounting.settings.invoice_number_patterns.pattern: Muster
+accounting.settings.invoice_number_patterns.example: Beispiel
+accounting.settings.invoice_number_patterns.global: Standard
+accounting.settings.invoice_number_patterns.link_global: Standard-Nummernkreis bearbeiten
+accounting.settings.invoice_number_patterns.link_branch: Niederlassungen verwalten
 
 # Anfangsbestand (Eröffnungsbuchungen)
 accounting.opening_balance.title: Anfangsbestand

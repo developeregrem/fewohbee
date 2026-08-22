@@ -204,7 +204,7 @@ class TemplatesServiceController extends AbstractController
             return $this->json([
                 'html' => '',
                 'warning' => 'templates.preview.noprovider',
-                'warningText' => (string) $this->container->get('translator')->trans('templates.preview.noprovider'),
+                'warningText' => $translator->trans('templates.preview.noprovider'),
                 'warningVars' => [],
             ]);
         }
@@ -238,8 +238,23 @@ class TemplatesServiceController extends AbstractController
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+        // Render the subject line with the same context (best-effort; a broken
+        // placeholder there should not hide the successfully rendered body).
+        $subject = null;
+        $subjectError = null;
+        $previewSubject = trim((string) $request->request->get('previewSubject', ''));
+        if ('' !== $previewSubject) {
+            try {
+                $subject = $templatesService->renderSubjectString($previewSubject, $params);
+            } catch (\Throwable $e) {
+                $subjectError = $e->getMessage();
+            }
+        }
+
         return $this->json([
             'html' => $html,
+            'subject' => $subject,
+            'subjectError' => $subjectError,
             'warning' => $params['_previewWarning'] ?? null,
             'warningText' => !empty($params['_previewWarning'])
                 ? (string) $translator->trans(

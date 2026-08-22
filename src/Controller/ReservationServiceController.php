@@ -352,7 +352,7 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->remove('customersInReservation');    // unset
             $requestStack->getSession()->remove('reservatioInCreationPrices');
         } else {
-            $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
+            $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation', []);
         }
 
         if (0 != count($newReservationsInformationArray)) {
@@ -587,20 +587,29 @@ class ReservationServiceController extends AbstractController
      * Modifys the Appartment options of a selected a Appartment.
      */
     #[Route('/appartments/modify/options', name: 'reservations.modify.appartment.options', methods: ['POST'])]
-    public function modifyAppartmentOptionsAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
+    public function modifyAppartmentOptionsAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
     {
-        $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
+        $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation', []);
+        $selectionIndex = $request->request->get('appartmentid');
+        $newReservationInformation = is_array($newReservationsInformationArray)
+            ? ($newReservationsInformationArray[$selectionIndex] ?? null)
+            : null;
 
-        $newReservationInformation = $newReservationsInformationArray[$request->request->get('appartmentid')];
-        $guestCountsRaw = $request->request->get('guestCounts', '{}');
-        $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
-        $newReservationInformation->setGuestCounts($guestCounts);
-        $newReservationInformation->setPersons((int) $request->request->get('persons', 0));
-        $newReservationInformation->setAdultRuleOverride((bool) $request->request->get('adultRuleOverride', false));
-        $newReservationInformation->setKurtaxeWaived((bool) $request->request->get('kurtaxeWaived', false));
-        $newReservationInformation->setReservationStatus($request->request->get('status'));
+        if ($newReservationInformation instanceof ReservationObject) {
+            $guestCountsRaw = $request->request->get('guestCounts', '{}');
+            $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
+            $newReservationInformation->setGuestCounts($guestCounts);
+            $newReservationInformation->setPersons([] !== $guestCounts
+                ? $rs->computePersonsFromCounts($guestCounts)
+                : (int) $request->request->get('persons', 0));
+            $newReservationInformation->setAdultRuleOverride((bool) $request->request->get('adultRuleOverride', false));
+            $newReservationInformation->setKurtaxeWaived((bool) $request->request->get('kurtaxeWaived', false));
+            $newReservationInformation->setReservationStatus($request->request->get('status'));
 
-        $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
+            $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
+        } else {
+            $requestStack->getSession()->getFlashBag()->add('warning', 'reservation.no.selected.appartments');
+        }
 
         $request2 = $request->duplicate([], []);
         $request2->attributes->set('_controller', 'App\Controller\ReservationServiceController::showSelectAppartmentsFormAction');
@@ -1435,6 +1444,11 @@ class ReservationServiceController extends AbstractController
         /* @var $template Template */
         $template = $em->getRepository(Template::class)->find($id);
         $templateOutput = $ts->renderTemplate($template->getId(), $reservations);
+        try {
+            $templateSubject = $ts->renderTemplateSubject($template, $reservations);
+        } catch (\Throwable $e) {
+            $templateSubject = (string) $template->getName();
+        }
         $emailDraft = $requestStack->getSession()->get(self::EMAIL_DRAFT_SESSION_KEY, []);
 
         // add attachments
@@ -1448,6 +1462,7 @@ class ReservationServiceController extends AbstractController
 
         return $this->render('Reservations/reservation_form_preview_template.html.twig', [
             'templateOutput' => $templateOutput,
+            'templateSubject' => $templateSubject,
             'template' => $template,
             'reservations' => $reservations,
             'token' => $csrf->getCSRFTokenForForm(),

@@ -168,31 +168,65 @@ export default class extends Controller {
             'dragend->room-category-images#dragEnd',
         ].join(' ');
 
-        const popoverContent = `<form action="${img.deleteUrl}">`
-            + `<div class="text-center">`
-            + `<a class="btn btn-danger btn-sm popover-delete">${this.labelDeleteValue}</a> `
-            + `<a class="btn btn-secondary btn-sm popover-cancel">${this.labelCancelValue}</a>`
-            + `</div>`
-            + `<input type="hidden" name="_token" value="${img.csrfToken}">`
-            + `</form>`;
+        const popoverForm = document.createElement('form');
+        popoverForm.setAttribute('action', img.deleteUrl);
 
-        card.innerHTML = `
-            <div class="card h-100">
-                <img src="${img.thumbnailUrl}" class="card-img-top" alt="" style="height:100px;object-fit:cover">
-                <div class="card-body p-1 text-center">
-                    <button type="button" class="btn btn-sm btn-link rc-img-primary ${img.isPrimary ? 'text-warning' : 'text-secondary'}"
-                            data-action="click->room-category-images#setPrimary" title="${this.labelSetPrimaryValue}">
-                        <i class="fas fa-star"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-link text-danger"
-                            title="${this.labelDeleteTitleValue}"
-                            data-popover="delete"
-                            data-bs-content='${popoverContent.replace(/'/g, '&#39;')}'>
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-        `;
+        const popoverButtons = document.createElement('div');
+        popoverButtons.className = 'text-center';
+
+        const confirmDelete = document.createElement('a');
+        confirmDelete.className = 'btn btn-danger btn-sm popover-delete';
+        confirmDelete.textContent = this.labelDeleteValue;
+
+        const cancelDelete = document.createElement('a');
+        cancelDelete.className = 'btn btn-secondary btn-sm popover-cancel';
+        cancelDelete.textContent = this.labelCancelValue;
+
+        popoverButtons.append(confirmDelete, document.createTextNode(' '), cancelDelete);
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.setAttribute('value', img.csrfToken);
+        popoverForm.append(popoverButtons, csrfInput);
+
+        const cardContent = document.createElement('div');
+        cardContent.className = 'card h-100';
+
+        const thumbnail = document.createElement('img');
+        thumbnail.src = img.thumbnailUrl;
+        thumbnail.className = 'card-img-top';
+        thumbnail.alt = '';
+        thumbnail.style.height = '100px';
+        thumbnail.style.objectFit = 'cover';
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'card-body p-1 text-center';
+
+        const primaryButton = document.createElement('button');
+        primaryButton.type = 'button';
+        primaryButton.className = `btn btn-sm btn-link rc-img-primary ${img.isPrimary ? 'text-warning' : 'text-secondary'}`;
+        primaryButton.dataset.action = 'click->room-category-images#setPrimary';
+        primaryButton.title = this.labelSetPrimaryValue;
+
+        const primaryIcon = document.createElement('i');
+        primaryIcon.className = 'fas fa-star';
+        primaryButton.append(primaryIcon);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'btn btn-sm btn-link text-danger';
+        deleteButton.title = this.labelDeleteTitleValue;
+        deleteButton.dataset.popover = 'delete';
+        deleteButton.dataset.bsContent = popoverForm.outerHTML;
+
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'fas fa-trash-alt';
+        deleteButton.append(deleteIcon);
+
+        cardBody.append(primaryButton, document.createTextNode(' '), deleteButton);
+        cardContent.append(thumbnail, cardBody);
+        card.append(cardContent);
 
         this.gridTarget.appendChild(card);
     }

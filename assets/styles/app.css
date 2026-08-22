@@ -155,12 +155,31 @@ body {
 }
 
 .reservation-inner {
+    position: relative;
+    --feb-reservation-radius-left: .375rem;
+    --feb-reservation-radius-right: .375rem;
     border: 1px solid var(--feb-border-strong);
+    border-radius: var(--feb-reservation-radius-left) var(--feb-reservation-radius-right) var(--feb-reservation-radius-right) var(--feb-reservation-radius-left);
+    clip-path: inset(0 round var(--feb-reservation-radius-left) var(--feb-reservation-radius-right) var(--feb-reservation-radius-right) var(--feb-reservation-radius-left));
     color: var(--feb-reservation-text);
     padding: 3px;
     white-space: nowrap;
     overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: 1px;
     text-overflow: ellipsis;
+}
+
+/* Cover the top border; the outline clip ends the accent exactly at the corner arcs. */
+.reservation-inner::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    height: 2px;
+    background-color: var(--feb-reservation-origin-color, transparent);
+    pointer-events: none;
 }
 
 .reservation-inner[draggable="true"] {
@@ -180,6 +199,20 @@ body {
 #reservation-table .reservation-drop-target {
     background: var(--feb-ui-selecting-bg) !important;
     box-shadow: inset 0 0 0 2px var(--bs-primary);
+}
+
+/* A clipped side is not a real start/end of the reservation. */
+#reservation-table td.cell-start .reservation-inner {
+    --feb-reservation-radius-right: 0;
+}
+
+#reservation-table td.cell-end .reservation-inner {
+    --feb-reservation-radius-left: 0;
+}
+
+#reservation-table td.cell-middle .reservation-inner {
+    --feb-reservation-radius-left: 0;
+    --feb-reservation-radius-right: 0;
 }
 
 .reservation-confirmed {
@@ -704,15 +737,23 @@ body {
 }
 
 /* Holiday highlighting must win over the plain weekend background -
-   .reservation-table-weekend uses !important, so only a combined selector
-   (higher specificity) with its own !important can override it. Colors
-   mirror Bootstrap's bg-info bg-opacity-25 utility.
-   Calendar-entry accent lines (box-shadow, see calendar_accent_marker_style)
-   don't need an equivalent override - box-shadow and background-color are
-   different properties and never fight for precedence the way two
-   background-colors do. */
+   .reservation-table-weekend uses !important, so only an equally !important
+   rule further down (or the combined selector, kept here to state the
+   precedence outright) can override it.
+
+   The tint is mixed into an opaque color instead of being laid over the cell
+   as a translucent one: these are sticky header cells, and a translucent
+   background there lets the body rows scrolling underneath show through the
+   header. color-mix reproduces what Bootstrap's bg-info bg-opacity-25 painted
+   before - 25% info over the cell background - and follows the theme through
+   --bs-body-bg. Doing the same with a translucent layer in background-image
+   is not an option: calendar-entry accents already set one inline, see
+   calendar_accent_marker_style.
+   Their accent lines (box-shadow) need no equivalent override - box-shadow
+   and background-color are different properties and never fight for
+   precedence the way two background-colors do. */
 .reservation-table-weekend.holiday-info {
-    background-color: rgba(var(--bs-info-rgb), .25) !important;
+    background-color: color-mix(in srgb, rgb(var(--bs-info-rgb)) 25%, var(--bs-body-bg)) !important;
 }
 
 
@@ -778,6 +819,7 @@ div .reservation-yearly {
     padding: .5rem;
     width: 100%; 
     height: 100%;
+    box-shadow: inset 0 2px 0 var(--feb-reservation-origin-color, transparent);
     pointer-events: auto; 
     z-index: 1;
     cursor: pointer;
@@ -792,6 +834,7 @@ div .reservation-yearly-day {
     z-index: 2; 
     padding: .5rem;
 }
+
 .month-reservationstartend {
     flex: 1 0 100%;
 }
@@ -937,7 +980,7 @@ th[aria-sort="descending"] .sort-icon {
  * needs a modern browser (Chrome/Edge 111+, Firefox 113+, Safari 9+); older
  * browsers simply show no striping.
  */
-.table > tbody > tr:nth-child(even of :not(.d-none)) > * {
+.table-visible-striped > tbody > tr:nth-child(even of :not(.d-none)) > * {
     --bs-table-bg-type: var(--bs-table-striped-bg);
 }
 

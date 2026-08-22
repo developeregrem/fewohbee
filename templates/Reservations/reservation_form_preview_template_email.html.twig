@@ -20,7 +20,7 @@
 
             <div class="col-sm-9">
                 <input type="text" class="form-control" name="subject"
-                       value="{{ emailDraft.subject|default('') }}" required>
+                       value="{{ emailDraft.subject|default(templateSubject|default('')) }}" required>
             </div>
         </div>
         <div class="row mt-3">

@@ -11,6 +11,7 @@ use App\Entity\Template;
 use App\Service\AppSettingsService;
 use App\Service\MailService;
 use App\Service\TemplatesService;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -25,6 +26,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   templateId     int    – ID of the Template to render
  *   recipientType  string – booker_email | invoice_email | notification_email | custom
  *   customRecipient string – used when recipientType === 'custom'
+ *   attachments    array  – documents to attach, see WorkflowAttachmentResolver
+ *   attachmentPolicy string – skip_missing | require_all
  */
 class SendTemplateEmailAction implements WorkflowActionInterface
 {
@@ -38,6 +41,7 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         private readonly TemplatesService $templatesService,
         private readonly MailService $mailService,
         private readonly AppSettingsService $settingsService,
+        private readonly WorkflowAttachmentResolver $attachmentResolver,
         private readonly EntityManagerInterface $em,
         private readonly TranslatorInterface $translator,
     ) {
@@ -89,6 +93,26 @@ class SendTemplateEmailAction implements WorkflowActionInterface
                 'label' => 'workflow.form.custom_recipient',
                 'showIf' => ['key' => 'recipientType', 'value' => 'custom'],
             ],
+            [
+                'key' => 'attachments',
+                'type' => 'attachment_list',
+                'label' => 'workflow.form.attachments',
+                'help' => 'workflow.form.attachments_help',
+                'includeInvoice' => true,
+            ],
+            [
+                'key' => 'attachmentPolicy',
+                'type' => 'select',
+                'label' => 'workflow.form.attachment_policy',
+                'help' => 'workflow.form.attachment_policy_help',
+                // Only relevant once something is actually attached.
+                'showIfAny' => 'attachments',
+                'default' => WorkflowAttachmentResolver::POLICY_SKIP_MISSING,
+                'options' => [
+                    ['value' => WorkflowAttachmentResolver::POLICY_SKIP_MISSING, 'label' => 'workflow.form.attachment_policy.skip_missing'],
+                    ['value' => WorkflowAttachmentResolver::POLICY_REQUIRE_ALL, 'label' => 'workflow.form.attachment_policy.require_all'],
+                ],
+            ],
         ];
     }
 
@@ -122,44 +146,101 @@ class SendTemplateEmailAction implements WorkflowActionInterface
         // For reservation templates: pass all reservations from context so the template
         // can render totals/positions across all rooms (e.g. online booking with multiple rooms).
         // resolveReservations() in the preview provider already handles Reservation[].
-        $renderInput = $entity;
-        if ($entity instanceof Reservation && !empty($context['allReservations'])) {
-            $allRes = $context['allReservations'];
+        $reservationGroup = $this->resolveReservationGroup($entity, $context);
+        $renderInput = $entity instanceof Reservation && [] !== $reservationGroup ? $reservationGroup : $entity;
+
+        $rendered = $this->templatesService->renderTemplate($templateId, $renderInput);
+        try {
+            $subject = $this->templatesService->renderTemplateSubject($template, $renderInput);
+        } catch (\Throwable) {
+            // A broken placeholder in the subject must never block the mail.
+            $subject = (string) $template->getName();
+        }
+
+        // Reservations the mail (and its attachments) belong to. For invoices these are
+        // the linked reservations, so the correspondence history stays complete.
+        $reservations = $entity instanceof Invoice ? $entity->getReservations()->toArray() : $reservationGroup;
+
+        $attachmentSet = $this->attachmentResolver->resolve(
+            is_array($config['attachments'] ?? null) ? $config['attachments'] : [],
+            $entity,
+            $reservations,
+            (string) ($config['attachmentPolicy'] ?? WorkflowAttachmentResolver::POLICY_SKIP_MISSING)
+        );
+
+        $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachmentSet->mailAttachments());
+
+        // Persist the mail and its attachments for every reservation involved.
+        foreach ($reservations as $res) {
+            if (!$res instanceof Reservation) {
+                continue;
+            }
+            $mail = new MailCorrespondence();
+            $mail->setRecipient($recipient)
+                 ->setName($template->getName())
+                 ->setSubject($subject)
+                 ->setText($rendered)
+                 ->setTemplate($template)
+                 ->setReservation($res);
+
+            foreach ($attachmentSet->attachments as $attachment) {
+                $file = $this->attachmentResolver->createFileCorrespondence($attachment, $res);
+                if (null !== $file) {
+                    $this->em->persist($file);
+                    $mail->addChild($file);
+                }
+            }
+
+            $this->em->persist($mail);
+        }
+        if ([] !== $reservations) {
+            $this->em->flush();
+        }
+
+        $summary = $attachmentSet->count() > 0
+            ? $this->translator->trans('workflow.log.email_sent_with_attachments', [
+                '%recipient%' => $recipient,
+                '%template%' => $template->getName(),
+                '%count%' => $attachmentSet->count(),
+            ])
+            : $this->translator->trans('workflow.log.email_sent', [
+                '%recipient%' => $recipient,
+                '%template%' => $template->getName(),
+            ]);
+
+        if ($attachmentSet->hasWarnings()) {
+            $summary .= ' – '.$this->translator->trans('workflow.log.attachment_warnings', [
+                '%warnings%' => $attachmentSet->warningSummary(),
+            ]);
+        }
+
+        return $summary;
+    }
+
+    /**
+     * All reservations a reservation-triggered workflow covers (a booking may span rooms).
+     *
+     * @return Reservation[]
+     */
+    private function resolveReservationGroup(mixed $entity, array $context): array
+    {
+        if (!$entity instanceof Reservation) {
+            return [];
+        }
+
+        $allRes = $context['allReservations'] ?? [];
+        if (is_array($allRes) && [] !== $allRes) {
             $allAreReservations = array_reduce(
                 $allRes,
                 static fn (bool $carry, mixed $r) => $carry && $r instanceof Reservation,
                 true
             );
             if ($allAreReservations) {
-                $renderInput = $allRes;
+                return $allRes;
             }
         }
 
-        $rendered = $this->templatesService->renderTemplate($templateId, $renderInput);
-        $subject = $template->getName();
-
-        $this->mailService->sendHTMLMail($recipient, $subject, $rendered);
-
-        // For reservations: persist MailCorrespondence for every reservation in the group
-        if ($entity instanceof Reservation) {
-            $allRes = !empty($context['allReservations']) ? $context['allReservations'] : [$entity];
-            foreach ($allRes as $res) {
-                if (!$res instanceof Reservation) {
-                    continue;
-                }
-                $mail = new MailCorrespondence();
-                $mail->setRecipient($recipient)
-                     ->setName($subject)
-                     ->setSubject($subject)
-                     ->setText($rendered)
-                     ->setTemplate($template)
-                     ->setReservation($res);
-                $this->em->persist($mail);
-            }
-            $this->em->flush();
-        }
-
-        return $this->translator->trans('workflow.log.email_sent', ['%recipient%' => $recipient, '%template%' => $template->getName()]);
+        return [$entity];
     }
 
     private function resolveRecipient(array $config, mixed $entity): ?string

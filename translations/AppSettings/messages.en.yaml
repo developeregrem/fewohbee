@@ -24,6 +24,8 @@ app_settings:
     currency_symbol: "Currency symbol"
     invoice_filename_pattern: "Invoice export filename"
     invoice_filename_pattern_help: "Placeholders: <code>&lt;company&gt;</code>, <code>&lt;lastname&gt;</code>, <code>&lt;firstname&gt;</code>, <code>&lt;status&gt;</code>, <code>&lt;payment&gt;</code>, <code>&lt;number&gt;</code>, <code>&lt;date&gt;</code>. Fallback syntax: <code>&lt;company|lastname&gt;</code>"
+    invoice_number_pattern: "Invoice number range (default)"
+    invoice_number_pattern_help: "Placeholders: <code>&lt;year&gt;</code> (2026), <code>&lt;year2&gt;</code> (26), <code>&lt;month&gt;</code> (08), <code>&lt;day&gt;</code> (17), <code>&lt;number&gt;</code> (running number, width via <code>&lt;number:4&gt;</code>). Example: <code>RE-&lt;year&gt;-&lt;number:4&gt;</code> produces <code>RE-2026-0001</code>. Branches can define their own range. Leave empty to keep incrementing the most recently used number."
     customer_salutations: "Salutations"
     customer_salutations_help: "Comma-separated list of available salutations (e.g. Ms, Mr, Family)."
     notification_email: "Recipient email"

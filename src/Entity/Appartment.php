@@ -7,6 +7,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: 'App\Repository\AppartmentRepository')]
@@ -17,6 +18,9 @@ class Appartment
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private $id;
+    /** Stable public identifier, used where a room is addressed from an unauthenticated surface. */
+    #[ORM\Column(type: 'uuid', unique: true)]
+    private Uuid $uuid;
     #[ORM\Column(type: 'string', length: 10)]
     #[Assert\Length(max: 10)]
     private string $number;
@@ -45,6 +49,7 @@ class Appartment
 
     public function __construct()
     {
+        $this->uuid = Uuid::v4();
         $this->reservations = new ArrayCollection();
         $this->calendarSyncImports = new ArrayCollection();
     }
@@ -52,6 +57,11 @@ class Appartment
     public function getId()
     {
         return $this->id;
+    }
+
+    public function getUuid(): Uuid
+    {
+        return $this->uuid;
     }
 
     public function getNumber()

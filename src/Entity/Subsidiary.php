@@ -20,6 +20,13 @@ class Subsidiary
     private $name;
     #[ORM\Column(type: 'string', length: 255)]
     private $description;
+
+    /**
+     * Invoice number range of this branch, e.g. 'NORD-<year>-<number:4>'.
+     * Null means the global default from AppSettings applies.
+     */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
+    private ?string $invoiceNumberPattern = null;
     #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
     private $appartments;
 
@@ -70,6 +77,23 @@ class Subsidiary
     public function setDescription(string $description): void
     {
         $this->description = $description;
+    }
+
+    public function getInvoiceNumberPattern(): ?string
+    {
+        return $this->invoiceNumberPattern;
+    }
+
+    /**
+     * An empty string is stored as null so "not configured" has exactly one
+     * representation and the fallback to the global pattern stays unambiguous.
+     */
+    public function setInvoiceNumberPattern(?string $invoiceNumberPattern): self
+    {
+        $invoiceNumberPattern = null === $invoiceNumberPattern ? null : trim($invoiceNumberPattern);
+        $this->invoiceNumberPattern = '' === $invoiceNumberPattern ? null : $invoiceNumberPattern;
+
+        return $this;
     }
 
     public function setAppartments($appartments): void

@@ -33,6 +33,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $availabilityLimiter,
             $submitLimiter,
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -60,12 +61,56 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $availabilityLimiter,
             $submitLimiter,
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
         $this->expectException(PublicBookingException::class);
         $this->expectExceptionMessage('online_booking.error.try_again_later_submit');
         $service->validateSubmitRequest($request);
+    }
+
+    /** Ensure calendar requests are rejected once the calendar limiter denies consumption. */
+    public function testValidateCalendarRequestThrowsWhenCalendarRateLimitIsExceeded(): void
+    {
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->headers->set('User-Agent', 'PHPUnit');
+        $request->headers->set('Accept-Language', 'de');
+
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(false),
+            $this->createTokenStore()
+        );
+
+        $this->expectException(PublicBookingException::class);
+        $this->expectExceptionMessage('online_booking.error.try_again_later');
+        $service->validateCalendarRequest($request);
+    }
+
+    /**
+     * The calendar is fetched by the page itself, so it carries neither the honeypot
+     * field nor the form timestamp — those checks must not be applied to it.
+     */
+    public function testValidateCalendarRequestPassesWithoutFormFields(): void
+    {
+        $request = new Request();
+        $request->server->set('REMOTE_ADDR', '127.0.0.1');
+        $request->headers->set('User-Agent', 'PHPUnit');
+        $request->headers->set('Accept-Language', 'de');
+
+        $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
+            $this->createTokenStore()
+        );
+
+        $service->validateCalendarRequest($request);
+
+        $this->expectNotToPerformAssertions();
     }
 
     /** Ensure a valid availability request passes all checks without throwing. */
@@ -82,6 +127,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -93,6 +139,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
     public function testValidateSubmitRequestPassesForValidRequest(): void
     {
         $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
@@ -127,6 +174,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -149,6 +197,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -168,6 +217,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $request->headers->set('Accept-Language', 'de');
 
         $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
@@ -193,6 +243,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -205,6 +256,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
     public function testSubmitTokenCannotBeReused(): void
     {
         $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
@@ -236,6 +288,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -256,6 +309,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
         $service = new PublicBookingAbuseProtectionService(
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()
         );
 
@@ -272,6 +326,7 @@ final class PublicBookingAbuseProtectionServiceTest extends TestCase
     public function testClearSubmitFailuresResetsCounter(): void
     {
         $service = new PublicBookingAbuseProtectionService(
+            $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createLimiterFactoryReturningAccepted(true),
             $this->createTokenStore()

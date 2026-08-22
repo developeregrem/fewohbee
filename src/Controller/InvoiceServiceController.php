@@ -20,6 +20,7 @@ use App\Entity\InvoicePosition;
 use App\Entity\InvoiceSettingsData;
 use App\Entity\Price;
 use App\Entity\Reservation;
+use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Form\InvoiceApartmentPositionType;
 use App\Form\InvoiceCustomerType;
@@ -32,6 +33,8 @@ use App\Service\CSRFProtectionService;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\EInvoice\Validation\EInvoiceValidationException;
+use App\Repository\InvoiceRepository;
+use App\Service\InvoiceNumberGenerator;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -224,7 +227,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/positions/create', name: 'invoices.create.invoice.positions', methods: ['GET', 'POST'])]
-    public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EInvoiceReadinessService $readinessService, Request $request)
+    public function showCreateInvoicePositionsFormAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EInvoiceReadinessService $readinessService, InvoiceNumberGenerator $numberGenerator, Request $request)
     {
         $em = $doctrine->getManager();
         $selectedReservationIds = $reservationService->getSelectedReservationIds();
@@ -258,9 +261,9 @@ class InvoiceServiceController extends AbstractController
         $invoice = $is->getInvoiceInCreation($requestStack);
 
         // Number and date now live directly on the in-creation invoice (not in separate session keys),
-        // so the e-invoice readiness reflects them and no extra submit is needed.
-        $lastInvoiceId = $em->getRepository(Invoice::class)->getLastInvoiceId();
-        $is->ensureInvoiceCreationMeta($invoice, $lastInvoiceId);
+        // so the e-invoice readiness reflects them and no extra submit is needed. This also resolves
+        // the branch, which decides both the number range and later the issuer data.
+        $is->prepareInCreationInvoice($invoice, $reservations, $requestStack);
 
         // Values coming from a re-rendered fragment (back navigation still posts them).
         if (null != $request->request->get('invoiceid')) {
@@ -285,7 +288,9 @@ class InvoiceServiceController extends AbstractController
                 'positionsMiscellaneous' => $newInvoicePositionsMiscellaneousArray,
                 'positionsAppartment' => $newInvoicePositionsAppartmentsArray,
                 'canContinue' => $canContinue,
-                'lastinvoiceid' => $lastInvoiceId,
+                'numberRangeSubsidiary' => $invoice->getSubsidiary(),
+                'numberRangeConfigured' => $numberGenerator->hasConfiguredPattern(),
+                'lastinvoiceid' => $em->getRepository(Invoice::class)->getLastInvoiceId(),
                 'invoiceid' => $invoice->getNumber(),
                 'invoice' => $invoice,
                 'invoiceDate' => $invoice->getDate(),
@@ -673,7 +678,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/new/invoice/preview', name: 'invoices.show.new.invoice.preview', methods: ['GET'])]
-    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is)
+    public function showNewInvoicePreviewAction(ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, InvoiceRepository $invoiceRepository)
     {
         $em = $doctrine->getManager();
         $invoice = $is->getInvoiceInCreation($requestStack);
@@ -687,6 +692,12 @@ class InvoiceServiceController extends AbstractController
 
         if ('' === trim((string) $invoice->getNumber())) {
             $this->addFlash('warning', 'invoice.number.missing.error');
+
+            return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
+        }
+
+        if ($invoiceRepository->countByNumber(trim((string) $invoice->getNumber())) > 0) {
+            $this->addFlash('warning', 'invoice.number.duplicate.error');
 
             return $this->forward('App\Controller\InvoiceServiceController::showCreateInvoicePositionsFormAction');
         }
@@ -723,7 +734,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/create/new/invoice', name: 'invoices.create.invoice', methods: ['POST'])]
-    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EventDispatcherInterface $eventDispatcher, Request $request)
+    public function createNewInvoiceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, RequestStack $requestStack, InvoiceService $is, ReservationService $reservationService, EventDispatcherInterface $eventDispatcher, InvoiceRepository $invoiceRepository, Request $request)
     {
         $em = $doctrine->getManager();
         $error = false;
@@ -741,10 +752,23 @@ class InvoiceServiceController extends AbstractController
                 return $this->render('feedback.html.twig', ['error' => true]);
             }
 
+            if ($invoiceRepository->countByNumber(trim((string) $invoice->getNumber())) > 0) {
+                $this->addFlash('warning', 'invoice.number.duplicate.error');
+
+                return $this->render('feedback.html.twig', ['error' => true]);
+            }
+
             $newInvoiceReservationsArray = $reservationService->getSelectedReservationIds();
 
             $newInvoicePositionsMiscellaneousArray = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
             $newInvoicePositionsAppartmentsArray = $requestStack->getSession()->get('invoicePositionsAppartments');
+
+            // The subsidiary was resolved in an earlier request and lives detached in the
+            // session; persisting the invoice with it would raise "a new entity was found
+            // through the relationship". Same treatment as the revenue accounts below.
+            if (null !== ($subsidiary = $invoice->getSubsidiary())) {
+                $invoice->setSubsidiary($em->getReference(Subsidiary::class, $subsidiary->getId()));
+            }
 
             $em->persist($invoice);
 
@@ -865,22 +889,35 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/edit/number/save', name: 'invoices.edit.invoice.number.save', methods: ['POST'])]
-    public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, Request $request)
+    public function saveChangeNumberInvoiceEditAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, InvoiceRepository $invoiceRepository, Request $request)
     {
         $em = $doctrine->getManager();
         $id = $request->request->get('invoice-id');
         if ($csrf->validateCSRFToken($request, true)) {
-            if (strlen($request->request->get('date')) > 0 && strlen($request->request->get('number')) > 0) {
-                $invoice = $em->getRepository(Invoice::class)->find($id);
-                $invoice->setDate(new \DateTime($request->request->get('date')));
-                $invoice->setNumber($request->request->get('number'));
-                $em->persist($invoice);
-                $em->flush();
+            $date = (string) $request->request->get('date', '');
+            $number = trim((string) $request->request->get('number', ''));
 
-                $this->addFlash('success', 'invoice.flash.edit.success');
-            } else {
-                return $this->showChangeNumberInvoiceEditAction($id);
+            if ('' === $date || '' === $number) {
+                $this->addFlash('warning', 'invoice.number.missing.error');
+
+                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $id);
             }
+
+            // Re-numbering must not collide with an existing invoice; the invoice being
+            // edited is excluded so keeping its own number stays possible.
+            if ($invoiceRepository->countByNumber($number, (int) $id) > 0) {
+                $this->addFlash('warning', 'invoice.number.duplicate.error');
+
+                return $this->showChangeNumberInvoiceEditAction($doctrine, $csrf, $id);
+            }
+
+            $invoice = $em->getRepository(Invoice::class)->find($id);
+            $invoice->setDate(new \DateTime($date));
+            $invoice->setNumber($number);
+            $em->persist($invoice);
+            $em->flush();
+
+            $this->addFlash('success', 'invoice.flash.edit.success');
         }
 
         return $this->forward('App\Controller\InvoiceServiceController::getInvoiceAction', [
@@ -932,7 +969,7 @@ class InvoiceServiceController extends AbstractController
         $readiness = $readinessService->check($invoice);
         if ($readiness->ready) {
             try {
-                $pdfOutput = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $readinessService->getActiveSettings());
+                $pdfOutput = $is->generateInvoicePdfXml($ts, $einvoice, $invoice, $template, $readinessService->resolveSettingsFor($invoice));
                 $filenameBase = $is->buildInvoiceExportFilename($invoice, true);
             } catch (\Throwable $e) {
                 $this->addFlash('warning', 'invoice.einvoice.export.fallback');
@@ -964,10 +1001,9 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{id}/export/einvoice', name: 'invoices.export.xrechnung', methods: ['GET'])]
-    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is,  EInvoiceExportService $einvoice, Invoice $invoice): Response
+    public function exportToXRechnung(ManagerRegistry $doctrine, InvoiceService $is,  EInvoiceExportService $einvoice, EInvoiceReadinessService $readinessService, Invoice $invoice): Response
     {
-        $em = $doctrine->getManager();
-        $invoiceSettings = $em->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]);
+        $invoiceSettings = $readinessService->resolveSettingsFor($invoice);
         if (!($invoiceSettings instanceof InvoiceSettingsData)) {
             $this->addFlash('danger', 'invoice.settings.active.error');
 
@@ -1034,6 +1070,9 @@ class InvoiceServiceController extends AbstractController
             'templateId' => $templateId,
             'editSettingId' => $editSettingId,
             'activeTab' => $activeTab,
+            // Branches without their own record fall back to the default one; if none is
+            // marked as default, they end up with no issuer data at all.
+            'hasDefaultSetting' => null !== $doctrine->getRepository(InvoiceSettingsData::class)->findOneBy(['isActive' => true]),
         ]);
     }
 

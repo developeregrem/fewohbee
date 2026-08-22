@@ -1,0 +1,113 @@
+<div class="fhb-section fhb-scroll-target" id="fhb-availability-results" tabindex="-1">
+        <h2 class="fhb-section-title">
+            {{- calendarActive|default(false)
+                ? 'online_booking.public.calendar.your_offer'|trans
+                : 'online_booking.public.available_room_types'|trans -}}
+        </h2>
+        {% for row in availability %}
+            {% set galleryId = 'gallery-' ~ row.typeKey|replace({':': '-'}) %}
+            <div class="fhb-room-card">
+                <div class="fhb-room-layout">
+                    {% if row.primaryImage is defined and row.primaryImage %}
+                        <div class="fhb-room-media-wrap">
+                            <img src="{{ row.primaryImage.mediumUrl }}"
+                                 alt="{{ row.typeLabel }}"
+                                 class="fhb-room-media"
+                                 {% if row.images|length > 1 %}
+                                     role="button"
+                                     data-bs-toggle="modal"
+                                     data-bs-target="#{{ galleryId }}"
+                                 {% endif %}>
+                        </div>
+                    {% endif %}
+                    <div class="fhb-room-body">
+                        <h3 class="fhb-room-title">{{ row.typeLabel }}</h3>
+                        <div class="fhb-room-meta">{{ 'online_booking.public.table.available'|trans }}: {{ row.availableCount }}</div>
+
+                        {% if row.typeDescription is not empty %}
+                            <p class="fhb-room-desc">{{ row.typeDescription }}</p>
+                        {% endif %}
+
+                        {# Amenity icons (max 6) + "+N" toggle to expand remaining #}
+                        {% if row.amenities is defined and row.amenities.items is not empty %}
+                            <div class="fhb-amenity-row">
+                                {% for amenity in row.amenities.items %}
+                                    <span class="fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
+                                {% endfor %}
+                                {% if row.amenities.remaining is not empty %}
+                                    {% for amenity in row.amenities.remaining %}
+                                        <span class="fhb-amenity-hidden fhb-tip" data-fhb-tip="{{ amenity.label }}" tabindex="0" role="img" aria-label="{{ amenity.label }}"><i class="{{ amenity.iconClass }}" aria-hidden="true"></i></span>
+                                    {% endfor %}
+                                    <span class="fhb-amenity-more" role="button" tabindex="0"
+                                          onclick="this.parentNode.classList.add('fhb-amenity-expanded');this.remove()">
+                                        +{{ row.amenities.remaining|length }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {# The listed prices are plain list prices: which room a guest with a
+                           differing rate ends up in is only decided in the next step, so the
+                           amount cannot be shown here — only that it is coming. #}
+                        {% if row.priceAdjustment is defined and row.priceAdjustment %}
+                            {% set adjustmentText = ('online_booking.public.price_adjustment.' ~ row.priceAdjustment.direction)|trans({
+                                '%categories%': row.priceAdjustment.labels|join(', ')
+                            }) %}
+                            <div class="fhb-room-adjustment">
+                                <span class="fhb-tip" data-fhb-tip="{{ adjustmentText }}" tabindex="0" role="img" aria-label="{{ adjustmentText }}"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span>
+                                <span>{{ ('online_booking.public.price_adjustment.short.' ~ row.priceAdjustment.direction)|trans }}</span>
+                            </div>
+                        {% endif %}
+
+                        {% if row.images is defined and row.images|length > 1 %}
+                            <a href="#" class="fhb-gallery-link" data-bs-toggle="modal" data-bs-target="#{{ galleryId }}">
+                                {{ 'online_booking.public.view_photos'|trans({'%count%': row.images|length}) }}
+                            </a>
+                        {% endif %}
+
+                        {% if calendarActive|default(false) %}
+                            {# One known room and a party the guest already stated: there is
+                               exactly one applicable price. Listing the other occupancies
+                               would offer a choice that does not exist. #}
+                            {% set bookedOption = row.occupancyOptions|filter(o => o.persons == mixOccupancyTotal|default(0))|first %}
+                            {% if bookedOption %}
+                                <div class="fhb-occupancy">
+                                    <div class="fhb-occupancy-row">
+                                        <span class="fhb-occupancy-icons"
+                                              title="{{ bookedOption.persons }} {{ bookedOption.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}">
+                                            {% for i in 1..bookedOption.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
+                                        </span>
+                                        <span class="fhb-occupancy-price">{{ bookedOption.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning py-2 small mb-0" style="margin-top:0.75rem">
+                                    {{ 'online_booking.public.calendar.no_price_for_party'|trans({'%count%': mixOccupancyTotal|default(0)}) }}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="fhb-occupancy">
+                                {% for option in row.occupancyOptions %}
+                                    {% set fieldName = 'occ_' ~ row.typeKey ~ '_p' ~ option.persons %}
+                                    {% set selectedVal = selectedQty[row.typeKey][option.persons]|default(0) %}
+                                    <div class="fhb-occupancy-row">
+                                        <span class="fhb-occupancy-icons"
+                                              title="{{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}">
+                                            {% for i in 1..option.persons %}<i class="fa-solid fa-user fhb-occupancy-icon"></i>{% endfor %}
+                                        </span>
+                                        <span class="fhb-occupancy-price">{{ option.totalPriceFormatted }}&nbsp;{{ currency_symbol }}</span>
+                                        <div class="fhb-qty">
+                                            <input class="form-control" type="number" min="0" max="{{ row.availableCount }}"
+                                                   name="{{ fieldName }}" value="{{ selectedVal }}"
+                                                   aria-label="{{ row.typeLabel }} — {{ option.persons }} {{ option.persons == 1 ? ('online_booking.public.guest_singular'|trans) : ('online_booking.public.guest_plural'|trans) }}"
+                                                   onwheel="this.blur()">
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>

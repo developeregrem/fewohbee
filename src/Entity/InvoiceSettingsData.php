@@ -5,8 +5,10 @@ namespace App\Entity;
 use App\Repository\InvoiceSettingsDataRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: InvoiceSettingsDataRepository::class)]
+#[UniqueEntity(fields: ['subsidiary'], message: 'invoice.settings.subsidiary.taken')]
 class InvoiceSettingsData
 {
     #[ORM\Id]
@@ -79,9 +81,31 @@ class InvoiceSettingsData
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $creditorReference = null;
 
+    /**
+     * Branch this issuer belongs to. Null means it is not branch-specific; the row
+     * flagged isActive then serves as the global fallback.
+     *
+     * The column carries a unique index, so at most one issuer can claim a given branch.
+     */
+    #[ORM\ManyToOne(targetEntity: Subsidiary::class)]
+    #[ORM\JoinColumn(nullable: true, unique: true, onDelete: 'SET NULL')]
+    private ?Subsidiary $subsidiary = null;
+
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getSubsidiary(): ?Subsidiary
+    {
+        return $this->subsidiary;
+    }
+
+    public function setSubsidiary(?Subsidiary $subsidiary): static
+    {
+        $this->subsidiary = $subsidiary;
+
+        return $this;
     }
 
     public function getCompanyName(): ?string

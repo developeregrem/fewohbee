@@ -126,6 +126,14 @@
                 <source>calendar.sync.export.access.url.hint</source>
                 <target>Mit dieser Adresse können Sie von anderen Anwendungen aus auf diesen Kalender zugreifen.</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.export.access.private_url.title">
+                <source>calendar.sync.export.access.private_url.title</source>
+                <target>Private Adresse im iCal-Format</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.export.access.private_url.hint">
+                <source>calendar.sync.export.access.private_url.hint</source>
+                <target>Diese Adresse funktioniert auch ohne öffentliche Freigabe. Der Zugriff erfolgt mit einem API-Token (Berechtigung „Kalender lesen“), das im Profil erstellt werden kann – z. B. in Kalender-Programmen als Passwort zusammen mit dem Benutzernamen.</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.export.access.last">
                 <source>calendar.sync.export.access.last</source>
                 <target>letzter Aufruf</target>

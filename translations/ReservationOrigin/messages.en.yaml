@@ -1,5 +1,8 @@
 reservationorigin.add: Add origin
 reservationorigin.business: Business
+reservationorigin.color: Color
+reservationorigin.color.enable: Show color indicator
+reservationorigin.color.help: The color is displayed as an indicator on reservations in the reservation overview.
 reservationorigin.delete.ask: Are you sure you want to delete the reservation origin?
 reservationorigin.description: Reservation origin
 reservationorigin.flash.create.check_prices: Please review your price categories and make sure they also apply to this new reservation origin.

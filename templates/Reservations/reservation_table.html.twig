@@ -189,7 +189,7 @@
                                      data-move-url="{{ path('reservations.move', {'id': cell.reservationId}) }}"
                                      aria-description="{{ 'reservation.move.hint'|trans }}"
                                  {% endif %}
-                                 style="background-color: {{ cell.color }}; color: {{ cell.contrastColor }}"
+                                 style="background-color: {{ cell.color }};{% if cell.originColor %} --feb-reservation-origin-color: {{ cell.originColor }};{% endif %} color: {{ cell.contrastColor }}"
                                  class="reservation-inner text-center"
                                  title="{{ block('popTitle') }}"
                                  data-bs-content="{{ block('popBody') }}"

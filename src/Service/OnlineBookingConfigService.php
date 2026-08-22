@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
-use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\OnlineBookingConfigRepository;
 use App\Repository\SubsidiaryRepository;
@@ -91,26 +90,18 @@ class OnlineBookingConfigService
         return $this->appartmentRepository->loadExistingIds($config->getSelectedRoomIds());
     }
 
-    /** Return the configured confirmation template only if it is a reservation email template. */
-    public function getConfirmationEmailTemplate(?OnlineBookingConfig $config = null): ?Template
+    /**
+     * How many rooms are actually bookable online (released, active, in an allowed
+     * subsidiary). A single-room property has no use for a "number of rooms" field.
+     */
+    public function countBookableRooms(?OnlineBookingConfig $config = null): int
     {
         $config ??= $this->getConfig();
-        $templateId = $config->getConfirmationEmailTemplateId();
-        if (null === $templateId) {
-            return null;
-        }
 
-        $template = $this->em->getRepository(Template::class)->find($templateId);
-        if (!$template instanceof Template) {
-            return null;
-        }
-
-        $type = $template->getTemplateType();
-        if (null === $type || 'TEMPLATE_RESERVATION_EMAIL' !== $type->getName()) {
-            return null;
-        }
-
-        return $template;
+        return count($this->appartmentRepository->findForPublicBooking(
+            $this->getAllowedRoomIds($config),
+            $this->getAllowedSubsidiaryIds($config),
+        ));
     }
 
     /** Resolve the configured inquiry reservation status or null if missing/invalid. */

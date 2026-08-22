@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Appartment;
+use App\Entity\Enum\PublicBookingMode;
+use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
-use App\Entity\Template;
+use App\Service\DisplayNameResolver;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -17,9 +19,12 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -30,6 +35,7 @@ class OnlineBookingConfigType extends AbstractType
         private readonly EntityManagerInterface $em,
         private readonly OnlineBookingConfigService $configService,
         private readonly TranslatorInterface $translator,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -40,8 +46,6 @@ class OnlineBookingConfigType extends AbstractType
         $rooms = $this->em->getRepository(Appartment::class)->findAll();
         $statuses = $this->em->getRepository(ReservationStatus::class)->findAll();
         $origins = $this->em->getRepository(ReservationOrigin::class)->findAll();
-        $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_RESERVATION_EMAIL']) ?? [];
-
         $builder
             ->add('enabled', CheckboxType::class, [
                 'required' => false,
@@ -107,21 +111,36 @@ class OnlineBookingConfigType extends AbstractType
                 'choice_translation_domain' => false,
                 'choices' => $this->buildRoomChoices($rooms),
             ])
+            ->add('theme', EnumType::class, [
+                'class' => PublicBookingTheme::class,
+                'label' => 'online_booking.settings.theme',
+                'help' => 'online_booking.settings.theme_help',
+                'expanded' => true,
+                'multiple' => false,
+                'choice_label' => static fn (PublicBookingTheme $theme): string => 'online_booking.settings.theme_'.$theme->value,
+            ])
+            ->add('mode', EnumType::class, [
+                'class' => PublicBookingMode::class,
+                'label' => 'online_booking.settings.mode',
+                'expanded' => true,
+                'multiple' => false,
+                'choice_label' => static fn (PublicBookingMode $mode): string => 'online_booking.settings.mode_'.$mode->value,
+            ])
             ->add('themePrimaryColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_primary',
                 'html5' => true,
+            ])
+            ->add('useBackgroundColor', CheckboxType::class, [
+                'label' => 'online_booking.settings.theme_background_use',
+                'required' => false,
+                // Not stored: a colour input can never submit an empty value, so this
+                // is the only way to clear the colour and fall back to transparency.
+                'mapped' => false,
             ])
             ->add('themeBackgroundColor', ColorType::class, [
                 'label' => 'online_booking.settings.theme_background',
                 'required' => false,
                 'html5' => true,
-            ])
-            ->add('confirmationEmailTemplateId', ChoiceType::class, [
-                'label' => 'online_booking.settings.confirmation_email_template',
-                'required' => false,
-                'placeholder' => 'online_booking.placeholder.select_template',
-                'choice_translation_domain' => false,
-                'choices' => $this->buildTemplateChoices($templates),
             ])
             ->add('inquiryReservationStatusId', ChoiceType::class, [
                 'label' => 'online_booking.settings.inquiry_status',
@@ -183,6 +202,24 @@ class OnlineBookingConfigType extends AbstractType
                 ],
             ])
         ;
+
+        // Reflect the stored state in the checkbox. POST_SET_DATA, because only then is
+        // the form's data settled — setting an unmapped child earlier does not survive.
+        $builder->addEventListener(FormEvents::POST_SET_DATA, static function (FormEvent $event): void {
+            $config = $event->getData();
+            $event->getForm()->get('useBackgroundColor')->setData(
+                $config instanceof OnlineBookingConfig && null !== $config->getThemeBackgroundColor()
+            );
+        });
+
+        // … and clear the colour when it is switched off. The browser always submits a
+        // colour, so without this the value could never be removed again.
+        $builder->addEventListener(FormEvents::POST_SUBMIT, static function (FormEvent $event): void {
+            $config = $event->getData();
+            if ($config instanceof OnlineBookingConfig && true !== $event->getForm()->get('useBackgroundColor')->getData()) {
+                $config->setThemeBackgroundColor(null);
+            }
+        });
     }
 
     /** Attach the form to the config entity and register conditional validation rules. */
@@ -196,23 +233,11 @@ class OnlineBookingConfigType extends AbstractType
         ]);
     }
 
-    /** Validate required MVP fields when online booking is enabled. */
+    /** Validate required reservation defaults when online booking is enabled. */
     public function validateConfig(OnlineBookingConfig $config, ExecutionContextInterface $context): void
     {
         if (!$config->isEnabled()) {
             return;
-        }
-
-        if (null === $config->getConfirmationEmailTemplateId()) {
-            $context->buildViolation('online_booking.validation.confirmation_template_required')
-                ->atPath('confirmationEmailTemplateId')
-                ->setTranslationDomain('messages')
-                ->addViolation();
-        } elseif (null === $this->configService->getConfirmationEmailTemplate($config)) {
-            $context->buildViolation('online_booking.validation.confirmation_template_invalid_type')
-                ->atPath('confirmationEmailTemplateId')
-                ->setTranslationDomain('messages')
-                ->addViolation();
         }
 
         if (null === $config->getInquiryReservationStatusId() || null === $this->configService->getInquiryStatus($config)) {
@@ -310,7 +335,7 @@ class OnlineBookingConfigType extends AbstractType
     {
         $choices = [];
         foreach ($statuses as $status) {
-            $choices[(string) $status->getName()] = (int) $status->getId();
+            $choices[$this->displayNameResolver->resolve($status)] = (int) $status->getId();
         }
 
         return $choices;
@@ -327,22 +352,6 @@ class OnlineBookingConfigType extends AbstractType
         $choices = [];
         foreach ($origins as $origin) {
             $choices[(string) $origin->getName()] = (int) $origin->getId();
-        }
-
-        return $choices;
-    }
-
-    /**
-     * Build template choices already filtered to reservation email templates.
-     *
-     * @param Template[] $templates
-     * @return array<string, int>
-     */
-    private function buildTemplateChoices(array $templates): array
-    {
-        $choices = [];
-        foreach ($templates as $template) {
-            $choices[(string) $template->getName()] = (int) $template->getId();
         }
 
         return $choices;

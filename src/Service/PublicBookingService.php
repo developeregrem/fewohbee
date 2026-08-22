@@ -7,23 +7,18 @@ namespace App\Service;
 use App\Entity\Appartment;
 use App\Entity\Customer;
 use App\Entity\CustomerAddresses;
-use App\Entity\MailCorrespondence;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\Price;
 use App\Exception\PublicBookingException;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
-use App\Entity\Template;
 use App\Repository\AppartmentRepository;
 use App\Repository\CustomerRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Event\OnlineBookingCreatedEvent;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicBookingService
 {
@@ -32,10 +27,6 @@ class PublicBookingService
         private readonly AppartmentRepository $appartmentRepository,
         private readonly OnlineBookingConfigService $configService,
         private readonly PublicAvailabilityService $availabilityService,
-        private readonly InvoiceService $invoiceService,
-        private readonly TemplatesService $templatesService,
-        private readonly MailService $mailService,
-        private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly PublicPricingService $pricingService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
@@ -48,7 +39,8 @@ class PublicBookingService
      *
      * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1, 1 => 0]]
      * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array{availability: array, selected: array<string,array<int,int>>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, roomReservations: Reservation[], extras: array, selectedExtras: array<int,int>, extrasTotal: float, extrasTotalFormatted: string, grandTotal: float, grandTotalFormatted: string}
+     * @param array<int, int> $guestCounts Map of guest category ID => count
+     * @return array{availability: array<int, array<string, mixed>>, selected: array<string,array<int,int>>, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, modifierTotal: float, modifierBreakdown: array<int, array{label: string, total: float, totalFormatted: string}>, roomReservations: Reservation[], touristTaxTotal: float, touristTaxTotalFormatted: string, touristTaxLines: array<int, array{label: string, total: float, totalFormatted: string}>, extras: array<int, array<string, mixed>>, selectedExtras: array<int,int>, extrasTotal: float, extrasTotalFormatted: string, extrasBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, grandTotal: float, grandTotalFormatted: string}
      */
     public function buildSelectionPreview(
         \DateTimeImmutable $dateFrom,
@@ -56,12 +48,12 @@ class PublicBookingService
         int $persons,
         int $roomsCount,
         array $occupancySelection,
-        Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
+        ?Appartment $calendarRoom = null,
     ): array {
         $config = $this->configService->getConfig();
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
+        $availability = $this->resolveAvailability($calendarRoom, $dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
         if ([] === $selection && [] !== $occupancySelection) {
@@ -90,7 +82,9 @@ class PublicBookingService
         );
         $extrasResult = $this->summarizeExtras($resolvedExtras);
 
-        $grandTotal = $pricing['roomTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
+        // Per-guest adjustments are a separate line now, so they have to be added back
+        // here — the room total is the list price of the rooms alone.
+        $grandTotal = $pricing['roomTotal'] + $pricing['modifierTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
 
         return [
             'availability' => $availability,
@@ -98,6 +92,8 @@ class PublicBookingService
             'roomTotal' => $pricing['roomTotal'],
             'roomTotalFormatted' => $pricing['roomTotalFormatted'],
             'roomPriceBreakdown' => $pricing['roomPriceBreakdown'],
+            'modifierTotal' => $pricing['modifierTotal'],
+            'modifierBreakdown' => $pricing['modifierBreakdown'],
             'roomReservations' => $roomReservations,
             'touristTaxTotal' => $pricing['touristTaxTotal'],
             'touristTaxTotalFormatted' => $pricing['touristTaxTotalFormatted'],
@@ -108,7 +104,7 @@ class PublicBookingService
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
             'extrasBreakdown' => $extrasResult['extrasBreakdown'],
             'grandTotal' => $grandTotal,
-            'grandTotalFormatted' => number_format($grandTotal, 2, ',', '.'),
+            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
         ];
     }
 
@@ -118,7 +114,8 @@ class PublicBookingService
      * @param array<string, array<int, int>> $occupancySelection e.g. ['category:1' => [2 => 1]]
      * @param array<string, string> $booker
      * @param array<int, int> $selectedExtras Map of Price ID => quantity
-     * @return array{reservations: Reservation[], bookingGroupUuid: Uuid, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>}
+     * @param array<int, int> $guestCounts Map of guest category ID => count
+     * @return array{reservations: Reservation[], bookingGroupUuid: Uuid, roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, modifierTotal: float, modifierBreakdown: array<int, array{label: string, total: float, totalFormatted: string}>, touristTaxTotal: float, touristTaxTotalFormatted: string, extrasTotal: float, extrasTotalFormatted: string, grandTotal: float, grandTotalFormatted: string}
      */
     public function createBooking(
         \DateTimeImmutable $dateFrom,
@@ -127,15 +124,15 @@ class PublicBookingService
         int $roomsCount,
         array $occupancySelection,
         array $booker,
-        Request $request,
         array $selectedExtras = [],
         array $guestCounts = [],
+        ?Appartment $calendarRoom = null,
     ): array {
         $config = $this->configService->getConfig();
         $this->assertConfigReady($config);
 
         $selection = $this->normalizeOccupancySelection($occupancySelection);
-        $availability = $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
+        $availability = $this->resolveAvailability($calendarRoom, $dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
         $this->validateOccupancySelectionAgainstAvailability($selection, $availability, $persons, $roomsCount);
 
         $assignedRoomsWithPersons = $this->assignRoomsWithOccupancy($availability, $selection);
@@ -194,8 +191,10 @@ class PublicBookingService
         $pricing = $this->calculateRoomTotal($reservations);
         $extrasResult = $this->summarizeExtras($resolvedExtras);
 
-        $this->sendConfirmationMailIfPossible($config, $customer, $reservations);
         $this->eventDispatcher->dispatch(new OnlineBookingCreatedEvent($reservations, $customer));
+
+        // Grand total must match the preview: room rates + guest adjustments + extras + tourist tax.
+        $grandTotal = $pricing['roomTotal'] + $pricing['modifierTotal'] + $extrasResult['extrasTotal'] + $pricing['touristTaxTotal'];
 
         return [
             'reservations' => $reservations,
@@ -203,10 +202,14 @@ class PublicBookingService
             'roomTotal' => $pricing['roomTotal'],
             'roomTotalFormatted' => $pricing['roomTotalFormatted'],
             'roomPriceBreakdown' => $pricing['roomPriceBreakdown'],
+            'modifierTotal' => $pricing['modifierTotal'],
+            'modifierBreakdown' => $pricing['modifierBreakdown'],
+            'touristTaxTotal' => $pricing['touristTaxTotal'],
+            'touristTaxTotalFormatted' => $pricing['touristTaxTotalFormatted'],
             'extrasTotal' => $extrasResult['extrasTotal'],
             'extrasTotalFormatted' => $extrasResult['extrasTotalFormatted'],
-            'grandTotal' => $pricing['roomTotal'] + $extrasResult['extrasTotal'],
-            'grandTotalFormatted' => number_format($pricing['roomTotal'] + $extrasResult['extrasTotal'], 2, ',', '.'),
+            'grandTotal' => $grandTotal,
+            'grandTotalFormatted' => PublicPricingService::formatAmount($grandTotal),
         ];
     }
 
@@ -228,6 +231,33 @@ class PublicBookingService
         return null;
     }
 
+    /**
+     * Offer rows for the current entry point.
+     *
+     * The calendar path already knows the room, so it asks for that one room only;
+     * the search path runs the full availability query. Both return the same row
+     * shape, which is why everything downstream of this call is mode-agnostic.
+     *
+     * @param array<int, int> $guestCounts
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveAvailability(
+        ?Appartment $calendarRoom,
+        \DateTimeImmutable $dateFrom,
+        \DateTimeImmutable $dateTo,
+        int $persons,
+        int $roomsCount,
+        OnlineBookingConfig $config,
+        array $guestCounts,
+    ): array {
+        if ($calendarRoom instanceof Appartment) {
+            return $this->availabilityService->getAvailabilityForRoom($calendarRoom, $dateFrom, $dateTo, $guestCounts);
+        }
+
+        return $this->availabilityService->getAvailability($dateFrom, $dateTo, $persons, $roomsCount, $config, $guestCounts);
+    }
+
     /** Guard booking execution against incomplete or invalid online booking configuration. */
     private function assertConfigReady(OnlineBookingConfig $config): void
     {
@@ -238,8 +268,6 @@ class PublicBookingService
         if (null === $this->configService->getReservationOrigin($config)) {
             throw new PublicBookingException('online_booking.error.reservation_origin_missing');
         }
-
-        // Template validity is checked in settings validation. Runtime can fall back to the default template.
 
         if (!$this->configService->getInquiryStatus($config) instanceof ReservationStatus) {
             throw new PublicBookingException('online_booking.error.invalid_status_config');
@@ -587,40 +615,27 @@ class PublicBookingService
 
     /**
      * Calculate the room-only total using session-free apartment position building.
-     * Includes apartment-modifier delta lines and tourist-tax positions when
-     * configured — both come from the apartment-pricing pipeline.
+     *
+     * Room rates, per-guest adjustments and tourist tax come back as three separate
+     * breakdowns. The adjustments in particular must not be folded into the room line:
+     * the guest was shown a list price in step 2, and seeing that same number here with
+     * the reduction spelled out underneath is the difference between a transparent offer
+     * and a total that appears to have changed on its own.
      *
      * @param Reservation[] $reservations
-     * @return array{roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, touristTaxTotal: float, touristTaxTotalFormatted: string, touristTaxLines: array<int, array{label: string, total: float, totalFormatted: string}>}
+     * @return array{roomTotal: float, roomTotalFormatted: string, roomPriceBreakdown: array<int, array{label: string, quantity: int, total: float, totalFormatted: string}>, modifierTotal: float, modifierBreakdown: array<int, array{label: string, total: float, totalFormatted: string}>, touristTaxTotal: float, touristTaxTotalFormatted: string, touristTaxLines: array<int, array{label: string, total: float, totalFormatted: string}>}
      */
     private function calculateRoomTotal(array $reservations): array
     {
         $apartmentTotal = 0.0;
         $breakdown = [];
+        $modifierTotal = 0.0;
+        $modifierLines = [];
         $touristTaxTotal = 0.0;
         $touristTaxLines = [];
 
         foreach ($reservations as $reservation) {
-            $positions = $this->invoiceService->buildAppartmentPositions($reservation);
-            $modifierPositions = $this->invoiceService->buildApartmentModifierPositions([$reservation]);
-
-            $vatSums = [];
-            $brutto = 0.0;
-            $netto = 0.0;
-            $singleTotal = 0.0;
-            $miscTotal = 0.0;
-            $this->invoiceService->calculateSums(
-                new ArrayCollection($positions),
-                new ArrayCollection($modifierPositions),
-                $vatSums,
-                $brutto,
-                $netto,
-                $singleTotal,
-                $miscTotal
-            );
-            // Modifier deltas net into apartment total — semantically they're
-            // adjustments to the room rate (same scope as the journal routing).
-            $singleTotal += $miscTotal;
+            $roomTotal = $this->pricingService->calculateReservationRoomTotal($reservation);
 
             $label = $this->buildReservationTypeLabel($reservation);
             if (!isset($breakdown[$label])) {
@@ -632,8 +647,17 @@ class PublicBookingService
             }
 
             $breakdown[$label]['quantity']++;
-            $breakdown[$label]['total'] += $singleTotal;
-            $apartmentTotal += $singleTotal;
+            $breakdown[$label]['total'] += $roomTotal->room;
+            $apartmentTotal += $roomTotal->room;
+            $modifierTotal += $roomTotal->modifiers;
+
+            // Same wording the invoice uses, so the guest recognises the line later.
+            // Identical adjustments across rooms collapse into one entry.
+            foreach ($roomTotal->modifierPositions as $position) {
+                $lineLabel = (string) $position->getDescription();
+                $modifierLines[$lineLabel] ??= ['label' => $lineLabel, 'total' => 0.0];
+                $modifierLines[$lineLabel]['total'] += $position->getAmount() * (float) $position->getPrice();
+            }
 
             // Tourist-tax breakdown stays a separate line on the preview so
             // the guest sees the levy distinctly from the room rate.
@@ -654,22 +678,29 @@ class PublicBookingService
         }
 
         $formattedBreakdown = array_map(static function (array $row): array {
-            $row['totalFormatted'] = number_format((float) $row['total'], 2, ',', '.');
+            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
 
             return $row;
         }, array_values($breakdown));
         $formattedTouristTaxLines = array_map(static function (array $row): array {
-            $row['totalFormatted'] = number_format((float) $row['total'], 2, ',', '.');
+            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
 
             return $row;
         }, array_values($touristTaxLines));
+        $formattedModifierLines = array_map(static function (array $row): array {
+            $row['totalFormatted'] = PublicPricingService::formatAmount((float) $row['total']);
+
+            return $row;
+        }, array_values($modifierLines));
 
         return [
             'roomTotal' => $apartmentTotal,
-            'roomTotalFormatted' => number_format($apartmentTotal, 2, ',', '.'),
+            'roomTotalFormatted' => PublicPricingService::formatAmount($apartmentTotal),
             'roomPriceBreakdown' => $formattedBreakdown,
+            'modifierTotal' => $modifierTotal,
+            'modifierBreakdown' => $formattedModifierLines,
             'touristTaxTotal' => $touristTaxTotal,
-            'touristTaxTotalFormatted' => number_format($touristTaxTotal, 2, ',', '.'),
+            'touristTaxTotalFormatted' => PublicPricingService::formatAmount($touristTaxTotal),
             'touristTaxLines' => $formattedTouristTaxLines,
         ];
     }
@@ -878,66 +909,6 @@ class PublicBookingService
     }
 
     /**
-     * Send a confirmation mail with the configured template and fallback to the default reservation email template.
-     *
-     * @param Reservation[] $reservations
-     */
-    private function sendConfirmationMailIfPossible(OnlineBookingConfig $config, Customer $customer, array $reservations): void
-    {
-        $email = null;
-        foreach ($customer->getCustomerAddresses() as $address) {
-            if ($address instanceof CustomerAddresses && null !== $address->getEmail() && '' !== trim($address->getEmail())) {
-                $email = trim($address->getEmail());
-                break;
-            }
-        }
-
-        if (null === $email) {
-            return;
-        }
-
-        $template = $this->configService->getConfirmationEmailTemplate($config);
-        if (!$template instanceof Template) {
-            $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_RESERVATION_EMAIL']);
-            $template = $this->templatesService->getDefaultTemplate($templates ?? []);
-        }
-
-        if (!$template instanceof Template) {
-            return;
-        }
-
-        $subject = OnlineBookingConfig::BOOKING_MODE_BOOKING === $config->getBookingMode()
-            ? $this->translator->trans('online_booking.email.subject.booking')
-            : $this->translator->trans('online_booking.email.subject.inquiry');
-
-        $body = $this->templatesService->renderTemplate((int) $template->getId(), $reservations);
-        $this->mailService->sendHTMLMail($email, $subject, $body);
-        $this->persistMailCorrespondenceForReservations($reservations, $template, $email, $subject, $body);
-    }
-
-    /**
-     * Persist sent confirmation mail as reservation correspondence entries.
-     *
-     * @param Reservation[] $reservations
-     */
-    private function persistMailCorrespondenceForReservations(array $reservations, Template $template, string $recipient, string $subject, string $body): void
-    {
-        foreach ($reservations as $reservation) {
-            $mail = new MailCorrespondence();
-            $mail->setRecipient($recipient)
-                ->setName($subject)
-                ->setSubject($subject)
-                ->setText($body)
-                ->setTemplate($template)
-                ->setReservation($reservation);
-
-            $this->em->persist($mail);
-        }
-
-        $this->em->flush();
-    }
-
-    /**
      * Build the extras catalogue for the room-selection step, using one representative room per
      * available category so that category-bound extras of every offered category are surfaced.
      *
@@ -1033,7 +1004,7 @@ class PublicBookingService
 
         return [
             'extrasTotal' => $extrasTotal,
-            'extrasTotalFormatted' => number_format($extrasTotal, 2, ',', '.'),
+            'extrasTotalFormatted' => PublicPricingService::formatAmount($extrasTotal),
             'extrasBreakdown' => $breakdown,
         ];
     }

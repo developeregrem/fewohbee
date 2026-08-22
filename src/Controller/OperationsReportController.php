@@ -13,6 +13,7 @@ use App\Service\OperationsReportService;
 use App\Service\TemplatesService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -115,7 +116,7 @@ class OperationsReportController extends AbstractController
         }
 
         $template = $em->getRepository(Template::class)->find($templateId);
-        if (!$template instanceof Template) {
+        if (!$template instanceof Template || 'TEMPLATE_OPERATIONS_PDF' !== $template->getTemplateType()?->getName()) {
             $this->addFlash('warning', 'templates.notfound');
 
             return $this->redirect($this->generateUrl('operations.reports'));
@@ -136,14 +137,20 @@ class OperationsReportController extends AbstractController
             'Operations-Report-'.$startDate->format('Y-m-d'),
             $template
         );
-
-        $response = new Response($pdfOutput);
-        $response->headers->set('Content-Type', 'application/pdf');
-        if ($isPreview) {
-            $response->headers->set('Content-Disposition', 'inline; filename="Operations-Report-'.$startDate->format('Y-m-d').'.pdf"');
+        if (!str_starts_with($pdfOutput, '%PDF-')) {
+            throw new \RuntimeException('The generated operations report is not a valid PDF.');
         }
 
-        return $response;
+        $filename = 'Operations-Report-'.$startDate->format('Y-m-d').'.pdf';
+        $disposition = HeaderUtils::makeDisposition(
+            $isPreview ? HeaderUtils::DISPOSITION_INLINE : HeaderUtils::DISPOSITION_ATTACHMENT,
+            $filename
+        );
+
+        return new Response($pdfOutput, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => $disposition,
+        ]);
     }
 
     /**

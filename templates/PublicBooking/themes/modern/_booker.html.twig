@@ -1,0 +1,61 @@
+<h2 class="fhb-section-title">{{ 'online_booking.public.booker_details'|trans }}</h2>
+
+<div class="row g-3">
+    <div class="col-12 col-md-3">
+        <label class="fhb-label" for="salutation">{{ 'customer.salutation'|trans }}</label>
+        <select class="form-select" id="salutation" name="salutation" required>
+            <option value="">--</option>
+            {% for salutation in customer_salutations %}
+                {% set translatedSalutation = salutation|trans %}
+                <option value="{{ translatedSalutation }}" {% if booker.salutation == translatedSalutation %}selected{% endif %}>{{ translatedSalutation }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-6 col-md">
+        <label class="fhb-label" for="firstname">{{ 'customer.firstname'|trans }}</label>
+        <input class="form-control" type="text" id="firstname" name="firstname" required value="{{ booker.firstname }}">
+    </div>
+    <div class="col-6 col-md">
+        <label class="fhb-label" for="lastname">{{ 'customer.lastname'|trans }}</label>
+        <input class="form-control" type="text" id="lastname" name="lastname" required value="{{ booker.lastname }}">
+    </div>
+
+    <div class="col-12 col-md-4">
+        <label class="fhb-label" for="email">{{ 'online_booking.public.email'|trans }}</label>
+        <input class="form-control" type="email" id="email" name="email" required value="{{ booker.email }}">
+    </div>
+    <div class="col-6 col-md-4">
+        <label class="fhb-label" for="phone">{{ 'online_booking.public.phone'|trans }}</label>
+        <input class="form-control" type="tel" id="phone" name="phone" value="{{ booker.phone }}">
+    </div>
+    <div class="col-6 col-md-4">
+        <label class="fhb-label" for="company">{{ 'customer.company'|trans }}</label>
+        <input class="form-control" type="text" id="company" name="company" value="{{ booker.company }}">
+    </div>
+
+    <div class="col-12 col-md-5">
+        <label class="fhb-label" for="address">{{ 'customer.address'|trans }}</label>
+        <input class="form-control" type="text" id="address" name="address" required value="{{ booker.address }}">
+    </div>
+    <div class="col-4 col-md-2">
+        <label class="fhb-label" for="zip">{{ 'customer.zip'|trans }}</label>
+        <input class="form-control" type="text" id="zip" name="zip" required value="{{ booker.zip }}">
+    </div>
+    <div class="col-8 col-md-3">
+        <label class="fhb-label" for="city">{{ 'customer.city'|trans }}</label>
+        <input class="form-control" type="text" id="city" name="city" required value="{{ booker.city }}">
+    </div>
+    <div class="col-12 col-md-2">
+        <label class="fhb-label" for="country">{{ 'customer.country'|trans }}</label>
+        <select class="form-select" id="country" name="country" required>
+            {% for key, country in countries %}
+                <option value="{{ key }}" {% if booker.country == key %}selected{% endif %}>{{ country }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12">
+        <label class="fhb-label" for="comment">{{ 'online_booking.public.comment'|trans }}</label>
+        <textarea class="form-control" id="comment" name="comment" rows="3">{{ booker.comment }}</textarea>
+    </div>
+</div>

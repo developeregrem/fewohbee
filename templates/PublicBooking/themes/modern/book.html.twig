@@ -1,0 +1,163 @@
+{% extends 'PublicBooking/themes/modern/base.html.twig' %}
+
+{#
+  Public booking page, modern theme.
+
+  Two entry points share one form and one flow. Step 1 differs per mode — the
+  search asks for dates and party size, the calendar lets the guest pick an
+  accommodation and period — and from step 2 on both continue identically with
+  occupancy, extras, price and guest details. Each step lives in its own partial
+  so the split between the modes is visible in the file list, not buried in
+  nested conditions.
+#}
+
+{% block body %}
+{% set autoScrollTarget = null %}
+{% if successMessage %}
+    {# The confirmation is much shorter than the form the guest just filled in,
+       so without this they would be left scrolled somewhere past its end. #}
+    {% set autoScrollTarget = 'fhb-success' %}
+{% elseif submitFallbackNotice %}
+    {% set autoScrollTarget = 'fhb-form-fallback' %}
+{% elseif errorMessage %}
+    {# An error must always be visible. The alert sits at the very top of the
+       card, above the form, so prioritize it over any step container —
+       otherwise the auto-scroll would jump past the error. #}
+    {% set autoScrollTarget = 'fhb-form-error' %}
+{% elseif step >= 3 and availability is not empty %}
+    {% set autoScrollTarget = 'fhb-booker-details' %}
+{% elseif availabilityChecked %}
+    {% set autoScrollTarget = 'fhb-availability-results' %}
+{% endif %}
+{% set currentStep = step|default(1) %}
+{% set isCalendarMode = calendarActive|default(false) and calendarRooms|default([])|length > 0 %}
+<div class="fhb-booking-root{{ embed ? ' fhb-embed' : '' }}">
+    <div class="fhb-shell">
+        <div class="fhb-booking-card">
+            {% if not embed %}
+                <h1 class="fhb-title">{{ config.bookingMode == 'BOOKING' ? 'online_booking.public.page_title'|trans : 'online_booking.public.page_title_inquiry'|trans }}</h1>
+            {% endif %}
+
+            {% if not successMessage %}
+                {{ include('PublicBooking/themes/modern/_step_indicator.html.twig') }}
+            {% endif %}
+
+            {% if submitFallbackNotice %}
+                <div class="alert alert-warning fhb-scroll-target" id="fhb-form-fallback" tabindex="-1" role="alert">{{ 'online_booking.public.submit_fallback_notice'|trans }}</div>
+            {% endif %}
+
+            {% if errorMessage %}
+                <div class="alert alert-danger fhb-scroll-target" id="fhb-form-error" tabindex="-1" role="alert">{{ errorMessage|trans }}</div>
+            {% endif %}
+
+            {% if successMessage %}
+                <div class="alert alert-success fhb-scroll-target" id="fhb-success" tabindex="-1">{{ successMessage|trans }}</div>
+                {% if config.successMessageText %}
+                    <div class="fhb-section">{{ config.successMessageText|raw }}</div>
+                {% endif %}
+                <div class="fhb-actions">
+                    <a class="btn btn-outline-primary" href="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+                        {{ 'online_booking.public.start_new'|trans }}
+                    </a>
+                </div>
+            {% else %}
+            <form method="post" action="{{ path('public.booking', {'embed': embed ? 1 : 0}) }}">
+                <input type="hidden" name="embed" value="{{ embed ? 1 : 0 }}">
+                <input type="hidden" name="form_started_at" value="{{ formState.formStartedAt }}">
+                {% if formState.submitToken %}
+                    <input type="hidden" name="submit_token" value="{{ formState.submitToken }}">
+                {% endif %}
+                <div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+                    <label for="website">{{ 'online_booking.public.website_field'|trans }}</label>
+                    <input type="text" id="website" name="website" value="" tabindex="-1" autocomplete="off">
+                </div>
+
+                {# Guest-category flags used by the guests partial in both modes. #}
+                {% set hasCategories = guestCategories|default([])|length > 0 %}
+                {% set hasChildCategory = hasCategories and (guestCategories|filter(c => c.statisticalGroup.value != 'adult')|length > 0) %}
+                {% set initialChildAges = search.childAges|default([]) %}
+
+                {# ── Step 1 — entry point ── #}
+                {% if isCalendarMode %}
+                    {{ include('PublicBooking/themes/modern/_step1_calendar.html.twig') }}
+                {% else %}
+                    {{ include('PublicBooking/themes/modern/_step1_search.html.twig') }}
+                {% endif %}
+
+                <div class="fhb-actions">
+                    {# Once the calendar is live the guest has already seen the availability,
+                       so the button leads on to prices instead of promising another check. #}
+                    <button type="submit" name="intent" value="availability" class="btn btn-outline-primary">
+                        <span data-fhb-label-default>{{ 'online_booking.public.check_availability'|trans }}</span>
+                        <span data-fhb-label-calendar hidden>{{ 'online_booking.public.calendar.continue'|trans }}</span>
+                    </button>
+                </div>
+
+                {% if availabilityChecked and availability is empty and not errorMessage %}
+                    <div class="alert alert-info" style="margin-top:1rem;margin-bottom:0">
+                        {{ 'online_booking.public.no_matching_rooms'|trans }}
+                    </div>
+                {% endif %}
+
+                {# ── Step 2 — occupancy, extras and price ── #}
+                {% if availability is not empty %}
+                    <hr class="fhb-divider">
+                    {{ include('PublicBooking/themes/modern/_offer.html.twig') }}
+                    {{ include('PublicBooking/themes/modern/_extras.html.twig') }}
+
+                    <div class="fhb-actions">
+                        <button type="submit" name="intent" value="preview" class="btn btn-primary">{{ 'online_booking.public.continue'|trans }}</button>
+                    </div>
+
+                    {{ include('PublicBooking/themes/modern/_gallery_modals.html.twig') }}
+                {% endif %}
+
+                {# ── Step 3 — booker details and summary ── #}
+                {% if step >= 3 and availability is not empty %}
+                    {# No hidden fields needed for occ_/extra_ — the visible step 2
+                       inputs are still in the DOM and carry the current values.
+                       Duplicating them as hidden fields would override user changes. #}
+                    <hr class="fhb-divider">
+                    <div class="fhb-section fhb-scroll-target" id="fhb-booker-details" tabindex="-1">
+                        {{ include('PublicBooking/themes/modern/_booker.html.twig') }}
+                        {{ include('PublicBooking/themes/modern/_summary.html.twig') }}
+
+                        <div class="fhb-actions">
+                            <button type="submit" name="intent" value="submit" class="btn btn-primary">
+                                {{ config.bookingMode == 'BOOKING' ? ('online_booking.public.submit_booking'|trans) : ('online_booking.public.submit_inquiry'|trans) }}
+                            </button>
+                        </div>
+                    </div>
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% if autoScrollTarget %}
+<script>
+(function() {
+    var targetId = {{ autoScrollTarget|json_encode|raw }};
+    function jumpToStep() {
+        var target = document.getElementById(targetId);
+        if (!target) {
+            return;
+        }
+
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        if (typeof target.focus === 'function') {
+            target.focus({ preventScroll: true });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            requestAnimationFrame(jumpToStep);
+        }, { once: true });
+    } else {
+        requestAnimationFrame(jumpToStep);
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

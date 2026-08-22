@@ -18,6 +18,18 @@
                 <source>reservationorigin.name</source>
                 <target>Bezeichnung</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.color">
+                <source>reservationorigin.color</source>
+                <target>Farbe</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.color.enable">
+                <source>reservationorigin.color.enable</source>
+                <target>Farbindikator anzeigen</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.color.help">
+                <source>reservationorigin.color.help</source>
+                <target>Die Farbe wird in der Reservierungsübersicht als Indikator an der Reservierung angezeigt.</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>
