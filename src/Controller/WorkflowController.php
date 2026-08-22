@@ -11,6 +11,7 @@ use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\AppSettingsService;
+use App\Service\DisplayNameResolver;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Action\WorkflowActionRegistry;
@@ -39,6 +40,7 @@ class WorkflowController extends AbstractController
         private readonly AppSettingsService $settingsService,
         private readonly AccountingSettingsService $accountingSettingsService,
         private readonly AccountingAccountRepository $accountRepo,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -266,10 +268,14 @@ class WorkflowController extends AbstractController
     /** @return array<int, array{value: int, label: string}> */
     private function loadReservationStatusOptions(): array
     {
-        $statuses = $this->em->getRepository(ReservationStatus::class)->findBy([], ['name' => 'ASC']);
+        // Ordering by the stored name would order by the seed-time locale;
+        // system statuses are labelled from a translation key at render time.
+        $statuses = $this->displayNameResolver->sortByDisplayName(
+            $this->em->getRepository(ReservationStatus::class)->findAll(),
+        );
         $options = [['value' => 0, 'label' => '–']];
         foreach ($statuses as $status) {
-            $options[] = ['value' => $status->getId(), 'label' => $status->getName()];
+            $options[] = ['value' => $status->getId(), 'label' => $this->displayNameResolver->resolve($status)];
         }
 
         return $options;

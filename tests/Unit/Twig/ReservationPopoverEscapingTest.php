@@ -19,6 +19,9 @@ final class ReservationPopoverEscapingTest extends TestCase
             ['autoescape' => 'name'],
         );
         $twig->addFilter(new TwigFilter('trans', static fn (string $key): string => $key));
+        // This test drives the template with plain arrays and only asserts
+        // escaping, so display_name is stubbed down to the raw name.
+        $twig->addFilter(new TwigFilter('display_name', static fn (array $status): string => $status['name']));
 
         $rendered = $twig->render('Reservations/_resevation_popover.html.twig', [
             'reservation' => [

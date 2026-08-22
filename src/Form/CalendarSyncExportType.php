@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\CalendarSync;
 use App\Entity\ReservationStatus;
+use App\Service\DisplayNameResolver;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -14,6 +15,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class CalendarSyncExportType extends AbstractType
 {
+    public function __construct(
+        private readonly DisplayNameResolver $displayNameResolver,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -32,7 +38,7 @@ class CalendarSyncExportType extends AbstractType
             ->add('reservationStatus', EntityType::class, [
                 // looks for choices from this entity
                 'class' => ReservationStatus::class,
-                'choice_label' => 'name',
+                'choice_label' => fn (ReservationStatus $s) => $this->displayNameResolver->resolve($s),
                 // used to render a select box, check boxes or radios
                 'multiple' => true,
                 'expanded' => true,

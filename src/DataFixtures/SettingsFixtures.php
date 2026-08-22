@@ -226,7 +226,10 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
                 'code' => null,
                 'isBlocking' => true,
             ], [
-                'name' => $this->translator->trans('status.canceled_noshow'),
+                // System status: the label comes from the translation key
+                // derived from `code`, so the stored name is only a fallback
+                // and must not freeze the fixture-time locale.
+                'name' => $this->translator->trans('status.canceled_noshow', locale: 'en'),
                 'color' => '#6c757d',
                 'contrast' => '#ffffff',
                 'code' => ReservationStatus::CODE_CANCELED_NOSHOW,

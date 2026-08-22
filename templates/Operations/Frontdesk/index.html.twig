@@ -97,7 +97,7 @@
                                            value="{{ status.id }}"{% if status.id in selectedStatusIds or (statusDefault and status.isBlocking) %} checked{% endif %}>
                                     <span class="badge"
                                           style="background-color: {{ status.color }}; color: {{ status.contrastColor }};">
-                                        {{ status.name }}
+                                        {{ status|display_name }}
                                     </span>
                                 </label>
                             {% endfor %}

@@ -43,7 +43,7 @@
             {% set invoiceNumbers = invoiceNumbers ~ invoice.number|e %}
             {% if not loop.last %}{% set invoiceNumbers = invoiceNumbers ~ ", " %}{% endif %}
         {% endfor %}
-        {% set popBody = popBody ~ " <i>(" ~ reservation.reservationStatus.name|e ~ ")</i>" %}
+        {% set popBody = popBody ~ " <i>(" ~ (reservation.reservationStatus|display_name)|e ~ ")</i>" %}
         {% if businessCompany %}
             {% set popBody = businessCompany ~ "<br />" ~ popBody %}
         {% endif %}

@@ -11,6 +11,7 @@ use App\Entity\OnlineBookingConfig;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
+use App\Service\DisplayNameResolver;
 use App\Service\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -34,6 +35,7 @@ class OnlineBookingConfigType extends AbstractType
         private readonly EntityManagerInterface $em,
         private readonly OnlineBookingConfigService $configService,
         private readonly TranslatorInterface $translator,
+        private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
 
@@ -333,7 +335,7 @@ class OnlineBookingConfigType extends AbstractType
     {
         $choices = [];
         foreach ($statuses as $status) {
-            $choices[(string) $status->getName()] = (int) $status->getId();
+            $choices[$this->displayNameResolver->resolve($status)] = (int) $status->getId();
         }
 
         return $choices;

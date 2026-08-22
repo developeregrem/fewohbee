@@ -7,6 +7,7 @@ namespace App\Form;
 use App\Entity\CalendarSyncImport;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Service\DisplayNameResolver;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -20,6 +21,11 @@ use Symfony\Component\Validator\Constraints\Url;
 /** Build a form for configuring iCal imports. */
 class CalendarSyncImportType extends AbstractType
 {
+    public function __construct(
+        private readonly DisplayNameResolver $displayNameResolver,
+    ) {
+    }
+
     /** Configure the import form fields. */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -59,7 +65,7 @@ class CalendarSyncImportType extends AbstractType
             ])
             ->add('reservationStatus', EntityType::class, [
                 'class' => ReservationStatus::class,
-                'choice_label' => 'name',
+                'choice_label' => fn (ReservationStatus $s) => $this->displayNameResolver->resolve($s),
                 'label' => 'calendar.sync.import.status.label',
                 'help' => 'calendar.sync.import.status.hint',
                 'required' => true,

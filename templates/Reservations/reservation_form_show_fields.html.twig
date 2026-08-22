@@ -128,7 +128,7 @@
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td>{{ reservation.reservationStatus.name }}</td>
+                    <td>{{ reservation.reservationStatus|display_name }}</td>
                     <td>{{ reservation.startdate|date('d.m.Y') }}</td>
                     <td>{{ reservation.enddate|date('d.m.Y') }}</td>
                 </tr>

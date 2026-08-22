@@ -40,7 +40,7 @@
                                                             <td>{{ res.endDate|date('d.m.y') }}</td>
                                                             <td>{{ res.amount }}</td>
                                                             <td>{{ res.appartment ? res.appartment.number ~ ' ' ~ res.appartment.description : '–' }}</td>
-                                                            <td>{{ res.reservationStatus ? res.reservationStatus.name : '–' }}</td>
+                                                            <td>{{ res.reservationStatus ? res.reservationStatus|display_name : '–' }}</td>
                                                             <td>
                                                                 {% if res.invoices is empty %}
                                                                     <span class="text-muted">–</span>

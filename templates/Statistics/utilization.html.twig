@@ -162,7 +162,7 @@
                             <input type="checkbox" class="form-check-input" id="reservation-status-{{ status.id }}" name="reservation-status[]" value="{{ status.id }}"
                                    {% if not status.isSystem %}checked="checked"{% endif %}
                                    data-action="change->statistics#drawMonthlyUtilizationAction change->statistics#drawYearlyUtilizationAction">
-                            <label class="form-check-label" for="reservation-status-{{ status.id }}">{{ status.name }}</label>
+                            <label class="form-check-label" for="reservation-status-{{ status.id }}">{{ status|display_name }}</label>
                         </div>
                     {% endfor %}
                 </form>
