@@ -21,6 +21,7 @@ use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
 use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -474,7 +475,7 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
-    public function uploadImage(Request $request, FileUploader $fos)
+    public function uploadImage(Request $request, FileUploader $fos, LoggerInterface $logger): Response
     {
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');
@@ -485,6 +486,8 @@ class TemplatesServiceController extends AbstractController
         try {
             $name = $fos->upload($imageFile);
         } catch (\Symfony\Component\HttpFoundation\File\Exception\FileException $ex) {
+            $logger->error('Template image upload failed.', ['exception' => $ex]);
+
             return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
