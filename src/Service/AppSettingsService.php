@@ -74,32 +74,34 @@ class AppSettingsService
     {
         $settings ??= $this->getSettings();
 
-        return $settings->getMailFromEmail() ?: $this->fromMail;
+        return $settings->getMailFromEmail();
     }
 
     public function getEffectiveMailFromName(?AppSettings $settings = null): string
     {
         $settings ??= $this->getSettings();
 
-        return $settings->getMailFromName() ?: $this->fromName;
+        return $settings->getMailFromName() ?? '';
     }
 
     public function getEffectiveMailReturnPath(?AppSettings $settings = null): ?string
     {
         $settings ??= $this->getSettings();
 
-        return $settings->getMailReturnPath() ?: $this->returnPath;
+        return $settings->getMailReturnPath();
     }
 
     public function isEffectiveMailCopyEnabled(?AppSettings $settings = null): bool
     {
         $settings ??= $this->getSettings();
 
-        return $settings->getMailCopy() ?? filter_var($this->mailCopy, \FILTER_VALIDATE_BOOLEAN);
+        return $settings->getMailCopy() ?? false;
     }
 
     private function applyLegacyMailDefaultsIfEmpty(AppSettings $settings): bool
     {
+        // The required sender address is the migration marker. Once it exists, null values
+        // in optional database fields are intentional and must not revive legacy env values.
         if (null !== $settings->getMailFromEmail()) {
             return false;
         }
