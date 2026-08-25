@@ -73,6 +73,12 @@ templates.editor.apartment_modifier.positions.desc: >-
   last-minute discounts, pet fees). The table is only rendered when such
   positions exist on the invoice.
 templates.editor.tourist_tax.positions: Tourist tax positions
+templates.editor.payment_qr: Payment QR code (GiroCode)
+templates.editor.payment_qr.desc: >-
+  Inserts a QR code that fills a SEPA credit transfer in the payer's banking
+  app. The number is the image resolution in pixels; its size on the page comes
+  from the CSS. The code only appears when the bank details are configured in
+  the invoice settings and the installation runs in euro.
 templates.editor.tourist_tax.positions.desc: >-
   Inserts a table with all tourist-tax / accommodation-tax positions. The
   table is only rendered when such positions exist on the invoice.
