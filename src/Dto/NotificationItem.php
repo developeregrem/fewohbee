@@ -30,6 +30,8 @@ final readonly class NotificationItem
         public array $titleParams = [],
         public ?string $bodyKey = null,
         public array $bodyParams = [],
+        /** Operator-written explanation. Plain text, not a translation key. */
+        public ?string $body = null,
         public ?\DateTimeImmutable $createdAt = null,
         public ?string $url = null,
         public ?string $modalUrl = null,

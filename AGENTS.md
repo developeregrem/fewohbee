@@ -260,6 +260,22 @@ Config schemas are declared by the trigger/condition/action itself, using the fi
 4. Add a unit test in `tests/Unit/Workflow/`.
 5. Optionally add an example workflow to `WorkflowSeeder`.
 
+The **notification centre** (`src/Notification/`) follows the same shape: implement
+`NotificationProviderInterface`, and the tagged iterator picks it up. Two kinds of provider live
+side by side, and the distinction matters:
+
+- **derived** providers count live state (open conflicts, entries awaiting confirmation). Their
+  entries vanish when the underlying work is done, so they have no read state and nothing to
+  dismiss.
+- **stored** providers read the `notifications` table and track per user what has been read.
+
+`countUnread()` runs on **every page render** for the bell badge — keep it a COUNT, never load
+entities there. `getSeverity()` exists for the same reason: the badge needs a colour without
+fetching rows. `getItems()` is only called when the panel is opened.
+
+Most new notifications need **no provider at all**: the `create_in_app_notification` workflow action
+works with every trigger, so an operator can wire one up under Settings → Automations.
+
 The **template preview** system follows the same shape: implement `ITemplatePreviewProvider` in
 `src/Service/TemplatePreview/` and it is picked up automatically.
 

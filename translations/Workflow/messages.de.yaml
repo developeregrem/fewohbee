@@ -74,6 +74,20 @@ workflow:
     attachment_policy_help: "Zum Beispiel, wenn zu einer Reservierung noch gar keine Rechnung existiert."
     attachment_policy.skip_missing: "E-Mail trotzdem senden (ohne den fehlenden Anhang)"
     attachment_policy.require_all: "E-Mail nicht senden"
+    notification_note: "Hinweistext (optional)"
+    notification_note_help: "Erklärt im Benachrichtigungsfenster, warum die Benachrichtigung erscheint — z.B. 'Zahlungsziel überschritten'."
+    notification_severity: "Wichtigkeit"
+    notification_severity_help: "Nur 'Kritisch' färbt die Glocke rot."
+    notification_severity_info: "Info"
+    notification_severity_warning: "Warnung"
+    notification_severity_critical: "Kritisch"
+    notification_role: "Sichtbar für"
+    notification_role_help: "Wer die Benachrichtigung sieht."
+    notification_role_everyone: "Alle angemeldeten Benutzer"
+    notification_role_reservations: "Reservierungen"
+    notification_role_invoices: "Rechnungen"
+    notification_role_operations: "Betrieb"
+    notification_role_admin: "Nur Administratoren"
 
   # Trigger labels
   trigger:
@@ -114,6 +128,7 @@ workflow:
     change_invoice_status: "Rechnungsstatus ändern"
     change_payment_means: "Zahlungsmethode ändern"
     change_reservation_status: "Reservierungsstatus ändern"
+    create_in_app_notification: "Benachrichtigung in der App anzeigen"
 
   # Preview (dry run)
   preview:
@@ -163,6 +178,12 @@ workflow:
     example_invoice_paid_reservation_status:
       name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
       description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
+    notify_online_booking_inapp:
+      name: "Online-Buchung in der Glocke anzeigen"
+      description: "Legt für jede Online-Buchung einen Eintrag in der Benachrichtigungs-Glocke an."
+    notify_calendar_import_inapp:
+      name: "Kalender-Import in der Glocke anzeigen"
+      description: "Legt für jede importierte Buchung einen Eintrag in der Benachrichtigungs-Glocke an."
 
   log:
     condition_not_met: "Bedingung nicht erfüllt"
@@ -197,6 +218,7 @@ workflow:
     skipped_attachment_missing: "Übersprungen: ein benötigter Anhang fehlt – %reason%"
     skipped_attachments_too_large: "Übersprungen: die Anhänge sind mit %size% MB zu groß für den E-Mail-Versand"
     email_sent_with_attachments: "E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhang)|E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhänge)"
+    notification_created: "Benachrichtigung erstellt: %title%"
 
   error:
     name_required: "Bitte gib eine Bezeichnung ein."

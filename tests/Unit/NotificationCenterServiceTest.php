@@ -9,7 +9,9 @@ use App\Entity\Enum\NotificationSeverity;
 use App\Entity\User;
 use App\Notification\NotificationProviderInterface;
 use App\Notification\NotificationProviderRegistry;
+use App\Repository\NotificationRepository;
 use App\Service\NotificationCenterService;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 final class NotificationCenterServiceTest extends TestCase
@@ -99,7 +101,7 @@ final class NotificationCenterServiceTest extends TestCase
             }
         };
 
-        $service = new NotificationCenterService(new NotificationProviderRegistry([$provider]));
+        $service = $this->buildService(new NotificationProviderRegistry([$provider]));
         $user = $this->user();
 
         $service->getSummary($user);
@@ -136,7 +138,17 @@ final class NotificationCenterServiceTest extends TestCase
 
     private function service(NotificationProviderInterface ...$providers): NotificationCenterService
     {
-        return new NotificationCenterService(new NotificationProviderRegistry($providers));
+        return $this->buildService(new NotificationProviderRegistry($providers));
+    }
+
+    /** These tests only exercise the read side, so persistence is stubbed out. */
+    private function buildService(NotificationProviderRegistry $registry): NotificationCenterService
+    {
+        return new NotificationCenterService(
+            $registry,
+            $this->createStub(EntityManagerInterface::class),
+            $this->createStub(NotificationRepository::class),
+        );
     }
 
     private function provider(

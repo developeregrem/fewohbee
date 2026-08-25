@@ -11,3 +11,9 @@ notification:
   release_note:
     title: "New in fewohbee %version%"
     body: "See what has changed."
+  stored:
+    unknown_guest: "Unknown guest"
+    reservation: "New booking from %name% starting %from%"
+    invoice: "Invoice %number%"
+  mark_all_read: "Mark all as read"
+  mark_read: "Mark as read"

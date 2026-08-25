@@ -273,7 +273,7 @@ class Reservation
     /**
      * Get booker.
      *
-     * @return Customer
+     * @return Customer|null
      */
     public function getBooker()
     {

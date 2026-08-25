@@ -1,4 +1,6 @@
-<div data-notification-panel>
+<div data-notification-panel
+     data-notification-total="{{ summary.total }}"
+     data-notification-badge-class="{{ summary.badgeClass }}">
 {% if groups is empty %}
     <div class="px-3 py-4 text-center text-body-secondary">
         <i class="fas fa-check-circle d-block fs-4 mb-2"></i>
@@ -8,25 +10,53 @@
     <h6 class="dropdown-header">{{ 'notification.title'|trans }}</h6>
     {% for key, items in groups %}
         {% for item in items %}
-            <a class="dropdown-item d-flex align-items-start gap-2 py-2 text-wrap"
-               href="{{ item.url|default('#') }}"
-               {% if item.modalUrl %}
-                   data-action="click->notifications#openItemAction"
-                   data-url="{{ item.modalUrl }}"
-                   data-modal-title="{{ item.modalTitle ? item.modalTitle|trans(item.titleParams) : '' }}"
-               {% endif %}>
-                <i class="fas {{ item.icon }} {{ item.severity.textClass }} mt-1"></i>
-                <span class="flex-grow-1">
-                    <span class="d-block fw-semibold">{{ item.titleKey|trans(item.titleParams) }}</span>
-                    {% if item.bodyKey %}
-                        <small class="d-block text-body-secondary">{{ item.bodyKey|trans(item.bodyParams) }}</small>
+            <div class="position-relative">
+                <a class="dropdown-item d-flex align-items-start gap-2 py-2 text-wrap{{ item.id ? ' pe-5' : '' }}"
+                   href="{{ item.url|default('#') }}"
+                   {% if item.modalUrl %}
+                       data-action="click->notifications#openItemAction"
+                       data-url="{{ item.modalUrl }}"
+                       data-modal-title="{{ item.modalTitle ? item.modalTitle|trans(item.titleParams) : '' }}"
+                   {% endif %}>
+                    <i class="fas {{ item.icon }} {{ item.severity.textClass }} mt-1"></i>
+                    <span class="flex-grow-1">
+                        <span class="d-block fw-semibold">{{ item.titleKey|trans(item.titleParams) }}</span>
+                        {% if item.body %}
+                            {# Operator-written free text, so it is escaped, not translated. #}
+                            <small class="d-block text-body-secondary">{{ item.body }}</small>
+                        {% elseif item.bodyKey %}
+                            <small class="d-block text-body-secondary">{{ item.bodyKey|trans(item.bodyParams) }}</small>
+                        {% endif %}
+                    </span>
+                    {% if item.count > 1 %}
+                        <span class="badge {{ item.severity.badgeClass }} align-self-center">{{ item.count }}</span>
                     {% endif %}
-                </span>
-                {% if item.count > 1 %}
-                    <span class="badge {{ item.severity.badgeClass }} align-self-center">{{ item.count }}</span>
+                </a>
+                {# Only stored entries can be dismissed. Conflicts and reminders
+                   disappear by themselves once the underlying work is done, so
+                   offering to "clear" them would be a lie. #}
+                {% if item.id %}
+                    <button type="button"
+                            class="btn btn-sm btn-link text-body-secondary border-0 position-absolute end-0 top-50 translate-middle-y me-1"
+                            data-action="click->notifications#markReadAction"
+                            data-url="{{ path('notifications.read', { 'id': item.id }) }}"
+                            data-token="{{ csrf_token('notification-read-' ~ item.id) }}"
+                            aria-label="{{ 'notification.mark_read'|trans }}"
+                            title="{{ 'notification.mark_read'|trans }}">
+                        <i class="fas fa-times"></i>
+                    </button>
                 {% endif %}
-            </a>
+            </div>
         {% endfor %}
     {% endfor %}
+    {% if hasStored %}
+        <div class="dropdown-divider"></div>
+        <button type="button" class="dropdown-item text-body-secondary small"
+                data-action="click->notifications#markAllReadAction"
+                data-url="{{ path('notifications.read_all') }}"
+                data-token="{{ csrf_token('notification-read-all') }}">
+            <i class="fas fa-check-double me-1"></i>{{ 'notification.mark_all_read'|trans }}
+        </button>
+    {% endif %}
 {% endif %}
 </div>

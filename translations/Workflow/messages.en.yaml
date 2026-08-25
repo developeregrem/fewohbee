@@ -74,6 +74,20 @@ workflow:
     attachment_policy_help: "For example when a reservation does not have an invoice yet."
     attachment_policy.skip_missing: "Send the email anyway (without the missing attachment)"
     attachment_policy.require_all: "Do not send the email"
+    notification_note: "Explanation (optional)"
+    notification_note_help: "Explains in the notification window why the notification appeared, e.g. 'Payment overdue'."
+    notification_severity: "Importance"
+    notification_severity_help: "Only 'Critical' turns the bell red."
+    notification_severity_info: "Info"
+    notification_severity_warning: "Warning"
+    notification_severity_critical: "Critical"
+    notification_role: "Visible to"
+    notification_role_help: "Who sees the notification."
+    notification_role_everyone: "All signed-in users"
+    notification_role_reservations: "Reservations"
+    notification_role_invoices: "Invoices"
+    notification_role_operations: "Operations"
+    notification_role_admin: "Administrators only"
 
   trigger:
     online_booking_created: "New online booking received"
@@ -111,6 +125,7 @@ workflow:
     change_invoice_status: "Change invoice status"
     change_payment_means: "Change payment method"
     change_reservation_status: "Change reservation status"
+    create_in_app_notification: "Show a notification in the app"
 
   preview:
     title: "Dry Run"
@@ -158,6 +173,12 @@ workflow:
     example_invoice_paid_reservation_status:
       name: "Example: Change reservation status on payment"
       description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
+    notify_online_booking_inapp:
+      name: "Show online bookings in the bell"
+      description: "Creates an entry in the notification bell for every online booking."
+    notify_calendar_import_inapp:
+      name: "Show calendar imports in the bell"
+      description: "Creates an entry in the notification bell for every imported booking."
 
   log:
     condition_not_met: "Condition not met"
@@ -192,6 +213,7 @@ workflow:
     skipped_attachment_missing: "Skipped: a required attachment is missing – %reason%"
     skipped_attachments_too_large: "Skipped: the attachments are too large for email delivery (%size% MB)"
     email_sent_with_attachments: "Email sent to %recipient% (template: \"%template%\", %count% attachment)|Email sent to %recipient% (template: \"%template%\", %count% attachments)"
+    notification_created: "Notification created: %title%"
 
   error:
     name_required: "Please enter a name."

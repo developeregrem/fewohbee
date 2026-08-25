@@ -11,3 +11,9 @@ notification:
   release_note:
     title: "Neu in FewohBee %version%"
     body: "Sieh dir an, was sich geändert hat."
+  stored:
+    unknown_guest: "Unbekannter Gast"
+    reservation: "Neue Buchung von %name% ab %from%"
+    invoice: "Rechnung %number%"
+  mark_all_read: "Alle als gelesen markieren"
+  mark_read: "Als gelesen markieren"
