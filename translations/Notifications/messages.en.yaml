@@ -1,0 +1,13 @@
+notification:
+  title: "Notifications"
+  empty: "All clear — nothing outstanding."
+  reservation_conflict:
+    title: "Review %count% imports"
+    body_conflicts: "Overlapping bookings from a calendar import."
+    body_reviews: "Imported bookings without an assigned guest."
+  calendar_reminder:
+    title: "%count% calendar reminders"
+    body: "Entries due today that still need confirming."
+  release_note:
+    title: "New in fewohbee %version%"
+    body: "See what has changed."

@@ -23,6 +23,7 @@ use App\Entity\Role;
 use App\Entity\Subsidiary;
 use App\Entity\TemplateType;
 use App\Entity\User;
+use App\Service\ReleaseNotesService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -51,6 +52,7 @@ class FirstRunCommand extends Command
         private readonly ReservationFixtures $reservationFixtures,
         private readonly WorkflowSeeder $workflowSeeder,
         private readonly GuestCategorySeeder $guestCategorySeeder,
+        private readonly ReleaseNotesService $releaseNotes,
     ) {
         parent::__construct();
     }
@@ -159,6 +161,9 @@ class FirstRunCommand extends Command
         $user->setLastname($lastName);
         $user->setPassword($this->hasher->hashPassword($user, $password));
         $user->setUsername($username);
+        // A fresh installation has nothing to announce: stamping the current version
+        // keeps the "what's new" modal from greeting the operator on day one.
+        $user->setLastSeenVersion($this->releaseNotes->getCurrentVersion());
         if (isset($createdRoles['ROLE_ADMIN'])) {
             $user->addRole($createdRoles['ROLE_ADMIN']);
         }

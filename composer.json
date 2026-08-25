@@ -13,6 +13,7 @@
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
         "horstoeko/zugferd": "^1.0",
+        "league/commonmark": "^2.10",
         "league/flysystem-aws-s3-v3": "^3",
         "mpdf/mpdf": "^8.2",
         "oneup/flysystem-bundle": "*",

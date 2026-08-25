@@ -1,0 +1,10 @@
+release_notes:
+  page_title: "What's new"
+  nav: "What's new"
+  installed_version: "Installed version: %version%"
+  current: "Current"
+  all: "All changes"
+  got_it: "Got it"
+  empty: "No release notes are bundled with this installation."
+  announce:
+    title: "New in fewohbee %version%"

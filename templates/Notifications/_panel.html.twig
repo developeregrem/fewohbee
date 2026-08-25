@@ -1,0 +1,32 @@
+<div data-notification-panel>
+{% if groups is empty %}
+    <div class="px-3 py-4 text-center text-body-secondary">
+        <i class="fas fa-check-circle d-block fs-4 mb-2"></i>
+        {{ 'notification.empty'|trans }}
+    </div>
+{% else %}
+    <h6 class="dropdown-header">{{ 'notification.title'|trans }}</h6>
+    {% for key, items in groups %}
+        {% for item in items %}
+            <a class="dropdown-item d-flex align-items-start gap-2 py-2 text-wrap"
+               href="{{ item.url|default('#') }}"
+               {% if item.modalUrl %}
+                   data-action="click->notifications#openItemAction"
+                   data-url="{{ item.modalUrl }}"
+                   data-modal-title="{{ item.modalTitle ? item.modalTitle|trans(item.titleParams) : '' }}"
+               {% endif %}>
+                <i class="fas {{ item.icon }} {{ item.severity.textClass }} mt-1"></i>
+                <span class="flex-grow-1">
+                    <span class="d-block fw-semibold">{{ item.titleKey|trans(item.titleParams) }}</span>
+                    {% if item.bodyKey %}
+                        <small class="d-block text-body-secondary">{{ item.bodyKey|trans(item.bodyParams) }}</small>
+                    {% endif %}
+                </span>
+                {% if item.count > 1 %}
+                    <span class="badge {{ item.severity.badgeClass }} align-self-center">{{ item.count }}</span>
+                {% endif %}
+            </a>
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+</div>

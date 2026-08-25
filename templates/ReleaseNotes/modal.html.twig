@@ -1,0 +1,18 @@
+<div class="modal-body" data-controller="release-notes"
+     data-release-notes-seen-url="{{ path('release_notes.seen') }}"
+     data-release-notes-seen-token="{{ csrf_token('release-notes-seen') }}">
+    <div class="release-notes-body">
+        {# The markdown ships with the repository and is rendered with
+           html_input: strip, so no user input can reach this output.
+           See ReleaseNotesService::getHtml(). #}
+        {{ html|raw }}
+    </div>
+</div>
+<div class="modal-footer">
+    <a href="{{ path('release_notes.index') }}" class="btn btn-outline-secondary">
+        {{ 'release_notes.all'|trans }}
+    </a>
+    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+        {{ 'release_notes.got_it'|trans }}
+    </button>
+</div>

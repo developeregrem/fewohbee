@@ -6,6 +6,7 @@ twig:
     form_themes: ['form/fewohbee_bootstrap_5_layout.html.twig']
     globals:
         passkey_enabled: '%passkey_enabled%'
+        app_version: '%version%'
 
 when@test:
     twig:

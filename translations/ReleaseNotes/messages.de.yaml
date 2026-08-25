@@ -1,0 +1,10 @@
+release_notes:
+  page_title: "Was ist neu"
+  nav: "Was ist neu"
+  installed_version: "Installierte Version: %version%"
+  current: "Aktuell"
+  all: "Alle Neuerungen"
+  got_it: "Verstanden"
+  empty: "Für diese Installation sind keine Versionshinweise hinterlegt."
+  announce:
+    title: "Neu in FewohBee %version%"

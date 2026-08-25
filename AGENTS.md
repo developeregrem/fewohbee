@@ -535,6 +535,33 @@ leave complex methods undocumented.
 
 ---
 
+## 11a. Release notes
+
+Every release ships its notes with the application, so hosted customers see what changed without
+visiting GitHub.
+
+- Notes live in `docs/release-notes/` as `<version>.<locale>.md`, e.g. `4.12.0.de.md`. The version
+  comes from the filename — do not repeat it inside the document.
+- **German is authored by hand and has priority**; English is generated from it. Both locales ship.
+  A version with only one locale still works: `ReleaseNotesService` falls back.
+- An optional YAML front matter block carries the release date:
+
+  ```markdown
+  ---
+  date: 2026-09-15
+  ---
+  ```
+
+- The version itself is the `version` parameter in `config/services.yaml`, exposed to Twig as the
+  `app_version` global. **Bump it in the same commit that adds the release notes file** — the two
+  must agree, or the "what's new" announcement never fires.
+- A new version announces itself **in the notification bell**, not as a popup, and stays there until
+  the user opens the notes and closes them again — that writes `users.last_seen_version`. There is
+  deliberately no auto-opening modal: a popup on page load gets dismissed by reflex before it is
+  read, and it would have to be suppressed on every subsequent page view anyway.
+
+---
+
 ## 12. Frontend
 
 - **AssetMapper only.** Add JS dependencies with `php bin/console importmap:require <package>`.

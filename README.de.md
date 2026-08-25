@@ -46,7 +46,7 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 | ⚡ **Automatisierung** | Regelwerk aus Auslösern, Bedingungen und Aktionen — Mails versenden, Status ändern, Buchungen anlegen, ganz ohne Code |
 | ✉️ **Korrespondenz** | Mailversand aus der Anwendung, mit visuellem Vorlagen-Editor und Live-Vorschau |
 | 📅 **Kalender-Sync** | iCal/ICS in beide Richtungen mit Airbnb, Booking.com und anderen |
-| 📊 **Statistiken** | Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
+| 📊 **Statistiken** | Beherbergungsstatistik, Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
 | ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, lesende REST-API |
 
 📖 **[Vollständige Funktionsübersicht im Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**

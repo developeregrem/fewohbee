@@ -39,6 +39,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $email;
     #[ORM\Column(type: 'string', length: 10, options: ['default' => 'light'])]
     private $themePreference = 'light';
+    /**
+     * Last application version whose release notes this user has seen.
+     * Null means "never announced" — the notes for the current version are shown once.
+     */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    private ?string $lastSeenVersion = null;
     #[ORM\Column(type: 'datetime', nullable: true)]
     private $lastAction;
     #[ORM\Column(type: 'boolean')]
@@ -164,6 +170,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setThemePreference(string $themePreference): self
     {
         $this->themePreference = $themePreference;
+
+        return $this;
+    }
+
+    public function getLastSeenVersion(): ?string
+    {
+        return $this->lastSeenVersion;
+    }
+
+    public function setLastSeenVersion(?string $lastSeenVersion): self
+    {
+        $this->lastSeenVersion = $lastSeenVersion;
 
         return $this;
     }

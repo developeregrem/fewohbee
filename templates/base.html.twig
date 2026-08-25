@@ -93,7 +93,7 @@
                                 <a class="nav-link dropdown-toggle" href="#"  id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-tools"></i> {{ 'nav.settings'|trans }}
                                 </a>
-                                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown2">
                                     <a class="dropdown-item{% if activeRouteName starts with "settings.general" %} active{% endif %}" href="{{ path('settings.general.index') }}"><i class="fas fa-cog text-secondary"></i> {{ 'app_settings.nav.label'|trans }}</a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item{% if activeRouteName starts with "users" %} active{% endif %}" href="{{ path('users.overview') }}"><i class="fas fa-users text-secondary"></i> {{ 'nav.user'|trans }}</a>
@@ -112,12 +112,39 @@
                                 </div>
                             </li>
                         {% endif %}
+                        {% set notifications = notification_summary() %}
+                        <li class="nav-item dropdown" data-controller="notifications"
+                            data-notifications-url-value="{{ path('notifications.panel') }}">
+                            <a class="nav-link position-relative" href="#" id="navbarNotifications" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false"
+                               data-action="show.bs.dropdown->notifications#loadPanelAction"
+                               aria-label="{{ 'notification.title'|trans }}">
+                                <i class="fas fa-bell"></i>
+                                {% if not notifications.isEmpty %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClass }}">
+                                        {{ notifications.total }}
+                                        <span class="visually-hidden">{{ 'notification.title'|trans }}</span>
+                                    </span>
+                                {% endif %}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end notification-panel" aria-labelledby="navbarNotifications"
+                                 data-notifications-target="panel">
+                                <div class="px-3 py-4 text-center text-body-secondary">
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                </div>
+                            </div>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown3" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 {{ 'nav.welcome'|trans({ '%user%': app.user.getUsername() }) }}
                             </a>
-                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown3">
                                 <a class="dropdown-item" href="{{ path('profile') }}"><i class="fas fa-user"></i> {{ 'nav.profile'|trans }}</a>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('release_notes.index') }}">
+                                    <i class="fas fa-gift"></i>
+                                    <span>{{ 'release_notes.nav'|trans }}</span>
+                                    <span class="text-body-secondary small ms-auto">{{ app_version }}</span>
+                                </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ path('logout') }}"><i class="fas fa-sign-out-alt"></i> {{ 'nav.logout'|trans }}</a>
                             </div>

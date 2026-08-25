@@ -1,0 +1,13 @@
+notification:
+  title: "Benachrichtigungen"
+  empty: "Alles erledigt — nichts Offenes."
+  reservation_conflict:
+    title: "%count% Importe prüfen"
+    body_conflicts: "Überschneidende Buchungen aus einem Kalender-Import."
+    body_reviews: "Importierte Buchungen ohne zugeordneten Gast."
+  calendar_reminder:
+    title: "%count% Kalender-Erinnerungen"
+    body: "Termine für heute, die noch bestätigt werden müssen."
+  release_note:
+    title: "Neu in FewohBee %version%"
+    body: "Sieh dir an, was sich geändert hat."
