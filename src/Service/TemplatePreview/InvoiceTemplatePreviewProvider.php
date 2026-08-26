@@ -250,7 +250,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'label' => 'templates.editor.payment_qr',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
-                'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" style=\"width: 30mm;\"></div>",
+                'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
             ],
             [
                 'id' => 'pdf.header',
