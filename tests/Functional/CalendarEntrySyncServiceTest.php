@@ -775,6 +775,50 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertNull($this->entriesForCalendar($calendar)[0]->getTime());
     }
 
+    /**
+     * A series with a single moved occurrence: the bin collection falls on a public
+     * holiday, so that one date carries its own SUMMARY. The override must keep its
+     * title instead of inheriting the series one.
+     */
+    public function testAMovedOccurrenceKeepsItsOwnTitle(): void
+    {
+        $calendar = $this->createCalendar('Muell '.uniqid());
+
+        $ics = implode("\r\n", [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:muellabfuhr',
+            'DTSTART;VALUE=DATE:20260803',
+            'RRULE:FREQ=WEEKLY;UNTIL=20260914',
+            'SUMMARY:Restmüll',
+            'END:VEVENT',
+            'BEGIN:VEVENT',
+            'UID:muellabfuhr',
+            'RECURRENCE-ID;VALUE=DATE:20260831',
+            'DTSTART;VALUE=DATE:20260901',
+            'SUMMARY:Restmüll – wegen Feiertag',
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ]);
+
+        $result = $this->service->importIcsString($calendar, $ics);
+        self::assertSame(0, $result->skippedInvalid);
+
+        $titles = [];
+        foreach ($this->entriesForCalendar($calendar) as $entry) {
+            $titles[$entry->getDate()->format('Y-m-d')] = $entry->getTitle();
+        }
+
+        // The moved occurrence sits on its new day under its own title,
+        self::assertSame('Restmüll – wegen Feiertag', $titles['2026-09-01'] ?? null);
+        // the original Monday is gone,
+        self::assertArrayNotHasKey('2026-08-31', $titles);
+        // and every other occurrence still reads as the series does.
+        self::assertSame('Restmüll', $titles['2026-08-24'] ?? null);
+        self::assertSame('Restmüll', $titles['2026-09-07'] ?? null);
+    }
+
     private function createCalendar(string $name): Calendar
     {
         $calendar = new Calendar();

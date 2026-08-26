@@ -152,8 +152,7 @@ class CalendarEntrySyncService
                 $lastIndex = array_key_last($span->dates);
 
                 $sourceUid = $this->buildSourceUid($calendar, $occurrence->uid, $summary, $span->dates[0]);
-                $occurrences[$sourceUid] ??= ['summary' => $summary, 'dates' => [], 'times' => [], 'endTimes' => []];
-                $occurrences[$sourceUid]['summary'] = $summary;
+                $occurrences[$sourceUid] ??= ['dates' => [], 'summaries' => [], 'times' => [], 'endTimes' => []];
 
                 // What earlier VEVENTs sharing this UID already recorded. Read
                 // out first so the loop below can fall back to it: a later
@@ -165,6 +164,10 @@ class CalendarEntrySyncService
                 foreach ($span->dates as $index => $date) {
                     $dateKey = $date->format('Y-m-d');
                     $occurrences[$sourceUid]['dates'][$dateKey] = $date;
+                    // Per date, not per event: a RECURRENCE-ID override is a second
+                    // VEVENT under the same UID carrying its own SUMMARY, and the day
+                    // it moved to has to read as that one rather than as the series.
+                    $occurrences[$sourceUid]['summaries'][$dateKey] = $summary;
                     // The day the event starts on carries the start time and
                     // the day it ends on the end time; the days in between run
                     // all day by definition.
@@ -176,7 +179,7 @@ class CalendarEntrySyncService
             }
 
             foreach ($occurrences as $sourceUid => $grouped) {
-                foreach ($this->reconcile($calendar, $sourceUid, $grouped['summary'], $grouped['dates'], $grouped['times'], $grouped['endTimes'], $today) as $outcome) {
+                foreach ($this->reconcile($calendar, $sourceUid, $grouped['summaries'], $grouped['dates'], $grouped['times'], $grouped['endTimes'], $today) as $outcome) {
                     match ($outcome) {
                         self::OUTCOME_NEW => $new++,
                         self::OUTCOME_UPDATED => $updated++,
@@ -265,13 +268,16 @@ class CalendarEntrySyncService
      * date keeps it, one whose date is gone is left alone rather than being
      * reused for another day.
      *
+     * @param array<string, string>              $summaries keyed by Y-m-d; a moved occurrence
+     *                                                      carries its own title, so this is
+     *                                                      per date rather than per event
      * @param array<string, \DateTimeImmutable>  $dates    keyed by Y-m-d
      * @param array<string, ?\DateTimeImmutable> $times    keyed by Y-m-d, null where the day has no start time
      * @param array<string, ?\DateTimeImmutable> $endTimes keyed by Y-m-d, null where the day has no end time
      *
      * @return list<string> one OUTCOME_* per entry touched or left in place
      */
-    private function reconcile(Calendar $calendar, string $sourceUid, string $summary, array $dates, array $times, array $endTimes, \DateTimeImmutable $today): array
+    private function reconcile(Calendar $calendar, string $sourceUid, array $summaries, array $dates, array $times, array $endTimes, \DateTimeImmutable $today): array
     {
         ksort($dates);
         $existing = $this->repo->findBySource($calendar, $sourceUid);
@@ -282,7 +288,7 @@ class CalendarEntrySyncService
         // into rows nobody asked for.
         foreach ($dates as $dateKey => $date) {
             if ($date < $today) {
-                unset($dates[$dateKey], $times[$dateKey], $endTimes[$dateKey]);
+                unset($dates[$dateKey], $summaries[$dateKey], $times[$dateKey], $endTimes[$dateKey]);
             }
         }
 
@@ -308,6 +314,7 @@ class CalendarEntrySyncService
 
         $outcomes = [];
         foreach ($matched as $dateKey => $entry) {
+            $summary = $summaries[$dateKey] ?? '';
             $time = $times[$dateKey] ?? null;
             $endTime = $endTimes[$dateKey] ?? null;
             if ($entry->isConfirmed()
@@ -323,6 +330,7 @@ class CalendarEntrySyncService
         }
 
         foreach (array_diff_key($dates, $matched) as $dateKey => $date) {
+            $summary = $summaries[$dateKey] ?? '';
             $time = $times[$dateKey] ?? null;
             $endTime = $endTimes[$dateKey] ?? null;
             $entry = $this->takeReusable($spare);
