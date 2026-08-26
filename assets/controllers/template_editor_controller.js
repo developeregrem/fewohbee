@@ -96,6 +96,18 @@ const templateImagePlaceholder = (src) => {
     return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
 };
 
+/**
+ * Replaces the width inside an inline style, leaving a style that states none alone.
+ * An image can carry its width twice — as the attribute and in the style — and mPDF
+ * follows the style, so a resize that only updated the attribute would show up in the
+ * editor and nowhere else.
+ */
+const withWidthInStyle = (style, width) => (
+    style && /(^|;)\s*width\s*:/i.test(style)
+        ? style.replace(/(^|;)(\s*)width\s*:[^;]*/gi, `$1$2width: ${width}`)
+        : style
+);
+
 /** What the browser should actually load for a given node src. */
 const displayImageSrc = (src) => (isTemplateExpression(src) ? templateImagePlaceholder(src) : (src || ''));
 
@@ -173,10 +185,21 @@ const ResizableImage = Image.extend({
                 if (typeof getPos !== 'function') return;
                 const pos = getPos();
                 if (pos == null) return;
-                const newWidth = Math.max(30, startWidth + (e.clientX - startX));
-                editor.chain().focus()
-                    .updateAttributes('image', { width: newWidth + 'px' })
-                    .run();
+                const newWidth = Math.max(30, startWidth + (e.clientX - startX)) + 'px';
+
+                // Addressed by position instead of through updateAttributes(), which acts
+                // on the current selection. Clicking the image first does select the node,
+                // so the drag sticks — but grabbing the handle straight from a text
+                // selection leaves nothing for that command to act on, and the new width
+                // is dropped without a trace. The position does not depend on either.
+                const { state, dispatch } = editor.view;
+                const target = state.doc.nodeAt(pos);
+                if (!target) return;
+                dispatch(state.tr.setNodeMarkup(pos, undefined, {
+                    ...target.attrs,
+                    width: newWidth,
+                    style: withWidthInStyle(target.attrs.style, newWidth),
+                }));
             };
 
             handle.addEventListener('mousedown', (e) => {
