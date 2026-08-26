@@ -385,10 +385,17 @@ export, and must not be written to logs.
 **Every user-facing string is translated, in both `de` and `en`, in the same commit.** No exceptions,
 no "English only for now".
 
-- Translations live in `translations/<Domain>/messages.{de,en}.yaml` — one directory per domain
-  (`Reservations`, `Invoices`, `Workflow`, `Housekeeping`, …). Some legacy domains use `.xlf`;
-  match whatever the domain already uses.
-- Reference the domain explicitly in Twig: `{{ 'workflow.page_title'|trans({}, 'Workflow') }}`
+- Translations are grouped by product area under `translations/<Area>/` (`Reservations`,
+  `Invoices`, `Workflow`, `Housekeeping`, …). The directory is organizational and does **not**
+  define Symfony's translation domain. Match the filenames and format already used by the area;
+  some existing translations use `.xlf` instead of `.yaml`.
+- Symfony derives the translation domain from the filename, not the directory. Most files are
+  named `messages.{de,en}.yaml` or `messages.{de,en}.xlf` and therefore use the default `messages`
+  domain. Do not pass the area name as a domain; use `{{ 'workflow.page_title'|trans }}` in Twig or
+  `$translator->trans('workflow.page_title')` in PHP.
+- Pass an explicit domain only when the filename defines one. For example,
+  `translations/Housekeeping/Housekeeping.de.xlf` uses the `Housekeeping` domain and is referenced
+  as `{{ 'housekeeping.title'|trans({}, 'Housekeeping') }}`.
 - Keys are lowercase, dot-separated, and describe *meaning* rather than the English text:
   `workflow.flash.created`, not `workflow.automation_was_created`.
 - Both files must contain the **same set of keys**. A key present in `de` but missing in `en` is a
