@@ -77,7 +77,7 @@ workflow:
     notification_note: "Explanation (optional)"
     notification_note_help: "Explains in the notification window why the notification appeared, e.g. 'Payment overdue'."
     notification_severity: "Importance"
-    notification_severity_help: "Only 'Critical' turns the bell red."
+    notification_severity_help: "Only 'Critical' highlights the notification window in red."
     notification_severity_info: "Info"
     notification_severity_warning: "Warning"
     notification_severity_critical: "Critical"
@@ -174,11 +174,11 @@ workflow:
       name: "Example: Change reservation status on payment"
       description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
     notify_online_booking_inapp:
-      name: "Show online bookings in the bell"
-      description: "Creates an entry in the notification bell for every online booking."
+      name: "Show online bookings in the notification window"
+      description: "Creates an entry in the notification window for every online booking."
     notify_calendar_import_inapp:
-      name: "Show calendar imports in the bell"
-      description: "Creates an entry in the notification bell for every imported booking."
+      name: "Show calendar imports in the notification window"
+      description: "Creates an entry in the notification window for every imported booking."
 
   log:
     condition_not_met: "Condition not met"

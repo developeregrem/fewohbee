@@ -114,20 +114,97 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         $all = $context['allReservations'] ?? null;
         $count = is_array($all) && count($all) > 0 ? count($all) : 1;
 
-        $booker = $reservation->getBooker();
-        $name = null !== $booker
-            ? trim($booker->getFirstname() . ' ' . $booker->getLastname())
-            : $this->translator->trans('notification.stored.unknown_guest');
+        $appartment = $reservation->getAppartment();
+        $params = [
+            '%count%' => $count,
+            '%from%' => $reservation->getStartDate()->format('d.m.Y'),
+            '%room%' => null !== $appartment ? (string) $appartment->getNumber() : '–',
+        ];
 
+        // This action works with every trigger, so the wording must follow the
+        // event, not the entity. A status change on an imported booking is not
+        // "a new booking taken over from Booking.com", and a reminder three days
+        // before arrival is not a new booking either.
+        $trigger = (string) ($context['triggerType'] ?? '');
+        $isNewBooking = in_array(
+            $trigger,
+            ['online_booking.created', 'calendar_import.created', 'reservation.created'],
+            true
+        );
+
+        $import = $reservation->getCalendarSyncImport();
+        if ($isNewBooking && null !== $import) {
+            // Portals do not send guest details over iCal, so an imported booking
+            // never has a booker. Printing "unknown guest" would be noise.
+            $params['%source%'] = $import->getName();
+
+            return $this->record(
+                'calendar_import',
+                'notification.stored.calendar_import',
+                $params,
+                $import->getName(),
+                $severity,
+                $requiredRole,
+                $note,
+                $reservation,
+            );
+        }
+
+        $booker = $reservation->getBooker();
+        $name = null !== $booker ? trim($booker->getFirstname() . ' ' . $booker->getLastname()) : '';
+
+        // No booker means no name to show — a placeholder like "unknown guest"
+        // is filler, not information. Separate keys rather than an empty
+        // parameter, so the sentence does not end up with a dangling "from".
+        $hasName = '' !== $name;
+        if ($hasName) {
+            $params['%name%'] = $name;
+        }
+
+        $titleKey = match (true) {
+            // One booking can cover several rooms; naming just the first would
+            // be wrong, so the count takes over.
+            !$isNewBooking => $hasName
+                ? 'notification.stored.reservation_generic'
+                : 'notification.stored.reservation_generic_anonymous',
+            $count > 1 => $hasName
+                ? 'notification.stored.reservation_multi'
+                : 'notification.stored.reservation_multi_anonymous',
+            default => $hasName
+                ? 'notification.stored.reservation'
+                : 'notification.stored.reservation_anonymous',
+        };
+
+        return $this->record(
+            'reservation',
+            $titleKey,
+            $params,
+            $hasName ? $name : ('#' . $reservation->getId()),
+            $severity,
+            $requiredRole,
+            $note,
+            $reservation,
+        );
+    }
+
+    /**
+     * @param array<string, string|int> $params
+     */
+    private function record(
+        string $type,
+        string $titleKey,
+        array $params,
+        string $logLabel,
+        NotificationSeverity $severity,
+        ?string $requiredRole,
+        ?string $note,
+        Reservation $reservation,
+    ): string {
         $this->notificationCenter->create(
-            type: 'reservation',
-            titleKey: 'notification.stored.reservation',
+            type: $type,
+            titleKey: $titleKey,
             severity: $severity,
-            params: [
-                '%name%' => $name,
-                '%count%' => $count,
-                '%from%' => $reservation->getStartDate()->format('d.m.Y'),
-            ],
+            params: $params,
             routeName: 'start',
             requiredRole: $requiredRole ?? 'ROLE_RESERVATIONS_RO',
             entityClass: Reservation::class,
@@ -135,7 +212,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
             note: $note,
         );
 
-        return $this->translator->trans('workflow.log.notification_created', ['%title%' => $name]);
+        return $this->translator->trans('workflow.log.notification_created', ['%title%' => $logLabel]);
     }
 
     private function notifyInvoice(Invoice $invoice, NotificationSeverity $severity, ?string $requiredRole, ?string $note): string

@@ -149,7 +149,7 @@ class Reservation
     }
 
     /**
-     * @return Appartment
+     * @return Appartment|null
      */
     public function getAppartment()
     {

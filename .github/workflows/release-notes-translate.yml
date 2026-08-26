@@ -1,0 +1,52 @@
+name: Translate release notes
+
+# German is written by hand; English is derived. The pull request is the moment
+# to do it: the translation then lands in the same review as everything else,
+# before the tag is set.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # For pull_request this filters the BASE branch: only the release pull
+    # request into master is a candidate.
+    branches: [master]
+    paths:
+      - 'docs/release-notes/*.de.md'
+  workflow_dispatch:
+
+jobs:
+  translate:
+    name: Translate German release notes
+    # Three separate gates, all of which have to hold:
+    #  - same repository: a fork pull request gets no secrets, so the job could
+    #    only fail noisily, and nobody outside the project should be able to
+    #    spend the subscription or push a commit through this action.
+    #  - head branch "<version>-dev": the release branch, not bank-import,
+    #    renovate/… or any other feature branch that happens to touch a note.
+    #  - base master is enforced by the branches filter above.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       endsWith(github.head_ref, '-dev'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      # Checkout must run first: the skill lives in .claude/skills/ and has to be
+      # on disk before the action starts.
+      - uses: actions/checkout@v7
+        with:
+          # The PR branch, so the commit lands there and not on the merge ref.
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          # Authenticates with the Claude subscription instead of API credits.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: '/translate-release-notes'
+          claude_args: '--max-turns 20'
+        # github_token is deliberately not passed: the action then commits as the
+        # Claude GitHub App, and CI still runs on its commits. With the default
+        # GITHUB_TOKEN, GitHub suppresses those workflow runs.

@@ -571,6 +571,14 @@ visiting GitHub.
 - The version itself is the `version` parameter in `config/services.yaml`, exposed to Twig as the
   `app_version` global. **Bump it in the same commit that adds the release notes file** — the two
   must agree, or the "what's new" announcement never fires.
+- **Two workflows automate the rest.** On a pull request that touches a `*.de.md`, the Claude Code
+  GitHub Action runs the `translate-release-notes` skill and commits the English file into the PR,
+  so the translation is reviewed together with the code. On a `v*` tag, `release.yml` builds the
+  GitHub release body from the same files — English first, German collapsed below. **Do not write
+  release notes in the GitHub editor**; they would be overwritten and would drift from the copy the
+  application ships.
+- The tag, the `version` parameter and the two note files must agree — `release.yml` refuses to
+  publish otherwise. That check is the reason a release cannot ship without notes.
 - A new version announces itself **in the notification bell**, not as a popup, and stays there until
   the user opens the notes and closes them again — that writes `users.last_seen_version`. There is
   deliberately no auto-opening modal: a popup on page load gets dismissed by reflex before it is

@@ -65,6 +65,11 @@ class WorkflowEngine
 
     private function executeWorkflow(Workflow $workflow, mixed $entity, array $context, bool $logConditionSkip = true): bool
     {
+        // Actions that work with every trigger need to know which one fired, or
+        // they cannot word their output correctly. Taken from the workflow rather
+        // than the caller so the event-driven and the scheduled path agree.
+        $context['triggerType'] ??= $workflow->getTriggerType();
+
         try {
             foreach ($workflow->getConditions() as $conditionDef) {
                 $condition = $this->conditionRegistry->get($conditionDef['type']);

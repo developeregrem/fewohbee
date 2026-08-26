@@ -77,7 +77,7 @@ workflow:
     notification_note: "Hinweistext (optional)"
     notification_note_help: "Erklärt im Benachrichtigungsfenster, warum die Benachrichtigung erscheint — z.B. 'Zahlungsziel überschritten'."
     notification_severity: "Wichtigkeit"
-    notification_severity_help: "Nur 'Kritisch' färbt die Glocke rot."
+    notification_severity_help: "Nur 'Kritisch' hebt das Benachrichtigungsfenster rot hervor."
     notification_severity_info: "Info"
     notification_severity_warning: "Warnung"
     notification_severity_critical: "Kritisch"
@@ -179,11 +179,11 @@ workflow:
       name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
       description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
     notify_online_booking_inapp:
-      name: "Online-Buchung in der Glocke anzeigen"
-      description: "Legt für jede Online-Buchung einen Eintrag in der Benachrichtigungs-Glocke an."
+      name: "Online-Buchung im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede Online-Buchung einen Eintrag im Benachrichtigungsfenster an."
     notify_calendar_import_inapp:
-      name: "Kalender-Import in der Glocke anzeigen"
-      description: "Legt für jede importierte Buchung einen Eintrag in der Benachrichtigungs-Glocke an."
+      name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."
 
   log:
     condition_not_met: "Bedingung nicht erfüllt"
