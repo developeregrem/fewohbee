@@ -67,6 +67,39 @@ const TemplateTableHeader = extendWithTemplateAttrs(TableHeader, repeatAndCondit
 const TemplateTableCell = extendWithTemplateAttrs(TableCell, repeatAndConditionAttributes(), styleAndClassAttributes());
 
 /**
+ * An <img> whose src is a template expression cannot be fetched by the browser, so the
+ * visual editor would show a broken-image icon exactly where a picture appears at render
+ * time. These helpers put a neutral placeholder in its place, labelled with the
+ * expression, while the node attribute keeps the expression untouched for saving.
+ */
+const TEMPLATE_EXPRESSION = /\[\[|\[%|\{\{|\{%/;
+
+const isTemplateExpression = (src) => TEMPLATE_EXPRESSION.test(src || '');
+
+const templateImagePlaceholder = (src) => {
+    const label = String(src || '').replace(/[\[\]{}%]/g, '').trim().slice(0, 30);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160">
+        <rect x="2" y="2" width="156" height="156" rx="6" fill="#f3f4f6" stroke="#9ca3af"
+              stroke-width="2" stroke-dasharray="6 4"/>
+        <g fill="#9ca3af">
+            <rect x="34" y="34" width="30" height="30" rx="3"/>
+            <rect x="96" y="34" width="30" height="30" rx="3"/>
+            <rect x="34" y="96" width="30" height="30" rx="3"/>
+            <rect x="80" y="80" width="12" height="12"/>
+            <rect x="104" y="104" width="12" height="12"/>
+            <rect x="80" y="128" width="12" height="12"/>
+        </g>
+        <text x="80" y="152" font-family="sans-serif" font-size="9" fill="#6b7280"
+              text-anchor="middle">${label}</text>
+    </svg>`;
+
+    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+};
+
+/** What the browser should actually load for a given node src. */
+const displayImageSrc = (src) => (isTemplateExpression(src) ? templateImagePlaceholder(src) : (src || ''));
+
+/**
  * Resizable image extension with drag handles and alignment support.
  * Stores width as an HTML attribute so it survives code ↔ visual round-trips.
  */
@@ -98,9 +131,10 @@ const ResizableImage = Image.extend({
             wrapper.contentEditable = 'false';
 
             const img = document.createElement('img');
-            img.src = node.attrs.src || '';
+            img.src = displayImageSrc(node.attrs.src);
             if (node.attrs.alt) img.alt = node.attrs.alt;
             if (node.attrs.title) img.title = node.attrs.title;
+            else if (isTemplateExpression(node.attrs.src)) img.title = node.attrs.src;
             if (node.attrs.width) img.style.width = node.attrs.width;
 
             // Alignment toolbar — sets text-align on the parent <p> so mPDF can use it
@@ -174,7 +208,8 @@ const ResizableImage = Image.extend({
                 dom: wrapper,
                 update: (updatedNode) => {
                     if (updatedNode.type.name !== 'image') return false;
-                    img.src = updatedNode.attrs.src || '';
+                    img.src = displayImageSrc(updatedNode.attrs.src);
+                    if (isTemplateExpression(updatedNode.attrs.src)) img.title = updatedNode.attrs.src;
                     if (updatedNode.attrs.alt) img.alt = updatedNode.attrs.alt;
                     img.style.width = updatedNode.attrs.width || '';
                     return true;
