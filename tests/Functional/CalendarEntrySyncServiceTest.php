@@ -819,6 +819,68 @@ final class CalendarEntrySyncServiceTest extends KernelTestCase
         self::assertSame('Restmüll', $titles['2026-09-07'] ?? null);
     }
 
+    /**
+     * The other way a series states an exception: EXDATE drops a single occurrence
+     * instead of moving it. Nothing may be filed on that day.
+     */
+    public function testAnExcludedOccurrenceIsNotImported(): void
+    {
+        $calendar = $this->createCalendar('Muell EXDATE '.uniqid());
+
+        $result = $this->service->importIcsString($calendar, $this->buildWeeklyMuellIcs(withExdate: true));
+
+        self::assertSame(0, $result->skippedInvalid);
+
+        $dates = array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        );
+
+        self::assertNotContains('2026-08-31', $dates);
+        // The occurrences around it stay, so the whole series was not dropped by mistake.
+        self::assertContains('2026-08-24', $dates);
+        self::assertContains('2026-09-07', $dates);
+    }
+
+    /** A date that later disappears from the feed takes its unconfirmed entry with it. */
+    public function testAnOccurrenceExcludedLaterRemovesItsEntry(): void
+    {
+        $calendar = $this->createCalendar('Muell EXDATE spaeter '.uniqid());
+
+        $this->service->importIcsString($calendar, $this->buildWeeklyMuellIcs(withExdate: false));
+        self::assertContains('2026-08-31', array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        ));
+
+        $this->service->importIcsString($calendar, $this->buildWeeklyMuellIcs(withExdate: true));
+
+        self::assertNotContains('2026-08-31', array_map(
+            static fn (CalendarEntry $e) => $e->getDate()->format('Y-m-d'),
+            $this->entriesForCalendar($calendar),
+        ));
+    }
+
+    private function buildWeeklyMuellIcs(bool $withExdate): string
+    {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'BEGIN:VEVENT',
+            'UID:muellabfuhr-exdate',
+            'DTSTART;VALUE=DATE:20260803',
+            'RRULE:FREQ=WEEKLY;UNTIL=20260914',
+        ];
+        if ($withExdate) {
+            $lines[] = 'EXDATE;VALUE=DATE:20260831';
+        }
+        $lines[] = 'SUMMARY:Restmüll';
+        $lines[] = 'END:VEVENT';
+        $lines[] = 'END:VCALENDAR';
+
+        return implode("\r\n", $lines);
+    }
+
     private function createCalendar(string $name): Calendar
     {
         $calendar = new Calendar();
