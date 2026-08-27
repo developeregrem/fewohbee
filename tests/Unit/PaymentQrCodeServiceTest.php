@@ -142,6 +142,59 @@ final class PaymentQrCodeServiceTest extends TestCase
         $this->assertNotNull($this->createService($settings)->buildPayload($this->createInvoice(), 10.0));
     }
 
+    public function testDataUriIsAPngOfTheRequestedSize(): void
+    {
+        $uri = $this->createService($this->createSettings())->buildDataUri($this->createInvoice(), 10.0, 300);
+
+        self::assertIsString($uri);
+        self::assertStringStartsWith('data:image/png;base64,', $uri);
+        self::assertSame([300, 300], $this->pixelSize($uri));
+    }
+
+    /**
+     * The size comes from a template, so it has to survive a typo. Memory and time
+     * grow with the square of the edge; an unbounded value takes the worker down.
+     */
+    public function testAnOversizedRequestIsCapped(): void
+    {
+        $uri = $this->createService($this->createSettings())->buildDataUri($this->createInvoice(), 10.0, 8000);
+
+        self::assertSame([1000, 1000], $this->pixelSize((string) $uri));
+    }
+
+    /** Below the floor the encoder refuses a full-length payload outright. */
+    public function testAnUndersizedRequestIsRaisedToTheFloor(): void
+    {
+        $uri = $this->createService($this->createSettings())->buildDataUri($this->createInvoice(), 10.0, 10);
+
+        self::assertSame([100, 100], $this->pixelSize((string) $uri));
+    }
+
+    /** Even at the floor, the longest payload the scheme carries still encodes. */
+    public function testTheFloorStillEncodesAMaximalPayload(): void
+    {
+        $settings = $this->createSettings();
+        $settings->setAccountName(str_repeat('a', 70));
+
+        $uri = $this->createService($settings)->buildDataUri($this->createInvoice(str_repeat('9', 60)), 999999999.99, 1);
+
+        self::assertSame([100, 100], $this->pixelSize((string) $uri));
+    }
+
+    public function testNoDataUriWhenNoPayloadIsPossible(): void
+    {
+        self::assertNull($this->createService(null)->buildDataUri($this->createInvoice(), 10.0));
+    }
+
+    /** @return array{int, int} */
+    private function pixelSize(string $dataUri): array
+    {
+        $png = base64_decode(substr($dataUri, \strlen('data:image/png;base64,')), true);
+        $info = getimagesizefromstring((string) $png);
+
+        return [$info[0] ?? 0, $info[1] ?? 0];
+    }
+
     private function createService(?InvoiceSettingsData $settings, string $currency = 'EUR'): PaymentQrCodeService
     {
         $readiness = $this->createStub(EInvoiceReadinessService::class);

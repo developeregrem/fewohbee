@@ -51,6 +51,20 @@ final class PaymentQrCodeService
     private const MAX_PAYLOAD_BYTES = 331;
 
     /**
+     * Bounds for the requested edge length, because the size comes from a template
+     * and templates are written by hand.
+     *
+     * Below the lower bound the encoder refuses a full-length payload outright
+     * ("Too much data"), which would surface as an exception in the middle of an
+     * invoice. Above the upper bound nothing is gained and a lot is paid: memory and
+     * time grow with the square of the edge, and an 8000 px code costs half a
+     * gigabyte and five seconds — enough to take the worker down with it. 1000 px is
+     * around 85 mm at 300 dpi, past anything a printed invoice asks for.
+     */
+    private const MIN_SIZE = 100;
+    private const MAX_SIZE = 1000;
+
+    /**
      * Rendered codes per invoice and pixel size, for the lifetime of the request:
      * a template that guards with an if and then prints the code asks twice.
      *
@@ -70,9 +84,17 @@ final class PaymentQrCodeService
      * invoice cannot be paid by credit transfer as it stands — missing bank
      * details, a non-euro installation, or an amount outside the range
      * EPC069-12 allows.
+     *
+     * @param int $size edge length of the generated image in pixels, clamped to
+     *                  MIN_SIZE..MAX_SIZE; how large the code appears on the page is
+     *                  a matter for the template, not for this number
      */
     public function buildDataUri(Invoice $invoice, float $amount, int $size = 300): ?string
     {
+        // Clamped before the cache key so two requests that end up at the same edge
+        // length share the one rendered code.
+        $size = max(self::MIN_SIZE, min(self::MAX_SIZE, $size));
+
         $cacheKey = ((string) $invoice->getId()).'|'.$size.'|'.$amount;
         if (\array_key_exists($cacheKey, $this->rendered)) {
             return $this->rendered[$cacheKey];
