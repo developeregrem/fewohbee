@@ -412,6 +412,9 @@ class TemplatesServiceController extends AbstractController
             if (!empty($snippet['label'])) {
                 $snippet['label'] = $translator->trans($snippet['label']);
             }
+            if (!empty($snippet['description'])) {
+                $snippet['description'] = $translator->trans($snippet['description']);
+            }
             if (!empty($snippet['content']) && is_string($snippet['content'])) {
                 try {
                     // Render snippet labels/text (e.g. {{ '...'|trans }}) while

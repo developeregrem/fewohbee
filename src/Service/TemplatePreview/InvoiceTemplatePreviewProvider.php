@@ -122,6 +122,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.number',
                 'label' => 'templates.editor.invoice.number',
+                'description' => 'templates.editor.invoice.number.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '[[ invoice.number ]]',
@@ -129,6 +130,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.date',
                 'label' => 'templates.editor.invoice.date',
+                'description' => 'templates.editor.invoice.date.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => "[[ invoice.date|date('d.m.Y') ]]",
@@ -185,6 +187,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.appartment',
                 'label' => 'templates.editor.price.total',
+                'description' => 'templates.editor.price.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ appartmentTotal ]]',
@@ -192,6 +195,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.misc',
                 'label' => 'templates.editor.misc.total',
+                'description' => 'templates.editor.misc.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ miscTotal ]]',
@@ -199,6 +203,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.netto',
                 'label' => 'templates.editor.netto',
+                'description' => 'templates.editor.netto.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ nettoFormated ]]',
@@ -206,6 +211,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.brutto',
                 'label' => 'templates.editor.brutto',
+                'description' => 'templates.editor.brutto.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ bruttoFormated ]]',
@@ -213,6 +219,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.vat',
                 'label' => 'templates.editor.vat',
+                'description' => 'templates.editor.vat.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table border=\"0\">\n  <tbody>\n    <tr data-repeat=\"vats\" data-repeat-key=\"key\" data-repeat-as=\"value\">\n      <td style=\"text-align: right;\">[[ key ]] %</td>\n      <td style=\"text-align: right;\">[[ value.nettoFormated ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -220,6 +227,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.appartment.positions',
                 'label' => 'templates.editor.appartment.positions',
+                'description' => 'templates.editor.appartment.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.appartment'|trans }}</th>\n      <th>{{ 'invoice.position.stays'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.appartments\" data-repeat-as=\"appartment\">\n      <td>[[ appartment.description ]] (Personen: [[ appartment.persons ]])<br />[[ appartment.startDate|date('d.m.Y') ]] - [[ appartment.endDate|date('d.m.Y') ]]</td>\n      <td>[[ appartment.amount ]]</td>\n      <td>[[ appartment.priceFormated ]] €</td>\n      <td>[[ appartment.vat ]]</td>\n      <td style=\"text-align: right;\">[[ appartment.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ appartmentTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -227,6 +235,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.misc.positions',
                 'label' => 'templates.editor.misc.positions',
+                'description' => 'templates.editor.misc.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.additional'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup != 'tourist_tax' and p.positionGroup != 'apartment_modifier')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -234,6 +243,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.apartment_modifier.positions',
                 'label' => 'templates.editor.apartment_modifier.positions',
+                'description' => 'templates.editor.apartment_modifier.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\" data-if=\"invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')|length > 0\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -241,6 +251,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.tourist_tax.positions',
                 'label' => 'templates.editor.tourist_tax.positions',
+                'description' => 'templates.editor.tourist_tax.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\" data-if=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')|length > 0\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.tourist_tax.heading'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -248,6 +259,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
+                'description' => 'templates.preview.snippet.pdf_header.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="header"><p>Header</p></div>',
@@ -255,6 +267,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
+                'description' => 'templates.editor.footer.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="footer"><p>Footer</p></div>',

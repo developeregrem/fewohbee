@@ -165,6 +165,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'bookingjournal.positions',
                 'label' => 'templates.preview.snippet.bookingjournal.positions',
+                'description' => 'templates.preview.snippet.bookingjournal.positions.desc',
                 'group' => 'bookingjournal',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%; border-collapse: collapse;\" border=\"0\" cellspacing=\"0\"><tr><th style=\"text-align: left;\">{{ 'accounting.journal.entry.doc_number'|trans }}</th><th style=\"text-align: left;\">{{ 'accounting.journal.entry.date'|trans }}</th><th style=\"text-align: left;\">{{ 'accounting.journal.entry.debit'|trans }}</th><th style=\"text-align: left;\">{{ 'accounting.journal.entry.credit'|trans }}</th><th style=\"text-align: right;\">{{ 'accounting.journal.entry.amount'|trans }}</th><th style=\"text-align: center;\">{{ 'accounting.journal.entry.tax_rate'|trans }}</th><th style=\"text-align: left;\">{{ 'accounting.journal.entry.invoice'|trans }}</th><th style=\"text-align: left;\">{{ 'accounting.journal.entry.remark'|trans }}</th></tr><tr data-repeat=\"journal.entries\" data-repeat-as=\"entry\"><td>[[ entry.documentNumberF ]]</td><td>[[ entry.date|date('d.m.Y') ]]</td><td>[[ entry.debitAccount ? entry.debitAccount.label : '–' ]]</td><td>[[ entry.creditAccount ? entry.creditAccount.label : '–' ]]</td><td style=\"text-align: right;\">[[ entry.amountF ]] €</td><td style=\"text-align: center;\">[[ entry.taxRate ? entry.taxRate.rate : '0.00' ]] %</td><td>[[ entry.invoiceNumber ?: '–' ]]</td><td>[[ entry.remark ?: '–' ]]</td></tr></table>",
@@ -172,6 +173,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
+                'description' => 'templates.preview.snippet.pdf_header.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="header"><p>Header</p></div>',
@@ -179,6 +181,7 @@ class CashJournalTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
+                'description' => 'templates.editor.footer.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="footer"><p>Footer</p></div>',

@@ -29,6 +29,28 @@ final class TemplatesEditorApiTest extends WebTestCase
         self::assertSame('entity', $payload['invoice']['type'] ?? null);
     }
 
+    public function testSnippetsEndpointReturnsTranslatedOptionalDescriptions(): void
+    {
+        $client = self::createClient();
+        $client->loginUser($this->getAdminUser(), 'main');
+
+        $type = $this->requireTemplateType('TEMPLATE_INVOICE_PDF');
+        $client->request('GET', '/settings/templates/snippets/'.$type->getId());
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+
+        $snippetsById = [];
+        foreach ($payload as $snippet) {
+            self::assertIsArray($snippet);
+            $snippetsById[$snippet['id']] = $snippet;
+        }
+
+        self::assertSame('Gibt die Rechnungsnummer aus.', $snippetsById['invoice.number']['description'] ?? null);
+        self::assertArrayNotHasKey('description', $snippetsById['invoice.firstname']);
+    }
+
     public function testPreviewRenderReturnsFriendlyErrorPayload(): void
     {
         $client = self::createClient();
