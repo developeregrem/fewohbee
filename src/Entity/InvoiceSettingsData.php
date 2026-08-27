@@ -336,6 +336,24 @@ class InvoiceSettingsData
         return $this;
     }
 
+    /**
+     * The day payment falls due for an invoice issued on the given date.
+     *
+     * Null when this issuer states no payment period: the settings accept free-text
+     * terms instead, and validation only insists that one of the two is filled. A
+     * caller that prints the date has to leave it out in that case rather than
+     * inventing one.
+     */
+    public function dueDateFor(\DateTimeInterface $invoiceDate): ?\DateTimeImmutable
+    {
+        if (null === $this->paymentDueDays) {
+            return null;
+        }
+
+        return \DateTimeImmutable::createFromInterface($invoiceDate)
+            ->modify('+'.$this->paymentDueDays.' days');
+    }
+
     public function getEinvoiceProfile(): ?string
     {
         return $this->einvoiceProfile;

@@ -110,11 +110,9 @@ class ZugferdInvoiceGenerator
             $mandateReference = $invoice->getMandateReference();
         }
 
-        // payment terms and due date
-        $dueDate = !is_null($settings->getPaymentDueDays())
-            ? (clone $invoice->getDate())->modify('+'.$settings->getPaymentDueDays().' days')
-            : null;
-        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $dueDate, $mandateReference); // Payment term
+        // payment terms and due date - the same date the invoice template prints,
+        // so the XML and the paper never state different deadlines
+        $documentBuilder->addDocumentPaymentTerm($settings->getPaymentTerms(), $settings->dueDateFor($invoice->getDate()), $mandateReference); // Payment term
         // Buyer reference (BT-10, Leitweg-ID): mandatory for XRechnung via validator, omitted otherwise.
         $buyerReference = $invoice->getBuyerReference();
         if (null !== $buyerReference && '' !== trim($buyerReference)) {
