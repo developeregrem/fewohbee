@@ -738,6 +738,10 @@
                 <source>invoice.tourist_tax.no_positions</source>
                 <target>Für diese Buchung wurden keine Beherbergungsabgaben berechnet.</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_qr.remittance">
+                <source>invoice.payment_qr.remittance</source>
+                <target>Rechnung %number%</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

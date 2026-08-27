@@ -830,6 +830,14 @@
                 <source>templates.editor.tourist_tax.positions.desc</source>
                 <target>Fügt eine Tabelle mit allen Beherbergungsabgabe-/Kurtaxe-Positionen ein. Die Tabelle wird nur angezeigt, wenn entsprechende Positionen auf der Rechnung vorhanden sind.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.payment_qr">
+                <source>templates.editor.payment_qr</source>
+                <target>Zahlungs-QR-Code (GiroCode)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.payment_qr.desc">
+                <source>templates.editor.payment_qr.desc</source>
+                <target>Fügt einen QR-Code ein, der in der Banking-App des Zahlenden eine SEPA-Überweisung vorausfüllt. Die Zahl ist die Auflösung des Bildes in Pixeln; wie groß es auf der Seite erscheint, bestimmt die Breite des Bildes, die du am Ziehpunkt einstellst. Der Code erscheint nur, wenn in den Rechnungseinstellungen eine Bankverbindung hinterlegt ist und die Installation in Euro rechnet.</target>
+            </trans-unit>
             <trans-unit id="templates.notfound">
                 <source>templates.notfound</source>
                 <target>Es konnte keine Vorlage gefunden werden. Stelle bitte sicher, dass ein Template für die ausgewählte Aktion existiert.</target>
