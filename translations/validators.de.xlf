@@ -62,6 +62,10 @@
                 <source>invoice_number_pattern.empty</source>
                 <target>Bitte ein Muster angeben.</target>
             </trans-unit>
+            <trans-unit id="calendar.form.ics_file_invalid">
+                <source>calendar.form.ics_file_invalid</source>
+                <target>Bitte eine gültige ICS-Datei (.ics) hochladen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
