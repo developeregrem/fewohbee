@@ -246,6 +246,13 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'content' => "<table style=\"width: 100%;\" data-if=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')|length > 0\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.tourist_tax.heading'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
             ],
             [
+                'id' => 'invoice.payment_qr',
+                'label' => 'templates.editor.payment_qr',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
+            ],
+            [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
                 'group' => 'PDF',
