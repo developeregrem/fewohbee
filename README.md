@@ -57,7 +57,7 @@ Curious what it looks like? There's a feature tour at [fewohbee.app](https://few
 ## Requirements
 
 - **PHP 8.4 or higher** (the official Docker image runs on PHP 8.5)
-  - Extensions: `intl` (with full ICU data), `gd`, `pdo_mysql`, `exif`, `ctype`, `iconv`
+  - Extensions: `intl` (with full ICU data), `gd`, `pdo_mysql`, `exif`, `ctype`, `iconv`, `zip`
 - A web server — nginx or Apache
 - **MySQL 8.0+** or **MariaDB** — set `DB_SERVER_VERSION` in `.env` to match your server
 - [Composer](https://getcomposer.org/download/)

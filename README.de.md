@@ -58,7 +58,7 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 
 - **PHP 8.4 oder höher** (das offizielle Docker-Image läuft auf PHP 8.5)
   - Erweiterungen: `intl` (mit vollständigen ICU-Daten), `gd`, `pdo_mysql`, `exif`, `ctype`,
-    `iconv`
+    `iconv`, `zip`
 - Ein Webserver — nginx oder Apache
 - **MySQL 8.0+** oder **MariaDB** — `DB_SERVER_VERSION` in der `.env` passend zum Server setzen
 - [Composer](https://getcomposer.org/download/)
