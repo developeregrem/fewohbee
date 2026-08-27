@@ -66,6 +66,10 @@
                 <source>accounting.bank_import.upload.file.invalid_type</source>
                 <target>Bitte eine gültige Datei (.csv, .xls, .xlsx, .xml) hochladen.</target>
             </trans-unit>
+            <trans-unit id="calendar.form.ics_file_invalid">
+                <source>calendar.form.ics_file_invalid</source>
+                <target>Bitte eine gültige ICS-Datei (.ics) hochladen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

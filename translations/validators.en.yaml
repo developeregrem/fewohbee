@@ -1,3 +1,6 @@
+calendar:
+  form:
+    ics_file_invalid: Please upload a valid ICS (.ics) file.
 form:
   email:
     notblank: Please enter your e-mail address.

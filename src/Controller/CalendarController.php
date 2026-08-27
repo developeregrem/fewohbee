@@ -95,18 +95,12 @@ class CalendarController extends AbstractController
                             '%updated%' => $result->updated,
                             '%unchanged%' => $result->unchanged,
                         ]));
-                    } elseif (0 === $result->skippedRecurring && 0 === $result->skippedInvalid) {
+                    } elseif (0 === $result->skippedInvalid) {
                         // Only claim the source was empty when it really was:
-                        // a feed made entirely of recurring or unreadable
-                        // events imports nothing either, and the messages
-                        // below name that reason instead of blaming the source.
+                        // a feed made entirely of unreadable events imports
+                        // nothing either, and the message below names that
+                        // reason instead of blaming the source.
                         $this->addFlash('warning', 'calendar.flash.synced_empty');
-                    }
-
-                    if ($result->skippedRecurring > 0) {
-                        $this->addFlash('warning', $translator->trans('calendar.flash.synced_recurring_skipped', [
-                            '%count%' => $result->skippedRecurring,
-                        ]));
                     }
 
                     if ($result->skippedInvalid > 0) {
