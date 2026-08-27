@@ -27,12 +27,14 @@ use App\Service\BookingJournal\BankImport\Parser\BankStatementParserRegistry;
 use App\Service\BookingJournal\BankImport\Parser\ParserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/journal/bank-import')]
@@ -42,20 +44,11 @@ class BankImportController extends AbstractController
     #[Route('', name: 'bank_import.index', methods: ['GET'])]
     public function index(BankImportDraftSession $drafts, AccountingAccountRepository $accountRepo): Response
     {
-        $accountsById = [];
-        foreach ($accountRepo->findAll() as $account) {
-            $accountsById[$account->getId()] = $account;
-        }
-
         $form = $this->createForm(BankStatementUploadType::class, null, [
             'action' => $this->generateUrl('bank_import.upload'),
         ]);
 
-        return $this->render('BookingJournal/BankImport/index.html.twig', [
-            'drafts' => $drafts->list(),
-            'accountsById' => $accountsById,
-            'uploadForm' => $form,
-        ]);
+        return $this->renderIndex($drafts, $accountRepo, $form);
     }
 
     #[Route('/upload', name: 'bank_import.upload', methods: ['POST'])]
@@ -67,15 +60,16 @@ class BankImportController extends AbstractController
         InvoiceMatcher $invoiceMatcher,
         BankImportRuleMatcher $ruleMatcher,
         BankStatementImportRepository $statementImportRepo,
+        AccountingAccountRepository $accountRepo,
         TranslatorInterface $translator,
     ): Response {
         $form = $this->createForm(BankStatementUploadType::class);
         $form->handleRequest($request);
 
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.upload.flash.invalid'));
+            $this->addFlash('danger', 'accounting.bank_import.upload.flash.invalid');
 
-            return $this->redirectToRoute('bank_import.index');
+            return $this->renderIndex($drafts, $accountRepo, $form, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         /** @var AccountingAccount $bankAccount */
@@ -87,14 +81,14 @@ class BankImportController extends AbstractController
         $files = $this->uploadedFiles($form->get('file')->getData());
 
         if ([] === $files) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.upload.flash.invalid'));
+            $this->addFlash('danger', 'accounting.bank_import.upload.flash.invalid');
 
             return $this->redirectToRoute('bank_import.index');
         }
 
         $parser = $parsers->get($formatKey);
         if (!$parser->supportsMultipleFiles() && 1 !== count($files)) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.upload.flash.csv_requires_single_file'));
+            $this->addFlash('danger', 'accounting.bank_import.upload.flash.csv_requires_single_file');
 
             return $this->redirectToRoute('bank_import.index');
         }
@@ -102,11 +96,11 @@ class BankImportController extends AbstractController
         try {
             $result = $this->parseUploadedFiles($files, $parser, $profile);
         } catch (MultipleSourceAccountsException) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.parser.error.camt_multiple_accounts'));
+            $this->addFlash('danger', 'accounting.bank_import.parser.error.camt_multiple_accounts');
 
             return $this->redirectToRoute('bank_import.index');
         } catch (\Throwable $e) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.upload.flash.parse_failed', [
+            $this->addFlash('danger', new TranslatableMessage('accounting.bank_import.upload.flash.parse_failed', [
                 '%message%' => $e->getMessage(),
             ]));
 
@@ -114,7 +108,7 @@ class BankImportController extends AbstractController
         }
 
         if ([] === $result->lines) {
-            $this->addFlash('warning', $translator->trans('accounting.bank_import.upload.flash.no_lines'));
+            $this->addFlash('warning', 'accounting.bank_import.upload.flash.no_lines');
 
             return $this->redirectToRoute('bank_import.index');
         }
@@ -139,13 +133,34 @@ class BankImportController extends AbstractController
 
         if (null !== $state->sourceIban && null !== $bankAccount->getIban()
             && $state->sourceIban !== $bankAccount->getIban()) {
-            $this->addFlash('warning', $translator->trans('accounting.bank_import.upload.flash.iban_mismatch', [
+            $this->addFlash('warning', new TranslatableMessage('accounting.bank_import.upload.flash.iban_mismatch', [
                 '%file%' => $state->sourceIban,
                 '%account%' => $bankAccount->getIban(),
             ]));
         }
 
         return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
+    }
+
+    /**
+     * Renders the bank-import overview with either a fresh or submitted upload form.
+     */
+    private function renderIndex(
+        BankImportDraftSession $drafts,
+        AccountingAccountRepository $accountRepo,
+        FormInterface $form,
+        int $status = Response::HTTP_OK,
+    ): Response {
+        $accountsById = [];
+        foreach ($accountRepo->findAll() as $account) {
+            $accountsById[$account->getId()] = $account;
+        }
+
+        return $this->render('BookingJournal/BankImport/index.html.twig', [
+            'drafts' => $drafts->list(),
+            'accountsById' => $accountsById,
+            'uploadForm' => $form,
+        ], new Response(status: $status));
     }
 
     /**
@@ -519,7 +534,6 @@ class BankImportController extends AbstractController
         BankImportDraftSession $drafts,
         AccountingAccountRepository $accountRepo,
         BankImportRuleMatcher $ruleMatcher,
-        TranslatorInterface $translator,
     ): Response {
         if (!$this->isCsrfTokenValid('bank_import_line_'.$sessionImportId, (string) $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -545,7 +559,7 @@ class BankImportController extends AbstractController
         $touched = $ruleMatcher->reapplyPreviouslyAppliedRules($state, $bankAccount);
         $drafts->save($state);
 
-        $this->addFlash('success', $translator->trans('accounting.bank_import.preview.reapply_rules.flash.done', [
+        $this->addFlash('success', new TranslatableMessage('accounting.bank_import.preview.reapply_rules.flash.done', [
             '%count%' => $touched,
         ]));
 
@@ -559,7 +573,6 @@ class BankImportController extends AbstractController
         BankImportDraftSession $drafts,
         AccountingAccountRepository $accountRepo,
         BankStatementCommitter $committer,
-        TranslatorInterface $translator,
     ): Response {
         if (!$this->isCsrfTokenValid('bank_import_line_'.$sessionImportId, (string) $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -586,14 +599,14 @@ class BankImportController extends AbstractController
         try {
             $result = $committer->commit($state, $bankAccount, $user instanceof \App\Entity\User ? $user : null);
         } catch (\Throwable $e) {
-            $this->addFlash('danger', $translator->trans('accounting.bank_import.commit.flash.failed', [
+            $this->addFlash('danger', new TranslatableMessage('accounting.bank_import.commit.flash.failed', [
                 '%message%' => $e->getMessage(),
             ]));
 
             return $this->redirectToRoute('bank_import.preview', ['sessionImportId' => $sessionImportId]);
         }
 
-        $this->addFlash('success', $translator->trans('accounting.bank_import.commit.flash.done', [
+        $this->addFlash('success', new TranslatableMessage('accounting.bank_import.commit.flash.done', [
             '%committed%' => $result['committed'],
             '%ignored%' => $result['ignored'],
             '%duplicates%' => $result['duplicates'],

@@ -19,3 +19,8 @@ invoice_number_pattern:
   month_without_year: Without a year the numbering restarts every month and repeats in later years.
   too_long: The generated invoice number must not exceed %max% characters.
   empty: Please enter a pattern.
+accounting:
+  bank_import:
+    upload:
+      file:
+        invalid_type: Please upload a valid file (.csv, .xls, .xlsx, .xml).
