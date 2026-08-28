@@ -73,6 +73,39 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
+     * Look up the account bound to an identity provider subject. Both parts of
+     * the pair matter: the same "sub" from a different issuer is a different
+     * person.
+     */
+    public function findOneByOidcIdentity(string $issuer, string $subject): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.oidcIssuer = :issuer')
+            ->andWhere('u.oidcSubject = :subject')
+            ->setParameter('issuer', $issuer)
+            ->setParameter('subject', $subject)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * All accounts carrying this e-mail address. The column has no unique
+     * constraint, so duplicates are possible — callers that use the address to
+     * identify a person must treat more than one hit as ambiguous rather than
+     * picking the first.
+     *
+     * @return list<User>
+     */
+    public function findByEmailAddress(string $email): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('LOWER(u.email) = LOWER(:email)')
+            ->setParameter('email', $email)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Sagt aus, ob ein Nutzername bereits in Verwendung ist.
      */
     public function isUsernameAvailable(string $username): bool

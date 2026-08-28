@@ -12,6 +12,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Table(name: 'users')]
+#[ORM\UniqueConstraint(name: 'uniq_users_oidc_identity', columns: ['oidc_issuer', 'oidc_subject'])]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -49,6 +50,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private $lastAction;
     #[ORM\Column(type: 'boolean')]
     private $active;
+    /**
+     * Issuer URL of the identity provider this account is bound to, once the
+     * user has signed in via OIDC at least once. Null for accounts that have
+     * never used single sign-on.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $oidcIssuer = null;
+    /**
+     * The "sub" claim from the identity provider — stable per user and issuer,
+     * and the only identifier trusted after the initial linking. Matching by
+     * e-mail happens exactly once; from then on this binding decides.
+     */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $oidcSubject = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $oidcLinkedAt = null;
 
     public function __construct()
     {
@@ -255,6 +272,55 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $this->addRole($role);
             }
         }
+
+        return $this;
+    }
+
+    public function getOidcIssuer(): ?string
+    {
+        return $this->oidcIssuer;
+    }
+
+    public function getOidcSubject(): ?string
+    {
+        return $this->oidcSubject;
+    }
+
+    public function getOidcLinkedAt(): ?\DateTimeImmutable
+    {
+        return $this->oidcLinkedAt;
+    }
+
+    public function isLinkedToOidc(): bool
+    {
+        return null !== $this->oidcIssuer && null !== $this->oidcSubject;
+    }
+
+    /**
+     * Bind this account to an identity provider subject. Called once, on the
+     * first successful single sign-on; afterwards the binding is what identifies
+     * the user, so it must never be overwritten silently — callers check
+     * isLinkedToOidc() first and refuse a conflicting subject.
+     */
+    public function linkOidcIdentity(string $issuer, string $subject): self
+    {
+        $this->oidcIssuer = $issuer;
+        $this->oidcSubject = $subject;
+        $this->oidcLinkedAt = new \DateTimeImmutable();
+
+        return $this;
+    }
+
+    /**
+     * Drop the identity provider binding so the account can be linked to a
+     * different subject on the next single sign-on (staff turnover, a rebuilt
+     * identity provider, a mistaken first link).
+     */
+    public function unlinkOidcIdentity(): self
+    {
+        $this->oidcIssuer = null;
+        $this->oidcSubject = null;
+        $this->oidcLinkedAt = null;
 
         return $this;
     }

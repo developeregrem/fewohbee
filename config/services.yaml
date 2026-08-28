@@ -13,6 +13,13 @@ parameters:
     default_mailcopy: 'true'
     default_mail_enabled: 'true'
     passkey_enabled: '%env(bool:PASSKEY_ENABLED)%'
+    oidc_enabled: '%env(bool:OIDC_ENABLED)%'
+    oidc_enforce: '%env(bool:OIDC_ENFORCE)%'
+    oidc_button_label: '%env(OIDC_BUTTON_LABEL)%'
+    # Plain HTTP to the identity provider would expose the client secret and
+    # every token in transit. Relaxed for dev and test at the bottom of this
+    # file so a local provider without a certificate can be used.
+    oidc_require_https: true
     default_frame_ancestors: ''
     frameAncestors: '%env(default:default_frame_ancestors:FRAME_ANCESTORS)%'
     # fallback parameters
@@ -155,6 +162,26 @@ services:
             $rpId: '%env(RELYING_PARTY_ID)%'
             $rpName: '%env(RELYING_PARTY_NAME)%'
 
+    # Single sign-on is configured through .env only: it carries a client secret
+    # and has to work before anyone can log in, so it never lives in AppSettings.
+    App\Service\Oidc\OidcConfiguration:
+        arguments:
+            $enabled: '%oidc_enabled%'
+            $issuer: '%env(OIDC_ISSUER)%'
+            $clientId: '%env(OIDC_CLIENT_ID)%'
+            $clientSecret: '%env(OIDC_CLIENT_SECRET)%'
+            $scopes: '%env(OIDC_SCOPES)%'
+            $buttonLabel: '%oidc_button_label%'
+            $userMatching: '%env(OIDC_USER_MATCHING)%'
+            $requireVerifiedEmail: '%env(bool:OIDC_REQUIRE_VERIFIED_EMAIL)%'
+            $enforce: '%oidc_enforce%'
+            $endSession: '%env(bool:OIDC_END_SESSION)%'
+            $requireHttps: '%oidc_require_https%'
+
+    App\Service\Oidc\OidcDiscoveryService:
+        arguments:
+            $oidcCache: '@cache.app'
+
     App\Workflow\Trigger\WorkflowTriggerRegistry:
         arguments:
             $triggers: !tagged_iterator app.workflow.trigger
@@ -170,3 +197,11 @@ services:
     App\Notification\NotificationProviderRegistry:
         arguments:
             $providers: !tagged_iterator app.notification.provider
+
+when@dev:
+    parameters:
+        oidc_require_https: false
+
+when@test:
+    parameters:
+        oidc_require_https: false

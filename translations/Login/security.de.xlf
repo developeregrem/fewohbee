@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file original="file.ext" datatype="plaintext" source-language="de" target-language="de">
+        <body>
+            <trans-unit id="login.oidc.error.disabled">
+                <source>login.oidc.error.disabled</source>
+                <target>Die SSO-Anmeldung ist derzeit nicht verfügbar. Bitte wende dich an deinen Administrator.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.state">
+                <source>login.oidc.error.state</source>
+                <target>Die Anmeldung ist abgelaufen oder wurde unterbrochen. Bitte versuche es noch einmal.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.provider">
+                <source>login.oidc.error.provider</source>
+                <target>Die Anmeldung wurde abgebrochen.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.token">
+                <source>login.oidc.error.token</source>
+                <target>Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es noch einmal.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.no_match">
+                <source>login.oidc.error.no_match</source>
+                <target>Zu diesem Konto gibt es keinen Benutzer in FewohBee. Bitte lass dich von deinem Administrator anlegen.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.ambiguous">
+                <source>login.oidc.error.ambiguous</source>
+                <target>Diese E-Mail-Adresse ist mehreren Benutzern zugeordnet. Bitte wende dich an deinen Administrator.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.email_unverified">
+                <source>login.oidc.error.email_unverified</source>
+                <target>Deine E-Mail-Adresse ist beim Identity Provider nicht bestätigt. Eine Anmeldung ist deshalb nicht möglich.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.already_linked">
+                <source>login.oidc.error.already_linked</source>
+                <target>Dieser Benutzer ist bereits mit einem anderen SSO-Konto verknüpft. Bitte wende dich an deinen Administrator.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.inactive">
+                <source>login.oidc.error.inactive</source>
+                <target>Dieser Benutzer ist deaktiviert.</target>
+            </trans-unit>
+            <trans-unit id="login.oidc.error.password_disabled">
+                <source>login.oidc.error.password_disabled</source>
+                <target>Die Anmeldung mit Passwort ist deaktiviert. Bitte melde dich über SSO an.</target>
+            </trans-unit>
+        </body>
+  </file>
+</xliff>

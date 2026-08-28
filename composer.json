@@ -47,7 +47,8 @@
         "symfony/web-link": "8.1.*",
         "symfony/yaml": "8.1.*",
         "symfonycasts/reset-password-bundle": "^1.18",
-        "web-auth/webauthn-lib": "5.3.*"
+        "web-auth/webauthn-lib": "5.3.*",
+        "web-token/jwt-library": "^4.1"
     },
     "require-dev": {
         "league/flysystem-memory": "^3",

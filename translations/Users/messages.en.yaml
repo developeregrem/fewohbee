@@ -23,3 +23,9 @@ ROLE_STATISTICS: Statistics
 ROLE_CASHJOURNAL: Cash journal
 ROLE_RESERVATIONS_RO: Reservations read-only
 ROLE_OPERATIONS: Operations
+user.oidc.badge: SSO
+user.oidc.unlink: Unlink SSO account
+user.oidc.unlink_confirm: >-
+  The link to the SSO account will be removed. The user stays and will be matched
+  again on the next SSO sign-in.
+user.oidc.flash.unlinked: The SSO link has been removed.

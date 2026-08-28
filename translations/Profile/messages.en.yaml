@@ -65,3 +65,12 @@ profile:
       unauthorized: Unauthorized.
       no_registration_in_progress: No passkey registration is currently active.
       invalid_response_type: Invalid authenticator response.
+  oidc:
+    title: Single sign-on
+    linked: Your account is linked to the single sign-on provider.
+    not_linked: >-
+      Your account is not linked yet. The link is created automatically the first
+      time you sign in via SSO.
+    issuer: Provider
+    subject: Identifier
+    linked_at: Linked on

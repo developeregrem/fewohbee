@@ -37,6 +37,10 @@
         {{ 'login.webauthn.failure'|trans }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    {# With OIDC_ENFORCE the password form is gone entirely - there is deliberately
+       no query parameter that brings it back. PasswordLoginGuardSubscriber also
+       rejects credentials posted directly to /login, so this is not merely visual. #}
+    {% if not oidc_enforce %}
     <div class="form-floating">
       <input type="text" class="form-control" id="floatingInput" name="_username" placeholder="{{ 'login.username.placeholder'|trans }}" {% if passkey_enabled %}data-webauthn-target="username"{% endif %}>
       <label for="floatingInput">{{ 'login.username.placeholder'|trans }}</label>
@@ -53,15 +57,23 @@
       </label>
     </div>
     <button class="w-100 btn btn-lg btn-primary" type="submit">{{ 'login.submit.value'|trans }}</button>
+    {% endif %}
+    {% if oidc_enabled %}
+    <a class="w-100 btn btn-lg {{ oidc_enforce ? 'btn-primary' : 'btn-secondary mt-2' }}" href="{{ path('oidc_start') }}">
+        <i class="fas fa-right-to-bracket"></i> {{ oidc_button_label|default('') is empty ? 'login.oidc'|trans : oidc_button_label }}
+    </a>
+    {% endif %}
     {% if passkey_enabled %}
     <button class="w-100 btn btn-lg btn-secondary mt-2"
         {{ stimulus_action('webauthn', 'authenticate') }}>
             <i class="fas fa-key"></i> {{ 'login.passkey'|trans }}
         </button>
     {% endif %}
+    {% if not oidc_enforce %}
     <div class="row mt-3">
         <div class="col text-end"><a href="{{ path('app_forgot_password_request') }}">{{ 'login.pwforgotten.link'|trans }}</a></div>
     </div>
+    {% endif %}
     <p class="mt-4 mb-3 text-muted">&copy; Copyright {{ "now"|date("Y") }} - <a class="text-muted" href="https://www.fewohbee.app" target="_blank" style="text-decoration:none;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';">{{ 'login.copy'|trans }}</a></p>
   </form>
 </main>

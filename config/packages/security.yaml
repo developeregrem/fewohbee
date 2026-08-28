@@ -32,6 +32,7 @@ security:
             entry_point: form_login
             custom_authenticators:
                 - App\Security\WebauthnAuthenticator
+                - App\Security\OidcAuthenticator
             form_login:
                 login_path: login
                 check_path: login

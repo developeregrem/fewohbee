@@ -36,7 +36,12 @@
                 <tbody>
                 {% for user in users %}
                     <tr>
-                        <td>{{ user.username }}</td>
+                        <td>
+                            {{ user.username }}
+                            {% if oidc_enabled and user.linkedToOidc %}
+                                <span class="badge bg-secondary" title="{{ user.oidcIssuer }}">{{ 'user.oidc.badge'|trans }}</span>
+                            {% endif %}
+                        </td>
                         <td>{{ user.firstname }}</td>
                         <td>{{ user.lastname }}</td>
                         <td>
@@ -51,13 +56,28 @@
                                    data-url="{{ path('users.edit.user', {'id': user.id}) }}"
                                    data-title="{{ 'button.edit'|trans }}"
                                    data-enable-edit="true"></i></a>
+            {# Both popovers below share the deletePopoverContent block, so every
+               variable it reads is set explicitly for each one - leaving a value
+               from the previous row in place would produce duplicate form ids. #}
                             {% set id = user.id %}
+                            {% set formId = user.id %}
                             {% set targetUrl = path('users.delete.user', {'id': user.id}) %}
+                            {% set deletePopoverHint = '' %}
                             <a href="#" title="{{ 'button.delete'|trans }}">
                                 <i class="fas fa-trash-alt"
                                    data-popover="delete"
                                    data-title="{{ 'registrationbook.delete.ask'|trans }}"
                                    data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            {% if oidc_enabled and user.linkedToOidc %}
+                                {% set formId = 'unlink-' ~ user.id %}
+                                {% set targetUrl = path('users.unlink.sso', {'id': user.id}) %}
+                                {% set deletePopoverHint = 'user.oidc.unlink_confirm'|trans %}
+                                <a href="#" title="{{ 'user.oidc.unlink'|trans }}">
+                                    <i class="fas fa-link-slash"
+                                       data-popover="delete"
+                                       data-title="{{ 'user.oidc.unlink'|trans }}"
+                                       data-bs-content='{{ block('deletePopoverContent') }}'></i></a>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
