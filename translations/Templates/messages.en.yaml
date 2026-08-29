@@ -76,6 +76,11 @@ templates.editor.payment_qr.desc: >-
   page is the image's own width, which the resize handle sets. The code only
   appears when the bank details are configured in the invoice settings and the
   installation runs in euro.
+templates.editor.payment_due_date: Payment due date
+templates.editor.payment_due_date.desc: >-
+  Inserts the day payment falls due, taken from the payment period in the
+  invoice settings so the printed date and the e-invoice always agree. The line
+  is left out when the settings state no period.
 templates.editor.tourist_tax.positions.desc: >-
   Inserts a table with all tourist-tax / accommodation-tax positions. The
   table is only rendered when such positions exist on the invoice.

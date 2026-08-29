@@ -113,6 +113,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'numbers' => ['type' => 'array'],
             'appartmentTotal' => ['type' => 'scalar'],
             'miscTotal' => ['type' => 'scalar'],
+            'paymentDueDate' => ['type' => 'date'],
         ];
     }
 
@@ -265,6 +266,13 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
                 'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
             ],
             [
+                'id' => 'invoice.payment_due_date',
+                'label' => 'templates.editor.payment_due_date',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"paymentDueDate\">{{ 'invoice.payment_due_date'|trans }}: [[ paymentDueDate|date('d.m.Y') ]]</p>",
+            ],
+            [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
                 'description' => 'templates.preview.snippet.pdf_header.desc',
@@ -354,6 +362,9 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'numbers' => $numbers,
             'appartmentTotal' => number_format($appartmentTotal, 2, ',', '.'),
             'miscTotal' => number_format($miscTotal, 2, ',', '.'),
+            // A sample invoice has no issuer behind it, so the preview shows what a
+            // ten-day period would look like rather than leaving the line empty.
+            'paymentDueDate' => (new \DateTimeImmutable('today'))->modify('+10 days'),
         ];
 
         return $this->appendPreviewMeta($params, $ctx);

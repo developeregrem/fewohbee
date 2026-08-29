@@ -838,6 +838,14 @@
                 <source>templates.editor.payment_qr.desc</source>
                 <target>Fügt einen QR-Code ein, der in der Banking-App des Zahlenden eine SEPA-Überweisung vorausfüllt. Die Zahl ist die Auflösung des Bildes in Pixeln; wie groß es auf der Seite erscheint, bestimmt die Breite des Bildes, die du am Ziehpunkt einstellst. Der Code erscheint nur, wenn in den Rechnungseinstellungen eine Bankverbindung hinterlegt ist und die Installation in Euro rechnet.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.payment_due_date">
+                <source>templates.editor.payment_due_date</source>
+                <target>Fälligkeitsdatum</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.payment_due_date.desc">
+                <source>templates.editor.payment_due_date.desc</source>
+                <target>Fügt den Tag ein, an dem die Zahlung fällig wird. Er stammt aus dem Zahlungsziel in den Rechnungseinstellungen, damit gedrucktes Datum und E-Rechnung nie auseinanderlaufen. Ist dort kein Zahlungsziel hinterlegt, entfällt die Zeile.</target>
+            </trans-unit>
             <trans-unit id="templates.notfound">
                 <source>templates.notfound</source>
                 <target>Es konnte keine Vorlage gefunden werden. Stelle bitte sicher, dass ein Template für die ausgewählte Aktion existiert.</target>
