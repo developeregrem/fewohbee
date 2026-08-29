@@ -742,6 +742,10 @@
                 <source>invoice.payment_qr.remittance</source>
                 <target>Rechnung %number%</target>
             </trans-unit>
+            <trans-unit id="invoice.payment_due_date">
+                <source>invoice.payment_due_date</source>
+                <target>Zahlbar bis</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

@@ -186,3 +186,4 @@ invoice.tourist_tax.position.nights: '{0} %count% nights|{1} %count% night|]1,In
 invoice.tourist_tax.position.persons: '{0} %count% people|{1} %count% person|]1,Inf] %count% people'
 invoice.tourist_tax.no_positions: No tourist tax lines were calculated for this booking.
 invoice.payment_qr.remittance: Invoice %number%
+invoice.payment_due_date: Payable by
