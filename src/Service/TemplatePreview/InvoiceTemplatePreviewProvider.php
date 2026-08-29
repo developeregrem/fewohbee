@@ -268,6 +268,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.payment_due_date',
                 'label' => 'templates.editor.payment_due_date',
+                'description' => 'templates.editor.payment_due_date.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<p data-if=\"paymentDueDate\">{{ 'invoice.payment_due_date'|trans }}: [[ paymentDueDate|date('d.m.Y') ]]</p>",
