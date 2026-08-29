@@ -232,6 +232,43 @@ final class InvoiceSettingsSaveTest extends WebTestCase
         );
     }
 
+    /**
+     * Zero days is a payment period, not a missing one: the invoice is due on the day
+     * it is issued. The rule asking for terms or a period has to read it as filled,
+     * or that setting cannot be saved without also inventing a terms text.
+     */
+    public function testAPaymentPeriodOfZeroDaysCanBeSaved(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createInvoiceUser());
+
+        $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
+        foreach ($em->getRepository(InvoiceSettingsData::class)->findAll() as $existing) {
+            $em->remove($existing);
+        }
+        $em->flush();
+
+        $setting = $this->buildSetting('en16931', true);
+        $setting->setPaymentTerms(null);
+        $em->persist($setting);
+        $em->flush();
+        $settingId = $setting->getId();
+
+        $crawler = $client->request('GET', '/invoices/settings');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form#sttings-form-1')->form();
+        $form['invoice_settings[paymentDueDays]'] = '0';
+        $form['invoice_settings[paymentTerms]'] = '';
+        $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+
+        $em->clear();
+        $reloaded = $em->getRepository(InvoiceSettingsData::class)->find($settingId);
+        self::assertSame(0, $reloaded->getPaymentDueDays(), 'A payment period of zero days must survive the save');
+    }
+
     private function buildSetting(string $profile, bool $active): InvoiceSettingsData
     {
         $settings = new InvoiceSettingsData();
