@@ -26,7 +26,7 @@ kann.
 - 🇩🇪 🇬🇧 **Zweisprachig** — vollständig auf Deutsch und Englisch verfügbar
 - 🐳 **Docker-ready** — in wenigen Minuten einsatzbereit
 - 🧾 **E-Rechnung integriert** — EN 16931, XRechnung, ZUGFeRD
-- 🔐 **Moderne Anmeldung** — Passwort, Passkeys (WebAuthn), API-Token mit Scopes
+- 🔐 **Moderne Anmeldung** — Passwort, Passkeys (WebAuthn), Single Sign-On (OIDC), API-Token mit Scopes
 
 Neugierig, wie das aussieht? Auf [fewohbee.app](https://fewohbee.app) gibt es eine Feature-Tour,
 und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles im Detail.
@@ -47,7 +47,7 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 | ✉️ **Korrespondenz** | Mailversand aus der Anwendung, mit visuellem Vorlagen-Editor und Live-Vorschau |
 | 📅 **Kalender-Sync** | iCal/ICS in beide Richtungen mit Airbnb, Booking.com und anderen |
 | 📊 **Statistiken** | Beherbergungsstatistik, Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
-| ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, lesende REST-API |
+| ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, SSO, lesende REST-API |
 
 📖 **[Vollständige Funktionsübersicht im Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**
  · **[Benutzerhandbuch](https://www.fewohbee.app/documentation/documentation.html)**
@@ -69,6 +69,8 @@ Optional:
   einzelne Instanz reicht der Dateisystem-Cache.
 - **HTTPS und eine konfigurierte `RELYING_PARTY_ID`** — Voraussetzung für die Anmeldung per
   Passkey (`PASSKEY_ENABLED=true`).
+- **Ein OpenID-Connect-Provider** — nur für Single Sign-On nötig (`OIDC_ENABLED=true`), z. B.
+  Keycloak, Authentik, Authelia, Entra ID oder Google Workspace.
 - **S3-kompatibler Speicher** — alternativ zur lokalen Dateiablage (`STORAGE_ADAPTER`).
 
 Die allgemeine Grundlage beschreiben die

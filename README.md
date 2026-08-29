@@ -26,7 +26,7 @@ training.
 - 🇩🇪 🇬🇧 **Bilingual** — fully available in German and English
 - 🐳 **Docker-ready** — up and running in minutes
 - 🧾 **E-invoicing built in** — EN 16931, XRechnung, ZUGFeRD
-- 🔐 **Modern authentication** — passwords, passkeys (WebAuthn), scoped API tokens
+- 🔐 **Modern authentication** — passwords, passkeys (WebAuthn), single sign-on (OIDC), scoped API tokens
 
 Curious what it looks like? There's a feature tour at [fewohbee.app](https://fewohbee.app), and the
 [Wiki](https://github.com/developeregrem/fewohbee/wiki) covers everything in depth.
@@ -47,7 +47,7 @@ Curious what it looks like? There's a feature tour at [fewohbee.app](https://few
 | ✉️ **Correspondence** | Send email from the app, with a visual template editor and live preview |
 | 📅 **Calendar sync** | Two-way iCal/ICS sync with Airbnb, Booking.com and others |
 | 📊 **Statistics** | Occupancy and utilization, monthly snapshots, tourist tax reporting |
-| ⚙️ **Administration** | Multiple branches, granular roles, passkeys, read-only REST API |
+| ⚙️ **Administration** | Multiple branches, granular roles, passkeys, SSO, read-only REST API |
 
 📖 **[Full feature overview in the Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**
  · **[User manual](https://www.fewohbee.app/en/documentation/documentation.html)**
@@ -68,6 +68,8 @@ Optional:
   filesystem cache works fine for a single instance.
 - **HTTPS + a configured `RELYING_PARTY_ID`** — required if you want to enable passkey login
   (`PASSKEY_ENABLED=true`).
+- **An OpenID Connect provider** — required only for single sign-on (`OIDC_ENABLED=true`), e.g.
+  Keycloak, Authentik, Authelia, Entra ID or Google Workspace.
 - **S3-compatible storage** — as an alternative to local file storage (`STORAGE_ADAPTER`).
 
 See the [Symfony technical requirements](https://symfony.com/doc/current/setup.html#technical-requirements)
