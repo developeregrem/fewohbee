@@ -27,6 +27,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * Config:
  *   templateId      int    – ID of the email template (TEMPLATE_INVOICE_EMAIL)
+ *   invoicePdfTemplateId int – ID of the invoice PDF template (TEMPLATE_INVOICE_PDF);
+ *                            0 or missing uses the default invoice template
  *   recipientType   string – invoice_email | custom
  *   customRecipient string – used when recipientType === 'custom'
  *   attachmentMode  string – einvoice_preferred | einvoice_required | pdf_only
@@ -76,6 +78,13 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
                 'type' => 'template_select',
                 'label' => 'workflow.form.template',
                 'templateTypes' => ['TEMPLATE_INVOICE_EMAIL'],
+            ],
+            [
+                'key' => 'invoicePdfTemplateId',
+                'type' => 'template_select',
+                'label' => 'workflow.form.invoice_pdf_template',
+                'help' => 'workflow.form.invoice_pdf_template_help',
+                'templateTypes' => ['TEMPLATE_INVOICE_PDF'],
             ],
             [
                 'key' => 'recipientType',
@@ -134,7 +143,7 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_recipient', ['%type%' => $config['recipientType'] ?? 'invoice_email']));
         }
 
-        $pdfTemplate = $this->resolvePdfTemplate();
+        $pdfTemplate = $this->resolvePdfTemplate($config);
         $attachments = [];
         $asEInvoice = false;
         $fallbackUsed = false;
@@ -249,24 +258,21 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
             throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_no_template'));
         }
 
-        $template = $this->em->getRepository(Template::class)->find($templateId);
-        if (!$template instanceof Template) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_not_found', ['%id%' => $templateId]));
-        }
-
-        $typeName = $template->getTemplateType()?->getName();
-        if ('TEMPLATE_INVOICE_EMAIL' !== $typeName) {
-            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', [
-                '%type%' => $typeName ?? 'null',
-                '%expected%' => 'TEMPLATE_INVOICE_EMAIL',
-            ]));
-        }
-
-        return $template;
+        return $this->loadTemplate($templateId, 'TEMPLATE_INVOICE_EMAIL');
     }
 
-    private function resolvePdfTemplate(): Template
+    /**
+     * The invoice layout to render. Picking one is optional — without an explicit
+     * choice the default invoice template is used, which is what every invoice
+     * printed by hand uses as well.
+     */
+    private function resolvePdfTemplate(array $config): Template
     {
+        $templateId = (int) ($config['invoicePdfTemplateId'] ?? 0);
+        if ($templateId > 0) {
+            return $this->loadTemplate($templateId, 'TEMPLATE_INVOICE_PDF');
+        }
+
         $templates = $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF']);
         $default = $this->templatesService->getDefaultTemplate($templates);
         if (!$default instanceof Template) {
@@ -274,6 +280,30 @@ class SendInvoiceEmailAction implements WorkflowActionInterface
         }
 
         return $default;
+    }
+
+    /**
+     * Loads a configured template and verifies it is still of the expected type —
+     * a template can be retyped or deleted long after the workflow was set up.
+     *
+     * @throws WorkflowSkippedException when it is gone or no longer fits
+     */
+    private function loadTemplate(int $templateId, string $expectedType): Template
+    {
+        $template = $this->em->getRepository(Template::class)->find($templateId);
+        if (!$template instanceof Template) {
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_not_found', ['%id%' => $templateId]));
+        }
+
+        $typeName = $template->getTemplateType()?->getName();
+        if ($expectedType !== $typeName) {
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_template_incompatible', [
+                '%type%' => $typeName ?? 'null',
+                '%expected%' => $expectedType,
+            ]));
+        }
+
+        return $template;
     }
 
     private function resolveRecipient(array $config, Invoice $invoice): ?string

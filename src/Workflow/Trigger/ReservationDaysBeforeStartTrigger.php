@@ -10,12 +10,13 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Fires X days before a reservation's start date.
  *
- * Config: {"days": 3}
+ * Config: {"days": 3, "runOnDays": "mon_fri", "runAtHour": 9}
  *
- * The cron command runs this trigger daily. It finds reservations
- * whose start_date is exactly today + N days.
+ * The cron command runs this trigger on every allowed day. It finds reservations
+ * whose start_date is today + N days; a run that follows excluded weekdays also
+ * picks up the start dates those days would have handled (see ScheduleWindow).
  */
-class ReservationDaysBeforeStartTrigger implements WorkflowTriggerInterface
+class ReservationDaysBeforeStartTrigger extends AbstractScheduledTrigger
 {
     public function getType(): string
     {
@@ -34,7 +35,7 @@ class ReservationDaysBeforeStartTrigger implements WorkflowTriggerInterface
 
     public function getConfigSchema(): array
     {
-        return [
+        return $this->withScheduleFields([
             [
                 'key' => 'days',
                 'type' => 'number',
@@ -43,22 +44,17 @@ class ReservationDaysBeforeStartTrigger implements WorkflowTriggerInterface
                 'max' => 365,
                 'default' => 3,
             ],
-        ];
-    }
-
-    public function isEventDriven(): bool
-    {
-        return false;
+        ]);
     }
 
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
-        $days = (int) ($config['days'] ?? 3);
-        $targetDate = (new \DateTimeImmutable('+' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, $this->days($config), preview: true);
 
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->where('r.startDate = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('r.startDate BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->orderBy('r.startDate', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -67,17 +63,23 @@ class ReservationDaysBeforeStartTrigger implements WorkflowTriggerInterface
 
     public function findMatchingIds(EntityManagerInterface $em, array $config, int $limit = 500): array
     {
-        $days = (int) ($config['days'] ?? 3);
-        $targetDate = (new \DateTimeImmutable('+' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, $this->days($config));
 
         $rows = $em->getRepository(Reservation::class)->createQueryBuilder('r')
             ->select('r.id')
-            ->where('r.startDate = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('r.startDate BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
 
         return array_column($rows, 'id');
+    }
+
+    /** @param array<string, mixed> $config */
+    private function days(array $config): int
+    {
+        return (int) ($config['days'] ?? 3);
     }
 }

@@ -10,14 +10,16 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Fires exactly X days after an invoice's date.
  *
- * Config: {"days": 14}
+ * Config: {"days": 14, "runOnDays": "mon_fri", "runAtHour": 9}
  *
- * The cron command runs this daily. It finds invoices where
- * date = today - N days (exact match). This means each invoice is a
- * candidate exactly once per configured interval — allowing multiple
- * workflows with different delays (e.g. 14 days, 30 days, 60 days).
+ * The cron command runs this trigger on every allowed day. It finds invoices where
+ * date = today - N days, so each invoice is a candidate exactly once per configured
+ * interval — allowing multiple workflows with different delays (e.g. 14, 30, 60 days).
+ * A run that follows excluded weekdays also picks up the invoice dates those days
+ * would have handled (see ScheduleWindow), so a due date on a Sunday is mailed on
+ * Monday instead of being dropped.
  */
-class InvoiceDaysAfterDateTrigger implements WorkflowTriggerInterface
+class InvoiceDaysAfterDateTrigger extends AbstractScheduledTrigger
 {
     public function getType(): string
     {
@@ -36,7 +38,7 @@ class InvoiceDaysAfterDateTrigger implements WorkflowTriggerInterface
 
     public function getConfigSchema(): array
     {
-        return [
+        return $this->withScheduleFields([
             [
                 'key' => 'days',
                 'type' => 'number',
@@ -45,22 +47,17 @@ class InvoiceDaysAfterDateTrigger implements WorkflowTriggerInterface
                 'max' => 365,
                 'default' => 14,
             ],
-        ];
-    }
-
-    public function isEventDriven(): bool
-    {
-        return false;
+        ]);
     }
 
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
-        $days = (int) ($config['days'] ?? 14);
-        $targetDate = (new \DateTimeImmutable('-' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, -$this->days($config), preview: true);
 
         return $em->getRepository(Invoice::class)->createQueryBuilder('i')
-            ->where('i.date = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('i.date BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->orderBy('i.date', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -69,17 +66,23 @@ class InvoiceDaysAfterDateTrigger implements WorkflowTriggerInterface
 
     public function findMatchingIds(EntityManagerInterface $em, array $config, int $limit = 500): array
     {
-        $days = (int) ($config['days'] ?? 14);
-        $targetDate = (new \DateTimeImmutable('-' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, -$this->days($config));
 
         $rows = $em->getRepository(Invoice::class)->createQueryBuilder('i')
             ->select('i.id')
-            ->where('i.date = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('i.date BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
 
         return array_column($rows, 'id');
+    }
+
+    /** @param array<string, mixed> $config */
+    private function days(array $config): int
+    {
+        return (int) ($config['days'] ?? 14);
     }
 }

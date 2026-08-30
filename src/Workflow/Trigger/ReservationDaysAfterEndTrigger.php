@@ -10,12 +10,13 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Fires X days after a reservation's end date (departure).
  *
- * Config: {"days": 1}
+ * Config: {"days": 1, "runOnDays": "mon_fri", "runAtHour": 9}
  *
- * The cron command runs this trigger daily. It finds reservations
- * whose end_date is exactly today - N days.
+ * The cron command runs this trigger on every allowed day. It finds reservations
+ * whose end_date is today - N days; a run that follows excluded weekdays also picks
+ * up the end dates those days would have handled (see ScheduleWindow).
  */
-class ReservationDaysAfterEndTrigger implements WorkflowTriggerInterface
+class ReservationDaysAfterEndTrigger extends AbstractScheduledTrigger
 {
     public function getType(): string
     {
@@ -34,7 +35,7 @@ class ReservationDaysAfterEndTrigger implements WorkflowTriggerInterface
 
     public function getConfigSchema(): array
     {
-        return [
+        return $this->withScheduleFields([
             [
                 'key' => 'days',
                 'type' => 'number',
@@ -43,22 +44,17 @@ class ReservationDaysAfterEndTrigger implements WorkflowTriggerInterface
                 'max' => 365,
                 'default' => 1,
             ],
-        ];
-    }
-
-    public function isEventDriven(): bool
-    {
-        return false;
+        ]);
     }
 
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
-        $days = (int) ($config['days'] ?? 1);
-        $targetDate = (new \DateTimeImmutable('-' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, -$this->days($config), preview: true);
 
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->where('r.endDate = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('r.endDate BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->orderBy('r.endDate', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
@@ -67,17 +63,23 @@ class ReservationDaysAfterEndTrigger implements WorkflowTriggerInterface
 
     public function findMatchingIds(EntityManagerInterface $em, array $config, int $limit = 500): array
     {
-        $days = (int) ($config['days'] ?? 1);
-        $targetDate = (new \DateTimeImmutable('-' . $days . ' days'))->setTime(0, 0, 0);
+        [$from, $to] = $this->targetDateRange($config, -$this->days($config));
 
         $rows = $em->getRepository(Reservation::class)->createQueryBuilder('r')
             ->select('r.id')
-            ->where('r.endDate = :targetDate')
-            ->setParameter('targetDate', $targetDate)
+            ->where('r.endDate BETWEEN :from AND :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
             ->setMaxResults($limit)
             ->getQuery()
             ->getScalarResult();
 
         return array_column($rows, 'id');
+    }
+
+    /** @param array<string, mixed> $config */
+    private function days(array $config): int
+    {
+        return (int) ($config['days'] ?? 1);
     }
 }

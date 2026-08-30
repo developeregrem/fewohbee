@@ -28,6 +28,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   customRecipient string – used when recipientType === 'custom'
  *   attachments    array  – documents to attach, see WorkflowAttachmentResolver
  *   attachmentPolicy string – skip_missing | require_all
+ *   invoicePdfTemplateId int – layout for attached invoices; 0 uses the default one
  */
 class SendTemplateEmailAction implements WorkflowActionInterface
 {
@@ -101,6 +102,21 @@ class SendTemplateEmailAction implements WorkflowActionInterface
                 'includeInvoice' => true,
             ],
             [
+                // Only the invoice items of the list above use a shared layout; every other
+                // document is picked as a template already, so the field stays hidden
+                // until an invoice is actually among the attachments.
+                'key' => 'invoicePdfTemplateId',
+                'type' => 'template_select',
+                'label' => 'workflow.form.invoice_pdf_template',
+                'help' => 'workflow.form.invoice_pdf_template_attachment_help',
+                'templateTypes' => ['TEMPLATE_INVOICE_PDF'],
+                'showIfAny' => 'attachments',
+                'showIfAnyItemTypes' => [
+                    WorkflowAttachmentResolver::TYPE_INVOICE_PDF,
+                    WorkflowAttachmentResolver::TYPE_INVOICE_PDF_OPEN,
+                ],
+            ],
+            [
                 'key' => 'attachmentPolicy',
                 'type' => 'select',
                 'label' => 'workflow.form.attachment_policy',
@@ -165,7 +181,8 @@ class SendTemplateEmailAction implements WorkflowActionInterface
             is_array($config['attachments'] ?? null) ? $config['attachments'] : [],
             $entity,
             $reservations,
-            (string) ($config['attachmentPolicy'] ?? WorkflowAttachmentResolver::POLICY_SKIP_MISSING)
+            (string) ($config['attachmentPolicy'] ?? WorkflowAttachmentResolver::POLICY_SKIP_MISSING),
+            (int) ($config['invoicePdfTemplateId'] ?? 0)
         );
 
         $this->mailService->sendHTMLMail($recipient, $subject, $rendered, $attachmentSet->mailAttachments());

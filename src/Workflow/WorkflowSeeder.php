@@ -90,7 +90,8 @@ class WorkflowSeeder
             actionType: 'send_template_email',
             defaultEnabled: false,
             conditions: [['type' => 'reservation.has_booker_email', 'config' => []]],
-            triggerConfig: ['days' => 3],
+            // Every day, but at 09:00 rather than right after midnight.
+            triggerConfig: ['days' => 3, 'runOnDays' => 'daily', 'runAtHour' => 9],
             actionConfig: ['recipientType' => 'booker_email', 'templateId' => 0, 'customRecipient' => ''],
             isSystem: false,
         );
@@ -103,7 +104,8 @@ class WorkflowSeeder
             actionType: 'send_template_email',
             defaultEnabled: false,
             conditions: [['type' => 'invoice.has_email', 'config' => []]],
-            triggerConfig: ['days' => 14],
+            // A payment reminder is a working-day mail: Sunday's due dates go out on Monday.
+            triggerConfig: ['days' => 14, 'runOnDays' => 'mon_fri', 'runAtHour' => 9],
             actionConfig: ['recipientType' => 'invoice_email', 'templateId' => 0, 'customRecipient' => ''],
             isSystem: false,
         );

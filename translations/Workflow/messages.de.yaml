@@ -53,6 +53,9 @@ workflow:
     fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
     booking_entry_remark: "Bemerkung (optional)"
     booking_entry_remark_help: "Wenn leer, wird die Bezeichnung des Erlöskontos als Buchungstext verwendet (z. B. „Erlöse 7% USt“)."
+    invoice_pdf_template: "Rechnungsvorlage (PDF)"
+    invoice_pdf_template_help: "Leer lassen, um die Standard-Rechnungsvorlage zu verwenden."
+    invoice_pdf_template_attachment_help: "Vorlage der angehängten Rechnungen. Leer lassen, um die Standard-Rechnungsvorlage zu verwenden."
     attachment_mode: "Rechnungsanhang"
     attachment_mode.einvoice_preferred: "E-Rechnungs-PDF wenn möglich, sonst normales PDF"
     attachment_mode.einvoice_required: "Nur E-Rechnungs-PDF (bei unvollständigen Daten überspringen)"
@@ -104,6 +107,13 @@ workflow:
     days_before: "Tage vorher"
     days_after: "Tage danach"
     day_of_month: "Tag des Monats"
+    run_on_days: "An welchen Tagen ausführen?"
+    run_on_days_help: "Fällt der Stichtag auf einen ausgeschlossenen Tag, wird die Ausführung am nächsten erlaubten Tag nachgeholt – es geht nichts verloren."
+    run_on_days.daily: "Täglich"
+    run_on_days.mon_fri: "Montag bis Freitag"
+    run_on_days.mon_sat: "Montag bis Samstag"
+    run_at_hour: "Frühestens ab Uhrzeit"
+    run_at_hour_help: "Die Ausführung startet beim ersten Durchlauf ab dieser Uhrzeit. 00:00 bedeutet: so früh wie möglich."
 
   # Condition labels
   condition:
@@ -210,6 +220,8 @@ workflow:
     reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"
     attachment_template_not_found: "Anhang übersprungen: Vorlage #%id% wurde nicht gefunden"
     attachment_template_incompatible: "Anhang übersprungen: \"%name%\" ist keine PDF-Vorlage"
+    attachment_invoice_template_not_found: "Rechnungsanhang: Vorlage #%id% wurde nicht gefunden, es wurde die Standard-Rechnungsvorlage verwendet"
+    attachment_invoice_template_incompatible: "Rechnungsanhang: \"%name%\" ist keine Rechnungsvorlage, es wurde die Standard-Rechnungsvorlage verwendet"
     attachment_no_reservation: "Anhang übersprungen: \"%name%\" benötigt eine Reservierung"
     attachment_render_failed: "Anhang \"%name%\" konnte nicht erstellt werden: %error%"
     attachment_no_invoice: "Anhang übersprungen: es existiert keine Rechnung"

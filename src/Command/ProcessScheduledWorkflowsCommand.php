@@ -8,6 +8,7 @@ use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
 use App\Workflow\Condition\WorkflowConditionRegistry;
 use App\Workflow\Trigger\MonthlyScheduleTrigger;
+use App\Workflow\Trigger\ScheduleWindow;
 use App\Workflow\Trigger\WorkflowTriggerRegistry;
 use App\Workflow\WorkflowEngine;
 use Doctrine\ORM\EntityManagerInterface;
@@ -81,6 +82,7 @@ class ProcessScheduledWorkflowsCommand extends Command
 
         $totalCandidates = 0;
         $totalExecuted = 0;
+        $now = new \DateTimeImmutable();
 
         foreach ($workflows as $workflow) {
             $triggerType = $workflow->getTriggerType();
@@ -94,15 +96,38 @@ class ProcessScheduledWorkflowsCommand extends Command
             }
 
             $trigger = $this->triggerRegistry->get($triggerType);
+            $workflowId = $workflow->getId();
+
+            // Weekday and hour window. Records of an excluded day are not lost: the
+            // next allowed run widens its date range to cover them (ScheduleWindow).
+            $window = ScheduleWindow::fromConfig($workflow->getTriggerConfig());
+            if (!$window->shouldRunNow($now)) {
+                if ($dryRun) {
+                    $io->writeln(sprintf(
+                        '[dry-run] Workflow "%s" is outside its schedule window (runs from %02d:00 on allowed weekdays)',
+                        $workflow->getName(),
+                        $window->getHour()
+                    ));
+                }
+                continue;
+            }
 
             // Handle monthly schedule triggers separately
             if ($trigger instanceof MonthlyScheduleTrigger) {
-                if (!$trigger->matchesToday($workflow->getTriggerConfig())) {
+                $matchedDay = $trigger->matchingDay($workflow->getTriggerConfig(), $now);
+                if (null === $matchedDay) {
+                    continue;
+                }
+
+                // These workflows carry no entity, so the log dedup below cannot cover
+                // them; without this check every cron pass of the day would fire again.
+                if (null !== $workflowId && $this->workflowLogRepository->hasEntitylessSuccessSince($workflowId, $matchedDay)) {
                     continue;
                 }
 
                 if ($dryRun) {
                     $io->writeln(sprintf('[dry-run] Monthly workflow "%s" would fire today', $workflow->getName()));
+                    ++$totalExecuted;
                     continue;
                 }
 
@@ -122,7 +147,6 @@ class ProcessScheduledWorkflowsCommand extends Command
             }
 
             $entityClass = $trigger->getEntityClass();
-            $workflowId = $workflow->getId();
 
             // Phase 2: batch dedup — one query instead of N individual checks
             $processedIds = ($workflowId !== null && $entityClass !== null)

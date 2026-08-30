@@ -9,12 +9,13 @@ use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
-use App\Service\BookingJournal\AccountingSettingsService;
-use App\Service\AppSettingsService;
-use App\Service\DisplayNameResolver;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
+use App\Service\AppSettingsService;
+use App\Service\BookingJournal\AccountingSettingsService;
+use App\Service\DisplayNameResolver;
 use App\Workflow\Action\WorkflowActionRegistry;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\Condition\WorkflowConditionRegistry;
 use App\Workflow\Trigger\WorkflowTriggerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
@@ -241,6 +242,13 @@ class WorkflowController extends AbstractController
 
             $field = $this->translateField($field);
 
+            // Clock labels are built after the translation pass: "08:00" is not a
+            // translation key and must not be looked up as one.
+            if ('hour_select' === $type) {
+                $field['type'] = 'select';
+                $field['options'] = $this->loadHourOptions();
+            }
+
             // For recipientType selects: filter by entity class and resolve %email% placeholder
             if (($field['key'] ?? '') === 'recipientType' && isset($field['options'])) {
                 $notificationEmail = $this->settingsService->getNotificationEmail() ?? '–';
@@ -263,6 +271,23 @@ class WorkflowController extends AbstractController
         }
 
         return $result;
+    }
+
+    /**
+     * Full-hour options for the scheduling window. Minutes are deliberately not
+     * offered: the scheduler runs in 15 minute cron passes, so anything finer
+     * would promise a precision the system cannot keep.
+     *
+     * @return array<int, array{value: int, label: string}>
+     */
+    private function loadHourOptions(): array
+    {
+        $options = [];
+        for ($hour = 0; $hour <= 23; ++$hour) {
+            $options[] = ['value' => $hour, 'label' => sprintf('%02d:00', $hour)];
+        }
+
+        return $options;
     }
 
     /** @return array<int, array{value: int, label: string}> */
@@ -345,9 +370,13 @@ class WorkflowController extends AbstractController
             \App\Entity\Invoice::class => 'TEMPLATE_INVOICE_EMAIL',
         ];
 
+        // The map narrows the *email* template of an action down to the one type that
+        // fits its entity. A field asking for a different family — the invoice PDF
+        // layout, say — is loaded exactly as requested, otherwise it would end up
+        // with an empty dropdown.
         $compatibleType = $entityTemplateTypeMap[$entityClass] ?? null;
-        $typesToLoad = $compatibleType !== null
-            ? array_filter($templateTypes, fn (string $t) => $t === $compatibleType)
+        $typesToLoad = ($compatibleType !== null && in_array($compatibleType, $templateTypes, true))
+            ? [$compatibleType]
             : $templateTypes;
 
         if (empty($typesToLoad)) {
@@ -403,14 +432,14 @@ class WorkflowController extends AbstractController
                 'label' => $this->translator->trans('workflow.form.attachments.group_invoice'),
                 'items' => [
                     [
-                        'key' => 'invoice_pdf',
+                        'key' => WorkflowAttachmentResolver::TYPE_INVOICE_PDF,
                         'label' => $this->translator->trans('workflow.form.attachments.invoice_pdf'),
-                        'item' => ['type' => 'invoice_pdf'],
+                        'item' => ['type' => WorkflowAttachmentResolver::TYPE_INVOICE_PDF],
                     ],
                     [
-                        'key' => 'invoice_pdf_open',
+                        'key' => WorkflowAttachmentResolver::TYPE_INVOICE_PDF_OPEN,
                         'label' => $this->translator->trans('workflow.form.attachments.invoice_pdf_open'),
-                        'item' => ['type' => 'invoice_pdf_open'],
+                        'item' => ['type' => WorkflowAttachmentResolver::TYPE_INVOICE_PDF_OPEN],
                     ],
                 ],
             ];

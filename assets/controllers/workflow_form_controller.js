@@ -297,9 +297,14 @@ export default class extends Controller {
                 div.classList.add('d-none'); // hidden by default; evaluated after render
             }
 
-            // Visible only while the referenced list field holds at least one entry
+            // Visible only while the referenced list field holds at least one entry.
+            // With showIfAnyItemTypes only entries of those item types count, so a field
+            // that belongs to one kind of attachment stays hidden for the others.
             if (field.showIfAny) {
                 div.dataset.showIfAnyKey = field.showIfAny;
+                if (Array.isArray(field.showIfAnyItemTypes) && field.showIfAnyItemTypes.length > 0) {
+                    div.dataset.showIfAnyItemTypes = field.showIfAnyItemTypes.join(',');
+                }
                 div.classList.add('d-none');
             }
 
@@ -479,15 +484,27 @@ export default class extends Controller {
 
         container.querySelectorAll('[data-show-if-any-key]').forEach(div => {
             const list = container.querySelector(`[data-config-key="${div.dataset.showIfAnyKey}"][data-config-list]`);
-            div.classList.toggle('d-none', !this._hasListEntries(list));
+            const itemTypes = div.dataset.showIfAnyItemTypes
+                ? div.dataset.showIfAnyItemTypes.split(',')
+                : null;
+            div.classList.toggle('d-none', !this._hasListEntries(list, itemTypes));
         });
     }
 
     /** True when the list holds at least one row with an actual selection. */
-    _hasListEntries(list) {
+    /** @param {string[]|null} itemTypes only count rows holding one of these item types */
+    _hasListEntries(list, itemTypes = null) {
         if (!list) return false;
-        return Array.from(list.querySelectorAll('[data-attachment-row] select'))
-            .some(select => select.selectedOptions[0]?.dataset.attachmentItem);
+        return Array.from(list.querySelectorAll('[data-attachment-row] select')).some(select => {
+            const item = select.selectedOptions[0]?.dataset.attachmentItem;
+            if (!item) return false;
+            if (!itemTypes) return true;
+            try {
+                return itemTypes.includes(JSON.parse(item).type);
+            } catch {
+                return false;
+            }
+        });
     }
 
     _restoreConfig(container, jsonStr) {
