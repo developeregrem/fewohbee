@@ -52,12 +52,12 @@ class InvoiceDaysAfterDateTrigger extends AbstractScheduledTrigger
 
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
-        [$from, $to] = $this->targetDateRange($config, -$this->days($config), preview: true);
+        // The preview shows what the rule covers today; the schedule is not applied here.
+        $targetDate = $this->previewDate(-$this->days($config));
 
         return $em->getRepository(Invoice::class)->createQueryBuilder('i')
-            ->where('i.date BETWEEN :from AND :to')
-            ->setParameter('from', $from)
-            ->setParameter('to', $to)
+            ->where('i.date = :targetDate')
+            ->setParameter('targetDate', $targetDate)
             ->orderBy('i.date', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()

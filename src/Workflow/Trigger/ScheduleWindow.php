@@ -159,18 +159,4 @@ final class ScheduleWindow
             $targetDate,
         ];
     }
-
-    /** First allowed day at or after $from — the day the next run will happen on. */
-    public function nextRunDay(\DateTimeImmutable $from): \DateTimeImmutable
-    {
-        $day = $from;
-        for ($i = 0; $i < 7; ++$i) {
-            if ($this->isAllowedDay($day)) {
-                return $day;
-            }
-            $day = $day->modify('+1 day');
-        }
-
-        return $from;
-    }
 }

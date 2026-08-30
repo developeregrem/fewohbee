@@ -136,14 +136,6 @@ final class ScheduleWindowTest extends TestCase
         self::assertSame('2026-08-17', $to->format('Y-m-d'));
     }
 
-    public function testNextRunDaySkipsForwardToAnAllowedDay(): void
-    {
-        $window = ScheduleWindow::fromConfig(['runOnDays' => ScheduleWindow::PRESET_MON_FRI]);
-
-        self::assertSame(self::MONDAY, $window->nextRunDay(self::day(self::SATURDAY))->format('Y-m-d'));
-        self::assertSame(self::MONDAY, $window->nextRunDay(self::day(self::MONDAY))->format('Y-m-d'));
-    }
-
     public function testConfigSchemaExposesBothFields(): void
     {
         $keys = array_column(ScheduleWindow::configSchema(), 'key');

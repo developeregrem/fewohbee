@@ -139,7 +139,7 @@ workflow:
 
   preview:
     title: "Dry Run"
-    description: "Shows which records would currently be affected by this trigger and condition – without executing any action."
+    description: "Shows which records would currently be affected by this trigger and condition – without executing any action. The schedule (weekdays and time of day) is not taken into account here."
     run: "Run dry run"
     loading: "Loading …"
     empty: "No matching records found."

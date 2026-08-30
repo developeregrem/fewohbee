@@ -11,10 +11,10 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
- * The workflow form builds its fields from the schema this endpoint returns, so the
- * options a user can actually pick only exist once the endpoint resolves them.
+ * The two endpoints the workflow form talks to: the schema that builds its fields, and
+ * the dry run that lists the records a rule currently covers.
  */
-final class WorkflowFormOptionsTest extends WebTestCase
+final class WorkflowFormEndpointsTest extends WebTestCase
 {
     protected function setUp(): void
     {
@@ -97,6 +97,69 @@ final class WorkflowFormOptionsTest extends WebTestCase
             'TEMPLATE_INVOICE_PDF',
             array_column($fields['templateId']['options'], 'label')
         );
+    }
+
+    public function testDryRunIgnoresTheScheduleAndListsTodaysMatchesOnly(): void
+    {
+        self::ensureKernelShutdown();
+        $client = static::createClient();
+        $client->loginUser($this->createAdmin());
+
+        $due = $this->insertInvoice('WF-PREVIEW-DUE', new \DateTimeImmutable('-1 day'));
+        $notDue = $this->insertInvoice('WF-PREVIEW-NOT-DUE', new \DateTimeImmutable('today'));
+
+        try {
+            // Whatever the weekday window says, the dry run answers the same question:
+            // which records does "1 day after the invoice date" cover today?
+            foreach (['daily', 'mon_fri', 'mon_sat'] as $preset) {
+                $ids = $this->previewIds($client, ['days' => 1, 'runOnDays' => $preset, 'runAtHour' => 9]);
+
+                self::assertContains($due, $ids, sprintf('[%s] Yesterday\'s invoice is due today.', $preset));
+                self::assertNotContains($notDue, $ids,
+                    sprintf('[%s] Today\'s invoice is only due tomorrow and must not be listed.', $preset));
+            }
+        } finally {
+            $this->removeInvoices([$due, $notDue]);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $triggerConfig
+     *
+     * @return int[]
+     */
+    private function previewIds(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client, array $triggerConfig): array
+    {
+        $client->request('POST', '/settings/workflows/preview', [
+            'triggerType' => 'invoice.days_after_date',
+            'triggerConfig' => json_encode($triggerConfig, JSON_THROW_ON_ERROR),
+            'conditions' => '[]',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        return array_column($payload['entities'] ?? [], 'id');
+    }
+
+    private function insertInvoice(string $number, \DateTimeImmutable $date): int
+    {
+        $conn = static::getContainer()->get(ManagerRegistry::class)->getManager()->getConnection();
+        $conn->executeStatement(
+            'INSERT INTO invoices (number, date, status) VALUES (:number, :date, 1)',
+            ['number' => $number, 'date' => $date->format('Y-m-d')]
+        );
+
+        return (int) $conn->lastInsertId();
+    }
+
+    /** @param int[] $ids */
+    private function removeInvoices(array $ids): void
+    {
+        $conn = static::getContainer()->get(ManagerRegistry::class)->getManager()->getConnection();
+        foreach ($ids as $id) {
+            $conn->executeStatement('DELETE FROM invoices WHERE id = :id', ['id' => $id]);
+        }
     }
 
     /**

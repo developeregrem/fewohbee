@@ -49,12 +49,12 @@ class ReservationDaysBeforeStartTrigger extends AbstractScheduledTrigger
 
     public function findPreviewEntities(EntityManagerInterface $em, array $config, int $limit = 20): array
     {
-        [$from, $to] = $this->targetDateRange($config, $this->days($config), preview: true);
+        // The preview shows what the rule covers today; the schedule is not applied here.
+        $targetDate = $this->previewDate($this->days($config));
 
         return $em->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->where('r.startDate BETWEEN :from AND :to')
-            ->setParameter('from', $from)
-            ->setParameter('to', $to)
+            ->where('r.startDate = :targetDate')
+            ->setParameter('targetDate', $targetDate)
             ->orderBy('r.startDate', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()

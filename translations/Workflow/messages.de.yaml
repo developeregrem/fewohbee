@@ -143,7 +143,7 @@ workflow:
   # Preview (dry run)
   preview:
     title: "Probelauf"
-    description: "Zeigt, welche Datensätze aktuell von diesem Auslöser und dieser Bedingung betroffen wären – ohne tatsächlich eine Aktion auszuführen."
+    description: "Zeigt, welche Datensätze aktuell von diesem Auslöser und dieser Bedingung betroffen wären – ohne tatsächlich eine Aktion auszuführen. Der Zeitplan (Wochentage und Uhrzeit) bleibt dabei unberücksichtigt."
     run: "Probelauf starten"
     loading: "Wird geladen …"
     empty: "Keine passenden Datensätze gefunden."
