@@ -38,6 +38,13 @@ calendar:
     synced_empty: "Sync durchgeführt, aber keine Einträge in der Quelle gefunden – bisherige Einträge bleiben unverändert aktiv."
     sync_failed: "Kalender konnte nicht synchronisiert werden: %message%"
     synced_invalid_skipped: "%count% Termine wurden übersprungen, weil ihr Zeitraum nicht lesbar war – z.B. ein Ende vor oder gleich dem Beginn. Solche Termine werden verworfen statt auf einen geratenen Tag gelegt."
+  sync:
+    error:
+      http_status: "Die Kalender-URL antwortete mit Status %status%."
+      unreachable: "Die Kalender-URL ist nicht erreichbar."
+      too_large: "Der Kalender ist größer als 2 MB."
+      invalid_ical: "Der Kalender ist kein gültiges iCal-Format."
+      processing: "Die Kalendertermine konnten nicht verarbeitet werden."
   cleanup:
     title: "Vergangene Termine aufräumen"
     hint: "Löscht vergangene Termine dieses Kalenders, die nie bestätigt wurden. Bestätigte Termine sowie alles ab heute bleiben erhalten."

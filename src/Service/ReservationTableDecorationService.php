@@ -8,6 +8,8 @@ use App\Dto\ReservationTable\DayCalendarEntry;
 use App\Dto\ReservationTable\DayDecoration;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
+use App\Service\Calendar\Entry\CalendarEntryTimeFormatter;
+use App\Service\Calendar\PublicHolidayService;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -23,7 +25,7 @@ class ReservationTableDecorationService
     public function __construct(
         private readonly CalendarEntryRepository $entryRepo,
         private readonly CalendarRepository $calendarRepo,
-        private readonly CalendarService $calendarService,
+        private readonly PublicHolidayService $calendarService,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly CalendarEntryTimeFormatter $timeFormatter,
     ) {

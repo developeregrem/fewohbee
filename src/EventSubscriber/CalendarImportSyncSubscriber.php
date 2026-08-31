@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
-use App\Service\CalendarImportService;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -16,7 +16,7 @@ class CalendarImportSyncSubscriber implements EventSubscriberInterface
     /** Configure dependencies for the calendar import fallback. */
     public function __construct(
         private readonly AuthorizationCheckerInterface $auth,
-        private readonly CalendarImportService $calendarImportService
+        private readonly ReservationCalendarImportService $calendarImportService
     ) {
     }
 

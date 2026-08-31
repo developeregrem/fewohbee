@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Dto\Ics\IcsOccurrence;
-use App\Service\CalendarEntryTimeRules;
-use App\Service\Ics\IcsEventSpanResolver;
-use App\Service\Ics\IcsOccurrenceReader;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
+use App\Service\Calendar\Sync\Ics\IcsEventSpanResolver;
+use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use PHPUnit\Framework\TestCase;
 
 final class IcsEventSpanResolverTest extends TestCase

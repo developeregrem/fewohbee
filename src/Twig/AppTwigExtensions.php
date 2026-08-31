@@ -16,7 +16,7 @@ namespace App\Twig;
 use App\Entity\Reservation;
 use App\Entity\RoomBlock;
 use App\Service\AppSettingsService;
-use App\Service\CalendarService;
+use App\Service\Calendar\PublicHolidayService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -31,7 +31,7 @@ class AppTwigExtensions extends AbstractExtension implements GlobalsInterface
     private $calendarService;
     private $appSettingsService;
 
-    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, CalendarService $cs, AppSettingsService $appSettingsService)
+    public function __construct(EntityManagerInterface $em, RequestStack $requestStack, PublicHolidayService $cs, AppSettingsService $appSettingsService)
     {
         $this->em = $em;
         $this->requestStack = $requestStack;

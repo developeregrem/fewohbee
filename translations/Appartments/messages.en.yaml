@@ -116,6 +116,7 @@ calendar:
       error:
         http_status: Remote calendar returned an invalid response.
         unreachable: Remote calendar URL is not reachable.
+        too_large: Remote calendar is larger than 2 MB.
         invalid_ical: Remote calendar is not a valid iCal feed.
         no_events: Remote calendar has no events.
         skipped:

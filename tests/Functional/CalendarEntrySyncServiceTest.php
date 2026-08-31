@@ -7,7 +7,7 @@ namespace App\Tests\Functional;
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
 use App\Repository\CalendarEntryRepository;
-use App\Service\CalendarEntrySyncService;
+use App\Service\Calendar\Sync\CalendarEntrySyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

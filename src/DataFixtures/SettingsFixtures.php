@@ -21,7 +21,6 @@ use App\Entity\ReservationStatus;
 use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Service\AppSettingsService;
-use App\Service\CalendarSyncService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -36,15 +35,12 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
     public const SAMPLE_INVOICE_NUMBER_PATTERN = 'RE-<year>-<number:4>';
 
     private $translator;
-    private $syncService;
 
     public function __construct(
         TranslatorInterface $translator,
-        CalendarSyncService $css,
         private readonly AppSettingsService $appSettingsService,
     ) {
         $this->translator = $translator;
-        $this->syncService = $css;
     }
 
     public static function getGroups(): array
@@ -131,7 +127,6 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
                 $app->setRoomCategory($roomCats[0]);
                 $app->setDescription($this->translator->trans('category.single'));
             }
-            $this->syncService->initSync($app);
             $manager->persist($app);
         }
     }

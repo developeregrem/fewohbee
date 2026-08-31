@@ -14,8 +14,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\CalendarSync;
-use App\Service\CalendarService;
-use App\Service\CalendarSyncService;
+use App\Service\Calendar\Sync\ApartmentCalendarExportService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\HeaderUtils;
@@ -24,29 +23,30 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 
+/** Publishes privacy-aware apartment availability calendars by unguessable UUID. */
 class ApartmentCalendarController extends AbstractController
 {
     #[Route('/apartments/calendar/{uuid}/calendar.ics', name: 'apartments.get.calendar', requirements: ['uuid' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'], methods: ['GET'])]
-    public function getCalendarAction(ManagerRegistry $doctrine, CalendarService $cs, string $uuid, CalendarSyncService $css): Response
-    {
-        $em = $doctrine->getManager();
-        $sync = $em->getRepository(CalendarSync::class)->findOneBy(['uuid' => Uuid::fromString($uuid)]);
-        /* @var $sync CalendarSync */
+    public function getCalendarAction(
+        ManagerRegistry $doctrine,
+        ApartmentCalendarExportService $exportService,
+        string $uuid,
+    ): Response {
+        $sync = $doctrine->getManager()->getRepository(CalendarSync::class)
+            ->findOneBy(['uuid' => Uuid::fromString($uuid)]);
         if (!$sync instanceof CalendarSync || !$sync->getIsPublic() || !$sync->getApartment()?->isActive()) {
             throw new NotFoundHttpException();
         }
-        $css->updateExportDate($sync);
 
         $response = new Response(
-            $cs->getIcalContent($sync),
+            $exportService->export($sync),
             Response::HTTP_OK,
-            ['content-type' => 'text/calendar; charset=utf-8']
+            ['content-type' => 'text/calendar; charset=utf-8'],
         );
-        $disposition = HeaderUtils::makeDisposition(
-            HeaderUtils::DISPOSITION_ATTACHMENT,
-            'calendar.ics'
+        $response->headers->set(
+            'Content-Disposition',
+            HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, 'calendar.ics'),
         );
-        $response->headers->set('Content-Disposition', $disposition);
 
         return $response;
     }

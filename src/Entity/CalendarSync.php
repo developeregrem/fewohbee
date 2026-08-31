@@ -8,6 +8,7 @@ use App\Repository\CalendarSyncRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: CalendarSyncRepository::class)]
 #[ORM\Table(name: 'calendar_sync')]
@@ -34,6 +35,7 @@ class CalendarSync
 
     public function __construct()
     {
+        $this->uuid = Uuid::v4();
         $this->reservationStatus = new ArrayCollection();
         $this->isPublic = false;
         $this->exportGuestName = false;

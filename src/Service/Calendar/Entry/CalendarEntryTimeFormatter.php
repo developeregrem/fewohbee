@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Calendar\Entry;
 
 use App\Entity\CalendarEntry;
 use Symfony\Contracts\Translation\TranslatorInterface;

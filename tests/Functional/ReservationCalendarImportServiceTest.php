@@ -10,7 +10,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Repository\ReservationRepository;
-use App\Service\CalendarImportService;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -21,7 +21,7 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /** Verify iCal import syncing and conflict handling. */
-final class CalendarImportServiceTest extends KernelTestCase
+final class ReservationCalendarImportServiceTest extends KernelTestCase
 {
     private EntityManagerInterface $em;
     private static int $apartmentCounter = 1;
@@ -55,6 +55,10 @@ final class CalendarImportServiceTest extends KernelTestCase
         self::assertSame($import->getReservationStatus()->getId(), $reservation->getReservationStatus()->getId());
         self::assertSame($start->format('Y-m-d'), $reservation->getStartDate()->format('Y-m-d'));
         self::assertSame($end->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
+        self::assertSame(2, $reservation->getPersons());
+        $defaultAdult = static::getContainer()->get(\App\Repository\GuestCategoryRepository::class)->findDefaultAdult();
+        self::assertNotNull($defaultAdult);
+        self::assertSame([$defaultAdult->getId() => 2], $reservation->getGuestCounts());
     }
 
     /** Verify that an existing reservation keeps manually edited fields when the UID matches. */
@@ -205,8 +209,8 @@ final class CalendarImportServiceTest extends KernelTestCase
         self::assertFalse($reservation->isConflict());
     }
 
-    /** Build a CalendarImportService with mocked HTTP responses keyed by URL. */
-    private function createServiceWithResponses(array $responses): CalendarImportService
+    /** Build a ReservationCalendarImportService with mocked HTTP responses keyed by URL. */
+    private function createServiceWithResponses(array $responses): ReservationCalendarImportService
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($responses) {
             return new MockResponse($responses[$url] ?? '', ['http_code' => 200]);
@@ -215,16 +219,23 @@ final class CalendarImportServiceTest extends KernelTestCase
         $translator = static::getContainer()->get(TranslatorInterface::class);
 
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
-
-        return new CalendarImportService(
+        $synchronizer = new \App\Service\Calendar\Sync\ImportedReservationSynchronizer(
             $this->em,
-            $httpClient,
-            $cache,
-            $translator,
             $eventDispatcher,
             $this->getReservationRepository(),
-            $this->em->getRepository(\App\Entity\RoomBlock::class),
-            new \App\Service\Ics\IcsEventParser()
+            static::getContainer()->get(\App\Service\AvailabilityService::class),
+            static::getContainer()->get(\App\Repository\GuestCategoryRepository::class),
+            static::getContainer()->get(\App\Service\ReservationService::class),
+        );
+
+        return new ReservationCalendarImportService(
+            $this->em,
+            $this->em->getRepository(CalendarSyncImport::class),
+            new \App\Service\Calendar\Sync\Ics\IcsFeedClient($httpClient),
+            $cache,
+            $translator,
+            new \App\Service\Calendar\Sync\Ics\IcsOccurrenceReader(),
+            $synchronizer,
         );
     }
 

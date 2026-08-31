@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\EventSubscriber\CalendarImportSyncSubscriber;
-use App\Service\CalendarImportService;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -19,7 +19,7 @@ final class CalendarImportSyncSubscriberTest extends TestCase
     {
         $auth = $this->createMock(AuthorizationCheckerInterface::class);
         $auth->expects(self::once())->method('isGranted')->with('ROLE_RESERVATIONS')->willReturn(true);
-        $service = $this->createMock(CalendarImportService::class);
+        $service = $this->createMock(ReservationCalendarImportService::class);
         $service->expects(self::once())->method('syncActiveImports')->with(false);
 
         $subscriber = new CalendarImportSyncSubscriber($auth, $service);
@@ -31,7 +31,7 @@ final class CalendarImportSyncSubscriberTest extends TestCase
     {
         $auth = $this->createMock(AuthorizationCheckerInterface::class);
         $auth->expects(self::once())->method('isGranted')->with('ROLE_RESERVATIONS')->willReturn(false);
-        $service = $this->createMock(CalendarImportService::class);
+        $service = $this->createMock(ReservationCalendarImportService::class);
         $service->expects(self::never())->method('syncActiveImports');
 
         $subscriber = new CalendarImportSyncSubscriber($auth, $service);
@@ -43,7 +43,7 @@ final class CalendarImportSyncSubscriberTest extends TestCase
     {
         $auth = $this->createMock(AuthorizationCheckerInterface::class);
         $auth->expects(self::never())->method('isGranted');
-        $service = $this->createMock(CalendarImportService::class);
+        $service = $this->createMock(ReservationCalendarImportService::class);
         $service->expects(self::never())->method('syncActiveImports');
 
         $subscriber = new CalendarImportSyncSubscriber($auth, $service);

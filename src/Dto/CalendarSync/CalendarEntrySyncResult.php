@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Dto\CalendarSync;
 
+/** Summarizes one custom-calendar synchronization run. */
 final readonly class CalendarEntrySyncResult
 {
     /**

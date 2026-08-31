@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Calendar\Entry;
 
 /**
  * The single place that knows what a calendar entry's start and end time mean.

@@ -24,8 +24,7 @@ use App\Form\CalendarSyncExportType;
 use App\Form\CalendarSyncImportType;
 use App\Repository\AppartmentRepository;
 use App\Service\AppartmentService;
-use App\Service\CalendarImportService;
-use App\Service\CalendarSyncService;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use App\Service\CSRFProtectionService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,8 +33,10 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/settings/apartments')]
+#[IsGranted('ROLE_ADMIN')]
 class ApartmentServiceController extends AbstractController
 {
     #[Route('/', name: 'apartments.overview', methods: ['GET'])]
@@ -64,7 +65,7 @@ class ApartmentServiceController extends AbstractController
     }
 
     #[Route('/new', name: 'apartments.new.apartment', methods: ['GET', 'POST'])]
-    public function new(ManagerRegistry $doctrine, Request $request, CalendarSyncService $css): Response
+    public function new(ManagerRegistry $doctrine, Request $request): Response
     {
         $apartment = new Appartment();
         $form = $this->createForm(ApartmentType::class, $apartment);
@@ -74,7 +75,6 @@ class ApartmentServiceController extends AbstractController
             $entityManager = $doctrine->getManager();
             $entityManager->persist($apartment);
             $entityManager->flush();
-            $css->initSync($apartment);
 
             // add succes message
             $this->addFlash('success', 'appartment.flash.create.success');
@@ -159,7 +159,7 @@ class ApartmentServiceController extends AbstractController
         ManagerRegistry $doctrine,
         Request $request,
         CalendarSync $sync,
-        CalendarImportService $calendarImportService,
+        ReservationCalendarImportService $calendarImportService,
         FormFactoryInterface $formFactory
     ): Response
     {

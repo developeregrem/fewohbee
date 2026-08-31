@@ -27,4 +27,9 @@ final class Version20260828120000 extends AbstractMigration
         $this->addSql('DROP INDEX uniq_users_oidc_identity ON users');
         $this->addSql('ALTER TABLE users DROP oidc_issuer, DROP oidc_subject, DROP oidc_linked_at');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

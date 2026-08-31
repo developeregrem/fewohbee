@@ -2,27 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\Calendar\Sync;
 
+use App\Dto\CalendarSync\CalendarEntrySyncResult;
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
 use App\Repository\CalendarEntryRepository;
-use App\Service\Exception\CalendarSyncException;
-use App\Service\Ics\IcsEventSpanResolver;
-use App\Service\Ics\IcsOccurrenceReader;
+use App\Exception\CalendarSyncException;
+use App\Service\Calendar\Sync\Ics\IcsEventSpanResolver;
+use App\Service\Calendar\Sync\Ics\IcsFeedClient;
+use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
-use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Imports entries from an ICS source (URL, configured per Calendar, or a
  * one-time file upload passed in directly) into CalendarEntry rows.
- *
- * Named CalendarEntrySyncService (not CalendarSyncService) to avoid
- * colliding with the pre-existing CalendarSyncService, which manages this
- * project's unrelated apartment-calendar export/subscription feature
- * (CalendarSync entity).
  *
  * RRULE-recurring events are expanded into one entry per occurrence by
  * IcsOccurrenceReader. Because such a rule can be unbounded, the import runs
@@ -61,7 +56,7 @@ class CalendarEntrySyncService
         private readonly EntityManagerInterface $em,
         private readonly CalendarEntryRepository $repo,
         private readonly IcsOccurrenceReader $icsReader,
-        private readonly HttpClientInterface $httpClient,
+        private readonly IcsFeedClient $feedClient,
         private readonly IcsEventSpanResolver $spanResolver,
         private readonly ClockInterface $clock,
     ) {
@@ -78,18 +73,7 @@ class CalendarEntrySyncService
             return null;
         }
 
-        // Bounded timeout (matching CalendarImportService's ICS fetch) so one
-        // unresponsive host can't stall the whole calendars:sync cron run,
-        // which fetches every configured calendar sequentially in one process.
-        try {
-            $response = $this->httpClient->request('GET', $url, ['timeout' => 10]);
-            if (200 !== $response->getStatusCode()) {
-                throw new CalendarSyncException('ICS-URL antwortete mit Status '.$response->getStatusCode().': '.$url);
-            }
-            $content = $response->getContent();
-        } catch (ExceptionInterface $exception) {
-            throw new CalendarSyncException('ICS-URL konnte nicht abgerufen werden: '.$url, previous: $exception);
-        }
+        $content = $this->feedClient->fetch($url);
 
         return $this->importIcsString($calendar, $content);
     }
@@ -97,7 +81,7 @@ class CalendarEntrySyncService
     public function importIcsString(Calendar $calendar, string $icsData): CalendarEntrySyncResult
     {
         if (!$this->icsReader->isValidCalendar($icsData)) {
-            throw new CalendarSyncException('ICS-Datei konnte nicht gelesen werden.');
+            throw new CalendarSyncException('calendar.sync.error.invalid_ical');
         }
 
         $new = 0;
@@ -205,7 +189,7 @@ class CalendarEntrySyncService
             // then. Stale entries can still be removed manually.
             $this->em->flush();
         } catch (\Throwable $e) {
-            throw new CalendarSyncException('ICS-Termine konnten nicht verarbeitet werden: '.$e->getMessage(), previous: $e);
+            throw new CalendarSyncException('calendar.sync.error.processing', previous: $e);
         }
 
         return $result;
@@ -366,7 +350,7 @@ class CalendarEntrySyncService
     /**
      * Pops the first entry that may be re-dated, skipping confirmed ones.
      *
-     * @param list<CalendarEntry> $spare
+     * @param array<int, CalendarEntry> $spare
      */
     private function takeReusable(array &$spare): ?CalendarEntry
     {

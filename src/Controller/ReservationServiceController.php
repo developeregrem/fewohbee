@@ -34,9 +34,9 @@ use App\Form\CalendarEntryType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
 use App\Service\AvailabilityService;
-use App\Service\CalendarEntryService;
-use App\Service\CalendarImportService;
-use App\Service\CalendarService;
+use App\Service\Calendar\Entry\CalendarEntryService;
+use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
+use App\Service\Calendar\PublicHolidayService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
@@ -78,7 +78,7 @@ class ReservationServiceController extends AbstractController
      * Index Action start page.
      */
     #[Route('/', name: 'start', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -297,7 +297,7 @@ class ReservationServiceController extends AbstractController
     }
 
     #[Route('/table/settings', name: 'reservations.table.settings', methods: ['POST'])]
-    public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
+    public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
     {
         $em = $doctrine->getManager();
         $request = $requestStack->getCurrentRequest();
@@ -381,7 +381,7 @@ class ReservationServiceController extends AbstractController
     {
         $em = $doctrine->getManager();
         $start = $request->request->get('from');
-        $startDate = new \DateTime($start);        
+        $startDate = new \DateTime($start);
         $end = $request->request->get('end');
         $endDate = new \DateTime($end);
 
@@ -1631,7 +1631,7 @@ class ReservationServiceController extends AbstractController
 
     #[Route('/conflicts/{id}/resolve', name: 'reservations.conflicts.resolve', methods: ['POST'])]
     /** Try to resolve a conflict by rechecking current overlaps. */
-    public function resolveConflictAction(CalendarImportService $calendarImportService, Reservation $reservation): Response 
+    public function resolveConflictAction(ImportedReservationSynchronizer $calendarImportService, Reservation $reservation): Response
     {
         $success = false;
         if ($reservation->isConflict()) {

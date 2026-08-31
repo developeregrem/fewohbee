@@ -270,6 +270,10 @@
                 <source>calendar.sync.import.error.unreachable</source>
                 <target>Die Kalender-URL ist nicht erreichbar.</target>
             </trans-unit>
+            <trans-unit id="calendar.sync.import.error.too_large">
+                <source>calendar.sync.import.error.too_large</source>
+                <target>Der Kalender ist größer als 2 MB.</target>
+            </trans-unit>
             <trans-unit id="calendar.sync.import.error.invalid_ical">
                 <source>calendar.sync.import.error.invalid_ical</source>
                 <target>Der Kalender ist kein gültiges iCal-Format.</target>

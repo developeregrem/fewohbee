@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Ics;
+namespace App\Service\Calendar\Sync\Ics;
 
 use App\Dto\Ics\IcsEventSpan;
 use App\Dto\Ics\IcsOccurrence;
-use App\Service\CalendarEntryTimeRules;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
 
 /**
  * Turns one VEVENT's raw DTSTART/DTEND properties into the days it covers and

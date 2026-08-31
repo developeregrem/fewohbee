@@ -6,10 +6,16 @@ namespace App\Tests\Unit;
 
 use App\Entity\Appartment;
 use App\Entity\CalendarSyncImport;
+use App\Repository\AppartmentRepository;
+use App\Repository\CalendarSyncImportRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\ReservationRepository;
-use App\Service\CalendarImportService;
-use App\Service\Ics\IcsEventParser;
+use App\Repository\RoomBlockRepository;
+use App\Service\AvailabilityService;
+use App\Service\Calendar\Sync\Ics\IcsFeedClient;
+use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
+use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use App\Service\InvoiceService;
 use App\Service\ReservationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -20,6 +26,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/** Verify active-state defaults and guards shared by apartments and calendar imports. */
 final class ApartmentActivationTest extends TestCase
 {
     public function testNewApartmentIsActiveByDefaultAndCanBeDeactivated(): void
@@ -27,6 +34,8 @@ final class ApartmentActivationTest extends TestCase
         $apartment = new Appartment();
 
         self::assertTrue($apartment->isActive());
+        self::assertSame($apartment, $apartment->getCalendarSync()->getApartment());
+        self::assertInstanceOf(\Symfony\Component\Uid\Uuid::class, $apartment->getCalendarSync()->getUuid());
 
         $returnedApartment = $apartment->setActive(false);
 
@@ -45,10 +54,10 @@ final class ApartmentActivationTest extends TestCase
             $this->createStub(InvoiceService::class),
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(GuestCategoryRepository::class),
-            new \App\Service\AvailabilityService(
+            new AvailabilityService(
                 $this->createStub(ReservationRepository::class),
-                $this->createStub(\App\Repository\RoomBlockRepository::class),
-                $this->createStub(\App\Repository\AppartmentRepository::class),
+                $this->createStub(RoomBlockRepository::class),
+                $this->createStub(AppartmentRepository::class),
             ),
         );
 
@@ -66,16 +75,23 @@ final class ApartmentActivationTest extends TestCase
     {
         $httpClient = $this->createMock(HttpClientInterface::class);
         $httpClient->expects(self::never())->method('request');
+        $entityManager = $this->createStub(EntityManagerInterface::class);
 
-        $service = new CalendarImportService(
-            $this->createStub(EntityManagerInterface::class),
-            $httpClient,
+        $service = new ReservationCalendarImportService(
+            $entityManager,
+            $this->createStub(CalendarSyncImportRepository::class),
+            new IcsFeedClient($httpClient),
             new ArrayAdapter(),
             $this->createStub(TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(ReservationRepository::class),
-            $this->createStub(\App\Repository\RoomBlockRepository::class),
-            $this->createStub(IcsEventParser::class),
+            new IcsOccurrenceReader(),
+            new ImportedReservationSynchronizer(
+                $entityManager,
+                $this->createStub(EventDispatcherInterface::class),
+                $this->createStub(ReservationRepository::class),
+                $this->createStub(AvailabilityService::class),
+                $this->createStub(GuestCategoryRepository::class),
+                $this->createStub(ReservationService::class),
+            ),
         );
 
         $import = (new CalendarSyncImport())

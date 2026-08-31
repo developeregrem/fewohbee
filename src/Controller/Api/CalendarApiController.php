@@ -16,7 +16,7 @@ namespace App\Controller\Api;
 use App\Entity\Calendar;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
-use App\Service\CalendarService;
+use App\Service\Calendar\PublicHolidayService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -38,7 +38,7 @@ class CalendarApiController extends AbstractController
     private const MAX_RANGE_DAYS = 731; // two years
 
     public function __construct(
-        private readonly CalendarService $calendarService,
+        private readonly PublicHolidayService $calendarService,
         private readonly CalendarRepository $calendarRepository,
         private readonly CalendarEntryRepository $calendarEntryRepository,
     ) {
