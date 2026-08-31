@@ -12,8 +12,8 @@ use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\JWKSet;
 use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Algorithm\HS256;
-use Jose\Component\Signature\Algorithm\RS256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use PHPUnit\Framework\TestCase;
@@ -28,15 +28,19 @@ final class OidcIdTokenValidatorTest extends TestCase
     private const CLIENT_ID = 'fewohbee';
     private const NONCE = 'the-expected-nonce';
 
+    private const RS256_PUBLIC_JWK = '{"alg":"RS256","use":"sig","kid":"rsa-fixture","kty":"RSA","n":"i9rnwV76NI2DuC9QHrEB1fZby9ws5mcGv9P9Icj5jFMGIRbq4HWQS2Fq7YCCoLOcRzzo-6SeJ7cB6k4-O5rixqkcDZGOyrgWI6GD7t8GKS6Qn4F61sRQCBYxqJ1NBShhgyudy9P3LiJmXaqy0Qju9US8MN-XIpWTk_6ht757EwHVNKxWFlriiVbB3-b9yIq2BCugbPfYPTDoxOm4kcnKNniZPeOv-H7h5sILJnPCBayj9V1mt1JglZI6xK6EbovNXr_R_jIcxpGnOz9e7uQtqXLEAsF5h-i-WKyKSFD5vJESCK_cRmkZ3UUiEpfdAieor_rcxW0iusnhThvf1nJQ0Q","e":"AQAB"}';
+
+    private const RS256_TOKEN = 'eyJhbGciOiJSUzI1NiIsImtpZCI6InJzYS1maXh0dXJlIn0.eyJpc3MiOiJodHRwczpcL1wvaWQuZXhhbXBsZS5jb20iLCJzdWIiOiJwcm92aWRlci1zdWJqZWN0LTQyIiwiYXVkIjoiZmV3b2hiZWUiLCJleHAiOjE3ODc5MTg3MDAsImlhdCI6MTc4NzkxODQwMCwibm9uY2UiOiJ0aGUtZXhwZWN0ZWQtbm9uY2UiLCJlbWFpbCI6InN0YWZmQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWV9.eBnOI7b2Udr0ZNkvKoAdcZXMtY44r2HAU2noI-l5YadBqGuzXGhkUUUmJVRHAwV_k889F5TjHYr2SPwujsy30qUrFp9wigvjgGqGHSKmmoCMCTS1HpEX-9CO6e3hT5naDw1nCDEnDQkg4sm8qqaYmbDNf-JP6TkBC5K7wBjxqEfpF1QdeTcwpyEUlZ7FGV2FwwAjmsIc94UbHcnylV8Si_AhT0IHLxGaD_YiGtq2uYy3FlCVX8JQ2uOWOxNwTow_m1XN35sqNACU1PJ9BLzxFijLlJ7CQpEQwJDHuCgLWDF6FxhqNDOmvUwXGQ9J7ECEg2A-KTDvLixYR7XULdV0LA';
+
     private static ?JWK $signingKey = null;
 
     private MockClock $clock;
 
     protected function setUp(): void
     {
-        // One 2048 bit key for the whole class — generating it per test makes
-        // the suite noticeably slower for no extra coverage.
-        self::$signingKey ??= JWKFactory::createRSAKey(2048, ['alg' => 'RS256', 'use' => 'sig', 'kid' => 'key-1']);
+        // Claim-validation tests use fast asymmetric EC signatures. RS256 is
+        // covered separately with a stable pre-signed fixture below.
+        self::$signingKey ??= JWKFactory::createECKey('P-256', ['alg' => 'ES256', 'use' => 'sig', 'kid' => 'key-1']);
         $this->clock = new MockClock('2026-08-28 12:00:00');
     }
 
@@ -77,7 +81,7 @@ final class OidcIdTokenValidatorTest extends TestCase
     /**
      * @param array<string, mixed> $claimOverrides
      */
-    private function token(array $claimOverrides = [], ?JWK $key = null, string $alg = 'RS256', ?string $kid = 'key-1'): string
+    private function token(array $claimOverrides = [], ?JWK $key = null, string $alg = 'ES256', ?string $kid = 'key-1'): string
     {
         $now = $this->clock->now()->getTimestamp();
         $claims = array_merge([
@@ -102,7 +106,7 @@ final class OidcIdTokenValidatorTest extends TestCase
             $header['kid'] = $kid;
         }
 
-        $builder = new JWSBuilder(new AlgorithmManager([new RS256(), new HS256()]));
+        $builder = new JWSBuilder(new AlgorithmManager([new ES256(), new HS256()]));
         $jws = $builder->create()
             ->withPayload(json_encode($claims, \JSON_THROW_ON_ERROR))
             ->addSignature($key ?? self::$signingKey, $header)
@@ -117,6 +121,16 @@ final class OidcIdTokenValidatorTest extends TestCase
 
         self::assertSame('provider-subject-42', $claims['sub']);
         self::assertSame('staff@example.com', $claims['email']);
+    }
+
+    /** Verify RS256 support without calculating an expensive private RSA signature at runtime. */
+    public function testAcceptsAPreSignedRs256Token(): void
+    {
+        $keySet = new JWKSet([JWK::createFromJson(self::RS256_PUBLIC_JWK)]);
+
+        $claims = $this->validator([$keySet])->validate(self::RS256_TOKEN, self::NONCE);
+
+        self::assertSame('provider-subject-42', $claims['sub']);
     }
 
     public function testRejectsAWrongIssuer(): void
@@ -244,7 +258,7 @@ final class OidcIdTokenValidatorTest extends TestCase
 
     public function testRejectsASignatureFromAnUnknownKey(): void
     {
-        $attackerKey = JWKFactory::createRSAKey(2048, ['alg' => 'RS256', 'use' => 'sig', 'kid' => 'key-1']);
+        $attackerKey = JWKFactory::createECKey('P-256', ['alg' => 'ES256', 'use' => 'sig', 'kid' => 'key-1']);
 
         $this->expectException(OidcConfigurationException::class);
         $this->expectExceptionMessageMatches('/signature could not be verified/');
@@ -300,7 +314,7 @@ final class OidcIdTokenValidatorTest extends TestCase
      */
     public function testRefetchesTheKeySetForAnUnknownKeyId(): void
     {
-        $stale = new JWKSet([JWKFactory::createRSAKey(2048, ['alg' => 'RS256', 'use' => 'sig', 'kid' => 'old-key'])->toPublic()]);
+        $stale = new JWKSet([JWKFactory::createECKey('P-256', ['alg' => 'ES256', 'use' => 'sig', 'kid' => 'old-key'])->toPublic()]);
         $rotated = new JWKSet([self::$signingKey->toPublic()]);
 
         $claims = $this->validator([$stale, $rotated])->validate($this->token(), self::NONCE);

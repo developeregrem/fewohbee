@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\EInvoice\Profile;
 
 use App\Entity\Invoice;
 use App\Entity\InvoiceSettingsData;
@@ -12,35 +12,40 @@ use App\Service\EInvoice\Validation\EInvoiceValidationResult;
 use App\Service\EInvoice\ZugferdInvoiceGenerator;
 use horstoeko\zugferd\ZugferdProfiles;
 
-// EN 16931 profile generator wrapper.
-class En16931Service implements EInvoiceProfileGeneratorInterface
+/**
+ * Generates and validates electronic invoices using the EN 16931 profile.
+ */
+final class En16931ProfileGenerator implements EInvoiceProfileGeneratorInterface
 {
-    // Uses the shared ZUGFeRD generator with EN16931 profile id.
-    public function __construct(private ZugferdInvoiceGenerator $generator, private En16931InvoiceValidator $validator)
-    {
+    public function __construct(
+        private readonly ZugferdInvoiceGenerator $generator,
+        private readonly En16931InvoiceValidator $validator,
+    ) {
     }
 
-    // Profile key stored in settings.
     public function getProfileKey(): string
     {
         return 'en16931';
     }
 
-    // Label translation key for forms.
     public function getLabelKey(): string
     {
         return 'invoice.settings.einvoiceProfile.en16931';
     }
 
-    // Checks the EN 16931 baseline rules.
     public function validate(Invoice $invoice, InvoiceSettingsData $settings): EInvoiceValidationResult
     {
         return $this->validator->validate($invoice, $settings);
     }
 
-    // Generates the invoice data for EN 16931.
+    /** Generate validated EN 16931 XML through the shared ZUGFeRD generator. */
     public function generateInvoiceData(Invoice $invoice, InvoiceSettingsData $settings): string
     {
-        return $this->generator->generateInvoiceData($invoice, $settings, ZugferdProfiles::PROFILE_EN16931, $this->validator);
+        return $this->generator->generateInvoiceData(
+            $invoice,
+            $settings,
+            ZugferdProfiles::PROFILE_EN16931,
+            $this->validator,
+        );
     }
 }
