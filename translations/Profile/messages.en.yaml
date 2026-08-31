@@ -48,6 +48,8 @@ profile:
       calendar_read: Read calendars (iCal export, holidays, custom calendars)
       statistics_read: Read statistics
       invoices_read: Read invoices
+      prices_read: Read prices (price list, price quote, rate calendar)
+      tourist_tax_read: Read tourist tax (settings and monthly report)
   passkeys:
     title: Passwordless sign-in (Passkeys)
     create: Add passkey

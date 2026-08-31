@@ -22,6 +22,8 @@ info:
     | `calendar:read` | ROLE_RESERVATIONS_RO |
     | `statistics:read` | ROLE_STATISTICS |
     | `invoices:read` | ROLE_INVOICES |
+    | `prices:read` | ROLE_RESERVATIONS_RO |
+    | `tourist-tax:read` | ROLE_OPERATIONS |
 
     Requests are rate limited to 300 per 5 minutes per token.
   license:
@@ -44,10 +46,28 @@ security:
 
 tags:
   - name: Reservations
+    description: Bookings in a date range, classified by arrival, departure and in-house.
   - name: Invoices
+    description: >-
+      Issued invoices with their line items and VAT breakdown. Authoritative for what a
+      stay was actually billed. Payment credentials are never exposed.
+  - name: Prices
+    description: >-
+      The configured price catalogue, the per-night rate calendar, and price quotes.
+      Only the quote computes amounts — see its description before deriving money from
+      the catalogue.
+  - name: Tourist tax
+    description: >-
+      Tourist tax (Kurtaxe / city tax) configuration and the monthly report a municipality
+      filing is built from.
   - name: Calendars
+    description: iCal export of a room's occupancy, public holidays, and custom calendars.
   - name: Statistics
+    description: >-
+      Utilization, booking origins and turnover, keyed by ISO months and years rather than
+      localized labels.
   - name: Meta
+    description: The machine-readable description of this API.
 
 paths:
   /reservations:
@@ -466,6 +486,301 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /prices:
+    get:
+      tags: [Prices]
+      operationId: listPrices
+      summary: The configured price catalogue
+      description: |
+        Requires the `prices:read` scope.
+
+        Reference data: which price rows exist and when they apply. Working out what a
+        stay costs from these fields means reimplementing period priority, weekday
+        matching, minStay selection and the guest-category modifiers, and the result
+        will drift from the invoice. Use `/prices/quote` for amounts.
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [apartment, misc] }
+          description: Apartment (room) prices or miscellaneous prices; both when omitted.
+        - name: roomCategoryId
+          in: query
+          schema: { type: integer }
+        - name: originId
+          in: query
+          description: One or more reservation origin ids (repeatable or comma separated).
+          schema: { type: string }
+        - name: active
+          in: query
+          schema: { type: string, enum: ['true', 'false', 'all'], default: 'true' }
+        - name: bookableOnline
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: The matching price rows.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Price' }
+                  meta:
+                    type: object
+                    properties:
+                      type: { type: [string, 'null'] }
+                      roomCategoryId: { type: [integer, 'null'] }
+                      originIds: { type: [array, 'null'], items: { type: integer } }
+                      active: { type: [boolean, 'null'] }
+                      bookableOnline: { type: [boolean, 'null'] }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /prices/quote:
+    get:
+      tags: [Prices]
+      operationId: getPriceQuote
+      summary: What a stay would cost
+      description: |
+        Requires the `prices:read` scope.
+
+        Computed through the same pipeline that produces the invoice, so a quote and the
+        later invoice agree as long as nobody edits the invoice by hand. A quote is never
+        a document — the authoritative amount for a billed stay is the invoice itself.
+
+        `priceFound: false` means no price row applies to this apartment, occupancy and
+        period. That is different from a stay that genuinely costs nothing; all totals
+        are `0.0` in that case, so never read a `0.00` total as "free".
+
+        `touristTax` and `grandTotal` are `null` when the token lacks the
+        `tourist-tax:read` scope, so "not permitted to see it" stays distinguishable
+        from "no tourist tax applies".
+      parameters:
+        - name: apartmentId
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: start
+          in: query
+          required: true
+          description: Arrival date (Y-m-d).
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          required: true
+          description: Departure date (Y-m-d), exclusive. 1st to 8th is seven nights.
+          schema: { type: string, format: date }
+        - name: persons
+          in: query
+          description: >-
+            Occupancy the apartment price is matched against. Required unless
+            `guestCounts` carries occupancy-counted guests, in which case it defaults
+            to their sum.
+          schema: { type: integer, minimum: 1 }
+        - name: guestCounts
+          in: query
+          style: deepObject
+          explode: true
+          description: >-
+            Head count per guest category, as `guestCounts[categoryId]=count`. Drives
+            the guest-category modifiers (child rates, extra-bed surcharges) and the
+            tourist tax. Omit for a plain list price.
+          schema:
+            type: object
+            additionalProperties: { type: integer, minimum: 0 }
+        - $ref: '#/components/parameters/OriginId'
+      responses:
+        '200':
+          description: The quote. The stay must not exceed 366 nights.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PriceQuote' }
+                  meta:
+                    type: object
+                    properties:
+                      touristTaxIncluded: { type: boolean }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /prices/rates:
+    get:
+      tags: [Prices]
+      operationId: getRateCalendar
+      summary: Per-night, per-occupancy rate calendar
+      description: |
+        Requires the `prices:read` scope.
+
+        The rate for a night is not a property of that night alone: candidate prices are
+        filtered by `minStay` and matched on occupancy exactly. Both are parameters here
+        rather than assumptions, so the per-night rate of a seven-night stay
+        (`nights=7`) can legitimately differ from the single-night rate (`nights=1`).
+
+        A night with no applicable price comes back with an empty `rates` array.
+      parameters:
+        - name: roomCategoryId
+          in: query
+          description: Required unless `apartmentId` is given.
+          schema: { type: integer }
+        - name: apartmentId
+          in: query
+          description: Alternative to `roomCategoryId` — the room's category is used.
+          schema: { type: integer }
+        - name: start
+          in: query
+          description: First night (Y-m-d). Defaults to today.
+          schema: { type: string, format: date }
+        - name: end
+          in: query
+          description: Last night (Y-m-d), inclusive. Defaults to `start`.
+          schema: { type: string, format: date }
+        - name: nights
+          in: query
+          description: Intended stay length, drives minStay selection.
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: occupancy
+          in: query
+          description: >-
+            Single occupancy to report. Defaults to every occupancy the category has an
+            active price for.
+          schema: { type: integer, minimum: 1 }
+        - $ref: '#/components/parameters/OriginId'
+      responses:
+        '200':
+          description: One entry per night. The range must not exceed 500 days.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string, format: date }
+                        rates:
+                          type: array
+                          items: { $ref: '#/components/schemas/Rate' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      nights: { type: integer }
+                      roomCategoryId: { type: [integer, 'null'] }
+                      occupancies: { type: array, items: { type: integer } }
+                      origin:
+                        type: object
+                        properties:
+                          id: { type: integer }
+                          name: { type: [string, 'null'] }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /tourist-taxes:
+    get:
+      tags: [Tourist tax]
+      operationId: listTouristTaxes
+      summary: The configured tourist taxes
+      description: |
+        Requires the `tourist-tax:read` scope.
+
+        Configuration, not amounts. A `per_night_flat` tax carries a tariff per guest
+        category; a `percent_per_room` tax is a percentage of the apartment total and
+        therefore has no per-night figure at all. What a stay owes comes from
+        `/prices/quote`, what a month owes from `/tourist-taxes/report`.
+      responses:
+        '200':
+          description: All configured tourist taxes, active ones first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TouristTax' }
+                  meta:
+                    type: object
+                    properties:
+                      count: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /tourist-taxes/report:
+    get:
+      tags: [Tourist tax]
+      operationId: getTouristTaxReport
+      summary: Monthly tourist-tax report
+      description: |
+        Requires the `tourist-tax:read` scope.
+
+        The figures a municipality filing is built from, aggregated per month, per tax
+        and per report group (falling back to the guest category when a rate defines no
+        group). Amounts are live-calculated per reservation through the same service the
+        invoice uses, not read off invoices, so report and invoice cannot drift apart.
+
+        A tax valid in a month with no matching reservations still appears, with zero
+        totals — an explicit nil return rather than a missing row.
+      parameters:
+        - $ref: '#/components/parameters/StartMonth'
+        - $ref: '#/components/parameters/EndMonth'
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/ReservationStatusId'
+      responses:
+        '200':
+          description: One entry per month. The range must not exceed 36 months.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month: { type: string, examples: ['2026-09'] }
+                        total: { type: number }
+                        taxes:
+                          type: array
+                          items: { $ref: '#/components/schemas/TouristTaxReportRow' }
+                  meta:
+                    type: object
+                    properties:
+                      start: { type: string }
+                      end: { type: string }
+                      objectId: { type: [integer, 'null'] }
+                      guestCategories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: integer }
+                            name: { type: [string, 'null'] }
+                            statisticalGroup: { type: string }
+                            isCountedInOccupancy: { type: boolean }
+                            sortOrder: { type: integer }
+                      count: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /openapi.yaml:
     get:
       tags: [Meta]
@@ -499,6 +814,15 @@ components:
         calendar applications. The real login password is never accepted.
 
   parameters:
+    OriginId:
+      name: originId
+      in: query
+      description: >-
+        Reservation origin the price rows are looked up for. Price rows are linked to
+        origins, so different origins legitimately yield different prices. Defaults to
+        the origin configured for online booking; when none is configured the parameter
+        is required.
+      schema: { type: integer }
     StartDate:
       name: start
       in: query
@@ -775,3 +1099,329 @@ components:
           type: boolean
           description: False when the entry came from an ICS sync.
         isConfirmed: { type: boolean }
+
+    Price:
+      type: object
+      description: A configured price row. Reference data — see the endpoint description.
+      properties:
+        id: { type: integer }
+        type: { type: string, enum: [apartment, misc] }
+        description: { type: [string, 'null'] }
+        price:
+          type: number
+          description: The stored amount. Per head, per room or for the whole stay depending on the flags below.
+        vat: { type: number, description: 'VAT percentage.' }
+        includesVat: { type: boolean, description: 'Whether `price` is gross.' }
+        isFlatPrice: { type: boolean, description: 'Billed once for the stay.' }
+        isPerRoom: { type: boolean, description: 'Billed per room-night, occupancy-independent.' }
+        numberOfPersons:
+          type: [integer, 'null']
+          description: Occupancy this row is for. Matched exactly — there is no fallback to a lower occupancy.
+        minStay: { type: [integer, 'null'] }
+        active: { type: boolean }
+        roomCategory:
+          type: [object, 'null']
+          properties:
+            id: { type: [integer, 'null'] }
+            name: { type: [string, 'null'] }
+        origins:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: [string, 'null'] }
+        allDays: { type: boolean, description: 'When true the weekday flags are ignored.' }
+        weekdays:
+          type: object
+          description: Which weekdays the row applies to when `allDays` is false.
+          properties:
+            monday: { type: boolean }
+            tuesday: { type: boolean }
+            wednesday: { type: boolean }
+            thursday: { type: boolean }
+            friday: { type: boolean }
+            saturday: { type: boolean }
+            sunday: { type: boolean }
+        allPeriods: { type: boolean, description: 'When true the row applies year-round and `periods` is irrelevant.' }
+        periods:
+          type: array
+          description: Season windows the row applies to. Earlier-starting periods win over later ones.
+          items:
+            type: object
+            properties:
+              startDate: { type: string, format: date }
+              endDate: { type: string, format: date }
+        seasonStart: { type: [string, 'null'], format: date }
+        seasonEnd: { type: [string, 'null'], format: date }
+        isBookableOnline: { type: boolean }
+        isMandatoryOnline: { type: boolean }
+        isDefaultActiveInReservationCreation: { type: boolean }
+        isPackage: { type: boolean, description: 'Whether the row splits into components for revenue accounting.' }
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: [integer, 'null'] }
+              description: { type: string }
+              vat: { type: number }
+              allocationType: { type: string }
+              allocationValue: { type: [number, 'null'] }
+              isRemainder: { type: boolean }
+              sortOrder: { type: integer }
+
+    Rate:
+      type: object
+      properties:
+        occupancy: { type: integer }
+        priceId: { type: integer }
+        description: { type: [string, 'null'] }
+        pricingModel: { type: string, enum: [per_person_night, per_room_night, flat] }
+        unitPrice: { type: number, description: 'The stored amount of the price row.' }
+        perNight:
+          type: [number, 'null']
+          description: >-
+            Room total for one night at this occupancy. Null for `flat` rows — a flat
+            price covers the whole stay and has no meaningful per-night figure.
+        stayPrice:
+          type: [number, 'null']
+          description: The stay amount for `flat` rows; null otherwise.
+        minStay: { type: [integer, 'null'] }
+        vat: { type: number }
+        includesVat: { type: boolean }
+        isBookableOnline: { type: boolean }
+
+    PriceQuote:
+      type: object
+      properties:
+        apartment:
+          type: object
+          properties:
+            id: { type: [integer, 'null'] }
+            number: { type: [string, 'null'] }
+            description: { type: [string, 'null'] }
+        object:
+          type: object
+          properties:
+            id: { type: [integer, 'null'] }
+            name: { type: [string, 'null'] }
+        roomCategory:
+          type: [object, 'null']
+          properties:
+            id: { type: [integer, 'null'] }
+            name: { type: [string, 'null'] }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date, description: 'Departure date, exclusive.' }
+        nightCount: { type: integer }
+        persons: { type: integer }
+        guestCounts:
+          type: object
+          additionalProperties: { type: integer }
+        origin:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: [string, 'null'] }
+        priceFound:
+          type: boolean
+          description: >-
+            False when no price row applies. All totals are 0.0 then — do not read that
+            as "free".
+        room:
+          type: object
+          description: >-
+            Room total. `gross`, `net` and `vat` are the VAT-resolved amounts. `base` and
+            `modifiers` are the same total split into room rate and guest-category
+            adjustments, but carried in the stored flavour of the price rows, so they add
+            up to `gross` only where those rows are VAT-inclusive.
+          properties:
+            gross: { type: number }
+            net: { type: number }
+            vat: { type: number }
+            base: { type: number, description: 'Room rate before guest-category adjustments, in the price row''s stored flavour.' }
+            modifiers: { type: number, description: 'Sum of the guest-category adjustments, in the price row''s stored flavour.' }
+        vatRates:
+          type: array
+          items:
+            type: object
+            properties:
+              rate: { type: number }
+              gross: { type: number }
+              vat: { type: number }
+              net: { type: number }
+        nights:
+          type: array
+          description: >-
+            One entry per stretch of nights sharing a price row, exactly as the invoice
+            would print it — a stay crossing a season boundary yields two entries.
+          items:
+            type: object
+            properties:
+              startDate: { type: string, format: date }
+              endDate: { type: string, format: date }
+              nights: { type: integer, description: 'Night span of this stretch.' }
+              description: { type: [string, 'null'] }
+              unitPrice: { type: number }
+              amount:
+                type: integer
+                description: 'Billed units — nights x persons for per-head rows, 1 for flat rows.'
+              total: { type: number }
+              vat: { type: number }
+              includesVat: { type: boolean }
+              isFlatPrice: { type: boolean }
+              isPerRoom: { type: boolean }
+              persons: { type: integer }
+        modifiers:
+          type: array
+          description: >-
+            Guest-category adjustments (child rates, extra-bed surcharges). Already part
+            of the room total; listed separately so a consumer can explain why the quote
+            differs from the room's list price.
+          items:
+            type: object
+            properties:
+              description: { type: [string, 'null'] }
+              amount: { type: integer }
+              unitPrice: { type: number }
+              total: { type: number }
+              vat: { type: number }
+              includesVat: { type: boolean }
+        extras:
+          type: array
+          description: >-
+            Miscellaneous prices applicable to this stay, priced for a single room. Only
+            those flagged `isMandatoryOnline` are summed into `extrasTotal`; the rest are
+            listed so a caller can build its own basket.
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              description: { type: [string, 'null'] }
+              calculationType: { type: string, enum: [per_person_night, per_room_night, flat] }
+              unitPrice: { type: number }
+              validNights: { type: integer }
+              total: { type: number }
+              vat: { type: number }
+              includesVat: { type: boolean }
+              isBookableOnline: { type: boolean }
+              isMandatoryOnline: { type: boolean }
+              isDefaultActiveInReservationCreation: { type: boolean }
+              roomCategory:
+                type: [object, 'null']
+                properties:
+                  id: { type: [integer, 'null'] }
+                  name: { type: [string, 'null'] }
+        extrasTotal: { type: number, description: 'Sum of the mandatory extras.' }
+        touristTax:
+          type: [object, 'null']
+          description: Null when the token lacks the `tourist-tax:read` scope.
+          properties:
+            total: { type: number }
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/TouristTaxItem' }
+        grandTotal:
+          type: [number, 'null']
+          description: >-
+            Room gross plus mandatory extras plus tourist tax. Null when the token lacks
+            the `tourist-tax:read` scope, because the sum would be incomplete.
+
+    TouristTaxItem:
+      type: object
+      properties:
+        taxId: { type: integer }
+        taxName: { type: string }
+        calculationMode: { type: string, enum: [per_night_flat, percent_per_room] }
+        guestCategory:
+          type: [object, 'null']
+          description: Null for percentage taxes, which are levied per room rather than per guest.
+          properties:
+            id: { type: integer }
+            name: { type: string }
+        reportGroup: { type: [string, 'null'] }
+        pricePerNight: { type: number }
+        nights: { type: integer }
+        count: { type: integer }
+        percentageRate: { type: [number, 'null'] }
+        apartmentBase:
+          type: [number, 'null']
+          description: The apartment total the percentage was applied to.
+        includesVat: { type: boolean }
+        vatRate: { type: [number, 'null'] }
+        total: { type: number }
+
+    TouristTax:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        active: { type: boolean }
+        calculationMode: { type: string, enum: [per_night_flat, percent_per_room] }
+        percentageRate: { type: [number, 'null'] }
+        percentageBase:
+          type: [string, 'null']
+          enum: [net, gross, null]
+          description: Which apartment total a percentage tax is applied to.
+        appliesOnlyToAdult: { type: boolean }
+        includesVat: { type: boolean }
+        validFrom: { type: [string, 'null'], format: date }
+        validTo: { type: [string, 'null'], format: date }
+        sortOrder: { type: integer }
+        subsidiaries:
+          type: array
+          description: Empty means the tax applies to every subsidiary.
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: [string, 'null'] }
+        taxRate:
+          type: [object, 'null']
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            rate: { type: number }
+        rates:
+          type: array
+          description: Tariff per guest category. Empty for percentage taxes.
+          items:
+            type: object
+            properties:
+              guestCategory:
+                type: object
+                properties:
+                  id: { type: [integer, 'null'] }
+                  name: { type: [string, 'null'] }
+              pricePerNight: { type: number }
+              reportGroup: { type: [string, 'null'] }
+
+    TouristTaxReportRow:
+      type: object
+      properties:
+        taxId: { type: integer }
+        name: { type: string }
+        sortOrder: { type: integer }
+        appliesOnlyToAdult: { type: boolean }
+        calculationMode: { type: string, enum: [per_night_flat, percent_per_room] }
+        percentageRate: { type: [number, 'null'] }
+        percentageBase: { type: [string, 'null'] }
+        totalNights: { type: integer, description: 'Guest-nights, i.e. nights x heads.' }
+        totalAmount: { type: number }
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: [string, 'null'] }
+              reportGroup: { type: [string, 'null'] }
+              pricePerNight: { type: number }
+              pricePerNightConsistent:
+                type: boolean
+                description: >-
+                  False when rates merged into one report group carry different tariffs,
+                  in which case `pricePerNight` is only one of them.
+              totalNights: { type: integer }
+              totalCount: { type: integer }
+              totalAmount: { type: number }
+              categoryIds: { type: array, items: { type: integer } }

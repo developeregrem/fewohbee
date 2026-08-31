@@ -281,7 +281,7 @@ class PublicPricingService
      *
      * @return array{0: string, 1: float} [calculationType, pricePerUnit]
      */
-    private function unitPricing(Price $price, float $unitPrice, int $validDays, int $persons): array
+    public function unitPricing(Price $price, float $unitPrice, int $validDays, int $persons): array
     {
         if ($price->getIsFlatPrice()) {
             return ['flat', $unitPrice];
@@ -297,7 +297,7 @@ class PublicPricingService
      * Count how many nights of the stay the extra is valid for (season/weekday aware).
      * Day 0 is the arrival day and is skipped (same as InvoiceService::prefillMiscPositions).
      */
-    private function countValidDays(Reservation $reservation, Price $price, int $nights): int
+    public function countValidDays(Reservation $reservation, Price $price, int $nights): int
     {
         $pricesPerDay = $this->priceService->getPricesForReservationDays(
             $reservation,

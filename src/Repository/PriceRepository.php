@@ -8,6 +8,7 @@ use App\Entity\AccountingAccount;
 use App\Entity\Price;
 use App\Entity\PriceComponent;
 use App\Entity\Reservation;
+use App\Entity\RoomCategory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\Expr;
@@ -375,4 +376,77 @@ class PriceRepository extends ServiceEntityRepository
         return ['room' => $room, 'misc' => $misc, 'extras' => $extras];
     }
 
+    /**
+     * Price catalogue for the REST API: the configured price rows themselves, with the
+     * relations a consumer needs to render a price table (periods, origins, components).
+     *
+     * @param int[] $originIds
+     *
+     * @return Price[]
+     */
+    public function findForCatalogue(
+        ?int $type = null,
+        ?int $roomCategoryId = null,
+        array $originIds = [],
+        ?bool $active = true,
+        ?bool $bookableOnline = null,
+    ): array {
+        $q = $this->createQueryBuilder('p')
+            ->select('p, pp, ro, pc, rc')
+            ->leftJoin('p.pricePeriods', 'pp')
+            ->leftJoin('p.reservationOrigins', 'ro')
+            ->leftJoin('p.components', 'pc')
+            ->leftJoin('p.roomCategory', 'rc')
+            ->addOrderBy('p.type', 'DESC')
+            ->addOrderBy('rc.name', 'ASC')
+            ->addOrderBy('p.numberOfPersons', 'ASC')
+            ->addOrderBy('p.minStay', 'ASC')
+            ->addOrderBy('p.description', 'ASC');
+
+        if (null !== $type) {
+            $q->andWhere('p.type = :type')->setParameter('type', $type);
+        }
+        if (null !== $roomCategoryId) {
+            $q->andWhere('p.roomCategory = :rcid')->setParameter('rcid', $roomCategoryId);
+        }
+        if (null !== $active) {
+            $q->andWhere('p.active = :active')->setParameter('active', $active);
+        }
+        if (null !== $bookableOnline) {
+            $q->andWhere('p.isBookableOnline = :bo')->setParameter('bo', $bookableOnline);
+        }
+        if ([] !== $originIds) {
+            // Separate join alias: filtering on the fetch-joined 'ro' would truncate the
+            // hydrated origin collection to the filtered subset.
+            $q->andWhere($q->expr()->exists(
+                'SELECT 1 FROM App\\Entity\\Price pf JOIN pf.reservationOrigins rof WHERE pf = p AND rof.id IN (:oids)'
+            ))->setParameter('oids', $originIds);
+        }
+
+        return $q->getQuery()->getResult();
+    }
+
+    /**
+     * The occupancies (numberOfPersons) a room category actually has active apartment
+     * prices for. The rate calendar iterates these instead of guessing 1..bedsMax:
+     * findApartmentPrices() matches numberOfPersons exactly, so any other value yields
+     * no price at all.
+     *
+     * @return int[] ascending
+     */
+    public function findOccupanciesForRoomCategory(RoomCategory $roomCategory): array
+    {
+        $rows = $this->createQueryBuilder('p')
+            ->select('DISTINCT p.numberOfPersons AS nop')
+            ->where('p.active = true')
+            ->andWhere('p.type = 2')
+            ->andWhere('p.roomCategory = :rc')
+            ->andWhere('p.numberOfPersons IS NOT NULL')
+            ->orderBy('p.numberOfPersons', 'ASC')
+            ->setParameter('rc', $roomCategory)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(static fn (array $row): int => (int) $row['nop'], $rows);
+    }
 }

@@ -48,6 +48,8 @@ profile:
       calendar_read: Kalender lesen (iCal-Export, Feiertage, eigene Kalender)
       statistics_read: Statistiken lesen
       invoices_read: Rechnungen lesen
+      prices_read: Preise lesen (Preisliste, Preisauskunft, Ratenkalender)
+      tourist_tax_read: Kurtaxe lesen (Einstellungen und Monatsabrechnung)
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen
