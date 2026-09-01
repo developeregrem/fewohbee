@@ -54,6 +54,58 @@
                 <source>object.flash.invoice_number_pattern.invalid</source>
                 <target>Der Rechnungsnummern-Kreis ist ungültig. Er braucht genau einen &lt;number&gt;-Platzhalter und darf nur bekannte Platzhalter verwenden.</target>
             </trans-unit>
+            <trans-unit id="object.opening_hours">
+                <source>object.opening_hours</source>
+                <target>Öffnungszeiten</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours.help">
+                <source>object.opening_hours.help</source>
+                <target>Leer lassen bedeutet geschlossen. Die Zeiten lassen sich in Vorlagen für Briefe und E-Mails über den Platzhalter &lt;code&gt;openingHoursFormatted&lt;/code&gt; der Niederlassung ausgeben und über die REST-API abrufen.</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.1">
+                <source>object.weekday.1</source>
+                <target>Montag</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.2">
+                <source>object.weekday.2</source>
+                <target>Dienstag</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.3">
+                <source>object.weekday.3</source>
+                <target>Mittwoch</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.4">
+                <source>object.weekday.4</source>
+                <target>Donnerstag</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.5">
+                <source>object.weekday.5</source>
+                <target>Freitag</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.6">
+                <source>object.weekday.6</source>
+                <target>Samstag</target>
+            </trans-unit>
+            <trans-unit id="object.weekday.7">
+                <source>object.weekday.7</source>
+                <target>Sonntag</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours.period.1">
+                <source>object.opening_hours.period.1</source>
+                <target>Zeitraum 1</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours.period.2">
+                <source>object.opening_hours.period.2</source>
+                <target>Zeitraum 2</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours.from">
+                <source>object.opening_hours.from</source>
+                <target>von</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours.to">
+                <source>object.opening_hours.to</source>
+                <target>bis</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

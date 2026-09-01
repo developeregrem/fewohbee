@@ -10,4 +10,17 @@ object.invoice_number_pattern: Own invoice number range
 object.invoice_number_pattern.help: 'Leave empty to use the default range from the settings. Placeholders: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>, <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>. Invoices for rooms of this branch then get their own running number.'
 object.invoice_number_pattern.placeholder: 'e.g. RE-<year>-<number:4>'
 object.name: Branch
+object.opening_hours: Opening hours
+object.opening_hours.from: from
+object.opening_hours.help: 'Leave empty for closed. The times can be printed in letter and email templates through the branch''s <code>openingHoursFormatted</code> placeholder, and retrieved through the REST API.'
+object.opening_hours.period.1: Period 1
+object.opening_hours.period.2: Period 2
+object.opening_hours.to: to
 object.title: Branch management
+object.weekday.1: Monday
+object.weekday.2: Tuesday
+object.weekday.3: Wednesday
+object.weekday.4: Thursday
+object.weekday.5: Friday
+object.weekday.6: Saturday
+object.weekday.7: Sunday
