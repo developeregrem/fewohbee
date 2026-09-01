@@ -50,6 +50,7 @@ profile:
       invoices_read: Rechnungen lesen
       prices_read: Preise lesen (Preisliste, Preisauskunft, Ratenkalender)
       tourist_tax_read: Kurtaxe lesen (Einstellungen und Monatsabrechnung)
+      subsidiaries_read: Niederlassungen lesen (Stammdaten und Öffnungszeiten)
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen

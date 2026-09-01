@@ -14,6 +14,7 @@ enum ApiScope: string
     case INVOICES_READ = 'invoices:read';
     case PRICES_READ = 'prices:read';
     case TOURIST_TAX_READ = 'tourist-tax:read';
+    case SUBSIDIARIES_READ = 'subsidiaries:read';
 
     public function requiredRole(): string
     {
@@ -24,6 +25,7 @@ enum ApiScope: string
             self::INVOICES_READ => 'ROLE_INVOICES',
             self::PRICES_READ => 'ROLE_RESERVATIONS_RO',
             self::TOURIST_TAX_READ => 'ROLE_OPERATIONS',
+            self::SUBSIDIARIES_READ => 'ROLE_RESERVATIONS_RO',
         };
     }
 
@@ -36,6 +38,7 @@ enum ApiScope: string
             self::INVOICES_READ => 'profile.apitokens.scopes.invoices_read',
             self::PRICES_READ => 'profile.apitokens.scopes.prices_read',
             self::TOURIST_TAX_READ => 'profile.apitokens.scopes.tourist_tax_read',
+            self::SUBSIDIARIES_READ => 'profile.apitokens.scopes.subsidiaries_read',
         };
     }
 }
