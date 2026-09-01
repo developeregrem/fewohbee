@@ -218,6 +218,7 @@ online_booking:
       legend_busy: "booked"
       loading: "Loading availability …"
       unavailable: "The calendar is unavailable right now. Please enter the dates directly."
+      stay_not_bookable: "This stay cannot be booked online. Please choose different arrival and departure dates or contact us directly."
       pick_departure: "Please pick a departure day."
       selected_one: "1 night selected."
       selected_many: "%count% nights selected."

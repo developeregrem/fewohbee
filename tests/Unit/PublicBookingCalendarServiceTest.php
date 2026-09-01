@@ -51,8 +51,9 @@ final class PublicBookingCalendarServiceTest extends TestCase
 
         $payload = $service->getAvailability((string) $room->getUuid(), '2026-09', 1)->toArray();
 
-        self::assertSame(['room', 'from', 'toExclusive', 'nights'], array_keys($payload));
+        self::assertSame(['room', 'from', 'toExclusive', 'nights', 'hasMore'], array_keys($payload));
         self::assertSame((string) $room->getUuid(), $payload['room']);
+        self::assertTrue($payload['hasMore']);
         $distinctValues = array_unique(array_values($payload['nights']));
         sort($distinctValues);
         self::assertSame([0, 1], $distinctValues);
@@ -106,6 +107,24 @@ final class PublicBookingCalendarServiceTest extends TestCase
 
         self::assertNotNull($result);
         self::assertSame($horizon->format('Y-m-d'), $result->toExclusive);
+        self::assertFalse($result->hasMore);
+    }
+
+    public function testWindowAtTheHorizonReturnsANormalEmptyCalendarEnd(): void
+    {
+        $room = $this->makeRoom(1, 'Doppelzimmer');
+        $horizon = (new \DateTimeImmutable('today'))->modify('first day of next month');
+        $service = $this->makeService([$room], [], null, $horizon);
+
+        // An unknown UUID deliberately receives the same end marker, so normal
+        // pagination beyond the horizon cannot confirm whether a room exists.
+        $result = $service->getAvailability((string) Uuid::v4(), $horizon->format('Y-m'), 1);
+
+        self::assertNotNull($result);
+        self::assertSame($horizon->format('Y-m-d'), $result->from);
+        self::assertSame($horizon->format('Y-m-d'), $result->toExclusive);
+        self::assertSame([], $result->nights);
+        self::assertFalse($result->hasMore);
     }
 
     public function testRoomsWithMultipleOccupancyAreNotOfferedInTheCalendar(): void

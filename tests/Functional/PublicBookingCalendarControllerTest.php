@@ -31,8 +31,9 @@ final class PublicBookingCalendarControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $payload = json_decode((string) $client->getResponse()->getContent(), true);
 
-        self::assertSame(['room', 'from', 'toExclusive', 'nights'], array_keys($payload));
+        self::assertSame(['room', 'from', 'toExclusive', 'nights', 'hasMore'], array_keys($payload));
         self::assertSame((string) $room->getUuid(), $payload['room']);
+        self::assertIsBool($payload['hasMore']);
         self::assertNotEmpty($payload['nights']);
         foreach ($payload['nights'] as $night => $free) {
             self::assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}$/', (string) $night);
@@ -101,7 +102,29 @@ final class PublicBookingCalendarControllerTest extends WebTestCase
         $payload = json_decode((string) $client->getResponse()->getContent(), true);
 
         $horizon = (new \DateTimeImmutable('today'))->modify('+1 month');
-        self::assertLessThanOrEqual($horizon->format('Y-m-d'), $payload['toExclusive']);
+        self::assertSame($horizon->format('Y-m-d'), $payload['toExclusive']);
+        self::assertFalse($payload['hasMore']);
+    }
+
+    public function testCalendarReturnsANormalEmptyPageBeyondTheBookingHorizon(): void
+    {
+        $client = self::createClient();
+        $room = $this->getAnyRoom();
+        $config = $this->createCalendarConfig();
+        $config->setBookingHorizonMonths(1);
+        $this->useConfig($config);
+
+        $outsideMonth = (new \DateTimeImmutable('today'))->modify('+2 months')->format('Y-m');
+        $client->request('GET', '/book/calendar-data?room='.$room->getUuid().'&from='.$outsideMonth.'&months=1');
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+
+        $horizon = (new \DateTimeImmutable('today'))->modify('+1 month')->format('Y-m-d');
+        self::assertSame($horizon, $payload['from']);
+        self::assertSame($horizon, $payload['toExclusive']);
+        self::assertSame([], $payload['nights']);
+        self::assertFalse($payload['hasMore']);
     }
 
     /** Build an enabled config with the calendar switched on. */

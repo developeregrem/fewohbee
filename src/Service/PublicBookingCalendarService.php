@@ -15,9 +15,9 @@ use Symfony\Component\Uid\Uuid;
  * Availability data for the guest-facing booking calendar.
  *
  * Everything a guest may see about a room's occupancy passes through here, so the
- * class owns the guard rails: only rooms the hotelier released are addressable, the
- * window never reaches past the configured booking horizon, and the result carries
- * per-night booleans and nothing else.
+ * class owns the guard rails: only released rooms are addressable inside the
+ * calendar window, the window never reaches past the configured booking horizon,
+ * and the result carries per-night booleans plus pagination state and nothing else.
  */
 class PublicBookingCalendarService
 {
@@ -79,10 +79,11 @@ class PublicBookingCalendarService
      * @param string $from     first month to load, as Y-m
      * @param int    $months   number of months, clamped to a small range
      *
-     * @return CalendarAvailability|null null when the calendar is off, the room is
-     *                                   not released, or the input is unusable —
-     *                                   the caller must not distinguish these cases
-     *                                   towards the visitor
+     * @return CalendarAvailability|null null when the calendar is off, the input is
+     *                                   unusable, or the room is not released inside
+     *                                   the calendar window. At the horizon, every
+     *                                   valid UUID receives the same empty end marker
+     *                                   so the response does not confirm room scope
      */
     public function getAvailability(string $roomUuid, string $from, int $months, ?OnlineBookingConfig $config = null): ?CalendarAvailability
     {
@@ -91,17 +92,33 @@ class PublicBookingCalendarService
             return null;
         }
 
-        $room = $this->findReleasedRoom($roomUuid, $config);
-        if (!$room instanceof Appartment) {
-            return null;
-        }
-
         $window = $this->resolveWindow($from, $months);
         if (null === $window) {
             return null;
         }
 
-        [$start, $endExclusive] = $window;
+        [$start, $endExclusive, $hasMore] = $window;
+
+        // Reaching the horizon is ordinary pagination, not a broken calendar. The
+        // same empty result is returned for every syntactically valid UUID so this
+        // edge case cannot be used to confirm whether a room exists.
+        if ($start >= $endExclusive) {
+            return Uuid::isValid($roomUuid)
+                ? new CalendarAvailability(
+                    $roomUuid,
+                    $start->format('Y-m-d'),
+                    $endExclusive->format('Y-m-d'),
+                    [],
+                    false,
+                )
+                : null;
+        }
+
+        $room = $this->findReleasedRoom($roomUuid, $config);
+        if (!$room instanceof Appartment) {
+            return null;
+        }
+
         $occupied = $this->availabilityService->getOccupiedNightsForRoom($room, $start, $endExclusive);
 
         $nights = [];
@@ -115,10 +132,11 @@ class PublicBookingCalendarService
             $start->format('Y-m-d'),
             $endExclusive->format('Y-m-d'),
             $nights,
+            $hasMore,
         );
     }
 
-    /** Last night the calendar may offer, derived from the configured booking horizon. */
+    /** Exclusive departure boundary derived from the configured booking horizon. */
     public function getHorizonEnd(): \DateTimeImmutable
     {
         $maxDeparture = $this->restrictionService->getMaxDepartureDate();
@@ -197,7 +215,7 @@ class PublicBookingCalendarService
     /**
      * Clamp the requested window to [today's month, booking horizon].
      *
-     * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}|null
+     * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable, 2: bool}|null
      */
     private function resolveWindow(string $from, int $months): ?array
     {
@@ -217,11 +235,15 @@ class PublicBookingCalendarService
         $endExclusive = $start->modify(sprintf('+%d months', $months));
 
         $horizonEnd = $this->getHorizonEnd();
+        if ($start >= $horizonEnd) {
+            return [$horizonEnd, $horizonEnd, false];
+        }
+
         if ($endExclusive > $horizonEnd) {
             $endExclusive = $horizonEnd;
         }
 
-        return $start < $endExclusive ? [$start, $endExclusive] : null;
+        return [$start, $endExclusive, $endExclusive < $horizonEnd];
     }
 
     /**

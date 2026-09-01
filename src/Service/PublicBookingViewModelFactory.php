@@ -217,11 +217,15 @@ class PublicBookingViewModelFactory
         return $view;
     }
 
-    /** Whole months the calendar may page through, counted from the current month. */
+    /** Whole months containing bookable nights, counted from the current month. */
     public function monthsUntil(\DateTimeImmutable $end): int
     {
         $firstOfThisMonth = (new \DateTimeImmutable('today'))->modify('first day of this month');
-        $diff = $firstOfThisMonth->diff($end->modify('first day of this month'));
+        // The horizon is an exclusive departure boundary. If it falls on the first
+        // day of a month, that month contains no bookable night and must not become
+        // an otherwise empty calendar page.
+        $lastBookableMonth = $end->modify('-1 day')->modify('first day of this month');
+        $diff = $firstOfThisMonth->diff($lastBookableMonth);
 
         return max(1, $diff->y * 12 + $diff->m + 1);
     }

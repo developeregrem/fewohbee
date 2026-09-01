@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Entity\Appartment;
+use App\Entity\Enum\PublicBookingMode;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\User;
@@ -231,6 +233,53 @@ final class PublicBookingControllerTest extends WebTestCase
         self::assertStringContainsString('class="fhb-steps"', $content);
     }
 
+    public function testCalendarUsesABookabilityMessageForAnEmptyAvailabilityResult(): void
+    {
+        $client = self::createClient();
+        $room = $this->getCalendarRoom();
+        $config = $this->createEnabledConfig();
+        $config->setMode(PublicBookingMode::CALENDAR);
+
+        $publicBookingService = $this->createMock(PublicBookingService::class);
+        $publicBookingService->expects(self::once())
+            ->method('validateEnabledConfig')
+            ->willReturn(null);
+        $publicBookingService->expects(self::once())
+            ->method('buildSelectionPreview')
+            ->willReturn(['availability' => [], 'extras' => []]);
+
+        $configService = $this->createStub(OnlineBookingConfigService::class);
+        $configService->method('getConfig')->willReturn($config);
+        $configService->method('getAllowedRoomIds')->willReturn([(int) $room->getId()]);
+        $configService->method('getAllowedSubsidiaryIds')->willReturn([(int) $room->getObject()->getId()]);
+        $configService->method('countBookableRooms')->willReturn(1);
+
+        self::getContainer()->set(PublicBookingService::class, $publicBookingService);
+        self::getContainer()->set(OnlineBookingConfigService::class, $configService);
+        self::getContainer()->set(PublicBookingAbuseProtectionService::class, $this->createNoopAbuseProtectionService());
+
+        $dateFrom = new \DateTimeImmutable('tomorrow');
+        $client->request('POST', '/book', [
+            'intent' => 'availability',
+            'room' => (string) $room->getUuid(),
+            'dateFrom' => $dateFrom->format('Y-m-d'),
+            'dateTo' => $dateFrom->modify('+2 days')->format('Y-m-d'),
+            'persons' => 1,
+            'roomsCount' => 1,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString(
+            'Dieser Aufenthalt kann leider nicht online gebucht werden.',
+            $content,
+        );
+        self::assertStringNotContainsString(
+            'Für Ihre gewünschten Suchkriterien konnte leider kein passendes Zimmer gefunden werden.',
+            $content,
+        );
+    }
+
     /** Ensure anonymous visitors cannot switch the theme through the preview parameter. */
     public function testPreviewThemeParameterIsIgnoredForAnonymousVisitors(): void
     {
@@ -335,6 +384,19 @@ final class PublicBookingControllerTest extends WebTestCase
         $em = self::getContainer()->get('doctrine')->getManager();
 
         return $em;
+    }
+
+    /** Return one active room that the single-accommodation calendar can represent. */
+    private function getCalendarRoom(): Appartment
+    {
+        $rooms = $this->getEntityManager()->getRepository(Appartment::class)->findBy(['active' => true]);
+        foreach ($rooms as $room) {
+            if (true !== $room->isMultipleOccupancy()) {
+                return $room;
+            }
+        }
+
+        self::fail('No usable room found in the test database.');
     }
 
     /** Replace the booking services in the test container for controller-level flow assertions. */

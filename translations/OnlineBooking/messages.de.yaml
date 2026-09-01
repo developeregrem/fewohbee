@@ -218,6 +218,7 @@ online_booking:
       legend_busy: "belegt"
       loading: "Verfügbarkeit wird geladen …"
       unavailable: "Der Kalender ist gerade nicht verfügbar. Bitte trage die Daten direkt ein."
+      stay_not_bookable: "Dieser Aufenthalt kann leider nicht online gebucht werden. Bitte wählen Sie andere An- und Abreisedaten oder kontaktieren Sie uns direkt."
       pick_departure: "Bitte Abreisetag wählen."
       selected_one: "1 Nacht ausgewählt."
       selected_many: "%count% Nächte ausgewählt."
