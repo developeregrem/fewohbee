@@ -25,16 +25,18 @@ final class Version20260831120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add opening_hours to objects (per-subsidiary opening hours, display only)';
+        return 'Add opening_hours and opening_hours_note to objects (per-subsidiary opening hours, display only)';
     }
 
     public function up(Schema $schema): void
     {
         $this->addSql('ALTER TABLE objects ADD opening_hours JSON DEFAULT NULL');
+        $this->addSql('ALTER TABLE objects ADD opening_hours_note LONGTEXT DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
+        $this->addSql('ALTER TABLE objects DROP opening_hours_note');
         $this->addSql('ALTER TABLE objects DROP opening_hours');
     }
 }

@@ -54,27 +54,4 @@ final class TemplateSchemaServiceTest extends TestCase
 
         self::assertSame('scalar', $schema['broken']['type']);
     }
-
-    /**
-     * The opening hours form tells the user the times can be used as a placeholder in
-     * letter and email templates. That promise only holds while the branch stays within
-     * the schema's depth limit, so it is asserted rather than assumed.
-     */
-    public function testOpeningHoursOfTheBranchAreReachableFromAReservation(): void
-    {
-        $service = new TemplateSchemaService();
-
-        $schema = $service->buildSchema([
-            'reservation1' => ['class' => Reservation::class],
-        ]);
-
-        $node = $schema['reservation1'];
-        foreach (['appartment', 'object', 'openingHoursFormatted'] as $step) {
-            self::assertArrayHasKey($step, $node['properties'], 'not reachable: '.$step);
-            $node = $node['properties'][$step];
-        }
-
-        self::assertSame('scalar', $node['type']);
-    }
 }
-

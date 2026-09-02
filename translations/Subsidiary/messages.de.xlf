@@ -60,7 +60,7 @@
             </trans-unit>
             <trans-unit id="object.opening_hours.help">
                 <source>object.opening_hours.help</source>
-                <target>Leer lassen bedeutet geschlossen. Die Zeiten lassen sich in Vorlagen für Briefe und E-Mails über den Platzhalter &lt;code&gt;openingHoursFormatted&lt;/code&gt; der Niederlassung ausgeben und über die REST-API abrufen.</target>
+                <target>Leer lassen bedeutet geschlossen. Die Zeiten lassen sich in Vorlagen für Briefe und E-Mails über den Baustein „Öffnungszeiten der Niederlassung" einfügen und über die REST-API abrufen.</target>
             </trans-unit>
             <trans-unit id="object.weekday.1">
                 <source>object.weekday.1</source>
@@ -105,6 +105,22 @@
             <trans-unit id="object.opening_hours.to">
                 <source>object.opening_hours.to</source>
                 <target>bis</target>
+            </trans-unit>
+            <trans-unit id="object.flash.opening_hours.incomplete">
+                <source>object.flash.opening_hours.incomplete</source>
+                <target>Bei den Öffnungszeiten ist ein Zeitfenster nur halb ausgefüllt. Bitte „von" und „bis" angeben oder beide Felder leeren.</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours_note">
+                <source>object.opening_hours_note</source>
+                <target>Hinweis zu den Öffnungszeiten</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours_note.placeholder">
+                <source>object.opening_hours_note.placeholder</source>
+                <target>z. B. Außerhalb dieser Zeiten nach Vereinbarung, Tel. 0123 456</target>
+            </trans-unit>
+            <trans-unit id="object.opening_hours_note.help">
+                <source>object.opening_hours_note.help</source>
+                <target>Freier Text, der zusammen mit den Zeiten ausgegeben wird — für alles, was ein Wochenraster nicht abbildet.</target>
             </trans-unit>
         </body>
     </file>

@@ -24,6 +24,7 @@ info:
     | `invoices:read` | ROLE_INVOICES |
     | `prices:read` | ROLE_RESERVATIONS_RO |
     | `tourist-tax:read` | ROLE_OPERATIONS |
+    | `subsidiaries:read` | ROLE_RESERVATIONS_RO |
 
     Requests are rate limited to 300 per 5 minutes per token.
   license:
@@ -962,6 +963,11 @@ components:
               properties:
                 from: { type: string, examples: ['08:00'] }
                 to: { type: string, examples: ['12:00'] }
+        openingHoursNote:
+          type: [string, 'null']
+          description: >-
+            Free text an operator entered alongside the hours, for anything a weekly grid
+            cannot express. Null when none is set.
       examples:
         - id: 1
           name: Main house
@@ -969,6 +975,7 @@ components:
           openingHours:
             '1': [{ from: '08:00', to: '12:00' }, { from: '16:00', to: '19:00' }]
             '6': [{ from: '09:00', to: '12:00' }]
+          openingHoursNote: Outside these hours by arrangement
 
     Reservation:
       type: object

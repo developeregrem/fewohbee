@@ -65,5 +65,16 @@
             {% endfor %}
         </tbody>
     </table>
+    <div class="row">
+        <label for="opening-hours-note-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.opening_hours_note'|trans }}</label>
+
+        <div class="col-sm-8">
+            <textarea class="form-control" rows="2"
+                      name="opening-hours-note-{{ object.id }}"
+                      id="opening-hours-note-{{ object.id }}"
+                      placeholder="{{ 'object.opening_hours_note.placeholder'|trans }}">{{ object.openingHoursNote }}</textarea>
+            <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
+        </div>
+    </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">

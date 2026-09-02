@@ -41,6 +41,14 @@ class Subsidiary
      */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $openingHours = null;
+
+    /**
+     * Free text shown with the opening hours, e.g. "outside these hours by arrangement,
+     * phone 0123 456". Kept separate from the hours themselves because it is prose: it
+     * carries the exceptions a grid cannot express.
+     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $openingHoursNote = null;
     #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
     private $appartments;
 
@@ -155,76 +163,20 @@ class Subsidiary
         return $this;
     }
 
-    /**
-     * One-line rendering for correspondence templates and overviews, e.g.
-     * "Mo.–Fr. 08:00–12:00, 16:00–19:00 · Sa. 09:00–12:00".
-     *
-     * Consecutive weekdays sharing the same hours are folded into a range so the common
-     * "Monday to Friday" case does not print five near-identical entries. Weekday names
-     * follow the current default locale, which Symfony sets per request — reading a global
-     * keeps the entity free of injected services.
-     */
-    public function getOpeningHoursFormatted(): string
+    public function getOpeningHoursNote(): ?string
     {
-        $hours = $this->getOpeningHours();
-        if ([] === $hours) {
-            return '';
-        }
-
-        $groups = [];
-        foreach (range(1, 7) as $weekday) {
-            $ranges = $hours[$weekday] ?? [];
-            if ([] === $ranges) {
-                continue;
-            }
-
-            $times = implode(', ', array_map(
-                static fn (array $range): string => $range[0].'–'.$range[1],
-                $ranges
-            ));
-
-            $last = array_key_last($groups);
-            // Extend the previous group only when it ends on the day right before this
-            // one; a gap (e.g. closed on Wednesday) has to start a new group.
-            if (null !== $last && $groups[$last]['times'] === $times && $groups[$last]['to'] === $weekday - 1) {
-                $groups[$last]['to'] = $weekday;
-                continue;
-            }
-
-            $groups[] = ['from' => $weekday, 'to' => $weekday, 'times' => $times];
-        }
-
-        $parts = [];
-        foreach ($groups as $group) {
-            $label = self::weekdayName($group['from']);
-            if ($group['to'] > $group['from']) {
-                $label .= '–'.self::weekdayName($group['to']);
-            }
-
-            $parts[] = $label.' '.$group['times'];
-        }
-
-        return implode(' · ', $parts);
+        return $this->openingHoursNote;
     }
 
     /**
-     * Abbreviated weekday name for an ISO weekday (1 = Monday) in the default locale.
+     * An empty string is stored as null, so "no note" has one representation.
      */
-    private static function weekdayName(int $weekday): string
+    public function setOpeningHoursNote(?string $openingHoursNote): self
     {
-        // 2024-01-01 was a Monday, so offsetting from it lands on the wanted weekday.
-        $date = (new \DateTimeImmutable('2024-01-01'))->modify('+'.($weekday - 1).' days');
+        $openingHoursNote = null === $openingHoursNote ? null : trim($openingHoursNote);
+        $this->openingHoursNote = '' === $openingHoursNote ? null : $openingHoursNote;
 
-        $formatter = new \IntlDateFormatter(
-            \Locale::getDefault(),
-            \IntlDateFormatter::NONE,
-            \IntlDateFormatter::NONE,
-            null,
-            null,
-            'EEE'
-        );
-
-        return $formatter->format($date) ?: '';
+        return $this;
     }
 
     public function setAppartments($appartments): void

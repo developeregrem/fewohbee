@@ -25,6 +25,7 @@ final readonly class SubsidiaryDto
         public string $name,
         public string $description,
         public ?array $openingHours,
+        public ?string $openingHoursNote,
     ) {
     }
 
@@ -49,6 +50,7 @@ final readonly class SubsidiaryDto
             // would contradict the object the schema promises. Null says "not configured"
             // without a second shape for the same field.
             [] === $openingHours ? null : $openingHours,
+            $subsidiary->getOpeningHoursNote(),
         );
     }
 }
