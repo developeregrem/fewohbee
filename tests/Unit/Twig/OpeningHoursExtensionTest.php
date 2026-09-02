@@ -11,11 +11,21 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class OpeningHoursExtensionTest extends TestCase
 {
+    private string $originalLocale;
+
     protected function setUp(): void
     {
+        $this->originalLocale = \Locale::getDefault();
         // Deliberately different from the locales used below, so a test that passes
         // can only be reading the translator and not the ambient default.
         \Locale::setDefault('en_US');
+    }
+
+    protected function tearDown(): void
+    {
+        // The default is process-wide, so leaving it changed would leak into every
+        // test running after this class.
+        \Locale::setDefault($this->originalLocale);
     }
 
     public function testConsecutiveWeekdaysWithEqualHoursAreFolded(): void
