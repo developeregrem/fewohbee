@@ -5,9 +5,26 @@ object.flash.create.success: Branch was created successfully.
 object.flash.delete.error.still.in.use: Branch cannot be deleted because it still has rooms assigned to it.
 object.flash.delete.success: Branch has been successfully deleted.
 object.flash.edit.success: Branch has been updated successfully.
+object.flash.opening_hours.incomplete: 'One of the opening-hours ranges is only half filled in. Please give both "from" and "to", or clear both fields.'
 object.flash.invoice_number_pattern.invalid: The invoice number range is invalid. It needs exactly one <number> placeholder and may only use known placeholders.
 object.invoice_number_pattern: Own invoice number range
 object.invoice_number_pattern.help: 'Leave empty to use the default range from the settings. Placeholders: <code>&lt;year&gt;</code>, <code>&lt;year2&gt;</code>, <code>&lt;month&gt;</code>, <code>&lt;day&gt;</code>, <code>&lt;number:4&gt;</code>. Invoices for rooms of this branch then get their own running number.'
 object.invoice_number_pattern.placeholder: 'e.g. RE-<year>-<number:4>'
 object.name: Branch
+object.opening_hours: Opening hours
+object.opening_hours.from: from
+object.opening_hours.help: 'Leave empty for closed. The times can be inserted into letter and email templates with the "Opening hours of the branch" snippet, and retrieved through the REST API.'
+object.opening_hours_note: Note on the opening hours
+object.opening_hours_note.help: 'Free text printed together with the hours — for everything a weekly grid cannot express.'
+object.opening_hours_note.placeholder: 'e.g. outside these hours by arrangement, phone 0123 456'
+object.opening_hours.period.1: Period 1
+object.opening_hours.period.2: Period 2
+object.opening_hours.to: to
 object.title: Branch management
+object.weekday.1: Monday
+object.weekday.2: Tuesday
+object.weekday.3: Wednesday
+object.weekday.4: Thursday
+object.weekday.5: Friday
+object.weekday.6: Saturday
+object.weekday.7: Sunday

@@ -88,6 +88,9 @@ class SubsidiaryServiceController extends AbstractController
             } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
+            } elseif ($sub->hasIncompleteOpeningHours($request, 'new')) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($object);
@@ -124,6 +127,10 @@ class SubsidiaryServiceController extends AbstractController
             } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
+                $em->clear(Subsidiary::class);
+            } elseif ($sub->hasIncompleteOpeningHours($request, $id)) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
                 $em->clear(Subsidiary::class);
             } else {
                 $em->persist($object);

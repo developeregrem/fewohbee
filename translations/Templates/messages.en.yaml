@@ -69,6 +69,8 @@ templates.editor.apartment_modifier.positions.desc: >-
   Inserts a table with all apartment surcharge / discount positions. The table is only rendered when such
   positions exist on the invoice.
 templates.editor.tourist_tax.positions: Tourist tax positions
+templates.editor.opening_hours: Opening hours of the branch
+templates.editor.opening_hours.desc: 'Prints the branch''s weekly opening hours as a single line, e.g. "Mon–Fri 08:00–12:00, 16:00–19:00". The paragraph is omitted when no hours are configured.'
 templates.editor.payment_qr: Payment QR code (GiroCode)
 templates.editor.payment_qr.desc: >-
   Inserts a QR code that fills a SEPA credit transfer in the payer's banking

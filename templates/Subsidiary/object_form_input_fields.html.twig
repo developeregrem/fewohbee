@@ -26,5 +26,55 @@
             <small class="form-text text-muted">{{ 'object.invoice_number_pattern.help'|trans|raw }}</small>
         </div>
     </div>
+
+    <hr>
+    <h5>{{ 'object.opening_hours'|trans }}</h5>
+    <p class="text-muted small mb-2">{{ 'object.opening_hours.help'|trans|raw }}</p>
+    <table class="table table-sm align-middle mb-2">
+        <thead>
+            <tr>
+                <th style="width: 20%;"></th>
+                <th style="width: 40%;">{{ 'object.opening_hours.period.1'|trans }}</th>
+                <th style="width: 40%;">{{ 'object.opening_hours.period.2'|trans }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for weekday in 1..7 %}
+                {% set ranges = object.openingHours[weekday]|default([]) %}
+                {% set weekdayLabel = ('object.weekday.' ~ weekday)|trans %}
+                <tr>
+                    <th scope="row" class="fw-normal">{{ weekdayLabel }}</th>
+                    {% for slot in 0..1 %}
+                        {% set range = ranges[slot]|default(['', '']) %}
+                        {% set periodLabel = ('object.opening_hours.period.' ~ (slot + 1))|trans %}
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="time" class="form-control form-control-sm"
+                                       name="opening-hours-{{ object.id }}[{{ weekday }}][{{ slot }}][from]"
+                                       value="{{ range[0] }}"
+                                       aria-label="{{ weekdayLabel }}, {{ periodLabel }}, {{ 'object.opening_hours.from'|trans }}">
+                                <span class="text-muted">–</span>
+                                <input type="time" class="form-control form-control-sm"
+                                       name="opening-hours-{{ object.id }}[{{ weekday }}][{{ slot }}][to]"
+                                       value="{{ range[1] }}"
+                                       aria-label="{{ weekdayLabel }}, {{ periodLabel }}, {{ 'object.opening_hours.to'|trans }}">
+                            </div>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="row">
+        <label for="opening-hours-note-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.opening_hours_note'|trans }}</label>
+
+        <div class="col-sm-8">
+            <textarea class="form-control" rows="2"
+                      name="opening-hours-note-{{ object.id }}"
+                      id="opening-hours-note-{{ object.id }}"
+                      placeholder="{{ 'object.opening_hours_note.placeholder'|trans }}">{{ object.openingHoursNote }}</textarea>
+            <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
+        </div>
+    </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">

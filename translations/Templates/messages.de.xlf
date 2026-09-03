@@ -898,6 +898,14 @@
                 <source>templates.editor.reservation.misc_positions.desc</source>
                 <target>Fügt alle zusätzlichen Reservierungspositionen mit Beschreibung und Gesamtpreis zeilenweise ein.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.opening_hours">
+                <source>templates.editor.opening_hours</source>
+                <target>Öffnungszeiten der Niederlassung</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.opening_hours.desc">
+                <source>templates.editor.opening_hours.desc</source>
+                <target>Gibt die wöchentlichen Öffnungszeiten der Niederlassung als eine Zeile aus, z. B. „Mo.–Fr. 08:00–12:00, 16:00–19:00". Sind keine Zeiten hinterlegt, entfällt der Absatz.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

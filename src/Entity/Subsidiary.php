@@ -27,6 +27,28 @@ class Subsidiary
      */
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private ?string $invoiceNumberPattern = null;
+
+    /**
+     * Opening hours of this branch, keyed by ISO weekday (1 = Monday … 7 = Sunday).
+     * Each weekday holds a list of [from, to] ranges in 'HH:MM' notation; a weekday
+     * missing from the array is closed.
+     *
+     * Display data only: nothing derives availability, arrival windows or any other
+     * behaviour from it. That is why it is a JSON column and not a queryable table —
+     * no query ever asks "is the branch open at 14:00?".
+     *
+     * @var array<int, list<array{0: string, 1: string}>>|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $openingHours = null;
+
+    /**
+     * Free text shown with the opening hours, e.g. "outside these hours by arrangement,
+     * phone 0123 456". Kept separate from the hours themselves because it is prose: it
+     * carries the exceptions a grid cannot express.
+     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $openingHoursNote = null;
     #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
     private $appartments;
 
@@ -92,6 +114,67 @@ class Subsidiary
     {
         $invoiceNumberPattern = null === $invoiceNumberPattern ? null : trim($invoiceNumberPattern);
         $this->invoiceNumberPattern = '' === $invoiceNumberPattern ? null : $invoiceNumberPattern;
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, list<array{0: string, 1: string}>>
+     */
+    public function getOpeningHours(): array
+    {
+        return $this->openingHours ?? [];
+    }
+
+    /**
+     * Incomplete ranges (only one end filled in) and weekdays outside 1..7 are dropped,
+     * and an entirely empty grid is stored as null, so "no opening hours configured" has
+     * exactly one representation — the same reasoning as setInvoiceNumberPattern().
+     *
+     * @param array<int|string, iterable<array{0?: ?string, 1?: ?string}>>|null $openingHours
+     */
+    public function setOpeningHours(?array $openingHours): self
+    {
+        $normalized = [];
+
+        foreach ($openingHours ?? [] as $weekday => $ranges) {
+            $weekday = (int) $weekday;
+            if ($weekday < 1 || $weekday > 7) {
+                continue;
+            }
+
+            foreach ($ranges as $range) {
+                $from = trim((string) ($range[0] ?? ''));
+                $to = trim((string) ($range[1] ?? ''));
+
+                // A range only carries meaning once both ends are known.
+                if ('' === $from || '' === $to) {
+                    continue;
+                }
+
+                $normalized[$weekday][] = [$from, $to];
+            }
+        }
+
+        ksort($normalized);
+
+        $this->openingHours = [] === $normalized ? null : $normalized;
+
+        return $this;
+    }
+
+    public function getOpeningHoursNote(): ?string
+    {
+        return $this->openingHoursNote;
+    }
+
+    /**
+     * An empty string is stored as null, so "no note" has one representation.
+     */
+    public function setOpeningHoursNote(?string $openingHoursNote): self
+    {
+        $openingHoursNote = null === $openingHoursNote ? null : trim($openingHoursNote);
+        $this->openingHoursNote = '' === $openingHoursNote ? null : $openingHoursNote;
 
         return $this;
     }

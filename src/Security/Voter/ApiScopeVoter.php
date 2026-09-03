@@ -24,6 +24,7 @@ class ApiScopeVoter extends Voter
     public const INVOICES_READ = 'API_SCOPE_INVOICES_READ';
     public const PRICES_READ = 'API_SCOPE_PRICES_READ';
     public const TOURIST_TAX_READ = 'API_SCOPE_TOURIST_TAX_READ';
+    public const SUBSIDIARIES_READ = 'API_SCOPE_SUBSIDIARIES_READ';
 
     private const ATTRIBUTE_SCOPES = [
         self::RESERVATIONS_READ => ApiScope::RESERVATIONS_READ,
@@ -32,6 +33,7 @@ class ApiScopeVoter extends Voter
         self::INVOICES_READ => ApiScope::INVOICES_READ,
         self::PRICES_READ => ApiScope::PRICES_READ,
         self::TOURIST_TAX_READ => ApiScope::TOURIST_TAX_READ,
+        self::SUBSIDIARIES_READ => ApiScope::SUBSIDIARIES_READ,
     ];
 
     public function __construct(

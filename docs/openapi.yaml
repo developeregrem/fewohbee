@@ -24,6 +24,7 @@ info:
     | `invoices:read` | ROLE_INVOICES |
     | `prices:read` | ROLE_RESERVATIONS_RO |
     | `tourist-tax:read` | ROLE_OPERATIONS |
+    | `subsidiaries:read` | ROLE_RESERVATIONS_RO |
 
     Requests are rate limited to 300 per 5 minutes per token.
   license:
@@ -60,6 +61,10 @@ tags:
     description: >-
       Tourist tax (Kurtaxe / city tax) configuration and the monthly report a municipality
       filing is built from.
+  - name: Subsidiaries
+    description: >-
+      Branch master data including the weekly opening hours, so a website or home
+      automation can print them from one place instead of keeping a second copy.
   - name: Calendars
     description: iCal export of a room's occupancy, public holidays, and custom calendars.
   - name: Statistics
@@ -781,6 +786,36 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
 
+  /subsidiaries:
+    get:
+      tags: [Subsidiaries]
+      operationId: listSubsidiaries
+      summary: The configured branches
+      description: |
+        Requires the `subsidiaries:read` scope.
+
+        Master data only. `openingHours` is what an operator entered under Settings →
+        Branches; whether a branch is open at the moment of the call is not computed, as
+        that depends on the caller's timezone.
+      responses:
+        '200':
+          description: All branches, ordered by name.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Subsidiary' }
+                  meta:
+                    type: object
+                    properties:
+                      count: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
   /openapi.yaml:
     get:
       tags: [Meta]
@@ -908,6 +943,39 @@ components:
         - error:
             code: 400
             message: "Invalid parameter 'start': expected format Y-m-d."
+
+    Subsidiary:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        openingHours:
+          type: [object, 'null']
+          description: >-
+            Weekday ('1' = Monday … '7' = Sunday) to its time ranges, or null when no
+            opening hours are configured at all. Within a configured set, a weekday that
+            is absent is closed.
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                from: { type: string, examples: ['08:00'] }
+                to: { type: string, examples: ['12:00'] }
+        openingHoursNote:
+          type: [string, 'null']
+          description: >-
+            Free text an operator entered alongside the hours, for anything a weekly grid
+            cannot express. Null when none is set.
+      examples:
+        - id: 1
+          name: Main house
+          description: Reception building
+          openingHours:
+            '1': [{ from: '08:00', to: '12:00' }, { from: '16:00', to: '19:00' }]
+            '6': [{ from: '09:00', to: '12:00' }]
+          openingHoursNote: Outside these hours by arrangement
 
     Reservation:
       type: object

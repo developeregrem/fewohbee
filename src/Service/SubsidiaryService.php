@@ -40,8 +40,77 @@ class SubsidiaryService
         $object->setName($request->request->get('name-'.$id));
         $object->setDescription($request->request->get('description-'.$id));
         $object->setInvoiceNumberPattern($request->request->get('invoice-number-pattern-'.$id));
+        $object->setOpeningHours($this->getOpeningHoursFromForm($request, $id));
+        $object->setOpeningHoursNote($request->request->get('opening-hours-note-'.$id));
 
         return $object;
+    }
+
+    /**
+     * True when the submitted grid holds a range with only one end filled in.
+     *
+     * Subsidiary::setOpeningHours() drops such a range, which on its own would leave the
+     * operator believing a lone "07:00" had been saved. The controller turns this into a
+     * visible warning instead.
+     *
+     * @param int|string $id
+     */
+    public function hasIncompleteOpeningHours(Request $request, $id): bool
+    {
+        foreach ($request->request->all('opening-hours-'.$id) as $ranges) {
+            if (!is_array($ranges)) {
+                continue;
+            }
+
+            foreach ($ranges as $range) {
+                if (!is_array($range)) {
+                    continue;
+                }
+
+                $from = trim((string) ($range['from'] ?? ''));
+                $to = trim((string) ($range['to'] ?? ''));
+
+                if (('' === $from) !== ('' === $to)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reads the weekday grid of the object form into the shape the entity stores:
+     * weekday => list of [from, to]. Empty and half-filled ranges are left in place
+     * here and dropped by Subsidiary::setOpeningHours(), so normalisation lives in
+     * exactly one spot.
+     *
+     * @param int|string $id
+     *
+     * @return array<int, list<array{0: string, 1: string}>>
+     */
+    private function getOpeningHoursFromForm(Request $request, $id): array
+    {
+        $hours = [];
+
+        foreach ($request->request->all('opening-hours-'.$id) as $weekday => $ranges) {
+            if (!is_array($ranges)) {
+                continue;
+            }
+
+            foreach ($ranges as $range) {
+                if (!is_array($range)) {
+                    continue;
+                }
+
+                $hours[(int) $weekday][] = [
+                    (string) ($range['from'] ?? ''),
+                    (string) ($range['to'] ?? ''),
+                ];
+            }
+        }
+
+        return $hours;
     }
 
     public function deleteObject(Subsidiary $object)

@@ -55,4 +55,3 @@ final class TemplateSchemaServiceTest extends TestCase
         self::assertSame('scalar', $schema['broken']['type']);
     }
 }
-
