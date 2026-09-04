@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Entity\Reservation;
+use App\Entity\Subsidiary;
 use App\Service\TemplateSchemaService;
 use PHPUnit\Framework\TestCase;
 
@@ -53,5 +54,17 @@ final class TemplateSchemaServiceTest extends TestCase
         ]);
 
         self::assertSame('scalar', $schema['broken']['type']);
+    }
+
+    public function testBuildSchemaOmitsExplicitlyIgnoredGetters(): void
+    {
+        $service = new TemplateSchemaService();
+
+        $schema = $service->buildSchema([
+            'subsidiary' => ['class' => Subsidiary::class],
+        ]);
+
+        self::assertArrayNotHasKey('openingHours', $schema['subsidiary']['properties']);
+        self::assertSame('scalar', $schema['subsidiary']['properties']['openingHoursNote']['type']);
     }
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\Attribute\TemplateIgnore;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -107,6 +108,10 @@ class TemplateSchemaService
         $properties = [];
 
         foreach ($refClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            if ([] !== $method->getAttributes(TemplateIgnore::class)) {
+                continue;
+            }
+
             $propertyName = $this->extractPropertyName($method);
             if (null === $propertyName) {
                 continue;

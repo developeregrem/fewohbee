@@ -678,13 +678,31 @@ class ReservationService
 
     /**
      * Build all reservation variables required by template rendering.
+     *
+     * Reservations without a booker receive an empty address object. Imported and
+     * partially created reservations may legitimately have no booker, and templates
+     * that only use unrelated reservation data must still remain renderable.
+     *
+     * @param non-empty-list<Reservation> $param
+     *
+     * @return array<string, mixed>
      */
     public function buildTemplateRenderParams(Template $template, mixed $param): array
     {
+        $reservation = $param[0];
+        $address = new CustomerAddresses();
+        $booker = $reservation->getBooker();
+        if ($booker instanceof Customer) {
+            $firstAddress = $booker->getCustomerAddresses()->first();
+            if ($firstAddress instanceof CustomerAddresses) {
+                $address = $firstAddress;
+            }
+        }
+
         // params need to be an array containing a list of Reservation Objects
         $params = [
-            'reservation1' => $param[0],
-            'address' => (0 == count($param[0]->getBooker()->getCustomerAddresses()) ? new CustomerAddresses() : $param[0]->getBooker()->getCustomerAddresses()[0]),
+            'reservation1' => $reservation,
+            'address' => $address,
             'reservations' => $param,
         ];
         $prices = $this->getTotalPricesForTemplate($param);

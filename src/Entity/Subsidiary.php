@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Attribute\TemplateIgnore;
 use App\Repository\SubsidiaryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
@@ -121,6 +122,7 @@ class Subsidiary
     /**
      * @return array<int, list<array{0: string, 1: string}>>
      */
+    #[TemplateIgnore]
     public function getOpeningHours(): array
     {
         return $this->openingHours ?? [];

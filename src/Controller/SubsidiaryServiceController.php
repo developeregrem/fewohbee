@@ -123,15 +123,15 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Subsidiary::class);
+                $em->clear();
             } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
-                $em->clear(Subsidiary::class);
+                $em->clear();
             } elseif ($sub->hasIncompleteOpeningHours($request, $id)) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
-                $em->clear(Subsidiary::class);
+                $em->clear();
             } else {
                 $em->persist($object);
                 $em->flush();

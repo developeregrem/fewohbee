@@ -39,4 +39,9 @@ final class Version20260831120000 extends AbstractMigration
         $this->addSql('ALTER TABLE objects DROP opening_hours_note');
         $this->addSql('ALTER TABLE objects DROP opening_hours');
     }
+
+    public function isTransactional(): bool
+    {
+        return false;
+    }
 }

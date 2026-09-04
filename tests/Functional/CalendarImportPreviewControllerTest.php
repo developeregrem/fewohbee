@@ -43,6 +43,7 @@ final class CalendarImportPreviewControllerTest extends WebTestCase
     public function testPreviewReturnsGroupedCurrentEntries(): void
     {
         $client = self::createClient();
+        $client->disableReboot();
         $client->loginUser($this->getAdminUser(), 'main');
         $sync = $this->getCalendarSync();
 

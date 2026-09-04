@@ -222,7 +222,17 @@ class TemplatesServiceController extends AbstractController
             $context = $sampleContext;
         }
 
-        $params = $provider->buildPreviewRenderParams($template, $context);
+        try {
+            $params = $provider->buildPreviewRenderParams($template, $context);
+        } catch (\Throwable) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.render.error.generic',
+                'warningText' => $translator->trans('templates.preview.render.error.generic'),
+                'warningVars' => [],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $templateText = trim((string) $request->request->get('previewText', ''));
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
@@ -275,6 +285,7 @@ class TemplatesServiceController extends AbstractController
         TemplatesService $templatesService,
         TemplatePreviewProviderRegistry $previewRegistry,
         Request $request,
+        TranslatorInterface $translator,
         Template $template
     ): Response {
         $provider = $previewRegistry->getProvider($template);
@@ -300,7 +311,19 @@ class TemplatesServiceController extends AbstractController
             $context = $provider->buildSampleContext();
         }
 
-        $params = $provider->buildPreviewRenderParams($template, $context);
+        try {
+            $params = $provider->buildPreviewRenderParams($template, $context);
+        } catch (\Throwable) {
+            $message = $translator->trans('templates.preview.render.error.generic');
+            if ($request->isXmlHttpRequest()) {
+                return $this->json(['error' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $this->addFlash('warning', $message);
+
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
+        }
+
         $templateText = trim((string) $request->request->get('previewText', ''));
         if ('' === $templateText) {
             $templateText = (string) $template->getText();

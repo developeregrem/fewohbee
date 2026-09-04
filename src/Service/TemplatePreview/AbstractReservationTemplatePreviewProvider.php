@@ -20,6 +20,7 @@ use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Service\ReservationService;
@@ -287,6 +288,10 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
 
     /**
      * Build a minimal sample payload for reservation templates.
+     *
+     * @param array<string, mixed> $ctx
+     *
+     * @return array<string, mixed>
      */
     protected function buildSampleParams(array $ctx = []): array
     {
@@ -304,10 +309,23 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
         $address->setEmail('max@example.com');
         $address->setPhone('+49 30 123456');
 
+        $subsidiary = new Subsidiary();
+        $subsidiary->setName('Musterpension');
+        $subsidiary->setDescription('Haupthaus');
+        $subsidiary->setOpeningHours([
+            1 => [['08:00', '12:00'], ['16:00', '19:00']],
+            2 => [['08:00', '12:00'], ['16:00', '19:00']],
+            3 => [['08:00', '12:00'], ['16:00', '19:00']],
+            4 => [['08:00', '12:00'], ['16:00', '19:00']],
+            5 => [['08:00', '12:00'], ['16:00', '19:00']],
+        ]);
+        $subsidiary->setOpeningHoursNote('Außerhalb dieser Zeiten nach Vereinbarung');
+
         $appartment = new Appartment();
         $appartment->setNumber('1');
         $appartment->setDescription('Doppelzimmer');
         $appartment->setBedsMax(2);
+        $appartment->setObject($subsidiary);
 
         $status = new ReservationStatus();
         $status->setName('Bestätigt');
