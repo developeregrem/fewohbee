@@ -43,6 +43,7 @@ use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use App\Service\ReservationObject;
+use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
 use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
@@ -377,22 +378,24 @@ class ReservationServiceController extends AbstractController
      * Gets the available appartments in the reservation process for the given period.
      */
     #[Route('/appartments/available/get', name: 'reservations.get.available.appartments', methods: ['POST'])]
-    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, ReservationService $rs, Request $request)
-    {
+    public function getAvailableAppartmentsAction(
+        ManagerRegistry $doctrine,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+        Request $request,
+    ): Response {
         $em = $doctrine->getManager();
-        $start = $request->request->get('from');
-        $startDate = new \DateTime($start);
-        $end = $request->request->get('end');
-        $endDate = new \DateTime($end);
+        $period = $periodService->parse(
+            $request->request->getString('from'),
+            $request->request->getString('end'),
+        );
 
-        // if start is greater than end -> swap
-        if ($startDate > $endDate) {
-            $tmp = $startDate;
-            $startDate = $endDate;
-            $endDate = $tmp;
-        }
-
-        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
+        $apartments = $rs->getAvailableApartments(
+            $period->start,
+            $period->end,
+            null,
+            $request->request->getString('object', 'all'),
+        );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
@@ -407,22 +410,24 @@ class ReservationServiceController extends AbstractController
      * Gets the available appartments in the edit process of a reservation for the given period.
      */
     #[Route('/edit/available/get', name: 'reservations.get.edit.available.appartments', methods: ['POST'])]
-    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request, ReservationService $rs)
-    {
+    public function getEditAvailableAppartmentsAction(
+        ManagerRegistry $doctrine,
+        Request $request,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+    ): Response {
         $em = $doctrine->getManager();
-        $start = $request->request->get('from');
-        $startDate = new \DateTime($start);
-        $end = $request->request->get('end');
-        $endDate = new \DateTime($end);
+        $period = $periodService->parse(
+            $request->request->getString('from'),
+            $request->request->getString('end'),
+        );
 
-        // if start is greater than end -> swap
-        if ($startDate > $endDate) {
-            $tmp = $startDate;
-            $startDate = $endDate;
-            $endDate = $tmp;
-        }
-
-        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
+        $apartments = $rs->getAvailableApartments(
+            $period->start,
+            $period->end,
+            null,
+            $request->request->getString('object', 'all'),
+        );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
@@ -446,20 +451,24 @@ class ReservationServiceController extends AbstractController
      * Adds an Appartment to the selected ones in the reservation process.
      */
     #[Route('/appartments/add/to/reservation', name: 'reservations.add.appartment.to.reservation', methods: ['POST'])]
-    public function addAppartmentToReservationAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
-    {
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function addAppartmentToReservationAction(
+        HttpKernelInterface $kernel,
+        RequestStack $requestStack,
+        ReservationPeriodService $periodService,
+        Request $request,
+    ): Response {
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         if (null != $request->request->get('appartmentid')) {
-            $from = $request->request->get('from');
-            $end = $request->request->get('end');
-            if ($from > $end) {
-                [$from, $end] = [$end, $from];
-            }
+            $period = $periodService->parse(
+                $request->request->getString('from'),
+                $request->request->getString('end'),
+            );
             $reservationObject = new ReservationObject(
                 $request->request->get('appartmentid'),
-                $from,
-                $end,
+                $period->start->format('Y-m-d'),
+                $period->end->format('Y-m-d'),
                 $request->request->get('status'),
                 (int) $request->request->get('persons', 0)
             );
@@ -483,8 +492,15 @@ class ReservationServiceController extends AbstractController
      * Supports single apartment (appartmentid, from, end) or multiple apartments (apartments[]).
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
-    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
-    {
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function addAppartmentToReservationSelectableAction(
+        ManagerRegistry $doctrine,
+        HttpKernelInterface $kernel,
+        RequestStack $requestStack,
+        Request $request,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+    ): Response {
         if ('true' == $request->request->get('createNewReservation')) {
             $newReservationsInformationArray = [];
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
@@ -502,10 +518,16 @@ class ReservationServiceController extends AbstractController
         $multiApartments = $request->request->all('apartments');
         if (!empty($multiApartments)) {
             foreach ($multiApartments as $apt) {
+                if (!is_array($apt)) {
+                    $apartmentsToAdd[] = ['id' => null, 'from' => '', 'end' => ''];
+                    continue;
+                }
+
+                $apartmentId = $apt['id'] ?? null;
                 $apartmentsToAdd[] = [
-                    'id' => $apt['id'],
-                    'from' => $apt['from'],
-                    'end' => $apt['end'],
+                    'id' => is_int($apartmentId) || is_string($apartmentId) ? $apartmentId : null,
+                    'from' => is_string($apt['from'] ?? null) ? $apt['from'] : '',
+                    'end' => is_string($apt['end'] ?? null) ? $apt['end'] : '',
                 ];
             }
         } elseif (null != $request->request->get('appartmentid')) {
@@ -518,27 +540,22 @@ class ReservationServiceController extends AbstractController
 
         $hasConflict = false;
         foreach ($apartmentsToAdd as $aptData) {
-            $from = $aptData['from'];
-            $end = $aptData['end'];
-            $fromDate = new \DateTime($from);
-            $endDate = new \DateTime($end);
+            $period = $periodService->parse(
+                is_string($aptData['from'] ?? null) ? $aptData['from'] : '',
+                is_string($aptData['end'] ?? null) ? $aptData['end'] : '',
+            );
 
-            // if start is greater end -> swap
-            if ($fromDate > $endDate) {
-                $tmp = $from;
-                $from = $end;
-                $end = $tmp;
-                $fromDate = new \DateTime($from);
-                $endDate = new \DateTime($end);
+            $room = $em->getRepository(Appartment::class)->find($aptData['id'] ?? null);
+            if (!$room instanceof Appartment || !$room->isActive()) {
+                $hasConflict = true;
+                continue;
             }
-
-            $room = $em->getRepository(Appartment::class)->find($aptData['id']);
-            $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
+            $isselactable = $rs->isApartmentAvailable($period->start, $period->end, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
                     $aptData['id'],
-                    $from,
-                    $end,
+                    $period->start->format('Y-m-d'),
+                    $period->end->format('Y-m-d'),
                     $request->request->get('status', $defaultStatusId),
                     $room->getBedsMax()
                 );

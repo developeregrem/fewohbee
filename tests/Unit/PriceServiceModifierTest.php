@@ -14,6 +14,7 @@ use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Service\PriceService;
+use App\Service\ReservationPeriodService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -227,7 +228,7 @@ final class PriceServiceModifierTest extends TestCase
                 GuestCategoryModifierRepository $modRepo,
                 private readonly Price $price,
             ) {
-                parent::__construct($em, $catRepo, $modRepo);
+                parent::__construct($em, new ReservationPeriodService(), $catRepo, $modRepo);
             }
 
             public function getPricesForReservationDays(Reservation $reservation, int $type, ?\Doctrine\Common\Collections\Collection $prices = null): array

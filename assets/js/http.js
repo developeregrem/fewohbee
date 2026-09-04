@@ -111,7 +111,9 @@ export function request({ url, method = 'GET', data = null, target = null, loade
             const text = await response.text();
             if (!response.ok) {
                 const message = text || response.statusText || 'Unbekannter Fehler';
-                throw new Error(`${response.status} ${message}`.trim());
+                const error = new Error(message);
+                error.status = response.status;
+                throw error;
             }
             if (onSuccess) {
                 onSuccess(text);
@@ -123,12 +125,13 @@ export function request({ url, method = 'GET', data = null, target = null, loade
         })
         .catch((err) => {
             const message = err && err.message ? err.message : 'Request fehlgeschlagen';
+            const status = Number.isInteger(err?.status) ? err.status : null;
             if (onError) {
-                onError(message);
+                onError(message, status);
             } else if (targetEl) {
                 targetEl.innerHTML = message;
             } else {
-                console.error(message);
+                console.error(status ? `${status} ${message}` : message);
             }
         })
         .finally(() => {

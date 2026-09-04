@@ -48,6 +48,9 @@ reservation.option: Option
 reservation.origin: Origin
 reservation.person: Person
 reservation.persons: Persons
+reservation.period.invalid_dates: Please enter valid arrival and departure dates.
+reservation.period.end_before_start: The departure date must not be before the arrival date.
+reservation.period.too_long: The selected reservation period is too long.
 reservation.preview.appartments.selected: Selected room
 reservation.preview.booker: Reserved by
 reservation.preview.contact: Contact

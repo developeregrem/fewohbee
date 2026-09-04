@@ -21,6 +21,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Event\ReservationStatusChangedEvent;
+use App\Exception\InvalidReservationPeriodException;
 use App\Repository\GuestCategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -40,6 +41,7 @@ class ReservationService
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly AvailabilityService $availabilityService,
+        private readonly ReservationPeriodService $reservationPeriodService,
     ) {
     }
 
@@ -246,9 +248,17 @@ class ReservationService
 
     /**
      * Returns a list of apartments that can be selected (free) for the given period.
+     *
+     * @return list<Appartment>
+     *
+     * @throws InvalidReservationPeriodException when the period is unsafe to process
      */
     public function getAvailableApartments(\DateTimeInterface $start, \DateTimeInterface $end, ?Appartment $apartment = null, string $propertyId = 'all'): array
     {
+        $period = $this->reservationPeriodService->validate($start, $end);
+        $start = $period->start;
+        $end = $period->end;
+
         if ($apartment instanceof Appartment) {
             $propertyId = $apartment->getObject()->getId();
         }
@@ -298,15 +308,28 @@ class ReservationService
         return $result;
     }
 
+    /**
+     * Rebuilds transient reservation entities from the reservation-creation session.
+     *
+     * @param list<ReservationObject> $newReservationsInformationArray
+     *
+     * @return list<Reservation>
+     *
+     * @throws InvalidReservationPeriodException when a stored period is invalid
+     */
     public function createReservationsFromReservationInformationArray($newReservationsInformationArray, ?Customer $customer = null)
     {
         $reservations = [];
 
         foreach ($newReservationsInformationArray as $reservationInformation) {
+            $period = $this->reservationPeriodService->parse(
+                (string) $reservationInformation->getStart(),
+                (string) $reservationInformation->getEnd(),
+            );
             $reservation = new Reservation();
             $reservation->setAppartment($this->em->getRepository(Appartment::class)->findById($reservationInformation->getAppartmentId())[0]);
-            $reservation->setEndDate(new \DateTime($reservationInformation->getEnd()));
-            $reservation->setStartDate(new \DateTime($reservationInformation->getStart()));
+            $reservation->setEndDate(\DateTime::createFromInterface($period->end));
+            $reservation->setStartDate(\DateTime::createFromInterface($period->start));
             $reservation->setReservationStatus($this->em->getRepository(ReservationStatus::class)->find($reservationInformation->getReservationStatus()));
             $reservation->setAdultRuleOverride($reservationInformation->isAdultRuleOverride());
             $reservation->setKurtaxeWaived($reservationInformation->isKurtaxeWaived());
@@ -378,12 +401,23 @@ class ReservationService
         }
     }
 
+    /**
+     * Applies a validated manual edit and persists it when occupancy and availability permit.
+     *
+     * @throws InvalidReservationPeriodException when the submitted period is invalid
+     */
     public function updateReservation(Request $request, Reservation $reservation): bool
     {
         $apartmentId = $request->request->get('aid');
         $status = $request->request->get('status');
-        $start = new \DateTime($request->request->get('from'));
-        $end = new \DateTime($request->request->get('end'));
+        $period = $this->reservationPeriodService->parse(
+            $request->request->getString('from'),
+            $request->request->getString('end'),
+        );
+        // Keep mutable DateTime instances here for compatibility with the existing
+        // update pipeline; moveReservation() normalizes them before persistence.
+        $start = \DateTime::createFromInterface($period->start);
+        $end = \DateTime::createFromInterface($period->end);
 
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
         $guestCounts = is_string($guestCountsRaw) ? (json_decode($guestCountsRaw, true) ?: []) : [];
@@ -401,12 +435,6 @@ class ReservationService
         // Never apply a partial update when a submitted relation cannot be resolved.
         if (!$apartment instanceof Appartment || !$reservationStatus instanceof ReservationStatus) {
             return false;
-        }
-
-        if ($start > $end) {
-            $tmp = $start;
-            $start = $end;
-            $end = $tmp;
         }
 
         // Occupancy data is needed for the availability check below. Keep its
@@ -470,6 +498,8 @@ class ReservationService
     /**
      * Move one reservation to another period and/or room after a central
      * availability check. No reservation data is changed on conflict.
+     *
+     * @throws InvalidReservationPeriodException when the target period is unsafe to process
      */
     public function moveReservation(
         Reservation $reservation,
@@ -478,18 +508,22 @@ class ReservationService
         \DateTimeInterface $end,
         bool $flush = true,
     ): bool {
+        $period = $this->reservationPeriodService->validate($start, $end);
+        $startDate = \DateTime::createFromInterface($period->start);
+        $endDate = \DateTime::createFromInterface($period->end);
+
         if (!$this->availabilityService->isRoomAvailable(
             $apartment,
-            $start,
-            $end,
+            $startDate,
+            $endDate,
             $reservation->getPersons(),
             $reservation,
         )) {
             return false;
         }
 
-        $reservation->setStartDate(\DateTime::createFromInterface($start));
-        $reservation->setEndDate(\DateTime::createFromInterface($end));
+        $reservation->setStartDate($startDate);
+        $reservation->setEndDate($endDate);
         $reservation->setAppartment($apartment);
 
         if ($flush) {
@@ -502,10 +536,20 @@ class ReservationService
 
     /**
      * Check if an apartment is available for the given time.
+     *
+     * @throws InvalidReservationPeriodException when the period is unsafe to process
      */
     public function isApartmentAvailable(\DateTimeInterface $start, \DateTimeInterface $end, Appartment $apartment, int $numberOfPersons, ?Reservation $reservation = null): bool
     {
-        return $this->availabilityService->isRoomAvailable($apartment, $start, $end, $numberOfPersons, $reservation);
+        $period = $this->reservationPeriodService->validate($start, $end);
+
+        return $this->availabilityService->isRoomAvailable(
+            $apartment,
+            $period->start,
+            $period->end,
+            $numberOfPersons,
+            $reservation,
+        );
     }
 
     public function updateReservationCustomers($reservation, $customer, $tab): void

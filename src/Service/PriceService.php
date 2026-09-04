@@ -40,6 +40,7 @@ class PriceService
 
     public function __construct(
         EntityManagerInterface $em,
+        private readonly ReservationPeriodService $reservationPeriodService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
     ) {
@@ -451,10 +452,21 @@ class PriceService
     /**
      * Based on the given reservation, price categories will be returned for each day of stay ordered by priority
      * The result is an array where ech key represents a day of stay. idx 0 startday idx, 1 next day, ...
+     *
+     * @param Collection<int, Price>|null $prices
+     *
+     * @return array<int, list<Price>|null>
+     *
+     * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
      */
     public function getPricesForReservationDays(Reservation $reservation, int $type, ?Collection $prices = null): array
     {
-        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        // Guard before repository work or the per-night result allocation. A mistyped
+        // year previously allowed this loop to grow until PHP exhausted its memory.
+        $days = $this->reservationPeriodService->validate(
+            $reservation->getStartDate(),
+            $reservation->getEndDate(),
+        )->nights;
         if (1 === $type && null === $prices) {
             $prices = $this->em->getRepository(Price::class)->findMiscPrices($reservation);
         } elseif (null === $prices) {
@@ -513,7 +525,10 @@ class PriceService
     public function getPriceBreakdownForReservation(Reservation $reservation): array
     {
         $pricesPerDay = $this->getPricesForReservationDays($reservation, 2);
-        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        $days = $this->reservationPeriodService->validate(
+            $reservation->getStartDate(),
+            $reservation->getEndDate(),
+        )->nights;
         $guestCounts = $reservation->getGuestCounts();
 
         $categories = [];
@@ -764,14 +779,6 @@ class PriceService
         }
 
         return $uniquePrices;
-    }
-
-    private function getDateDiff(\DateTime $start, \DateTime $end): int
-    {
-        $interval = date_diff($start, $end);
-
-        // return number of days, minimum 1 for same-day bookings
-        return max(1, (int) $interval->format('%a'));
     }
 
     private function isDateBetween(\DateTime $cur, \DateTime $start, \DateTime $end)

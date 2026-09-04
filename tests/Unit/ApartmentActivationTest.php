@@ -60,6 +60,7 @@ final class ApartmentActivationTest extends TestCase
                 $this->createStub(RoomBlockRepository::class),
                 $this->createStub(AppartmentRepository::class),
             ),
+            new \App\Service\ReservationPeriodService(),
         );
 
         $apartment = (new Appartment())->setActive(false);

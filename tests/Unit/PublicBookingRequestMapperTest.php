@@ -12,6 +12,7 @@ use App\Exception\PublicBookingException;
 use App\Repository\GuestCategoryRepository;
 use App\Service\GuestCategoryAgeMapper;
 use App\Service\PublicBookingRequestMapper;
+use App\Service\ReservationPeriodService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -39,7 +40,7 @@ final class PublicBookingRequestMapperTest extends TestCase
         $ageMapper = $this->createStub(GuestCategoryAgeMapper::class);
         $ageMapper->method('map')->willReturn($mappedCounts);
 
-        return new PublicBookingRequestMapper($repository, $ageMapper);
+        return new PublicBookingRequestMapper($repository, $ageMapper, new ReservationPeriodService());
     }
 
     /** @return array<string, string> a request that passes date validation */
@@ -172,6 +173,18 @@ final class PublicBookingRequestMapperTest extends TestCase
         $this->map([
             'dateFrom' => (new \DateTimeImmutable('+3 days'))->format('Y-m-d'),
             'dateTo' => (new \DateTimeImmutable('+1 day'))->format('Y-m-d'),
+        ]);
+    }
+
+    /** Excessive public booking periods are rejected before pricing work starts. */
+    public function testRejectsExcessivePeriod(): void
+    {
+        $this->expectException(PublicBookingException::class);
+        $this->expectExceptionMessage('online_booking.error.booking_horizon_exceeded');
+
+        $this->map([
+            'dateFrom' => '2026-09-12',
+            'dateTo' => '4026-09-13',
         ]);
     }
 

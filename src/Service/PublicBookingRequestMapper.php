@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Dto\PublicBooking\BookerInput;
 use App\Dto\PublicBooking\PublicBookingRequest;
 use App\Entity\Appartment;
+use App\Exception\InvalidReservationPeriodException;
 use App\Exception\PublicBookingException;
 use App\Repository\GuestCategoryRepository;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,6 +27,7 @@ class PublicBookingRequestMapper
     public function __construct(
         private readonly GuestCategoryRepository $guestCategoryRepository,
         private readonly GuestCategoryAgeMapper $ageMapper,
+        private readonly ReservationPeriodService $reservationPeriodService,
     ) {
     }
 
@@ -85,19 +87,23 @@ class PublicBookingRequestMapper
         }
 
         try {
-            $dateFrom = new \DateTimeImmutable($dateFromRaw);
-            $dateTo = new \DateTimeImmutable($dateToRaw);
-        } catch (\Throwable) {
-            throw new PublicBookingException('online_booking.error.invalid_dates');
+            $period = $this->reservationPeriodService->parse($dateFromRaw, $dateToRaw);
+        } catch (InvalidReservationPeriodException $e) {
+            // Public booking renders expected validation exceptions inside the wizard.
+            $message = match ($e->getMessage()) {
+                'reservation.period.invalid_dates' => 'online_booking.error.invalid_dates',
+                'reservation.period.end_before_start' => 'online_booking.error.departure_after_arrival',
+                default => 'online_booking.error.booking_horizon_exceeded',
+            };
+
+            throw new PublicBookingException($message);
         }
+        $dateFrom = $period->start;
+        $dateTo = $period->end;
 
         $persons = max(1, (int) $request->request->get('persons', 1));
         $roomsCount = max(1, (int) $request->request->get('roomsCount', 1));
         $minArrivalDate = new \DateTimeImmutable('today');
-
-        if ($dateFrom > $dateTo) {
-            throw new PublicBookingException('online_booking.error.departure_after_arrival');
-        }
 
         if ($dateFrom < $minArrivalDate) {
             throw new PublicBookingException('online_booking.error.arrival_must_be_future');

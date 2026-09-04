@@ -54,6 +54,18 @@
                 <source>reservation.enddate</source>
                 <target>Bis</target>
             </trans-unit>
+            <trans-unit id="reservation.period.invalid_dates">
+                <source>reservation.period.invalid_dates</source>
+                <target>Bitte gib ein gültiges An- und Abreisedatum ein.</target>
+            </trans-unit>
+            <trans-unit id="reservation.period.end_before_start">
+                <source>reservation.period.end_before_start</source>
+                <target>Das Abreisedatum darf nicht vor dem Anreisedatum liegen.</target>
+            </trans-unit>
+            <trans-unit id="reservation.period.too_long">
+                <source>reservation.period.too_long</source>
+                <target>Der gewählte Reservierungszeitraum ist zu lang.</target>
+            </trans-unit>
             <trans-unit id="reservation.person">
                 <source>reservation.person</source>
                 <target>Person</target>
