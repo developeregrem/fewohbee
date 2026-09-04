@@ -42,8 +42,55 @@ class SubsidiaryService
         $object->setInvoiceNumberPattern($request->request->get('invoice-number-pattern-'.$id));
         $object->setOpeningHours($this->getOpeningHoursFromForm($request, $id));
         $object->setOpeningHoursNote($request->request->get('opening-hours-note-'.$id));
+        $object->setCheckInFrom($this->readTime($request, 'check-in-from-'.$id));
+        $object->setCheckInUntil($this->readTime($request, 'check-in-until-'.$id));
+        $object->setCheckOutUntil($this->readTime($request, 'check-out-until-'.$id));
+        $object->setCheckInNote($request->request->get('check-in-note-'.$id));
 
         return $object;
+    }
+
+    /**
+     * True when the submitted check-in window cannot be read as written.
+     *
+     * Two cases, both of which would otherwise be stored as something the operator did
+     * not mean: a closing time without an opening one (a window that never starts), and
+     * a window that ends before it begins. Handled the way the invoice number pattern and
+     * the opening hours already are — the controller turns this into a visible warning.
+     *
+     * A lone $checkInFrom is fine and means "from 17:00, no published end".
+     *
+     * @param int|string $id
+     */
+    public function hasInvalidCheckInWindow(Request $request, $id): bool
+    {
+        $from = $this->readTime($request, 'check-in-from-'.$id);
+        $until = $this->readTime($request, 'check-in-until-'.$id);
+
+        if (null === $until) {
+            return false;
+        }
+
+        return null === $from || $until <= $from;
+    }
+
+    /**
+     * Reads one 'HH:MM' form field into a time, or null when it is empty or unparsable.
+     *
+     * The date part is irrelevant — the column is a TIME — but createFromFormat would
+     * otherwise fill it with today, so it is pinned to a fixed day to keep two times
+     * comparable.
+     */
+    private function readTime(Request $request, string $field): ?\DateTimeImmutable
+    {
+        $value = trim((string) $request->request->get($field, ''));
+        if ('' === $value) {
+            return null;
+        }
+
+        $time = \DateTimeImmutable::createFromFormat('!H:i', $value);
+
+        return false === $time ? null : $time;
     }
 
     /**

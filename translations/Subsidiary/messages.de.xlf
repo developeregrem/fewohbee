@@ -122,6 +122,62 @@
                 <source>object.opening_hours_note.help</source>
                 <target>Freier Text, der zusammen mit den Zeiten ausgegeben wird — für alles, was ein Wochenraster nicht abbildet.</target>
             </trans-unit>
+            <trans-unit id="object.check_in">
+                <source>object.check_in</source>
+                <target>Check-in und Check-out</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.help">
+                <source>object.check_in.help</source>
+                <target>Hausregeln für An- und Abreise. Sie können mit dem Baustein „Check-in-Zeiten des Betriebs“ in Brief- und E-Mail-Vorlagen eingefügt und über die REST-API abgerufen werden. Leer lassen, wenn nichts veröffentlicht wird.</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.window">
+                <source>object.check_in.window</source>
+                <target>Check-in</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.window.help">
+                <source>object.check_in.window.help</source>
+                <target>Das zweite Feld ist die Obergrenze. Leer lassen, wenn die Anreise auch später möglich ist.</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.from">
+                <source>object.check_in.from</source>
+                <target>Check-in ab</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.until">
+                <source>object.check_in.until</source>
+                <target>Check-in bis</target>
+            </trans-unit>
+            <trans-unit id="object.check_out.until">
+                <source>object.check_out.until</source>
+                <target>Check-out bis</target>
+            </trans-unit>
+            <trans-unit id="object.check_in_note">
+                <source>object.check_in_note</source>
+                <target>Hinweis zum Check-in</target>
+            </trans-unit>
+            <trans-unit id="object.check_in_note.help">
+                <source>object.check_in_note.help</source>
+                <target>Freier Text, der zusammen mit den Zeiten ausgegeben wird — für alles, was zwei Uhrzeiten nicht abbilden.</target>
+            </trans-unit>
+            <trans-unit id="object.check_in_note.placeholder">
+                <source>object.check_in_note.placeholder</source>
+                <target>z. B. Spätere Anreise nach telefonischer Absprache</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.value.from">
+                <source>object.check_in.value.from</source>
+                <target>Check-in ab %from% Uhr</target>
+            </trans-unit>
+            <trans-unit id="object.check_in.value.window">
+                <source>object.check_in.value.window</source>
+                <target>Check-in %from%–%until% Uhr</target>
+            </trans-unit>
+            <trans-unit id="object.check_out.value">
+                <source>object.check_out.value</source>
+                <target>Check-out bis %until% Uhr</target>
+            </trans-unit>
+            <trans-unit id="object.flash.check_in_window.invalid">
+                <source>object.flash.check_in_window.invalid</source>
+                <target>Das Check-in-Fenster ist ungültig. Bitte eine Startzeit angeben, die vor der Endzeit liegt — oder das zweite Feld leer lassen.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

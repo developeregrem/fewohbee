@@ -1,6 +1,20 @@
 object.action: Action
+object.check_in: Check-in and check-out
+object.check_in.from: check-in from
+object.check_in.help: 'House rules for arrival and departure. They can be inserted into letter and email templates with the "Check-in times of the branch" snippet, and retrieved through the REST API. Leave empty to publish nothing.'
+object.check_in.until: check-in until
+object.check_in.value.from: 'Check-in from %from%'
+object.check_in.value.window: 'Check-in %from%-%until%'
+object.check_in.window: Check-in
+object.check_in.window.help: 'The second field is the upper bound. Leave it empty when a later arrival is possible too.'
+object.check_in_note: Note on the check-in times
+object.check_in_note.help: 'Free text printed together with the times — for everything two clock values cannot express.'
+object.check_in_note.placeholder: 'e.g. later arrival by arrangement, just give us a call'
+object.check_out.until: Check-out by
+object.check_out.value: 'Check-out by %until%'
 object.delete.ask: Are you sure you want to delete this branch?
 object.description: Description
+object.flash.check_in_window.invalid: 'The check-in window is invalid. Please give a start time that lies before the end time, or leave the second field empty.'
 object.flash.create.success: Branch was created successfully.
 object.flash.delete.error.still.in.use: Branch cannot be deleted because it still has rooms assigned to it.
 object.flash.delete.success: Branch has been successfully deleted.

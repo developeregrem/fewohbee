@@ -19,6 +19,10 @@ final readonly class SubsidiaryDto
      * @param array<int, list<array{from: string, to: string}>>|null $openingHours weekday
      *        (1 = Monday … 7 = Sunday) to its time ranges, or null when no opening hours
      *        are configured at all; within a configured set, an absent weekday is closed
+     * @param string|null $checkInFrom  earliest arrival time as 'HH:MM', null when the
+     *        house publishes none
+     * @param string|null $checkInUntil end of the arrival window as 'HH:MM', null when
+     *        there is no published upper bound
      */
     public function __construct(
         public int $id,
@@ -26,6 +30,10 @@ final readonly class SubsidiaryDto
         public string $description,
         public ?array $openingHours,
         public ?string $openingHoursNote,
+        public ?string $checkInFrom,
+        public ?string $checkInUntil,
+        public ?string $checkOutUntil,
+        public ?string $checkInNote,
     ) {
     }
 
@@ -51,6 +59,12 @@ final readonly class SubsidiaryDto
             // without a second shape for the same field.
             [] === $openingHours ? null : $openingHours,
             $subsidiary->getOpeningHoursNote(),
+            // 'HH:MM' rather than a full timestamp: these are times of day, and a date
+            // part would invite a consumer to read a timezone into them that is not there.
+            $subsidiary->getCheckInFrom()?->format('H:i'),
+            $subsidiary->getCheckInUntil()?->format('H:i'),
+            $subsidiary->getCheckOutUntil()?->format('H:i'),
+            $subsidiary->getCheckInNote(),
         );
     }
 }

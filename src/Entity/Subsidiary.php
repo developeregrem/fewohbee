@@ -50,6 +50,36 @@ class Subsidiary
      */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $openingHoursNote = null;
+
+    /**
+     * Earliest time a guest can check in, e.g. 17:00. Null means the house does not
+     * publish one.
+     *
+     * House policy, not a property of any single stay: Reservation::arrivalTime holds
+     * when a particular guest announced they would turn up, which is a different
+     * statement and deliberately stays independent of this.
+     */
+    #[ORM\Column(type: 'time_immutable', nullable: true)]
+    private ?\DateTimeImmutable $checkInFrom = null;
+
+    /**
+     * Latest time a guest can check in, closing the arrival window. Null means there is
+     * no published upper bound — arrivals after $checkInFrom stay possible.
+     */
+    #[ORM\Column(type: 'time_immutable', nullable: true)]
+    private ?\DateTimeImmutable $checkInUntil = null;
+
+    /** Time by which the room has to be vacated on the day of departure, e.g. 10:00. */
+    #[ORM\Column(type: 'time_immutable', nullable: true)]
+    private ?\DateTimeImmutable $checkOutUntil = null;
+
+    /**
+     * Free text shown with the check-in times, e.g. "later arrival by arrangement, we
+     * will let you in by phone". The prose counterpart to the times, for the exception a
+     * pair of clock values cannot carry — same split as the opening hours and their note.
+     */
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $checkInNote = null;
     #[ORM\OneToMany(targetEntity: 'Appartment', mappedBy: 'object')]
     private $appartments;
 
@@ -177,6 +207,58 @@ class Subsidiary
     {
         $openingHoursNote = null === $openingHoursNote ? null : trim($openingHoursNote);
         $this->openingHoursNote = '' === $openingHoursNote ? null : $openingHoursNote;
+
+        return $this;
+    }
+
+    public function getCheckInFrom(): ?\DateTimeImmutable
+    {
+        return $this->checkInFrom;
+    }
+
+    public function setCheckInFrom(?\DateTimeImmutable $checkInFrom): self
+    {
+        $this->checkInFrom = $checkInFrom;
+
+        return $this;
+    }
+
+    public function getCheckInUntil(): ?\DateTimeImmutable
+    {
+        return $this->checkInUntil;
+    }
+
+    public function setCheckInUntil(?\DateTimeImmutable $checkInUntil): self
+    {
+        $this->checkInUntil = $checkInUntil;
+
+        return $this;
+    }
+
+    public function getCheckOutUntil(): ?\DateTimeImmutable
+    {
+        return $this->checkOutUntil;
+    }
+
+    public function setCheckOutUntil(?\DateTimeImmutable $checkOutUntil): self
+    {
+        $this->checkOutUntil = $checkOutUntil;
+
+        return $this;
+    }
+
+    public function getCheckInNote(): ?string
+    {
+        return $this->checkInNote;
+    }
+
+    /**
+     * An empty string is stored as null, so "no note" has one representation.
+     */
+    public function setCheckInNote(?string $checkInNote): self
+    {
+        $checkInNote = null === $checkInNote ? null : trim($checkInNote);
+        $this->checkInNote = '' === $checkInNote ? null : $checkInNote;
 
         return $this;
     }

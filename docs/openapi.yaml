@@ -794,9 +794,12 @@ paths:
       description: |
         Requires the `subsidiaries:read` scope.
 
-        Master data only. `openingHours` is what an operator entered under Settings →
-        Branches; whether a branch is open at the moment of the call is not computed, as
-        that depends on the caller's timezone.
+        Master data only. `openingHours` and the check-in times are what an operator
+        entered under Settings → Branches; whether a branch is open at the moment of the
+        call is not computed, as that depends on the caller's timezone.
+
+        The check-in times state house policy. They are unrelated to a reservation's
+        `arrivalTime`, which carries what one guest announced for their own stay.
       responses:
         '200':
           description: All branches, ordered by name.
@@ -968,6 +971,30 @@ components:
           description: >-
             Free text an operator entered alongside the hours, for anything a weekly grid
             cannot express. Null when none is set.
+        checkInFrom:
+          type: [string, 'null']
+          description: >-
+            Earliest time a guest can check in, as 'HH:MM'. House policy, unrelated to the
+            arrivalTime of any single reservation, which is what one guest announced for
+            their own stay. Null when the house publishes no check-in time.
+          examples: ['17:00']
+        checkInUntil:
+          type: [string, 'null']
+          description: >-
+            End of the arrival window, as 'HH:MM'. Null means there is no published upper
+            bound and arrivals after checkInFrom stay possible.
+          examples: ['20:00']
+        checkOutUntil:
+          type: [string, 'null']
+          description: >-
+            Time by which the room has to be vacated on the day of departure, as 'HH:MM'.
+            Null when the house publishes none.
+          examples: ['10:00']
+        checkInNote:
+          type: [string, 'null']
+          description: >-
+            Free text alongside the check-in times, for the exception a pair of clock
+            values cannot carry. Null when none is set.
       examples:
         - id: 1
           name: Main house
@@ -976,6 +1003,10 @@ components:
             '1': [{ from: '08:00', to: '12:00' }, { from: '16:00', to: '19:00' }]
             '6': [{ from: '09:00', to: '12:00' }]
           openingHoursNote: Outside these hours by arrangement
+          checkInFrom: '17:00'
+          checkInUntil: '20:00'
+          checkOutUntil: '10:00'
+          checkInNote: Later arrival by arrangement
 
     Reservation:
       type: object

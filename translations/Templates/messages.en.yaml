@@ -70,6 +70,11 @@ templates.editor.apartment_modifier.positions.desc: >-
   positions exist on the invoice.
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.opening_hours: Opening hours of the branch
+templates.editor.check_in_times: Check-in times of the branch
+templates.editor.check_in_times.desc: >-
+  Prints the branch's check-in window and check-out time as a single line, e.g.
+  "Check-in 17:00-20:00 - Check-out by 10:00". These are house rules, not the arrival time
+  of this particular reservation. The paragraph is omitted when no times are configured.
 templates.editor.opening_hours.desc: 'Prints the branch''s weekly opening hours as a single line, e.g. "Mon–Fri 08:00–12:00, 16:00–19:00". The paragraph is omitted when no hours are configured.'
 templates.editor.payment_qr: Payment QR code (GiroCode)
 templates.editor.payment_qr.desc: >-

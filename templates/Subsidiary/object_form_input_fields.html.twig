@@ -76,5 +76,45 @@
             <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
         </div>
     </div>
+    <hr class="my-3">
+    <h5>{{ 'object.check_in'|trans }}</h5>
+    <p class="text-muted small mb-2">{{ 'object.check_in.help'|trans|raw }}</p>
+    <div class="row mb-2">
+        <label class="col-sm-4 col-form-label">{{ 'object.check_in.window'|trans }}</label>
+        <div class="col-sm-8">
+            <div class="d-flex align-items-center gap-2">
+                <input type="time" class="form-control"
+                       name="check-in-from-{{ object.id }}"
+                       value="{{ object.checkInFrom ? object.checkInFrom|date('H:i') : '' }}"
+                       aria-label="{{ 'object.check_in.from'|trans }}">
+                <span class="text-muted">–</span>
+                <input type="time" class="form-control"
+                       name="check-in-until-{{ object.id }}"
+                       value="{{ object.checkInUntil ? object.checkInUntil|date('H:i') : '' }}"
+                       aria-label="{{ 'object.check_in.until'|trans }}">
+            </div>
+            <small class="form-text text-muted">{{ 'object.check_in.window.help'|trans }}</small>
+        </div>
+    </div>
+    <div class="row mb-2">
+        <label for="check-out-until-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.check_out.until'|trans }}</label>
+        <div class="col-sm-8">
+            <input type="time" class="form-control"
+                   name="check-out-until-{{ object.id }}"
+                   id="check-out-until-{{ object.id }}"
+                   value="{{ object.checkOutUntil ? object.checkOutUntil|date('H:i') : '' }}">
+        </div>
+    </div>
+    <div class="row">
+        <label for="check-in-note-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.check_in_note'|trans }}</label>
+
+        <div class="col-sm-8">
+            <textarea class="form-control" rows="2"
+                      name="check-in-note-{{ object.id }}"
+                      id="check-in-note-{{ object.id }}"
+                      placeholder="{{ 'object.check_in_note.placeholder'|trans }}">{{ object.checkInNote }}</textarea>
+            <small class="form-text text-muted">{{ 'object.check_in_note.help'|trans }}</small>
+        </div>
+    </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">
