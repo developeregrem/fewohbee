@@ -12,6 +12,8 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -69,6 +71,24 @@ class CalendarSyncImportType extends AbstractType
                 'label' => 'calendar.sync.import.status.label',
                 'help' => 'calendar.sync.import.status.hint',
                 'required' => true,
+            ])
+            ->add('excludedSummaries', CollectionType::class, [
+                'entry_type' => HiddenType::class,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'label' => false,
+            ])
+            ->add('excludedSummaryTerms', CollectionType::class, [
+                'entry_type' => HiddenType::class,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'label' => false,
+            ])
+            ->add('shareSummaryFilters', CheckboxType::class, [
+                'label' => 'calendar.sync.import.preview.share.label',
+                'help' => 'calendar.sync.import.preview.share.hint',
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
+                'required' => false,
             ])
         ;
     }

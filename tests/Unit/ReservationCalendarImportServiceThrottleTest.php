@@ -8,6 +8,7 @@ use App\Repository\CalendarSyncImportRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\ReservationRepository;
 use App\Service\AvailabilityService;
+use App\Service\Calendar\Sync\CalendarImportSummaryMatcher;
 use App\Service\Calendar\Sync\Ics\IcsFeedClient;
 use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
@@ -102,6 +103,7 @@ final class ReservationCalendarImportServiceThrottleTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new IcsOccurrenceReader(),
             $reservationSynchronizer,
+            new CalendarImportSummaryMatcher(),
         );
     }
 }

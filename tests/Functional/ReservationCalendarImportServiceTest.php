@@ -9,6 +9,7 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Repository\CalendarSyncImportRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -59,6 +60,51 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
         $defaultAdult = static::getContainer()->get(\App\Repository\GuestCategoryRepository::class)->findDefaultAdult();
         self::assertNotNull($defaultAdult);
         self::assertSame([$defaultAdult->getId() => 2], $reservation->getGuestCounts());
+    }
+
+    /** Ensure an empty but valid calendar is recorded as a successful synchronization. */
+    public function testEmptyCalendarCompletesSuccessfully(): void
+    {
+        $import = $this->createImport(
+            'https://example.test/ical/empty',
+            CalendarSyncImport::CONFLICT_MARK,
+        );
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => <<<'ICS'
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//New property//Calendar//EN
+END:VCALENDAR
+ICS,
+        ]);
+
+        $service->syncImport($import);
+
+        self::assertNotNull($import->getLastSyncAt());
+        self::assertNull($import->getLastSyncError());
+    }
+
+    /** Ensure a user-confirmed portal block label does not create a reservation. */
+    public function testImportSkipsUserExcludedSummaryVariation(): void
+    {
+        $import = $this->createImport('https://example.test/ical/excluded', CalendarSyncImport::CONFLICT_MARK);
+        $import->setExcludedSummaryTerms(['Not available']);
+        $this->em->flush();
+        $uid = 'uid-excluded-1';
+        $start = new \DateTimeImmutable('+2 days');
+        $end = new \DateTimeImmutable('+4 days');
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => $this->buildIcal(
+                $uid,
+                $start,
+                $end,
+                summary: 'Airbnb (Not available)',
+            ),
+        ]);
+
+        $service->syncImport($import);
+
+        self::assertNull($this->getReservationRepository()->findOneByRefUidAndImport($uid, $import));
     }
 
     /** Verify that an existing reservation keeps manually edited fields when the UID matches. */
@@ -209,7 +255,11 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
         self::assertFalse($reservation->isConflict());
     }
 
-    /** Build a ReservationCalendarImportService with mocked HTTP responses keyed by URL. */
+    /**
+     * Build a ReservationCalendarImportService with mocked HTTP responses keyed by URL.
+     *
+     * @param array<string, string> $responses
+     */
     private function createServiceWithResponses(array $responses): ReservationCalendarImportService
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) use ($responses) {
@@ -230,12 +280,13 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
 
         return new ReservationCalendarImportService(
             $this->em,
-            $this->em->getRepository(CalendarSyncImport::class),
+            static::getContainer()->get(CalendarSyncImportRepository::class),
             new \App\Service\Calendar\Sync\Ics\IcsFeedClient($httpClient),
             $cache,
             $translator,
             new \App\Service\Calendar\Sync\Ics\IcsOccurrenceReader(),
             $synchronizer,
+            new \App\Service\Calendar\Sync\CalendarImportSummaryMatcher(),
         );
     }
 
@@ -322,7 +373,8 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
         string $uid,
         \DateTimeImmutable $start,
         \DateTimeImmutable $end,
-        ?string $description = null
+        ?string $description = null,
+        ?string $summary = null,
     ): string {
         $lines = [
             'BEGIN:VCALENDAR',
@@ -332,6 +384,9 @@ final class ReservationCalendarImportServiceTest extends KernelTestCase
             'DTSTART:'.$start->format('Ymd'),
             'DTEND:'.$end->format('Ymd'),
         ];
+        if (null !== $summary) {
+            $lines[] = 'SUMMARY:'.$summary;
+        }
         if (null !== $description) {
             $lines[] = 'DESCRIPTION:'.$description;
         }

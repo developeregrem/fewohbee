@@ -32,6 +32,7 @@ class ReservationCalendarImportService
         private readonly TranslatorInterface $translator,
         private readonly IcsOccurrenceReader $occurrenceReader,
         private readonly ImportedReservationSynchronizer $reservationSynchronizer,
+        private readonly CalendarImportSummaryMatcher $summaryMatcher,
     ) {
     }
 
@@ -72,15 +73,13 @@ class ReservationCalendarImportService
             return;
         }
 
-        if (0 === $read->sourceEventCount) {
-            $this->updateSyncError($import, 'calendar.sync.import.error.no_events');
-
-            return;
-        }
-
         $missingCount = $read->skipped;
         $conflictCount = 0;
         foreach ($read->occurrences as $event) {
+            if ($this->summaryMatcher->isExcluded($import, $event->summary)) {
+                continue;
+            }
+
             $outcome = $this->reservationSynchronizer->synchronize($import, $event);
             if (ReservationImportOutcome::MissingRequiredData === $outcome) {
                 ++$missingCount;

@@ -12,6 +12,7 @@ use App\Repository\GuestCategoryRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
 use App\Service\AvailabilityService;
+use App\Service\Calendar\Sync\CalendarImportSummaryMatcher;
 use App\Service\Calendar\Sync\Ics\IcsFeedClient;
 use App\Service\Calendar\Sync\Ics\IcsOccurrenceReader;
 use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
@@ -92,6 +93,7 @@ final class ApartmentActivationTest extends TestCase
                 $this->createStub(GuestCategoryRepository::class),
                 $this->createStub(ReservationService::class),
             ),
+            new CalendarImportSummaryMatcher(),
         );
 
         $import = (new CalendarSyncImport())

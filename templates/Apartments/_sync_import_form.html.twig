@@ -1,6 +1,8 @@
 {% use "common/delete_popover.html.twig" %}
 
-<div data-controller="calendar-imports">
+<div data-controller="calendar-imports"
+     data-calendar-imports-preview-url-value="{{ path('apartments.sync.import.preview') }}"
+     data-calendar-imports-preview-token-value="{{ csrf_token('calendar-import-preview') }}">
     <div class="row mb-4">
         <div class="col">{{ 'calendar.sync.import.hint'|trans }}</div>
     </div>
@@ -87,36 +89,7 @@
             'data-action': 'submit->settings#submitFormAction',
             'data-url': path('apartments.sync.import.new', {'id': sync.id})
         } }) }}
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.name) }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.url) }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.isActive) }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.conflictStrategy) }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.reservationOrigin) }}
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col">
-                    {{ form_row(importCreateForm.reservationStatus) }}
-                </div>
-            </div>
+            {{ include('Apartments/_sync_import_fields.html.twig', {importForm: importCreateForm}) }}
 
             {{ form_rest(importCreateForm) }}
 
@@ -170,36 +143,7 @@
                         'data-action': 'submit->settings#submitFormAction',
                         'data-url': path('apartments.sync.import.edit', {'id': import.id})
                     } }) }}
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.name) }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.url) }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.isActive) }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.conflictStrategy) }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.reservationOrigin) }}
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ form_row(importForm.reservationStatus) }}
-                        </div>
-                    </div>
+                    {{ include('Apartments/_sync_import_fields.html.twig', {importForm: importForm}) }}
 
                     {{ form_rest(importForm) }}
 

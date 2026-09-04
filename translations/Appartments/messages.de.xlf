@@ -278,13 +278,109 @@
                 <source>calendar.sync.import.error.invalid_ical</source>
                 <target>Der Kalender ist kein gültiges iCal-Format.</target>
             </trans-unit>
-            <trans-unit id="calendar.sync.import.error.no_events">
-                <source>calendar.sync.import.error.no_events</source>
-                <target>Der Kalender enthält keine Einträge.</target>
-            </trans-unit>
             <trans-unit id="calendar.sync.import.error.skipped.summary">
                 <source>calendar.sync.import.error.skipped.summary</source>
                 <target>Übersprungene Einträge: fehlende Pflichtfelder (%missing%), Konflikte (%conflict%).</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.title">
+                <source>calendar.sync.import.preview.title</source>
+                <target>Kalender vor dem Import prüfen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.hint">
+                <source>calendar.sync.import.preview.hint</source>
+                <target>Portale übertragen manchmal neben Buchungen auch eigene Sperr- oder Regelzeiten. Hier lässt sich prüfen, welche Einträge wirklich Buchungen sind.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.share.label">
+                <source>calendar.sync.import.preview.share.label</source>
+                <target>Für alle Kalenderimporte dieses Portals dieselben Regeln verwenden</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.share.hint">
+                <source>calendar.sync.import.preview.share.hint</source>
+                <target>Wenn aktiviert, übernimmt dieser Kalenderimport bereits vorhandene Regeln dazu, welche Einträge als Buchungen gelten – auch ohne vorherige Kalenderprüfung. Änderungen werden mit bestehenden und später eingerichteten Kalenderimporten desselben Portals geteilt, bei denen diese Option ebenfalls aktiviert ist.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.button">
+                <source>calendar.sync.import.preview.button</source>
+                <target>Kalender prüfen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.loading">
+                <source>calendar.sync.import.preview.loading</source>
+                <target>Kalender wird geprüft</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.configured">
+                <source>calendar.sync.import.preview.configured</source>
+                <target>Gespeicherte Ausschlussregeln: %count%. Nach einer erneuten Kalenderprüfung lassen sie sich mit den aktuellen Einträgen abgleichen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.question">
+                <source>calendar.sync.import.preview.question</source>
+                <target>Welche Einträge sollen als Buchung übernommen werden?</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.labels_hint">
+                <source>calendar.sync.import.preview.labels_hint</source>
+                <target>Die angezeigten Bezeichnungen kommen direkt vom Portal. Bei Sperrzeiten oder anderen Einträgen, die keine echte Buchung sind, entfernt man den Haken.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.labels_explanation">
+                <source>calendar.sync.import.preview.labels_explanation</source>
+                <target>Das Portal gibt jedem Kalender-Eintrag eine Bezeichnung, z. B. „Reserved“ oder „Not available“. FewohBee fasst gleiche Bezeichnungen zusammen. Datum und Anzahl erleichtern die Zuordnung.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.default_safety">
+                <source>calendar.sync.import.preview.default_safety</source>
+                <target>Alle Einträge sind zunächst aktiviert. So wird eine echte Buchung nicht versehentlich übergangen.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.count_title">
+                <source>calendar.sync.import.preview.count_title</source>
+                <target>Gefundene Zeiträume</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.similar.title">
+                <source>calendar.sync.import.preview.similar.title</source>
+                <target>Auch ähnliche Bezeichnungen ausschließen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.similar.hint">
+                <source>calendar.sync.import.preview.similar.hint</source>
+                <target>Falls ein Portal die Bezeichnung leicht verändert, kann ein gemeinsamer Textteil eingetragen werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.similar.placeholder">
+                <source>calendar.sync.import.preview.similar.placeholder</source>
+                <target>z. B. Not available</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.similar.add">
+                <source>calendar.sync.import.preview.similar.add</source>
+                <target>Hinzufügen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.similar.remove">
+                <source>calendar.sync.import.preview.similar.remove</source>
+                <target>Regel entfernen</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.existing_hint">
+                <source>calendar.sync.import.preview.existing_hint</source>
+                <target>Bereits importierte Reservierungen werden nicht automatisch verändert oder gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.empty_summary">
+                <source>calendar.sync.import.preview.empty_summary</source>
+                <target>Ohne Bezeichnung</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.error.generic">
+                <source>calendar.sync.import.preview.error.generic</source>
+                <target>Der Kalender konnte nicht geprüft werden. Die Prüfung muss erneut gestartet werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.error.invalid_request">
+                <source>calendar.sync.import.preview.error.invalid_request</source>
+                <target>Die Anfrage ist abgelaufen. Das Fenster muss erneut geöffnet werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.error.invalid_url">
+                <source>calendar.sync.import.preview.error.invalid_url</source>
+                <target>Zuerst muss eine gültige Kalenderadresse eingetragen werden.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.result.empty">
+                <source>calendar.sync.import.preview.result.empty</source>
+                <target>Der Kalender ist erreichbar, enthält aber keine aktuellen oder zukünftigen Einträge.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.result.success">
+                <source>calendar.sync.import.preview.result.success</source>
+                <target>Kalender geprüft: %count% aktuelle oder zukünftige Zeiträume gefunden.</target>
+            </trans-unit>
+            <trans-unit id="calendar.sync.import.preview.result.success_with_skipped">
+                <source>calendar.sync.import.preview.result.success_with_skipped</source>
+                <target>Kalender geprüft: %count% aktuelle oder zukünftige Zeiträume gefunden; %skipped% unlesbare Einträge wurden ausgelassen.</target>
             </trans-unit>
         </body>
     </file>

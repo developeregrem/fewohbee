@@ -1053,3 +1053,21 @@ details.einvoice-readiness > summary::-webkit-details-marker {
     max-height: 70vh;
     overflow-y: auto;
 }
+
+/* Match the established price-period badge while keeping its close action easy to hit. */
+.calendar-import-filter-term {
+    font-size: 90%;
+}
+
+.calendar-import-filter-remove {
+    width: 1em;
+    height: 1em;
+    margin-left: .25rem;
+    padding: .5em;
+    opacity: .85;
+}
+
+.calendar-import-filter-remove:hover,
+.calendar-import-filter-remove:focus {
+    opacity: 1;
+}

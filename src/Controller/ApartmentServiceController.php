@@ -19,21 +19,26 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\RoomCategory;
 use App\Entity\Reservation;
 use App\Entity\Subsidiary;
+use App\Exception\CalendarSyncException;
 use App\Form\ApartmentType;
 use App\Form\CalendarSyncExportType;
 use App\Form\CalendarSyncImportType;
 use App\Repository\AppartmentRepository;
 use App\Service\AppartmentService;
+use App\Service\Calendar\Sync\CalendarImportFilterSharingService;
+use App\Service\Calendar\Sync\CalendarImportPreviewService;
 use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use App\Service\CSRFProtectionService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/settings/apartments')]
 #[IsGranted('ROLE_ADMIN')]
@@ -47,8 +52,8 @@ class ApartmentServiceController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/get', name: 'appartments.get.appartment', defaults: ['id' => '0'], methods: ['GET'])]
-    public function getAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    #[Route('/{id}/get', name: 'appartments.get.appartment', defaults: ['id' => 0], methods: ['GET'])]
+    public function getAppartmentAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, int $id): Response
     {
         $em = $doctrine->getManager();
 
@@ -153,6 +158,60 @@ class ApartmentServiceController extends AbstractController
         return $this->renderSyncModal($sync, $formFactory, $exportForm);
     }
 
+    #[Route('/sync/import/preview', name: 'apartments.sync.import.preview', methods: ['POST'])]
+    /** Inspect a remote calendar for the user without importing or persisting its entries. */
+    public function previewImport(
+        Request $request,
+        CalendarImportPreviewService $previewService,
+        CalendarImportFilterSharingService $filterSharingService,
+        TranslatorInterface $translator,
+    ): JsonResponse {
+        if (!$this->isCsrfTokenValid('calendar-import-preview', (string) $request->request->get('_token'))) {
+            return $this->json([
+                'success' => false,
+                'message' => $translator->trans('calendar.sync.import.preview.error.invalid_request'),
+            ], Response::HTTP_FORBIDDEN);
+        }
+
+        $url = trim((string) $request->request->get('url'));
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if ('' === $url || 2048 < mb_strlen($url) || !\in_array($scheme, ['http', 'https'], true)) {
+            return $this->json([
+                'success' => false,
+                'message' => $translator->trans('calendar.sync.import.preview.error.invalid_url'),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $preview = $previewService->preview(
+                $url,
+                new \DateTimeZone(date_default_timezone_get()),
+            );
+        } catch (CalendarSyncException $exception) {
+            return $this->json([
+                'success' => false,
+                'message' => $translator->trans($exception->translationKey, $exception->translationParameters),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $messageKey = match (true) {
+            0 === $preview->eventCount => 'calendar.sync.import.preview.result.empty',
+            0 < $preview->skippedCount => 'calendar.sync.import.preview.result.success_with_skipped',
+            default => 'calendar.sync.import.preview.result.success',
+        };
+
+        $sharedFilters = $filterSharingService->findReusableFilterSet($url);
+
+        return $this->json([
+            'success' => true,
+            'message' => $translator->trans($messageKey, [
+                '%count%' => $preview->eventCount,
+                '%skipped%' => $preview->skippedCount,
+            ]),
+            'sharedFilters' => $sharedFilters?->toArray(),
+        ] + $preview->toArray());
+    }
+
     #[Route('/sync/{id}/import/new', name: 'apartments.sync.import.new', methods: ['POST'])]
     /** Persist a new iCal import configuration for the apartment. */
     public function createImport(
@@ -160,6 +219,7 @@ class ApartmentServiceController extends AbstractController
         Request $request,
         CalendarSync $sync,
         ReservationCalendarImportService $calendarImportService,
+        CalendarImportFilterSharingService $filterSharingService,
         FormFactoryInterface $formFactory
     ): Response
     {
@@ -168,6 +228,7 @@ class ApartmentServiceController extends AbstractController
         $importCreateForm->handleRequest($request);
 
         if ($importCreateForm->isSubmitted() && $importCreateForm->isValid()) {
+            $filterSharingService->reuseForNewImport($import);
             $doctrine->getManager()->persist($import);
             $doctrine->getManager()->flush();
             $calendarImportService->syncImport($import);
@@ -186,6 +247,7 @@ class ApartmentServiceController extends AbstractController
         ManagerRegistry $doctrine,
         Request $request,
         CalendarSyncImport $import,
+        CalendarImportFilterSharingService $filterSharingService,
         FormFactoryInterface $formFactory
     ): Response
     {
@@ -193,6 +255,7 @@ class ApartmentServiceController extends AbstractController
         $importEditForm->handleRequest($request);
 
         if ($importEditForm->isSubmitted() && $importEditForm->isValid()) {
+            $filterSharingService->shareFromExistingImport($import);
             $doctrine->getManager()->flush();
 
             $this->addFlash('success', 'calendar.sync.import.flash.edit.success');
@@ -241,18 +304,29 @@ class ApartmentServiceController extends AbstractController
         return $import;
     }
 
-    /** Build edit forms for all imports of a sync. */
+    /**
+     * Build edit forms for all persisted imports of a sync.
+     *
+     * @return array<int, FormInterface>
+     */
     private function buildImportEditForms(CalendarSync $sync, FormFactoryInterface $formFactory): array
     {
         $forms = [];
         foreach ($sync->getApartment()->getCalendarSyncImports() as $import) {
-            $forms[$import->getId()] = $formFactory->createNamed('import_'.$import->getId(), CalendarSyncImportType::class, $import);
+            $id = $import->getId();
+            if (null !== $id) {
+                $forms[$id] = $formFactory->createNamed('import_'.$id, CalendarSyncImportType::class, $import);
+            }
         }
 
         return $forms;
     }
 
-    /** Render the calendar sync modal with export and import forms and active tab selection. */
+    /**
+     * Render the calendar sync modal with export and import forms and active tab selection.
+     *
+     * @param array<int, FormInterface> $importEditForms
+     */
     private function renderSyncModal(
         CalendarSync $sync,
         FormFactoryInterface $formFactory,

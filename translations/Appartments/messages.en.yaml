@@ -113,12 +113,41 @@ calendar:
           success: Import configuration updated.
         delete:
           success: Import configuration deleted. Imported reservations were not deleted.
+      preview:
+        title: Check the calendar before importing
+        hint: Portals sometimes include their own blocked periods or booking rules as well as reservations. This check shows which entries really are bookings.
+        share:
+          label: Use the same rules for all calendar imports from this portal
+          hint: When enabled, this calendar import adopts existing rules for which entries count as bookings, even without checking the calendar first. Changes are shared with existing and future calendar imports from the same portal that also have this option enabled.
+        button: Check calendar
+        loading: Checking calendar
+        configured: 'Saved exclusion rules: %count%. Checking the calendar again allows them to be compared with its current entries.'
+        question: Which entries should be imported as bookings?
+        labels_hint: The displayed labels come directly from the portal. The checkbox can be cleared for blocked periods or other entries that are not real bookings.
+        labels_explanation: The portal gives each calendar entry a label, such as “Reserved” or “Not available”. FewohBee groups identical labels. The dates and count make them easier to identify.
+        default_safety: All entries are enabled initially, so a real booking is not accidentally missed.
+        count_title: Periods found
+        similar:
+          title: Exclude similar labels too
+          hint: If a portal changes a label slightly, a shared part of the text can be entered.
+          placeholder: e.g. Not available
+          add: Add
+          remove: Remove rule
+        existing_hint: Existing imported reservations are not changed or deleted automatically.
+        empty_summary: Without a label
+        error:
+          generic: The calendar could not be checked. Please try again.
+          invalid_request: This request has expired. The window needs to be reopened.
+          invalid_url: A valid calendar URL must be entered first.
+        result:
+          empty: The calendar is reachable but contains no current or future entries.
+          success: 'Calendar checked: %count% current or future periods found.'
+          success_with_skipped: 'Calendar checked: %count% current or future periods found; %skipped% unreadable entries were omitted.'
       error:
         http_status: Remote calendar returned an invalid response.
         unreachable: Remote calendar URL is not reachable.
         too_large: Remote calendar is larger than 2 MB.
         invalid_ical: Remote calendar is not a valid iCal feed.
-        no_events: Remote calendar has no events.
         skipped:
           summary: >-
             Skipped events: missing required fields (%missing%), conflicts (%conflict%).

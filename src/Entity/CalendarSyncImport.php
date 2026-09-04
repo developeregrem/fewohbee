@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\CalendarSyncImportRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /** Store a remote iCal import configuration. */
@@ -13,6 +14,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'calendar_sync_import_apartment_idx', columns: ['apartment_id'])]
 class CalendarSyncImport
 {
+    public const MAX_SUMMARY_FILTERS = 50;
+    public const MAX_SUMMARY_FILTER_LENGTH = 255;
+
     public const CONFLICT_SKIP = 'skip';
     public const CONFLICT_OVERWRITE = 'overwrite';
     public const CONFLICT_MARK = 'mark_conflict';
@@ -20,7 +24,7 @@ class CalendarSyncImport
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private $id;
+    private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 100)]
     private string $name;
@@ -39,6 +43,17 @@ class CalendarSyncImport
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $lastSyncError = null;
+
+    /** @var list<string>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $excludedSummaries = null;
+
+    /** @var list<string>|null */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $excludedSummaryTerms = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $shareSummaryFilters = true;
 
     #[ORM\ManyToOne(targetEntity: ReservationOrigin::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -147,6 +162,60 @@ class CalendarSyncImport
         return $this;
     }
 
+    /**
+     * @return list<string> calendar labels that are excluded when they match exactly
+     */
+    public function getExcludedSummaries(): array
+    {
+        return $this->excludedSummaries ?? [];
+    }
+
+    /**
+     * Store exact calendar-label exclusions while keeping untrusted form data bounded.
+     *
+     * @param list<string>|null $excludedSummaries
+     */
+    public function setExcludedSummaries(?array $excludedSummaries): self
+    {
+        $this->excludedSummaries = $this->sanitizeFilterValues($excludedSummaries);
+
+        return $this;
+    }
+
+    /**
+     * @return list<string> text fragments that exclude similar calendar labels
+     */
+    public function getExcludedSummaryTerms(): array
+    {
+        return $this->excludedSummaryTerms ?? [];
+    }
+
+    /**
+     * Store partial calendar-label exclusions while keeping untrusted form data bounded.
+     *
+     * @param list<string>|null $excludedSummaryTerms
+     */
+    public function setExcludedSummaryTerms(?array $excludedSummaryTerms): self
+    {
+        $this->excludedSummaryTerms = $this->sanitizeFilterValues($excludedSummaryTerms);
+
+        return $this;
+    }
+
+    /** Return whether portal-label rules are shared with other room imports from the same portal host. */
+    public function getShareSummaryFilters(): bool
+    {
+        return $this->shareSummaryFilters;
+    }
+
+    /** Enable or disable reuse of this import's portal-label rules for matching portal hosts. */
+    public function setShareSummaryFilters(bool $shareSummaryFilters): self
+    {
+        $this->shareSummaryFilters = $shareSummaryFilters;
+
+        return $this;
+    }
+
     /** Return the reservation origin applied to imported entries. */
     public function getReservationOrigin(): ReservationOrigin
     {
@@ -187,5 +256,39 @@ class CalendarSyncImport
         $this->apartment = $apartment;
 
         return $this;
+    }
+
+    /**
+     * Normalize and deduplicate user-configured filters without changing their display casing.
+     *
+     * @param list<string>|null $values
+     *
+     * @return list<string>
+     */
+    private function sanitizeFilterValues(?array $values): array
+    {
+        $sanitized = [];
+        $seen = [];
+
+        foreach ($values ?? [] as $value) {
+            $value = trim($value);
+            if ('' === $value) {
+                continue;
+            }
+
+            $value = mb_substr($value, 0, self::MAX_SUMMARY_FILTER_LENGTH);
+            $key = mb_strtolower($value);
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $sanitized[] = $value;
+            $seen[$key] = true;
+            if (self::MAX_SUMMARY_FILTERS === count($sanitized)) {
+                break;
+            }
+        }
+
+        return $sanitized;
     }
 }
