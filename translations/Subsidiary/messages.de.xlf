@@ -136,7 +136,7 @@
             </trans-unit>
             <trans-unit id="object.check_in.window.help">
                 <source>object.check_in.window.help</source>
-                <target>Das zweite Feld ist die Obergrenze. Leer lassen, wenn die Anreise auch später möglich ist.</target>
+                <target>Das zweite Feld ist die Obergrenze. Leer lassen, wenn die Anreise auch später möglich ist. Eine Endzeit vor der Startzeit bedeutet über Mitternacht hinaus, z. B. 17:00–02:00.</target>
             </trans-unit>
             <trans-unit id="object.check_in.from">
                 <source>object.check_in.from</source>
@@ -176,7 +176,11 @@
             </trans-unit>
             <trans-unit id="object.flash.check_in_window.invalid">
                 <source>object.flash.check_in_window.invalid</source>
-                <target>Das Check-in-Fenster ist ungültig. Bitte eine Startzeit angeben, die vor der Endzeit liegt — oder das zweite Feld leer lassen.</target>
+                <target>Das Check-in-Fenster ist ungültig. Bitte eine Startzeit angeben und eine Endzeit, die nicht mit ihr übereinstimmt — oder das zweite Feld leer lassen.</target>
+            </trans-unit>
+            <trans-unit id="object.tab.general">
+                <source>object.tab.general</source>
+                <target>Stammdaten</target>
             </trans-unit>
         </body>
     </file>

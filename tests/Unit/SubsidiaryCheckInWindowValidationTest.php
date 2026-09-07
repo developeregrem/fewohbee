@@ -37,15 +37,27 @@ final class SubsidiaryCheckInWindowValidationTest extends TestCase
         self::assertTrue($this->isInvalid('', '20:00'));
     }
 
-    public function testAWindowEndingBeforeItBeginsIsRejected(): void
+    /**
+     * A late reception that runs past midnight. Reported by Alex on #284: 17:00-02:00 is
+     * a perfectly ordinary thing for a house to publish, and an earlier end must not be
+     * read as a mistake.
+     */
+    public function testAWindowRunningPastMidnightIsAccepted(): void
     {
-        self::assertTrue($this->isInvalid('20:00', '17:00'));
+        self::assertFalse($this->isInvalid('17:00', '02:00'));
+    }
+
+    public function testAWindowEndingOneMinuteBeforeItStartsIsStillAWindow(): void
+    {
+        // 23 hours and 59 minutes long, not a negative window.
+        self::assertFalse($this->isInvalid('17:00', '16:59'));
     }
 
     /**
-     * Equal ends leave no window at all, which is never what was meant.
+     * Equal ends say nothing: neither a zero-length window nor a full day is a plausible
+     * reading, so the operator is asked rather than guessed at.
      */
-    public function testAZeroLengthWindowIsRejected(): void
+    public function testAWindowWithTwoIdenticalEndsIsRejected(): void
     {
         self::assertTrue($this->isInvalid('17:00', '17:00'));
     }

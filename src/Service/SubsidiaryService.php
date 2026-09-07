@@ -55,10 +55,13 @@ class SubsidiaryService
      *
      * Two cases, both of which would otherwise be stored as something the operator did
      * not mean: a closing time without an opening one (a window that never starts), and
-     * a window that ends before it begins. Handled the way the invoice number pattern and
-     * the opening hours already are — the controller turns this into a visible warning.
+     * one where both ends are the same time (a window with no length).
      *
-     * A lone $checkInFrom is fine and means "from 17:00, no published end".
+     * An end *before* the start is explicitly fine: 17:00–02:00 is a late reception that
+     * runs past midnight, which is a normal thing for a house to publish. Only the pair
+     * is stored, never a date, so nothing has to be said about which day the end falls on.
+     *
+     * A lone $checkInFrom is fine too and means "from 17:00, no published end".
      *
      * @param int|string $id
      */
@@ -71,7 +74,7 @@ class SubsidiaryService
             return false;
         }
 
-        return null === $from || $until <= $from;
+        return null === $from || $until == $from;
     }
 
     /**

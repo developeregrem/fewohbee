@@ -19,7 +19,9 @@ use Doctrine\Migrations\AbstractMigration;
  * booking, not about the house. Nothing here defaults or overwrites them.
  *
  * TIME columns rather than strings: the values are times, and storing them as such keeps
- * comparisons ("is check-out before check-in?") meaningful without parsing.
+ * them comparable without parsing. The check-in window may run past midnight — a
+ * check_in_until earlier than check_in_from means the next day, which is why no date is
+ * stored alongside.
  *
  * down() drops the columns and with them the configured times.
  */

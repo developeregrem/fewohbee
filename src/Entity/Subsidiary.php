@@ -65,6 +65,10 @@ class Subsidiary
     /**
      * Latest time a guest can check in, closing the arrival window. Null means there is
      * no published upper bound — arrivals after $checkInFrom stay possible.
+     *
+     * May be earlier in the day than $checkInFrom, which means the window runs past
+     * midnight: 17:00–02:00 is a late reception, not a mistake. Only the two times are
+     * stored, so nothing here states which day the end falls on.
      */
     #[ORM\Column(type: 'time_immutable', nullable: true)]
     private ?\DateTimeImmutable $checkInUntil = null;

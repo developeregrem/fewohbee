@@ -41,6 +41,19 @@ final class CheckInTimesExtensionTest extends TestCase
         );
     }
 
+    /**
+     * A window that runs past midnight prints as it was entered; the reader understands
+     * "17:00-02:00" without being told which day the end falls on.
+     */
+    public function testAWindowRunningPastMidnightIsPrintedAsEntered(): void
+    {
+        $subsidiary = new Subsidiary();
+        $subsidiary->setCheckInFrom(new \DateTimeImmutable('17:00'));
+        $subsidiary->setCheckInUntil(new \DateTimeImmutable('02:00'));
+
+        self::assertSame('Check-in 17:00–02:00 Uhr', $this->extension('de')->checkInTimes($subsidiary));
+    }
+
     public function testEitherHalfCanStandAlone(): void
     {
         $checkOutOnly = new Subsidiary();

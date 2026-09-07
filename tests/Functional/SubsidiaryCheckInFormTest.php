@@ -63,6 +63,28 @@ final class SubsidiaryCheckInFormTest extends WebTestCase
         self::assertSame('', $crawler->filter('input[name="check-in-until-'.$id.'"]')->attr('value'));
     }
 
+    /**
+     * Requested by Alex on #284: the three unrelated topics get a tab each. The check-in
+     * fields must sit in their own pane, not merely somewhere on the page.
+     */
+    public function testTheFormSplitsItsTopicsIntoTabs(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createAdmin());
+
+        $crawler = $client->request('GET', '/settings/objects/new');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(3, $crawler->filter('.nav-tabs button[data-bs-toggle="tab"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-general-new'));
+        self::assertCount(1, $crawler->filter('#sub-pane-opening-new'));
+        self::assertCount(1, $crawler->filter('#sub-pane-checkin-new'));
+
+        self::assertCount(1, $crawler->filter('#sub-pane-checkin-new input[name="check-in-from-new"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-opening-new input[name="opening-hours-new[1][0][from]"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-general-new input[name="name-new"]'));
+    }
+
     private function createAdmin(): User
     {
         $container = static::getContainer();

@@ -1,4 +1,33 @@
 <fieldset id="entry-form-fieldset-{{ object.id }}" {% if object.id != "new" %} disabled {% endif %}>
+    {# Three unrelated topics share this modal, so they get a tab each rather than one
+       long scroll — the same shape as Settings → Room categories. The ids carry the
+       object id because the create form uses "new" while an edit form uses the real one. #}
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="sub-tab-general-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-general-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-general-{{ object.id }}" aria-selected="true">
+                {{ 'object.tab.general'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sub-tab-opening-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-opening-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-opening-{{ object.id }}" aria-selected="false">
+                {{ 'object.opening_hours'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sub-tab-checkin-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-checkin-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-checkin-{{ object.id }}" aria-selected="false">
+                {{ 'object.check_in'|trans }}
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content pt-4">
+    <div class="tab-pane fade show active" id="sub-pane-general-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-general-{{ object.id }}" tabindex="0">
     <div class="row">
         <label for="name-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.name'|trans }} *</label>
 
@@ -27,8 +56,10 @@
         </div>
     </div>
 
-    <hr>
-    <h5>{{ 'object.opening_hours'|trans }}</h5>
+    </div>
+
+    <div class="tab-pane fade" id="sub-pane-opening-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-opening-{{ object.id }}" tabindex="0">
     <p class="text-muted small mb-2">{{ 'object.opening_hours.help'|trans|raw }}</p>
     <table class="table table-sm align-middle mb-2">
         <thead>
@@ -76,8 +107,10 @@
             <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
         </div>
     </div>
-    <hr class="my-3">
-    <h5>{{ 'object.check_in'|trans }}</h5>
+    </div>
+
+    <div class="tab-pane fade" id="sub-pane-checkin-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-checkin-{{ object.id }}" tabindex="0">
     <p class="text-muted small mb-2">{{ 'object.check_in.help'|trans|raw }}</p>
     <div class="row mb-2">
         <label class="col-sm-4 col-form-label">{{ 'object.check_in.window'|trans }}</label>
@@ -115,6 +148,8 @@
                       placeholder="{{ 'object.check_in_note.placeholder'|trans }}">{{ object.checkInNote }}</textarea>
             <small class="form-text text-muted">{{ 'object.check_in_note.help'|trans }}</small>
         </div>
+    </div>
+    </div>
     </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">

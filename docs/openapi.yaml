@@ -982,7 +982,8 @@ components:
           type: [string, 'null']
           description: >-
             End of the arrival window, as 'HH:MM'. Null means there is no published upper
-            bound and arrivals after checkInFrom stay possible.
+            bound and arrivals after checkInFrom stay possible. A value earlier in the day
+            than checkInFrom means the window runs past midnight, e.g. 17:00 to 02:00.
           examples: ['20:00']
         checkOutUntil:
           type: [string, 'null']
