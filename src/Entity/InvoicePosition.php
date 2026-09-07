@@ -7,6 +7,9 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * An invoice line for ancillary services or deductions with a signed unit price.
+ */
 #[ORM\Entity]
 #[ORM\Table(name: 'invoice_positions')]
 class InvoicePosition
@@ -21,8 +24,8 @@ class InvoicePosition
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     private $description;
+    // Negative unit prices represent deductions, just like miscellaneous prices.
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    #[Assert\PositiveOrZero]
     private $price;
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]

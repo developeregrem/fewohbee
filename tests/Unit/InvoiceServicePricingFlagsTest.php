@@ -21,8 +21,53 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+/**
+ * Verifies invoice prefilling and totals for the supported pricing options.
+ */
 final class InvoiceServicePricingFlagsTest extends TestCase
 {
+    public function testNegativeMiscPriceReducesRoomTotal(): void
+    {
+        $price = $this->createPrice(1003, true);
+        $price->setPrice(-100);
+        $price->setVat(7);
+        $price->setIncludesVat(true);
+        $reservation = $this->createReservation(2003, 1, '2026-01-01', '2026-01-02');
+        $requestStack = $this->createRequestStack();
+        $priceService = $this->createMock(PriceService::class);
+        $priceService->expects(self::once())
+            ->method('getPricesForReservationDays')
+            ->with($reservation, 1, null)
+            ->willReturn([0 => null, 1 => [$price]]);
+        $service = $this->createService($priceService);
+
+        $service->prefillMiscPositionsWithReservations([$reservation], $requestStack);
+
+        $positions = $requestStack->getSession()->get('invoicePositionsMiscellaneous');
+        self::assertCount(1, $positions);
+        self::assertSame(-100, $positions[0]->getPrice());
+        self::assertSame(1, $positions[0]->getAmount());
+
+        $apartment = new InvoiceAppartment();
+        $apartment->setStartDate(new \DateTime('2026-01-01'));
+        $apartment->setEndDate(new \DateTime('2026-01-02'));
+        $apartment->setPersons(1);
+        $apartment->setIsPerRoom(true);
+        $apartment->setPrice(150);
+        $apartment->setVat(7);
+        $apartment->setIncludesVat(true);
+
+        $vats = [];
+        $brutto = $netto = $apartmentTotal = $miscTotal = 0.0;
+        $service->calculateSums(new ArrayCollection([$apartment]), $positions, $vats, $brutto, $netto, $apartmentTotal, $miscTotal);
+
+        self::assertSame(150.0, $apartmentTotal);
+        self::assertSame(-100.0, $miscTotal);
+        self::assertSame(50.0, $brutto);
+        self::assertSame(3.27, $netto);
+        self::assertEqualsWithDelta(46.73, round($vats[7]['netSum'], 2), 0.001);
+    }
+
     public function testPrefillMiscPositionsCalculatesPerPersonAmount(): void
     {
         $price = $this->createPrice(1001, false);
