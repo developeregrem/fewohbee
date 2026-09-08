@@ -182,9 +182,9 @@
                 <source>object.tab.general</source>
                 <target>Allgemein</target>
             </trans-unit>
-            <trans-unit id="object.tab.invoice_number">
-                <source>object.tab.invoice_number</source>
-                <target>Rechnungsnummernkreis</target>
+            <trans-unit id="object.tab.invoice_data">
+                <source>object.tab.invoice_data</source>
+                <target>Rechnungsdaten</target>
             </trans-unit>
         </body>
     </file>
