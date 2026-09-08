@@ -1,7 +1,9 @@
 <fieldset id="entry-form-fieldset-{{ object.id }}" {% if object.id != "new" %} disabled {% endif %}>
-    {# Three unrelated topics share this modal, so they get a tab each rather than one
-       long scroll — the same shape as Settings → Room categories. The ids carry the
-       object id because the create form uses "new" while an edit form uses the real one. #}
+    {# Three topics share this modal, so they get a tab each rather than one long scroll —
+       the same shape as Settings → Room categories. Opening hours and check-in times sit
+       in one tab because both answer "when": when someone can be reached, and when a
+       guest may arrive. The ids carry the object id because the create form uses "new"
+       while an edit form uses the real one. #}
     <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="sub-tab-general-{{ object.id }}" data-bs-toggle="tab"
@@ -18,10 +20,10 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="sub-tab-checkin-{{ object.id }}" data-bs-toggle="tab"
-                    data-bs-target="#sub-pane-checkin-{{ object.id }}" type="button" role="tab"
-                    aria-controls="sub-pane-checkin-{{ object.id }}" aria-selected="false">
-                {{ 'object.check_in'|trans }}
+            <button class="nav-link" id="sub-tab-invoice-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-invoice-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-invoice-{{ object.id }}" aria-selected="false">
+                {{ 'object.tab.invoice_number'|trans }}
             </button>
         </li>
     </ul>
@@ -44,22 +46,11 @@
                    value="{{ object.description }}" required>
         </div>
     </div>
-    <div class="row mt-2">
-        <label for="invoice-number-pattern-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.invoice_number_pattern'|trans }}</label>
-
-        <div class="col-sm-8">
-            <input type="text" class="form-control" name="invoice-number-pattern-{{ object.id }}"
-                   id="invoice-number-pattern-{{ object.id }}" maxlength="100"
-                   placeholder="{{ 'object.invoice_number_pattern.placeholder'|trans }}"
-                   value="{{ object.invoiceNumberPattern }}">
-            <small class="form-text text-muted">{{ 'object.invoice_number_pattern.help'|trans|raw }}</small>
-        </div>
-    </div>
-
     </div>
 
     <div class="tab-pane fade" id="sub-pane-opening-{{ object.id }}" role="tabpanel"
          aria-labelledby="sub-tab-opening-{{ object.id }}" tabindex="0">
+    <h5>{{ 'object.opening_hours'|trans }}</h5>
     <p class="text-muted small mb-2">{{ 'object.opening_hours.help'|trans|raw }}</p>
     <table class="table table-sm align-middle mb-2">
         <thead>
@@ -107,10 +98,8 @@
             <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
         </div>
     </div>
-    </div>
-
-    <div class="tab-pane fade" id="sub-pane-checkin-{{ object.id }}" role="tabpanel"
-         aria-labelledby="sub-tab-checkin-{{ object.id }}" tabindex="0">
+    <hr class="my-4">
+    <h5>{{ 'object.check_in'|trans }}</h5>
     <p class="text-muted small mb-2">{{ 'object.check_in.help'|trans|raw }}</p>
     <div class="row mb-2">
         <label class="col-sm-4 col-form-label">{{ 'object.check_in.window'|trans }}</label>
@@ -149,6 +138,22 @@
             <small class="form-text text-muted">{{ 'object.check_in_note.help'|trans }}</small>
         </div>
     </div>
+    </div>
+
+    <div class="tab-pane fade" id="sub-pane-invoice-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-invoice-{{ object.id }}" tabindex="0">
+    <div class="row mt-2">
+        <label for="invoice-number-pattern-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.invoice_number_pattern'|trans }}</label>
+
+        <div class="col-sm-8">
+            <input type="text" class="form-control" name="invoice-number-pattern-{{ object.id }}"
+                   id="invoice-number-pattern-{{ object.id }}" maxlength="100"
+                   placeholder="{{ 'object.invoice_number_pattern.placeholder'|trans }}"
+                   value="{{ object.invoiceNumberPattern }}">
+            <small class="form-text text-muted">{{ 'object.invoice_number_pattern.help'|trans|raw }}</small>
+        </div>
+    </div>
+
     </div>
     </div>
 </fieldset>

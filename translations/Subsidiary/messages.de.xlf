@@ -180,7 +180,11 @@
             </trans-unit>
             <trans-unit id="object.tab.general">
                 <source>object.tab.general</source>
-                <target>Stammdaten</target>
+                <target>Allgemein</target>
+            </trans-unit>
+            <trans-unit id="object.tab.invoice_number">
+                <source>object.tab.invoice_number</source>
+                <target>Rechnungsnummernkreis</target>
             </trans-unit>
         </body>
     </file>

@@ -78,11 +78,17 @@ final class SubsidiaryCheckInFormTest extends WebTestCase
         self::assertCount(3, $crawler->filter('.nav-tabs button[data-bs-toggle="tab"]'));
         self::assertCount(1, $crawler->filter('#sub-pane-general-new'));
         self::assertCount(1, $crawler->filter('#sub-pane-opening-new'));
-        self::assertCount(1, $crawler->filter('#sub-pane-checkin-new'));
+        self::assertCount(1, $crawler->filter('#sub-pane-invoice-new'));
 
-        self::assertCount(1, $crawler->filter('#sub-pane-checkin-new input[name="check-in-from-new"]'));
+        // Both kinds of times answer "when", so they share the second tab.
         self::assertCount(1, $crawler->filter('#sub-pane-opening-new input[name="opening-hours-new[1][0][from]"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-opening-new input[name="check-in-from-new"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-opening-new input[name="check-out-until-new"]'));
+
         self::assertCount(1, $crawler->filter('#sub-pane-general-new input[name="name-new"]'));
+        self::assertCount(1, $crawler->filter('#sub-pane-invoice-new input[name="invoice-number-pattern-new"]'));
+        // The number range moved out of the general tab; it must not be left behind there.
+        self::assertCount(0, $crawler->filter('#sub-pane-general-new input[name="invoice-number-pattern-new"]'));
     }
 
     private function createAdmin(): User
