@@ -1,0 +1,41 @@
+{# The effect table: arrival weekday by stay length. It is the main explanation device on
+   this page - a night rule produces gaps that no wording makes obvious, and the table
+   shows them directly. Reloaded over ajax when the category or week changes. #}
+{% if matrixCategory is null or rows|length == 0 %}
+    <div class="p-3 text-body-secondary small text-center">{{ 'booking_rules.matrix_no_category'|trans }}</div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle text-center mb-0 small">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-start ps-3 fw-normal text-body-secondary">{{ 'booking_rules.matrix_header'|trans }}</th>
+                    {% for nights in 1..maxNights %}
+                        <th style="width:3.25rem">{{ nights }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <th scope="row" class="text-start ps-3 fw-semibold text-nowrap">
+                            {{ ('booking_rules.day_' ~ row.date.format('N'))|trans }}
+                            <span class="text-body-secondary fw-normal">{{ row.date.format('d.m.') }}</span>
+                        </th>
+                        {% for cell in row.cells %}
+                            {% set label = cell.isAllowed
+                                ? 'booking_rules.matrix_allowed'|trans
+                                : ('booking_rules.reason_' ~ cell.reason.value)|trans({
+                                    '%nights%': 'booking_rules.nights_count'|trans({'%count%': cell.requiredNights, '%nights%': cell.requiredNights}),
+                                  }) %}
+                            <td class="{{ cell.isAllowed ? 'table-success' : '' }}" title="{{ label }}">
+                                <i class="fas {{ cell.isAllowed ? 'fa-check text-success' : 'fa-xmark text-danger' }}" aria-hidden="true"></i>
+                                <span class="visually-hidden">{{ label }}</span>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="px-3 pt-2 pb-0 mb-0 text-body-secondary" style="font-size:.8rem">{{ 'booking_rules.matrix_hint'|trans }}</p>
+{% endif %}

@@ -132,7 +132,7 @@
             </trans-unit>
             <trans-unit id="price.minstay">
                 <source>price.minstay</source>
-                <target>Mindestübernachtungen</target>
+                <target>Preis gültig ab … Nächten</target>
             </trans-unit>
             <trans-unit id="price.active">
                 <source>price.active</source>

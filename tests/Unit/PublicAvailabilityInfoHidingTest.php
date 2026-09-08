@@ -47,7 +47,7 @@ final class PublicAvailabilityInfoHidingTest extends TestCase
         $configService->method('getAllowedRoomIds')->willReturn([1, 2, 3, 4, 5, 6, 7, 8]);
 
         $restrictionService = $this->createStub(OnlineBookingRestrictionService::class);
-        $restrictionService->method('isStayLongEnough')->willReturn(true);
+        $restrictionService->method('isStayAllowed')->willReturn(true);
         $restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
         $restrictionService->method('getMaxRoomsForCategory')->willReturn(null);
 
