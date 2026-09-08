@@ -121,6 +121,7 @@ workflow:
     invoice_has_email: "Invoice has an email address"
     invoice_payment_means_is: "Payment method is"
     reservation_origin_is: "Origin is"
+    invoice_reservation_origin_is: "Reservation origin is"
     reservation_has_invoice: "Invoice exists"
     has_invoice.label: "Which invoice has to exist?"
     has_invoice.any: "Any invoice (excluding cancelled)"
