@@ -36,6 +36,7 @@ object.opening_hours.period.2: Period 2
 object.opening_hours.to: to
 object.tab.general: General
 object.tab.invoice_data: Invoice details
+object.tab.service_times: Service hours
 object.title: Branch management
 object.weekday.1: Monday
 object.weekday.2: Tuesday

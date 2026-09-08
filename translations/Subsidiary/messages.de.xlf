@@ -186,6 +186,10 @@
                 <source>object.tab.invoice_data</source>
                 <target>Rechnungsdaten</target>
             </trans-unit>
+            <trans-unit id="object.tab.service_times">
+                <source>object.tab.service_times</source>
+                <target>Servicezeiten</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
