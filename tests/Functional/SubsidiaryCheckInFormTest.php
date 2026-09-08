@@ -91,6 +91,32 @@ final class SubsidiaryCheckInFormTest extends WebTestCase
         self::assertCount(0, $crawler->filter('#sub-pane-general-new input[name="invoice-number-pattern-new"]'));
     }
 
+    /**
+     * Inside the times tab the two sections are accordions, both folded to begin with.
+     * Neither carries data-bs-parent — a grouped accordion would snap the opening hours
+     * shut the moment someone opens the check-in section.
+     */
+    public function testTheTimesTabSplitsItsTwoSectionsIntoAccordions(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createAdmin());
+
+        $crawler = $client->request('GET', '/settings/objects/new');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(2, $crawler->filter('#sub-pane-opening-new .accordion-item'));
+        self::assertCount(0, $crawler->filter('#sub-pane-opening-new [data-bs-parent]'));
+
+        // Both start folded, so the tab opens on an overview instead of a weekday grid.
+        self::assertCount(1, $crawler->filter('#sub-collapse-opening-new.collapse'));
+        self::assertCount(1, $crawler->filter('#sub-collapse-checkin-new.collapse'));
+        self::assertCount(0, $crawler->filter('#sub-pane-opening-new .accordion-collapse.show'));
+
+        // Each section keeps its own fields, whichever way it is folded.
+        self::assertCount(1, $crawler->filter('#sub-collapse-opening-new input[name="opening-hours-new[1][0][from]"]'));
+        self::assertCount(1, $crawler->filter('#sub-collapse-checkin-new input[name="check-in-from-new"]'));
+    }
+
     private function createAdmin(): User
     {
         $container = static::getContainer();
