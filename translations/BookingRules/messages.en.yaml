@@ -2,7 +2,7 @@ booking_rules:
     section_rules: "Booking rules"
     section_rules_desc: "Define how long guests have to stay and on which days arrival or departure is not possible. Without a rule, a single night is enough."
     section_periods: "Special periods"
-    section_periods_desc: "Different rules for a date range, for example public holidays or high season. They replace the minimum stay of the general rules, including with a lower value."
+    section_periods_desc: "Different rules for a date range, for example public holidays or high season. On the days they cover they replace the minimum stays of the general rules entirely — including with a lower value. Arrival and departure closures stay in force."
     section_effect: "Effect"
     section_effect_desc: "How your rules apply to actual bookings. Special periods are included."
 

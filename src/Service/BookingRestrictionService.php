@@ -90,10 +90,11 @@ class BookingRestrictionService implements ResetInterface
 
     /**
      * Resolves every date of a half-open window. Each restriction type is resolved on its
-     * own, so a lower night minimum never cancels an arrival minimum. Within the minimum-stay
-     * types a dated rule (special period) replaces the unlimited ones — that is what allows a
-     * period to *lower* a minimum — and among equals the highest value wins. Closures simply
-     * add up: any matching rule closes the day.
+     * own, so a lower night minimum never cancels an arrival minimum. A special period
+     * replaces the unlimited minimum-stay rules of *both* kinds for the days it covers — that
+     * is what allows a period to lower a minimum — and among the rules left in play the
+     * highest value wins. Closures simply add up: any matching rule closes the day, and a
+     * period never lifts one.
      *
      * @param list<BookingRestrictionRule>|null $rules explicit rules for previews; no database work when provided
      *
@@ -119,11 +120,28 @@ class BookingRestrictionService implements ResetInterface
             $noArrivalRule = null;
             $noDepartureRule = null;
 
+            // A special period states the minimum stays for its days on its own. As soon as
+            // one covers this date, the unlimited minimum-stay rules step aside entirely —
+            // across both kinds, not just the matching one. Otherwise a period lowering the
+            // arrival minimum would still be overruled by a general night rule, which is not
+            // what "special period" means to anyone reading it.
+            $periodOverridesMinStay = false;
+            foreach ($matching as $rule) {
+                if ($rule->isPeriod() && $rule->getType()->needsMinNights() && $rule->coversDate($date)) {
+                    $periodOverridesMinStay = true;
+                    break;
+                }
+            }
+
             foreach ($matching as $rule) {
                 if (!$rule->coversDate($date)) {
                     continue;
                 }
-                match ($rule->getType()) {
+                $type = $rule->getType();
+                if ($type->needsMinNights() && $periodOverridesMinStay && !$rule->isPeriod()) {
+                    continue;
+                }
+                match ($type) {
                     BookingRestrictionType::MIN_STAY_ARRIVAL => $arrivalRule = $this->chooseMinStay($arrivalRule, $rule),
                     BookingRestrictionType::MIN_STAY_THROUGH => $throughRule = $this->chooseMinStay($throughRule, $rule),
                     BookingRestrictionType::CLOSED_TO_ARRIVAL => $noArrivalRule ??= $rule,
@@ -177,18 +195,14 @@ class BookingRestrictionService implements ResetInterface
     }
 
     /**
-     * A dated rule replaces an unlimited one for the days it covers, even when it lowers the
-     * minimum. Among rules of the same kind the strictest value wins — there is no
-     * "last saved wins" and no priority number for the operator to maintain.
+     * The strictest of the rules that are still in play wins. Which layer is in play was
+     * decided before this point, so there is no "last saved wins" and no priority number
+     * for the operator to maintain.
      */
     private function chooseMinStay(?BookingRestrictionRule $current, BookingRestrictionRule $candidate): BookingRestrictionRule
     {
         if (null === $current) {
             return $candidate;
-        }
-
-        if ($candidate->isPeriod() !== $current->isPeriod()) {
-            return $candidate->isPeriod() ? $candidate : $current;
         }
 
         return $candidate->getMinNights() > $current->getMinNights() ? $candidate : $current;

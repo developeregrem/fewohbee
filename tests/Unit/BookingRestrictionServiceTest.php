@@ -108,13 +108,69 @@ final class BookingRestrictionServiceTest extends TestCase
         self::assertSame(2, $result->requiredNights);
     }
 
-    public function testLowerNightExceptionDoesNotCancelArrivalMinimum(): void
+    /**
+     * A special period states the minimum stays for its days on its own: it replaces the
+     * unlimited rules of *both* kinds. Otherwise a period that lowers the arrival minimum
+     * would still be overruled by a general night rule, which is not what an operator reads
+     * into "special period".
+     */
+    public function testSpecialPeriodReplacesBothKindsOfUnlimitedMinimum(): void
     {
         $result = $this->service()->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-13'), new \DateTimeImmutable('2026-09-15'), [
             $this->rule(Type::MIN_STAY_ARRIVAL, 4), $this->period(Type::MIN_STAY_THROUGH, 1, '2026-09-13', '2026-09-15'),
         ]);
+        self::assertSame(1, $result->requiredNights);
+        self::assertTrue($result->isAllowed());
+    }
+
+    /**
+     * Reported case: a general night rule of 4 plus a period arrival rule of 2 has to allow
+     * a two-night stay inside the period. Tuesday 2026-09-15 to Thursday 2026-09-17 occupies
+     * the Tue and Wed nights, both covered by the general rule.
+     */
+    public function testPeriodArrivalRuleFreesAStayFromAGeneralNightRule(): void
+    {
+        $rules = [
+            $this->rule(Type::MIN_STAY_THROUGH, 4, [1, 2, 3, 4, 7]),
+            $this->period(Type::MIN_STAY_ARRIVAL, 2, '2026-09-14', '2026-09-28', [1, 2, 3, 4]),
+        ];
+        $service = $this->service();
+
+        $inside = $service->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-15'), new \DateTimeImmutable('2026-09-17'), $rules);
+        self::assertSame(2, $inside->requiredNights);
+        self::assertTrue($inside->isAllowed());
+
+        // Outside the period the general night rule is untouched.
+        $before = $service->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-08'), new \DateTimeImmutable('2026-09-10'), $rules);
+        self::assertSame(4, $before->requiredNights);
+        self::assertFalse($before->isAllowed());
+
+        // Inside the period but on a weekday the period rule does not name: unchanged too.
+        $sunday = $service->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-20'), new \DateTimeImmutable('2026-09-22'), $rules);
+        self::assertSame(4, $sunday->requiredNights);
+        self::assertFalse($sunday->isAllowed());
+    }
+
+    /** Both kinds remain expressible — inside a period they simply have to be stated there. */
+    public function testTwoPeriodRulesOfDifferentKindsStillCombine(): void
+    {
+        $result = $this->service()->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-15'), new \DateTimeImmutable('2026-09-17'), [
+            $this->period(Type::MIN_STAY_ARRIVAL, 2, '2026-09-14', '2026-09-28'),
+            $this->period(Type::MIN_STAY_THROUGH, 4, '2026-09-14', '2026-09-28'),
+        ]);
         self::assertSame(4, $result->requiredNights);
         self::assertFalse($result->isAllowed());
+    }
+
+    /** A period never lifts a closure; those add up regardless of layer. */
+    public function testPeriodMinimumDoesNotLiftAnUnlimitedClosure(): void
+    {
+        $result = $this->service()->checkStay(new RoomCategory(), new \DateTimeImmutable('2026-09-13'), new \DateTimeImmutable('2026-09-15'), [
+            $this->rule(Type::CLOSED_TO_ARRIVAL, null, [7]),
+            $this->period(Type::MIN_STAY_ARRIVAL, 1, '2026-09-13', '2026-09-15'),
+        ]);
+        self::assertFalse($result->isAllowed());
+        self::assertSame(Type::CLOSED_TO_ARRIVAL, $result->reason);
     }
 
     public function testClosedToArrivalRejectsAnyStayLength(): void
@@ -305,9 +361,10 @@ final class BookingRestrictionServiceTest extends TestCase
         return $rule;
     }
 
-    private function period(Type $type, ?int $nights, string $start, string $end): BookingRestrictionRule
+    /** @param list<int> $weekdays */
+    private function period(Type $type, ?int $nights, string $start, string $end, array $weekdays = [1, 2, 3, 4, 5, 6, 7]): BookingRestrictionRule
     {
-        $rule = $this->rule($type, $nights);
+        $rule = $this->rule($type, $nights, $weekdays);
         $rule->setPeriod(new \DateTimeImmutable($start), new \DateTimeImmutable($end));
 
         return $rule;

@@ -2,7 +2,7 @@ booking_rules:
     section_rules: "Buchungsregeln"
     section_rules_desc: "Lege fest, wie lange Gäste mindestens bleiben müssen und an welchen Tagen keine An- oder Abreise möglich ist. Ohne Regel genügt eine Nacht."
     section_periods: "Sonderzeiträume"
-    section_periods_desc: "Abweichende Regeln für einen Zeitraum, zum Beispiel Feiertage oder Hochsaison. Sie ersetzen den Mindestaufenthalt der allgemeinen Regeln, auch mit einem niedrigeren Wert."
+    section_periods_desc: "Abweichende Regeln für einen Zeitraum, zum Beispiel Feiertage oder Hochsaison. An den Tagen, die sie abdecken, ersetzen sie die Mindestaufenthalte der allgemeinen Regeln vollständig — auch mit einem niedrigeren Wert. Anreise- und Abreisesperren bleiben bestehen."
     section_effect: "Wirkung"
     section_effect_desc: "So wirken deine Regeln auf konkrete Buchungen. Sonderzeiträume sind berücksichtigt."
 
