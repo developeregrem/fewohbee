@@ -202,6 +202,9 @@ Controller  →  Service  →  Repository  →  Doctrine
 They do **not** contain business rules, DQL, price math, or multi-step domain workflows. If a
 controller method exceeds roughly 30 lines, the excess almost certainly belongs in a service.
 
+Controllers do not call helpers on other controllers — no shared `public static` methods. Logic
+that more than one controller needs, request parsing included, belongs in a service.
+
 **Services** own the business logic and are stateless. Inject dependencies via constructor
 promotion with `private readonly`:
 
@@ -354,7 +357,13 @@ Online booking, public availability and iCal feeds are reachable without a login
   input into a query.
 - **XSS:** Twig auto-escaping stays on. `|raw` requires a written justification in a comment and
   server-side sanitization of the value.
-- **CSRF:** Symfony forms handle this automatically. For hand-built forms and AJAX endpoints use
+- **CSRF:** Forms use Symfony's **stateless** CSRF protection (`config/packages/csrf.yaml`, token
+  id `submit`). The rendered token field holds a placeholder that `assets/js/csrf_protection.js`
+  turns into a real token when the form is submitted, so regular and Turbo form submissions need no
+  extra code. A form sent with `fetch()` bypasses that listener: call `generateCsrfToken(form)`
+  before sending and add `generateCsrfHeaders(form)` to the request headers, as
+  `assets/controllers/mail_settings_controller.js` does. For hand-built forms and AJAX endpoints
+  without a Symfony form use
   `$this->isCsrfTokenValid('some-action-' . $id, $request->request->get('_token'))`.
   *(A legacy `CSRFProtectionService` still exists in older controllers — do not use it in new code.)*
 - **Mass assignment:** bind through Symfony Form types or explicit DTOs; never hydrate an entity
@@ -401,9 +410,14 @@ no "English only for now".
 - Both files must contain the **same set of keys**. A key present in `de` but missing in `en` is a
   bug.
 - Never concatenate translated fragments — use placeholders (`%count%`, `%name%`).
+- Sentences that contain a count need plural forms — "1 Nächte" is a bug. Pass `%count%` and use
+  Symfony's interval syntax, e.g. `"{1}eine Nacht|]1,Inf[%count% Nächte"`. If a sentence is
+  assembled in JavaScript, render the plural variants server-side and hand them to the Stimulus
+  controller instead of reimplementing plural rules in JavaScript.
 - Dates, numbers and currency are formatted through Twig/Intl helpers, never hand-formatted.
-- German is the primary product language and uses informal address ("du"), matching the existing
-  strings. Keep the tone consistent with neighbouring keys.
+- German is the primary product language. New German strings use the informal "du" — also where
+  neighbouring keys still use the formal "Sie". Do not rewrite existing strings as a side effect of
+  an unrelated change.
 - Validation messages and enum labels need translations too.
 
 ---
@@ -415,7 +429,8 @@ Both layers are required for a feature to be considered complete.
 ### 9.1 Unit tests — `tests/Unit/`
 
 - Cover business logic, calculations, conditions, actions, mappers, DTOs, edge cases.
-- No database. Mock repositories and collaborators.
+- No database. Replace repositories and collaborators with test doubles: `createStub()` by
+  default, `createMock()` only when the test verifies an interaction with `expects()`.
 - **Agents may run these themselves**, they are fast and side-effect free:
 
 ```bash
@@ -455,11 +470,16 @@ bin/run-tests.sh tests/Functional/InvoiceTest.php # a single file
 
 ### 9.4 Static analysis
 
+PHPStan runs at level 6. The codebase still contains older findings that have not been fixed yet,
+so a run over the whole tree is not clean. The rule is: **your change adds no new findings.**
+Analyse the PHP files you changed — the whole tree can need more memory than PHP's default:
+
 ```bash
-vendor/bin/phpstan analyse    # level 6, must stay green
+vendor/bin/phpstan analyse --memory-limit=1G src/Service/FooService.php tests/Unit/FooServiceTest.php
 ```
 
-Do not add `@phpstan-ignore` or baseline entries to silence a real problem.
+A finding that already exists in such a file on the target branch is not yours. Fixing older
+findings is welcome as a separate change. Do not add `@phpstan-ignore` to silence a real problem.
 
 ---
 
@@ -626,7 +646,7 @@ Before you report a feature as complete, verify every line:
 - [ ] `de` **and** `en` translations complete, same key set
 - [ ] Unit tests written and passing
 - [ ] Functional tests written and passing via `bin/run-tests.sh`
-- [ ] PHPStan level 6 clean
+- [ ] No new PHPStan findings (level 6)
 - [ ] Class docblock present; docblocks on all non-trivial methods; non-obvious logic commented,
       in English
 - [ ] Migration added and reviewed, if the schema changed
@@ -641,7 +661,8 @@ Before you report a feature as complete, verify every line:
 - Raw SQL string concatenation, or DQL outside repositories.
 - New features in the **registration book** module — it is slated for removal.
 - Shipping English-only strings "for now".
-- Running the functional test suite (it resets the maintainer's database) without being asked.
+- Starting a second `bin/run-tests.sh` while one is running, or running it against any environment
+  other than `test`.
 - Editing released migrations.
 - Silencing PHPStan instead of fixing the finding.
 - Large opportunistic refactors bundled into a feature commit — propose them separately.
