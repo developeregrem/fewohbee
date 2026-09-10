@@ -47,7 +47,7 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
         $this->configService->method('getAllowedSubsidiaryIds')->willReturn([1]);
         $this->configService->method('getAllowedRoomIds')->willReturn([1]);
 
-        $this->restrictionService->method('isStayLongEnough')->willReturn(true);
+        $this->restrictionService->method('isStayAllowed')->willReturn(true);
         $this->restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
 
         // The multipleOccupancy rule itself lives in AvailabilityService, so this

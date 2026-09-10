@@ -127,8 +127,6 @@ class PublicAvailabilityService
             $grouped[$typeKey]['maxGuests'] = max($grouped[$typeKey]['maxGuests'], $effectiveCapacity);
         }
 
-        $stayNights = (int) $dateFrom->diff($dateTo)->days;
-
         foreach ($grouped as $key => &$row) {
             sort($row['roomIds']);
             $row['roomCapacities'] = array_intersect_key($row['roomCapacities'], array_flip($row['roomIds']));
@@ -137,9 +135,9 @@ class PublicAvailabilityService
 
             $category = $row['_category'] ?? null;
 
-            // Apply minimum stay restriction: hide category if stay is too short
             if ($category instanceof RoomCategory) {
-                if (!$this->restrictionService->isStayLongEnough($category, $dateFrom, $stayNights)) {
+                // Booking rules are resolved per category, so one check covers every room of the group.
+                if (!$this->restrictionService->isStayAllowed($category, $dateFrom, $dateTo)) {
                     unset($grouped[$key]);
                     continue;
                 }
@@ -242,8 +240,7 @@ class PublicAvailabilityService
         }
 
         $category = $room->getRoomCategory();
-        $nights = (int) $dateFrom->diff($dateTo)->days;
-        if ($category instanceof RoomCategory && !$this->restrictionService->isStayLongEnough($category, $dateFrom, $nights)) {
+        if ($category instanceof RoomCategory && !$this->restrictionService->isStayAllowed($category, $dateFrom, $dateTo)) {
             return [];
         }
 
