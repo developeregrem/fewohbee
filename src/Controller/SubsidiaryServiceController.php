@@ -91,6 +91,9 @@ class SubsidiaryServiceController extends AbstractController
             } elseif ($sub->hasIncompleteOpeningHours($request, 'new')) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
+            } elseif ($sub->hasInvalidCheckInWindow($request, 'new')) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.check_in_window.invalid');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($object);
@@ -131,6 +134,10 @@ class SubsidiaryServiceController extends AbstractController
             } elseif ($sub->hasIncompleteOpeningHours($request, $id)) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
+                $em->clear();
+            } elseif ($sub->hasInvalidCheckInWindow($request, $id)) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.check_in_window.invalid');
                 $em->clear();
             } else {
                 $em->persist($object);

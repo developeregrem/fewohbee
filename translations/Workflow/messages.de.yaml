@@ -123,6 +123,7 @@ workflow:
     invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
     invoice_payment_means_is: "Zahlungsmethode ist"
     reservation_origin_is: "Herkunft ist"
+    invoice_reservation_origin_is: "Herkunft der Reservierung ist"
     reservation_has_invoice: "Rechnung vorhanden"
     has_invoice.label: "Welche Rechnung muss es geben?"
     has_invoice.any: "Irgendeine Rechnung (ohne stornierte)"

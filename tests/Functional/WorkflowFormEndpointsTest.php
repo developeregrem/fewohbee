@@ -51,6 +51,24 @@ final class WorkflowFormEndpointsTest extends WebTestCase
         self::assertNotContains('runOnDays', array_column($schema, 'key'));
     }
 
+    public function testInvoiceTriggerOffersTheReservationOriginCondition(): void
+    {
+        $conditions = $this->fetchOptions('invoice.created')['conditions'] ?? [];
+
+        $condition = $this->findCondition($conditions, 'invoice.reservation_origin_is');
+
+        self::assertStringNotContainsString('workflow.condition', $condition['label']);
+
+        $fields = array_column($condition['configSchema'], null, 'key');
+        self::assertArrayHasKey('originId', $fields);
+        self::assertSame('select', $fields['originId']['type']);
+        self::assertGreaterThan(
+            1,
+            count($fields['originId']['options']),
+            'The select must list the configured reservation origins, not just the empty entry.'
+        );
+    }
+
     public function testInvoiceEmailActionOffersInvoicePdfTemplates(): void
     {
         $actions = $this->fetchOptions('invoice.days_after_date')['actions'] ?? [];
@@ -160,6 +178,22 @@ final class WorkflowFormEndpointsTest extends WebTestCase
         foreach ($ids as $id) {
             $conn->executeStatement('DELETE FROM invoices WHERE id = :id', ['id' => $id]);
         }
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $conditions
+     *
+     * @return array<string, mixed>
+     */
+    private function findCondition(array $conditions, string $type): array
+    {
+        foreach ($conditions as $candidate) {
+            if ($type === ($candidate['type'] ?? '')) {
+                return $candidate;
+            }
+        }
+
+        self::fail(sprintf('Condition "%s" is not offered for this trigger.', $type));
     }
 
     /**
