@@ -104,6 +104,14 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
     {
         return [
             [
+                'id' => 'reservation.check_in_times',
+                'label' => 'templates.editor.check_in_times',
+                'description' => 'templates.editor.check_in_times.desc',
+                'group' => 'Reservation',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"check_in_times(reservation1.appartment.object)\">[[ check_in_times(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.checkInNote\">[[ reservation1.appartment.object.checkInNote ]]</p>",
+            ],
+            [
                 'id' => 'reservation.opening_hours',
                 'label' => 'templates.editor.opening_hours',
                 'description' => 'templates.editor.opening_hours.desc',

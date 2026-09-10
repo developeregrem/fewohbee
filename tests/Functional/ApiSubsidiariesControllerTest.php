@@ -102,6 +102,39 @@ final class ApiSubsidiariesControllerTest extends WebTestCase
             if ($name === ($row['name'] ?? null)) {
                 self::assertNull($row['openingHours']);
                 self::assertNull($row['openingHoursNote']);
+                self::assertNull($row['checkInFrom']);
+                self::assertNull($row['checkInUntil']);
+                self::assertNull($row['checkOutUntil']);
+                self::assertNull($row['checkInNote']);
+
+                return;
+            }
+        }
+
+        self::fail('The created branch must appear in the listing.');
+    }
+
+    public function testTheCheckInTimesAreListedAsPlainClockValues(): void
+    {
+        $client = static::createClient();
+        [, $plainToken] = $this->createUserWithToken(['ROLE_RESERVATIONS_RO'], [ApiScope::SUBSIDIARIES_READ->value]);
+
+        $name = 'Api branch '.bin2hex(random_bytes(4));
+        $this->createSubsidiary($name, [], null, true);
+
+        $this->requestWithBearer($client, '/api/v1/subsidiaries', $plainToken);
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true);
+
+        foreach ($payload['data'] as $row) {
+            if ($name === ($row['name'] ?? null)) {
+                // 'HH:MM' without a date part: a consumer must not be tempted to read a
+                // timezone into a house rule.
+                self::assertSame('17:00', $row['checkInFrom']);
+                self::assertSame('20:00', $row['checkInUntil']);
+                self::assertSame('10:00', $row['checkOutUntil']);
+                self::assertSame('Later arrival by arrangement', $row['checkInNote']);
 
                 return;
             }
@@ -118,7 +151,7 @@ final class ApiSubsidiariesControllerTest extends WebTestCase
     /**
      * @param array<int, list<array{0: string, 1: string}>> $openingHours
      */
-    private function createSubsidiary(string $name, array $openingHours, ?string $note): void
+    private function createSubsidiary(string $name, array $openingHours, ?string $note, bool $withCheckInTimes = false): void
     {
         $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
 
@@ -127,6 +160,12 @@ final class ApiSubsidiariesControllerTest extends WebTestCase
         $subsidiary->setDescription('Functional test');
         $subsidiary->setOpeningHours($openingHours);
         $subsidiary->setOpeningHoursNote($note);
+        if ($withCheckInTimes) {
+            $subsidiary->setCheckInFrom(new \DateTimeImmutable('17:00'));
+            $subsidiary->setCheckInUntil(new \DateTimeImmutable('20:00'));
+            $subsidiary->setCheckOutUntil(new \DateTimeImmutable('10:00'));
+            $subsidiary->setCheckInNote('Later arrival by arrangement');
+        }
 
         $em->persist($subsidiary);
         $em->flush();

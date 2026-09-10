@@ -906,6 +906,14 @@
                 <source>templates.editor.opening_hours.desc</source>
                 <target>Gibt die wöchentlichen Öffnungszeiten der Niederlassung als eine Zeile aus, z. B. „Mo.–Fr. 08:00–12:00, 16:00–19:00". Sind keine Zeiten hinterlegt, entfällt der Absatz.</target>
             </trans-unit>
+            <trans-unit id="templates.editor.check_in_times">
+                <source>templates.editor.check_in_times</source>
+                <target>Check-in-Zeiten des Betriebs</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.check_in_times.desc">
+                <source>templates.editor.check_in_times.desc</source>
+                <target>Gibt Check-in-Fenster und Check-out-Zeit des Betriebs als eine Zeile aus, z. B. „Check-in 17:00–20:00 Uhr · Check-out bis 10:00 Uhr“. Das sind Hausregeln, nicht die Anreisezeit dieser Reservierung. Der Absatz entfällt, wenn keine Zeiten hinterlegt sind.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>
