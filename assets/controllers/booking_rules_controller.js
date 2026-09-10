@@ -1,6 +1,8 @@
 import { Controller } from '@hotwired/stimulus';
 import { enableDeletePopover } from '../js/utils.js';
 
+const SCROLL_KEY = 'booking-rules:scroll-target';
+
 /* stimulusFetch: 'lazy' */
 
 /**
@@ -39,6 +41,7 @@ export default class extends Controller {
 
     connect() {
         this.initDeletePopovers();
+        this.restoreScrollTarget();
     }
 
     /** Loads the rule form for a new or existing rule into the offcanvas. */
@@ -83,6 +86,7 @@ export default class extends Controller {
             });
 
             if (response.status === 204) {
+                this.rememberScrollTarget(form, response.headers.get('X-Booking-Rule-Id'));
                 window.location.reload();
                 return;
             }
@@ -131,6 +135,41 @@ export default class extends Controller {
 
         // A disabled rule stops applying, so the effect table has to catch up.
         this.reloadMatrix();
+    }
+
+    /**
+     * Remembers where to land after the reload that follows a save: the saved rule itself,
+     * or — should the id be missing — the list it belongs to. A reload alone would drop the
+     * operator at the top of a long settings page.
+     */
+    rememberScrollTarget(form, ruleId) {
+        const isPeriod = form.querySelector('input[name$="[startDate]"]') !== null;
+        const target = ruleId ? `booking-rule-${ruleId}` : (isPeriod ? 'booking-rule-periods' : 'booking-rules');
+
+        try {
+            window.sessionStorage.setItem(SCROLL_KEY, target);
+        } catch {
+            // Storage can be unavailable (private mode); the page then simply opens at the top.
+        }
+    }
+
+    /** Scrolls to the element remembered before the last save and forgets it again. */
+    restoreScrollTarget() {
+        let id = null;
+        try {
+            id = window.sessionStorage.getItem(SCROLL_KEY);
+            window.sessionStorage.removeItem(SCROLL_KEY);
+        } catch {
+            return;
+        }
+
+        const target = id ? document.getElementById(id) : null;
+        if (!target) {
+            return;
+        }
+
+        // Centred, so the rule is seen together with its neighbours and the list heading.
+        requestAnimationFrame(() => target.scrollIntoView({ behavior: 'auto', block: 'center' }));
     }
 
     /** Shows only the fields the selected type uses and rewrites labels and summary. */

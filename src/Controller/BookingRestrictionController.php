@@ -56,13 +56,16 @@ final class BookingRestrictionController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->writer->save($data, $rule);
+            $saved = $this->writer->save($data, $rule);
             $this->addFlash('success', 'booking_rules.saved');
 
-            // The offcanvas submits by fetch and reloads on success; a no-JS post redirects.
-            return $request->isXmlHttpRequest()
-                ? new Response(status: Response::HTTP_NO_CONTENT)
-                : $this->redirectToRoute('settings.online_booking.index');
+            // The offcanvas submits by fetch and reloads on success; the id lets the page scroll
+            // back to the rule that was just saved instead of landing at the top.
+            if ($request->isXmlHttpRequest()) {
+                return new Response(status: Response::HTTP_NO_CONTENT, headers: ['X-Booking-Rule-Id' => (string) $saved->getId()]);
+            }
+
+            return $this->redirectToRoute('settings.online_booking.index', ['_fragment' => 'booking-rule-'.$saved->getId()]);
         }
 
         if ($form->isSubmitted() && !$request->isXmlHttpRequest()) {

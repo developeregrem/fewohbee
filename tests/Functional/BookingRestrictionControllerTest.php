@@ -195,6 +195,32 @@ final class BookingRestrictionControllerTest extends WebTestCase
         self::assertSelectorNotExists('a[href="#booking-rule-periods"]');
     }
 
+    /**
+     * The offcanvas reloads the page after saving; the returned id lets it scroll back to the
+     * rule instead of dropping the operator at the top.
+     */
+    public function testSavingReportsTheRuleSoThePageCanScrollBackToIt(): void
+    {
+        $client = $this->authenticatedClient();
+        $crawler = $client->request('GET', '/settings/online-booking/rules/new', server: self::XHR);
+        $input = $crawler->filter('form[name="booking_restriction_rule"]')->form()->getPhpValues();
+
+        $client->request('POST', '/settings/online-booking/rules/new', $input, server: self::XHR);
+        self::assertResponseStatusCodeSame(204);
+        $id = $this->repository()->findOneBy([])?->getId();
+        self::assertNotNull($id);
+        self::assertResponseHeaderSame('X-Booking-Rule-Id', (string) $id);
+
+        $client->request('GET', '/settings/online-booking');
+        self::assertSelectorExists('#booking-rule-'.$id);
+
+        // Without JavaScript the redirect carries the same target as a fragment.
+        $crawler = $client->request('GET', '/settings/online-booking/rules/'.$id.'/edit', server: self::XHR);
+        $input = $crawler->filter('form[name="booking_restriction_rule"]')->form()->getPhpValues();
+        $client->request('POST', '/settings/online-booking/rules/'.$id.'/edit', $input);
+        self::assertResponseRedirects('/settings/online-booking#booking-rule-'.$id);
+    }
+
     public function testToggleAndDeleteRequireCsrfAndUnknownRuleIsNotFound(): void
     {
         $client = $this->authenticatedClient();

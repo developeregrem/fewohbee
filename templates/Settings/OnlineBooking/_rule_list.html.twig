@@ -21,7 +21,9 @@
     <div class="card-body p-0">
         <ul class="list-group list-group-flush" data-booking-rules-target="ruleList" {{ listRules|length > 0 ? '' : 'hidden' }}>
                 {% for rule in listRules %}
-                    <li class="list-group-item d-flex flex-wrap align-items-start justify-content-between gap-2 {{ rule.enabled ? '' : 'opacity-50' }}"
+                    {# The id is the scroll target after saving a rule in the offcanvas. #}
+                    <li id="booking-rule-{{ rule.id }}"
+                        class="list-group-item d-flex flex-wrap align-items-start justify-content-between gap-2 {{ rule.enabled ? '' : 'opacity-50' }}"
                         data-booking-rules-target="ruleRow">
                         <div class="me-auto">
                             <p class="mb-1 small fw-semibold">
