@@ -196,7 +196,7 @@
             </trans-unit>
             <trans-unit id="calendar.sync.import.conflict.option.skip">
                 <source>calendar.sync.import.conflict.option.skip</source>
-                <target>Konflikt ignorieren</target>
+                <target>Eintrag bei Konflikt überspringen</target>
             </trans-unit>
             <trans-unit id="calendar.sync.import.conflict.option.overwrite">
                 <source>calendar.sync.import.conflict.option.overwrite</source>
