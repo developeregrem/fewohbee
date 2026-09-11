@@ -35,6 +35,7 @@ final class ImportedReservationSynchronizer
 
     /**
      * Create or update the reservation represented by one non-recurring portal event.
+     * Updates preserve local room moves and check conflicts in the reservation's current room.
      */
     public function synchronize(CalendarSyncImport $import, IcsOccurrence $event): ReservationImportOutcome
     {
@@ -50,14 +51,16 @@ final class ImportedReservationSynchronizer
         }
 
         $existing = $this->reservationRepository->findOneByRefUidAndImport($uid, $import);
+        // The import room is only the default for new reservations; local room moves are preserved.
+        $apartment = $existing?->getAppartment() ?? $import->getApartment();
         $reservationConflicts = $this->availabilityService->getConflictingReservations(
-            $import->getApartment(),
+            $apartment,
             $start,
             $end,
             $existing,
         );
         $blockConflicts = $this->availabilityService->getConflictingBlocks(
-            $import->getApartment(),
+            $apartment,
             $start,
             $end,
         );

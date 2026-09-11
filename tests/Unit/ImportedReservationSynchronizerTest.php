@@ -22,9 +22,62 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-/** Verify defaults and side effects applied to newly imported reservations. */
+/** Verify import defaults, room selection and synchronization side effects. */
 final class ImportedReservationSynchronizerTest extends TestCase
 {
+    public function testMovedReservationChecksConflictsInItsCurrentApartment(): void
+    {
+        $import = (new CalendarSyncImport())
+            ->setApartment(new Appartment())
+            ->setConflictStrategy(CalendarSyncImport::CONFLICT_MARK);
+        $currentApartment = new Appartment();
+        $reservation = new Reservation();
+        $reservation->setAppartment($currentApartment);
+        $start = new \DateTimeImmutable('today +2 days');
+        $end = new \DateTimeImmutable('today +4 days');
+
+        $repository = $this->createStub(ReservationRepository::class);
+        $repository->method('findOneByRefUidAndImport')->willReturn($reservation);
+
+        $availability = $this->createMock(AvailabilityService::class);
+        $availability->expects(self::once())->method('getConflictingReservations')
+            ->with(self::identicalTo($currentApartment), $start, $end, self::identicalTo($reservation))
+            ->willReturn([]);
+        $availability->expects(self::once())->method('getConflictingBlocks')
+            ->with(self::identicalTo($currentApartment), $start, $end)
+            ->willReturn([]);
+
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects(self::never())->method('persist');
+        $entityManager->expects(self::once())->method('flush');
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects(self::never())->method('dispatch');
+
+        $service = new ImportedReservationSynchronizer(
+            $entityManager,
+            $dispatcher,
+            $repository,
+            $availability,
+            $this->createStub(GuestCategoryRepository::class),
+            $this->createStub(ReservationService::class),
+        );
+
+        $outcome = $service->synchronize($import, new IcsOccurrence(
+            uid: 'moved-portal-uid',
+            summary: 'Reservation',
+            description: '',
+            start: $start,
+            end: $end,
+            allDay: true,
+        ));
+
+        self::assertSame(ReservationImportOutcome::Synchronized, $outcome);
+        self::assertSame($currentApartment, $reservation->getAppartment());
+        self::assertEquals($start, $reservation->getStartDate());
+        self::assertEquals($end, $reservation->getEndDate());
+        self::assertFalse($reservation->isConflict());
+    }
+
     public function testConflictImportUsesBedCountGuestCountsAndDispatchesCreatedEvent(): void
     {
         $apartment = new Appartment();

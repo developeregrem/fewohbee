@@ -9,12 +9,14 @@ use App\Entity\CalendarSyncImport;
 use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
+use App\Entity\RoomBlock;
 use App\Repository\CalendarSyncImportRepository;
 use App\Repository\ReservationRepository;
 use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -136,6 +138,90 @@ ICS,
         self::assertSame($manualOrigin->getId(), $reservation->getReservationOrigin()->getId());
         self::assertSame($manualStatus->getId(), $reservation->getReservationStatus()->getId());
         self::assertFalse($reservation->isConflict());
+    }
+
+    /** Verify room moves against persisted bookings and blocks for every conflict strategy. */
+    #[DataProvider('movedReservationConflictCases')]
+    public function testMovedReservationUsesCurrentRoomForConflicts(
+        string $strategy,
+        bool $blockCurrentRoom,
+        bool $useRoomBlock,
+    ): void {
+        $import = $this->createImport('https://example.test/ical/moved', $strategy);
+        $uid = 'uid-moved';
+        $start = new \DateTimeImmutable('today +3 days');
+        $end = new \DateTimeImmutable('today +5 days');
+        $service = $this->createServiceWithResponses([
+            $import->getUrl() => $this->buildIcal($uid, $start, $end),
+        ]);
+        $service->syncImport($import);
+        $reservation = $this->getReservationRepository()->findOneByRefUidAndImport($uid, $import);
+        self::assertNotNull($reservation);
+        $reservationId = $reservation->getId();
+
+        $currentRoom = $this->createApartment();
+        $reservation->setAppartment($currentRoom);
+        $localStart = new \DateTime('today +6 days');
+        $localEnd = new \DateTime('today +8 days');
+        $reservation->setStartDate($localStart);
+        $reservation->setEndDate($localEnd);
+        $this->em->flush();
+
+        $occupiedRoom = $blockCurrentRoom ? $currentRoom : $import->getApartment();
+        if ($useRoomBlock) {
+            $obstacle = (new RoomBlock())
+                ->setAppartment($occupiedRoom)
+                ->setStartDate($start)
+                ->setEndDate($end)
+                ->setReason('Maintenance');
+            $this->em->persist($obstacle);
+        } else {
+            $obstacle = $this->createReservation(
+                $import,
+                'manual-reservation',
+                \DateTime::createFromImmutable($start),
+                \DateTime::createFromImmutable($end),
+            );
+            $obstacle->setAppartment($occupiedRoom);
+            $obstacle->setCalendarSyncImport(null);
+            $obstacle->setRefUid(null);
+        }
+        $this->em->flush();
+
+        $service->syncImport($import);
+
+        $this->em->refresh($reservation);
+        self::assertSame($reservationId, $reservation->getId());
+        self::assertSame($currentRoom->getId(), $reservation->getAppartment()->getId());
+        self::assertSame($import->getId(), $reservation->getCalendarSyncImport()?->getId());
+        $skipped = $blockCurrentRoom && CalendarSyncImport::CONFLICT_SKIP === $strategy;
+        self::assertSame(($skipped ? $localStart : $start)->format('Y-m-d'), $reservation->getStartDate()->format('Y-m-d'));
+        self::assertSame(($skipped ? $localEnd : $end)->format('Y-m-d'), $reservation->getEndDate()->format('Y-m-d'));
+        self::assertSame(
+            $blockCurrentRoom && !$skipped && ($useRoomBlock || CalendarSyncImport::CONFLICT_MARK === $strategy),
+            $reservation->isConflict(),
+        );
+        self::assertFalse($reservation->isConflictIgnored());
+        $this->em->refresh($obstacle);
+        self::assertSame($occupiedRoom->getId(), $obstacle->getAppartment()->getId());
+        if ($obstacle instanceof Reservation) {
+            self::assertSame(
+                $blockCurrentRoom && CalendarSyncImport::CONFLICT_OVERWRITE === $strategy,
+                $obstacle->isConflict(),
+            );
+        }
+    }
+
+    /** @return iterable<string, array{string, bool, bool}> */
+    public static function movedReservationConflictCases(): iterable
+    {
+        foreach ([CalendarSyncImport::CONFLICT_MARK, CalendarSyncImport::CONFLICT_SKIP, CalendarSyncImport::CONFLICT_OVERWRITE] as $strategy) {
+            foreach (['original room' => false, 'current room' => true] as $room => $blockCurrentRoom) {
+                foreach (['reservation' => false, 'room block' => true] as $obstacle => $useRoomBlock) {
+                    yield $strategy.' / '.$room.' / '.$obstacle => [$strategy, $blockCurrentRoom, $useRoomBlock];
+                }
+            }
+        }
     }
 
     /** Verify that conflict updates also preserve manually edited fields. */
