@@ -7,6 +7,7 @@ namespace App\Tests\Unit\BookingJournal\BankImport;
 use App\Dto\BookingJournal\BankImport\ImportState;
 use App\Entity\BankImportRule;
 use App\Service\BookingJournal\BankImport\RuleActionApplicator;
+use App\Service\BookingJournal\BankImport\UserRegexCompiler;
 use PHPUnit\Framework\TestCase;
 
 final class RuleActionApplicatorTest extends TestCase
@@ -15,7 +16,7 @@ final class RuleActionApplicatorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->applicator = new RuleActionApplicator();
+        $this->applicator = new RuleActionApplicator(new UserRegexCompiler());
     }
 
     public function testIgnoreActionFlagsLine(): void

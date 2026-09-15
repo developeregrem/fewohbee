@@ -6,9 +6,6 @@ namespace App\Controller;
 
 use App\Entity\BankImportRule;
 use App\Form\BankImportRuleType;
-use App\Repository\AccountingAccountRepository;
-use App\Repository\BankImportRuleRepository;
-use App\Repository\TaxRateRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,10 +16,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 /**
  * CRUD over the user's saved bank-import rules.
  *
- * Authoring rules from scratch happens in the preview ("Als Regel speichern"),
- * because the context (a real line) is what makes the conditions/actions
- * meaningful. This controller exposes the resulting rules for review,
- * priority/scope tweaks, enable/disable, and deletion.
+ * Rules are born in the preview ("Als Regel speichern"), because the context
+ * of a real line is what makes the conditions and the action meaningful. This
+ * controller exposes them for review, for enabling and disabling, for deletion
+ * and for editing the values they carry — see {@see BankImportRuleType} for
+ * what editing covers.
  */
 #[Route('/journal/bank-import/rules')]
 #[IsGranted('ROLE_CASHJOURNAL')]
@@ -40,7 +38,7 @@ class BankImportRuleController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'bank_import.rules.edit', methods: ['GET'])]
-    public function edit(BankImportRule $rule, AccountingAccountRepository $accountRepo, TaxRateRepository $taxRateRepo): Response
+    public function edit(BankImportRule $rule): Response
     {
         $form = $this->createForm(BankImportRuleType::class, $rule, [
             'action' => $this->generateUrl('bank_import.rules.update', ['id' => $rule->getId()]),
@@ -49,13 +47,11 @@ class BankImportRuleController extends AbstractController
         return $this->render('BookingJournal/BankImport/rule_form.html.twig', [
             'form' => $form,
             'rule' => $rule,
-            'accountsById' => $this->mapAccountsById($accountRepo),
-            'taxRatesById' => $this->mapTaxRatesById($taxRateRepo),
         ]);
     }
 
     #[Route('/{id}/update', name: 'bank_import.rules.update', methods: ['POST'])]
-    public function update(BankImportRule $rule, Request $request, EntityManagerInterface $em, AccountingAccountRepository $accountRepo, TaxRateRepository $taxRateRepo): Response
+    public function update(BankImportRule $rule, Request $request, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(BankImportRuleType::class, $rule);
         $form->handleRequest($request);
@@ -70,8 +66,6 @@ class BankImportRuleController extends AbstractController
         return $this->render('BookingJournal/BankImport/rule_form.html.twig', [
             'form' => $form,
             'rule' => $rule,
-            'accountsById' => $this->mapAccountsById($accountRepo),
-            'taxRatesById' => $this->mapTaxRatesById($taxRateRepo),
         ]);
     }
 
@@ -104,31 +98,5 @@ class BankImportRuleController extends AbstractController
         $this->addFlash('success', 'accounting.bank_import.rules.flash.deleted');
 
         return new Response('', Response::HTTP_NO_CONTENT);
-    }
-
-    /**
-     * @return array<int, \App\Entity\AccountingAccount>
-     */
-    private function mapAccountsById(AccountingAccountRepository $accountRepo): array
-    {
-        $accounts = [];
-        foreach ($accountRepo->findAll() as $account) {
-            $accounts[(int) $account->getId()] = $account;
-        }
-
-        return $accounts;
-    }
-
-    /**
-     * @return array<int, \App\Entity\TaxRate>
-     */
-    private function mapTaxRatesById(TaxRateRepository $taxRateRepo): array
-    {
-        $taxRates = [];
-        foreach ($taxRateRepo->findAll() as $taxRate) {
-            $taxRates[(int) $taxRate->getId()] = $taxRate;
-        }
-
-        return $taxRates;
     }
 }

@@ -27,3 +27,6 @@ accounting:
     upload:
       file:
         invalid_type: Please upload a valid file (.csv, .xls, .xlsx, .xml).
+    rules:
+      validation:
+        regex_invalid: This is not a valid regular expression.

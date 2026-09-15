@@ -41,18 +41,13 @@
                             </p>
                         </div>
                         <div class="text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                                    title="{{ 'booking_rules.edit'|trans }}"
-                                    data-action="click->booking-rules#openOffcanvas"
-                                    data-url="{{ path('settings.online_booking.rule_edit', {'id': rule.id}) }}"
-                                    data-offcanvas-title="{{ 'booking_rules.edit'|trans }}">
-                                <i class="fas fa-pen-to-square"></i>
-                            </button>
-                            {# Submitted over ajax so the page keeps its scroll position. #}
+                            {# Same button set as the other settings lists: toggle, edit, delete. The toggle
+                               is submitted over ajax so the page keeps its scroll position. #}
                             <form method="post" action="{{ path('settings.online_booking.rule_toggle', {'id': rule.id}) }}" class="d-inline"
                                   data-action="submit->booking-rules#toggleRule">
                                 <input type="hidden" name="_token" value="{{ csrf_token('booking-rule-toggle-' ~ rule.id) }}">
-                                <button class="btn btn-sm btn-outline-secondary me-1" type="submit"
+                                <button type="submit"
+                                        class="btn btn-sm {{ rule.enabled ? 'btn-success' : 'btn-outline-secondary' }}"
                                         data-booking-rules-target="toggleButton"
                                         data-enable-label="{{ 'booking_rules.enable'|trans }}"
                                         data-disable-label="{{ 'booking_rules.disable'|trans }}"
@@ -60,11 +55,17 @@
                                     <i class="fas {{ rule.enabled ? 'fa-toggle-on' : 'fa-toggle-off' }}"></i>
                                 </button>
                             </form>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    title="{{ 'booking_rules.edit'|trans }}"
+                                    data-action="click->booking-rules#openOffcanvas"
+                                    data-url="{{ path('settings.online_booking.rule_edit', {'id': rule.id}) }}"
+                                    data-offcanvas-title="{{ 'booking_rules.edit'|trans }}">
+                                <i class="fas fa-pen"></i>
+                            </button>
                             {% set id = rule.id %}
                             {% set targetUrl = path('settings.online_booking.rule_delete', {'id': rule.id}) %}
                             {% set deletePopoverHint = 'booking_rules.delete_confirm'|trans %}
-                            <button type="button"
-                                    class="btn btn-sm btn-link text-danger p-0 border-0 align-baseline"
+                            <button type="button" class="btn btn-sm btn-outline-danger"
                                     title="{{ 'button.delete'|trans }}"
                                     data-popover="delete"
                                     data-title="{{ 'registrationbook.delete.ask'|trans }}"

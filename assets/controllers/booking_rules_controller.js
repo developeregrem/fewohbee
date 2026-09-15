@@ -126,6 +126,9 @@ export default class extends Controller {
         const button = form.querySelector('[data-booking-rules-target="toggleButton"]');
         if (button) {
             button.title = enabled ? button.dataset.enableLabel : button.dataset.disableLabel;
+            // Green while active, neutral while inactive — as the server renders it on load.
+            button.classList.toggle('btn-success', !enabled);
+            button.classList.toggle('btn-outline-secondary', enabled);
             const icon = button.querySelector('i');
             if (icon) {
                 icon.classList.toggle('fa-toggle-on', !enabled);
