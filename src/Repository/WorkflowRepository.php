@@ -61,6 +61,34 @@ class WorkflowRepository extends ServiceEntityRepository
     }
 
     /**
+     * Ids of the tax rates workflows currently point at.
+     *
+     * Read by the form offering the choice, which narrows its list to what the
+     * active chart of accounts holds today: a rate a workflow was configured
+     * with has to stay in that list even once it falls outside, or opening the
+     * workflow would drop the selection without a word.
+     *
+     * @return int[]
+     */
+    public function findReferencedTaxRateIds(): array
+    {
+        $ids = [];
+        foreach (self::TAX_RATE_CONFIG_KEYS as $actionType => $keys) {
+            foreach ($this->findBy(['actionType' => $actionType]) as $workflow) {
+                $config = $workflow->getActionConfig();
+                foreach ($keys as $key) {
+                    $id = (int) ($config[$key] ?? 0);
+                    if (0 !== $id) {
+                        $ids[$id] = $id;
+                    }
+                }
+            }
+        }
+
+        return array_values($ids);
+    }
+
+    /**
      * How many workflows name this id under any of the given config keys.
      *
      * @param array<string, string[]> $keysByActionType

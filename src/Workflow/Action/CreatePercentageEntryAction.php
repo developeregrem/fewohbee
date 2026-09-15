@@ -68,11 +68,6 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
      */
     public function getConfigSchema(): array
     {
-        $taxRateOptions = [['value' => '', 'label' => '-']];
-        foreach ($this->taxRateRepo->findAllOrdered() as $taxRate) {
-            $taxRateOptions[] = ['value' => (string) $taxRate->getId(), 'label' => $taxRate->getName()];
-        }
-
         return [
             [
                 'key' => 'percent',
@@ -97,9 +92,11 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             ],
             [
                 'key' => 'taxRateId',
-                'type' => 'select',
+                // Resolved by the controller, which scopes the list to the chart
+                // of accounts in use - an action has no business knowing which
+                // one that is.
+                'type' => 'tax_rate_select',
                 'label' => 'workflow.form.percentage_entry_tax_rate',
-                'options' => $taxRateOptions,
                 'default' => '',
             ],
             [
