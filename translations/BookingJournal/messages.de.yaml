@@ -213,6 +213,8 @@ accounting.journal.entry.debit: Soll
 accounting.journal.entry.credit: Haben
 accounting.journal.entry.tax_rate: Steuersatz
 accounting.journal.entry.invoice: Rechnungs-Nr.
+accounting.journal.entry.requires_document: Beleg wird nachgereicht
+accounting.journal.entry.requires_document_help: Die Buchung wartet auf eine Belegnummer. Solange sie fehlt, lässt sich der Monat nicht abschließen.
 accounting.journal.entry.remark: Bemerkung
 accounting.journal.entry.empty: Keine Buchungen vorhanden.
 accounting.journal.entry.delete_ask: Diese Buchung wirklich löschen?

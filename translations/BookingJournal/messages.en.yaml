@@ -213,6 +213,8 @@ accounting.journal.entry.debit: Debit
 accounting.journal.entry.credit: Credit
 accounting.journal.entry.tax_rate: Tax Rate
 accounting.journal.entry.invoice: Invoice No.
+accounting.journal.entry.requires_document: Document to follow
+accounting.journal.entry.requires_document_help: The entry is waiting for a document number. The month cannot be closed while it is missing.
 accounting.journal.entry.remark: Remark
 accounting.journal.entry.empty: No entries yet.
 accounting.journal.entry.delete_ask: Delete this entry?

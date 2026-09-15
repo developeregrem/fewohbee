@@ -276,6 +276,10 @@ class BookingJournalController extends AbstractController
         $copy->setCreditAccount($entry->getCreditAccount());
         $copy->setTaxRate($entry->getTaxRate());
         $copy->setInvoiceNumber($entry->getInvoiceNumber());
+        // Carried over like everything else: a copy of an entry booked ahead of
+        // its document is waiting for one just as much as the original, and
+        // losing the flag would let the month close on it.
+        $copy->setRequiresDocumentNumber($entry->requiresDocumentNumber());
         $copy->setRemark($entry->getRemark());
 
         $formOptions = [

@@ -291,6 +291,41 @@ final class BookingJournalControllerTest extends WebTestCase
         self::assertStringNotContainsString('booking-journal#openOffcanvas', (string) $client->getResponse()->getContent());
     }
 
+    // ── Duplicating an entry ────────────────────────────────────────
+
+    public function testDuplicatingAnEntryKeepsTheDocumentFlag(): void
+    {
+        // The copy of an entry booked ahead of its document is waiting for one
+        // just as much as the original; losing the flag would let the month be
+        // closed on a deduction nothing documents.
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $entry = $this->createEntryIn(2095, 4, static function (BookingEntry $entry): void {
+            $entry->setRequiresDocumentNumber(true);
+        });
+
+        $crawler = $client->request('GET', '/journal/entry/'.$entry->getId().'/duplicate');
+
+        self::assertResponseIsSuccessful();
+        $checkbox = $crawler->filter('input[id$="_requiresDocumentNumber"]');
+        self::assertGreaterThan(0, $checkbox->count(), 'the entry form does not offer the document flag');
+        self::assertNotNull($checkbox->attr('checked'), 'the copy does not wait for the document the original waits for');
+    }
+
+    public function testDuplicatingAnOrdinaryEntryLeavesTheDocumentFlagOff(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $entry = $this->createEntryIn(2095, 5);
+
+        $crawler = $client->request('GET', '/journal/entry/'.$entry->getId().'/duplicate');
+
+        self::assertResponseIsSuccessful();
+        self::assertNull($crawler->filter('input[id$="_requiresDocumentNumber"]')->attr('checked'));
+    }
+
     // ── Deleting a tax rate ─────────────────────────────────────────
 
     public function testTaxRateConfiguredInAWorkflowCannotBeDeleted(): void
@@ -386,6 +421,36 @@ final class BookingJournalControllerTest extends WebTestCase
 
         $client->request('DELETE', $url, ['_token' => $token]);
         $this->getEntityManager()->clear();
+    }
+
+    /** An entry of its own month, so the tests do not disturb each other. */
+    private function createEntryIn(int $year, int $month, ?callable $adjust = null): BookingEntry
+    {
+        $em = $this->getEntityManager();
+
+        $batch = new BookingBatch();
+        $batch->setYear($year);
+        $batch->setMonth($month);
+        $batch->setIsClosed(false);
+        $batch->setCashStart(0);
+        $batch->setCashEnd(0);
+        $em->persist($batch);
+
+        $entry = new BookingEntry();
+        $entry->setBookingBatch($batch);
+        $entry->setDate(new \DateTime(sprintf('%04d-%02d-15', $year, $month)));
+        $entry->setDocumentNumber(1);
+        $entry->setAmount('42.00');
+        $entry->setRemark('Kopier-Testbuchung');
+
+        if (null !== $adjust) {
+            $adjust($entry);
+        }
+
+        $em->persist($entry);
+        $em->flush();
+
+        return $entry;
     }
 
     private function createCashJournalUser(): User
