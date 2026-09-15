@@ -56,11 +56,11 @@
             </trans-unit>
             <trans-unit id="reservationorigin.collection.property">
                 <source>reservationorigin.collection.property</source>
-                <target>dem Haus</target>
+                <target>Unterkunft</target>
             </trans-unit>
             <trans-unit id="reservationorigin.collection.portal">
                 <source>reservationorigin.collection.portal</source>
-                <target>dem Portal</target>
+                <target>Portal</target>
             </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>

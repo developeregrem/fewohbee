@@ -76,17 +76,22 @@
                 </select>
             </div>
         </div>
-        <div class="row mt-2">
-            <label for="tourist-tax-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.tourist_tax_collection'|trans }}</label>
+        {# Only asked where a tourist tax exists at all - with none configured
+           there is nothing for a portal to collect, and the answer is the
+           property either way. #}
+        {% if hasTouristTax %}
+            <div class="row mt-2">
+                <label for="tourist-tax-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.tourist_tax_collection'|trans }}</label>
 
-            <div class="col-sm-8">
-                <select id="tourist-tax-collection-{{ origin.id }}" name="tourist-tax-collection-{{ origin.id }}" class="form-select">
-                    <option value="property"{% if origin.touristTaxCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
-                    <option value="portal"{% if origin.touristTaxCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
-                </select>
-                <div class="form-text small"><i class="fas fa-info-circle"></i> {{ 'reservationorigin.tourist_tax_collection.hint'|trans }}</div>
+                <div class="col-sm-8">
+                    <select id="tourist-tax-collection-{{ origin.id }}" name="tourist-tax-collection-{{ origin.id }}" class="form-select">
+                        <option value="property"{% if origin.touristTaxCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
+                        <option value="portal"{% if origin.touristTaxCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
+                    </select>
+                    <div class="form-text small"><i class="fas fa-info-circle"></i> {{ 'reservationorigin.tourist_tax_collection.hint'|trans }}</div>
+                </div>
             </div>
-        </div>
+        {% endif %}
     </div>
 </fieldset>
 
