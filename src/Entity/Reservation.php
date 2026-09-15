@@ -440,7 +440,10 @@ class Reservation
     /**
      * Get reservationOrigin.
      *
-     * @return ReservationOrigin
+     * Null for a booking that came in directly - the field is optional, and the
+     * fee calculation leans on that.
+     *
+     * @return ReservationOrigin|null
      */
     public function getReservationOrigin()
     {
