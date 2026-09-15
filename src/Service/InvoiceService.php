@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\OriginFee;
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\TaxCalculationMode;
@@ -215,14 +216,24 @@ class InvoiceService
             // reservation's origin, worked out by OriginFeeCalculator - the same
             // one the deduction is booked from, so the guest is shown what the
             // journal records. Amounts are zero (not null) when no origin
-            // applies; originName is null then, so a template can guard with a
-            // plain [% if originName %]. A total, if wanted, is originCommission
-            // + originPaymentFee - left to the template rather than provided.
+            // applies, and originName is null then. A total, if wanted, is
+            // originCommission + originPaymentFee - left to the template rather
+            // than provided.
+            //
+            // Null where the invoice does not yield one figure: reservations
+            // taken at different rates, or stays settled partly through the
+            // portal and partly with the house. The journal refuses such an
+            // invoice too (see CreatePercentageEntryAction), and the two must
+            // not disagree - printing the first reservation's rate across the
+            // whole invoice would state a figure nobody can stand behind. The
+            // portal is still named, so a template can say what it cannot say -
+            // which is also why a template printing an amount has to guard on
+            // the amount itself, not on originName.
             'originName' => $originFees->originName,
-            'originCommission' => $originFees->commission->amount,
-            'originCommissionFormated' => number_format($originFees->commission->amount, 2, ',', '.'),
-            'originPaymentFee' => $originFees->paymentFee->amount,
-            'originPaymentFeeFormated' => number_format($originFees->paymentFee->amount, 2, ',', '.'),
+            'originCommission' => $this->settledAmount($originFees->commission),
+            'originCommissionFormated' => $this->settledAmountFormatted($originFees->commission),
+            'originPaymentFee' => $this->settledAmount($originFees->paymentFee),
+            'originPaymentFeeFormated' => $this->settledAmountFormatted($originFees->paymentFee),
         ];
 
         return $params;
@@ -600,6 +611,18 @@ class InvoiceService
         $brokered = $this->touristTaxIsCollectedByPortal($reservations);
 
         return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row, $brokered), array_values($aggregates));
+    }
+
+    /** The fee's amount, or null where the invoice does not state one. */
+    private function settledAmount(OriginFee $fee): ?float
+    {
+        return $fee->isSettled() ? $fee->amount : null;
+    }
+
+    /** The same figure ready to print; an empty string where there is none. */
+    private function settledAmountFormatted(OriginFee $fee): string
+    {
+        return $fee->isSettled() ? number_format($fee->amount, 2, ',', '.') : '';
     }
 
     /**
