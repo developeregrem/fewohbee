@@ -607,10 +607,16 @@ class InvoiceService
      * decides whether its payment fee is charged on it. Commission is not at
      * stake here: a separately billed tourist tax carries none either way.
      *
-     * Every reservation has to agree and carry an origin that says so. The
-     * positions are aggregated across reservations and no longer know which one
-     * they came from, and a stay whose tax the house collects must not be swept
-     * into a portal's payment fee by a booking sharing the invoice with it.
+     * What the reservation recorded wins over what its origin says today, as
+     * with the rates and the payment: an origin that starts collecting the tax
+     * must not change how bookings taken before were settled. Where nothing was
+     * recorded the origin answers, and a booking without an origin never says
+     * a portal took anything.
+     *
+     * Every reservation has to agree. The positions are aggregated across
+     * reservations and no longer know which one they came from, and a stay
+     * whose tax the house collects must not be swept into a portal's payment
+     * fee by a booking sharing the invoice with it.
      *
      * @param array<Reservation|null> $reservations
      */
@@ -622,8 +628,10 @@ class InvoiceService
         }
 
         foreach ($reservations as $reservation) {
-            $origin = $reservation->getReservationOrigin();
-            if (null === $origin || !$origin->getTouristTaxCollection()->isPortal()) {
+            $collection = $reservation->getTouristTaxCollection()
+                ?? $reservation->getReservationOrigin()?->getTouristTaxCollection();
+
+            if (null === $collection || !$collection->isPortal()) {
                 return false;
             }
         }

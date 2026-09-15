@@ -79,6 +79,17 @@ class Reservation
      */
     #[ORM\Column(name: 'payment_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
     private ?PaymentCollection $paymentCollection = null;
+
+    /**
+     * Who collected the tourist tax for this booking, pinned like the payment
+     * above and for the same reason. Asked separately because the answers
+     * differ: a portal can settle the stay while the tax is paid on arrival.
+     *
+     * Null where nothing is recorded, in the same cases as the payment above,
+     * which then falls back to the origin.
+     */
+    #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
+    private ?PaymentCollection $touristTaxCollection = null;
     #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
     #[ORM\ManyToMany(targetEntity: Price::class)]
@@ -343,6 +354,7 @@ class Reservation
             // stay in the payment fee's base, and nothing would say so.
             $chargesFees = null !== $this->commissionPercent || null !== $this->paymentFeePercent;
             $this->paymentCollection = $chargesFees ? $reservationOrigin?->getPaymentCollection() : null;
+            $this->touristTaxCollection = $chargesFees ? $reservationOrigin?->getTouristTaxCollection() : null;
         }
 
         $this->reservationOrigin = $reservationOrigin;
@@ -405,6 +417,22 @@ class Reservation
     public function setPaymentCollection(?PaymentCollection $paymentCollection): self
     {
         $this->paymentCollection = $paymentCollection;
+
+        return $this;
+    }
+
+    /**
+     * Who collected the tourist tax for this booking, null when nothing was
+     * recorded - then the origin answers, see the property.
+     */
+    public function getTouristTaxCollection(): ?PaymentCollection
+    {
+        return $this->touristTaxCollection;
+    }
+
+    public function setTouristTaxCollection(?PaymentCollection $touristTaxCollection): self
+    {
+        $this->touristTaxCollection = $touristTaxCollection;
 
         return $this;
     }

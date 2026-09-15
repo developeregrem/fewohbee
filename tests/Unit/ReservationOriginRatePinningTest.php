@@ -121,10 +121,23 @@ final class ReservationOriginRatePinningTest extends TestCase
         self::assertSame(PaymentCollection::PROPERTY, $reservation->getPaymentCollection());
     }
 
+    public function testRecordsNoCollectionWhereTheOriginChargesNoFee(): void
+    {
+        // An origin without fees is never asked who collects and only carries its
+        // default. Pinned, that default would keep a booking taken before the
+        // fees were set up off the stay in the payment fee's base, while its
+        // rates fall back to the ones configured later.
+        $origin = $this->origin(null, null);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        self::assertNull($reservation->getPaymentCollection());
+        self::assertNull($reservation->getTouristTaxCollection());
+    }
+
     public function testRecordsNoCollectionForABookingWithoutAnOrigin(): void
     {
-        // Unlike the rates there is no blank to guard against - an origin always
-        // answers - so only its absence leaves this unrecorded.
         $origin = $this->origin('12.00', '1.40');
         $origin->setPaymentCollection(PaymentCollection::PORTAL);
 
@@ -133,6 +146,35 @@ final class ReservationOriginRatePinningTest extends TestCase
         $reservation->setReservationOrigin(null);
 
         self::assertNull($reservation->getPaymentCollection());
+    }
+
+    public function testPinsWhoCollectsTheTouristTaxAsWell(): void
+    {
+        // Asked separately from the payment because the answers differ: a portal
+        // can settle the stay while the tax is paid on arrival.
+        $origin = $this->origin('12.00', '1.40');
+        $origin->setPaymentCollection(PaymentCollection::PORTAL);
+        $origin->setTouristTaxCollection(PaymentCollection::PROPERTY);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        self::assertSame(PaymentCollection::PORTAL, $reservation->getPaymentCollection());
+        self::assertSame(PaymentCollection::PROPERTY, $reservation->getTouristTaxCollection());
+    }
+
+    public function testKeepsWhoCollectedTheTouristTaxWhenTheOriginLaterSwitches(): void
+    {
+        // The reason the column exists: an invoice written next month for a
+        // booking taken today must charge what was agreed today.
+        $origin = $this->origin('12.00', '1.40');
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        $origin->setTouristTaxCollection(PaymentCollection::PORTAL);
+
+        self::assertSame(PaymentCollection::PROPERTY, $reservation->getTouristTaxCollection());
     }
 
     private function origin(?string $commission, ?string $paymentFee): ReservationOrigin
