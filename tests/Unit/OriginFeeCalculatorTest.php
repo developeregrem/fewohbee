@@ -206,17 +206,51 @@ final class OriginFeeCalculatorTest extends TestCase
         self::assertSame(0.0, $fees->paymentFee->base);
     }
 
-    public function testOneStayPaidToTheHouseSettlesItForTheWholeInvoice(): void
+    public function testAnInvoiceSettledBothWaysStatesNoPaymentFeeBase(): void
     {
-        // The base covers the invoice, not a single stay, and charging a payment
-        // fee on money the portal never saw is the error worth avoiding.
+        // One stay paid through the portal, one paid to the house. The invoice
+        // carries no attribution of its lines to reservations, so the stay
+        // cannot be split - and taking it out entirely books too little while
+        // reading like a correct deduction.
         $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
         $invoice->addReservation(new Reservation());
         $invoice->addAppartment($this->stay(200.00));
 
         $fees = $this->calculate($invoice);
 
-        self::assertSame(0.0, $fees->paymentFee->base);
+        self::assertFalse($fees->paymentFee->hasOneBase());
+        self::assertFalse($fees->paymentFee->isSettled());
+        self::assertSame(0.0, $fees->paymentFee->base, 'the unusable base stays on the cautious side');
+    }
+
+    public function testAgreementOnHowItWasSettledIsEnoughForABase(): void
+    {
+        // Two portal bookings on one invoice agree, whatever else differs.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $second = $this->reservationWithOrigin('Booking.com', '12.00', '1.40');
+        $second->setPaymentCollection(PaymentCollection::PORTAL);
+        $invoice->addReservation($second);
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertTrue($fees->paymentFee->hasOneBase());
+        self::assertTrue($fees->paymentFee->isSettled());
+        self::assertSame(200.00, $fees->paymentFee->base);
+    }
+
+    public function testTheCommissionIsUnaffectedByWhoTookTheMoney(): void
+    {
+        // Commission is charged on what was brokered, not on what was
+        // processed, so a mixed settlement leaves it stateable.
+        $invoice = $this->invoiceCollectedBy(PaymentCollection::PORTAL);
+        $invoice->addReservation(new Reservation());
+        $invoice->addAppartment($this->stay(200.00));
+
+        $fees = $this->calculate($invoice);
+
+        self::assertTrue($fees->commission->hasOneBase());
+        self::assertSame(200.00, $fees->commission->base);
     }
 
     // ── rates that disagree ──────────────────────────────────────────

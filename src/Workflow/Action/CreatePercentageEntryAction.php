@@ -303,6 +303,14 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             ]));
         }
 
+        // Same again for what the fee is charged on: an invoice whose stays were
+        // settled partly through the portal and partly with the house gives the
+        // payment fee no single base. Booking it on what is left would quietly
+        // take the stay out of the figure and look like a correct deduction.
+        if (!$fee->hasOneBase()) {
+            throw new WorkflowSkippedException($this->translator->trans('workflow.log.skipped_mixed_collection'));
+        }
+
         return $fee;
     }
 

@@ -202,6 +202,7 @@ workflow:
     skipped_no_amounts: "Übersprungen: Rechnung enthält keine buchbaren Beträge"
     skipped_no_percentage: "Übersprungen: kein gültiger Prozentsatz konfiguriert"
     skipped_mixed_rates: "Übersprungen: die Reservierungen dieser Rechnung wurden zu unterschiedlichen Sätzen gebucht (%rates%). Ein einzelner Abzug kann sie nicht abbilden – bitte von Hand buchen."
+    skipped_mixed_collection: "Übersprungen: auf dieser Rechnung wurde ein Teil der Aufenthalte über das Portal bezahlt, ein anderer direkt an das Haus. Worauf die Zahlungsgebühr entfällt, lässt sich daraus nicht ableiten – bitte von Hand buchen."
     percentage_entry_created: "Buchung über %amount% (%percent% % von %base%) für Rechnung %number% erstellt"
     skipped_invalid_config: "Übersprungen: ungültige Konfiguration"
     skipped_status_not_found: "Übersprungen: Reservierungsstatus nicht gefunden"

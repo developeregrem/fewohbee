@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Workflow;
 
 use App\Entity\AccountingAccount;
 use App\Entity\BookingEntry;
+use App\Entity\Enum\PaymentCollection;
 use App\Entity\Invoice;
 use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
@@ -218,6 +219,48 @@ final class CreatePercentageEntryActionTest extends TestCase
 
         $this->expectException(WorkflowSkippedException::class);
         $action->execute($config, $invoice, []);
+    }
+
+    public function testSkipsWhenTheStaysOnOneInvoiceWereSettledDifferently(): void
+    {
+        // One stay paid through the portal, one paid to the house. Both were
+        // brokered at the same rate, so the rate is not the problem - what the
+        // payment fee is charged on is, and the invoice cannot say.
+        $action = $this->makeAction(gross: 115.20);
+
+        $throughPortal = $this->reservation(commission: '12', paymentFee: '1.4');
+        $throughPortal->setPaymentCollection(PaymentCollection::PORTAL);
+
+        $toTheHouse = $this->reservation(commission: '12', paymentFee: '1.4');
+        $toTheHouse->setPaymentCollection(PaymentCollection::PROPERTY);
+
+        $invoice = $this->invoiceWithReservations($throughPortal, $toTheHouse);
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_PAYMENT_FEE]);
+
+        $this->expectException(WorkflowSkippedException::class);
+        $action->execute($config, $invoice, []);
+    }
+
+    public function testTheCommissionIsStillBookedWhereOnlyTheSettlementDiffers(): void
+    {
+        // Commission is charged on what was brokered, not on what was
+        // processed, so it is unaffected and must not be held back with it.
+        $captured = null;
+        $action = $this->makeAction(gross: 115.20, capture: $captured);
+
+        $throughPortal = $this->reservation(commission: '12', paymentFee: '1.4');
+        $throughPortal->setPaymentCollection(PaymentCollection::PORTAL);
+
+        $toTheHouse = $this->reservation(commission: '12', paymentFee: '1.4');
+        $toTheHouse->setPaymentCollection(PaymentCollection::PROPERTY);
+
+        $invoice = $this->invoiceWithReservations($throughPortal, $toTheHouse);
+
+        $config = $this->config(['percent' => '', 'percentSource' => CreatePercentageEntryAction::PERCENT_SOURCE_COMMISSION]);
+        $action->execute($config, $invoice, []);
+
+        self::assertSame('13.82', $captured['amount']);
     }
 
     public function testSkipsWhenTwoBookingsFromOnePortalCarryDifferentPinnedRates(): void

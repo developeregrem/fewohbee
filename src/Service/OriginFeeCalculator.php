@@ -64,17 +64,7 @@ class OriginFeeCalculator
                 static fn (Reservation $r): ?string => $r->getCommissionPercent()
                     ?? $r->getReservationOrigin()?->getCommissionPercent(),
             ),
-            $this->fee(
-                $invoice,
-                $shown,
-                $this->baseOf(
-                    $invoice,
-                    static fn (InvoicePosition $p): bool => $p->isBrokered(),
-                    includeStay: $this->portalCollectedThePayment($invoice),
-                ),
-                static fn (Reservation $r): ?string => $r->getPaymentFeePercent()
-                    ?? $r->getReservationOrigin()?->getPaymentFeePercent(),
-            ),
+            $this->paymentFee($invoice, $shown),
         );
     }
 
@@ -117,13 +107,44 @@ class OriginFeeCalculator
     }
 
     /**
-     * Whether the portal took the money for the stay itself.
+     * The payment fee, which unlike the commission depends on who took the
+     * money: a portal charges it for processing a payment, so a stay the house
+     * was paid for directly carries none.
+     *
+     * Where the invoice's reservations were settled differently the stay has no
+     * single answer, and the fee is marked as having no single base rather than
+     * quietly leaving the whole stay out. Dropping it silently books too little
+     * and reads as if that were the figure.
+     */
+    private function paymentFee(Invoice $invoice, ?Reservation $shown): OriginFee
+    {
+        $collectedByPortal = $this->portalCollectedThePayment($invoice);
+
+        return $this->fee(
+            $invoice,
+            $shown,
+            $this->baseOf(
+                $invoice,
+                static fn (InvoicePosition $p): bool => $p->isBrokered(),
+                // Undecided counts as not collected here: the base is only used
+                // where the caller has accepted it, and a figure nobody may use
+                // is better too small than too large.
+                includeStay: true === $collectedByPortal,
+            ),
+            static fn (Reservation $r): ?string => $r->getPaymentFeePercent()
+                ?? $r->getReservationOrigin()?->getPaymentFeePercent(),
+            baseIsOne: null !== $collectedByPortal,
+        );
+    }
+
+    /**
+     * Whether the portal took the money for the stay itself - null where the
+     * invoice's reservations disagree about it.
      *
      * Every reservation has to say so, and one without an origin never does. An
      * invoice mixing a portal booking with a direct one has no single answer,
-     * and charging a payment fee on a stay the house was paid for directly is
-     * the error worth avoiding - the other way round it costs the house nothing
-     * it cannot correct.
+     * and an invoice carries no attribution of its lines to reservations to
+     * split the stay along.
      *
      * What was recorded on the reservation wins over what its origin says today,
      * as with the rates: a portal that starts collecting payments must not
@@ -131,23 +152,24 @@ class OriginFeeCalculator
      * origin answers, and where there is no origin either, nobody but the house
      * took anything.
      */
-    private function portalCollectedThePayment(Invoice $invoice): bool
+    private function portalCollectedThePayment(Invoice $invoice): ?bool
     {
         $reservations = $invoice->getReservations() ?? new ArrayCollection();
         if (0 === count($reservations)) {
             return false;
         }
 
+        $answers = [];
         foreach ($reservations as $reservation) {
             $collection = $reservation->getPaymentCollection()
                 ?? $reservation->getReservationOrigin()?->getPaymentCollection();
 
-            if (null === $collection || !$collection->isPortal()) {
-                return false;
-            }
+            $answers[] = null !== $collection && $collection->isPortal();
         }
 
-        return true;
+        $answers = array_unique($answers);
+
+        return 1 === count($answers) ? reset($answers) : null;
     }
 
     /**
@@ -163,7 +185,7 @@ class OriginFeeCalculator
      *
      * @param callable(Reservation): ?string $rateOf
      */
-    private function fee(Invoice $invoice, ?Reservation $shown, float $base, callable $rateOf): OriginFee
+    private function fee(Invoice $invoice, ?Reservation $shown, float $base, callable $rateOf, bool $baseIsOne = true): OriginFee
     {
         $rates = [];
         foreach ($invoice->getReservations() ?? [] as $reservation) {
@@ -178,7 +200,7 @@ class OriginFeeCalculator
             ? reset($rates)
             : (null !== $shown ? $this->toPercent($rateOf($shown)) : 0.0);
 
-        return new OriginFee($percent, $base, $rates);
+        return new OriginFee($percent, $base, $rates, $baseIsOne);
     }
 
     /**

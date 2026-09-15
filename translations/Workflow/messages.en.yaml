@@ -197,6 +197,7 @@ workflow:
     skipped_no_amounts: "Skipped: invoice contains no bookable amounts"
     skipped_no_percentage: "Skipped: no valid percentage configured"
     skipped_mixed_rates: "Skipped: the reservations on this invoice were booked at different rates (%rates%). A single deduction cannot represent them - please book it by hand."
+    skipped_mixed_collection: "Skipped: some stays on this invoice were paid through the portal and others directly to the property. What the payment fee is charged on does not follow from that - please book it by hand."
     percentage_entry_created: "Entry of %amount% (%percent% % of %base%) created for invoice %number%"
     skipped_invalid_config: "Skipped: invalid configuration"
     skipped_status_not_found: "Skipped: reservation status not found"

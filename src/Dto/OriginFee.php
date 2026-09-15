@@ -21,18 +21,21 @@ final readonly class OriginFee
     public float $amount;
 
     /**
-     * @param float                $percent the rate this fee is charged at
-     * @param float                $base    the amount the percentage is taken of
-     * @param array<string, float> $rates   every distinct rate the invoice's reservations
-     *                                      carry for this fee, keyed by its formatted form
-     *                                      so a caller can name them in a message. Empty
-     *                                      where the rate did not come from the booking
-     *                                      at all but was typed into a workflow
+     * @param float                $percent     the rate this fee is charged at
+     * @param float                $base        the amount the percentage is taken of
+     * @param array<string, float> $rates       every distinct rate the invoice's reservations
+     *                                          carry for this fee, keyed by its formatted form
+     *                                          so a caller can name them in a message. Empty
+     *                                          where the rate did not come from the booking
+     *                                          at all but was typed into a workflow
+     * @param bool                 $baseIsOne   false where the invoice does not yield a single
+     *                                          amount this fee is charged on - see hasOneBase()
      */
     public function __construct(
         public float $percent,
         public float $base,
         public array $rates = [],
+        public bool $baseIsOne = true,
     ) {
         $this->amount = round($base * $percent / 100.0, 2);
     }
@@ -45,6 +48,31 @@ final readonly class OriginFee
     public function isAgreedUpon(): bool
     {
         return count($this->rates) <= 1;
+    }
+
+    /**
+     * Whether the invoice says what this fee is charged on.
+     *
+     * It does not when its reservations were settled differently - one paid
+     * through the portal, another directly to the house. The stay is then
+     * charged a payment fee for one and none for the other, and an invoice
+     * carries no attribution of its lines to reservations to split it along.
+     */
+    public function hasOneBase(): bool
+    {
+        return $this->baseIsOne;
+    }
+
+    /**
+     * Whether the amount can be stated at all, rather than guessed.
+     *
+     * Both callers stop here, differently: the journal refuses to book and says
+     * why, while an invoice shown to a guest leaves the figure out instead of
+     * printing one that may be wrong.
+     */
+    public function isSettled(): bool
+    {
+        return $this->isAgreedUpon() && $this->hasOneBase();
     }
 
     /** @return string[] the rates as they read in a message, e.g. "12,00 %" */
