@@ -57,7 +57,11 @@ final class BookingJournalControllerTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->createCashJournalUser());
 
-        // Clear any existing accounts and tax rates from previous test runs
+        // Clear any existing accounts and tax rates from previous test runs.
+        // Entries booked by earlier tests reference both, and whether any exist
+        // by now depends on the order the suite happens to run in - so they go
+        // first rather than leaving this test to fail on a foreign key.
+        $this->getEntityManager()->createQuery('DELETE FROM App\Entity\BookingEntry')->execute();
         $this->getEntityManager()->createQuery('DELETE FROM App\Entity\TaxRate')->execute();
         $this->getEntityManager()->createQuery('DELETE FROM App\Entity\AccountingAccount')->execute();
 
