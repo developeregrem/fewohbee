@@ -12,10 +12,10 @@ use App\Repository\OnlineBookingRoomCategoryLimitRepository;
 use App\Repository\PriceRepository;
 use App\Repository\RoomCategoryRepository;
 use App\Repository\WorkflowRepository;
-use App\Service\BookingRestrictionPresentation;
-use App\Service\BookingRestrictionService;
-use App\Service\OnlineBookingConfigService;
-use App\Service\PublicBookingCalendarService;
+use App\Service\OnlineBooking\BookingRestrictionCalendar;
+use App\Service\OnlineBooking\BookingRestrictionPresentation;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\PublicBookingCalendarService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,7 +39,7 @@ class OnlineBookingSettingsController extends AbstractController
         PublicBookingCalendarService $calendarService,
         WorkflowRepository $workflowRepository,
         BookingRestrictionRuleRepository $ruleRepository,
-        BookingRestrictionService $restrictions,
+        BookingRestrictionCalendar $calendar,
         BookingRestrictionPresentation $presentation,
     ): Response {
         $config = $configService->getConfig();
@@ -85,8 +85,12 @@ class OnlineBookingSettingsController extends AbstractController
             static fn (BookingRestrictionRule $rule): bool => null !== $rule->getEndDate() && $rule->getEndDate() <= $today,
         );
 
-        $matrixCategory = $roomCategoryRepository->find($request->query->getInt('matrixCategory')) ?? ($categories[0] ?? null);
-        $matrixWeek = BookingRestrictionController::parseWeek($request->query->getString('week'));
+        // The booking rules have their own tab. A submitted settings form always shows the
+        // settings tab, because that is where its errors are.
+        $activeTab = BookingRestrictionCalendar::SETTINGS_TAB === $request->query->getString('tab') && !$form->isSubmitted()
+            ? BookingRestrictionCalendar::SETTINGS_TAB
+            : 'tab-settings';
+        $calendarCategory = $roomCategoryRepository->find($request->query->getInt('category')) ?? ($categories[0] ?? null);
 
         return $this->render('Settings/OnlineBooking/index.html.twig', [
             'form' => $form->createView(),
@@ -94,10 +98,8 @@ class OnlineBookingSettingsController extends AbstractController
             'periods' => $periods,
             'periodsAllPast' => $periodsAllPast,
             'ruleDescriptions' => $descriptions,
-            'matrixCategory' => $matrixCategory,
-            'matrixWeek' => $matrixWeek,
-            'matrixRows' => null === $matrixCategory ? [] : $restrictions->getWeekMatrix($matrixCategory, $matrixWeek),
-            'maxNights' => BookingRestrictionService::MATRIX_NIGHTS,
+            'activeTab' => $activeTab,
+            'calendar' => null === $calendarCategory ? null : $calendar->build($calendarCategory, $request->query->getString('week') ?: null),
             'reservationOriginConfigured' => null !== $origin,
             'categories' => $categories,
             'limitsByCategory' => $limitsByCategory,
@@ -120,7 +122,7 @@ class OnlineBookingSettingsController extends AbstractController
         if (!$this->isCsrfTokenValid('ob_category_restrictions', $request->request->get('_token'))) {
             $this->addFlash('danger', 'online_booking.flash.invalid_token');
 
-            return $this->redirectToRoute('settings.online_booking.index');
+            return $this->redirectToRoute('settings.online_booking.index', ['tab' => BookingRestrictionCalendar::SETTINGS_TAB]);
         }
 
         $categories = $roomCategoryRepository->findAll();
@@ -149,7 +151,10 @@ class OnlineBookingSettingsController extends AbstractController
         $em->flush();
         $this->addFlash('success', 'online_booking.flash.restrictions_saved');
 
-        return $this->redirectToRoute('settings.online_booking.index');
+        return $this->redirectToRoute('settings.online_booking.index', [
+            'tab' => BookingRestrictionCalendar::SETTINGS_TAB,
+            '_fragment' => 'booking-rule-limits',
+        ]);
     }
 
     private function parseNullableInt(mixed $value): ?int

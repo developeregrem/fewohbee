@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Entity\OnlineBookingRoomCategoryLimit;
 use App\Entity\RoomCategory;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
+use App\Service\ReservationPeriodService;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**

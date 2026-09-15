@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Entity\BookingRestrictionRule;
 use App\Repository\BookingRestrictionRuleRepository;
@@ -39,6 +39,22 @@ final class BookingRestrictionPresentation
         return $sentence.' '.$this->translator->trans('booking_rules.summary_period', [
             '%from%' => $rule->getStartDate()?->format('d.m.Y'),
             // Storage is half-open; the operator entered the last covered day.
+            '%to%' => $rule->getEndDate()?->modify('-1 day')->format('d.m.Y'),
+        ]);
+    }
+
+    /**
+     * Where a calendar value comes from: the general rules, or a special period with its first
+     * and last covered day. Storage keeps the end exclusive, the operator entered the last day.
+     */
+    public function sourceLabel(BookingRestrictionRule $rule): string
+    {
+        if (!$rule->isPeriod()) {
+            return $this->translator->trans('booking_rules.source_general');
+        }
+
+        return $this->translator->trans('booking_rules.source_period', [
+            '%from%' => $rule->getStartDate()?->format('d.m.Y'),
             '%to%' => $rule->getEndDate()?->modify('-1 day')->format('d.m.Y'),
         ]);
     }

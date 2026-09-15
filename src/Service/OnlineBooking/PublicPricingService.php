@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Dto\PublicBooking\RoomTotal;
 use App\Entity\Appartment;
@@ -15,6 +15,8 @@ use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
+use App\Service\InvoiceService;
+use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**

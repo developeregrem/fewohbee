@@ -7,7 +7,7 @@ namespace App\Tests\Unit;
 use App\Entity\BookingRestrictionRule;
 use App\Entity\Enum\BookingRestrictionType as Type;
 use App\Repository\BookingRestrictionRuleRepository;
-use App\Service\BookingRestrictionPresentation;
+use App\Service\OnlineBooking\BookingRestrictionPresentation;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Loader\YamlFileLoader;
 use Symfony\Component\Translation\Translator;

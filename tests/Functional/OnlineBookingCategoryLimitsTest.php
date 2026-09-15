@@ -29,8 +29,9 @@ final class OnlineBookingCategoryLimitsTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         foreach ($categories as $category) {
-            self::assertSelectorExists(sprintf('input[name="max_rooms_%d"]', $category->getId()));
-            self::assertSelectorExists(sprintf('input[name="min_occupancy_%d"]', $category->getId()));
+            // The limits live in the booking rules tab, next to the other booking restrictions.
+            self::assertSelectorExists(sprintf('#tab-booking-rules input[name="max_rooms_%d"]', $category->getId()));
+            self::assertSelectorExists(sprintf('#tab-booking-rules input[name="min_occupancy_%d"]', $category->getId()));
         }
     }
 
@@ -41,7 +42,7 @@ final class OnlineBookingCategoryLimitsTest extends WebTestCase
         $id = (int) $category->getId();
 
         $this->submitLimits($client, $id, '2', '3');
-        self::assertResponseRedirects('/settings/online-booking');
+        self::assertResponseRedirects('/settings/online-booking?tab=tab-booking-rules#booking-rule-limits');
         $limit = $this->limits()->findOneBy(['roomCategory' => $id]);
         self::assertSame(2, $limit?->getMaxRooms());
         self::assertSame(3, $limit->getMinOccupancy());
@@ -68,7 +69,7 @@ final class OnlineBookingCategoryLimitsTest extends WebTestCase
             'max_rooms_'.$id => '4',
         ]);
 
-        self::assertResponseRedirects('/settings/online-booking');
+        self::assertResponseRedirects('/settings/online-booking?tab=tab-booking-rules');
         self::assertNull($this->limits()->findOneBy(['roomCategory' => $id]));
     }
 

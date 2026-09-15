@@ -9,7 +9,7 @@ use App\Entity\Enum\BookingRestrictionType as Type;
 use App\Entity\RoomCategory;
 use App\Exception\InvalidReservationPeriodException;
 use App\Repository\BookingRestrictionRuleRepository;
-use App\Service\BookingRestrictionService;
+use App\Service\OnlineBooking\BookingRestrictionService;
 use App\Service\ReservationPeriodService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -280,32 +280,56 @@ final class BookingRestrictionServiceTest extends TestCase
         ], $service->getDailyRestrictions($category, $arrival, $departure, [])['2026-09-13']->toChannelValues());
     }
 
-    public function testWeekMatrixShowsTheNonMonotonicEffectAndAgreesWithCheckStay(): void
+    public function testArrivalStayOptionsAgreeWithCheckStayAndReachBeyondTheLongestMinimum(): void
     {
         $service = $this->service();
         $category = new RoomCategory();
-        $rules = [$this->rule(Type::MIN_STAY_THROUGH, 4, [1, 2, 3, 4]), $this->rule(Type::MIN_STAY_THROUGH, 2, [5, 6, 7])];
-        // Monday 2026-09-14 starts the week, so the Saturday row is the sixth one.
-        $rows = $service->getWeekMatrix($category, new \DateTimeImmutable('2026-09-14'), 7, $rules);
+        $rules = [
+            $this->rule(Type::MIN_STAY_THROUGH, 4, [1, 2, 3, 4]),
+            $this->rule(Type::MIN_STAY_THROUGH, 2, [5, 6, 7]),
+            $this->rule(Type::CLOSED_TO_DEPARTURE, null, [7]),
+        ];
+        $from = new \DateTimeImmutable('2026-09-14');
 
-        self::assertCount(7, $rows);
-        self::assertSame('2026-09-14', $rows[0]['date']->format('Y-m-d'));
-        self::assertCount(7, $rows[0]['cells']);
+        $options = $service->getArrivalStayOptions($category, $from, $from->modify('+7 days'), $rules);
 
-        $saturday = $rows[5];
-        self::assertSame('6', $saturday['date']->format('N'));
-        // Two nights allowed, three too short, four allowed again.
-        self::assertTrue($saturday['cells'][1]->isAllowed());
-        self::assertFalse($saturday['cells'][2]->isAllowed());
-        self::assertTrue($saturday['cells'][3]->isAllowed());
+        // One list per arrival day, long enough for the longest minimum plus a week of departure days.
+        self::assertSame(['2026-09-14', '2026-09-15', '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-19', '2026-09-20'], array_keys($options));
+        self::assertCount(4 + 7, $options['2026-09-19']);
 
-        foreach ($rows as $row) {
-            foreach ($row['cells'] as $index => $cell) {
-                $nights = $index + 1;
-                $expected = $service->checkStay($category, $row['date'], $row['date']->modify(sprintf('+%d days', $nights)), $rules);
-                self::assertSame($expected->isAllowed(), $cell->isAllowed());
+        // Saturday: one night ends on the closed Sunday, two pass, three reach into the Monday night, four pass again.
+        self::assertFalse($options['2026-09-19'][0]->isAllowed());
+        self::assertTrue($options['2026-09-19'][1]->isAllowed());
+        self::assertFalse($options['2026-09-19'][2]->isAllowed());
+        self::assertTrue($options['2026-09-19'][3]->isAllowed());
+
+        // Extending a stay night by night must decide exactly like checking it on its own, reason and rule included.
+        foreach ($options as $arrival => $lengths) {
+            $start = new \DateTimeImmutable($arrival);
+            foreach ($lengths as $index => $option) {
+                $expected = $service->checkStay($category, $start, $start->modify(sprintf('+%d days', $index + 1)), $rules);
+                self::assertEquals($expected, $option, sprintf('%s, %d nights', $arrival, $index + 1));
             }
         }
+    }
+
+    public function testDayReportsWhichGeneralRulesASpecialPeriodReplaces(): void
+    {
+        $generalArrival = $this->rule(Type::MIN_STAY_ARRIVAL, 2);
+        $generalNight = $this->rule(Type::MIN_STAY_THROUGH, 4, [1, 2, 3, 4]);
+        $offSeason = $this->period(Type::MIN_STAY_ARRIVAL, 1, '2026-10-05', '2026-10-09');
+        $rules = [$generalArrival, $generalNight, $offSeason];
+
+        $days = $this->service()->getDailyRestrictions(new RoomCategory(), new \DateTimeImmutable('2026-10-06'), new \DateTimeImmutable('2026-10-13'), $rules);
+
+        // Inside the period both general minimum stays step aside, and the calendar can name them.
+        self::assertSame($offSeason, $days['2026-10-06']->arrivalRule);
+        self::assertSame([$generalArrival], $days['2026-10-06']->arrivalOverridden);
+        self::assertSame([$generalNight], $days['2026-10-06']->throughOverridden);
+
+        // Outside it nothing is replaced.
+        self::assertSame([], $days['2026-10-12']->arrivalOverridden);
+        self::assertSame([], $days['2026-10-12']->throughOverridden);
     }
 
     public function testRuleWindowIsLoadedOnceForMultipleCategoriesAndResetAfterChanges(): void
@@ -321,12 +345,13 @@ final class BookingRestrictionServiceTest extends TestCase
         $service->checkStay($this->category(1), $arrival, $departure);
     }
 
-    public function testWeekMatrixNeedsOnlyOneQuery(): void
+    public function testArrivalStayOptionsNeedOnlyOneQuery(): void
     {
         $repo = $this->createMock(BookingRestrictionRuleRepository::class);
         $repo->expects(self::once())->method('findActiveForPeriod')->willReturn([]);
         $service = new BookingRestrictionService($repo, new ReservationPeriodService());
-        $service->getWeekMatrix($this->category(1), new \DateTimeImmutable('2026-09-14'));
+        $from = new \DateTimeImmutable('2026-09-14');
+        $service->getArrivalStayOptions($this->category(1), $from, $from->modify('+28 days'));
     }
 
     #[DataProvider('invalidPeriods')]

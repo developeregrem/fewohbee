@@ -104,7 +104,7 @@ services:
             $mailCopy: '%mailCopy%'
             $mailerDsn: '%env(MAILER_DSN)%'
 
-    App\Service\OnlineBookingConfigService:
+    App\Service\OnlineBooking\OnlineBookingConfigService:
         arguments:
             $legacyFrameAncestors: '%frameAncestors%'
 

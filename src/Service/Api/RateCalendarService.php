@@ -8,8 +8,8 @@ use App\Entity\Appartment;
 use App\Entity\Price;
 use App\Entity\ReservationOrigin;
 use App\Repository\PriceRepository;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\PriceService;
-use App\Service\PublicPricingService;
 use Doctrine\Common\Collections\ArrayCollection;
 
 /**

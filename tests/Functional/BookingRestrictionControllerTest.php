@@ -10,12 +10,13 @@ use App\Entity\Role;
 use App\Entity\RoomCategory;
 use App\Entity\User;
 use App\Repository\BookingRestrictionRuleRepository;
-use App\Service\BookingRestrictionService;
+use App\Service\OnlineBooking\BookingRestrictionCalendar;
+use App\Service\OnlineBooking\BookingRestrictionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-/** HTTP, authorization and persistence coverage for the booking rule offcanvas and effect table. */
+/** HTTP, authorization and persistence coverage for the booking rule offcanvas, calendar and tabs. */
 final class BookingRestrictionControllerTest extends WebTestCase
 {
     private const XHR = ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'];
@@ -25,7 +26,7 @@ final class BookingRestrictionControllerTest extends WebTestCase
         $client = self::createClient();
         $client->request('GET', '/settings/online-booking/rules/new');
         self::assertResponseRedirects();
-        $client->request('GET', '/settings/online-booking/rules/matrix');
+        $client->request('GET', '/settings/online-booking/rules/calendar');
         self::assertResponseRedirects();
     }
 
@@ -137,22 +138,40 @@ final class BookingRestrictionControllerTest extends WebTestCase
         self::assertNull($rule->getMinNights());
     }
 
-    public function testEffectTableRendersForACategoryAndRejectsAnUnknownOne(): void
+    public function testCalendarRendersFourWeeksForACategoryAndRejectsAnUnknownOne(): void
     {
         $client = $this->authenticatedClient();
         $category = $this->em()->getRepository(RoomCategory::class)->findOneBy([]);
 
-        $client->request('GET', '/settings/online-booking/rules/matrix', [
+        $client->request('GET', '/settings/online-booking/rules/calendar', [
             'category' => (string) $category->getId(),
-            'week' => '2026-09-14',
+            'week' => '2026-09-17',
         ], server: self::XHR);
         self::assertResponseIsSuccessful();
-        // Seven arrival days, each with one cell per stay length.
-        self::assertSelectorCount(7, 'tbody tr');
-        self::assertSelectorCount(7 * BookingRestrictionService::MATRIX_NIGHTS, 'tbody td');
+        // Four weeks from the Monday of the requested week: a header per day, the combined arrival
+        // row and the four rule rows.
+        self::assertSelectorExists('#booking-rule-calendar[data-week="2026-09-14"]');
+        self::assertSelectorCount(BookingRestrictionCalendar::DAYS, '.brc-day');
+        self::assertSelectorCount(BookingRestrictionCalendar::DAYS, '.brc-cell--effective');
+        self::assertSelectorCount(5 * BookingRestrictionCalendar::DAYS, '.brc-cell');
 
-        $client->request('GET', '/settings/online-booking/rules/matrix', ['category' => '2147483647'], server: self::XHR);
+        $client->request('GET', '/settings/online-booking/rules/calendar', ['category' => '2147483647'], server: self::XHR);
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testSettingsTabIsTheDefaultAndTheQueryOpensTheBookingRules(): void
+    {
+        $client = $this->authenticatedClient();
+
+        $client->request('GET', '/settings/online-booking');
+        self::assertSelectorExists('#tab-settings.tab-pane.active');
+        self::assertSelectorNotExists('#tab-booking-rules.tab-pane.active');
+
+        $client->request('GET', '/settings/online-booking?tab=tab-booking-rules');
+        self::assertSelectorExists('#tab-booking-rules.tab-pane.active');
+        self::assertSelectorExists('#tab-booking-rules #booking-rule-calendar');
+        self::assertSelectorExists('#tab-booking-rules #booking-rule-limits');
+        self::assertSelectorNotExists('#tab-settings #booking-rule-calendar');
     }
 
     public function testExpiredSpecialPeriodsAreFlaggedOnTheSettingsPage(): void
@@ -218,7 +237,7 @@ final class BookingRestrictionControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/settings/online-booking/rules/'.$id.'/edit', server: self::XHR);
         $input = $crawler->filter('form[name="booking_restriction_rule"]')->form()->getPhpValues();
         $client->request('POST', '/settings/online-booking/rules/'.$id.'/edit', $input);
-        self::assertResponseRedirects('/settings/online-booking#booking-rule-'.$id);
+        self::assertResponseRedirects('/settings/online-booking?tab=tab-booking-rules#booking-rule-'.$id);
     }
 
     public function testToggleAndDeleteRequireCsrfAndUnknownRuleIsNotFound(): void
@@ -241,7 +260,7 @@ final class BookingRestrictionControllerTest extends WebTestCase
         self::assertSelectorExists($toggleSelector.'.btn-success');
         $toggle = $crawler->filter('form[action="/settings/online-booking/rules/'.$id.'/toggle"]')->form();
         $client->submit($toggle);
-        self::assertResponseRedirects('/settings/online-booking');
+        self::assertResponseRedirects('/settings/online-booking?tab=tab-booking-rules');
         self::assertFalse($this->repository()->find($id)?->isEnabled());
         $client->request('GET', '/settings/online-booking');
         self::assertSelectorExists($toggleSelector.'.btn-outline-secondary');

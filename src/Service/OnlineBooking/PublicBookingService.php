@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Entity\Appartment;
 use App\Entity\Customer;
@@ -19,6 +19,7 @@ use App\Event\OnlineBookingCreatedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use App\Service\TouristTaxService;
 
 class PublicBookingService
 {

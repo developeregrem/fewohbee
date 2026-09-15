@@ -12,9 +12,9 @@ use App\Entity\RoomCategory;
 use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Service\AvailabilityService;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\PublicBookingCalendarService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\PublicBookingCalendarService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 

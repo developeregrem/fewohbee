@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Repository\GuestCategoryRepository;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\PublicBookingAbuseProtectionService;
-use App\Service\PublicBookingCalendarService;
-use App\Service\PublicBookingRequestMapper;
-use App\Service\PublicBookingService;
-use App\Service\PublicBookingViewModelFactory;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
+use App\Service\OnlineBooking\PublicBookingCalendarService;
+use App\Service\OnlineBooking\PublicBookingRequestMapper;
+use App\Service\OnlineBooking\PublicBookingService;
+use App\Service\OnlineBooking\PublicBookingViewModelFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 

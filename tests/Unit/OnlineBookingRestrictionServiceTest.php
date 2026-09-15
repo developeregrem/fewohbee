@@ -8,9 +8,9 @@ use App\Entity\OnlineBookingConfig;
 use App\Entity\OnlineBookingRoomCategoryLimit;
 use App\Entity\RoomCategory;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\BookingRestrictionService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\BookingRestrictionService;
 use PHPUnit\Framework\TestCase;
 
 /**

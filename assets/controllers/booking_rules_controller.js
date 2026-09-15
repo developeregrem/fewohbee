@@ -10,12 +10,12 @@ const SCROLL_KEY = 'booking-rules:scroll-target';
  *
  * The controller is presentation only: it opens the offcanvas, shows the fields the chosen
  * rule type actually uses, keeps the day labels honest ("Mo" for an arrival, "Mo -> Di" for
- * a night) and writes the live summary sentence. Every decision about what a rule means -
- * precedence, the effect table, validation - is made on the server.
+ * a night), writes the live summary sentence and reloads the rule calendar. Every decision
+ * about what a rule means - precedence, the calendar values, validation - is made on the server.
  */
 export default class extends Controller {
     static values = {
-        matrixUrl: String,
+        calendarUrl: String,
     };
 
     static targets = [
@@ -29,9 +29,9 @@ export default class extends Controller {
         'minNightsRow',
         'categoryList',
         'summary',
-        'matrix',
-        'matrixCategory',
-        'matrixWeek',
+        'calendar',
+        'calendarTip',
+        'calendarLegend',
         'ruleRow',
         'ruleList',
         'ruleListEmpty',
@@ -40,6 +40,7 @@ export default class extends Controller {
     ];
 
     connect() {
+        this.highlightedRuleId = null;
         this.initDeletePopovers();
         this.restoreScrollTarget();
     }
@@ -136,8 +137,8 @@ export default class extends Controller {
             }
         }
 
-        // A disabled rule stops applying, so the effect table has to catch up.
-        this.reloadMatrix();
+        // A disabled rule stops applying, so the calendar has to catch up.
+        this.reloadCalendar();
     }
 
     /**
@@ -208,21 +209,194 @@ export default class extends Controller {
         this.renderSummary(type, isNight);
     }
 
-    /** Reloads the effect table for the chosen category and week. */
-    async reloadMatrix() {
-        if (!this.hasMatrixTarget || !this.hasMatrixCategoryTarget) {
+    /** Switches the calendar to another room category; the week stays. */
+    changeCalendarCategory(event) {
+        this.reloadCalendar({ category: event.currentTarget.value }, event.currentTarget);
+    }
+
+    /** Moves the calendar by a week or back to the current one; the server rendered the target week. */
+    navigateCalendar(event) {
+        this.reloadCalendar({ week: event.currentTarget.dataset.week }, event.currentTarget);
+    }
+
+    /**
+     * Re-renders the calendar card on the server. Category and week are mirrored into the page
+     * URL, so the reload that follows saving a rule shows the same view again.
+     */
+    async reloadCalendar(changes = {}, trigger = null) {
+        if (!this.hasCalendarTarget || !this.hasCalendarUrlValue) {
             return;
         }
 
+        const current = this.calendarTarget.dataset;
         const params = new URLSearchParams({
-            category: this.matrixCategoryTarget.value,
-            week: this.hasMatrixWeekTarget ? this.matrixWeekTarget.value : '',
+            category: changes.category ?? current.category,
+            week: changes.week ?? current.week,
         });
+        const focusSelector = trigger ? this.focusSelectorFor(trigger) : null;
 
-        const response = await fetch(`${this.matrixUrlValue}?${params}`, {
+        const response = await fetch(`${this.calendarUrlValue}?${params}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
-        this.matrixTarget.innerHTML = await response.text();
+        if (!response.ok) {
+            return;
+        }
+
+        this.hideTip();
+        this.calendarTarget.outerHTML = await response.text();
+
+        const url = new URL(window.location.href);
+        params.forEach((value, key) => url.searchParams.set(key, value));
+        window.history.replaceState(null, '', url.toString());
+
+        if (this.highlightedRuleId !== null) {
+            this.applyHighlight(this.highlightedRuleId);
+        }
+        if (focusSelector) {
+            this.calendarTarget.querySelector(focusSelector)?.focus({ preventScroll: true });
+        }
+    }
+
+    /** Where keyboard focus returns once the calendar card has been replaced. */
+    focusSelectorFor(trigger) {
+        if (trigger.matches('select')) {
+            return `#${CSS.escape(trigger.id)}`;
+        }
+        return trigger.dataset.nav ? `[data-nav="${CSS.escape(trigger.dataset.nav)}"]` : null;
+    }
+
+    /** Shows where a calendar value comes from. All wording arrives rendered from the server. */
+    showTip(event) {
+        const cell = event.target.closest('.brc-cell');
+        if (!cell || !this.hasCalendarTipTarget) {
+            if (event.type === 'focusin') this.hideTip();
+            return;
+        }
+
+        const tip = this.calendarTipTarget;
+        const rules = this.calendarRules();
+        tip.replaceChildren();
+        this.appendTipText(tip, 'brc-tip__title', cell.dataset.tipTitle);
+        this.appendTipText(tip, 'brc-tip__value', cell.dataset.tipValue);
+
+        const rule = rules[cell.dataset.rule];
+        if (rule) {
+            this.appendTipSection(tip, rule.source, [rule.text]);
+        }
+        const replaced = (cell.dataset.overridden || '').split(',').map((id) => rules[id]).filter(Boolean);
+        if (replaced.length > 0) {
+            this.appendTipSection(tip, this.calendarTarget.dataset.tipOverridden, replaced.map((r) => r.text));
+        }
+        // The top row explains only where the rules add up to more than the day's own rules.
+        this.calendarReasons(cell).forEach((reason) => this.appendTipSection(tip, reason.label, [reason.text, reason.source]));
+
+        tip.hidden = false;
+        const box = tip.offsetParent.getBoundingClientRect();
+        const rect = cell.getBoundingClientRect();
+        const left = Math.max(8, Math.min(rect.left - box.left + rect.width / 2 - tip.offsetWidth / 2, box.width - tip.offsetWidth - 8));
+        tip.style.left = `${left}px`;
+        tip.style.top = `${rect.bottom - box.top + 8}px`;
+    }
+
+    hideTip() {
+        if (this.hasCalendarTipTarget) {
+            this.calendarTipTarget.hidden = true;
+        }
+    }
+
+    /** The rule sentences of the current calendar, parsed once per rendered card. */
+    calendarRules() {
+        const calendar = this.calendarTarget;
+        if (this.rulesOwner !== calendar) {
+            try {
+                this.rules = JSON.parse(calendar.dataset.rules || '{}');
+            } catch {
+                this.rules = {};
+            }
+            this.rulesOwner = calendar;
+        }
+
+        return this.rules;
+    }
+
+    /** Why a top-row value is marked, as worded by the server. */
+    calendarReasons(cell) {
+        try {
+            return JSON.parse(cell.dataset.tipReasons || '[]');
+        } catch {
+            return [];
+        }
+    }
+
+    appendTipText(tip, className, text) {
+        if (!text) return;
+        const line = document.createElement('div');
+        line.className = className;
+        line.textContent = text;
+        tip.append(line);
+    }
+
+    appendTipSection(tip, label, texts) {
+        const section = document.createElement('div');
+        const heading = document.createElement('span');
+        heading.className = 'brc-tip__label';
+        heading.textContent = label || '';
+        section.append(heading);
+        texts.forEach((text, index) => {
+            if (index > 0) section.append(document.createElement('br'));
+            section.append(document.createTextNode(text));
+        });
+        tip.append(section);
+    }
+
+    /**
+     * Marks the calendar days whose value comes from the clicked rule. The marking stays while
+     * scrolling or changing weeks, so a rule far down the list can still be read in the calendar.
+     */
+    toggleHighlight(event) {
+        // The rule's own controls (switch, edit, delete) keep their meaning.
+        if (event.target.closest('a, input, form, button:not([data-rule-highlight])')) {
+            return;
+        }
+        const ruleId = event.currentTarget.dataset.ruleId;
+        this.highlightedRuleId = this.highlightedRuleId === ruleId ? null : ruleId;
+        this.applyHighlight(this.highlightedRuleId);
+    }
+
+    clearHighlight() {
+        this.highlightedRuleId = null;
+        this.applyHighlight(null);
+    }
+
+    applyHighlight(ruleId) {
+        this.ruleRowTargets.forEach((row) => {
+            const marked = row.dataset.ruleId === ruleId;
+            row.classList.toggle('is-highlighted', marked);
+            row.querySelector('[data-rule-highlight]')?.setAttribute('aria-pressed', String(marked));
+        });
+
+        if (!this.hasCalendarTarget) {
+            return;
+        }
+
+        let found = 0;
+        this.calendarTarget.querySelectorAll('.brc-cell').forEach((cell) => {
+            const isSource = ruleId !== null && cell.dataset.rule === ruleId;
+            const isReplaced = ruleId !== null && (cell.dataset.overridden || '').split(',').includes(ruleId);
+            cell.classList.toggle('is-source', isSource);
+            cell.classList.toggle('is-replaced', isReplaced);
+            if (isSource || isReplaced) found++;
+        });
+
+        if (!this.hasCalendarLegendTarget) {
+            return;
+        }
+        // Only visibility changes here: a shifting card would move the hovered rule away from the pointer.
+        if (ruleId === null) {
+            delete this.calendarLegendTarget.dataset.highlight;
+        } else {
+            this.calendarLegendTarget.dataset.highlight = found > 0 ? 'found' : 'none';
+        }
     }
 
     initDeletePopovers() {
@@ -230,9 +404,10 @@ export default class extends Controller {
             root: this.element,
             onSuccess: (triggerEl) => {
                 const row = triggerEl.closest('li');
+                if (row?.dataset.ruleId === this.highlightedRuleId) this.highlightedRuleId = null;
                 if (row) row.remove();
                 this.updateEmptyStates();
-                this.reloadMatrix();
+                this.reloadCalendar();
             },
         });
     }

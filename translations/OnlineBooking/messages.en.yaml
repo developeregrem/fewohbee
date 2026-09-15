@@ -114,6 +114,8 @@ online_booking:
     booking_horizon_months_help: "For how many months in the future are online bookings allowed? Empty = unlimited."
     allowed_embedding_origins: "On which websites should the form be embedded?"
     allowed_embedding_origins_help: "Enter one website per line where visitors should see the booking form. Variants count separately, for example <code>https://www.example-hotel.com</code> and <code>https://example-hotel.com</code>. If the website can also be reached through other addresses, add those too. Leave empty if the form is only opened directly in this application."
+    tab_settings: "Settings"
+    tab_booking_rules: "Booking rules"
     section_restrictions: "Category Restrictions"
     section_restrictions_desc: "Maximum room count per category and minimum occupancy per room for online booking. How long guests have to stay is set below, under the booking rules."
     restriction_category: "Category"

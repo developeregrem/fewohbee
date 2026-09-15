@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Dto\PublicBooking\BookerInput;
 use App\Dto\PublicBooking\PublicBookingRequest;
@@ -10,6 +10,7 @@ use App\Entity\Appartment;
 use App\Exception\InvalidReservationPeriodException;
 use App\Exception\PublicBookingException;
 use App\Repository\GuestCategoryRepository;
+use App\Service\ReservationPeriodService;
 use Symfony\Component\HttpFoundation\Request;
 
 /**

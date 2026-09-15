@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Dto\BookingRestriction\DayRestrictions;
 use App\Dto\BookingRestriction\StayRestrictionResult;
@@ -11,17 +11,23 @@ use App\Entity\Enum\BookingRestrictionType;
 use App\Entity\RoomCategory;
 use App\Exception\InvalidReservationPeriodException;
 use App\Repository\BookingRestrictionRuleRepository;
+use App\Service\ReservationPeriodService;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * The single resolver for booking restrictions, shared by the public booking flow, the
  * settings preview and — later — the channel export. It turns stored rules into per-date
  * values and answers whether one concrete stay is allowed.
+ *
+ * @phpstan-type Requirement array{nights: int, reason: BookingRestrictionType, rule: BookingRestrictionRule|null, date: \DateTimeImmutable}
  */
 class BookingRestrictionService implements ResetInterface
 {
-    /** Stay lengths shown as columns in the settings effect table. */
-    public const MATRIX_NIGHTS = 7;
+    /** Highest night count a rule accepts; see BookingRestrictionRule::setMinNights(). */
+    private const MAX_RULE_NIGHTS = 365;
+
+    /** Departure days tried beyond the longest minimum, so a weekly departure closure cannot hide the shortest stay. */
+    private const DEPARTURE_WEEK = 7;
 
     /** @var array<string, list<BookingRestrictionRule>> */
     private array $rulesByPeriod = [];
@@ -50,42 +56,16 @@ class BookingRestrictionService implements ResetInterface
         }
 
         // One day beyond the last night, so the departure day carries its own closure state.
-        $days = $this->getDailyRestrictions($category, $period->start, $period->end->modify('+1 day'), $rules);
+        $days = array_values($this->getDailyRestrictions($category, $period->start, $period->end->modify('+1 day'), $rules));
         $nights = count($days) - 1;
 
-        $first = $days[$period->start->format('Y-m-d')];
-        $last = $days[$period->end->format('Y-m-d')];
-
         // The night minima are the only value the departure day must not contribute.
-        $required = $first->minStayArrival;
-        $reason = BookingRestrictionType::MIN_STAY_ARRIVAL;
-        $rule = $first->arrivalRule;
-        $ruleDate = $first->date;
-
-        foreach ($days as $day) {
-            if ($day->date >= $period->end) {
-                continue;
-            }
-            if ($day->minStayThrough > $required) {
-                $required = $day->minStayThrough;
-                $reason = BookingRestrictionType::MIN_STAY_THROUGH;
-                $rule = $day->throughRule;
-                $ruleDate = $day->date;
-            }
+        $requirement = $this->arrivalRequirement($days[0]);
+        for ($night = 0; $night < $nights; ++$night) {
+            $requirement = $this->raiseForNight($requirement, $days[$night]);
         }
 
-        // Closures are absolute: no stay length can satisfy them, so they are reported first.
-        if ($first->closedToArrival) {
-            return new StayRestrictionResult($nights, $required, BookingRestrictionType::CLOSED_TO_ARRIVAL, $first->closedToArrivalRule, $first->date);
-        }
-        if ($last->closedToDeparture) {
-            return new StayRestrictionResult($nights, $required, BookingRestrictionType::CLOSED_TO_DEPARTURE, $last->closedToDepartureRule, $last->date);
-        }
-        if ($nights < $required) {
-            return new StayRestrictionResult($nights, $required, $reason, $rule, $ruleDate);
-        }
-
-        return new StayRestrictionResult($nights, $required);
+        return $this->decide($days[0], $days[$nights], $nights, $requirement);
     }
 
     /**
@@ -133,12 +113,20 @@ class BookingRestrictionService implements ResetInterface
                 }
             }
 
+            $arrivalOverridden = [];
+            $throughOverridden = [];
             foreach ($matching as $rule) {
                 if (!$rule->coversDate($date)) {
                     continue;
                 }
                 $type = $rule->getType();
                 if ($type->needsMinNights() && $periodOverridesMinStay && !$rule->isPeriod()) {
+                    // Kept so the settings calendar can name the general rule a period replaces.
+                    if (BookingRestrictionType::MIN_STAY_ARRIVAL === $type) {
+                        $arrivalOverridden[] = $rule;
+                    } else {
+                        $throughOverridden[] = $rule;
+                    }
                     continue;
                 }
                 match ($type) {
@@ -159,6 +147,8 @@ class BookingRestrictionService implements ResetInterface
                 $throughRule,
                 $noArrivalRule,
                 $noDepartureRule,
+                $arrivalOverridden,
+                $throughOverridden,
             );
         }
 
@@ -166,32 +156,116 @@ class BookingRestrictionService implements ResetInterface
     }
 
     /**
-     * Builds the effect table shown in the settings: seven arrival days by stay length.
-     * The whole table is answered from one rule query, so operators can flip through weeks
-     * without a query per cell.
+     * Checks every stay length for every arrival day of a window, as the settings calendar
+     * shows them. Lengths run until every minimum stay a rule demands is reached and a further
+     * week of departure days has been tried, so the shortest bookable stay is always among
+     * them. The days are resolved once and each length extends the previous one by a night,
+     * so the whole window costs one rule query however long the stays get.
      *
-     * @param list<BookingRestrictionRule>|null $rules explicit rules for an unsaved preview
+     * @param list<BookingRestrictionRule>|null $rules explicit rules; null loads the persisted ones
      *
-     * @return list<array{date: \DateTimeImmutable, cells: list<StayRestrictionResult>}>
+     * @return array<string, non-empty-list<StayRestrictionResult>> keyed by arrival Y-m-d over [$from, $to), each ordered by length from one night
+     *
+     * @throws InvalidReservationPeriodException for an invalid date window
      */
-    public function getWeekMatrix(RoomCategory $category, \DateTimeImmutable $weekStart, int $maxNights = self::MATRIX_NIGHTS, ?array $rules = null): array
+    public function getArrivalStayOptions(RoomCategory $category, \DateTimeImmutable $from, \DateTimeImmutable $to, ?array $rules = null): array
     {
-        $start = $weekStart->setTime(0, 0);
-        // The longest stay starting on the last row still has to resolve, plus its departure day.
-        $windowEnd = $start->modify(sprintf('+%d days', 7 + $maxNights + 1));
-        $rules ??= $this->repository->findActiveForPeriod($start, $windowEnd);
-
-        $rows = [];
-        for ($offset = 0; $offset < 7; ++$offset) {
-            $arrival = $start->modify(sprintf('+%d days', $offset));
-            $cells = [];
-            for ($nights = 1; $nights <= $maxNights; ++$nights) {
-                $cells[] = $this->checkStay($category, $arrival, $arrival->modify(sprintf('+%d days', $nights)), $rules);
-            }
-            $rows[] = ['date' => $arrival, 'cells' => $cells];
+        $period = $this->periodService->validate($from, $to);
+        if ($period->start >= $period->end) {
+            throw new InvalidReservationPeriodException('reservation.period.invalid_dates');
         }
 
-        return $rows;
+        // Loaded for the longest stay any rule could demand, so the horizon below never
+        // depends on a rule this query left out.
+        $rules ??= $this->repository->findActiveForPeriod(
+            $period->start,
+            $period->end->modify(sprintf('+%d days', self::MAX_RULE_NIGHTS + self::DEPARTURE_WEEK + 1)),
+        );
+        $maxNights = $this->longestMinimum($rules, $category) + self::DEPARTURE_WEEK;
+        $days = array_values($this->getDailyRestrictions($category, $period->start, $period->end->modify(sprintf('+%d days', $maxNights + 1)), $rules));
+
+        $result = [];
+        for ($first = 0; $days[$first]->date < $period->end; ++$first) {
+            $arrival = $days[$first];
+            $requirement = $this->arrivalRequirement($arrival);
+            $options = [];
+            for ($nights = 1; $nights <= $maxNights; ++$nights) {
+                $requirement = $this->raiseForNight($requirement, $days[$first + $nights - 1]);
+                $options[] = $this->decide($arrival, $days[$first + $nights], $nights, $requirement);
+            }
+            $result[$arrival->date->format('Y-m-d')] = $options;
+        }
+
+        return $result;
+    }
+
+    /**
+     * What the arrival day alone demands; the occupied nights can only raise it.
+     *
+     * @return Requirement
+     */
+    private function arrivalRequirement(DayRestrictions $arrival): array
+    {
+        return [
+            'nights' => $arrival->minStayArrival,
+            'reason' => BookingRestrictionType::MIN_STAY_ARRIVAL,
+            'rule' => $arrival->arrivalRule,
+            'date' => $arrival->date,
+        ];
+    }
+
+    /**
+     * A night takes over only with a strictly higher minimum, so on a tie the rule met first
+     * stays the one that is named.
+     *
+     * @param Requirement $requirement
+     *
+     * @return Requirement
+     */
+    private function raiseForNight(array $requirement, DayRestrictions $night): array
+    {
+        if ($night->minStayThrough <= $requirement['nights']) {
+            return $requirement;
+        }
+
+        return [
+            'nights' => $night->minStayThrough,
+            'reason' => BookingRestrictionType::MIN_STAY_THROUGH,
+            'rule' => $night->throughRule,
+            'date' => $night->date,
+        ];
+    }
+
+    /**
+     * @param Requirement $requirement the strictest minimum over the arrival and every occupied night
+     */
+    private function decide(DayRestrictions $arrival, DayRestrictions $departure, int $nights, array $requirement): StayRestrictionResult
+    {
+        // Closures are absolute: no stay length can satisfy them, so they are reported first.
+        if ($arrival->closedToArrival) {
+            return new StayRestrictionResult($nights, $requirement['nights'], BookingRestrictionType::CLOSED_TO_ARRIVAL, $arrival->closedToArrivalRule, $arrival->date);
+        }
+        if ($departure->closedToDeparture) {
+            return new StayRestrictionResult($nights, $requirement['nights'], BookingRestrictionType::CLOSED_TO_DEPARTURE, $departure->closedToDepartureRule, $departure->date);
+        }
+        if ($nights < $requirement['nights']) {
+            return new StayRestrictionResult($nights, $requirement['nights'], $requirement['reason'], $requirement['rule'], $requirement['date']);
+        }
+
+        return new StayRestrictionResult($nights, $requirement['nights']);
+    }
+
+    /** @param list<BookingRestrictionRule> $rules */
+    private function longestMinimum(array $rules, RoomCategory $category): int
+    {
+        $longest = 1;
+        foreach ($rules as $rule) {
+            if ($rule->getType()->needsMinNights() && $rule->appliesTo($category)) {
+                $longest = max($longest, (int) $rule->getMinNights());
+            }
+        }
+
+        return $longest;
     }
 
     /**

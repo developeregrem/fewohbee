@@ -23,7 +23,7 @@ use App\Repository\PriceRepository;
 use App\Security\Voter\ApiScopeVoter;
 use App\Service\Api\PriceQuoteService;
 use App\Service\Api\RateCalendarService;
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

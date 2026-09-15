@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Dto\PublicBooking\CalendarAvailability;
 use App\Dto\PublicBooking\CalendarRoom;
 use App\Entity\Appartment;
 use App\Entity\OnlineBookingConfig;
 use App\Repository\AppartmentRepository;
+use App\Service\AvailabilityService;
 use Symfony\Component\Uid\Uuid;
 
 /**

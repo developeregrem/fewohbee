@@ -114,6 +114,8 @@ online_booking:
     booking_horizon_months_help: "Für wie viele Monate in der Zukunft sind Online-Buchungen möglich? Leer = unbegrenzt."
     allowed_embedding_origins: "Auf welchen Webseiten soll das Formular eingebettet werden?"
     allowed_embedding_origins_help: "Trage jede Webseite in eine eigene Zeile ein, in die das Buchungsformular eingebettet werden soll. Wichtig: Varianten zählen einzeln, z.B. <code>https://www.meine-pension.de</code> und <code>https://meine-pension.de</code>. Wenn die Webseite auch über weitere Adressen erreichbar ist, müssen diese ebenfalls eingetragen werden. Leer lassen, wenn das Buchungsformular nur direkt aufgerufen wird."
+    tab_settings: "Einstellungen"
+    tab_booking_rules: "Buchungsregeln"
     section_restrictions: "Beschränkungen pro Zimmerkategorie"
     section_restrictions_desc: "Maximale Zimmeranzahl pro Kategorie und Mindestbelegung pro Zimmer für die Online-Buchung. Wie lange Gäste bleiben müssen, legst du weiter unten bei den Buchungsregeln fest."
     restriction_category: "Kategorie"

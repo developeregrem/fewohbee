@@ -148,6 +148,7 @@ There are ~60 services in `src/Service/`. Search before you build. Notably:
 | File storage | `Storage/`, `FileUploader` |
 | App settings | `AppSettingsService` |
 | Booking journal / accounting | `Service/BookingJournal/` |
+| Online booking, booking rules | `Service/OnlineBooking/` |
 
 Duplicating logic that already exists in a service is the most common review rejection. If a service
 *almost* fits, extend it (with tests) rather than forking its logic.

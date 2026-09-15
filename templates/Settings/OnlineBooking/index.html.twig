@@ -14,8 +14,8 @@
 {% set embedUrl = absolute_url(path('public.booking', {'embed': 1})) %}
 {% set iframeCode %}<iframe id="fhb-booking" src="{{ embedUrl }}" style="border:0;width:100%;max-width:960px;min-height:400px;" loading="lazy" title="Online Booking"></iframe>
 <script>window.addEventListener("message",function(e){if(!e.data)return;var f=document.getElementById("fhb-booking");if(!f)return;if(e.data.type==="fhb-resize"){f.style.height=e.data.height+"px"}else if(e.data.type==="fhb-scroll"){f.scrollIntoView({behavior:"smooth",block:"start"})}});</script>{% endset %}
-<div class="container" data-controller="settings online-booking-settings booking-rules"
-     data-booking-rules-matrix-url-value="{{ path('settings.online_booking.rule_matrix') }}">
+<div class="container" data-controller="settings online-booking-settings booking-rules tab-persistence"
+     data-booking-rules-calendar-url-value="{{ path('settings.online_booking.rule_calendar') }}">
     <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-9">
 
@@ -35,13 +35,29 @@
                 </div>
             </div>
 
-            {# ── Expired special periods ── #}
-            {% if periodsAllPast %}
-                <div class="alert alert-warning mb-3 small d-flex flex-wrap align-items-center gap-2" role="alert">
-                    <span><i class="fas fa-triangle-exclamation me-1"></i>{{ 'booking_rules.periods_all_past'|trans }}</span>
-                    <a href="#booking-rule-periods" class="ms-auto fw-semibold">{{ 'booking_rules.periods_all_past_link'|trans }}</a>
-                </div>
-            {% endif %}
+            {# ── Tabs: the booking page settings and the booking rules are maintained apart ── #}
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link{% if activeTab == 'tab-settings' %} active{% endif %}" type="button" role="tab" id="tab-settings-link"
+                            data-bs-toggle="tab" data-bs-target="#tab-settings" aria-controls="tab-settings"
+                            aria-selected="{{ activeTab == 'tab-settings' ? 'true' : 'false' }}">
+                        {{ 'online_booking.settings.tab_settings'|trans }}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link{% if activeTab == 'tab-booking-rules' %} active{% endif %}" type="button" role="tab" id="tab-booking-rules-link"
+                            data-bs-toggle="tab" data-bs-target="#tab-booking-rules" aria-controls="tab-booking-rules"
+                            aria-selected="{{ activeTab == 'tab-booking-rules' ? 'true' : 'false' }}">
+                        {{ 'online_booking.settings.tab_booking_rules'|trans }}
+                        {# Expired special periods are otherwise easy to miss behind the tab. #}
+                        {% if periodsAllPast %}<i class="fas fa-triangle-exclamation text-warning ms-1" title="{{ 'booking_rules.periods_all_past'|trans }}"></i>{% endif %}
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+            {# ── Tab: booking page settings ── #}
+            <div class="tab-pane fade{% if activeTab == 'tab-settings' %} show active{% endif %}" id="tab-settings" role="tabpanel" aria-labelledby="tab-settings-link">
 
             {{ form_start(form) }}
 
@@ -336,8 +352,78 @@
 
             {{ form_end(form) }}
 
-            {% if categories|length > 0 %}
+            {# ── Embed ── #}
             <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-code text-primary me-2"></i>{{ 'online_booking.settings.section_embed'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_embed_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_url_label'|trans }}</label>
+                        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                            <input type="text" readonly class="form-control font-monospace small" value="{{ standAloneUrl }}" data-copy-target="input">
+                            <button class="btn btn-outline-secondary shadow-none" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_iframe_label'|trans }}</label>
+                        <div data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                            <textarea readonly class="form-control font-monospace small mb-2" rows="5" style="white-space:pre;resize:vertical" data-copy-target="input">{{ iframeCode }}</textarea>
+                            <button class="btn btn-outline-secondary ms-auto" type="button" data-action="click->copy#copy">
+                                <i class="fas fa-copy me-1"></i>{{ 'copy.text'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            {# ── Tab: booking rules ── #}
+            <div class="tab-pane fade{% if activeTab == 'tab-booking-rules' %} show active{% endif %}" id="tab-booking-rules" role="tabpanel" aria-labelledby="tab-booking-rules-link">
+
+            {# ── Expired special periods ── #}
+            {% if periodsAllPast %}
+                <div class="alert alert-warning mb-3 small d-flex flex-wrap align-items-center gap-2" role="alert">
+                    <span><i class="fas fa-triangle-exclamation me-1"></i>{{ 'booking_rules.periods_all_past'|trans }}</span>
+                    <a href="#booking-rule-periods" class="ms-auto fw-semibold">{{ 'booking_rules.periods_all_past_link'|trans }}</a>
+                </div>
+            {% endif %}
+
+            {# ── Calendar: what applies on each day ── #}
+            {% if calendar %}
+                {{ include('Settings/OnlineBooking/_rule_calendar.html.twig', calendar|merge({categories: categories})) }}
+            {% endif %}
+
+            {# ── Booking rules ── #}
+            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
+                listRules: rules,
+                anchorId: 'booking-rules',
+                icon: 'fa-calendar-check',
+                listTitle: 'booking_rules.section_rules',
+                listDesc: 'booking_rules.section_rules_desc',
+                addPath: 'settings.online_booking.rule_new',
+                addLabel: 'booking_rules.add_rule',
+                emptyLabel: 'booking_rules.no_rules',
+            }) }}
+
+            {# ── Special periods: the same entity, but limited to a date range ── #}
+            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
+                listRules: periods,
+                anchorId: 'booking-rule-periods',
+                icon: 'fa-calendar-alt',
+                listTitle: 'booking_rules.section_periods',
+                listDesc: 'booking_rules.section_periods_desc',
+                addPath: 'settings.online_booking.period_new',
+                addLabel: 'booking_rules.add_period',
+                emptyLabel: 'booking_rules.no_periods',
+            }) }}
+
+            {% if categories|length > 0 %}
+            <div class="card mb-3" id="booking-rule-limits">
                 <div class="card-header">
                     <h5 class="card-title fs-6 mb-0"><i class="fas fa-shield-halved text-primary me-2"></i>{{ 'online_booking.settings.section_restrictions'|trans }}</h5>
                     <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_restrictions_desc'|trans }}</p>
@@ -384,63 +470,7 @@
                 </div>
             </div>
             {% endif %}
-
-            {# ── Booking rules ── #}
-            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
-                listRules: rules,
-                anchorId: 'booking-rules',
-                icon: 'fa-calendar-check',
-                listTitle: 'booking_rules.section_rules',
-                listDesc: 'booking_rules.section_rules_desc',
-                addPath: 'settings.online_booking.rule_new',
-                addLabel: 'booking_rules.add_rule',
-                emptyLabel: 'booking_rules.no_rules',
-            }) }}
-
-            {# ── Special periods: the same entity, but limited to a date range ── #}
-            {{ include('Settings/OnlineBooking/_rule_list.html.twig', {
-                listRules: periods,
-                anchorId: 'booking-rule-periods',
-                icon: 'fa-calendar-alt',
-                listTitle: 'booking_rules.section_periods',
-                listDesc: 'booking_rules.section_periods_desc',
-                addPath: 'settings.online_booking.period_new',
-                addLabel: 'booking_rules.add_period',
-                emptyLabel: 'booking_rules.no_periods',
-            }) }}
-
-            {# ── Effect table ── #}
-            <div class="card mb-3" id="booking-rule-effect">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-table-cells text-primary me-2"></i>{{ 'booking_rules.section_effect'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'booking_rules.section_effect_desc'|trans }}</p>
-                </div>
-                {% if categories|length > 0 %}
-                    <div class="card-body pb-2">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-sm-7">
-                                <label class="form-label small fw-semibold" for="matrix-category">{{ 'booking_rules.matrix_category'|trans }}</label>
-                                <select id="matrix-category" class="form-select form-select-sm"
-                                        data-booking-rules-target="matrixCategory"
-                                        data-action="change->booking-rules#reloadMatrix">
-                                    {% for category in categories %}
-                                        <option value="{{ category.id }}" {{ matrixCategory and matrixCategory.id == category.id ? 'selected' }}>{{ category.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-sm-5">
-                                <label class="form-label small fw-semibold" for="matrix-week">{{ 'booking_rules.matrix_week'|trans }}</label>
-                                <input type="date" id="matrix-week" class="form-control form-control-sm"
-                                       value="{{ matrixWeek.format('Y-m-d') }}"
-                                       data-booking-rules-target="matrixWeek"
-                                       data-action="change->booking-rules#reloadMatrix">
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-                <div class="card-body p-0 pb-2" data-booking-rules-target="matrix">
-                    {{ include('Settings/OnlineBooking/_rule_matrix.html.twig', {rows: matrixRows}) }}
-                </div>
+            </div>
             </div>
 
             {# ── Rule offcanvas: one editor for both lists ── #}
@@ -450,36 +480,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{{ 'button.cancel'|trans }}"></button>
                 </div>
                 <div class="offcanvas-body" data-booking-rules-target="offcanvasBody"></div>
-            </div>
-
-
-            {# ── Embed ── #}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-code text-primary me-2"></i>{{ 'online_booking.settings.section_embed'|trans }}</h5>
-                    <p class="text-body-secondary small mb-0 mt-1">{{ 'online_booking.settings.section_embed_desc'|trans }}</p>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_url_label'|trans }}</label>
-                        <div class="input-group" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                            <input type="text" readonly class="form-control font-monospace small" value="{{ standAloneUrl }}" data-copy-target="input">
-                            <button class="btn btn-outline-secondary shadow-none" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="form-label small fw-semibold">{{ 'online_booking.settings.embed_iframe_label'|trans }}</label>
-                        <div data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
-                            <textarea readonly class="form-control font-monospace small mb-2" rows="5" style="white-space:pre;resize:vertical" data-copy-target="input">{{ iframeCode }}</textarea>
-                            <button class="btn btn-outline-secondary ms-auto" type="button" data-action="click->copy#copy">
-                                <i class="fas fa-copy me-1"></i>{{ 'copy.text'|trans }}
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
         </div>

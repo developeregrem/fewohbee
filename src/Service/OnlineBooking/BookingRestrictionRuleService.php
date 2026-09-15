@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Dto\BookingRestriction\RuleData;
 use App\Entity\BookingRestrictionRule;

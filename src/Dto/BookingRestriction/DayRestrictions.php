@@ -12,6 +12,10 @@ use App\Entity\BookingRestrictionRule;
  */
 final readonly class DayRestrictions
 {
+    /**
+     * @param list<BookingRestrictionRule> $arrivalOverridden unlimited arrival rules a special period replaces on this date
+     * @param list<BookingRestrictionRule> $throughOverridden unlimited night rules a special period replaces on this date
+     */
     public function __construct(
         public \DateTimeImmutable $date,
         public int $minStayArrival,
@@ -22,6 +26,8 @@ final readonly class DayRestrictions
         public ?BookingRestrictionRule $throughRule = null,
         public ?BookingRestrictionRule $closedToArrivalRule = null,
         public ?BookingRestrictionRule $closedToDepartureRule = null,
+        public array $arrivalOverridden = [],
+        public array $throughOverridden = [],
     ) {
     }
 

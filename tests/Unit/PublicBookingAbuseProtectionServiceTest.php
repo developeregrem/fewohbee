@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit;
 
 use App\Exception\PublicBookingException;
-use App\Service\PublicBookingAbuseProtectionService;
+use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;

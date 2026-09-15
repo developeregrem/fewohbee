@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\OnlineBooking;
 
 use App\Entity\Appartment;
 use App\Entity\OnlineBookingConfig;
 use App\Entity\RoomCategory;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
+use App\Service\AvailabilityService;
+use App\Service\RoomCategoryImageService;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicAvailabilityService

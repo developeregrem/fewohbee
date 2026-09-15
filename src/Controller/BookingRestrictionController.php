@@ -9,9 +9,9 @@ use App\Entity\BookingRestrictionRule;
 use App\Form\BookingRestrictionRuleType;
 use App\Repository\BookingRestrictionRuleRepository;
 use App\Repository\RoomCategoryRepository;
-use App\Service\BookingRestrictionPresentation;
-use App\Service\BookingRestrictionRuleService;
-use App\Service\BookingRestrictionService;
+use App\Service\OnlineBooking\BookingRestrictionCalendar;
+use App\Service\OnlineBooking\BookingRestrictionPresentation;
+use App\Service\OnlineBooking\BookingRestrictionRuleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +31,6 @@ final class BookingRestrictionController extends AbstractController
     public function __construct(
         private readonly BookingRestrictionRuleRepository $repository,
         private readonly BookingRestrictionRuleService $writer,
-        private readonly BookingRestrictionService $restrictions,
         private readonly BookingRestrictionPresentation $presentation,
     ) {
     }
@@ -65,13 +64,16 @@ final class BookingRestrictionController extends AbstractController
                 return new Response(status: Response::HTTP_NO_CONTENT, headers: ['X-Booking-Rule-Id' => (string) $saved->getId()]);
             }
 
-            return $this->redirectToRoute('settings.online_booking.index', ['_fragment' => 'booking-rule-'.$saved->getId()]);
+            return $this->redirectToRoute('settings.online_booking.index', [
+                'tab' => BookingRestrictionCalendar::SETTINGS_TAB,
+                '_fragment' => 'booking-rule-'.$saved->getId(),
+            ]);
         }
 
         if ($form->isSubmitted() && !$request->isXmlHttpRequest()) {
             $this->addFlash('danger', 'booking_rules.invalid');
 
-            return $this->redirectToRoute('settings.online_booking.index');
+            return $this->redirectToRoute('settings.online_booking.index', ['tab' => BookingRestrictionCalendar::SETTINGS_TAB]);
         }
 
         return $this->renderRuleForm($form, $rule, $data, $form->isSubmitted() ? 422 : 200);
@@ -89,7 +91,7 @@ final class BookingRestrictionController extends AbstractController
         // The list updates the row in place, so the page keeps its scroll position.
         return $request->isXmlHttpRequest()
             ? new Response(status: Response::HTTP_NO_CONTENT)
-            : $this->redirectToRoute('settings.online_booking.index');
+            : $this->redirectToRoute('settings.online_booking.index', ['tab' => BookingRestrictionCalendar::SETTINGS_TAB]);
     }
 
     #[Route('/rules/{id}', name: 'settings.online_booking.rule_delete', requirements: ['id' => '\d+'], methods: ['DELETE'])]
@@ -104,32 +106,18 @@ final class BookingRestrictionController extends AbstractController
         return new Response(status: Response::HTTP_NO_CONTENT);
     }
 
-    /** Renders the effect table for one category and week; the page reloads it on change. */
-    #[Route('/rules/matrix', name: 'settings.online_booking.rule_matrix', methods: ['GET'])]
-    public function matrix(Request $request, RoomCategoryRepository $categories): Response
+    /**
+     * Renders the booking-rule calendar for one room category and week; the settings page
+     * reloads it whenever one of them changes.
+     */
+    #[Route('/rules/calendar', name: 'settings.online_booking.rule_calendar', methods: ['GET'])]
+    public function calendar(Request $request, RoomCategoryRepository $categories, BookingRestrictionCalendar $calendar): Response
     {
         $category = $categories->find($request->query->getInt('category')) ?? throw $this->createNotFoundException();
-        $week = self::parseWeek($request->query->getString('week'));
 
-        return $this->render('Settings/OnlineBooking/_rule_matrix.html.twig', [
-            'matrixCategory' => $category,
-            'rows' => $this->restrictions->getWeekMatrix($category, $week),
-            'maxNights' => BookingRestrictionService::MATRIX_NIGHTS,
-        ]);
-    }
+        $context = $calendar->build($category, $request->query->getString('week') ?: null);
 
-    /**
-     * Accepts only a plain Y-m-d date and snaps it to that week's Monday, so the columns
-     * always line up with how an operator reads a week. Anything else falls back to today.
-     */
-    public static function parseWeek(string $value): \DateTimeImmutable
-    {
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-        if (!$date instanceof \DateTimeImmutable || $date->format('Y-m-d') !== $value) {
-            $date = new \DateTimeImmutable('today');
-        }
-
-        return $date->modify('monday this week');
+        return $this->render('Settings/OnlineBooking/_rule_calendar.html.twig', $context + ['categories' => $categories->findAll()]);
     }
 
     private function renderRuleForm(FormInterface $form, ?BookingRestrictionRule $rule, RuleData $data, int $status): Response

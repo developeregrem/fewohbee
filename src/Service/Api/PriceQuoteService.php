@@ -10,7 +10,7 @@ use App\Entity\Reservation;
 use App\Entity\ReservationOrigin;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
-use App\Service\PublicPricingService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\TouristTaxService;
 use Doctrine\Common\Collections\ArrayCollection;
 
