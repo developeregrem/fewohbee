@@ -68,7 +68,7 @@ final class ReservationOriginSurchargeFormTest extends TestCase
         ]);
         $origin = $this->service()->getOriginFromForm($request, 'new');
 
-        self::assertTrue($this->service()->isSurchargeFlagSetWithoutValue($request, 'new', $origin));
+        self::assertSame('reservationorigin.flash.surcharge_required', $this->service()->findSurchargeValueError($request, 'new', $origin));
     }
 
     public function testFlaggedWithOneValuePasses(): void
@@ -81,7 +81,7 @@ final class ReservationOriginSurchargeFormTest extends TestCase
         ]);
         $origin = $this->service()->getOriginFromForm($request, 'new');
 
-        self::assertFalse($this->service()->isSurchargeFlagSetWithoutValue($request, 'new', $origin));
+        self::assertNull($this->service()->findSurchargeValueError($request, 'new', $origin));
     }
 
     public function testUnflaggedIsNeverRejectedEvenWhenEmpty(): void
@@ -89,7 +89,56 @@ final class ReservationOriginSurchargeFormTest extends TestCase
         $request = new Request([], ['name-new' => 'Direktbuchung']);
         $origin = $this->service()->getOriginFromForm($request, 'new');
 
-        self::assertFalse($this->service()->isSurchargeFlagSetWithoutValue($request, 'new', $origin));
+        self::assertNull($this->service()->findSurchargeValueError($request, 'new', $origin));
+    }
+
+    /**
+     * Values the decimal(5,2) column cannot hold, each rejected by name.
+     *
+     * The form's own min/max/step are a courtesy to whoever types; anything can
+     * be posted past them.
+     */
+    public static function unusablePercentages(): \Generator
+    {
+        yield 'nicht numerisch' => ['zwölf'];
+        yield 'negativ' => ['-5'];
+        yield 'über hundert' => ['120'];
+        yield 'zu viele Nachkommastellen' => ['12.345'];
+        yield 'Ausdruck' => ['12%'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('unusablePercentages')]
+    public function testAnUnusablePercentageIsRejectedAndNeverStored(string $typed): void
+    {
+        $request = new Request([], [
+            'name-new' => 'Booking.com',
+            'surcharge-enabled-new' => '1',
+            'commission-new' => $typed,
+            'payment-fee-new' => '1,4',
+        ]);
+        $origin = $this->service()->getOriginFromForm($request, 'new');
+
+        self::assertNull($origin->getCommissionPercent(), 'the unusable value reached the entity');
+        self::assertSame(
+            'reservationorigin.flash.surcharge_invalid',
+            $this->service()->findSurchargeValueError($request, 'new', $origin)
+        );
+    }
+
+    public function testTheBoundsThemselvesArePercentages(): void
+    {
+        foreach (['0', '100', '12,5', '1.4', '99.99'] as $typed) {
+            $request = new Request([], [
+                'name-new' => 'Booking.com',
+                'surcharge-enabled-new' => '1',
+                'commission-new' => $typed,
+                'payment-fee-new' => '',
+            ]);
+            $origin = $this->service()->getOriginFromForm($request, 'new');
+
+            self::assertSame(str_replace(',', '.', $typed), $origin->getCommissionPercent());
+            self::assertNull($this->service()->findSurchargeValueError($request, 'new', $origin), $typed);
+        }
     }
 
     /**

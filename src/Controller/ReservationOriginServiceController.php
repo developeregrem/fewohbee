@@ -86,9 +86,9 @@ class ReservationOriginServiceController extends AbstractController
             if (0 == strlen($origin->getName())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
-            } elseif ($ros->isSurchargeFlagSetWithoutValue($request, 'new', $origin)) {
+            } elseif (null !== ($surchargeError = $ros->findSurchargeValueError($request, 'new', $origin))) {
                 $error = true;
-                $this->addFlash('warning', 'reservationorigin.flash.surcharge_required');
+                $this->addFlash('warning', $surchargeError);
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($origin);
@@ -122,9 +122,9 @@ class ReservationOriginServiceController extends AbstractController
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
                 $em->clear();
-            } elseif ($ros->isSurchargeFlagSetWithoutValue($request, $id, $origin)) {
+            } elseif (null !== ($surchargeError = $ros->findSurchargeValueError($request, $id, $origin))) {
                 $error = true;
-                $this->addFlash('warning', 'reservationorigin.flash.surcharge_required');
+                $this->addFlash('warning', $surchargeError);
                 // stop auto commit of doctrine with invalid field values
                 $em->clear();
             } else {

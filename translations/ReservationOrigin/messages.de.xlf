@@ -74,6 +74,10 @@
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.flash.surcharge_invalid">
+                <source>reservationorigin.flash.surcharge_invalid</source>
+                <target>Kommission und Zahlungsgebühr müssen Prozentwerte zwischen 0 und 100 mit höchstens zwei Nachkommastellen sein.</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.surcharge_required">
                 <source>reservationorigin.flash.surcharge_required</source>
                 <target>Bei aktivierten OTA-Gebühren muss mindestens Kommission oder Zahlungsgebühr angegeben werden.</target>
