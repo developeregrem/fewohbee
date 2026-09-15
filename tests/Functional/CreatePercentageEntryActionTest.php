@@ -94,6 +94,22 @@ final class CreatePercentageEntryActionTest extends WebTestCase
         self::assertNull($entry->getInvoiceId());
     }
 
+    public function testTheEntryIsRecordedAsComingFromAWorkflow(): void
+    {
+        // The journal service serves the bank import and marks what it creates
+        // as typed in by hand. Nobody typed this one in, and an entry claiming
+        // otherwise makes the journal's own record of where its rows came from
+        // wrong for good.
+        $invoice = $this->createInvoice(115.20);
+        $action = static::getContainer()->get(WorkflowActionRegistry::class)->get('create_percentage_entry');
+        $since = $this->lastEntryId();
+
+        $action->execute($this->config('12', ''), $invoice, []);
+        $this->em()->flush();
+
+        self::assertSame(BookingEntry::SOURCE_WORKFLOW, $this->entriesSince($since)[0]->getSourceType());
+    }
+
     public function testTheEntryWaitsForItsDocumentNumber(): void
     {
         // The reference that belongs here is the supplier's invoice for the

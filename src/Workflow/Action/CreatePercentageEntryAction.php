@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Workflow\Action;
 
+use App\Entity\BookingEntry;
 use App\Entity\Invoice;
 use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
@@ -169,6 +170,11 @@ class CreatePercentageEntryAction implements WorkflowActionInterface
             null,
             !empty($config['taxRateId']) ? $this->taxRateRepo->find((int) $config['taxRateId']) : null,
         );
+
+        // createEntryFromStatement() serves the bank import and marks what it
+        // creates as manual, leaving the source to the caller. This one is not
+        // manual: nobody typed it in, a workflow put it there.
+        $entry->setSourceType(BookingEntry::SOURCE_WORKFLOW);
 
         // Defaults to true: workflows configured before the choice existed all
         // book deductions that are documented by a supplier invoice arriving
