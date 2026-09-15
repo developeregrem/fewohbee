@@ -8,11 +8,11 @@ namespace App\Dto;
  * One fee a portal charges for a booking - a commission or a payment fee -
  * with the amount it comes to and everything needed to judge that amount.
  *
- * The rates found on the invoice come along because the two callers disagree on
- * what to do when they disagree: the journal refuses to book an invoice whose
- * reservations were taken under different rates, while an invoice shown to a
- * guest names the first of them rather than nothing at all. Deciding that here
- * would force one of those answers onto both.
+ * The rates found on the invoice come along so that a caller refusing such an
+ * invoice can name them: the journal says in its log which rates it found
+ * rather than only that it gave up. Whether an amount can be stated at all is
+ * decided here, by isSettled(), so that the journal and the invoice cannot
+ * answer it differently.
  */
 final readonly class OriginFee
 {

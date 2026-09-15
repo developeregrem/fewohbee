@@ -167,21 +167,21 @@ class OriginFeeCalculator
             $answers[] = null !== $collection && $collection->isPortal();
         }
 
-        $answers = array_unique($answers);
+        $portal = in_array(true, $answers, true);
+        $property = in_array(false, $answers, true);
 
-        return 1 === count($answers) ? reset($answers) : null;
+        return $portal && $property ? null : $portal;
     }
 
     /**
      * One fee, at the rate that holds for the invoice.
      *
-     * Which rate that is has two answers, and both are needed. Where every
-     * reservation agrees, that agreed rate is it - including the case of an
-     * invoice with no reservations at all, which yields nothing to book. Where
-     * they disagree, the rate is the one of the reservation the figures are
-     * shown for; the journal refuses such an invoice anyway (see
-     * OriginFee::isAgreedUpon), while the guest is shown a figure rather than a
-     * blank.
+     * Where every reservation agrees, that agreed rate is it - including the
+     * case of an invoice with no reservations at all, which yields nothing to
+     * book. Where they disagree there is no such rate, and the fee says so
+     * through OriginFee::isAgreedUpon(); what it carries then is the rate of
+     * the reservation the figures belong to, which no caller may state as the
+     * invoice's own but which keeps the amount from being an arbitrary zero.
      *
      * @param callable(Reservation): ?string $rateOf
      */
@@ -207,9 +207,9 @@ class OriginFeeCalculator
      * The reservation whose portal and rates the invoice shows.
      *
      * The first one that came through a portal charging anything. An invoice can
-     * hold several - which is a disagreement the journal stops at, but a note to
-     * the guest names the first rather than staying silent about a surcharge
-     * they did pay.
+     * hold several, which is a disagreement both callers stop at - but the
+     * portal is still named, so an invoice can say whose fees it cannot state
+     * rather than staying silent about them altogether.
      *
      * A reservation whose rates are both zero is passed over on purpose: an
      * origin exists for direct bookings too, and naming one that costs nothing
