@@ -133,6 +133,7 @@ accounting.taxrates.flash.created: Steuersatz erfolgreich angelegt.
 accounting.taxrates.flash.updated: Steuersatz erfolgreich aktualisiert.
 accounting.taxrates.flash.deleted: Steuersatz erfolgreich gelöscht.
 accounting.taxrates.flash.cannot_delete_in_use: "Dieser Steuersatz kann nicht gelöscht werden, weil er bereits in Buchungsjournal-Einträgen verwendet wird. Nutzen Sie die Gültigkeitsfelder, damit er künftig nicht mehr verwendet wird."
+accounting.taxrates.flash.cannot_delete_in_workflow: "Dieser Steuersatz kann nicht gelöscht werden, weil ein Workflow damit bucht. Wähle im Workflow zuerst einen anderen Steuersatz."
 
 # Journal - Batches
 accounting.journal.batch.add: Monat hinzufügen

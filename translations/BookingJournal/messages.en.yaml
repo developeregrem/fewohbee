@@ -133,6 +133,7 @@ accounting.taxrates.flash.created: Tax rate created successfully.
 accounting.taxrates.flash.updated: Tax rate updated successfully.
 accounting.taxrates.flash.deleted: Tax rate deleted successfully.
 accounting.taxrates.flash.cannot_delete_in_use: "This tax rate cannot be deleted because it is already used in booking journal entries. Use the validity fields to prevent future use."
+accounting.taxrates.flash.cannot_delete_in_workflow: "This tax rate cannot be deleted because a workflow books with it. Choose a different tax rate in the workflow first."
 
 # Journal - Batches
 accounting.journal.batch.add: Add Month

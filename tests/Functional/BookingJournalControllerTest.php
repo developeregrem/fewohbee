@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 
 final class BookingJournalControllerTest extends WebTestCase
 {
@@ -290,6 +291,53 @@ final class BookingJournalControllerTest extends WebTestCase
         self::assertStringNotContainsString('booking-journal#openOffcanvas', (string) $client->getResponse()->getContent());
     }
 
+    // ── Deleting a tax rate ─────────────────────────────────────────
+
+    public function testTaxRateConfiguredInAWorkflowCannotBeDeleted(): void
+    {
+        // Without the guard the rate goes, the action keeps running, and every
+        // entry it books from then on carries no tax rate at all - silently.
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $em = $this->getEntityManager();
+        $rate = new TaxRate();
+        $rate->setName('Workflow-Satz '.bin2hex(random_bytes(3)));
+        $rate->setRate('19.00');
+        $em->persist($rate);
+        $em->flush();
+
+        $workflow = new Workflow();
+        $workflow->setName('Portalgebühr '.bin2hex(random_bytes(3)));
+        $workflow->setTriggerType('invoice.status_changed');
+        $workflow->setActionType('create_percentage_entry');
+        $workflow->setActionConfig(['percent' => '12', 'taxRateId' => (string) $rate->getId()]);
+        $em->persist($workflow);
+        $em->flush();
+
+        $this->deleteTaxRate($client, $rate);
+
+        self::assertNotNull(
+            $em->getRepository(TaxRate::class)->find($rate->getId()),
+            'a tax rate a workflow books with was deleted'
+        );
+        // Named as the workflow's doing, not the journal's: the way out differs.
+        $session = $client->getRequest()->getSession();
+        self::assertInstanceOf(FlashBagAwareSessionInterface::class, $session);
+        self::assertSame(['accounting.taxrates.flash.cannot_delete_in_workflow'], $session->getFlashBag()->peek('warning'));
+
+        // Re-read: submitting the delete cleared the manager the entity came from.
+        $em->remove($em->getRepository(Workflow::class)->find($workflow->getId()));
+        $em->flush();
+
+        $this->deleteTaxRate($client, $rate);
+
+        self::assertNull(
+            $em->getRepository(TaxRate::class)->find($rate->getId()),
+            'the rate stayed undeletable although nothing references it any more'
+        );
+    }
+
     public function testYearViewIsForbiddenWithoutRole(): void
     {
         $client = static::createClient();
@@ -309,6 +357,35 @@ final class BookingJournalControllerTest extends WebTestCase
         }
 
         return $this->em;
+    }
+
+    /**
+     * Posts the delete the settings page offers for this rate. The token has to
+     * come from that page, which is where it is minted.
+     */
+    private function deleteTaxRate(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client, TaxRate $rate): void
+    {
+        $url = '/journal/settings/tax-rates/'.$rate->getId().'/delete';
+        $crawler = $client->request('GET', '/journal/settings');
+
+        $token = null;
+        foreach ($crawler->filter('button[data-popover="delete"]') as $button) {
+            // The crawler hands out DOMNode; only an element carries attributes.
+            if (!$button instanceof \DOMElement) {
+                continue;
+            }
+
+            $content = $button->getAttribute('data-bs-content');
+            if (str_contains($content, $url) && preg_match('/name="_token" value="([^"]+)"/', $content, $m)) {
+                $token = $m[1];
+                break;
+            }
+        }
+
+        self::assertNotNull($token, 'no delete popover for the tax rate on the settings page');
+
+        $client->request('DELETE', $url, ['_token' => $token]);
+        $this->getEntityManager()->clear();
     }
 
     private function createCashJournalUser(): User
