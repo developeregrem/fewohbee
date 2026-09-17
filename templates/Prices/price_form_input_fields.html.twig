@@ -84,13 +84,14 @@
                     <div class="row">
                         <label for="category-{{ price.id }}" class="col-sm-4 col-form-label text-end">{{ 'price.category'|trans }}{% if not isMiscPriceType %} *{% endif %}</label>
                         <div class="col-sm-8">
-                            <select id="category-{{ price.id }}" name="category-{{ price.id }}" class="form-select"{% if not isMiscPriceType %} required{% endif %}>
-                                <option value="" id="category-all-{{ price.id }}"{% if not isMiscPriceType %} disabled hidden{% endif %}>{{ 'price.category.all'|trans }}</option>
+                            {% set selectedCategoryIds = price.roomCategories|map(category => category.id) %}
+                            <select id="category-{{ price.id }}" name="category-{{ price.id }}[]" class="form-select" multiple{% if not isMiscPriceType %} required{% endif %}>
                                 {% for category in categories %}
-                                    <option value="{{ category.id }}"{% if price.roomCategory != null and category.id == price.roomCategory.id %} selected{% endif %}>{{ category.name }}</option>
+                                    <option value="{{ category.id }}"{% if category.id in selectedCategoryIds %} selected{% endif %}>{{ category.name }}</option>
                                 {% endfor %}
                             </select>
                             <div class="form-text{% if not isMiscPriceType %} d-none{% endif %}" id="category-hint-{{ price.id }}"><i class="fas fa-info-circle"></i> {{ 'price.category.misc.hint'|trans }}</div>
+                            <div class="form-text{% if isMiscPriceType %} d-none{% endif %}" id="category-hint-appartment-{{ price.id }}"><i class="fas fa-info-circle"></i> {{ 'price.category.appartment.hint'|trans }}</div>
                         </div>
                     </div>
                     <div class="row mt-4">

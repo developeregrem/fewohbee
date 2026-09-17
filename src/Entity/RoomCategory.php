@@ -21,7 +21,7 @@ class RoomCategory
     private $name;
     #[ORM\OneToMany(targetEntity: 'App\Entity\Appartment', mappedBy: 'roomCategory')]
     private $apartments;
-    #[ORM\OneToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategory')]
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\Price', mappedBy: 'roomCategories')]
     private $prices;
     #[ORM\Column(type: 'string', length: 5, nullable: true)]
     #[Assert\Length(max: 5)]
@@ -137,7 +137,7 @@ class RoomCategory
     {
         if (!$this->prices->contains($price)) {
             $this->prices[] = $price;
-            $price->setRoomCategory($this);
+            $price->addRoomCategory($this);
         }
 
         return $this;
@@ -147,10 +147,7 @@ class RoomCategory
     {
         if ($this->prices->contains($price)) {
             $this->prices->removeElement($price);
-            // set the owning side to null (unless already changed)
-            if ($price->getRoomCategory() === $this) {
-                $price->setRoomCategory(null);
-            }
+            $price->removeRoomCategory($this);
         }
 
         return $this;

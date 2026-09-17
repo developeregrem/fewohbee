@@ -192,7 +192,19 @@
             </trans-unit>
             <trans-unit id="price.category.misc.hint">
                 <source>price.category.misc.hint</source>
-                <target>Optional: Diesen Preis auf eine einzelne Zimmerkategorie beschränken. Bei "Alle Kategorien" gilt er für jede Reservierung.</target>
+                <target>Optional: Ohne Auswahl gilt der Preis für alle Zimmerkategorien.</target>
+            </trans-unit>
+            <trans-unit id="price.overview.section.appartment">
+                <source>price.overview.section.appartment</source>
+                <target>Zimmerpreise</target>
+            </trans-unit>
+            <trans-unit id="price.overview.section.miscellaneous">
+                <source>price.overview.section.miscellaneous</source>
+                <target>Sonstige Preise</target>
+            </trans-unit>
+            <trans-unit id="price.category.appartment.hint">
+                <source>price.category.appartment.hint</source>
+                <target>Der Preis gilt für jede ausgewählte Zimmerkategorie.</target>
             </trans-unit>
             <trans-unit id="price.breakfast">
                 <source>price.breakfast</source>

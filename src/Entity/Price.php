@@ -57,9 +57,15 @@ class Price
     private $pricePeriods;
     #[ORM\Column(type: 'boolean')]
     private $allPeriods;
-    #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'prices')]
-    #[ORM\JoinColumn(nullable: true)]
-    private $roomCategory;
+    /**
+     * Room categories this price is bound to. Apartment prices need at least one; for misc prices
+     * an empty collection means "applies to every room category".
+     *
+     * @var Collection<int, RoomCategory>
+     */
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'prices')]
+    #[ORM\JoinTable(name: 'prices_has_room_categories')]
+    private Collection $roomCategories;
     #[ORM\Column(type: 'boolean')]
     private $includesVat;
     #[ORM\Column(type: 'boolean')]
@@ -87,6 +93,7 @@ class Price
         $this->reservationOrigins = new ArrayCollection();
         $this->pricePeriods = new ArrayCollection();
         $this->components = new ArrayCollection();
+        $this->roomCategories = new ArrayCollection();
         $this->allPeriods = true;
         $this->includesVat = true;
         $this->isFlatPrice = false;
@@ -355,14 +362,26 @@ class Price
         return $this;
     }
 
-    public function getRoomCategory(): ?RoomCategory
+    /**
+     * @return Collection<int, RoomCategory>
+     */
+    public function getRoomCategories(): Collection
     {
-        return $this->roomCategory;
+        return $this->roomCategories;
     }
 
-    public function setRoomCategory(?RoomCategory $roomCategory): self
+    public function addRoomCategory(RoomCategory $roomCategory): self
     {
-        $this->roomCategory = $roomCategory;
+        if (!$this->roomCategories->contains($roomCategory)) {
+            $this->roomCategories->add($roomCategory);
+        }
+
+        return $this;
+    }
+
+    public function removeRoomCategory(RoomCategory $roomCategory): self
+    {
+        $this->roomCategories->removeElement($roomCategory);
 
         return $this;
     }

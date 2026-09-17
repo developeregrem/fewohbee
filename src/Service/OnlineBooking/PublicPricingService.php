@@ -98,10 +98,13 @@ class PublicPricingService
      * therefore not user-editable. The concrete line totals are only known once rooms are
      * selected, so the catalogue intentionally exposes per-unit prices, not totals.
      *
+     * An extra bound to several room categories is listed once; categoryIds/categoryName name
+     * every offered category it serves (categoryIds is empty for global extras).
+     *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment}> $samples
      *        One representative room per available type/category
      *
-     * @return array<int, array{id: int, description: string, categoryId: ?int, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
+     * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, unitPrice: float, unitPriceFormatted: string, pricePerUnit: float, pricePerUnitFormatted: string, maxQuantity: int, isMandatory: bool, autoQuantity: bool}>
      */
     public function catalogExtras(
         array $samples,
@@ -123,11 +126,18 @@ class PublicPricingService
             $reservation = $this->buildSampleReservation($sample['sampleRoom'], max(1, $totalPersons), $dateFrom, $dateTo, $origin);
             foreach ($this->priceRepository->findBookableOnlineExtras($reservation) as $price) {
                 $id = (int) $price->getId();
-                $isGlobal = null === $price->getRoomCategory();
+                $isGlobal = $price->getRoomCategories()->isEmpty();
                 if ($isGlobal && isset($global[$id])) {
                     continue;
                 }
                 if (!$isGlobal && isset($byCategory[$id])) {
+                    // Seen for another sample already: only add this sample's category to the label.
+                    // Several samples (room types) can share one category.
+                    $categoryId = $sample['categoryId'];
+                    if (null !== $categoryId && !in_array($categoryId, $byCategory[$id]['categoryIds'], true)) {
+                        $byCategory[$id]['categoryIds'][] = $categoryId;
+                        $byCategory[$id]['categoryName'] = implode(', ', array_filter([$byCategory[$id]['categoryName'], $sample['categoryName']]));
+                    }
                     continue;
                 }
 
@@ -145,8 +155,8 @@ class PublicPricingService
                 $entry = [
                     'id' => $id,
                     'description' => (string) $price->getDescription(),
-                    'categoryId' => $price->getRoomCategory()?->getId(),
-                    'categoryName' => $isGlobal ? null : ($sample['categoryName'] ?? $price->getRoomCategory()?->getName()),
+                    'categoryIds' => $isGlobal || null === $sample['categoryId'] ? [] : [$sample['categoryId']],
+                    'categoryName' => $isGlobal ? null : $sample['categoryName'],
                     'calculationType' => $calculationType,
                     'unitPrice' => $unitPrice,
                     'unitPriceFormatted' => self::formatAmount($unitPrice),
@@ -173,15 +183,17 @@ class PublicPricingService
 
     /**
      * Resolve bookable-online extras against the concrete booked composition. Category-bound
-     * extras receive a quantity derived from how many rooms / persons of that category are
-     * actually booked (locked); global extras keep the guest-selected quantity. Mandatory
-     * extras are forced on. Each entry carries its Price for downstream reservation attachment.
+     * extras receive a quantity derived from how many rooms / persons of their categories are
+     * actually booked (locked); an extra bound to several categories counts the rooms and persons
+     * of all booked ones. Global extras keep the guest-selected quantity. Mandatory extras are
+     * forced on. Each entry carries its Price for downstream reservation attachment.
      *
      * @param array<int, array{categoryId: ?int, categoryName: ?string, sampleRoom: Appartment, roomCount: int, persons: int}> $buckets
      *        Booked rooms grouped by category (categoryId null = rooms without a category)
      * @param array<int, int> $selectedExtras Price ID => quantity/flag from the guest
      *
-     * @return array<int, array{id: int, description: string, categoryId: ?int, categoryName: ?string, calculationType: string, isMandatory: bool, autoQuantity: bool, quantity: int, pricePerUnit: float, lineTotal: float, lineTotalFormatted: string, price: Price}>
+     * @return array<int, array{id: int, description: string, categoryIds: list<int>, categoryName: ?string, calculationType: string, isMandatory: bool, autoQuantity: bool, quantity: int, pricePerUnit: float, lineTotal: float, lineTotalFormatted: string, price: Price}>
+     *         categoryIds lists the booked categories the extra applies to; empty for global extras
      */
     public function resolveExtras(
         array $buckets,
@@ -198,30 +210,30 @@ class PublicPricingService
 
         $nights = max(1, (int) $dateFrom->diff($dateTo)->days);
 
-        // Gather candidate prices, remembering which category bucket each belongs to.
+        // Gather candidate prices, remembering every category bucket each one applies to.
         $candidates = [];
         foreach ($buckets as $bucket) {
             $reservation = $this->buildSampleReservation($bucket['sampleRoom'], max(1, (int) $bucket['persons']), $dateFrom, $dateTo, $origin);
             foreach ($this->priceRepository->findBookableOnlineExtras($reservation) as $price) {
                 $id = (int) $price->getId();
-                if (isset($candidates[$id])) {
-                    continue;
-                }
-                $isGlobal = null === $price->getRoomCategory();
-                $candidates[$id] = [
+                $candidates[$id] ??= [
                     'price' => $price,
                     'reservation' => $reservation,
-                    'bucket' => $isGlobal ? null : $bucket,
+                    'buckets' => [],
                 ];
+                if (!$price->getRoomCategories()->isEmpty()) {
+                    $candidates[$id]['buckets'][] = $bucket;
+                }
             }
         }
 
         $result = [];
         foreach ($candidates as $id => $candidate) {
             $price = $candidate['price'];
-            $isGlobal = null === $price->getRoomCategory();
-            $scopeRooms = $isGlobal ? $totalRooms : (int) $candidate['bucket']['roomCount'];
-            $scopePersons = $isGlobal ? $totalPersons : (int) $candidate['bucket']['persons'];
+            $isGlobal = $price->getRoomCategories()->isEmpty();
+            // Buckets are grouped by category, so summing them never counts a room twice.
+            $scopeRooms = $isGlobal ? $totalRooms : (int) array_sum(array_column($candidate['buckets'], 'roomCount'));
+            $scopePersons = $isGlobal ? $totalPersons : (int) array_sum(array_column($candidate['buckets'], 'persons'));
 
             $validDays = $this->countValidDays($candidate['reservation'], $price, $nights);
             if (0 === $validDays && !$price->getIsFlatPrice()) {
@@ -262,8 +274,8 @@ class PublicPricingService
             $result[] = [
                 'id' => $id,
                 'description' => (string) $price->getDescription(),
-                'categoryId' => $price->getRoomCategory()?->getId(),
-                'categoryName' => $price->getRoomCategory()?->getName(),
+                'categoryIds' => array_values(array_filter(array_column($candidate['buckets'], 'categoryId'), static fn (?int $categoryId): bool => null !== $categoryId)),
+                'categoryName' => $isGlobal ? null : implode(', ', array_filter(array_column($candidate['buckets'], 'categoryName'))),
                 'calculationType' => $calculationType,
                 'isMandatory' => $mandatory,
                 'autoQuantity' => !$isGlobal,

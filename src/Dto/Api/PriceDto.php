@@ -17,7 +17,8 @@ use App\Entity\Price;
 final readonly class PriceDto
 {
     /**
-     * @param array{id: int|null, name: string|null}|null $roomCategory
+     * @param array{id: int|null, name: string|null}|null $roomCategory   deprecated: set only when the price has exactly one category
+     * @param list<array{id: int|null, name: string|null}> $roomCategories empty = misc price for every category
      * @param list<array{id: int, name: string|null}>     $origins
      * @param array<string, bool>                         $weekdays
      * @param list<array{startDate: string, endDate: string}> $periods
@@ -36,6 +37,7 @@ final readonly class PriceDto
         public ?int $minStay,
         public bool $active,
         public ?array $roomCategory,
+        public array $roomCategories,
         public array $origins,
         public bool $allDays,
         public array $weekdays,
@@ -53,7 +55,7 @@ final readonly class PriceDto
 
     public static function fromEntity(Price $price): self
     {
-        $category = $price->getRoomCategory();
+        $roomCategories = self::roomCategories($price);
 
         $origins = [];
         foreach ($price->getReservationOrigins() as $origin) {
@@ -95,9 +97,8 @@ final readonly class PriceDto
             numberOfPersons: null !== $price->getNumberOfPersons() ? (int) $price->getNumberOfPersons() : null,
             minStay: null !== $price->getMinStay() ? (int) $price->getMinStay() : null,
             active: (bool) $price->getActive(),
-            roomCategory: null !== $category
-                ? ['id' => $category->getId(), 'name' => $category->getName()]
-                : null,
+            roomCategory: 1 === count($roomCategories) ? $roomCategories[0] : null,
+            roomCategories: $roomCategories,
             origins: $origins,
             allDays: (bool) $price->getAllDays(),
             weekdays: [
@@ -119,5 +120,22 @@ final readonly class PriceDto
             isPackage: $price->isPackage(),
             components: $components,
         );
+    }
+
+    /**
+     * The price's room categories in API shape, ordered by id. Shared with the quote endpoint so
+     * both expose categories identically.
+     *
+     * @return list<array{id: int|null, name: string|null}>
+     */
+    public static function roomCategories(Price $price): array
+    {
+        $categories = [];
+        foreach ($price->getRoomCategories() as $category) {
+            $categories[] = ['id' => $category->getId(), 'name' => $category->getName()];
+        }
+        usort($categories, static fn (array $a, array $b): int => $a['id'] <=> $b['id']);
+
+        return $categories;
     }
 }

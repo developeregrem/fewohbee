@@ -138,7 +138,7 @@ class SettingsFixtures extends Fixture implements FixtureGroupInterface
         foreach ($roomCats as $roomCat) {
             $price = new Price();
             $price->setActive(true);
-            $price->setRoomCategory($roomCat);
+            $price->addRoomCategory($roomCat);
             $price->setType(2);
             $price->setMinStay(1);
             $price->setAllDays(true);

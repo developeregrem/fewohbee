@@ -44,15 +44,21 @@ class PriceRepository extends ServiceEntityRepository
         return $prices;
     }
 
+    /**
+     * All prices with their components and room categories, active ones first. Grouping by room
+     * category happens in PriceService::groupByRoomCategories(), because a price can belong to
+     * several categories and SQL cannot order by a collection.
+     *
+     * @return Price[]
+     */
     public function findAllOrdered()
     {
         $q = $this->createQueryBuilder('p')
-                ->addSelect('components')
+                ->addSelect('components', 'rc')
                 ->leftJoin('p.components', 'components')
-                ->addSelect('CASE WHEN p.roomCategory is null THEN 1 ELSE 0 END as HIDDEN cat_is_null')
-                ->addOrderBy('cat_is_null', 'ASC')
-                ->addOrderBy('p.roomCategory', 'ASC')
+                ->leftJoin('p.roomCategories', 'rc')
                 ->addOrderBy('p.active', 'DESC')
+                ->addOrderBy('p.id', 'ASC')
                 ->getQuery();
 
         try {
@@ -120,12 +126,16 @@ class PriceRepository extends ServiceEntityRepository
                     ->setParameter(':end', $pricePeriod->getEnd())
                     ->getQuery();
             try {
-                $prices = $resQ->getResult();
+                // Collect the conflicts of every period; keyed by id so a price overlapping
+                // several periods is listed once.
+                foreach ($resQ->getResult() as $conflict) {
+                    $prices[$conflict->getId()] = $conflict;
+                }
             } catch (NoResultException $e) {
             }
         }
 
-        return $prices;
+        return array_values($prices);
     }
 
     /**
@@ -141,14 +151,16 @@ class PriceRepository extends ServiceEntityRepository
                 /* select only room type and active prices */
             ->where('p.type = 2 AND p.active = true')
                 /* make sure that all room specific fields match */
-            ->andWhere('p.roomCategory = :rc and p.minStay = :ms and p.numberOfPersons = :nop')
+            ->andWhere('p.minStay = :ms and p.numberOfPersons = :nop')
+                /* the prices share at least one room category */
+            ->andWhere(':rcs MEMBER OF p.roomCategories')
                 /* select only prices for the given reservation origin */
             ->andWhere(':ros MEMBER OF p.reservationOrigins')
                 /* compare the weekdays whether there are conflicts, ignore all weekdays set to false and check only weekdays set to true */
             ->andWhere('((:ad = true AND p.allDays = true) OR (:mo = true AND p.monday = true) OR (:tu = true AND p.tuesday = true)'
                     .' OR (:we = true AND p.wednesday = true) OR (:th = true AND p.thursday = true)  OR (:fr = true AND p.friday = true)'
                     .' OR (:sa = true AND p.saturday = true) OR (:su = true AND p.sunday = true))')
-            ->setParameter('rc', $price->getRoomCategory())
+            ->setParameter('rcs', $price->getRoomCategories())
             ->setParameter('nop', $price->getNumberOfPersons())
             ->setParameter('ms', $price->getMinStay())
             ->setParameter('ros', $price->getReservationOrigins())
@@ -175,7 +187,7 @@ class PriceRepository extends ServiceEntityRepository
                 /* select only room type */
             ->andWhere('p.type = 2')
                 /* make sure that all room specific fields match */
-            ->andWhere('p.roomCategory = :rc AND p.numberOfPersons = :nop AND p.minStay <= :ms')
+            ->andWhere(':rc MEMBER OF p.roomCategories AND p.numberOfPersons = :nop AND p.minStay <= :ms')
             ->addOrderBy('p.minStay', 'DESC')
             ->setParameter('rc', $reservation->getAppartment()->getRoomCategory())
             ->setParameter('nop', $reservation->getPersons())
@@ -277,21 +289,21 @@ class PriceRepository extends ServiceEntityRepository
 
     /**
      * Restrict misc prices (type=1) to those that either have no room category (apply to everyone,
-     * backwards compatible) or match the room category of the reservation's apartment.
+     * backwards compatible) or include the room category of the reservation's apartment.
      */
     private function addMiscRoomCategoryFilter(\Doctrine\ORM\QueryBuilder $q, Reservation $reservation): void
     {
         $category = $reservation->getAppartment()?->getRoomCategory();
         if (null === $category) {
             // Apartment without a category can only match category-less misc prices.
-            $q->andWhere('p.roomCategory IS NULL');
+            $q->andWhere('p.roomCategories IS EMPTY');
 
             return;
         }
 
         // Parentheses are required: andWhere() does not wrap a raw OR string, so without them
         // AND/OR precedence would match category-bound prices regardless of the other conditions.
-        $q->andWhere('(p.roomCategory IS NULL OR p.roomCategory = :rc)')
+        $q->andWhere('(p.roomCategories IS EMPTY OR :rc MEMBER OF p.roomCategories)')
             ->setParameter('rc', $category);
     }
 
@@ -354,7 +366,6 @@ class PriceRepository extends ServiceEntityRepository
             ->where('p.active = true')
             ->setParameter('oid', $originId)
             ->addOrderBy('p.type', 'DESC')
-            ->addOrderBy('p.roomCategory', 'ASC')
             ->addOrderBy('p.numberOfPersons', 'ASC')
             ->addOrderBy('p.description', 'ASC')
             ->getQuery()
@@ -396,7 +407,7 @@ class PriceRepository extends ServiceEntityRepository
             ->leftJoin('p.pricePeriods', 'pp')
             ->leftJoin('p.reservationOrigins', 'ro')
             ->leftJoin('p.components', 'pc')
-            ->leftJoin('p.roomCategory', 'rc')
+            ->leftJoin('p.roomCategories', 'rc')
             ->addOrderBy('p.type', 'DESC')
             ->addOrderBy('rc.name', 'ASC')
             ->addOrderBy('p.numberOfPersons', 'ASC')
@@ -407,7 +418,9 @@ class PriceRepository extends ServiceEntityRepository
             $q->andWhere('p.type = :type')->setParameter('type', $type);
         }
         if (null !== $roomCategoryId) {
-            $q->andWhere('p.roomCategory = :rcid')->setParameter('rcid', $roomCategoryId);
+            // MEMBER OF instead of filtering on the fetch-joined 'rc': that would truncate the
+            // hydrated category collection to the requested category.
+            $q->andWhere(':rcid MEMBER OF p.roomCategories')->setParameter('rcid', $roomCategoryId);
         }
         if (null !== $active) {
             $q->andWhere('p.active = :active')->setParameter('active', $active);
@@ -440,7 +453,7 @@ class PriceRepository extends ServiceEntityRepository
             ->select('DISTINCT p.numberOfPersons AS nop')
             ->where('p.active = true')
             ->andWhere('p.type = 2')
-            ->andWhere('p.roomCategory = :rc')
+            ->andWhere(':rc MEMBER OF p.roomCategories')
             ->andWhere('p.numberOfPersons IS NOT NULL')
             ->orderBy('p.numberOfPersons', 'ASC')
             ->setParameter('rc', $roomCategory)

@@ -1023,9 +1023,9 @@ class PublicBookingService
             foreach ($resolved as $extra) {
                 /** @var Price $price */
                 $price = $extra['price'];
-                $categoryId = $extra['categoryId'];
+                $categoryIds = $extra['categoryIds'];
 
-                if (null === $categoryId) {
+                if ([] === $categoryIds) {
                     // Global extra: per_person to all reservations, flat/per_room to the first $qty.
                     if ('per_person_night' === $extra['calculationType']) {
                         $reservation->addPrice($price);
@@ -1035,10 +1035,10 @@ class PublicBookingService
                     continue;
                 }
 
-                // Category-bound: attach to every reservation of the matching category. The misc-price
+                // Category-bound: attach to every reservation of a matching category. The misc-price
                 // billing then yields the right multiplicity (flat → once per room, per_room → per
                 // room-night, per_person → per person-night).
-                if ($resCategoryId === $categoryId) {
+                if (in_array($resCategoryId, $categoryIds, true)) {
                     $reservation->addPrice($price);
                 }
             }

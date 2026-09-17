@@ -66,7 +66,7 @@ final class ApiPricesControllerTest extends WebTestCase
         $row = $payload['data'][0];
         foreach ([
             'id', 'type', 'description', 'price', 'vat', 'includesVat', 'isFlatPrice', 'isPerRoom',
-            'numberOfPersons', 'minStay', 'active', 'roomCategory', 'origins', 'allDays', 'weekdays',
+            'numberOfPersons', 'minStay', 'active', 'roomCategory', 'roomCategories', 'origins', 'allDays', 'weekdays',
             'allPeriods', 'periods', 'isBookableOnline', 'isMandatoryOnline', 'isPackage', 'components',
         ] as $key) {
             self::assertArrayHasKey($key, $row);
@@ -74,6 +74,11 @@ final class ApiPricesControllerTest extends WebTestCase
         self::assertSame('apartment', $row['type']);
         self::assertArrayHasKey('monday', $row['weekdays']);
         self::assertNotEmpty($row['origins'], 'A price without an origin can never be selected.');
+        self::assertNotEmpty($row['roomCategories'], 'An apartment price is always bound to a room category.');
+        // Deprecated single-category field stays filled while a price has exactly one category.
+        if (1 === count($row['roomCategories'])) {
+            self::assertSame($row['roomCategories'][0], $row['roomCategory']);
+        }
 
         // The type filter must actually filter.
         foreach ($payload['data'] as $price) {
@@ -311,7 +316,7 @@ final class ApiPricesControllerTest extends WebTestCase
         $em = static::getContainer()->get(ManagerRegistry::class)->getManager();
 
         foreach ($em->getRepository(Price::class)->findBy(['type' => 2, 'active' => true]) as $price) {
-            $category = $price->getRoomCategory();
+            $category = $price->getRoomCategories()->first() ?: null;
             $origin = $price->getReservationOrigins()->first();
             if (null === $category || false === $origin || null === $price->getNumberOfPersons()) {
                 continue;

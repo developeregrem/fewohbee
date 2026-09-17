@@ -24,21 +24,18 @@
         
 
         
-    {% set lastRoomCategory = null %}
     <div class="row mt-3">
         <div class="col">
-        {% for price in prices %}
-            {% if lastRoomCategory != price.roomCategory %}
+        {% for group in priceGroups %}
             <div class="card mb-3">
                 <div class="card-header">
-                  {% if price.roomCategory != null %}{{ 'price.category'|trans }}: <strong>{{ price.roomCategory.name }}</strong>{% endif %}
+                  {{ 'price.category'|trans }}:
+                  <strong>{% if group.roomCategories is empty %}{{ 'price.category.all'|trans }}{% else %}{{ group.roomCategories|map(category => category.name)|join(', ') }}{% endif %}</strong>
                 </div>
                 <div class="card-body">
-                    {% include 'Prices/price_table.html.twig' with {'currentPrice': price} %}
+                    {% include 'Prices/price_table.html.twig' with {'apartmentPrices': group.apartmentPrices, 'miscPrices': group.miscPrices} %}
                 </div>
-            </div>       
-            {% set lastRoomCategory = price.roomCategory  %}
-            {% endif %}
+            </div>
         {% endfor %}
         </div>
     </div>

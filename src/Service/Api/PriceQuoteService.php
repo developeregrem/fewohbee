@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Api;
 
+use App\Dto\Api\PriceDto;
 use App\Dto\Api\PriceQuoteDto;
 use App\Entity\Appartment;
 use App\Entity\Reservation;
@@ -216,6 +217,7 @@ class PriceQuoteService
                 continue;
             }
 
+            $roomCategories = PriceDto::roomCategories($price);
             [$calculationType, $total] = $this->pricingService->unitPricing(
                 $price,
                 (float) $price->getPrice(),
@@ -235,9 +237,9 @@ class PriceQuoteService
                 'isBookableOnline' => $price->getIsBookableOnline(),
                 'isMandatoryOnline' => $price->getIsMandatoryOnline(),
                 'isDefaultActiveInReservationCreation' => $price->getIsDefaultActiveInReservationCreation(),
-                'roomCategory' => null !== $price->getRoomCategory()
-                    ? ['id' => $price->getRoomCategory()->getId(), 'name' => $price->getRoomCategory()->getName()]
-                    : null,
+                // 'roomCategory' is deprecated and only set for exactly one category.
+                'roomCategory' => 1 === count($roomCategories) ? $roomCategories[0] : null,
+                'roomCategories' => $roomCategories,
             ];
         }
 
