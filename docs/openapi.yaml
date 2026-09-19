@@ -511,6 +511,7 @@ paths:
         - name: roomCategoryId
           in: query
           schema: { type: integer }
+          description: Prices bound to this room category, alone or together with others. Misc prices without a category are not included.
         - name: originId
           in: query
           description: One or more reservation origin ids (repeatable or comma separated).
@@ -1221,9 +1222,19 @@ components:
         active: { type: boolean }
         roomCategory:
           type: [object, 'null']
+          deprecated: true
+          description: Deprecated, use `roomCategories`. Only set when the price is bound to exactly one room category, otherwise null.
           properties:
             id: { type: [integer, 'null'] }
             name: { type: [string, 'null'] }
+        roomCategories:
+          type: array
+          description: Room categories the price applies to. Empty for a misc price that applies to every room category.
+          items:
+            type: object
+            properties:
+              id: { type: [integer, 'null'] }
+              name: { type: [string, 'null'] }
         origins:
           type: array
           items:
@@ -1409,9 +1420,19 @@ components:
               isDefaultActiveInReservationCreation: { type: boolean }
               roomCategory:
                 type: [object, 'null']
+                deprecated: true
+                description: Deprecated, use `roomCategories`. Only set when the extra is bound to exactly one room category, otherwise null.
                 properties:
                   id: { type: [integer, 'null'] }
                   name: { type: [string, 'null'] }
+              roomCategories:
+                type: array
+                description: Room categories the extra applies to. Empty when it applies to every room category.
+                items:
+                  type: object
+                  properties:
+                    id: { type: [integer, 'null'] }
+                    name: { type: [string, 'null'] }
         extrasTotal: { type: number, description: 'Sum of the mandatory extras.' }
         touristTax:
           type: [object, 'null']

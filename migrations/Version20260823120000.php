@@ -8,39 +8,38 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Notification centre and in-app release notes.
+ * Additive schema changes for 4.12.0: notifications, SSO identities, branch information
+ * and calendar import filters. Consolidates the unreleased development migrations.
  *
- * `last_seen_version` stays NULL on purpose for existing users. NULL means "never
- * announced", so everybody sees the notes for the version that introduces this
- * feature. The column is written when the user opens the notes from the bell and
- * closes them again — there is no auto-opening popup.
+ * Existing users keep NULL in last_seen_version so the release is announced in the bell;
+ * FirstRunCommand marks the current version as seen for the initial administrator instead.
+ * Notifications are shared across the installation, with read state tracked per user.
+ * Titles use translation keys and JSON parameters; notes hold the operator's own text.
  *
- * Fresh installations do not need the announcement — FirstRunCommand stamps the
- * current version on the initial administrator instead.
+ * Opening hours and check-in/out times are display-only branch information. They do not
+ * default or overwrite reservation times. A check-in end before its start means the next day.
+ * NULL means these optional settings have not been configured.
  *
- * `notifications` holds installation-wide entries; `notification_reads` tracks who
- * has already seen each one, because fewohbee runs one database per property and
- * two members of staff read independently.
- *
- * Titles are stored as a translation key plus JSON parameters rather than as
- * finished text, so an entry renders in German and English from one row and a
- * wording change needs no data migration. `note` carries the free-text
- * explanation the operator writes on the automation.
- *
- * Also seeds two system workflows that put online bookings and calendar imports
- * into the bell, mirroring the existing notify_* email workflows so either
- * channel can be switched off on its own.
+ * down() removes the new settings, SSO links, notifications and their system workflows.
+ * The separate booking-rule and price migrations retain their own data-loss guards.
  */
 final class Version20260823120000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add users.last_seen_version, the notifications tables and the in-app notification workflows';
+        return 'Add notifications, OIDC identities, branch opening/check-in times and calendar import filters';
     }
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE users ADD last_seen_version VARCHAR(20) DEFAULT NULL');
+        $this->addSql('ALTER TABLE users ADD last_seen_version VARCHAR(20) DEFAULT NULL, ADD oidc_issuer VARCHAR(255) DEFAULT NULL, ADD oidc_subject VARCHAR(255) DEFAULT NULL, ADD oidc_linked_at DATETIME DEFAULT NULL');
+        // NULL identities remain valid for existing users, even with the unique index.
+        $this->addSql('CREATE UNIQUE INDEX uniq_users_oidc_identity ON users (oidc_issuer, oidc_subject)');
+
+        $this->addSql('ALTER TABLE objects ADD opening_hours JSON DEFAULT NULL, ADD opening_hours_note LONGTEXT DEFAULT NULL, ADD check_in_from TIME DEFAULT NULL, ADD check_in_until TIME DEFAULT NULL, ADD check_out_until TIME DEFAULT NULL, ADD check_in_note LONGTEXT DEFAULT NULL');
+
+        // The entity treats NULL exclusions as an empty list; sharing defaults to enabled.
+        $this->addSql('ALTER TABLE calendar_sync_import ADD excluded_summaries JSON DEFAULT NULL, ADD excluded_summary_terms JSON DEFAULT NULL, ADD share_summary_filters TINYINT(1) DEFAULT 1 NOT NULL');
 
         $this->addSql('CREATE TABLE notifications (
             id INT AUTO_INCREMENT NOT NULL,
@@ -85,7 +84,10 @@ final class Version20260823120000 extends AbstractMigration
         $this->addSql('ALTER TABLE notification_reads DROP FOREIGN KEY FK_notification_reads_user');
         $this->addSql('DROP TABLE notification_reads');
         $this->addSql('DROP TABLE notifications');
-        $this->addSql('ALTER TABLE users DROP last_seen_version');
+        $this->addSql('ALTER TABLE calendar_sync_import DROP excluded_summaries, DROP excluded_summary_terms, DROP share_summary_filters');
+        $this->addSql('ALTER TABLE objects DROP check_in_note, DROP check_out_until, DROP check_in_until, DROP check_in_from, DROP opening_hours_note, DROP opening_hours');
+        $this->addSql('DROP INDEX uniq_users_oidc_identity ON users');
+        $this->addSql('ALTER TABLE users DROP last_seen_version, DROP oidc_issuer, DROP oidc_subject, DROP oidc_linked_at');
     }
 
     public function isTransactional(): bool
