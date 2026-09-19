@@ -1104,7 +1104,7 @@ class InvoiceService
             $position->setPrice($price->getPrice());
             $position->setVat($price->getVat());
             $position->setIncludesVat($price->getIncludesVat());
-            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsFlatPrice($this->isFlatAggregate($price, (int) $tmpPrice['amount']));
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($price->getRevenueAccount());
             $position->setPositionGroup('misc');
@@ -1139,7 +1139,7 @@ class InvoiceService
             $position->setPrice(number_format($component['unitPrice'], 2, '.', ''));
             $position->setVat($component['component']->getVat());
             $position->setIncludesVat($component['includesVat']);
-            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsFlatPrice($this->isFlatAggregate($price, (int) $tmpPrice['amount']));
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($component['component']->getRevenueAccount() ?? $price->getRevenueAccount());
             $position->setPositionGroup('misc');
@@ -1147,6 +1147,16 @@ class InvoiceService
         }
 
         return $positions;
+    }
+
+    /**
+     * Whether an aggregated price stays a flat-price position. A flat price is counted once per
+     * reservation, so an invoice covering several reservations carries one unit per reservation.
+     * Such a position is billed as a regular quantity — as a flat price it would be charged once.
+     */
+    private function isFlatAggregate(Price $price, int $amount): bool
+    {
+        return $price->getIsFlatPrice() && 1 === $amount;
     }
 
     /**

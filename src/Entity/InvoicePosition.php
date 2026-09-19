@@ -84,9 +84,14 @@ class InvoicePosition
         return $this->invoice;
     }
 
+    /**
+     * A flat price is billed exactly once, so its quantity is always 1 — whatever was stored.
+     * Line total, invoice sum, booking journal and e-invoice all read the quantity through here,
+     * which keeps them consistent even for positions saved with a larger quantity by mistake.
+     */
     public function getAmount()
     {
-        return $this->amount;
+        return $this->isFlatPrice ? 1 : $this->amount;
     }
 
     public function getTotalPriceRaw(): float

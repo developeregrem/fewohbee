@@ -20,6 +20,8 @@ class InvoiceMiscPositionType extends AbstractType
         $builder
             ->add('amount', IntegerType::class, [
                 'label' => 'invoice.miscellaneous.position.amount',
+                // Only shown while "flat price" is ticked — the template and invoices_controller.js toggle it.
+                'help' => 'invoice.miscellaneous.position.amount.flat_help',
             ])
             ->add('description', TextType::class, ['label' => 'invoice.appartment.position.description'])
             ->add('price', NumberType::class, [

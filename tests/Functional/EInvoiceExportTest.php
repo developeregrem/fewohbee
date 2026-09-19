@@ -11,6 +11,7 @@ use App\Entity\InvoiceSettingsData;
 use App\Service\AppSettingsService;
 use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\Validation\EInvoiceValidationException;
+use App\Service\InvoiceService;
 use horstoeko\zugferd\ZugferdDocumentPdfMerger;
 use horstoeko\zugferd\ZugferdDocumentPdfReader;
 use horstoeko\zugferd\ZugferdDocumentReader;
@@ -439,6 +440,47 @@ final class EInvoiceExportTest extends KernelTestCase
         $grandTotal = (float) $xpath->evaluate('string(//ram:GrandTotalAmount)');
         self::assertEqualsWithDelta($taxBasisTotal + $taxTotal, $grandTotal, 0.001, 'GrandTotalAmount must equal TaxBasisTotalAmount + TaxTotalAmount');
         self::assertEqualsWithDelta($taxTotalComputed, $taxTotal, 0.001, 'TaxTotalAmount must equal sum of all CalculatedAmounts');
+    }
+
+    public function testFlatPricePositionIsBilledOnceAndMatchesInvoiceTotal(): void
+    {
+        $settings = $this->createSettingsEntity('xrechnung');
+        $invoice = $this->createValidInvoice(PaymentMeansCode::CASH);
+
+        // "flat price" ticked, but the number of nights entered as quantity by mistake
+        $flat = new InvoicePosition();
+        $flat->setDescription('Getränkepauschale');
+        $flat->setAmount(7);
+        $flat->setPrice('20.00');
+        $flat->setVat(19);
+        $flat->setIncludesVat(false);
+        $flat->setIsFlatPrice(true);
+        $invoice->addPosition($flat);
+
+        $xml = $this->getExportService()->generateInvoiceData($invoice, $settings);
+
+        $doc = new \DOMDocument();
+        $doc->loadXML($xml);
+        $xpath = new \DOMXPath($doc);
+        $xpath->registerNamespace('ram', 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100');
+
+        $quantities = [];
+        foreach ($xpath->query('//ram:IncludedSupplyChainTradeLineItem') as $item) {
+            $name = $xpath->evaluate('string(.//ram:SpecifiedTradeProduct/ram:Name)', $item);
+            $quantities[$name] = (float) $xpath->evaluate('string(.//ram:BilledQuantity)', $item);
+        }
+        self::assertSame(1.0, $quantities['Getränkepauschale']);
+
+        // the e-invoice must carry the same total as the invoice itself (PDF, payment QR code, bank matching)
+        $vats = [];
+        $brutto = $netto = $apartmentTotal = $miscTotal = 0.0;
+        self::getContainer()->get(InvoiceService::class)
+            ->calculateSums($invoice->getAppartments(), $invoice->getPositions(), $vats, $brutto, $netto, $apartmentTotal, $miscTotal);
+        $grandTotal = (float) $xpath->evaluate('string(//ram:GrandTotalAmount)');
+
+        // 100.00 + 19 % and 20.00 + 19 % = 142.80
+        self::assertEqualsWithDelta(142.8, $brutto, 0.001);
+        self::assertEqualsWithDelta($brutto, $grandTotal, 0.001);
     }
 
     // Creates a valid invoice with required base fields populated.
