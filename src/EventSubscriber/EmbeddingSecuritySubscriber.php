@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;

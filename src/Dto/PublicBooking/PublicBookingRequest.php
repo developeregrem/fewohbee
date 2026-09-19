@@ -7,7 +7,7 @@ namespace App\Dto\PublicBooking;
 /**
  * Everything one public booking POST carries, already parsed and validated.
  *
- * Built by {@see \App\Service\PublicBookingRequestMapper}. Its existence is the
+ * Built by {@see \App\Service\OnlineBooking\PublicBookingRequestMapper}. Its existence is the
  * signal that the search input was sound: dates, occupancy and room count are
  * guaranteed to be present, so consumers no longer re-check them.
  */

@@ -81,7 +81,9 @@ final class WorkflowEngineTest extends TestCase
         $action = $this->createMock(WorkflowActionInterface::class);
         $action->expects(self::once())
             ->method('execute')
-            ->with([], $entity, [])
+            // The engine adds the trigger type so actions that serve every
+            // trigger can word their output for the event that fired.
+            ->with([], $entity, ['triggerType' => 'reservation.created'])
             ->willReturn('Email sent');
 
         $logService = $this->createMock(WorkflowLogService::class);

@@ -33,6 +33,10 @@ final class EntityChangeLogListener
     private const SENSITIVE_FIELD_NEEDLES = [
         'password', 'salt', 'token', 'secret', 'apikey', 'privatekey',
         'iban', 'vatid', 'card', 'cvv', 'idnumber',
+        // The identity provider's "sub" is a stable pseudonymous identifier for
+        // a person. Redacting the value keeps the linking event itself in the
+        // audit trail - the field name still shows that the binding changed.
+        'oidcsubject',
     ];
 
     /** LastActionSubscriber writes this on every request; filter defensively. */

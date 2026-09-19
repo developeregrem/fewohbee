@@ -1,0 +1,24 @@
+notification:
+  title: "Benachrichtigungen"
+  empty: "Alles erledigt — nichts Offenes."
+  reservation_conflict:
+    title: "%count% Importe prüfen"
+    body_conflicts: "Überschneidende Buchungen aus einem Kalender-Import."
+    body_reviews: "Importierte Buchungen ohne zugeordneten Gast."
+  calendar_reminder:
+    title: "%count% Kalender-Erinnerungen"
+    body: "Termine für heute, die noch bestätigt werden müssen."
+  release_note:
+    title: "Neu in FewohBee %version%"
+    body: "Sieh dir an, was sich geändert hat."
+  stored:
+    reservation: "Neue Buchung von %name% — Zimmer %room% ab %from%"
+    reservation_multi: "Neue Buchung von %name% — %count% Zimmer ab %from%"
+    reservation_generic: "Reservierung %name% — Zimmer %room% ab %from%"
+    reservation_anonymous: "Neue Buchung — Zimmer %room% ab %from%"
+    reservation_multi_anonymous: "Neue Buchung - %count% Zimmer ab %from%"
+    reservation_generic_anonymous: "Reservierung - Zimmer %room% ab %from%"
+    calendar_import: "Übernommene Buchung von %source% — Zimmer %room% ab %from%"
+    invoice: "Rechnung %number%"
+  mark_all_read: "Alle als gelesen markieren"
+  mark_read: "Als gelesen markieren"

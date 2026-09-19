@@ -8,14 +8,15 @@ use App\Entity\Calendar;
 use App\Form\CalendarType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
-use App\Service\CalendarEntrySyncService;
-use App\Service\Exception\CalendarSyncException;
+use App\Service\Calendar\Sync\CalendarEntrySyncService;
+use App\Exception\CalendarSyncException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -24,6 +25,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Generalizes what used to be the "Abfallkalender" card in AppSettings.
  */
 #[Route('/settings/calendars')]
+#[IsGranted('ROLE_ADMIN')]
 class CalendarController extends AbstractController
 {
     #[Route('', name: 'settings.calendars.index', methods: ['GET'])]
@@ -112,7 +114,7 @@ class CalendarController extends AbstractController
             } catch (CalendarSyncException $e) {
                 $syncFailed = true;
                 $this->addFlash('danger', $translator->trans('calendar.flash.sync_failed', [
-                    '%message%' => $e->getMessage(),
+                    '%message%' => $translator->trans($e->translationKey, $e->translationParameters),
                 ]));
             }
 

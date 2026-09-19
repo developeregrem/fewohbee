@@ -20,6 +20,8 @@ class InvoiceMiscPositionType extends AbstractType
         $builder
             ->add('amount', IntegerType::class, [
                 'label' => 'invoice.miscellaneous.position.amount',
+                // Only shown while "flat price" is ticked — the template and invoices_controller.js toggle it.
+                'help' => 'invoice.miscellaneous.position.amount.flat_help',
             ])
             ->add('description', TextType::class, ['label' => 'invoice.appartment.position.description'])
             ->add('price', NumberType::class, [
@@ -44,6 +46,15 @@ class InvoiceMiscPositionType extends AbstractType
                 'label' => 'price.perroom',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
+            ])
+            // A position typed in here has no price to inherit the answer from, and
+            // what the house sells on site is exactly what tends to be added by
+            // hand. Through markBrokered(), so commission follows the answer.
+            ->add('brokered', CheckboxType::class, [
+                'label' => 'price.brokered',
+                'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
+                'required' => false,
+                'setter' => static fn (InvoicePosition $position, ?bool $brokered) => $position->markBrokered((bool) $brokered),
             ])
         ;
     }

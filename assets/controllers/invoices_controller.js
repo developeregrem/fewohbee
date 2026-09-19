@@ -8,6 +8,8 @@ import {
     getLocalStorageItem,
     updatePDFExportLinks,
     enableDeletePopover,
+    enableTooltips,
+    disposeTooltips,
     setModalTitle
 } from '../js/utils.js';
 
@@ -23,6 +25,10 @@ const debounce = (fn, delay = 300) => {
 
 export default class extends Controller {
     connect() {
+        // Every form loaded into the modal connects anew, while the bootstrapping
+        // below runs once per page - so tooltips are set up before that guard.
+        this.initTooltips();
+
         this.modalContent = document.getElementById('modal-content-ajax');
         const invoicesBootstrapped = this.modalContent.hasAttribute('data-invoices-bootstrapped');
         if (invoicesBootstrapped) {
@@ -38,6 +44,14 @@ export default class extends Controller {
         if (templateId) {
             updatePDFExportLinks(templateId);
         }
+    }
+
+    async initTooltips() {
+        await enableTooltips(this.element);
+    }
+
+    disconnect() {
+        disposeTooltips(this.element);
     }
 
     // Actions
@@ -249,11 +263,17 @@ export default class extends Controller {
         if (includesVat) includesVat.checked = values[3] === '1';
         if (isFlatPrice) isFlatPrice.checked = values[4] === '1';
         if (isPerRoom) isPerRoom.checked = values[5] === '1';
+        // Carried over from the price like the switches above; a package passes
+        // its answer on to the components it is broken into.
+        const brokered = document.getElementById('invoice_misc_position_brokered');
+        if (brokered && selected) brokered.checked = selected.dataset.brokered !== '0';
         if (isFlatPrice && !isPackage) {
             this.applyFlatPriceState(isFlatPrice, isPerRoom);
         }
+        // flat prices (packages included) lock the quantity to 1, any other price leaves it to the user
         const amount = document.getElementById('invoice_misc_position_amount');
-        if (amount) amount.value = values[4] || '';
+        if (amount && !isFlatPrice?.checked) amount.value = '';
+        this.applyFlatPriceAmountState(isFlatPrice);
         return false;
     }
 
@@ -278,6 +298,7 @@ export default class extends Controller {
 
     flatPriceTogglePerRoomAction(event) {
         const flatPriceCheckbox = event.currentTarget;
+        this.applyFlatPriceAmountState(flatPriceCheckbox);
         const perRoomSelector = flatPriceCheckbox.dataset.perRoomSelector;
         if (!perRoomSelector) return;
         const perRoomCheckbox = document.querySelector(perRoomSelector);
@@ -314,6 +335,21 @@ export default class extends Controller {
         }
     }
 
+    // A flat price is billed exactly once, so its quantity is fixed to 1 and a hint below the field says so.
+    applyFlatPriceAmountState(flatPriceCheckbox) {
+        const amountSelector = flatPriceCheckbox?.dataset.amountSelector;
+        if (!amountSelector) return;
+        const amount = document.querySelector(amountSelector);
+        if (!amount) return;
+
+        if (flatPriceCheckbox.checked) {
+            amount.value = '1';
+        }
+        amount.readOnly = flatPriceCheckbox.checked;
+        const help = document.getElementById(`${amount.id}_help`);
+        if (help) help.classList.toggle('d-none', !flatPriceCheckbox.checked);
+    }
+
     syncFlatPricePerRoomStates() {
         const pairs = [
             ['#invoice_apartment_position_isFlatPrice', '#invoice_apartment_position_isPerRoom'],
@@ -323,6 +359,7 @@ export default class extends Controller {
             const flat = document.querySelector(flatSelector);
             const perRoom = document.querySelector(perRoomSelector);
             this.applyFlatPriceState(flat, perRoom);
+            this.applyFlatPriceAmountState(flat);
         });
     }
 

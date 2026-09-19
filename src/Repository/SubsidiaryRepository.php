@@ -70,6 +70,20 @@ class SubsidiaryRepository extends ServiceEntityRepository
     }
 
     /**
+     * All branches in the order the API and the overview present them.
+     *
+     * @return list<Subsidiary>
+     */
+    public function findAllOrdered(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->orderBy('s.name', 'ASC')
+            ->addOrderBy('s.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Branches that define their own number range, keyed by nothing in particular —
      * used by the bank import settings screen to label each pattern with its branch.
      *

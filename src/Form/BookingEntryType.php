@@ -11,6 +11,7 @@ use App\Repository\AccountingAccountRepository;
 use App\Repository\TaxRateRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -96,6 +97,14 @@ class BookingEntryType extends AbstractType
                 'label' => 'accounting.journal.entry.invoice',
                 'required' => false,
                 'attr' => ['maxlength' => 50],
+            ])
+            // Entries whose reference is not missing but simply does not exist -
+            // a cash deposit, a private withdrawal - are the ordinary case, so
+            // this stays off unless somebody says the entry is waiting for one.
+            ->add('requiresDocumentNumber', CheckboxType::class, [
+                'label' => 'accounting.journal.entry.requires_document',
+                'help' => 'accounting.journal.entry.requires_document_help',
+                'required' => false,
             ])
             ->add('remark', TextType::class, [
                 'label' => 'accounting.journal.entry.remark',

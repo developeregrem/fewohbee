@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\Entity\CalendarEntry;
-use App\Service\CalendarEntryTimeFormatter;
+use App\Service\Calendar\Entry\CalendarEntryTimeFormatter;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 

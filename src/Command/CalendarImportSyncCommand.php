@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\CalendarSyncImport;
-use App\Service\CalendarImportService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\CalendarSyncImportRepository;
+use App\Service\Calendar\Sync\ReservationCalendarImportService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,8 +22,8 @@ class CalendarImportSyncCommand extends Command
 {
     /** Provide dependencies for calendar import synchronization. */
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly CalendarImportService $calendarImportService
+        private readonly CalendarSyncImportRepository $importRepository,
+        private readonly ReservationCalendarImportService $calendarImportService
     ) {
         parent::__construct();
     }
@@ -44,7 +44,7 @@ class CalendarImportSyncCommand extends Command
         $force = (bool) $input->getOption('force');
 
         if (null !== $importId) {
-            $import = $this->em->getRepository(CalendarSyncImport::class)->find($importId);
+            $import = $this->importRepository->find($importId);
             if (!$import instanceof CalendarSyncImport) {
                 $io->error('Import configuration not found.');
 

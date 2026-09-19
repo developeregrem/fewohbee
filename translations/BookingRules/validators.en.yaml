@@ -1,0 +1,4 @@
+booking_rules.validation.categories: "Select at least one category or all categories."
+booking_rules.validation.weekdays: "Select at least one day."
+booking_rules.validation.period: "Enter a valid period. The last day must not precede the first day."
+booking_rules.validation.min_nights: "Enter a minimum stay between 1 and 365 nights."

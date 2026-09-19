@@ -11,6 +11,8 @@ use App\Entity\Reservation;
 use App\Entity\RoomCategory;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -204,6 +206,47 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         self::assertSame(4, $positions[0]->getAmount());
     }
 
+    public function testAMiscPositionInheritsWhetherAPortalBrokersIt(): void
+    {
+        // Answered once per service on the price, and recorded on the position
+        // it produces: a price changed next season must not rewrite what a
+        // portal charged on an invoice already written.
+        $price = $this->createMiscPrice(1004, false);
+        $price->setBrokered(false);
+
+        $positions = $this->prefill($price, $this->createReservation(2004, 2, '2026-03-25', '2026-03-25'));
+
+        self::assertFalse($positions[0]->isBrokered());
+        // Nothing but a separately billed tourist tax is brokered without being
+        // commissionable, so the two follow each other here.
+        self::assertFalse($positions[0]->isCommissionable());
+    }
+
+    public function testAMiscPositionCountsTowardsThePortalsFeesByDefault(): void
+    {
+        $positions = $this->prefill(
+            $this->createMiscPrice(1005, false),
+            $this->createReservation(2005, 2, '2026-03-25', '2026-03-25')
+        );
+
+        self::assertTrue($positions[0]->isBrokered());
+        self::assertTrue($positions[0]->isCommissionable());
+    }
+
+    /** @return \Doctrine\Common\Collections\Collection<int, \App\Entity\InvoicePosition> */
+    private function prefill(Price $price, Reservation $reservation): \Doctrine\Common\Collections\Collection
+    {
+        $requestStack = $this->createRequestStack();
+
+        $priceService = $this->createStub(PriceService::class);
+        $priceService->method('getPricesForReservationDays')
+            ->willReturn([0 => null, 1 => [$price]]);
+
+        $this->createService($priceService)->prefillMiscPositionsWithReservations([$reservation], $requestStack);
+
+        return $requestStack->getSession()->get('invoicePositionsMiscellaneous');
+    }
+
     // ─── InvoiceAppartment::getAmount (entity-level) ───────────────────
 
     public function testInvoiceAppartmentAmountOvernightPerPerson(): void
@@ -279,7 +322,7 @@ final class InvoiceServiceBuildPositionsTest extends TestCase
         $appSettingsService = $this->createStub(AppSettingsService::class);
         $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        return new InvoiceService($em, $priceService, $translator, $appSettingsService);
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService, new InvoiceSumCalculator(), new OriginFeeCalculator(new InvoiceSumCalculator()));
     }
 
     private function createRequestStack(): RequestStack

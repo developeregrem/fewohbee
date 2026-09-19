@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Dto\OriginFee;
 use App\Dto\TouristTaxBreakdown;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\TaxCalculationMode;
@@ -51,6 +52,8 @@ class InvoiceService
         private readonly PriceService $ps,
         private readonly TranslatorInterface $translator,
         private readonly AppSettingsService $appSettingsService,
+        private readonly InvoiceSumCalculator $sums,
+        private readonly OriginFeeCalculator $originFees,
         private readonly ?TouristTaxService $touristTaxService = null,
         private readonly ?InvoiceNumberGenerator $numberGenerator = null,
         // Optional like the two above, so the unit tests that build this service by
@@ -62,65 +65,20 @@ class InvoiceService
     /**
      * Calculates the sums and vats for an invoice.
      *
-     * @param array $apps            The invoice positions for apartment prices
-     * @param array $poss            The invoice positions for miscellaneous prices
-     * @param array $vats            Returns array of all vat values
-     * @param float $brutto          Returns the total price including vat
-     * @param float $netto           Returns the toal price for all vats
-     * @param float $appartmentTotal Returns the total sum for all apartment prices
-     * @param float $miscTotal       Returns the total price for all miscellaneous prices
+     * The arithmetic itself lives in InvoiceSumCalculator; this stays as the
+     * way every existing caller reaches it.
+     *
+     * @param Collection $apps            The invoice positions for apartment prices
+     * @param Collection $poss            The invoice positions for miscellaneous prices
+     * @param array      $vats            Returns array of all vat values
+     * @param float      $brutto          Returns the total price including vat
+     * @param float      $netto           Returns the toal price for all vats
+     * @param float      $appartmentTotal Returns the total sum for all apartment prices
+     * @param float      $miscTotal       Returns the total price for all miscellaneous prices
      */
     public function calculateSums(Collection $apps, Collection $poss, array &$vats, float &$brutto, float &$netto, float &$appartmentTotal, float &$miscTotal): void
     {
-        $vats = [];
-        $brutto = 0.0;
-        $netto = 0.0;
-        $appartmentTotal = 0.0;
-        $miscTotal = 0.0;
-
-        /* @var $apartment InvoiceAppartment */
-        // $apps = $invoice->getAppartments();
-        // $poss = $invoice->getPositions();
-        foreach ($apps as $apartment) {
-            $apartmentPrice = ($apartment->getIsFlatPrice() ? $apartment->getPrice() : $apartment->getAmount() * $apartment->getPrice());
-
-            if ($apartment->getIncludesVat()) { // price includes vat
-                $vatAmount = (($apartmentPrice * $apartment->getVat()) / (100 + $apartment->getVat()));
-                $bruttoAmount = $apartmentPrice;
-            } else { // price does not include vat
-                $vatAmount = (($apartmentPrice * $apartment->getVat()) / 100);
-                $bruttoAmount = $apartmentPrice + $vatAmount;
-            }
-
-            $vats[$apartment->getVat()]['brutto'] = ($vats[$apartment->getVat()]['brutto'] ?? 0) + $bruttoAmount;
-            $vats[$apartment->getVat()]['netto'] = ($vats[$apartment->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$apartment->getVat()]['netSum'] = ($vats[$apartment->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
-            $appartmentTotal += $apartmentPrice;
-        }
-
-        foreach ($poss as $pos) {
-            $miscPrice = ($pos->getIsFlatPrice() ? $pos->getPrice() : $pos->getAmount() * $pos->getPrice());
-
-            if ($pos->getIncludesVat()) { // price includes vat
-                $vatAmount = (($miscPrice * $pos->getVat()) / (100 + $pos->getVat()));
-                $bruttoAmount = $miscPrice;
-            } else { // price does not include vat
-                $vatAmount = (($miscPrice * $pos->getVat()) / 100);
-                $bruttoAmount = $miscPrice + $vatAmount;
-            }
-
-            $vats[$pos->getVat()]['brutto'] = ($vats[$pos->getVat()]['brutto'] ?? 0) + $bruttoAmount;
-            $vats[$pos->getVat()]['netto'] = ($vats[$pos->getVat()]['netto'] ?? 0) + $vatAmount;
-            $vats[$pos->getVat()]['netSum'] = ($vats[$pos->getVat()]['netSum'] ?? 0) + $bruttoAmount - $vatAmount;
-            $miscTotal += $miscPrice;
-        }
-
-        foreach ($vats as $key => $vat) {
-            $brutto += round($vat['brutto'], 2);
-            $netto += round($vat['netto'], 2);
-            $vats[$key]['nettoFormated'] = number_format(round($vat['netto'], 2), 2, ',', '.');
-        }
-        ksort($vats);
+        $this->sums->calculate($apps, $poss, $vats, $brutto, $netto, $appartmentTotal, $miscTotal);
     }
 
     /**
@@ -238,6 +196,8 @@ class InvoiceService
         $periods = $this->getUniqueReservationPeriods($invoice);
         $appartmentNumbers = $this->getUniqueAppartmentsNumber($invoice);
 
+        $originFees = $this->originFees->calculate($invoice);
+
         $params = [
             'invoice' => $invoice,
             'vats' => $vatSums,
@@ -252,6 +212,28 @@ class InvoiceService
             // Issuer data follows the invoice's branch, so a two-company setup prints
             // each invoice's own payment period. Null when none is configured.
             'paymentDueDate' => $this->readinessService?->resolveSettingsFor($invoice)?->dueDateFor($invoice->getDate()),
+            // The portal's commission and payment fee for a booking through the
+            // reservation's origin, worked out by OriginFeeCalculator - the same
+            // one the deduction is booked from, so the guest is shown what the
+            // journal records. Amounts are zero (not null) when no origin
+            // applies, and originName is null then. A total, if wanted, is
+            // originCommission + originPaymentFee - left to the template rather
+            // than provided.
+            //
+            // Null where the invoice does not yield one figure: reservations
+            // taken at different rates, or stays settled partly through the
+            // portal and partly with the house. The journal refuses such an
+            // invoice too (see CreatePercentageEntryAction), and the two must
+            // not disagree - printing the first reservation's rate across the
+            // whole invoice would state a figure nobody can stand behind. The
+            // portal is still named, so a template can say what it cannot say -
+            // which is also why a template printing an amount has to guard on
+            // the amount itself, not on originName.
+            'originName' => $originFees->originName,
+            'originCommission' => $this->settledAmount($originFees->commission),
+            'originCommissionFormated' => $this->settledAmountFormatted($originFees->commission),
+            'originPaymentFee' => $this->settledAmount($originFees->paymentFee),
+            'originPaymentFeeFormated' => $this->settledAmountFormatted($originFees->paymentFee),
         ];
 
         return $params;
@@ -626,7 +608,58 @@ class InvoiceService
             }
         }
 
-        return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row), array_values($aggregates));
+        $brokered = $this->touristTaxIsCollectedByPortal($reservations);
+
+        return array_map(fn (TouristTaxBreakdown $row): InvoicePosition => $this->makeTouristTaxPosition($row, $brokered), array_values($aggregates));
+    }
+
+    /** The fee's amount, or null where the invoice does not state one. */
+    private function settledAmount(OriginFee $fee): ?float
+    {
+        return $fee->isSettled() ? $fee->amount : null;
+    }
+
+    /** The same figure ready to print; an empty string where there is none. */
+    private function settledAmountFormatted(OriginFee $fee): string
+    {
+        return $fee->isSettled() ? number_format($fee->amount, 2, ',', '.') : '';
+    }
+
+    /**
+     * Whether the portal collects the tourist tax for these reservations, which
+     * decides whether its payment fee is charged on it. Commission is not at
+     * stake here: a separately billed tourist tax carries none either way.
+     *
+     * What the reservation recorded wins over what its origin says today, as
+     * with the rates and the payment: an origin that starts collecting the tax
+     * must not change how bookings taken before were settled. Where nothing was
+     * recorded the origin answers, and a booking without an origin never says
+     * a portal took anything.
+     *
+     * Every reservation has to agree. The positions are aggregated across
+     * reservations and no longer know which one they came from, and a stay
+     * whose tax the house collects must not be swept into a portal's payment
+     * fee by a booking sharing the invoice with it.
+     *
+     * @param array<Reservation|null> $reservations
+     */
+    private function touristTaxIsCollectedByPortal(array $reservations): bool
+    {
+        $reservations = array_filter($reservations, static fn ($r): bool => $r instanceof Reservation);
+        if ([] === $reservations) {
+            return false;
+        }
+
+        foreach ($reservations as $reservation) {
+            $collection = $reservation->getTouristTaxCollection()
+                ?? $reservation->getReservationOrigin()?->getTouristTaxCollection();
+
+            if (null === $collection || !$collection->isPortal()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function touristTaxAggregateKey(TouristTaxBreakdown $row): string
@@ -822,7 +855,7 @@ class InvoiceService
         };
     }
 
-    private function makeTouristTaxPosition(TouristTaxBreakdown $row): InvoicePosition
+    private function makeTouristTaxPosition(TouristTaxBreakdown $row, bool $brokered = false): InvoicePosition
     {
         $position = new InvoicePosition();
         $position->setVat(null !== $row->taxRate ? $row->taxRate->getRateFloat() : 0.0);
@@ -831,6 +864,12 @@ class InvoiceService
         $position->setIsPerRoom(false);
         $position->setRevenueAccount($row->revenueAccount);
         $position->setPositionGroup('tourist_tax');
+        // Billed as a position of its own, which is taken to carry no commission
+        // - an assumption, see InvoicePosition::$commissionable. Whether the
+        // portal processed the money is a separate question, and the one the
+        // caller answers.
+        $position->setCommissionable(false);
+        $position->setBrokered($brokered);
 
         if (TaxCalculationMode::PER_NIGHT_FLAT === $row->calculationMode) {
             $description = $this->translator->trans('invoice.tourist_tax.position', [
@@ -1104,10 +1143,14 @@ class InvoiceService
             $position->setPrice($price->getPrice());
             $position->setVat($price->getVat());
             $position->setIncludesVat($price->getIncludesVat());
-            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsFlatPrice($this->isFlatAggregate($price, (int) $tmpPrice['amount']));
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($price->getRevenueAccount());
             $position->setPositionGroup('misc');
+            // What a portal brokers is decided per service and recorded here, so
+            // a price whose answer changes next season leaves this invoice as it
+            // was.
+            $position->markBrokered($price->isBrokered());
             $positions[] = $position;
         }
 
@@ -1139,14 +1182,27 @@ class InvoiceService
             $position->setPrice(number_format($component['unitPrice'], 2, '.', ''));
             $position->setVat($component['component']->getVat());
             $position->setIncludesVat($component['includesVat']);
-            $position->setIsFlatPrice($price->getIsFlatPrice());
+            $position->setIsFlatPrice($this->isFlatAggregate($price, (int) $tmpPrice['amount']));
             $position->setIsPerRoom($price->getIsPerRoom());
             $position->setRevenueAccount($component['component']->getRevenueAccount() ?? $price->getRevenueAccount());
             $position->setPositionGroup('misc');
+            // The package is what was booked, so its answer covers the components
+            // it is broken into.
+            $position->markBrokered($price->isBrokered());
             $positions[] = $position;
         }
 
         return $positions;
+    }
+
+    /**
+     * Whether an aggregated price stays a flat-price position. A flat price is counted once per
+     * reservation, so an invoice covering several reservations carries one unit per reservation.
+     * Such a position is billed as a regular quantity — as a flat price it would be charged once.
+     */
+    private function isFlatAggregate(Price $price, int $amount): bool
+    {
+        return $price->getIsFlatPrice() && 1 === $amount;
     }
 
     /**

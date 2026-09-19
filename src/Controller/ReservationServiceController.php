@@ -34,15 +34,16 @@ use App\Form\CalendarEntryType;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
 use App\Service\AvailabilityService;
-use App\Service\CalendarEntryService;
-use App\Service\CalendarImportService;
-use App\Service\CalendarService;
+use App\Service\Calendar\Entry\CalendarEntryService;
+use App\Service\Calendar\Sync\ImportedReservationSynchronizer;
+use App\Service\Calendar\PublicHolidayService;
 use App\Service\CSRFProtectionService;
 use App\Service\CustomerService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
 use App\Service\ReservationObject;
+use App\Service\ReservationPeriodService;
 use App\Service\ReservationService;
 use App\Service\ReservationTableService;
 use App\Service\TemplatesService;
@@ -78,7 +79,7 @@ class ReservationServiceController extends AbstractController
      * Index Action start page.
      */
     #[Route('/', name: 'start', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs, CalendarEntryRepository $calendarEntryRepository)
+    public function indexAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
     {
         $em = $doctrine->getManager();
         $objects = $em->getRepository(Subsidiary::class)->findAll();
@@ -105,7 +106,6 @@ class ReservationServiceController extends AbstractController
         $conflictCount = $em->getRepository(Reservation::class)->countActiveConflicts();
         $reviewCount = $em->getRepository(Reservation::class)->countImportedWithoutBooker();
         $alertCount = $conflictCount + $reviewCount;
-        $calendarReminderCount = $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0;
 
         return $this->render('Reservations/index.html.twig', [
             'objects' => $objects,
@@ -125,7 +125,6 @@ class ReservationServiceController extends AbstractController
             'showFirstSteps' => (0 == $firstApartmentId),
             'conflictCount' => $alertCount,
             'hasConflicts' => $conflictCount > 0,
-            'calendarReminderCount' => $calendarReminderCount,
         ]);
     }
 
@@ -155,20 +154,20 @@ class ReservationServiceController extends AbstractController
      * Gets the reservation overview.
      */
     #[Route('/table', name: 'reservations.get.table', methods: ['GET'])]
-    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
+    public function getTableAction(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, ReservationTableDecorationService $decorationService): Response
     {
         $year = $request->query->get('year', null);
         if (null === $year) {
-            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $calendarEntryRepository, $decorationService);
+            return $this->_handleTableRequest($doctrine, $requestStack, $request, $tableService, $decorationService);
         } else {
-            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request, $calendarEntryRepository);
+            return $this->_handleTableYearlyRequest($doctrine, $requestStack, $request);
         }
     }
 
     /**
      * Displays the regular table overview based on a start date and a period.
      */
-    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, CalendarEntryRepository $calendarEntryRepository, ReservationTableDecorationService $decorationService): Response
+    private function _handleTableRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, ReservationTableService $tableService, ReservationTableDecorationService $decorationService): Response
     {
         $em = $doctrine->getManager();
         $date = $request->query->get('start');
@@ -253,7 +252,6 @@ class ReservationServiceController extends AbstractController
             'selectedSubdivision' => $selectedSubdivision,
             'objectId' => $objectId,
             'showCalendarEntries' => $showCalendarEntries,
-            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
         ]);
     }
 
@@ -262,7 +260,7 @@ class ReservationServiceController extends AbstractController
      *
      * @throws NotFoundHttpException
      */
-    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request, CalendarEntryRepository $calendarEntryRepository): Response
+    private function _handleTableYearlyRequest(ManagerRegistry $doctrine, RequestStack $requestStack, Request $request): Response
     {
         $em = $doctrine->getManager();
         $objectId = $request->query->get('object');
@@ -291,19 +289,16 @@ class ReservationServiceController extends AbstractController
             $requestStack->getSession()->set('reservation-overview-show-canceled', '1' === $showCanceledParam || 'true' === $showCanceledParam);
         }
 
-        $showCalendarEntries = (bool) $requestStack->getSession()->get('reservation-overview-show-calendar-entries', true);
-
         return $this->render('Reservations/reservation_table_year.html.twig', [
             'year' => $year,
             'apartment' => $apartment,
-            'calendarReminderCount' => $showCalendarEntries ? $calendarEntryRepository->countPendingReminders() : 0,
             // "holidayCountry" => $holidayCountry,
             // 'selectedSubdivision' => $selectedSubdivision
         ]);
     }
 
     #[Route('/table/settings', name: 'reservations.table.settings', methods: ['POST'])]
-    public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, CalendarService $cs)
+    public function tableSettingsAction(ManagerRegistry $doctrine, RequestStack $requestStack, PublicHolidayService $cs)
     {
         $em = $doctrine->getManager();
         $request = $requestStack->getCurrentRequest();
@@ -383,22 +378,24 @@ class ReservationServiceController extends AbstractController
      * Gets the available appartments in the reservation process for the given period.
      */
     #[Route('/appartments/available/get', name: 'reservations.get.available.appartments', methods: ['POST'])]
-    public function getAvailableAppartmentsAction(ManagerRegistry $doctrine, ReservationService $rs, Request $request)
-    {
+    public function getAvailableAppartmentsAction(
+        ManagerRegistry $doctrine,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+        Request $request,
+    ): Response {
         $em = $doctrine->getManager();
-        $start = $request->request->get('from');
-        $startDate = new \DateTime($start);        
-        $end = $request->request->get('end');
-        $endDate = new \DateTime($end);
+        $period = $periodService->parse(
+            $request->request->getString('from'),
+            $request->request->getString('end'),
+        );
 
-        // if start is greater than end -> swap
-        if ($startDate > $endDate) {
-            $tmp = $startDate;
-            $startDate = $endDate;
-            $endDate = $tmp;
-        }
-
-        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
+        $apartments = $rs->getAvailableApartments(
+            $period->start,
+            $period->end,
+            null,
+            $request->request->getString('object', 'all'),
+        );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
 
@@ -413,22 +410,24 @@ class ReservationServiceController extends AbstractController
      * Gets the available appartments in the edit process of a reservation for the given period.
      */
     #[Route('/edit/available/get', name: 'reservations.get.edit.available.appartments', methods: ['POST'])]
-    public function getEditAvailableAppartmentsAction(ManagerRegistry $doctrine, Request $request, ReservationService $rs)
-    {
+    public function getEditAvailableAppartmentsAction(
+        ManagerRegistry $doctrine,
+        Request $request,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+    ): Response {
         $em = $doctrine->getManager();
-        $start = $request->request->get('from');
-        $startDate = new \DateTime($start);
-        $end = $request->request->get('end');
-        $endDate = new \DateTime($end);
+        $period = $periodService->parse(
+            $request->request->getString('from'),
+            $request->request->getString('end'),
+        );
 
-        // if start is greater than end -> swap
-        if ($startDate > $endDate) {
-            $tmp = $startDate;
-            $startDate = $endDate;
-            $endDate = $tmp;
-        }
-
-        $apartments = $rs->getAvailableApartments($startDate, $endDate, null, $request->request->get('object'));
+        $apartments = $rs->getAvailableApartments(
+            $period->start,
+            $period->end,
+            null,
+            $request->request->getString('object', 'all'),
+        );
         $reservationStatus = $em->getRepository(ReservationStatus::class)->findAll();
         $guestCategories = $em->getRepository(GuestCategory::class)->findActiveOrdered();
         $guestCountsRaw = $request->request->get('guestCounts', '{}');
@@ -452,20 +451,24 @@ class ReservationServiceController extends AbstractController
      * Adds an Appartment to the selected ones in the reservation process.
      */
     #[Route('/appartments/add/to/reservation', name: 'reservations.add.appartment.to.reservation', methods: ['POST'])]
-    public function addAppartmentToReservationAction(HttpKernelInterface $kernel, RequestStack $requestStack, Request $request)
-    {
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function addAppartmentToReservationAction(
+        HttpKernelInterface $kernel,
+        RequestStack $requestStack,
+        ReservationPeriodService $periodService,
+        Request $request,
+    ): Response {
         $newReservationsInformationArray = $requestStack->getSession()->get('reservationInCreation');
 
         if (null != $request->request->get('appartmentid')) {
-            $from = $request->request->get('from');
-            $end = $request->request->get('end');
-            if ($from > $end) {
-                [$from, $end] = [$end, $from];
-            }
+            $period = $periodService->parse(
+                $request->request->getString('from'),
+                $request->request->getString('end'),
+            );
             $reservationObject = new ReservationObject(
                 $request->request->get('appartmentid'),
-                $from,
-                $end,
+                $period->start->format('Y-m-d'),
+                $period->end->format('Y-m-d'),
                 $request->request->get('status'),
                 (int) $request->request->get('persons', 0)
             );
@@ -489,8 +492,15 @@ class ReservationServiceController extends AbstractController
      * Supports single apartment (appartmentid, from, end) or multiple apartments (apartments[]).
      */
     #[Route('/appartments/selectable/add/to/reservation', name: 'reservations.add.appartment.to.reservation.selectable', methods: ['POST'])]
-    public function addAppartmentToReservationSelectableAction(ManagerRegistry $doctrine, HttpKernelInterface $kernel, RequestStack $requestStack, Request $request, ReservationService $rs)
-    {
+    #[IsGranted('ROLE_RESERVATIONS')]
+    public function addAppartmentToReservationSelectableAction(
+        ManagerRegistry $doctrine,
+        HttpKernelInterface $kernel,
+        RequestStack $requestStack,
+        Request $request,
+        ReservationService $rs,
+        ReservationPeriodService $periodService,
+    ): Response {
         if ('true' == $request->request->get('createNewReservation')) {
             $newReservationsInformationArray = [];
             $requestStack->getSession()->set('reservationInCreation', $newReservationsInformationArray);
@@ -508,10 +518,16 @@ class ReservationServiceController extends AbstractController
         $multiApartments = $request->request->all('apartments');
         if (!empty($multiApartments)) {
             foreach ($multiApartments as $apt) {
+                if (!is_array($apt)) {
+                    $apartmentsToAdd[] = ['id' => null, 'from' => '', 'end' => ''];
+                    continue;
+                }
+
+                $apartmentId = $apt['id'] ?? null;
                 $apartmentsToAdd[] = [
-                    'id' => $apt['id'],
-                    'from' => $apt['from'],
-                    'end' => $apt['end'],
+                    'id' => is_int($apartmentId) || is_string($apartmentId) ? $apartmentId : null,
+                    'from' => is_string($apt['from'] ?? null) ? $apt['from'] : '',
+                    'end' => is_string($apt['end'] ?? null) ? $apt['end'] : '',
                 ];
             }
         } elseif (null != $request->request->get('appartmentid')) {
@@ -524,27 +540,22 @@ class ReservationServiceController extends AbstractController
 
         $hasConflict = false;
         foreach ($apartmentsToAdd as $aptData) {
-            $from = $aptData['from'];
-            $end = $aptData['end'];
-            $fromDate = new \DateTime($from);
-            $endDate = new \DateTime($end);
+            $period = $periodService->parse(
+                is_string($aptData['from'] ?? null) ? $aptData['from'] : '',
+                is_string($aptData['end'] ?? null) ? $aptData['end'] : '',
+            );
 
-            // if start is greater end -> swap
-            if ($fromDate > $endDate) {
-                $tmp = $from;
-                $from = $end;
-                $end = $tmp;
-                $fromDate = new \DateTime($from);
-                $endDate = new \DateTime($end);
+            $room = $em->getRepository(Appartment::class)->find($aptData['id'] ?? null);
+            if (!$room instanceof Appartment || !$room->isActive()) {
+                $hasConflict = true;
+                continue;
             }
-
-            $room = $em->getRepository(Appartment::class)->find($aptData['id']);
-            $isselactable = $rs->isApartmentAvailable($fromDate, $endDate, $room, 0);
+            $isselactable = $rs->isApartmentAvailable($period->start, $period->end, $room, 0);
             if ($isselactable) {
                 $newReservationsInformationArray[] = new ReservationObject(
                     $aptData['id'],
-                    $from,
-                    $end,
+                    $period->start->format('Y-m-d'),
+                    $period->end->format('Y-m-d'),
                     $request->request->get('status', $defaultStatusId),
                     $room->getBedsMax()
                 );
@@ -1637,7 +1648,7 @@ class ReservationServiceController extends AbstractController
 
     #[Route('/conflicts/{id}/resolve', name: 'reservations.conflicts.resolve', methods: ['POST'])]
     /** Try to resolve a conflict by rechecking current overlaps. */
-    public function resolveConflictAction(CalendarImportService $calendarImportService, Reservation $reservation): Response 
+    public function resolveConflictAction(ImportedReservationSynchronizer $calendarImportService, Reservation $reservation): Response
     {
         $success = false;
         if ($reservation->isConflict()) {

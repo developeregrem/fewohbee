@@ -77,6 +77,15 @@ export default class extends Controller {
         }
     }
 
+    // Show or hide a container based on a checkbox, e.g. the portal-fee fields
+    // that only apply once an origin is marked as charging them.
+    toggleFieldsAction(event) {
+        const targetSelector = event.currentTarget.dataset.targetSelector;
+        if (!targetSelector) return;
+        const target = document.querySelector(targetSelector);
+        if (target) target.classList.toggle('d-none', !event.currentTarget.checked);
+    }
+
     submitFormAction(event) {
         event.preventDefault();
         const form = event.target.closest('form');

@@ -15,6 +15,7 @@ namespace App\Service;
 
 use App\Dto\PriceBreakdown;
 use App\Dto\PriceBreakdownLine;
+use App\Dto\PriceCategoryGroup;
 use App\Entity\AccountingAccount;
 use App\Entity\Enum\ModifierType;
 use App\Entity\Enum\PercentageBase;
@@ -40,6 +41,7 @@ class PriceService
 
     public function __construct(
         EntityManagerInterface $em,
+        private readonly ReservationPeriodService $reservationPeriodService,
         private readonly ?GuestCategoryRepository $guestCategoryRepository = null,
         private readonly ?GuestCategoryModifierRepository $modifierRepository = null,
     ) {
@@ -173,6 +175,17 @@ class PriceService
             $price->setIsDefaultActiveInReservationCreation(false);
         }
 
+        // Off means the house sells this on site: a portal neither brokered nor
+        // processed it, so none of its fees are charged on it. On is the ordinary
+        // case and how the switch starts out, so a price saved without touching
+        // it keeps counting towards a portal's fees as it did before.
+        //
+        // Asked for miscellaneous prices only. A night is the thing the portal
+        // brokered - the calculator counts it towards the fees whatever this
+        // says - so the form does not offer the switch there, and a missing
+        // field must not be read as an answer of "no".
+        $price->setBrokered(1 != $price->getType() || null != $request->request->get('brokered-'.$id));
+
         $mandatoryOnline = 1 == $price->getType() && null != $request->request->get('isMandatoryOnline-'.$id);
         $bookableOnline = 1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id);
         // Pflicht impliziert online verfügbar — auch wenn der Switch im UI gesperrt war.
@@ -182,13 +195,7 @@ class PriceService
         $price->setIsBookableOnline($bookableOnline);
         $price->setIsMandatoryOnline($mandatoryOnline);
 
-        // Both price types share one category field. Empty => no category: required for apartment
-        // prices, "applies to all" (backwards compatible) for misc prices.
-        $categoryId = $request->request->get('category-'.$id);
-        $category = (null !== $categoryId && '' !== $categoryId)
-            ? $this->em->getRepository(RoomCategory::class)->find($categoryId)
-            : null;
-        $price->setRoomCategory($category);
+        $this->setRoomCategories($request, $price, $id);
 
         if (2 == $price->getType()) {
             $price->setNumberOfPersons($request->request->get('number-of-persons-'.$id));
@@ -423,11 +430,19 @@ class PriceService
     }
 
     /**
-     * Returns a list of conflicting prices.
+     * Returns the active apartment prices that would compete with the given one for the same night:
+     * same occupancy and minimum stay, at least one shared room category, reservation origin and
+     * weekday, and overlapping periods. Misc prices never conflict — several of them may apply to
+     * the same stay.
      *
+     * @return ArrayCollection<int, Price>
      */
     public function findConflictingPrices(Price $price): ArrayCollection
     {
+        if (2 !== (int) $price->getType()) {
+            return new ArrayCollection();
+        }
+
         $prices = [];
         // find conflicts when no season is given
         if ($price->getAllPeriods()) {
@@ -438,6 +453,48 @@ class PriceService
         }
 
         return new ArrayCollection($prices);
+    }
+
+    /**
+     * Groups prices for the settings overview by their exact set of room categories and splits
+     * each group into apartment and misc prices. Each price appears in exactly one group.
+     *
+     * Groups follow the order in which the categories were created (id): single categories first,
+     * then combinations of several, then prices for every category. Within a group the given
+     * order of the prices is kept.
+     *
+     * @param Price[] $prices
+     *
+     * @return list<PriceCategoryGroup>
+     */
+    public function groupByRoomCategories(array $prices): array
+    {
+        $groups = [];
+        foreach ($prices as $price) {
+            $categories = $price->getRoomCategories()->toArray();
+            usort($categories, static fn (RoomCategory $a, RoomCategory $b): int => $a->getId() <=> $b->getId());
+            $ids = array_map(static fn (RoomCategory $category): int => (int) $category->getId(), $categories);
+
+            $key = implode(',', $ids);
+            $groups[$key] ??= ['categories' => $categories, 'ids' => $ids, 'apartment' => [], 'misc' => []];
+            $groups[$key][2 === (int) $price->getType() ? 'apartment' : 'misc'][] = $price;
+        }
+
+        // Before prices could have several categories the overview was ordered by category id.
+        // Keeping single categories first and in that order leaves the familiar sequence intact;
+        // combinations follow, and "all categories" (no ids) comes last.
+        uasort($groups, static function (array $a, array $b): int {
+            $sizeA = [] === $a['ids'] ? PHP_INT_MAX : count($a['ids']);
+            $sizeB = [] === $b['ids'] ? PHP_INT_MAX : count($b['ids']);
+
+            // Equal sizes compare the id lists element by element.
+            return [$sizeA, $a['ids']] <=> [$sizeB, $b['ids']];
+        });
+
+        return array_values(array_map(
+            static fn (array $group): PriceCategoryGroup => new PriceCategoryGroup($group['categories'], $group['apartment'], $group['misc']),
+            $groups,
+        ));
     }
 
     public function deletePrice(Price $price): bool
@@ -451,10 +508,21 @@ class PriceService
     /**
      * Based on the given reservation, price categories will be returned for each day of stay ordered by priority
      * The result is an array where ech key represents a day of stay. idx 0 startday idx, 1 next day, ...
+     *
+     * @param Collection<int, Price>|null $prices
+     *
+     * @return array<int, list<Price>|null>
+     *
+     * @throws \App\Exception\InvalidReservationPeriodException when the reservation period is unsafe to process
      */
     public function getPricesForReservationDays(Reservation $reservation, int $type, ?Collection $prices = null): array
     {
-        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        // Guard before repository work or the per-night result allocation. A mistyped
+        // year previously allowed this loop to grow until PHP exhausted its memory.
+        $days = $this->reservationPeriodService->validate(
+            $reservation->getStartDate(),
+            $reservation->getEndDate(),
+        )->nights;
         if (1 === $type && null === $prices) {
             $prices = $this->em->getRepository(Price::class)->findMiscPrices($reservation);
         } elseif (null === $prices) {
@@ -513,7 +581,10 @@ class PriceService
     public function getPriceBreakdownForReservation(Reservation $reservation): array
     {
         $pricesPerDay = $this->getPricesForReservationDays($reservation, 2);
-        $days = $this->getDateDiff($reservation->getStartDate(), $reservation->getEndDate());
+        $days = $this->reservationPeriodService->validate(
+            $reservation->getStartDate(),
+            $reservation->getEndDate(),
+        )->nights;
         $guestCounts = $reservation->getGuestCounts();
 
         $categories = [];
@@ -544,7 +615,13 @@ class PriceService
             // occupants always pay the regular per-head rate; modifiers only
             // apply to guests beyond that threshold. Compute, per non-adult
             // occupancy category, how many of its heads must stay at full fare.
-            $fullFarePerCategory = $this->computeFullFareSlots($guestCounts, $categories, $price);
+            // The rule is read from the booked room: a price can serve several
+            // room categories with different thresholds.
+            $fullFarePerCategory = $this->computeFullFareSlots(
+                $guestCounts,
+                $categories,
+                $reservation->getAppartment()?->getRoomCategory(),
+            );
 
             foreach ($guestCounts as $catId => $count) {
                 $count = (int) $count;
@@ -655,14 +732,15 @@ class PriceService
      * the surplus guests. Non-occupancy categories (e.g. infants in a cot) are
      * not part of room occupancy and never consume a slot.
      *
-     * @param array<int|string, int|string> $guestCounts {categoryId: count}
-     * @param array<int, GuestCategory>     $categories  {categoryId: GuestCategory}
+     * @param array<int|string, int|string> $guestCounts  {categoryId: count}
+     * @param array<int, GuestCategory>     $categories   {categoryId: GuestCategory}
+     * @param RoomCategory|null             $roomCategory category of the booked room; null means no rule
      *
      * @return array<int, int> {categoryId: number of heads to keep at full fare}
      */
-    private function computeFullFareSlots(array $guestCounts, array $categories, Price $price): array
+    private function computeFullFareSlots(array $guestCounts, array $categories, ?RoomCategory $roomCategory): array
     {
-        $minFullPayers = $price->getRoomCategory()?->getMinFullPayers() ?? 0;
+        $minFullPayers = $roomCategory?->getMinFullPayers() ?? 0;
         if ($minFullPayers <= 0) {
             return [];
         }
@@ -766,14 +844,6 @@ class PriceService
         return $uniquePrices;
     }
 
-    private function getDateDiff(\DateTime $start, \DateTime $end): int
-    {
-        $interval = date_diff($start, $end);
-
-        // return number of days, minimum 1 for same-day bookings
-        return max(1, (int) $interval->format('%a'));
-    }
-
     private function isDateBetween(\DateTime $cur, \DateTime $start, \DateTime $end)
     {
         if (($cur >= $start) && ($cur <= $end)) {
@@ -853,6 +923,31 @@ class PriceService
         foreach ($allAndRemovableOrigins as $origin) {
             if (!$allAddedOrigins->contains($origin)) {
                 $price->removeReservationOrigin($origin);
+            }
+        }
+    }
+
+    /**
+     * Syncs the posted room categories onto the price. An empty selection is kept empty: for misc
+     * prices it means "every room category", apartment prices are rejected by the controller.
+     */
+    private function setRoomCategories(Request $request, Price $price, int|string $id): void
+    {
+        $categoryIds = array_filter(
+            $request->request->all('category-'.$id),
+            static fn (mixed $value): bool => is_scalar($value) && ctype_digit((string) $value),
+        );
+        $selected = [] === $categoryIds
+            ? []
+            : $this->em->getRepository(RoomCategory::class)->findBy(['id' => array_map('intval', $categoryIds)]);
+
+        foreach ($selected as $category) {
+            $price->addRoomCategory($category);
+        }
+        // Categories deselected in the form are no longer part of the post body.
+        foreach ($price->getRoomCategories()->toArray() as $category) {
+            if (!in_array($category, $selected, true)) {
+                $price->removeRoomCategory($category);
             }
         }
     }

@@ -25,6 +25,74 @@
             <div class="form-text" id="color-help-{{ origin.id }}">{{ 'reservationorigin.color.help'|trans }}</div>
         </div>
     </div>
+    {% set hasSurcharge = origin.commissionPercent is not null or origin.paymentFeePercent is not null %}
+    <div class="row mt-3">
+        <div class="col-sm-8 offset-sm-4">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="surcharge-enabled-{{ origin.id }}"
+                       name="surcharge-enabled-{{ origin.id }}" value="1"{% if hasSurcharge %} checked{% endif %}
+                       data-action="change->settings#toggleFieldsAction"
+                       data-target-selector="#surcharge-fields-{{ origin.id }}">
+                <label class="form-check-label" for="surcharge-enabled-{{ origin.id }}">
+                    {{ 'reservationorigin.guest_surcharge_enabled'|trans }}
+                </label>
+            </div>
+        </div>
+    </div>
+    <div id="surcharge-fields-{{ origin.id }}"{% if not hasSurcharge %} class="d-none"{% endif %}>
+        <div class="row mt-2">
+            <label for="commission-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.commission_percent'|trans }}</label>
+
+            <div class="col-sm-8">
+                <div class="input-group">
+                    <input type="number" step="0.01" min="0" max="100" class="form-control" id="commission-{{ origin.id }}"
+                           name="commission-{{ origin.id }}" value="{{ origin.commissionPercent }}">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <label for="payment-fee-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.payment_fee_percent'|trans }}</label>
+
+            <div class="col-sm-8">
+                <div class="input-group">
+                    <input type="number" step="0.01" min="0" max="100" class="form-control" id="payment-fee-{{ origin.id }}"
+                           name="payment-fee-{{ origin.id }}" value="{{ origin.paymentFeePercent }}">
+                    <span class="input-group-text">%</span>
+                </div>
+            </div>
+        </div>
+        {# Who takes the money decides what the payment fee is charged on - a
+           portal charges it for processing a payment, so an amount it never
+           handled carries none. Asked twice because a portal can collect the
+           stay while the tourist tax is paid on arrival. #}
+        <div class="row mt-2">
+            <label for="payment-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.payment_collection'|trans }}</label>
+
+            <div class="col-sm-8">
+                <select id="payment-collection-{{ origin.id }}" name="payment-collection-{{ origin.id }}" class="form-select">
+                    <option value="property"{% if origin.paymentCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
+                    <option value="portal"{% if origin.paymentCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
+                </select>
+            </div>
+        </div>
+        {# Only asked where a tourist tax exists at all - with none configured
+           there is nothing for a portal to collect, and the answer is the
+           property either way. #}
+        {% if hasTouristTax %}
+            <div class="row mt-2">
+                <label for="tourist-tax-collection-{{ origin.id }}" class="col-sm-4 col-form-label">{{ 'reservationorigin.tourist_tax_collection'|trans }}</label>
+
+                <div class="col-sm-8">
+                    <select id="tourist-tax-collection-{{ origin.id }}" name="tourist-tax-collection-{{ origin.id }}" class="form-select">
+                        <option value="property"{% if origin.touristTaxCollection.value == 'property' %} selected{% endif %}>{{ 'reservationorigin.collection.property'|trans }}</option>
+                        <option value="portal"{% if origin.touristTaxCollection.value == 'portal' %} selected{% endif %}>{{ 'reservationorigin.collection.portal'|trans }}</option>
+                    </select>
+                    <div class="form-text small"><i class="fas fa-info-circle"></i> {{ 'reservationorigin.tourist_tax_collection.hint'|trans }}</div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </fieldset>
 
 <input name="_csrf_token" value="{{ token }}" type="hidden">

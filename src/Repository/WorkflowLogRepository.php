@@ -79,6 +79,31 @@ class WorkflowLogRepository extends ServiceEntityRepository
         return array_fill_keys(array_column($rows, 'entityId'), true);
     }
 
+    /**
+     * Whether a workflow without an entity (e.g. a monthly schedule) already ran
+     * successfully since the given point in time.
+     *
+     * findProcessedEntityIds() cannot answer this: those workflows log no entity,
+     * so there is nothing to deduplicate against. Without this check every 15
+     * minute cron pass of the matching day would execute them again.
+     */
+    public function hasEntitylessSuccessSince(int $workflowId, \DateTimeImmutable $since): bool
+    {
+        $count = $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->where('l.workflow = :workflowId')
+            ->andWhere('l.entityId IS NULL')
+            ->andWhere('l.status = :status')
+            ->andWhere('l.executedAt >= :since')
+            ->setParameter('workflowId', $workflowId)
+            ->setParameter('status', 'success')
+            ->setParameter('since', $since)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
+    }
+
     public function purgeOlderThan(\DateTimeImmutable $before): int
     {
         return $this->createQueryBuilder('l')

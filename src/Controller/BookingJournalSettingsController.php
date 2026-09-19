@@ -295,6 +295,7 @@ class BookingJournalSettingsController extends AbstractController
         EntityManagerInterface $em,
         Request $request,
         BookingEntryRepository $bookingEntryRepo,
+        WorkflowRepository $workflowRepo,
     ): Response {
         if (!$this->isCsrfTokenValid('delete'.$taxRate->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'flash.invalidtoken');
@@ -304,6 +305,17 @@ class BookingJournalSettingsController extends AbstractController
 
         if ($bookingEntryRepo->countByTaxRate($taxRate) > 0) {
             $this->addFlash('warning', 'accounting.taxrates.flash.cannot_delete_in_use');
+
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
+        // A workflow counts as much as a booked entry does: an action whose tax
+        // rate is gone keeps running and books without one, which is a wrong
+        // figure in the journal rather than an error anybody sees. Its own
+        // message, since the way out differs - a workflow can be pointed at
+        // another rate, a booked entry cannot.
+        if ($workflowRepo->countActionTaxRateReferences($taxRate) > 0) {
+            $this->addFlash('warning', 'accounting.taxrates.flash.cannot_delete_in_workflow');
 
             return new Response('', Response::HTTP_NO_CONTENT);
         }
@@ -347,7 +359,7 @@ class BookingJournalSettingsController extends AbstractController
             return true;
         }
 
-        return $workflowRepo->countCreateBookingEntryAccountReferences($account) > 0;
+        return $workflowRepo->countActionAccountReferences($account) > 0;
     }
 
     private function ensureExclusiveOpeningBalanceAccount(

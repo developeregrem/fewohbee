@@ -26,7 +26,7 @@ kann.
 - 🇩🇪 🇬🇧 **Zweisprachig** — vollständig auf Deutsch und Englisch verfügbar
 - 🐳 **Docker-ready** — in wenigen Minuten einsatzbereit
 - 🧾 **E-Rechnung integriert** — EN 16931, XRechnung, ZUGFeRD
-- 🔐 **Moderne Anmeldung** — Passwort, Passkeys (WebAuthn), API-Token mit Scopes
+- 🔐 **Moderne Anmeldung** — Passwort, Passkeys (WebAuthn), Single Sign-On (OIDC), API-Token mit Scopes
 
 Neugierig, wie das aussieht? Auf [fewohbee.app](https://fewohbee.app) gibt es eine Feature-Tour,
 und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles im Detail.
@@ -46,8 +46,8 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 | ⚡ **Automatisierung** | Regelwerk aus Auslösern, Bedingungen und Aktionen — Mails versenden, Status ändern, Buchungen anlegen, ganz ohne Code |
 | ✉️ **Korrespondenz** | Mailversand aus der Anwendung, mit visuellem Vorlagen-Editor und Live-Vorschau |
 | 📅 **Kalender-Sync** | iCal/ICS in beide Richtungen mit Airbnb, Booking.com und anderen |
-| 📊 **Statistiken** | Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
-| ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, lesende REST-API |
+| 📊 **Statistiken** | Beherbergungsstatistik, Belegung und Auslastung, Monats-Snapshots, Kurtaxe-Auswertung |
+| ⚙️ **Verwaltung** | Mehrere Betriebsstätten, feingranulare Rollen, Passkeys, SSO, lesende REST-API |
 
 📖 **[Vollständige Funktionsübersicht im Wiki](https://github.com/developeregrem/fewohbee/wiki#features)**
  · **[Benutzerhandbuch](https://www.fewohbee.app/documentation/documentation.html)**
@@ -58,7 +58,7 @@ und das [Wiki](https://github.com/developeregrem/fewohbee/wiki) erklärt alles i
 
 - **PHP 8.4 oder höher** (das offizielle Docker-Image läuft auf PHP 8.5)
   - Erweiterungen: `intl` (mit vollständigen ICU-Daten), `gd`, `pdo_mysql`, `exif`, `ctype`,
-    `iconv`
+    `iconv`, `zip`
 - Ein Webserver — nginx oder Apache
 - **MySQL 8.0+** oder **MariaDB** — `DB_SERVER_VERSION` in der `.env` passend zum Server setzen
 - [Composer](https://getcomposer.org/download/)
@@ -69,6 +69,8 @@ Optional:
   einzelne Instanz reicht der Dateisystem-Cache.
 - **HTTPS und eine konfigurierte `RELYING_PARTY_ID`** — Voraussetzung für die Anmeldung per
   Passkey (`PASSKEY_ENABLED=true`).
+- **Ein OpenID-Connect-Provider** — nur für Single Sign-On nötig (`OIDC_ENABLED=true`), z. B.
+  Keycloak, Authentik, Authelia, Entra ID oder Google Workspace.
 - **S3-kompatibler Speicher** — alternativ zur lokalen Dateiablage (`STORAGE_ADAPTER`).
 
 Die allgemeine Grundlage beschreiben die

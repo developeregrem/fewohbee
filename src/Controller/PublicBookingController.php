@@ -7,13 +7,13 @@ namespace App\Controller;
 use App\Entity\Enum\PublicBookingTheme;
 use App\Entity\OnlineBookingConfig;
 use App\Exception\PublicBookingException;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\PublicBookingAbuseProtectionService;
-use App\Service\PublicBookingCalendarService;
-use App\Service\PublicBookingRequestMapper;
-use App\Service\PublicBookingService;
-use App\Service\PublicBookingViewModelFactory;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\PublicBookingAbuseProtectionService;
+use App\Service\OnlineBooking\PublicBookingCalendarService;
+use App\Service\OnlineBooking\PublicBookingRequestMapper;
+use App\Service\OnlineBooking\PublicBookingService;
+use App\Service\OnlineBooking\PublicBookingViewModelFactory;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -123,10 +123,13 @@ class PublicBookingController extends AbstractController
      * Per-night availability of a single released room, for the booking calendar.
      *
      * Public on purpose, so it lives under /book where the firewall rule and the
-     * embedding CSP already apply. Everything unusable — calendar switched off, a
-     * room the hotelier did not release, a malformed window — answers 404, so the
-     * endpoint never confirms what exists. Rooms are addressed by UUID; the reply
-     * carries per-night booleans only.
+     * embedding CSP already apply. Inside the navigable window, everything unusable
+     * — calendar switched off, a room the hotelier did not release, a malformed
+     * window — answers 404, so the endpoint never confirms what exists. A request at
+     * or beyond the booking horizon instead returns the same empty successful page
+     * for every valid UUID: this is the regular end of calendar pagination, not a
+     * missing resource. The reply carries per-night booleans and the pagination
+     * state only.
      */
     #[Route('/book/calendar-data', name: 'public.booking.calendar_data', methods: ['GET'])]
     public function calendarData(

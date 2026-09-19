@@ -66,6 +66,51 @@ final class ApiScopeVoterTest extends TestCase
         );
     }
 
+    public function testPriceScopeRequiresReservationReadRole(): void
+    {
+        $context = $this->buildContext([ApiScope::PRICES_READ->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($this->buildSecurityToken(['ROLE_INVOICES']), null, [ApiScopeVoter::PRICES_READ])
+        );
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($this->buildSecurityToken(['ROLE_RESERVATIONS_RO']), null, [ApiScopeVoter::PRICES_READ])
+        );
+    }
+
+    public function testTouristTaxScopeRequiresOperationsRole(): void
+    {
+        $context = $this->buildContext([ApiScope::TOURIST_TAX_READ->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($this->buildSecurityToken(['ROLE_RESERVATIONS_RO']), null, [ApiScopeVoter::TOURIST_TAX_READ])
+        );
+        self::assertSame(
+            VoterInterface::ACCESS_GRANTED,
+            $voter->vote($this->buildSecurityToken(['ROLE_OPERATIONS']), null, [ApiScopeVoter::TOURIST_TAX_READ])
+        );
+    }
+
+    /**
+     * A price token must not open the tourist-tax endpoints: the quote gates its tourist
+     * tax block on this vote, so a false grant would leak amounts the token cannot see.
+     */
+    public function testPriceScopeDoesNotImplyTouristTaxScope(): void
+    {
+        $context = $this->buildContext([ApiScope::PRICES_READ->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(
+            VoterInterface::ACCESS_DENIED,
+            $voter->vote($this->buildSecurityToken(['ROLE_ADMIN']), null, [ApiScopeVoter::TOURIST_TAX_READ])
+        );
+    }
+
     public function testAbstainsForUnknownAttribute(): void
     {
         $voter = $this->buildVoter(new ApiTokenContext());

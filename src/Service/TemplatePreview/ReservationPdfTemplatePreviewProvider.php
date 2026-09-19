@@ -29,6 +29,7 @@ class ReservationPdfTemplatePreviewProvider extends AbstractReservationTemplateP
         $snippets[] = [
             'id' => 'pdf.header',
             'label' => 'templates.preview.snippet.pdf_header',
+            'description' => 'templates.preview.snippet.pdf_header.desc',
             'group' => 'PDF',
             'complexity' => 'simple',
             'content' => '<div class="header">\n  <p>Header</p>\n</div>',
@@ -36,6 +37,7 @@ class ReservationPdfTemplatePreviewProvider extends AbstractReservationTemplateP
         $snippets[] = [
             'id' => 'pdf.footer',
             'label' => 'templates.preview.snippet.pdf_footer',
+            'description' => 'templates.editor.footer.desc',
             'group' => 'PDF',
             'complexity' => 'simple',
             'content' => '<div class="footer">\n  <p>Footer</p>\n</div>',

@@ -88,6 +88,24 @@ class BookingEntryRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * Entries in this batch that were flagged as expecting a document
+     * reference and still have none. Many entries carry no reference at all
+     * and are perfectly complete without one, so the flag - not the empty
+     * field - is what makes an entry count as unfinished here.
+     */
+    public function countMissingDocumentNumber(BookingBatch $batch): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.bookingBatch = :batch')
+            ->andWhere('e.requiresDocumentNumber = true')
+            ->andWhere("e.invoiceNumber IS NULL OR e.invoiceNumber = ''")
+            ->setParameter('batch', $batch)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function countByAccount(AccountingAccount $account): int
     {
         return (int) $this->createQueryBuilder('e')

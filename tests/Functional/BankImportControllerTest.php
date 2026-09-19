@@ -22,6 +22,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Field\FileFormField;
 use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class BankImportControllerTest extends WebTestCase
@@ -355,6 +356,27 @@ final class BankImportControllerTest extends WebTestCase
         self::assertSame('-25.00', $outgoing['amount']);
         self::assertSame('Example Subscription AG', $outgoing['counterpartyName']);
     }
+    public function testInvalidUploadTypeIsShownOnTheFileField(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $bankAccount = $this->createBankAccount("DE00INVALIDUPLOADTEST");
+        $crawler = $client->request("GET", "/journal/bank-import");
+        $form = $crawler->filter("form")->form();
+        $form["bank_statement_upload[bankAccount]"]->select((string) $bankAccount->getId());
+        $form["bank_statement_upload[format]"]->select("iso20022_camt");
+
+        $client->request("POST", "/journal/bank-import/upload", $form->getPhpValues(), [
+            "bank_statement_upload" => [
+                "file" => [new UploadedFile(__FILE__, "invalid.php", "application/x-php", null, true)],
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        self::assertSelectorTextContains(".invalid-feedback", "Bitte eine gültige Datei");
+    }
+
 
     /**
      * @return iterable<string, array{profileType: string, fixtureName: string, expected: array<string, mixed>}>

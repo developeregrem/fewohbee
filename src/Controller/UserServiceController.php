@@ -18,6 +18,7 @@ use App\Form\UserEditType;
 use App\Form\UserType;
 use App\Service\UserService;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -105,6 +106,31 @@ class UserServiceController extends AbstractController
             $status = $us->deleteUser($user);
 
             $this->addFlash('success', 'user.flash.delete.success');
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Remove the identity provider binding from an account so it can be linked
+     * to a different subject on the next single sign-on.
+     *
+     * Needed when staff change (a new person inherits the mailbox), when the
+     * identity provider is rebuilt and issues new subjects, or when a first
+     * link went to the wrong account. The user keeps existing; only the binding
+     * goes away.
+     *
+     * Reuses the shared delete popover, whose CSRF token id is 'delete' ~ id.
+     */
+    #[Route('/{id}/unlink-sso', name: 'users.unlink.sso', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function unlinkSsoAction(Request $request, User $user, ManagerRegistry $doctrine): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), (string) $request->request->get('_token'))) {
+            $user->unlinkOidcIdentity();
+            $doctrine->getManager()->flush();
+
+            $this->addFlash('success', 'user.oidc.flash.unlinked');
         }
 
         return new Response('', Response::HTTP_NO_CONTENT);

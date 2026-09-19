@@ -9,6 +9,7 @@
             {% for price in prices %}
                 <option value="{{ price.vat|number_format(2, ',', '.') }}|{{ price.price|number_format(2, ',', '.') }}|{{ price.description }}|{{ price.includesVat }}|{{ price.isFlatPrice }}|{{ price.isPerRoom }}"
                         data-is-package="{{ price.isPackage ? 1 : 0 }}"
+                        data-brokered="{{ price.brokered ? 1 : 0 }}"
                         data-price-id="{{ price.id }}">{{ price.description }}</option>
             {% endfor %}
         </select>
@@ -18,14 +19,26 @@
 <div id="package-info" class="alert alert-info mt-2 d-none" role="alert">
     <small>{{ 'invoice.misc.package.hint'|trans }}</small>
 </div>
-{{ form_row(form.amount) }}
+{# a flat price is billed once: quantity locked to 1, hint visible (toggled by invoices#flatPriceTogglePerRoomAction) #}
+{{ form_row(form.amount, {
+    'attr': {'readonly': form.isFlatPrice.vars.checked},
+    'help_attr': {'class': form.isFlatPrice.vars.checked ? '' : 'd-none'}
+}) }}
 {{ form_row(form.description) }}                    
 {{ form_row(form.vat) }}
 {{ form_row(form.price) }}
 <div class="row mt-4 ps-5">
     <div class="col-sm">
         {{ form_widget(form.includesVat) }}
-        {{ form_widget(form.isFlatPrice, {'attr': {'data-action': 'change->invoices#flatPriceTogglePerRoomAction', 'data-per-room-selector': '#' ~ form.isPerRoom.vars.id}}) }}
-        {{ form_widget(form.isPerRoom, {'attr': {'disabled': form.isFlatPrice.vars.checked ? 'disabled' : null}}) }}
+        {{ form_widget(form.isFlatPrice, {'attr': {'data-action': 'change->invoices#flatPriceTogglePerRoomAction', 'data-per-room-selector': '#' ~ form.isPerRoom.vars.id, 'data-amount-selector': '#' ~ form.amount.vars.id}}) }}
+        {{ form_widget(form.isPerRoom, {'attr': {'disabled': form.isFlatPrice.vars.checked}}) }}
+    </div>
+</div>
+<div class="row mt-2 ps-5">
+    <div class="col-sm">
+        {{ form_widget(form.brokered) }}
+        <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'price.brokered.hint'|trans }}">
+            <i class="fas fa-circle-question"></i>
+        </span>
     </div>
 </div>

@@ -95,7 +95,9 @@
 
                 {% if availabilityChecked and availability is empty and not errorMessage %}
                     <div class="alert alert-info" style="margin-top:1rem;margin-bottom:0">
-                        {{ 'online_booking.public.no_matching_rooms'|trans }}
+                        {{ (isCalendarMode
+                            ? 'online_booking.public.calendar.stay_not_bookable'
+                            : 'online_booking.public.no_matching_rooms')|trans }}
                     </div>
                 {% endif %}
 

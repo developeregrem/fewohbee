@@ -122,6 +122,10 @@
                 <source>login.webauthn.failure</source>
                 <target>Anmeldung nicht erfolgreich</target>
             </trans-unit>
+            <trans-unit id="login.oidc">
+                <source>login.oidc</source>
+                <target>Mit SSO anmelden</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

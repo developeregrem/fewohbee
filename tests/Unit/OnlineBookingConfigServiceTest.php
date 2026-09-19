@@ -8,7 +8,7 @@ use App\Entity\OnlineBookingConfig;
 use App\Repository\AppartmentRepository;
 use App\Repository\OnlineBookingConfigRepository;
 use App\Repository\SubsidiaryRepository;
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 

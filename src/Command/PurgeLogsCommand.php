@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\LogRepository;
+use App\Repository\NotificationRepository;
 use App\Repository\WorkflowLogRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -15,7 +16,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:purge-logs',
-    description: 'Delete audit and workflow log entries older than a given number of days (run via daily cron).',
+    description: 'Delete audit log, workflow log and notification entries older than a given number of days (run via daily cron).',
     aliases: ['workflow:purge-logs'],
 )]
 class PurgeLogsCommand extends Command
@@ -23,13 +24,14 @@ class PurgeLogsCommand extends Command
     public function __construct(
         private readonly LogRepository $logRepository,
         private readonly WorkflowLogRepository $workflowLogRepository,
+        private readonly NotificationRepository $notificationRepository,
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit and workflow log entries older than this many days.', 90);
+        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit log, workflow log and notification entries older than this many days.', 90);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -51,11 +53,14 @@ class PurgeLogsCommand extends Command
         $before = new \DateTimeImmutable('-'.$days.' days');
         $audit = $this->logRepository->purgeOlderThan($before);
         $workflow = $this->workflowLogRepository->purgeOlderThan($before);
+        // Read state is removed with the notification by the FK cascade.
+        $notifications = $this->notificationRepository->purgeOlderThan($before);
 
         $io->success(sprintf(
-            'Deleted %d audit log and %d workflow log entries older than %d days.',
+            'Deleted %d audit log, %d workflow log and %d notification entries older than %d days.',
             $audit,
             $workflow,
+            $notifications,
             $days,
         ));
 

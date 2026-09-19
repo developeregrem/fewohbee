@@ -32,13 +32,13 @@ use Symfony\Component\Routing\Attribute\Route;
 class PriceServiceController extends AbstractController
 {
     #[Route('/', name: 'prices.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine, PriceService $ps)
     {
         $em = $doctrine->getManager();
         $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', [
-            'prices' => $prices,
+            'priceGroups' => $ps->groupByRoomCategories($prices),
         ]);
     }
 
@@ -111,8 +111,10 @@ class PriceServiceController extends AbstractController
             $price = $ps->getPriceFromForm($request, 'new');
 
             // check for mandatory fields
+            // apartment prices must name at least one room category, misc prices without one apply to all
             if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
-                || 0 == count($price->getReservationOrigins())) {
+                || 0 == count($price->getReservationOrigins())
+                || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -156,8 +158,10 @@ class PriceServiceController extends AbstractController
             $em = $doctrine->getManager();
 
             // check for mandatory fields
+            // apartment prices must name at least one room category, misc prices without one apply to all
             if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
-                || 0 == count($price->getReservationOrigins())) {
+                || 0 == count($price->getReservationOrigins())
+                || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values

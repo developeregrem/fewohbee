@@ -9,11 +9,21 @@ use App\Entity\Enum\PaymentMeansCode;
 use App\Entity\Invoice;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\Template;
+use App\Entity\TemplateType;
+use App\Repository\TemplateRepository;
 use App\Service\DisplayNameResolver;
+use App\Service\EInvoice\EInvoiceExportService;
+use App\Service\EInvoice\EInvoiceReadinessService;
+use App\Service\InvoiceService;
+use App\Service\MailService;
+use App\Service\TemplatesService;
 use App\Service\ReservationService;
 use App\Workflow\Action\ChangeInvoiceStatusAction;
 use App\Workflow\Action\ChangePaymentMeansAction;
 use App\Workflow\Action\ChangeReservationStatusAction;
+use App\Workflow\Action\SendInvoiceEmailAction;
+use App\Workflow\Attachment\WorkflowAttachmentResolver;
 use App\Workflow\WorkflowSkippedException;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -246,5 +256,116 @@ final class WorkflowActionTest extends TestCase
         self::assertCount(1, $schema);
         self::assertSame('statusId', $schema[0]['key']);
         self::assertSame('reservation_status_select', $schema[0]['type']);
+    }
+
+    // -------------------------------------------------------------------------
+    // SendInvoiceEmailAction – invoice PDF template selection
+    // -------------------------------------------------------------------------
+
+    public function testInvoiceEmailUsesTheConfiguredPdfTemplate(): void
+    {
+        $chosen = self::template('Rechnung kompakt', 'TEMPLATE_INVOICE_PDF');
+        $action = $this->createInvoiceEmailAction(
+            findResult: $chosen,
+            defaultTemplate: self::template('Standardrechnung', 'TEMPLATE_INVOICE_PDF'),
+        );
+
+        self::assertSame($chosen, $this->resolvePdfTemplate($action, ['invoicePdfTemplateId' => 42]));
+    }
+
+    public function testInvoiceEmailFallsBackToTheDefaultPdfTemplate(): void
+    {
+        $default = self::template('Standardrechnung', 'TEMPLATE_INVOICE_PDF');
+        $action = $this->createInvoiceEmailAction(
+            findResult: self::template('Rechnung kompakt', 'TEMPLATE_INVOICE_PDF'),
+            defaultTemplate: $default,
+        );
+
+        // Neither an explicit choice nor a leftover 0 from the "–" option picks a template.
+        self::assertSame($default, $this->resolvePdfTemplate($action, []));
+        self::assertSame($default, $this->resolvePdfTemplate($action, ['invoicePdfTemplateId' => 0]));
+    }
+
+    public function testInvoiceEmailSkipsWhenTheConfiguredPdfTemplateHasTheWrongType(): void
+    {
+        $action = $this->createInvoiceEmailAction(
+            findResult: self::template('Rechnungsmail', 'TEMPLATE_INVOICE_EMAIL'),
+            defaultTemplate: self::template('Standardrechnung', 'TEMPLATE_INVOICE_PDF'),
+        );
+
+        $this->expectException(WorkflowSkippedException::class);
+        $this->resolvePdfTemplate($action, ['invoicePdfTemplateId' => 42]);
+    }
+
+    public function testInvoiceEmailSkipsWhenTheConfiguredPdfTemplateIsGone(): void
+    {
+        $action = $this->createInvoiceEmailAction(
+            findResult: null,
+            defaultTemplate: self::template('Standardrechnung', 'TEMPLATE_INVOICE_PDF'),
+        );
+
+        $this->expectException(WorkflowSkippedException::class);
+        $this->resolvePdfTemplate($action, ['invoicePdfTemplateId' => 42]);
+    }
+
+    public function testInvoiceEmailConfigSchemaOffersInvoicePdfTemplates(): void
+    {
+        $action = $this->createInvoiceEmailAction(null, null);
+
+        $field = null;
+        foreach ($action->getConfigSchema() as $candidate) {
+            if ('invoicePdfTemplateId' === ($candidate['key'] ?? '')) {
+                $field = $candidate;
+                break;
+            }
+        }
+
+        self::assertNotNull($field);
+        self::assertSame('template_select', $field['type']);
+        self::assertSame(['TEMPLATE_INVOICE_PDF'], $field['templateTypes']);
+    }
+
+    private static function template(string $name, string $typeName): Template
+    {
+        $type = new TemplateType();
+        $type->setName($typeName);
+
+        $template = new Template();
+        $template->setName($name);
+        $template->setTemplateType($type);
+
+        return $template;
+    }
+
+    /** @param array<string, mixed> $config */
+    private function resolvePdfTemplate(SendInvoiceEmailAction $action, array $config): Template
+    {
+        // The resolution is deliberately private; going through execute() would pull
+        // in PDF rendering, mailing and persistence for a pure lookup decision.
+        return (new \ReflectionMethod($action, 'resolvePdfTemplate'))->invoke($action, $config);
+    }
+
+    private function createInvoiceEmailAction(?Template $findResult, ?Template $defaultTemplate): SendInvoiceEmailAction
+    {
+        $repository = $this->createStub(TemplateRepository::class);
+        $repository->method('find')->willReturn($findResult);
+        $repository->method('loadByTypeName')->willReturn(null !== $defaultTemplate ? [$defaultTemplate] : []);
+
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repository);
+
+        $templatesService = $this->createStub(TemplatesService::class);
+        $templatesService->method('getDefaultTemplate')->willReturn($defaultTemplate);
+
+        return new SendInvoiceEmailAction(
+            $templatesService,
+            $this->createStub(MailService::class),
+            $this->createStub(InvoiceService::class),
+            $this->createStub(EInvoiceReadinessService::class),
+            $this->createStub(EInvoiceExportService::class),
+            $this->createStub(WorkflowAttachmentResolver::class),
+            $em,
+            $this->translator,
+        );
     }
 }

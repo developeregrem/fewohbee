@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\ReservationOrigin;
+use App\Repository\TouristTaxRepository;
 use App\Service\CSRFProtectionService;
 use App\Service\ReservationOriginService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -43,13 +44,14 @@ class ReservationOriginServiceController extends AbstractController
      * Show single entity.
      */
     #[Route('/{id}/get', name: 'reservationorigin.get.origin', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, $id)
+    public function getAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TouristTaxRepository $touristTaxRepo, $id)
     {
         $em = $doctrine->getManager();
         $origin = $em->getRepository(ReservationOrigin::class)->find($id);
 
         return $this->render('ReservationOrigin/reservationorigin_form_edit.html.twig', [
             'origin' => $origin,
+            'hasTouristTax' => [] !== $touristTaxRepo->findAllOrdered(),
             'token' => $csrf->getCSRFTokenForForm(),
         ]);
     }
@@ -58,15 +60,14 @@ class ReservationOriginServiceController extends AbstractController
      * Show form for new entity.
      */
     #[Route('/new', name: 'reservationorigin.new.origin', methods: ['GET'])]
-    public function newAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf)
+    public function newAction(CSRFProtectionService $csrf, TouristTaxRepository $touristTaxRepo)
     {
-        $em = $doctrine->getManager();
-
         $origin = new ReservationOrigin();
         $origin->setId('new');
 
         return $this->render('ReservationOrigin/reservationorigin_form_create.html.twig', [
             'origin' => $origin,
+            'hasTouristTax' => [] !== $touristTaxRepo->findAllOrdered(),
             'token' => $csrf->getCSRFTokenForForm(),
         ]);
     }
@@ -85,6 +86,9 @@ class ReservationOriginServiceController extends AbstractController
             if (0 == strlen($origin->getName())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
+            } elseif (null !== ($surchargeError = $ros->findSurchargeValueError($request, 'new', $origin))) {
+                $error = true;
+                $this->addFlash('warning', $surchargeError);
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($origin);
@@ -117,7 +121,12 @@ class ReservationOriginServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(ReservationOrigin::class);
+                $em->clear();
+            } elseif (null !== ($surchargeError = $ros->findSurchargeValueError($request, $id, $origin))) {
+                $error = true;
+                $this->addFlash('warning', $surchargeError);
+                // stop auto commit of doctrine with invalid field values
+                $em->clear();
             } else {
                 $em->persist($origin);
                 $em->flush();

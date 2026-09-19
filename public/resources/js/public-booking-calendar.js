@@ -313,6 +313,7 @@
                 return response.json();
             })
             .then(function (data) {
+                self.applyCalendarEnd(data);
                 Object.keys(data.nights || {}).forEach(function (night) {
                     self.nights[night] = data.nights[night] === 1;
                 });
@@ -326,9 +327,9 @@
                 }
 
                 self.loading = false;
-                self.render();
+                // Also clamps a stale view when the server reached the horizon.
+                self.goTo(self.viewMonth);
                 self.describeSelection();
-                self.ensureLoaded(); // continue with whatever is still missing
             })
             .catch(function () {
                 // The date inputs remain the source of truth, so a failed load costs
@@ -336,6 +337,39 @@
                 self.loading = false;
                 self.setStatus(self.labels.unavailable || '');
             });
+    };
+
+    /**
+     * Treat the server's pagination boundary as the regular end of the calendar.
+     *
+     * The rendered month count already prevents the usual extra request. This is
+     * still authoritative when settings changed after the page was opened or a
+     * cached page carries an older horizon.
+     */
+    Calendar.prototype.applyCalendarEnd = function (data) {
+        if (data.hasMore !== false || !data.toExclusive) {
+            return;
+        }
+
+        // toExclusive is a departure boundary, so the preceding day identifies the
+        // final month that contains at least one bookable night.
+        var lastBookableMonth = startOfMonth(addDays(fromKey(data.toExclusive), -1));
+        if (lastBookableMonth < this.firstMonth) {
+            lastBookableMonth = this.firstMonth;
+        }
+        if (lastBookableMonth >= this.lastMonth) {
+            return;
+        }
+
+        this.lastMonth = lastBookableMonth;
+        if (this.monthSelect) {
+            var lastKey = monthKey(this.lastMonth);
+            Array.from(this.monthSelect.options).forEach(function (option) {
+                if (option.value > lastKey) {
+                    option.remove();
+                }
+            });
+        }
     };
 
     /**

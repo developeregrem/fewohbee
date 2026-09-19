@@ -8,10 +8,14 @@ use App\Dto\TouristTaxBreakdown;
 use App\Entity\AccountingAccount;
 use App\Entity\AppSettings;
 use App\Entity\Enum\TaxCalculationMode;
+use App\Entity\Enum\PaymentCollection;
 use App\Entity\Reservation;
+use App\Entity\ReservationOrigin;
 use App\Entity\TaxRate;
 use App\Service\AppSettingsService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use App\Service\TouristTaxService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -178,6 +182,76 @@ final class InvoiceServiceTouristTaxTest extends TestCase
         self::assertSame([], $service->buildTouristTaxPositions([$r]));
     }
 
+    // ── what a portal charges on the tax ─────────────────────────────
+
+    public function testTouristTaxIsNeverCommissionable(): void
+    {
+        // Billed as a position of its own, which is the form Booking.com exempts
+        // from commission - regardless of who collects it.
+        $positions = $this->buildFor($this->reservationFrom(PaymentCollection::PORTAL));
+
+        self::assertFalse($positions[0]->isCommissionable());
+    }
+
+    public function testTheTaxCountsAsBrokeredWhereThePortalCollectsIt(): void
+    {
+        // The portal handled the money, so its payment fee is charged on it.
+        $positions = $this->buildFor($this->reservationFrom(PaymentCollection::PORTAL));
+
+        self::assertTrue($positions[0]->isBrokered());
+    }
+
+    public function testTheTaxIsNotBrokeredWhereTheHouseCollectsIt(): void
+    {
+        $positions = $this->buildFor($this->reservationFrom(PaymentCollection::PROPERTY));
+
+        self::assertFalse($positions[0]->isBrokered());
+    }
+
+    public function testTheTaxIsNotBrokeredWithoutAnOrigin(): void
+    {
+        // A direct booking: nobody but the house took anything.
+        $positions = $this->buildFor(new Reservation());
+
+        self::assertFalse($positions[0]->isBrokered());
+    }
+
+    public function testOneStayCollectedByTheHouseSettlesItForTheWholeInvoice(): void
+    {
+        // The positions are aggregated across reservations and no longer know
+        // which one they came from, so a stay whose tax the house collects must
+        // not be swept into a portal's payment fee by the booking beside it.
+        $positions = $this->buildFor(
+            $this->reservationFrom(PaymentCollection::PORTAL),
+            new Reservation(),
+        );
+
+        self::assertFalse($positions[0]->isBrokered());
+    }
+
+    /** @return \App\Entity\InvoicePosition[] */
+    private function buildFor(Reservation ...$reservations): array
+    {
+        $touristTaxService = $this->createStub(TouristTaxService::class);
+        $touristTaxService->method('calculateForReservation')->willReturn(
+            [$this->makeBreakdown(1, 'Kurtaxe', 1, 'Erwachsene', 3.0, 2, 1)]
+        );
+
+        return $this->createService($touristTaxService)->buildTouristTaxPositions($reservations);
+    }
+
+    private function reservationFrom(PaymentCollection $touristTaxCollection): Reservation
+    {
+        $origin = new ReservationOrigin();
+        $origin->setName('Booking.com');
+        $origin->setTouristTaxCollection($touristTaxCollection);
+
+        $reservation = new Reservation();
+        $reservation->setReservationOrigin($origin);
+
+        return $reservation;
+    }
+
     private function createService(?TouristTaxService $touristTaxService, ?TranslatorInterface $translator = null): InvoiceService
     {
         $em = $this->createStub(EntityManagerInterface::class);
@@ -194,7 +268,7 @@ final class InvoiceServiceTouristTaxTest extends TestCase
         $appSettingsService = $this->createStub(AppSettingsService::class);
         $appSettingsService->method('getSettings')->willReturn($appSettings);
 
-        return new InvoiceService($em, $priceService, $translator, $appSettingsService, $touristTaxService);
+        return new InvoiceService($em, $priceService, $translator, $appSettingsService, new InvoiceSumCalculator(), new OriginFeeCalculator(new InvoiceSumCalculator()), $touristTaxService);
     }
 
     private function makeBreakdown(

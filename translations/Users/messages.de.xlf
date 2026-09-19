@@ -102,6 +102,22 @@
                 <source>ROLE_OPERATIONS</source>
                 <target>Betrieb</target>
             </trans-unit>
+            <trans-unit id="user.oidc.badge">
+                <source>user.oidc.badge</source>
+                <target>SSO</target>
+            </trans-unit>
+            <trans-unit id="user.oidc.unlink">
+                <source>user.oidc.unlink</source>
+                <target>SSO-Verknüpfung aufheben</target>
+            </trans-unit>
+            <trans-unit id="user.oidc.unlink_confirm">
+                <source>user.oidc.unlink_confirm</source>
+                <target>Die Verknüpfung zum SSO-Konto wird entfernt. Der Benutzer bleibt bestehen und wird bei der nächsten SSO-Anmeldung neu zugeordnet.</target>
+            </trans-unit>
+            <trans-unit id="user.oidc.flash.unlinked">
+                <source>user.oidc.flash.unlinked</source>
+                <target>Die SSO-Verknüpfung wurde aufgehoben.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

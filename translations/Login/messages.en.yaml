@@ -1,6 +1,7 @@
 login:
   copy: FewohBee
   description: Please login
+  oidc: Sign in with SSO
   password:
     placeholder: Password
   pwforgotten:

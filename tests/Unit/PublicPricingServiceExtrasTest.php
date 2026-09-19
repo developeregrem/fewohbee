@@ -13,9 +13,9 @@ use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\PriceService;
-use App\Service\PublicPricingService;
 use PHPUnit\Framework\TestCase;
 
 final class PublicPricingServiceExtrasTest extends TestCase
@@ -56,7 +56,10 @@ final class PublicPricingServiceExtrasTest extends TestCase
         return $category;
     }
 
-    private function createPrice(int $id, string $description, float $unitPrice, bool $isFlatPrice = false, bool $isPerRoom = false, ?RoomCategory $category = null, bool $mandatory = false): Price
+    /**
+     * @param RoomCategory|list<RoomCategory>|null $categories null or [] = global extra
+     */
+    private function createPrice(int $id, string $description, float $unitPrice, bool $isFlatPrice = false, bool $isPerRoom = false, RoomCategory|array|null $categories = null, bool $mandatory = false): Price
     {
         $price = new Price();
         $price->setId($id);
@@ -66,7 +69,9 @@ final class PublicPricingServiceExtrasTest extends TestCase
         $price->setIsPerRoom($isPerRoom);
         $price->setIsBookableOnline(true);
         $price->setIsMandatoryOnline($mandatory);
-        $price->setRoomCategory($category);
+        foreach (is_array($categories) ? $categories : array_filter([$categories]) as $category) {
+            $price->addRoomCategory($category);
+        }
         $price->setType(1); // misc price
 
         return $price;
@@ -75,7 +80,7 @@ final class PublicPricingServiceExtrasTest extends TestCase
     /**
      * Build the service. The PriceRepository stub mirrors the real category filter:
      * findBookableOnlineExtras returns extras that are global (no category) or whose
-     * category matches the reservation's apartment category.
+     * categories include the reservation's apartment category.
      *
      * @param Price[] $allExtras
      */
@@ -90,9 +95,8 @@ final class PublicPricingServiceExtrasTest extends TestCase
                 $category = $reservation->getAppartment()?->getRoomCategory();
 
                 return array_values(array_filter($allExtras, static function (Price $p) use ($category): bool {
-                    $pc = $p->getRoomCategory();
-
-                    return null === $pc || ($category !== null && $pc->getId() === $category->getId());
+                    return $p->getRoomCategories()->isEmpty()
+                        || (null !== $category && $p->getRoomCategories()->contains($category));
                 }));
             }
         );
@@ -140,7 +144,7 @@ final class PublicPricingServiceExtrasTest extends TestCase
 
         self::assertCount(1, $extras);
         self::assertSame(10, $extras[0]['id']);
-        self::assertNull($extras[0]['categoryId']);
+        self::assertSame([], $extras[0]['categoryIds']);
         self::assertFalse($extras[0]['autoQuantity']);
         self::assertSame('per_person_night', $extras[0]['calculationType']);
         // global per_person uses totalPersons: 14 × 3 × 7 = 294
@@ -158,17 +162,44 @@ final class PublicPricingServiceExtrasTest extends TestCase
 
         self::assertCount(3, $extras);
         // Global first, then category-bound.
-        self::assertNull($extras[0]['categoryId']);
+        self::assertSame([], $extras[0]['categoryIds']);
 
         $byId = [];
         foreach ($extras as $e) {
             $byId[$e['id']] = $e;
         }
-        self::assertSame(1, $byId[20]['categoryId']);
+        self::assertSame([1], $byId[20]['categoryIds']);
         self::assertTrue($byId[20]['autoQuantity']);
         self::assertSame('Einzelzimmer', $byId[20]['categoryName']);
-        self::assertSame(2, $byId[30]['categoryId']);
+        self::assertSame([2], $byId[30]['categoryIds']);
         self::assertSame('Doppelzimmer', $byId[30]['categoryName']);
+    }
+
+    public function testCatalogListsMultiCategoryExtraOnceNamingEveryCategory(): void
+    {
+        $cleaning = $this->createPrice(40, 'Endreinigung', 55.00, true, false, [$this->single, $this->double]);
+        $service = $this->buildService([$cleaning], 7);
+
+        $extras = $service->catalogExtras($this->samplesForBothCategories(), $this->dateFrom, $this->dateTo, 3, 3);
+
+        self::assertCount(1, $extras);
+        self::assertSame([1, 2], $extras[0]['categoryIds']);
+        self::assertSame('Einzelzimmer, Doppelzimmer', $extras[0]['categoryName']);
+        self::assertTrue($extras[0]['autoQuantity']);
+    }
+
+    public function testCatalogNamesSharedCategoryOnlyOnceForSeveralRoomTypes(): void
+    {
+        $cleaning = $this->createPrice(40, 'Endreinigung', 55.00, true, false, [$this->single, $this->double]);
+        $service = $this->buildService([$cleaning], 7);
+
+        $samples = $this->samplesForBothCategories();
+        // A second room type of the same double-room category.
+        $samples[] = ['categoryId' => 2, 'categoryName' => 'Doppelzimmer', 'sampleRoom' => $this->doubleRoom];
+        $extras = $service->catalogExtras($samples, $this->dateFrom, $this->dateTo, 3, 3);
+
+        self::assertSame([1, 2], $extras[0]['categoryIds']);
+        self::assertSame('Einzelzimmer, Doppelzimmer', $extras[0]['categoryName']);
     }
 
     // ───────────────────────── resolveExtras ─────────────────────────
@@ -247,6 +278,51 @@ final class PublicPricingServiceExtrasTest extends TestCase
         self::assertCount(1, $resolved);
         self::assertSame(2, $resolved[0]['quantity']);
         self::assertSame(100.0, $resolved[0]['lineTotal']);
+    }
+
+    public function testResolveMultiCategoryFlatCountsRoomsOfEveryBookedCategory(): void
+    {
+        // One mandatory cleaning price for single and double rooms: 1 single + 2 double = 3 rooms.
+        $cleaning = $this->createPrice(40, 'Endreinigung', 55.00, true, false, [$this->single, $this->double], true);
+        $service = $this->buildService([$cleaning], 7);
+
+        $resolved = $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, []);
+
+        self::assertCount(1, $resolved);
+        self::assertSame([1, 2], $resolved[0]['categoryIds']);
+        self::assertSame('Einzelzimmer, Doppelzimmer', $resolved[0]['categoryName']);
+        self::assertSame(3, $resolved[0]['quantity']);
+        self::assertSame(165.0, $resolved[0]['lineTotal']);
+    }
+
+    public function testResolveMultiCategoryPerPersonCountsPersonsOfEveryBookedCategory(): void
+    {
+        $breakfast = $this->createPrice(40, 'Frühstück', 10.00, false, false, [$this->single, $this->double], true);
+        $service = $this->buildService([$breakfast], 7);
+
+        $resolved = $service->resolveExtras($this->mixedBuckets(), $this->dateFrom, $this->dateTo, 5, 3, []);
+
+        self::assertCount(1, $resolved);
+        // per_person: 10 × (1 + 4 persons) × 7 nights = 350
+        self::assertSame(1, $resolved[0]['quantity']);
+        self::assertSame(350.0, $resolved[0]['lineTotal']);
+    }
+
+    public function testResolveMultiCategoryIgnoresCategoriesThatAreNotBooked(): void
+    {
+        // Bound to single and double, but only double rooms are booked.
+        $cleaning = $this->createPrice(40, 'Endreinigung', 55.00, true, false, [$this->single, $this->double], true);
+        $service = $this->buildService([$cleaning], 7);
+
+        $doubleOnly = [
+            ['categoryId' => 2, 'categoryName' => 'Doppelzimmer', 'sampleRoom' => $this->doubleRoom, 'roomCount' => 2, 'persons' => 4],
+        ];
+        $resolved = $service->resolveExtras($doubleOnly, $this->dateFrom, $this->dateTo, 4, 2, []);
+
+        self::assertCount(1, $resolved);
+        self::assertSame([2], $resolved[0]['categoryIds']);
+        self::assertSame('Doppelzimmer', $resolved[0]['categoryName']);
+        self::assertSame(2, $resolved[0]['quantity']);
     }
 
     public function testResolveGlobalFlatKeepsGuestSelectableQuantity(): void

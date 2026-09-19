@@ -1,598 +1,342 @@
 # AGENTS.md — Working on FewohBee
 
-Instructions for AI coding agents (Claude Code, Codex, Cursor, Aider, …) contributing to this
-repository. Human contributors are welcome to read it too — it is simply the house style, written
-down.
+Project conventions for AI coding agents and human contributors. **Read this file before your
+first change**, then follow the surrounding code. Security, data integrity, translations and the
+frontend toolchain are firm requirements. Architecture and style guidance allow proportionate,
+well-reasoned choices; explain meaningful departures without turning routine work into an approval
+process (§15).
 
-**Read this file completely before your first change.** It describes *how* things are built here,
-not just *what* exists. When in doubt, look at how the surrounding code solves the same problem and
-follow it.
-
-> **Scope note:** This file is intentionally environment-agnostic. It contains no machine-specific
-> paths or container commands, because every contributor runs this project differently (Docker,
-> DDEV, native PHP, …). Keep personal setup notes in an untracked local file
-> (e.g. `AGENTS.local.md` or `CLAUDE.md`) instead of here.
-
----
+Keep machine-specific setup in untracked local notes such as `AGENTS.local.md` or `CLAUDE.md`,
+not here.
 
 ## 1. What this project is
 
-FewohBee is an open-source **property management system (PMS)** for small and medium-sized
-guesthouses, pensions and hotels. It replaces pen-and-paper or spreadsheet room management with
-reservations, guest data, invoicing, correspondence, statistics, cash book and calendar sync.
+FewohBee is an open-source property management system for small and medium-sized guesthouses,
+pensions and hotels: reservations, guest data, invoicing, correspondence, statistics, cash book
+and calendar sync.
 
-**Who uses it:** hoteliers and guesthouse owners — *not* accountants, not developers, not
-enterprise operators. This single fact drives most product decisions:
-
-- Features must be understandable without domain training. Accounting, tax and e-invoicing UIs in
-  particular must be usable by a layperson, with sane defaults and plain-language labels.
-- Anything that can be derived, defaulted or hidden should be. Do not expose internal mechanics in
-  the UI just because they exist in the model.
-- Self-hosted installations are the norm. Assume no ops team, no monitoring, no one to recover a
-  broken migration at 2am.
-
----
+Build for hoteliers, not developers or accountants. Use plain-language labels, sensible defaults
+and existing UI patterns. Derive or hide internal details where possible. Self-hosted operators
+may have no ops team to recover from a failed update.
 
 ## 2. Tech stack
 
 | Area | Choice |
 |---|---|
-| Language | PHP **8.4+** (`declare(strict_types=1);` everywhere) |
-| Framework | **Symfony 8.1** components / FrameworkBundle |
-| Persistence | Doctrine ORM 3.x on MySQL / MariaDB, Doctrine Migrations |
-| Templating | Twig (`templates/`) |
-| Frontend | Symfony **AssetMapper** (`importmap.php`) + **Stimulus** + **Turbo** |
-| PDF | mPDF |
-| E-invoicing | `horstoeko/zugferd` (ZUGFeRD / XRechnung / EN 16931) |
-| Files | Flysystem (local + S3 via `oneup/flysystem-bundle`) |
-| Auth | Symfony Security, WebAuthn (`web-auth/webauthn-lib`), API tokens |
-| Tests | PHPUnit 13 |
-| Static analysis | PHPStan (level 6), Rector |
+| Language / framework | PHP 8.4+, Symfony 8.1 |
+| Persistence | Doctrine ORM 3.x, MySQL / MariaDB, Doctrine Migrations |
+| UI | Twig, AssetMapper, Stimulus, Turbo, Bootstrap 5.3 (Materia) |
+| PDF / e-invoicing | mPDF, `horstoeko/zugferd` |
+| Storage | Flysystem, local + S3 via `oneup/flysystem-bundle` |
+| Auth | Symfony Security, WebAuthn, API tokens |
+| Quality | PHPUnit 13, PHPStan level 6, Rector |
 
-**There is no npm/webpack build.** Frontend dependencies are declared in `importmap.php` and served
-by AssetMapper. Never introduce a Node toolchain, `package.json`, or a bundler.
-
----
+Use `composer.json` and `importmap.php` for dependency details. **Do not introduce npm, a Node
+build toolchain, `package.json`, webpack or another bundler.**
 
 ## 3. Repository layout
 
+```text
+src/Controller/      HTTP entry points
+src/Service/         Business logic, grouped by domain
+src/Repository/      DQL and QueryBuilder queries
+src/Entity/          Doctrine entities; src/GeoEntity/ uses a separate connection (§11)
+src/Dto/             Structured data across boundaries
+src/Form/            Symfony form types
+src/Workflow/        Automation triggers, conditions and actions
+src/Notification/    Notification providers
+src/Event/           Domain events; subscribers/listeners in their matching directories
+src/Security/        Authentication and authorization
+assets/controllers/  Stimulus behaviour; shared JS in assets/js/, CSS in assets/styles/
+templates/           Twig templates, mirroring controllers
+translations/        Grouped by product area, not translation domain (§8)
+migrations/          VersionYYYYMMDDHHMMSS.php
+tests/               Unit/, Functional/, Fixtures/
+config/              Symfony configuration
+docs/openapi.yaml    Public API specification
+bin/run-tests.sh     Test database reset, migrations, sample data and test execution
 ```
-src/
-  Controller/      HTTP entry points — thin, no business logic
-  Entity/          Doctrine entities (the domain model)
-  GeoEntity/       Entities on the separate "geo" connection — see §11
-  Repository/      Doctrine repositories — all DQL/QueryBuilder lives here
-  Service/         Business logic, grouped in subdirectories per domain
-  Dto/             Data transfer objects (API payloads, structured results)
-  Form/            Symfony form types
-  Workflow/        Automation rules engine (Triggers / Conditions / Actions)
-  Event/           Domain events
-  EventSubscriber/ Symfony event subscribers
-  EventListener/   Doctrine + kernel listeners
-  Security/        Authenticators, voters, API token handling
-  Validator/       Custom constraints + validators
-  Twig/            Twig extensions
-  Command/         Console commands
-  Interfaces/      Cross-cutting contracts
-  Exception/       Domain exceptions
-  DataFixtures/    Sample data
-assets/
-  controllers/     Stimulus controllers
-  js/              Shared JS utilities
-  styles/          CSS
-templates/         Twig templates, mirroring the controller structure
-translations/      One directory per translation domain — see §8
-migrations/        Doctrine migrations (VersionYYYYMMDDHHMMSS.php)
-tests/
-  Unit/            No database, no kernel booting where avoidable
-  Functional/      WebTestCase / KernelTestCase — requires a prepared database
-  Fixtures/        Test fixture files
-config/            Symfony configuration
-docs/openapi.yaml  Public API specification
-bin/run-tests.sh   Resets the test database and runs the suite
-```
-
----
 
 ## 4. Running commands
 
-Commands in this document are written **plainly**, e.g.:
+Commands are written plainly; run them natively or through the environment's container/DDEV
+wrapper. Check local notes first. If the execution method is still unclear, ask once and record
+the answer in those untracked notes.
 
 ```bash
-php bin/console doctrine:migrations:migrate
-php bin/console cache:clear
-php bin/console debug:router
 composer install
-```
-
-Execute them the way *your* environment requires — inside your PHP container, via DDEV, or
-natively. If you are an agent and do not know how, **ask once** and record the answer in your local
-(untracked) notes file rather than in this file.
-
-Useful project-specific commands:
-
-```bash
-php bin/console app:first-run                # initial setup wizard (users, accommodation, seed data)
+php bin/console debug:router
+php bin/console app:first-run                 # initial setup
 php bin/console app:first-run --load-sample-data
-php bin/console asset-map:compile            # required for production deploys
-php bin/console doctrine:migrations:diff     # generate a migration from entity changes
+php bin/console doctrine:migrations:diff
+php bin/console doctrine:migrations:migrate
+php bin/console asset-map:compile             # required for production deploys
 ```
 
----
+## 5. Core principles
 
-## 5. Core principles for every change
+- Inspect comparable code before adding a class or pattern. Extend existing behaviour rather
+  than duplicating it. Keep changes focused; propose unrelated large refactors separately.
+- Features should serve multiple operators or be optional. Avoid assumptions tied to one property,
+  country, tax regime or channel. Use `AppSettingsService` or per-`Subsidiary` settings where
+  behaviour varies by installation.
+- Prefer the simplest design that fits the existing architecture. Do not introduce a registry,
+  interface or configuration option for a variation the feature does not actually need.
 
-These are the acceptance criteria for new features. A change that fails any of them is not done.
+Search `src/Service/` before building. Common starting points:
 
-### 5.1 Fit the existing architecture
-
-Build on the structure that is already there. Before writing a new class, find the two or three
-places that solve the closest existing problem and mirror their shape. New top-level concepts,
-parallel abstractions, or a second way of doing something that already has a way are rejected by
-default. If the existing architecture genuinely does not fit, say so explicitly and propose the
-change *before* implementing it.
-
-### 5.2 Reuse — do not reinvent
-
-There are ~60 services in `src/Service/`. Search before you build. Notably:
-
-| Need | Use |
+| Need | Existing implementation |
 |---|---|
-| Room availability / conflicts | `AvailabilityService` |
-| Pricing | `PriceService`, `PublicPricingService` |
-| Reservations | `ReservationService` |
-| Invoices | `InvoiceService`, `EInvoice/`, `En16931Service`, `XRechnungService` |
-| Sending mail | `MailService` |
-| PDF rendering | `MpdfService` |
-| Template rendering / preview | `TemplatesService`, `TemplateSchemaService`, `TemplatePreview/` |
-| File storage | `Storage/`, `FileUploader` |
-| App settings | `AppSettingsService` |
-| Booking journal / accounting | `Service/BookingJournal/` |
+| Availability / pricing | `AvailabilityService`, `PriceService`, `PublicPricingService` |
+| Reservations / online booking | `ReservationService`, `OnlineBooking/` |
+| Invoices / e-invoicing | `InvoiceService`, `EInvoice/`, `En16931Service`, `XRechnungService` |
+| Mail / PDF | `MailService`, `MpdfService` |
+| Templates | `TemplatesService`, `TemplateSchemaService`, `TemplatePreview/` |
+| Storage | `Storage/`, `FileUploader` |
+| Accounting | `BookingJournal/` |
 
-Duplicating logic that already exists in a service is the most common review rejection. If a service
-*almost* fits, extend it (with tests) rather than forking its logic.
+## 6. Architecture
 
-### 5.3 Build generic features, not island solutions
+### 6.1 Responsibilities
 
-This is shared open-source software. Every feature should be useful to a broad set of operators, or
-be cleanly optional:
+The usual flow is **Controller → Service → Repository → Doctrine**, with entities and DTOs
+carrying state and results.
 
-- No hardcoded assumptions about one property, one country, one tax regime, one channel partner.
-- Configurable via existing settings mechanisms (`AppSettingsService`, per-`Subsidiary` config)
-  rather than constants in code.
-- Where behaviour varies, prefer an **extension point** (interface + registry, see §6.3) over an
-  `if` chain that grows forever.
-- Features that only make sense for a single installation belong in a fork, not here.
+- **Controllers** resolve input, enforce authorization, delegate and render responses. Business
+  rules, pricing and multi-step domain workflows belong in services. Length is a signal to review
+  responsibilities, not a line limit; straightforward form/response handling can stay together.
+  Shared logic belongs in a service, not a helper on another controller.
+- **Services** own business logic. Keep domain services stateless and inject dependencies, normally
+  through constructor promotion with `private readonly`.
+- **Repositories** own application DQL and QueryBuilder queries. Add a named method when a query
+  needs reuse or business meaning. Migration SQL belongs in migrations.
+- **Entities** hold state and invariants, without service dependencies or orchestration.
+- **DTOs** are useful for structured contracts across boundaries. Prefer readonly DTOs when the
+  shape matters; a small local array does not automatically need a new class.
 
-### 5.4 Multilingual from the start
+### 6.2 Events and extension points
 
-**German and English must both be complete in the same commit.** See §8.
+Use domain events in `src/Event/` for independent reactions to an operation. Direct service calls
+are appropriate for steps that belong to that operation. Consider whether new events should also
+be available as workflow triggers.
 
-### 5.5 Security is a first-class requirement
+For pluggable behaviour, follow the existing **interface + tagged implementations + registry**
+pattern. The workflow engine in `src/Workflow/` is the reference; notification and template preview
+providers use the same approach. A fixed choice within one implementation can use ordinary
+conditionals or an enum; it does not need a plugin architecture.
 
-Not an afterthought, not a follow-up ticket. See §7.
+When extending workflows, mirror the nearest trigger, condition or action, including its config
+schema, translations and tests. Symfony autoconfiguration registers implementations. Keep workflow
+seeding idempotent and use `WorkflowLogService::hasBeenProcessed()` to deduplicate time-based work.
+Consult the implementations for current field types and registration details.
 
-### 5.6 Tested
+For in-app messages, consider the existing `create_in_app_notification` workflow action before
+adding a provider. Derived notifications reflect live work and disappear when resolved; stored
+notifications track read state per user. Badge queries run on every page: use counts and cheap
+severity checks, and load items only when the panel opens.
 
-Unit tests for logic, functional tests for HTTP behaviour and persistence. See §9.
+### 6.3 User-authored templates
 
-### 5.7 Maintainable
+The editor uses `[[ ]]` for variables, `[% %]` for tags, `data-repeat` / `data-repeat-as` for loops
+and `data-if` for conditions. **This syntax is not a security boundary:** `TemplatesService`
+converts it to Twig before rendering. Do not assume delimiter replacement prevents arbitrary
+Twig execution; review allowed capabilities and input handling when changing rendering.
 
-**Every method that isn't self-explanatory gets a short docblock describing what it does**, and
-complex logic gets inline comments explaining *why*. Comments in English. See §10.
+For new template data, check `TemplateSchemaService`, the matching provider in
+`src/Service/TemplatePreview/`, and autocomplete in `assets/js/template-autocomplete.js`.
+The editor lives in `assets/controllers/template_editor_controller.js`. Keep schema, preview and
+autocomplete consistent.
 
----
+## 7. Security
 
-## 6. Architecture guidelines
+Guest records contain personal data and invoices contain financial records. Security checks are
+part of the implementation, not follow-up work.
 
-### 6.1 Layering
+### 7.1 Authorization and public endpoints
 
-```
-Controller  →  Service  →  Repository  →  Doctrine
-     ↓            ↓
-   Twig         Entity / DTO
-```
+- Declare protected controllers/actions with `#[IsGranted]`. Path rules in
+  `config/packages/security.yaml` are an additional safeguard, not a replacement.
+- Everything under `/settings` is admin-only. Respect read-only roles; they must never reach
+  mutating actions. Use the role hierarchy in `security.yaml` as the source of truth.
+- API endpoints additionally require the appropriate scope through `ApiScopeVoter`; extend the
+  scope model when an existing scope does not cover the new capability.
+- Verify that entities loaded by ID are accessible in the current tenant/subsidiary/user context.
+- Public booking, availability and iCal endpoints need input validation, rate limits and abuse
+  protection (`PublicBookingAbuseProtectionService`). Use unguessable identifiers such as UUIDs
+  and check publication flags. Never expose other guests, internal notes or unpublished prices.
 
-**Controllers** are thin. They:
-- resolve input (route params, `Request`, forms),
-- enforce authorization,
-- delegate to a service,
-- render a template or return a `Response` / `JsonResponse`.
+### 7.2 Input, output and CSRF
 
-They do **not** contain business rules, DQL, price math, or multi-step domain workflows. If a
-controller method exceeds roughly 30 lines, the excess almost certainly belongs in a service.
+- Bind query parameters; never concatenate user input into SQL or DQL.
+- Keep Twig auto-escaping enabled. `|raw` requires server-side sanitization and a comment explaining
+  why raw output is necessary.
+- Bind input through Symfony forms or explicit DTOs/field mappings; never hydrate an entity from
+  `$request->request->all()`.
+- Forms use stateless CSRF protection (`config/packages/csrf.yaml`, token ID `submit`). Normal and
+  Turbo submissions use `assets/js/csrf_protection.js`. For `fetch()`, call
+  `generateCsrfToken(form)` and add `generateCsrfHeaders(form)` to the request headers; see
+  `assets/controllers/mail_settings_controller.js`.
+- Hand-built forms/AJAX mutations without a Symfony form must validate an action-specific token
+  with `$this->isCsrfTokenValid(...)`. Do not use the legacy `CSRFProtectionService` in new code.
+- Uploads go through `FileUploader` / storage services. Validate MIME type and size; never trust
+  the client filename.
 
-**Services** own the business logic and are stateless. Inject dependencies via constructor
-promotion with `private readonly`:
+### 7.3 Credentials, privacy and errors
 
-```php
-class AvailabilityService
-{
-    public function __construct(
-        private readonly ReservationRepository $reservationRepository,
-        private readonly RoomBlockRepository $roomBlockRepository,
-    ) {
-    }
-}
-```
-
-**Repositories** own all query building. No DQL or `QueryBuilder` in controllers or services —
-add a named, documented method to the repository instead.
-
-**Entities** hold state and invariants, not orchestration. Keep them free of service dependencies.
-
-**DTOs** (`src/Dto/`) carry structured data across boundaries — API responses, computed results,
-form models. Prefer a readonly DTO over an associative array whenever the shape matters.
-
-### 6.2 Events over coupling
-
-Domain events live in `src/Event/` and are dispatched when something meaningful happens
-(`ReservationCreatedEvent`, `InvoiceStatusChangedEvent`, …). If your feature needs to *react* to
-something rather than *cause* it, subscribe to an event instead of editing the originating service.
-When adding a new domain event, consider whether it should also become a workflow trigger (§6.3).
-
-### 6.3 Extension points: interface + registry
-
-The established pattern for pluggable behaviour is **an interface, implementations tagged by
-autoconfiguration, and a registry that looks them up**. No base classes, no `switch` statements.
-
-The **Workflow engine** (`src/Workflow/`) is the reference implementation and the primary way to
-make features automatable by users:
-
-- `WorkflowTriggerInterface` — when does it fire? (event-driven or time-based)
-- `WorkflowConditionInterface` — should it run? (evaluated with short-circuit)
-- `WorkflowActionInterface` — what happens?
-- `WorkflowActionRegistry` / `WorkflowConditionRegistry` / `WorkflowTriggerRegistry` — typed lookup
-- `WorkflowEngine` — evaluates conditions, executes the action, logs the result
-- `WorkflowEventSubscriber` — maps Symfony events to trigger types
-- `WorkflowSeeder` — creates/updates system and example workflows, **idempotently**
-- `WorkflowLogService::hasBeenProcessed()` — deduplication; time-based actions must use it
-
-Config schemas are declared by the trigger/condition/action itself, using the field types `text`,
-`number`, `email`, `select` (with `options`), `template_select`, `accounting_account_select`,
-`reservation_status_select`, with conditional visibility via `showIf: {key, value}`.
-
-**Adding a trigger, condition or action:**
-
-1. Create a class implementing the interface in the matching subdirectory.
-2. Symfony autoconfiguration registers it — no manual service wiring.
-3. Add `de` + `en` keys in `translations/Workflow/messages.{de,en}.yaml`.
-4. Add a unit test in `tests/Unit/Workflow/`.
-5. Optionally add an example workflow to `WorkflowSeeder`.
-
-The **template preview** system follows the same shape: implement `ITemplatePreviewProvider` in
-`src/Service/TemplatePreview/` and it is picked up automatically.
-
-Use this pattern for any new pluggable dimension (export formats, import sources, payment
-adapters, channel connectors).
-
-### 6.4 The custom template system
-
-The user-facing template editor (letters, invoices, emails) uses a **pseudo-Twig syntax** so that
-user-authored templates can never execute arbitrary Twig:
-
-- `[[ ]]` instead of `{{ }}` for variables
-- `[% %]` instead of `{% %}` for tags
-- `data-repeat` / `data-repeat-as` for loops
-- `data-if` for conditionals
-
-Key files:
-
-- `assets/controllers/template_editor_controller.js` — Tiptap visual editor + CodeMirror code mode
-- `assets/js/template-autocomplete.js` — CodeMirror autocomplete
-- `src/Service/TemplateSchemaService.php` — builds the variable schema via PHP Reflection and
-  Doctrine ORM attributes; schema types are `scalar`, `date`, `entity`, `collection`, `array`
-- `src/Service/TemplatePreview/` — preview providers per template type
-- Schema endpoint: `GET /settings/templates/schema/{templateTypeId}`
-
-When you expose a new entity or field to templates, extend the schema service *and* the matching
-preview provider, and confirm the autocomplete picks it up.
-
----
-
-## 7. Security requirements
-
-Security is the highest-priority non-functional requirement in this project. Guest data is
-personal data (GDPR); invoices are financial records.
-
-### 7.1 Authorization on every entry point
-
-Every controller or action must declare its access requirement. Role hierarchy is defined in
-`config/packages/security.yaml`:
-
-```
-ROLE_ADMIN → ROLE_RESERVATIONS, ROLE_CUSTOMERS, ROLE_INVOICES,
-             ROLE_REGISTRATIONBOOK, ROLE_STATISTICS, ROLE_CASHJOURNAL, ROLE_OPERATIONS
-ROLE_RESERVATIONS → ROLE_RESERVATIONS_RO
-```
-
-```php
-#[Route('/settings/workflows')]
-#[IsGranted('ROLE_ADMIN')]
-class WorkflowController extends AbstractController { … }
-```
-
-- Path-level rules in `security.yaml` `access_control` are a safety net, **not** a substitute for
-  `#[IsGranted]` on the controller.
-- Anything under `/settings` is admin-only.
-- API endpoints are additionally scope-gated via `ApiScopeVoter`
-  (`#[IsGranted('API_SCOPE_RESERVATIONS_READ')]` etc.). A new API endpoint needs a scope.
-- Read-only variants exist (`ROLE_RESERVATIONS_RO`) — respect them; do not let a read-only role
-  reach a mutating action.
-
-### 7.2 Public / unauthenticated surfaces
-
-Online booking, public availability and iCal feeds are reachable without a login. For these:
-
-- Rate-limit and abuse-protect (`symfony/rate-limiter`,
-  `PublicBookingAbuseProtectionService`).
-- Use unguessable identifiers (UUIDs) — never sequential IDs — and check the "is public" flag
-  before returning anything.
-- Never leak internal data (other guests, prices you did not intend to publish, internal notes)
-  through a public response.
-- Validate *everything*. Treat all input as hostile.
-
-### 7.3 Standard hygiene
-
-- **SQL injection:** always parameter binding via `QueryBuilder`/DQL. Never string-concatenate user
-  input into a query.
-- **XSS:** Twig auto-escaping stays on. `|raw` requires a written justification in a comment and
-  server-side sanitization of the value.
-- **CSRF:** Symfony forms handle this automatically. For hand-built forms and AJAX endpoints use
-  `$this->isCsrfTokenValid('some-action-' . $id, $request->request->get('_token'))`.
-  *(A legacy `CSRFProtectionService` still exists in older controllers — do not use it in new code.)*
-- **Mass assignment:** bind through Symfony Form types or explicit DTOs; never hydrate an entity
-  straight from `$request->request->all()`.
-- **IDOR:** when loading an entity by id, verify it belongs to the current tenant/subsidiary/user
-  context before acting on it.
-- **Secrets:** never commit credentials. Use `.env.local` / environment variables. Secrets stored in
-  the database (e.g. SMTP passwords) are encrypted — see `SmtpPasswordCrypto`.
-- **File uploads:** go through `FileUploader` / the Flysystem storage services. Validate MIME type
-  and size; never trust the client-supplied filename.
-- **Errors:** no stack traces, SQL, or file paths in production responses (there is a functional
-  test guarding this — `ProductionErrorRenderingTest`). Log details server-side instead.
-- **Auth:** password hashing and WebAuthn are handled by Symfony Security and
-  `web-auth/webauthn-lib`. Do not hand-roll authentication or token comparison; use
-  `hash_equals()` for any secret comparison you cannot avoid.
-- **Audit:** `EntityChangeLogListener` records entity changes. Consider whether a new
-  security-relevant entity should be covered.
-
-### 7.4 Personal data
-
-Guest records are GDPR-relevant. New personal-data fields must be included in the existing GDPR
-export, and must not be written to logs.
-
----
+- Never commit credentials or personal data. Use environment variables / `.env.local`; encrypt
+  database-stored secrets using the existing facilities, such as `SmtpPasswordCrypto`.
+- Use Symfony Security and `web-auth/webauthn-lib` for authentication. Do not implement custom
+  password hashing or authentication; use `hash_equals()` for unavoidable secret comparisons.
+- Include new personal-data fields in the GDPR export and keep them out of logs.
+- Production responses must not expose stack traces, SQL or internal file paths. Log technical
+  details server-side without secrets or guest data; see `ProductionErrorRenderingTest`.
+- Consider `EntityChangeLogListener` audit coverage for new security-relevant entities.
 
 ## 8. Internationalization
 
-**Every user-facing string is translated, in both `de` and `en`, in the same commit.** No exceptions,
-no "English only for now".
+**Application strings, validation messages and enum labels must be complete in German and English
+in the same commit**, with matching key sets. Release notes use the separate workflow in §11a.
 
-- Translations live in `translations/<Domain>/messages.{de,en}.yaml` — one directory per domain
-  (`Reservations`, `Invoices`, `Workflow`, `Housekeeping`, …). Some legacy domains use `.xlf`;
-  match whatever the domain already uses.
-- Reference the domain explicitly in Twig: `{{ 'workflow.page_title'|trans({}, 'Workflow') }}`
-- Keys are lowercase, dot-separated, and describe *meaning* rather than the English text:
-  `workflow.flash.created`, not `workflow.automation_was_created`.
-- Both files must contain the **same set of keys**. A key present in `de` but missing in `en` is a
-  bug.
-- Never concatenate translated fragments — use placeholders (`%count%`, `%name%`).
-- Dates, numbers and currency are formatted through Twig/Intl helpers, never hand-formatted.
-- German is the primary product language and uses informal address ("du"), matching the existing
-  strings. Keep the tone consistent with neighbouring keys.
-- Validation messages and enum labels need translations too.
+- Directories under `translations/` group product areas. The **filename** defines the domain:
+  `messages.de.yaml` / `messages.de.xlf` use `messages`; `Housekeeping.de.xlf` uses `Housekeeping`.
+  Match the area's existing format and pass an explicit domain only when its filename requires it.
+- Use lowercase, dot-separated keys describing meaning, such as `workflow.flash.created`.
+- Use placeholders instead of concatenated fragments. Handle plural forms, e.g.
+  `"{1}eine Nacht|]1,Inf[%count% Nächte"`; render variants server-side for JavaScript consumers.
+- Format dates, numbers and currencies through Twig/Intl helpers.
+- German is the primary language. New German text uses informal **du**; do not rewrite unrelated
+  existing text merely to change its tone.
 
----
+## 9. Testing and static analysis
 
-## 9. Testing
+Choose tests for the behaviour and risk of the change. Business logic needs unit coverage; HTTP,
+authorization and persistence changes need functional coverage. Use both when both are affected.
+Documentation-only edits and simple presentational changes do not require artificial tests.
+Bug fixes need a regression test at the layer that would have caught the bug.
 
-Both layers are required for a feature to be considered complete.
+### 9.1 Unit tests
 
-### 9.1 Unit tests — `tests/Unit/`
-
-- Cover business logic, calculations, conditions, actions, mappers, DTOs, edge cases.
-- No database. Mock repositories and collaborators.
-- **Agents may run these themselves**, they are fast and side-effect free:
+Use `tests/Unit/`, without a database and normally without booting the kernel. Prefer `createStub()`;
+use `createMock()` when verifying interactions with `expects()`.
 
 ```bash
 php bin/phpunit tests/Unit
 ```
 
-### 9.2 Functional tests — `tests/Functional/`
+### 9.2 Functional tests
 
-- Cover controllers, HTTP status codes, authorization, persistence, API contracts.
-- They **require a prepared database**. Always run them through the wrapper script, never by
-  pointing PHPUnit at `tests/Functional` directly:
-
-```bash
-bin/run-tests.sh                                  # full suite
-bin/run-tests.sh tests/Functional/InvoiceTest.php # a single file
-```
-
-- The script drops and recreates the test database, runs all migrations, seeds sample data via
-  `app:first-run --load-sample-data`, and only then invokes PHPUnit. Running PHPUnit directly
-  against `tests/Functional` will fail or produce misleading results, because the database state it
-  expects has not been built.
-- **Agents may run this**, but be aware it takes a while (database reset + migrations + suite).
-  Set a generous command timeout rather than letting it be killed halfway through — an aborted run
-  leaves the test database in a partial state.
-- It targets `APP_ENV=test`, so it only ever touches the test database — but it *is* destructive to
-  that database. Never point it at a development or production environment.
-- While it runs, don't start a second test run in parallel; both share the same database.
-
-### 9.3 Conventions
-
-- `final class SomethingTest extends TestCase` (unit) or `WebTestCase` / `KernelTestCase`
-  (functional).
-- Descriptive method names: `testGetCalendarReturnsNotFoundForPrivateSync()`.
-- One behaviour per test; arrange–act–assert.
-- Test the failure paths, especially authorization denials and invalid input.
-- New bug fix ⇒ add the regression test that would have caught it.
-
-### 9.4 Static analysis
+**Always use the wrapper** for `tests/Functional/`; it resets the database, runs migrations and
+seeds sample data before PHPUnit. Do not run functional tests directly against an unprepared database.
 
 ```bash
-vendor/bin/phpstan analyse    # level 6, must stay green
+APP_ENV=test bin/run-tests.sh                                  # full suite
+APP_ENV=test bin/run-tests.sh tests/Functional/InvoiceTest.php  # one file
 ```
 
-Do not add `@phpstan-ignore` or baseline entries to silence a real problem.
+Agents may run these commands without asking again. Verify `APP_ENV=test`: the wrapper accepts an
+environment override and **drops the selected database**. Never use development or production, and
+never run two wrappers concurrently. Allow enough time for setup and execution to finish.
 
----
+### 9.3 Test conventions and checks
 
-## 10. Code style & documentation
+- Use final test classes with `TestCase`, `WebTestCase` or `KernelTestCase` as appropriate.
+- Name tests by behaviour, follow arrange–act–assert and cover meaningful failure paths,
+  especially denied access and invalid input.
+- Run affected checks; broaden the suite when shared behaviour or migration changes warrant it.
+  Report skipped or unavailable checks and remaining limitations.
+- PHPStan runs at level 6. Analyse changed PHP files and add no new findings:
 
-- `declare(strict_types=1);` at the top of every PHP file.
-- PSR-12 formatting, PSR-4 autoloading (`App\` → `src/`).
-- Constructor property promotion with `private readonly` for dependencies.
-- Type-hint everything: parameters, return types, properties. Avoid `mixed`; use generics
-  annotations (`@param list<Reservation> $reservations`) where PHPStan needs them.
-- Prefer `final` for new classes that are not designed for extension.
-- Enums (backed) instead of class constants for closed value sets.
-- Some files carry a license header comment — preserve it when editing such a file; follow the
-  surrounding file for new ones.
+  ```bash
+  vendor/bin/phpstan analyse --memory-limit=1G src/Service/FooService.php tests/Unit/FooServiceTest.php
+  ```
 
-### Documentation rules (non-negotiable)
+  Existing findings on the target branch are not introduced by your change. Do not suppress real
+  problems with `@phpstan-ignore`; keep unrelated cleanup separate.
 
-**All comments and docblocks are written in English.**
+## 10. Code style and documentation
 
-**Every method whose purpose is not obvious from its signature gets a docblock describing what it
-does.** The test is simple: *can a reader understand what this method does, and what it is for,
-from its name, parameters and return type alone?* If not, write the docblock. One or two sentences
-is usually enough — the point is that nobody has to reverse-engineer intent from the body.
+- Use `declare(strict_types=1);`, PSR-12 formatting and PSR-4 autoloading (`App\` → `src/`).
+- Type parameters, returns and properties. Use generics/array shapes where needed for PHPStan;
+  reserve `mixed` for genuinely open contracts.
+- Prefer constructor promotion and `private readonly` dependencies, `final` classes unless
+  extension is intended, and enums for closed value sets.
+- Preserve existing license headers and follow neighbouring files for new ones.
+- Write comments and docblocks in English. Explain a class's responsibility when its name and
+  interface do not make it clear; self-explanatory classes do not need boilerplate comments.
+- Document non-obvious method contracts: business/legal rules, hidden side effects, date
+  boundaries, units, meaningful null/empty results and relevant exceptions. Add type annotations
+  for structured results. Trivial accessors and obvious framework methods need no prose docblock.
+- Comment the reasoning behind complex logic or workarounds, not each instruction. Keep comments
+  accurate when behaviour changes.
 
-```php
-/**
- * Full room-level check. A room block always makes the room unavailable,
- * even for multipleOccupancy rooms (blocks act on the physical room).
- */
-public function isRoomAvailable(
-    Appartment $room,
-    \DateTimeInterface $start,
-    \DateTimeInterface $end,
-    int $numberOfPersons = 0,
-): bool {
-```
+## 11. Database and migrations
 
-**No docblock needed** — a comment that only restates the signature is noise, and trains readers to
-skip comments that *do* matter:
+- Ship schema changes through Doctrine migrations in `migrations/`. Generate with
+  `doctrine:migrations:diff` where appropriate, then review and edit the SQL.
+- **Never modify or delete a released migration.** Fix released behaviour with a new migration.
+- During development of an unreleased version, consolidate related changes into existing
+  migration files instead of adding a file for every small adjustment. Check the last release tag,
+  dependencies and execution order first. Keep an existing filename and remove redundant files.
+  Separate substantial data conversions or migrations with distinct rollback guards when useful.
+- Consolidation must preserve the resulting schema and data from the last release. Check both
+  fresh installation and upgrade paths, including rollback. Already-migrated development databases
+  need explicit reconciliation; editing a migration does not execute it again. Never silently reset
+  a development database to accommodate a rewritten migration.
+- Protect live data: use defaults/nullability that keep existing rows valid, consider table locks,
+  and document deliberate destructive changes. Provide a working `down()` where safe; explicitly
+  refuse a rollback that would discard data the old schema cannot represent.
+- Geo entities live in `src/GeoEntity/` on the separate `geo` connection. Their namespace must not
+  start with `App\Entity`, because Doctrine matches mapping prefixes. The connection falls back
+  to `DATABASE_URL` when `GEO_DATABASE_URL` is unset.
 
-- Entity getters and setters, and other trivial accessors
-- Short, self-explanatory methods where the name says everything (`isActive()`, `getFullName()`)
-- Framework boilerplate whose contract is defined by the interface it implements
-- Controller actions whose route, name and single service call already tell the whole story
+## 11a. Release notes
 
-```php
-// Noise — adds nothing over the signature:
-/**
- * Returns the name.
- */
-public function getName(): string
-```
-
-**Always write one, regardless of length,** when any of these apply:
-
-- The method has side effects that the name does not reveal (writes to the database, sends mail,
-  mutates a passed-in object, clears a cache)
-- It encodes a business or legal rule (tax, pricing, tourist tax, occupancy, e-invoicing)
-- Parameters have non-obvious semantics — units, boundary handling, what `null` means, which
-  parameter combinations are valid
-- It can throw, or returns `null` / an empty result in a meaningful special case
-- The return value needs a shape annotation for PHPStan (`@return list<Reservation>`,
-  `@return array<string, Invoice>`)
-- The implementation is short but the *reasoning* behind it is not
-
-Additionally:
-
-- Add a class-level docblock explaining the class's responsibility. This one has no exceptions —
-  it is the entry point for anyone meeting the class for the first time.
-- Add **inline comments for non-obvious logic** — business rules, tax and date arithmetic, boundary
-  handling (e.g. "reservation periods are half-open intervals: departure day is free"), workarounds,
-  and anything a future reader would otherwise have to guess.
-- Comment the *why*, not the *what*. `// increment counter` is noise; `// guests below
-  minFullPayers always pay the full rate` is valuable.
-- Keep comments truthful — update them when you change the code. A stale comment is worse than none.
-
-When in doubt, write it. The exceptions above are for genuinely trivial code, not an invitation to
-leave complex methods undocumented.
-
----
-
-## 11. Database & migrations
-
-- Schema changes always ship as a Doctrine migration in `migrations/`
-  (`VersionYYYYMMDDHHMMSS.php`). Generate with `doctrine:migrations:diff`, then **review and edit**
-  the generated SQL — never commit it unread.
-- Migrations must be safe on live self-hosted data: no destructive operation without a deliberate,
-  documented decision; provide a working `down()`.
-- Never modify an already-released migration. Add a new one.
-- Give new columns sensible defaults so existing rows stay valid.
-- Watch for large-table locks; hosts run on modest hardware.
-- **Geo data** lives on a separate `geo` Doctrine connection. Its entities belong in
-  `src/GeoEntity/` — *not* under `src/Entity/`, and the namespace must not start with `App\Entity`
-  (the mapping configuration matches on the string prefix). The connection falls back to
-  `DATABASE_URL` when `GEO_DATABASE_URL` is not set.
-
----
+- Write concise German notes in `docs/release-notes/<version>.de.md`, preserving upgrade steps
+  and user-visible changes. Do not repeat the version in the body. Optional YAML front matter
+  can set `date: YYYY-MM-DD`.
+- English is generated by the release-notes translation workflow on release pull requests.
+  **Do not manually create or update the English file unless explicitly requested.** Both locales
+  must be present and reviewed before release; the application has a locale fallback.
+- Update `version` in `config/services.yaml` with the release notes. It is exposed as `app_version`;
+  the version, both note filenames and release tag must agree.
+- `.github/workflows/release-notes-translate.yml` defines translation triggers;
+  `.github/workflows/release.yml` builds and validates the GitHub release from these files.
+  Do not maintain a separate release body in the GitHub editor.
+- New versions appear in the notification bell, without an automatic popup. Opening and closing
+  the notes records `users.last_seen_version`.
 
 ## 12. Frontend
 
-- **AssetMapper only.** Add JS dependencies with `php bin/console importmap:require <package>`.
-  No npm, no bundler, no `package.json`.
-- Behaviour lives in **Stimulus controllers** under `assets/controllers/`, wired via
-  `data-controller` attributes. No inline `<script>` blocks with logic, no global jQuery-style
-  soup.
-- **Turbo** is active — assume partial page updates. Code that must run after navigation belongs in
-  a Stimulus `connect()`, not in a `DOMContentLoaded` handler.
-- Twig templates in `templates/` mirror the controller structure. Extract reusable markup into
-  partials/macros rather than copy-pasting.
-- For delete confirmations use the existing **delete popover** component — not `confirm()`.
-- Styling is **Bootstrap 5.3** (Materia theme), vendored under `public/resources/` and loaded in
-  `templates/base.html.twig` — not via the importmap. Project CSS lives in `assets/styles/app.css`.
-- Keep the UI consistent with existing screens: existing form macros, existing table/filter
-  patterns, existing card and modal markup.
-- Production deploys need `php bin/console asset-map:compile`.
+- Add JS dependencies through `php bin/console importmap:require <package>` and AssetMapper.
+- Put behaviour in Stimulus controllers, not inline scripts or global jQuery-style handlers.
+  Account for Turbo navigation: initialise through `connect()`, not only `DOMContentLoaded`.
+- Reuse existing form macros, tables, filters, cards and modals. Extract repeated Twig markup
+  into partials/macros. Use the existing delete popover rather than `confirm()`.
+- Bootstrap/Materia is vendored under `public/resources/` and loaded by `templates/base.html.twig`.
+  Project CSS lives in `assets/styles/app.css`. Production deploys need `asset-map:compile`.
 
----
+## 13. Before reporting completion
 
-## 13. Definition of Done
+Check the parts relevant to the change and report any gaps:
 
-Before you report a feature as complete, verify every line:
+- Existing architecture and services reused; scope stays focused and useful across installations.
+- Applicable security, privacy and translation requirements met.
+- Affected behaviour verified at the appropriate test layer; no new PHPStan findings.
+- Non-obvious behaviour documented; migrations and upgrade/rollback paths reviewed when affected.
+- User/developer documentation and `docs/openapi.yaml` updated when behaviour or contracts change.
 
-- [ ] Fits the existing architecture; no parallel abstraction introduced
-- [ ] Existing services reused where applicable; no duplicated logic
-- [ ] Generic and configurable — useful beyond a single installation
-- [ ] Controller thin, logic in a service, queries in a repository
-- [ ] Authorization declared (`#[IsGranted]` / scope), input validated, CSRF handled
-- [ ] No new XSS / SQLi / IDOR surface; secrets not committed or logged
-- [ ] `de` **and** `en` translations complete, same key set
-- [ ] Unit tests written and passing
-- [ ] Functional tests written and passing via `bin/run-tests.sh`
-- [ ] PHPStan level 6 clean
-- [ ] Class docblock present; docblocks on all non-trivial methods; non-obvious logic commented,
-      in English
-- [ ] Migration added and reviewed, if the schema changed
-- [ ] Documentation updated if behaviour or configuration changed
+## 14. Scope boundaries
 
----
-
-## 14. Things to avoid
-
-- Introducing npm, webpack, Vite or any Node build step.
-- Business logic in controllers or Twig templates.
-- Raw SQL string concatenation, or DQL outside repositories.
-- New features in the **registration book** module — it is slated for removal.
-- Shipping English-only strings "for now".
-- Running the functional test suite (it resets the maintainer's database) without being asked.
-- Editing released migrations.
-- Silencing PHPStan instead of fixing the finding.
-- Large opportunistic refactors bundled into a feature commit — propose them separately.
-- Committing generated artifacts, `.env.local`, dumps, or personal data files.
-
----
+Do not add features to the registration book module; it is slated for removal. Do not commit
+runtime-generated artifacts, environment files containing secrets, dumps, personal data or local
+setup notes. Avoid unrelated refactors and cleanup in a feature change.
 
 ## 15. When you are unsure
 
-State the ambiguity, pick the interpretation that is most consistent with the existing code, and
-say which assumption you made. For anything that changes the data model, the security model, or a
-public interface, ask **before** implementing.
+For routine implementation choices, follow existing patterns and use judgment. State consequential
+assumptions and explain why a departure from a guideline fits the task.
+
+Ask before proceeding when an unresolved choice materially changes the data model, security model,
+public interface or risks existing data beyond the agreed scope. **Do not ask again for a change
+already explicitly requested or approved.** If the requested outcome is clear and the remaining
+choice is ordinary implementation detail, proceed and make the result reviewable.

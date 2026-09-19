@@ -44,6 +44,7 @@ invoice.number.range.global: Default
 invoice.lastname: Last Name
 invoice.miscellaneous: Miscellaneous
 invoice.miscellaneous.position.amount: Number
+invoice.miscellaneous.position.amount.flat_help: 'Flat rate: 1x per booking'
 invoice.netto: Net
 invoice.number: Invoice number
 invoice.number.short: Inv. no.

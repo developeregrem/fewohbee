@@ -28,9 +28,9 @@
 
     {% include 'feedback.html.twig' %}
 
+    {{ form_start(form) }}
     <div class="row">
         <div class="col-lg-7">
-            {{ form_start(form) }}
             <div class="card mb-3">
                 <div class="card-header py-2">
                     <strong>{{ 'accounting.bank_import.rules.section.basics'|trans }}</strong>
@@ -39,23 +39,10 @@
                     {{ form_row(form.name) }}
                     {{ form_row(form.description) }}
                     {{ form_row(form.isEnabled) }}
-                    <div class="row g-3">
-                        <div class="col-md-4">{{ form_row(form.priority) }}</div>
-                        <div class="col-md-2 d-flex align-items-end"></div>
-                        <div class="col-md-6">{{ form_row(form.bankAccount) }}</div>
-                    </div>
+                    {{ form_row(form.priority) }}
+                    {{ form_row(form.bankAccount) }}
                 </div>
             </div>
-
-            <div class="d-flex gap-2 justify-content-end mb-4">
-                <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary">
-                    {{ 'button.cancel'|trans }}
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
-                </button>
-            </div>
-            {{ form_end(form) }}
         </div>
 
         <div class="col-lg-5">
@@ -64,24 +51,100 @@
                     <strong>{{ 'accounting.bank_import.rules.section.conditions'|trans }}</strong>
                 </div>
                 <div class="card-body">
-                    {{ ruleUi.conditionsList(rule.conditions) }}
+                    {% if form.conditions|length == 0 %}
+                        <span class="text-muted small fst-italic">{{ 'accounting.bank_import.rules.conditions_empty'|trans }}</span>
+                    {% endif %}
+                    {% for conditionForm in form.conditions %}
+                        {% set condition = rule.conditions[loop.index0] %}
+                        <div class="row mb-2 align-items-center">
+                            <div class="col-sm-4 text-sm-end small">{{ ruleUi.conditionLabel(condition) }}</div>
+                            <div class="col-sm">
+                                {% if conditionForm.value is defined %}
+                                    {{ form_widget(conditionForm.value) }}
+                                    {{ form_errors(conditionForm.value) }}
+                                {% else %}
+                                    {{ ruleUi.conditionValue(condition) }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if not loop.last %}
+                            <div class="text-muted small fst-italic mb-2">{{ 'accounting.bank_import.rules.and'|trans }}</div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="card mb-3">
-                <div class="card-header py-2">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center">
                     <strong>{{ 'accounting.bank_import.rules.section.action'|trans }}</strong>
+                    {% set actionMode = rule.actionMode %}
+                    {% if actionMode == 'split' %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                            <i class="fas fa-code-branch"></i>
+                            {{ 'accounting.bank_import.rules.action.split'|trans({'%count%': (rule.action.splits|default([]))|length}) }}
+                        </span>
+                    {% elseif actionMode == 'ignore' %}
+                        <span class="badge bg-light text-dark border">
+                            <i class="fas fa-eye-slash"></i> {{ 'accounting.bank_import.rules.action.ignore'|trans }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-light text-dark border">{{ 'accounting.bank_import.rules.action.assign'|trans }}</span>
+                    {% endif %}
                 </div>
                 <div class="card-body">
-                    {{ ruleUi.actionSummary(rule.action, accountsById, taxRatesById) }}
+                    {% if actionMode == 'ignore' %}
+                        <p class="text-muted small mb-0">{{ 'accounting.bank_import.rules.action.ignore_help'|trans }}</p>
+                    {% elseif actionMode == 'split' %}
+                        {% for splitForm in form.action.splits %}
+                            {% set split = rule.action.splits[loop.index0] %}
+                            <div class="border rounded p-2 mb-3">
+                                <div class="small text-muted mb-2">
+                                    <span class="badge bg-secondary">#{{ loop.index }}</span>
+                                    {{ ruleUi.splitSource(split, false) }}
+                                </div>
+                                {% if splitForm.marker is defined %}{{ form_row(splitForm.marker) }}{% endif %}
+                                {% if splitForm.pattern is defined %}{{ form_row(splitForm.pattern) }}{% endif %}
+                                {{ form_row(splitForm.debitAccountId) }}
+                                {{ form_row(splitForm.creditAccountId) }}
+                                {{ form_row(splitForm.taxRateId) }}
+                                {{ form_row(splitForm.remarkTemplate) }}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        {{ form_row(form.action.debitAccountId) }}
+                        {{ form_row(form.action.creditAccountId) }}
+                        {{ form_row(form.action.taxRateId) }}
+                        {{ form_row(form.action.remarkTemplate) }}
+                    {% endif %}
+
+                    {% if form.action.invoiceNumberExtraction is defined %}
+                        <hr>
+                        <div class="small text-muted mb-2">{{ 'accounting.bank_import.rule.invoice_extraction.label'|trans }}</div>
+                        {% if form.action.invoiceNumberExtraction.marker is defined %}
+                            {{ form_row(form.action.invoiceNumberExtraction.marker) }}
+                        {% endif %}
+                        {% if form.action.invoiceNumberExtraction.pattern is defined %}
+                            {{ form_row(form.action.invoiceNumberExtraction.pattern) }}
+                        {% endif %}
+                    {% endif %}
                 </div>
             </div>
 
-            <p class="text-muted small mb-0">
+            <p class="text-muted small">
                 <i class="fas fa-info-circle me-1"></i>
                 {{ 'accounting.bank_import.rules.edit.recreate_hint'|trans }}
             </p>
         </div>
     </div>
+
+    <div class="d-flex gap-2 justify-content-end mb-4">
+        <a href="{{ path('bank_import.rules.index') }}" class="btn btn-outline-secondary">
+            {{ 'button.cancel'|trans }}
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> {{ 'button.save'|trans }}
+        </button>
+    </div>
+    {{ form_end(form) }}
 </div>
 {% endblock %}

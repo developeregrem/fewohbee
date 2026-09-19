@@ -154,6 +154,10 @@
                 <source>invoice.miscellaneous.position.amount</source>
                 <target>Anzahl</target>
             </trans-unit>
+            <trans-unit id="invoice.miscellaneous.position.amount.flat_help">
+                <source>invoice.miscellaneous.position.amount.flat_help</source>
+                <target>Pauschalpreis: 1x pro Buchung</target>
+            </trans-unit>
             <trans-unit id="invoice.position.add.miscellaneous">
                 <source>invoice.position.add.miscellaneous</source>
                 <target>Sonstige Position hinzufügen</target>

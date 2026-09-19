@@ -114,6 +114,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             'appartmentTotal' => ['type' => 'scalar'],
             'miscTotal' => ['type' => 'scalar'],
             'paymentDueDate' => ['type' => 'date'],
+            'originName' => ['type' => 'scalar'],
+            'originCommission' => ['type' => 'scalar'],
+            'originCommissionFormated' => ['type' => 'scalar'],
+            'originPaymentFee' => ['type' => 'scalar'],
+            'originPaymentFeeFormated' => ['type' => 'scalar'],
         ];
     }
 
@@ -123,6 +128,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.number',
                 'label' => 'templates.editor.invoice.number',
+                'description' => 'templates.editor.invoice.number.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => '[[ invoice.number ]]',
@@ -130,6 +136,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.date',
                 'label' => 'templates.editor.invoice.date',
+                'description' => 'templates.editor.invoice.date.desc',
                 'group' => 'Invoice',
                 'complexity' => 'simple',
                 'content' => "[[ invoice.date|date('d.m.Y') ]]",
@@ -186,6 +193,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.appartment',
                 'label' => 'templates.editor.price.total',
+                'description' => 'templates.editor.price.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ appartmentTotal ]]',
@@ -193,6 +201,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.misc',
                 'label' => 'templates.editor.misc.total',
+                'description' => 'templates.editor.misc.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ miscTotal ]]',
@@ -200,6 +209,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.netto',
                 'label' => 'templates.editor.netto',
+                'description' => 'templates.editor.netto.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ nettoFormated ]]',
@@ -207,6 +217,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.total.brutto',
                 'label' => 'templates.editor.brutto',
+                'description' => 'templates.editor.brutto.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ bruttoFormated ]]',
@@ -214,6 +225,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.vat',
                 'label' => 'templates.editor.vat',
+                'description' => 'templates.editor.vat.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table border=\"0\">\n  <tbody>\n    <tr data-repeat=\"vats\" data-repeat-key=\"key\" data-repeat-as=\"value\">\n      <td style=\"text-align: right;\">[[ key ]] %</td>\n      <td style=\"text-align: right;\">[[ value.nettoFormated ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -221,6 +233,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.appartment.positions',
                 'label' => 'templates.editor.appartment.positions',
+                'description' => 'templates.editor.appartment.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.appartment'|trans }}</th>\n      <th>{{ 'invoice.position.stays'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.appartments\" data-repeat-as=\"appartment\">\n      <td>[[ appartment.description ]] (Personen: [[ appartment.persons ]])<br />[[ appartment.startDate|date('d.m.Y') ]] - [[ appartment.endDate|date('d.m.Y') ]]</td>\n      <td>[[ appartment.amount ]]</td>\n      <td>[[ appartment.priceFormated ]] €</td>\n      <td>[[ appartment.vat ]]</td>\n      <td style=\"text-align: right;\">[[ appartment.totalPrice ]] €</td>\n    </tr>\n    <tr>\n      <td colspan=\"5\" style=\"text-align: right;\">[[ appartmentTotal ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -228,6 +241,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.misc.positions',
                 'label' => 'templates.editor.misc.positions',
+                'description' => 'templates.editor.misc.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.position.additional'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup != 'tourist_tax' and p.positionGroup != 'apartment_modifier')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -235,6 +249,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.apartment_modifier.positions',
                 'label' => 'templates.editor.apartment_modifier.positions',
+                'description' => 'templates.editor.apartment_modifier.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\" data-if=\"invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')|length > 0\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.apartment_modifier.heading'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup == 'apartment_modifier')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
@@ -242,13 +257,31 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.tourist_tax.positions',
                 'label' => 'templates.editor.tourist_tax.positions',
+                'description' => 'templates.editor.tourist_tax.positions.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width: 100%;\" data-if=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')|length > 0\">\n  <tbody>\n    <tr>\n      <th>{{ 'invoice.tourist_tax.heading'|trans }}</th>\n      <th>{{ 'invoice.position.amount'|trans }}</th>\n      <th>{{ 'invoice.price.single'|trans }}</th>\n      <th>{{ 'invoice.vat'|trans }}</th>\n      <th style=\"text-align: right;\">{{ 'invoice.price.total'|trans }}</th>\n    </tr>\n    <tr data-repeat=\"invoice.positions|filter(p => p.positionGroup == 'tourist_tax')\" data-repeat-as=\"position\">\n      <td>[[ position.description ]]</td>\n      <td>[[ position.amount ]]</td>\n      <td>[[ position.priceFormated ]] €</td>\n      <td>[[ position.vat ]]</td>\n      <td style=\"text-align: right;\">[[ position.totalPrice ]] €</td>\n    </tr>\n  </tbody>\n</table>",
             ],
             [
+                'id' => 'invoice.check_in_times',
+                'label' => 'templates.editor.check_in_times',
+                'description' => 'templates.editor.check_in_times.desc',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"check_in_times(invoice.subsidiary)\">[[ check_in_times(invoice.subsidiary) ]]</p>\n<p data-if=\"invoice.subsidiary.checkInNote\">[[ invoice.subsidiary.checkInNote ]]</p>",
+            ],
+            [
+                'id' => 'invoice.opening_hours',
+                'label' => 'templates.editor.opening_hours',
+                'description' => 'templates.editor.opening_hours.desc',
+                'group' => 'Invoice',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"opening_hours(invoice.subsidiary)\">{{ 'object.opening_hours'|trans }}: [[ opening_hours(invoice.subsidiary) ]]</p>\n<p data-if=\"invoice.subsidiary.openingHoursNote\">[[ invoice.subsidiary.openingHoursNote ]]</p>",
+            ],
+            [
                 'id' => 'invoice.payment_qr',
                 'label' => 'templates.editor.payment_qr',
+                'description' => 'templates.editor.payment_qr.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<div data-if=\"payment_qr(invoice)\"><img src=\"[[ payment_qr(invoice, 300) ]]\" alt=\"\" width=\"30mm\"></div>",
@@ -256,13 +289,36 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'invoice.payment_due_date',
                 'label' => 'templates.editor.payment_due_date',
+                'description' => 'templates.editor.payment_due_date.desc',
                 'group' => 'Invoice',
                 'complexity' => 'easy',
                 'content' => "<p data-if=\"paymentDueDate\">{{ 'invoice.payment_due_date'|trans }}: [[ paymentDueDate|date('d.m.Y') ]]</p>",
             ],
             [
+                'id' => 'invoice.origin_name',
+                'label' => 'templates.editor.origin_name',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '<span data-if="originName">[[ originName ]]</span>',
+            ],
+            [
+                'id' => 'invoice.origin_commission',
+                'label' => 'templates.editor.origin_commission',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '<span data-if="originCommission">[[ originCommissionFormated ]] €</span>',
+            ],
+            [
+                'id' => 'invoice.origin_payment_fee',
+                'label' => 'templates.editor.origin_payment_fee',
+                'group' => 'Invoice',
+                'complexity' => 'simple',
+                'content' => '<span data-if="originPaymentFee">[[ originPaymentFeeFormated ]] €</span>',
+            ],
+            [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
+                'description' => 'templates.preview.snippet.pdf_header.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="header"><p>Header</p></div>',
@@ -270,6 +326,7 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
+                'description' => 'templates.editor.footer.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="footer"><p>Footer</p></div>',
@@ -337,6 +394,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
         $periods = $this->invoiceService->getUniqueReservationPeriods($invoice);
         $numbers = $this->invoiceService->getUniqueAppartmentsNumber($invoice);
 
+        // Sample surcharges so a template using the origin placeholders renders
+        // in the preview; a real invoice fills these from its reservation origin.
+        $sampleCommission = round($brutto * 12.0 / 100.0, 2);
+        $samplePaymentFee = round($brutto * 1.4 / 100.0, 2);
+
         $params = [
             'invoice' => $invoice,
             'vats' => $vats,
@@ -351,6 +413,11 @@ class InvoiceTemplatePreviewProvider implements ITemplatePreviewProvider
             // A sample invoice has no issuer behind it, so the preview shows what a
             // ten-day period would look like rather than leaving the line empty.
             'paymentDueDate' => (new \DateTimeImmutable('today'))->modify('+10 days'),
+            'originName' => 'Booking.com',
+            'originCommission' => $sampleCommission,
+            'originCommissionFormated' => number_format($sampleCommission, 2, ',', '.'),
+            'originPaymentFee' => $samplePaymentFee,
+            'originPaymentFeeFormated' => number_format($samplePaymentFee, 2, ',', '.'),
         ];
 
         return $this->appendPreviewMeta($params, $ctx);

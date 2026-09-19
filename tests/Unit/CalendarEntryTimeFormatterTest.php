@@ -6,7 +6,7 @@ namespace App\Tests\Unit;
 
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
-use App\Service\CalendarEntryTimeFormatter;
+use App\Service\Calendar\Entry\CalendarEntryTimeFormatter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
