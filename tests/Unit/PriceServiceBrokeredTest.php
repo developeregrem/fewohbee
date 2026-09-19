@@ -6,6 +6,7 @@ namespace App\Tests\Unit;
 
 use App\Entity\ReservationOrigin;
 use App\Service\PriceService;
+use App\Service\ReservationPeriodService;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\EntityManagerInterface;
@@ -72,7 +73,7 @@ final class PriceServiceBrokeredTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repository);
 
-        $service = new PriceService($em);
+        $service = new PriceService($em, new ReservationPeriodService());
 
         return $service->getPriceFromForm(new Request([], $params), 'new');
     }
