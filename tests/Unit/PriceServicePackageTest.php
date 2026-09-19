@@ -8,6 +8,7 @@ use App\Entity\Enum\PriceComponentAllocationType;
 use App\Entity\Price;
 use App\Entity\PriceComponent;
 use App\Service\PriceService;
+use App\Service\ReservationPeriodService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +16,10 @@ final class PriceServicePackageTest extends TestCase
 {
     private function makeService(): PriceService
     {
-        return new PriceService($this->createStub(EntityManagerInterface::class));
+        return new PriceService(
+            $this->createStub(EntityManagerInterface::class),
+            new ReservationPeriodService(),
+        );
     }
 
     private function makeComponent(string $desc, float $vat, PriceComponentAllocationType $type, float $value, int $order = 0, bool $remainder = false): PriceComponent

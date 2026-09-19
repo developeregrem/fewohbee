@@ -7,6 +7,7 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-zip": "*",
         "azuyalabs/yasumi": "2.11.*",
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-fixtures-bundle": "^4.0",
@@ -14,6 +15,7 @@
         "doctrine/orm": "^3.6",
         "endroid/qr-code": "^6.1",
         "horstoeko/zugferd": "^1.0",
+        "league/commonmark": "^2.10",
         "league/flysystem-aws-s3-v3": "^3",
         "mpdf/mpdf": "^8.2",
         "oneup/flysystem-bundle": "*",
@@ -45,7 +47,8 @@
         "symfony/web-link": "8.1.*",
         "symfony/yaml": "8.1.*",
         "symfonycasts/reset-password-bundle": "^1.18",
-        "web-auth/webauthn-lib": "5.3.*"
+        "web-auth/webauthn-lib": "5.3.*",
+        "web-token/jwt-library": "^4.1"
     },
     "require-dev": {
         "league/flysystem-memory": "^3",

@@ -7,6 +7,9 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * An invoice line for ancillary services or deductions with a signed unit price.
+ */
 #[ORM\Entity]
 #[ORM\Table(name: 'invoice_positions')]
 class InvoicePosition
@@ -21,8 +24,8 @@ class InvoicePosition
     #[ORM\Column(type: 'string', length: 255)]
     #[Assert\NotBlank]
     private $description;
+    // Negative unit prices represent deductions, just like miscellaneous prices.
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    #[Assert\PositiveOrZero]
     private $price;
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
@@ -115,9 +118,14 @@ class InvoicePosition
         return $this->invoice;
     }
 
+    /**
+     * A flat price is billed exactly once, so its quantity is always 1 — whatever was stored.
+     * Line total, invoice sum, booking journal and e-invoice all read the quantity through here,
+     * which keeps them consistent even for positions saved with a larger quantity by mistake.
+     */
     public function getAmount()
     {
-        return $this->amount;
+        return $this->isFlatPrice ? 1 : $this->amount;
     }
 
     public function getTotalPriceRaw(): float

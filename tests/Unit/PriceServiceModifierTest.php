@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
+use App\Entity\Appartment;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\Enum\ModifierType;
 use App\Entity\GuestCategory;
@@ -14,6 +15,7 @@ use App\Entity\RoomCategory;
 use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Service\PriceService;
+use App\Service\ReservationPeriodService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -134,8 +136,8 @@ final class PriceServiceModifierTest extends TestCase
         $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
         $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
 
-        $reservation = $this->makeReservation([1 => 1, 2 => 1]);
-        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+        $reservation = $this->makeReservation([1 => 1, 2 => 1], 2);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00'));
 
         $night = $service->getPriceBreakdownForReservation($reservation)[0];
         self::assertSame(200.0, $night->total());
@@ -152,8 +154,8 @@ final class PriceServiceModifierTest extends TestCase
         $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
         $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
 
-        $reservation = $this->makeReservation([1 => 2, 2 => 1]);
-        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+        $reservation = $this->makeReservation([1 => 2, 2 => 1], 2);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00'));
 
         $night = $service->getPriceBreakdownForReservation($reservation)[0];
         self::assertSame(200.0, $night->total());
@@ -170,8 +172,8 @@ final class PriceServiceModifierTest extends TestCase
         $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
         $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
 
-        $reservation = $this->makeReservation([1 => 1, 2 => 2]);
-        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00', 2));
+        $reservation = $this->makeReservation([1 => 1, 2 => 2], 2);
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $this->makePrice('100.00'));
 
         $night = $service->getPriceBreakdownForReservation($reservation)[0];
         // adult(100) + child full-fare(100) + child free(0) = 200
@@ -187,6 +189,29 @@ final class PriceServiceModifierTest extends TestCase
         self::assertSame(1, $discountedChild->count);
         self::assertSame(0.0, $discountedChild->unitPrice);
         self::assertSame($modifier, $discountedChild->modifier);
+    }
+
+    public function testMinFullPayersIsTakenFromTheBookedRoomWhenPriceServesSeveralCategories(): void
+    {
+        // One apartment price serves a category with a 2-guest threshold and one without.
+        // Booked into the category without threshold, the child keeps its FREE modifier.
+        $adult = $this->makeCategory(1, GuestStatisticalGroup::ADULT);
+        $child = $this->makeCategory(2, GuestStatisticalGroup::CHILD);
+        $modifier = $this->makeModifier($child, ModifierType::FREE, '0');
+
+        $withThreshold = (new RoomCategory())->setMinFullPayers(2);
+        $withoutThreshold = new RoomCategory();
+        $price = $this->makePrice('100.00');
+        $price->addRoomCategory($withThreshold);
+        $price->addRoomCategory($withoutThreshold);
+
+        $reservation = $this->makeReservation([1 => 1, 2 => 1]);
+        $reservation->setAppartment((new Appartment())->setRoomCategory($withoutThreshold));
+        $service = $this->makeService([$adult, $child], [$modifier], $reservation, $price);
+
+        $night = $service->getPriceBreakdownForReservation($reservation)[0];
+        self::assertSame(100.0, $night->total());
+        self::assertSame($modifier, $night->lines[1]->modifier);
     }
 
     public function testEmptyGuestCountsProducesNoLines(): void
@@ -227,7 +252,7 @@ final class PriceServiceModifierTest extends TestCase
                 GuestCategoryModifierRepository $modRepo,
                 private readonly Price $price,
             ) {
-                parent::__construct($em, $catRepo, $modRepo);
+                parent::__construct($em, new ReservationPeriodService(), $catRepo, $modRepo);
             }
 
             public function getPricesForReservationDays(Reservation $reservation, int $type, ?\Doctrine\Common\Collections\Collection $prices = null): array
@@ -243,12 +268,23 @@ final class PriceServiceModifierTest extends TestCase
         };
     }
 
-    private function makeReservation(array $guestCounts): Reservation
+    /**
+     * @param int $minFullPayers threshold of the booked room's category; 0 books no room
+     */
+    private function makeReservation(array $guestCounts, int $minFullPayers = 0): Reservation
     {
         $r = new Reservation();
         $r->setStartDate(new \DateTime('2026-06-01'));
         $r->setEndDate(new \DateTime('2026-06-03'));
         $r->setGuestCounts($guestCounts);
+
+        if ($minFullPayers > 0) {
+            $rc = new RoomCategory();
+            $rc->setMinFullPayers($minFullPayers);
+            $room = new Appartment();
+            $room->setRoomCategory($rc);
+            $r->setAppartment($room);
+        }
 
         return $r;
     }
@@ -274,18 +310,12 @@ final class PriceServiceModifierTest extends TestCase
         return $m;
     }
 
-    private function makePrice(string $value, int $minFullPayers = 0): Price
+    private function makePrice(string $value): Price
     {
         $p = new Price();
         $p->setPrice($value);
         $p->setVat(7.0);
         $p->setDescription('apt');
-
-        if ($minFullPayers > 0) {
-            $rc = new RoomCategory();
-            $rc->setMinFullPayers($minFullPayers);
-            $p->setRoomCategory($rc);
-        }
 
         return $p;
     }

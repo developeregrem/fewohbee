@@ -7,7 +7,7 @@ namespace App\Tests\Unit;
 use App\Entity\Enum\GuestStatisticalGroup;
 use App\Entity\GuestCategory;
 use App\Repository\GuestCategoryRepository;
-use App\Service\GuestCategoryAgeMapper;
+use App\Service\OnlineBooking\GuestCategoryAgeMapper;
 use PHPUnit\Framework\TestCase;
 
 final class GuestCategoryAgeMapperTest extends TestCase

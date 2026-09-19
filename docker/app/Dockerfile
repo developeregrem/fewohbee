@@ -11,7 +11,7 @@
 # stages, so composer install and cache:warmup run only once per build.
 #
 ARG PHP_VERSION=8.5
-ARG PHP_EXTS="redis intl gd pdo_mysql exif"
+ARG PHP_EXTS="redis intl gd pdo_mysql exif zip"
 
 ############################
 # Stage: base

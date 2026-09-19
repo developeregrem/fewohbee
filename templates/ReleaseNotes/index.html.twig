@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    {{ parent() }} - {{ 'release_notes.page_title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'release_notes.page_title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="fs-4 mb-0">
+                    <i class="fas fa-gift text-primary me-1"></i>
+                    {{ 'release_notes.page_title'|trans }}
+                </h2>
+                <span class="text-body-secondary small">
+                    {{ 'release_notes.installed_version'|trans({ '%version%': currentVersion }) }}
+                </span>
+            </div>
+
+            {% if releaseNotes is empty %}
+                <div class="alert alert-light border">{{ 'release_notes.empty'|trans }}</div>
+            {% else %}
+                <div class="accordion" id="releaseNotesAccordion">
+                    {% for entry in releaseNotes %}
+                        {% set isCurrent = entry.note.version == currentVersion %}
+                        {% set collapseId = 'releaseNote' ~ entry.note.version|replace({'.': '_'}) %}
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button{{ loop.first ? '' : ' collapsed' }}" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#{{ collapseId }}"
+                                        aria-expanded="{{ loop.first ? 'true' : 'false' }}" aria-controls="{{ collapseId }}">
+                                    <span class="fw-semibold">{{ entry.note.version }}</span>
+                                    {% if isCurrent %}
+                                        <span class="badge bg-primary ms-2">{{ 'release_notes.current'|trans }}</span>
+                                    {% endif %}
+                                    {% if entry.note.date %}
+                                        <span class="text-body-secondary small ms-2">{{ getLocalizedDate(entry.note.date, 'd. MMMM yyyy', app.request.locale) }}</span>
+                                    {% endif %}
+                                    {% if entry.note.locale != app.request.locale %}
+                                        <span class="badge bg-secondary ms-2 text-uppercase">{{ entry.note.locale }}</span>
+                                    {% endif %}
+                                </button>
+                            </h3>
+                            <div id="{{ collapseId }}" class="accordion-collapse collapse{{ loop.first ? ' show' : '' }}"
+                                 data-bs-parent="#releaseNotesAccordion">
+                                <div class="accordion-body release-notes-body">
+                                    {# Repository-authored markdown, rendered with html_input: strip.
+                                       See ReleaseNotesService::getHtml(). #}
+                                    {{ entry.html|raw }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

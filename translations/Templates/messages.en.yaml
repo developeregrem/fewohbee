@@ -46,36 +46,39 @@ templates.edit: Edit template
 templates.editor.address: Address
 templates.editor.appartment.positions: Room positions
 templates.editor.appartment.positions.desc: >-
-  Inserts a table with all room positions. If more than one room is selected,
-  all rooms will be listed. Only one line can be seen in the preview, but all of
-  them will be present during export.
+  Inserts a table with all room positions, including stay dates, quantity,
+  unit price, VAT, and total price.
 templates.editor.brutto: Total gross
-templates.editor.brutto.desc: Total gross
+templates.editor.brutto.desc: Outputs the invoice gross total.
 templates.editor.city: City
 templates.editor.company: Company
 templates.editor.firstname: First Name
 templates.editor.footer: Footer
 templates.editor.footer.desc: Adds a footer that appears at the bottom of the page on each page.
 templates.editor.invoice.date: Date of invoice
-templates.editor.invoice.date.desc: Date of invoice
+templates.editor.invoice.date.desc: Outputs the invoice date in day-month-year format.
 templates.editor.invoice.number: Invoice number
-templates.editor.invoice.number.desc: Invoice number
+templates.editor.invoice.number.desc: Outputs the invoice number.
 templates.editor.lastname: Last Name
 templates.editor.misc.positions: Miscellaneous positions
 templates.editor.misc.positions.desc: >-
-  Inserts a table with all miscellaneous positions (excluding tourist-tax and
-  apartment-modifier positions, which have their own snippets). If there are
-  multiple positions, all are listed. Only one position can be seen in the
-  preview, but all of them will be present during export.
+  Inserts a table with all miscellaneous invoice positions. Tourist taxes,
+  surcharges, and discounts are excluded because they have their own snippets.
 templates.editor.apartment_modifier.positions: Surcharge / discount positions
 templates.editor.apartment_modifier.positions.desc: >-
-  Inserts a table with all apartment surcharge / discount positions (e.g.
-  last-minute discounts, pet fees). The table is only rendered when such
+  Inserts a table with all apartment surcharge / discount positions. The table is only rendered when such
   positions exist on the invoice.
 templates.editor.origin_name: Booking origin (name)
 templates.editor.origin_commission: OTA commission
 templates.editor.origin_payment_fee: OTA payment fee
 templates.editor.tourist_tax.positions: Tourist tax positions
+templates.editor.opening_hours: Opening hours of the branch
+templates.editor.check_in_times: Check-in times of the branch
+templates.editor.check_in_times.desc: >-
+  Prints the branch's check-in window and check-out time as a single line, e.g.
+  "Check-in 17:00-20:00 - Check-out by 10:00". These are house rules, not the arrival time
+  of this particular reservation. The paragraph is omitted when no times are configured.
+templates.editor.opening_hours.desc: 'Prints the branch''s weekly opening hours as a single line, e.g. "Mon–Fri 08:00–12:00, 16:00–19:00". The paragraph is omitted when no hours are configured.'
 templates.editor.payment_qr: Payment QR code (GiroCode)
 templates.editor.payment_qr.desc: >-
   Inserts a QR code that fills a SEPA credit transfer in the payer's banking
@@ -94,7 +97,7 @@ templates.editor.tourist_tax.positions.desc: >-
 templates.editor.misc.total: Total price of all other items
 templates.editor.misc.total.desc: Returns the total price of all other items.
 templates.editor.netto: Total net
-templates.editor.netto.desc: Total (net)
+templates.editor.netto.desc: Outputs the invoice net total.
 templates.editor.phone: Phone
 templates.editor.price.sum: Total Price
 templates.editor.price.sum.desc: Outputs the total price of all room and miscellaneous items.
@@ -102,7 +105,7 @@ templates.editor.price.total: Total price of all rooms
 templates.editor.price.total.desc: Returns the total price of all rooms.
 templates.editor.remarks: Remarks
 templates.editor.vat: VAT included.
-templates.editor.vat.desc: Inserts a list with individual items of the included VAT
+templates.editor.vat.desc: Inserts a table that breaks down net amounts by VAT rate.
 templates.editor.zip: Zip code
 templates.flash.create.success: Template is successfully created.
 templates.flash.delete.inuse.reservations: Template cannot be deleted because it is used in existing reservations.
@@ -239,3 +242,10 @@ templates.include.error.notfound: "Included template not found (ID: %id%)"
 templates.include.error.incompatible: "Template \"%name%\" (%type%) is not compatible with this template type"
 templates.type: Template type
 templates.journal.name: Booking journal
+
+templates.preview.snippet.pdf_header.desc: Adds a header that appears at the top of every PDF page.
+templates.preview.snippet.bookingjournal.positions.desc: Inserts a table with all entries for the selected month, including accounts, amounts, and documents.
+templates.preview.snippet.gdpr.addresses.desc: Inserts one block per stored customer address with postal and contact details.
+templates.preview.snippet.gdpr.reservations.desc: Inserts one block per reservation with stay, booking source, guest count, and invoices.
+templates.editor.reservation.appartment_positions.desc: Inserts a table with all booked rooms, stay dates, guest counts, and prices.
+templates.editor.reservation.misc_positions.desc: Inserts all additional reservation positions line by line with description and total price.

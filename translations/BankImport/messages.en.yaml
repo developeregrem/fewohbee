@@ -266,11 +266,13 @@ accounting:
         created from a real line in the preview via "Save as rule".
       empty: No rules saved yet.
       edit: Edit rule
-      edit.help: Adjust name, priority and scope here.
+      edit.help: |
+        Adjust the name, priority and scope here, as well as the values its
+        conditions and its action carry.
       edit.recreate_hint: |
-        A rule's conditions and action are authored from a real line in the
-        preview — if you need to change them, delete the rule and re-create
-        it from a fresh bank line.
+        How a rule is built — which conditions it checks, which action it
+        runs, how many split parts it has — is decided in the import preview.
+        To change that, delete the rule and create it again from a bank line.
       and: AND
       conditions_empty: No conditions — rule fires on every line.
       create_hint: |
@@ -286,7 +288,9 @@ accounting:
         action: Action
         actions: Actions
       action:
+        assign: Assign
         ignore: Ignore
+        ignore_help: Matching lines are skipped during the import.
         split: Split (%count% parts)
         split_marker: 'after "%marker%"'
         enable: Enable

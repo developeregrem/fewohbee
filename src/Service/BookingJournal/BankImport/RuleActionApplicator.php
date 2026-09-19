@@ -29,6 +29,11 @@ use App\Entity\BankImportRule;
  */
 final class RuleActionApplicator
 {
+    public function __construct(
+        private readonly UserRegexCompiler $regexCompiler,
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $line
      */
@@ -214,7 +219,7 @@ final class RuleActionApplicator
      */
     private function extractAmountByRegex(string $purpose, string $pattern): float|null|false
     {
-        $regex = $this->normalizeUserRegex($pattern);
+        $regex = $this->regexCompiler->compile($pattern);
         if (null === $regex) {
             return false;
         }
@@ -335,7 +340,7 @@ final class RuleActionApplicator
      */
     private function extractInvoiceNumberByRegex(string $purpose, string $pattern): string|null|false
     {
-        $regex = $this->normalizeUserRegex($pattern);
+        $regex = $this->regexCompiler->compile($pattern);
         if (null === $regex) {
             return false;
         }
@@ -349,19 +354,6 @@ final class RuleActionApplicator
         }
 
         return $this->cleanInvoiceNumber($matches[1] ?? $matches[0] ?? null) ?? false;
-    }
-
-    private function normalizeUserRegex(string $pattern): ?string
-    {
-        if ('' === $pattern) {
-            return null;
-        }
-
-        if (1 === preg_match('/^([\/#~]).+\1([imsxueADSUXJ]*)$/', $pattern)) {
-            return $pattern;
-        }
-
-        return '/'.str_replace('/', '\\/', $pattern).'/iu';
     }
 
     private function cleanInvoiceNumber(mixed $value): ?string

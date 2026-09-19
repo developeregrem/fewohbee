@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Twig;
 
 use App\Service\AppSettingsService;
-use App\Service\CalendarService;
+use App\Service\Calendar\PublicHolidayService;
 use App\Twig\AppTwigExtensions;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,7 +29,7 @@ final class CalendarAccentMarkerStyleTest extends TestCase
         $this->extensions = new AppTwigExtensions(
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(RequestStack::class),
-            $this->createStub(CalendarService::class),
+            $this->createStub(PublicHolidayService::class),
             $this->createStub(AppSettingsService::class),
         );
     }

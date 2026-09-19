@@ -53,6 +53,9 @@ workflow:
     fallback_credit_account_help: "Used when a tax rate has no revenue account configured"
     booking_entry_remark: "Remark (optional)"
     booking_entry_remark_help: "If left empty, the revenue account name is used as the booking text (e.g. \"Revenue 7% VAT\")."
+    invoice_pdf_template: "Invoice template (PDF)"
+    invoice_pdf_template_help: "Leave empty to use the default invoice template."
+    invoice_pdf_template_attachment_help: "Template of the attached invoices. Leave empty to use the default invoice template."
     attachment_mode: "Invoice attachment"
     attachment_mode.einvoice_preferred: "E-invoice PDF if possible, otherwise plain PDF"
     attachment_mode.einvoice_required: "E-invoice PDF only (skip when data is incomplete)"
@@ -96,6 +99,20 @@ workflow:
     percentage_entry_requires_document_help: The entry is dated the day the workflow runs and belongs to that month. Marks it as "Document missing" while no document number is filled in. The month can then only be closed once it has been supplied. Set to "No" when no separate document is issued for this deduction.
     percentage_entry_requires_document_yes: "Yes"
     percentage_entry_requires_document_no: "No"
+    notification_note: "Explanation (optional)"
+    notification_note_help: "Explains in the notification window why the notification appeared, e.g. 'Payment overdue'."
+    notification_severity: "Importance"
+    notification_severity_help: "Only 'Critical' highlights the notification window in red."
+    notification_severity_info: "Info"
+    notification_severity_warning: "Warning"
+    notification_severity_critical: "Critical"
+    notification_role: "Visible to"
+    notification_role_help: "Who sees the notification."
+    notification_role_everyone: "All signed-in users"
+    notification_role_reservations: "Reservations"
+    notification_role_invoices: "Invoices"
+    notification_role_operations: "Operations"
+    notification_role_admin: "Administrators only"
 
   trigger:
     online_booking_created: "New online booking received"
@@ -111,6 +128,13 @@ workflow:
     days_before: "Days before"
     days_after: "Days after"
     day_of_month: "Day of month"
+    run_on_days: "Run on which days?"
+    run_on_days_help: "If the target date falls on an excluded day, the run is caught up on the next allowed day – nothing is lost."
+    run_on_days.daily: "Every day"
+    run_on_days.mon_fri: "Monday to Friday"
+    run_on_days.mon_sat: "Monday to Saturday"
+    run_at_hour: "Not before"
+    run_at_hour_help: "The run starts at the first pass at or after this hour. 00:00 means as early as possible."
 
   condition:
     invoice_status_is: "Invoice status is"
@@ -119,6 +143,7 @@ workflow:
     invoice_has_email: "Invoice has an email address"
     invoice_payment_means_is: "Payment method is"
     reservation_origin_is: "Origin is"
+    invoice_reservation_origin_is: "Reservation origin is"
     reservation_has_invoice: "Invoice exists"
     has_invoice.label: "Which invoice has to exist?"
     has_invoice.any: "Any invoice (excluding cancelled)"
@@ -134,10 +159,11 @@ workflow:
     change_invoice_status: "Change invoice status"
     change_payment_means: "Change payment method"
     change_reservation_status: "Change reservation status"
+    create_in_app_notification: "Show a notification in the app"
 
   preview:
     title: "Dry Run"
-    description: "Shows which records would currently be affected by this trigger and condition – without executing any action."
+    description: "Shows which records would currently be affected by this trigger and condition – without executing any action. The schedule (weekdays and time of day) is not taken into account here."
     run: "Run dry run"
     loading: "Loading …"
     empty: "No matching records found."
@@ -181,6 +207,12 @@ workflow:
     example_invoice_paid_reservation_status:
       name: "Example: Change reservation status on payment"
       description: "Changes the reservation status of all linked reservations when an invoice is marked as paid."
+    notify_online_booking_inapp:
+      name: "Show online bookings in the notification window"
+      description: "Creates an entry in the notification window for every online booking."
+    notify_calendar_import_inapp:
+      name: "Show calendar imports in the notification window"
+      description: "Creates an entry in the notification window for every imported booking."
 
   log:
     condition_not_met: "Condition not met"
@@ -211,6 +243,8 @@ workflow:
     reservation_status_changed: "%count% reservation(s) status changed to \"%status%\""
     attachment_template_not_found: "Attachment skipped: template #%id% was not found"
     attachment_template_incompatible: "Attachment skipped: \"%name%\" is not a PDF template"
+    attachment_invoice_template_not_found: "Invoice attachment: template #%id% was not found, the default invoice template was used instead"
+    attachment_invoice_template_incompatible: "Invoice attachment: \"%name%\" is not an invoice template, the default invoice template was used instead"
     attachment_no_reservation: "Attachment skipped: \"%name%\" requires a reservation"
     attachment_render_failed: "Attachment \"%name%\" could not be created: %error%"
     attachment_no_invoice: "Attachment skipped: no invoice exists"
@@ -219,6 +253,7 @@ workflow:
     skipped_attachment_missing: "Skipped: a required attachment is missing – %reason%"
     skipped_attachments_too_large: "Skipped: the attachments are too large for email delivery (%size% MB)"
     email_sent_with_attachments: "Email sent to %recipient% (template: \"%template%\", %count% attachment)|Email sent to %recipient% (template: \"%template%\", %count% attachments)"
+    notification_created: "Notification created: %title%"
 
   error:
     name_required: "Please enter a name."

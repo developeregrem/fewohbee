@@ -193,7 +193,7 @@ class Reservation
     }
 
     /**
-     * @return Appartment
+     * @return Appartment|null
      */
     public function getAppartment()
     {
@@ -317,7 +317,7 @@ class Reservation
     /**
      * Get booker.
      *
-     * @return Customer
+     * @return Customer|null
      */
     public function getBooker()
     {

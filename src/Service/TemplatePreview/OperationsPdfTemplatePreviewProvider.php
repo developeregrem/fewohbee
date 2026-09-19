@@ -115,6 +115,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'operations.header_footer',
                 'label' => 'templates.editor.operations.header_footer',
+                'description' => 'templates.editor.operations.header_footer.desc',
                 'group' => 'Operations',
                 'complexity' => 'easy',
                 'content' => "<div class=\"header\"><div style=\"text-align: center; color: #666; font-size: 11px;\">[[ simple.meta.periodLabel ]]<span data-repeat=\"simple.meta.occupancyTypeLabelKeys\" data-repeat-as=\"type\"> | [[ occupancyLabels[type]|trans({}, 'Housekeeping') ]]</span> | [[ simple.meta.subsidiaryName ?: (simple.meta.subsidiaryAllLabelKey|trans({}, 'Housekeeping')) ]] | Erzeugt [[ simple.meta.generatedAt ]]</div></div><div class=\"footer\"><div style=\"text-align: right; font-size: 11px; color: #666;\">Seite {PAGENO} von {nbpg}</div></div>",
@@ -122,6 +123,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'operations.reservations.table',
                 'label' => 'templates.editor.operations.reservations_table',
+                'description' => 'templates.editor.operations.reservations_table.desc',
                 'group' => 'Operations',
                 'complexity' => 'easy',
                 'content' => "<h3>Alle Reservierungen im Zeitraum</h3><table style=\"width:100%; border-collapse: collapse;\"><tr><th>Zimmer</th><th>Gast</th><th>Personen</th><th>Zeitraum</th></tr><tr data-repeat=\"simple.reservations\" data-repeat-as=\"row\"><td>[[ row.roomLabel ]]</td><td>[[ row.guest ]]</td><td>[[ row.persons ]]</td><td>[[ row.start|date('d.m.Y') ]] - [[ row.end|date('d.m.Y') ]]</td></tr></table>",
@@ -129,6 +131,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'operations.housekeeping.day',
                 'label' => 'templates.editor.operations.housekeeping_day',
+                'description' => 'templates.editor.operations.housekeeping_day.desc',
                 'group' => 'Operations',
                 'complexity' => 'easy',
                 'content' => "<h3>Tagesbelegung</h3><table style=\"width:100%; border-collapse: collapse;\"><tr><th>{{ 'housekeeping.date'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.room'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.occupancy'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.guests'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.reservation'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.status'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.assigned_to'|trans({}, 'Housekeeping') }}</th><th>{{ 'housekeeping.note'|trans({}, 'Housekeeping') }}</th></tr><tr data-repeat=\"simple.views.housekeepingDay.rows\" data-repeat-as=\"row\"><td>[[ row.date ]]</td><td>[[ row.room ]]</td><td>[[ row.occupancyLabelKey|trans({}, 'Housekeeping') ]]</td><td>[[ row.guests ]]</td><td>[[ row.reservationSummary ]]</td><td>[[ row.statusLabelKey ? (row.statusLabelKey|trans({}, 'Housekeeping')) : '' ]]</td><td>[[ row.assignedTo ]]</td><td>[[ row.note ]]</td></tr></table>",
@@ -136,6 +139,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'operations.housekeeping.week',
                 'label' => 'templates.editor.operations.housekeeping_week',
+                'description' => 'templates.editor.operations.housekeeping_week.desc',
                 'group' => 'Operations',
                 'complexity' => 'easy',
                 'content' => "<h3>Wochenbelegung</h3><table style=\"width:100%; border-collapse: collapse;\"><tr><th>{{ 'housekeeping.room'|trans({}, 'Housekeeping') }}</th><th data-repeat=\"simple.days\" data-repeat-as=\"day\">[[ day.label ]]</th></tr><tr data-repeat=\"simple.views.housekeepingWeek.rows\" data-repeat-as=\"row\"><td>[[ row.apartmentLabel ]]</td><td data-repeat=\"row.cells\" data-repeat-as=\"cell\">[[ cell.occupancyLabelKey ? (cell.occupancyLabelKey|trans({}, 'Housekeeping')) : '' ]][[ cell.statusLabelKey ? ' / ' ~ (cell.statusLabelKey|trans({}, 'Housekeeping')) : '' ]][[ cell.guests ? ' / ' ~ cell.guests : '' ]]</td></tr></table>",
@@ -143,6 +147,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
+                'description' => 'templates.preview.snippet.pdf_header.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="header"><p>Header</p></div>',
@@ -150,6 +155,7 @@ class OperationsPdfTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
+                'description' => 'templates.editor.footer.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="footer"><p>Footer</p></div>',

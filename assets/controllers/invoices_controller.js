@@ -270,8 +270,10 @@ export default class extends Controller {
         if (isFlatPrice && !isPackage) {
             this.applyFlatPriceState(isFlatPrice, isPerRoom);
         }
+        // flat prices (packages included) lock the quantity to 1, any other price leaves it to the user
         const amount = document.getElementById('invoice_misc_position_amount');
-        if (amount) amount.value = values[4] || '';
+        if (amount && !isFlatPrice?.checked) amount.value = '';
+        this.applyFlatPriceAmountState(isFlatPrice);
         return false;
     }
 
@@ -296,6 +298,7 @@ export default class extends Controller {
 
     flatPriceTogglePerRoomAction(event) {
         const flatPriceCheckbox = event.currentTarget;
+        this.applyFlatPriceAmountState(flatPriceCheckbox);
         const perRoomSelector = flatPriceCheckbox.dataset.perRoomSelector;
         if (!perRoomSelector) return;
         const perRoomCheckbox = document.querySelector(perRoomSelector);
@@ -332,6 +335,21 @@ export default class extends Controller {
         }
     }
 
+    // A flat price is billed exactly once, so its quantity is fixed to 1 and a hint below the field says so.
+    applyFlatPriceAmountState(flatPriceCheckbox) {
+        const amountSelector = flatPriceCheckbox?.dataset.amountSelector;
+        if (!amountSelector) return;
+        const amount = document.querySelector(amountSelector);
+        if (!amount) return;
+
+        if (flatPriceCheckbox.checked) {
+            amount.value = '1';
+        }
+        amount.readOnly = flatPriceCheckbox.checked;
+        const help = document.getElementById(`${amount.id}_help`);
+        if (help) help.classList.toggle('d-none', !flatPriceCheckbox.checked);
+    }
+
     syncFlatPricePerRoomStates() {
         const pairs = [
             ['#invoice_apartment_position_isFlatPrice', '#invoice_apartment_position_isPerRoom'],
@@ -341,6 +359,7 @@ export default class extends Controller {
             const flat = document.querySelector(flatSelector);
             const perRoom = document.querySelector(perRoomSelector);
             this.applyFlatPriceState(flat, perRoom);
+            this.applyFlatPriceAmountState(flat);
         });
     }
 

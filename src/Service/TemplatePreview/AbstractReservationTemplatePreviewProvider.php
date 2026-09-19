@@ -20,6 +20,7 @@ use App\Entity\InvoiceAppartment;
 use App\Entity\InvoicePosition;
 use App\Entity\Reservation;
 use App\Entity\ReservationStatus;
+use App\Entity\Subsidiary;
 use App\Entity\Template;
 use App\Interfaces\ITemplatePreviewProvider;
 use App\Service\ReservationService;
@@ -103,6 +104,22 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
     {
         return [
             [
+                'id' => 'reservation.check_in_times',
+                'label' => 'templates.editor.check_in_times',
+                'description' => 'templates.editor.check_in_times.desc',
+                'group' => 'Reservation',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"check_in_times(reservation1.appartment.object)\">[[ check_in_times(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.checkInNote\">[[ reservation1.appartment.object.checkInNote ]]</p>",
+            ],
+            [
+                'id' => 'reservation.opening_hours',
+                'label' => 'templates.editor.opening_hours',
+                'description' => 'templates.editor.opening_hours.desc',
+                'group' => 'Reservation',
+                'complexity' => 'easy',
+                'content' => "<p data-if=\"opening_hours(reservation1.appartment.object)\">{{ 'object.opening_hours'|trans }}: [[ opening_hours(reservation1.appartment.object) ]]</p>\n<p data-if=\"reservation1.appartment.object.openingHoursNote\">[[ reservation1.appartment.object.openingHoursNote ]]</p>",
+            ],
+            [
                 'id' => 'reservation.booker.salutation',
                 'label' => 'customer.salutation',
                 'group' => 'Reservation',
@@ -168,6 +185,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
             [
                 'id' => 'reservation.price.total',
                 'label' => 'templates.editor.price.total',
+                'description' => 'templates.editor.price.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ sumApartment ]] €',
@@ -175,6 +193,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
             [
                 'id' => 'reservation.price.misc',
                 'label' => 'templates.editor.misc.total',
+                'description' => 'templates.editor.misc.total.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ sumMisc ]] €',
@@ -182,6 +201,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
             [
                 'id' => 'reservation.price.sum',
                 'label' => 'templates.editor.price.sum',
+                'description' => 'templates.editor.price.sum.desc',
                 'group' => 'Totals',
                 'complexity' => 'simple',
                 'content' => '[[ totalPrice ]] €',
@@ -189,6 +209,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
             [
                 'id' => 'reservation.apartment_positions.row',
                 'label' => 'templates.editor.appartment.positions',
+                'description' => 'templates.editor.reservation.appartment_positions.desc',
                 'group' => 'Reservation',
                 'complexity' => 'easy',
                 'content' => "<table style=\"width:100%; border-collapse: collapse;\"><tr><th>{{ 'reservation.startdate'|trans }}</th><th>{{ 'reservation.enddate'|trans }}</th><th>{{ 'reservation.appartment.name'|trans }}</th><th>{{ 'reservation.persons'|trans }}</th><th>{{ 'reservation.price'|trans }}</th></tr><tr data-repeat=\"apartmentPositions\" data-repeat-as=\"position\"><td>[[ position.startDate|date('d.m.Y') ]]</td><td>[[ position.endDate|date('d.m.Y') ]]</td><td>[[ position.description ]]</td><td>[[ position.persons ]]</td><td>[[ position.totalPrice ]] €</td></tr></table>",
@@ -196,6 +217,7 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
             [
                 'id' => 'reservation.misc_positions.line',
                 'label' => 'templates.editor.misc.positions',
+                'description' => 'templates.editor.reservation.misc_positions.desc',
                 'group' => 'Reservation',
                 'complexity' => 'easy',
                 'content' => "<span data-repeat=\"miscPositions\" data-repeat-as=\"position\">[[ position.description ]]: [[ position.totalPrice ]] €<br /></span>",
@@ -274,6 +296,10 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
 
     /**
      * Build a minimal sample payload for reservation templates.
+     *
+     * @param array<string, mixed> $ctx
+     *
+     * @return array<string, mixed>
      */
     protected function buildSampleParams(array $ctx = []): array
     {
@@ -291,10 +317,23 @@ abstract class AbstractReservationTemplatePreviewProvider implements ITemplatePr
         $address->setEmail('max@example.com');
         $address->setPhone('+49 30 123456');
 
+        $subsidiary = new Subsidiary();
+        $subsidiary->setName('Musterpension');
+        $subsidiary->setDescription('Haupthaus');
+        $subsidiary->setOpeningHours([
+            1 => [['08:00', '12:00'], ['16:00', '19:00']],
+            2 => [['08:00', '12:00'], ['16:00', '19:00']],
+            3 => [['08:00', '12:00'], ['16:00', '19:00']],
+            4 => [['08:00', '12:00'], ['16:00', '19:00']],
+            5 => [['08:00', '12:00'], ['16:00', '19:00']],
+        ]);
+        $subsidiary->setOpeningHoursNote('Außerhalb dieser Zeiten nach Vereinbarung');
+
         $appartment = new Appartment();
         $appartment->setNumber('1');
         $appartment->setDescription('Doppelzimmer');
         $appartment->setBedsMax(2);
+        $appartment->setObject($subsidiary);
 
         $status = new ReservationStatus();
         $status->setName('Bestätigt');

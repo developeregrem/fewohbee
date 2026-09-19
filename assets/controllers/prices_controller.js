@@ -220,24 +220,19 @@ export default class extends Controller {
                 this.applyMandatoryOnlineState(mandatoryOnlineCheckbox.checked, priceId);
             }
         }
-        // Single shared category field: required + no "all categories" option for apartment prices,
-        // optional + "all categories" default for misc prices.
+        // Shared multi-select category field: at least one category for apartment prices,
+        // optional for misc prices (no selection = all categories).
         const categorySelect = this.element.querySelector(`#category-${priceId}`);
-        const categoryAllOption = this.element.querySelector(`#category-all-${priceId}`);
         const categoryHint = this.element.querySelector(`#category-hint-${priceId}`);
+        const categoryAppartmentHint = this.element.querySelector(`#category-hint-appartment-${priceId}`);
         if (categorySelect) {
             categorySelect.required = isAppartment;
         }
-        if (categoryAllOption) {
-            categoryAllOption.disabled = isAppartment;
-            categoryAllOption.hidden = isAppartment;
-            if (isAppartment && categorySelect && categorySelect.value === '') {
-                const firstReal = categorySelect.querySelector('option[value]:not([value=""])');
-                if (firstReal) categorySelect.value = firstReal.value;
-            }
-        }
         if (categoryHint) {
             categoryHint.classList.toggle('d-none', isAppartment);
+        }
+        if (categoryAppartmentHint) {
+            categoryAppartmentHint.classList.toggle('d-none', !isAppartment);
         }
         const packageWrapper = this.element.querySelector(`#package-wrap-${priceId}`);
         if (packageWrapper) {

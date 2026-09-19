@@ -1,7 +1,7 @@
 {# Renders a human-readable summary of a BankImportRule's conditions + action.
    Reusable in the list view and the edit view. #}
 
-{% macro conditionLine(condition) %}
+{% macro conditionLabel(condition) %}
     {% set fieldLabels = {
         'counterpartyName': 'accounting.bank_import.rules.field_label.counterparty_name',
         'counterpartyIban': 'accounting.bank_import.rules.field_label.counterparty_iban',
@@ -20,7 +20,16 @@
     } %}
     <span class="text-body-secondary">{{ (fieldLabels[condition.field] ?? condition.field)|trans }}</span>
     <span class="text-muted small">{{ (opLabels[condition.operator] ?? condition.operator)|trans }}</span>
+{% endmacro %}
+
+{% macro conditionValue(condition) %}
     <code>{% if condition.value is iterable %}{{ condition.value|join(' – ') }}{% else %}{{ condition.value }}{% endif %}</code>
+{% endmacro %}
+
+{% macro conditionLine(condition) %}
+    {% import _self as ui %}
+    {{ ui.conditionLabel(condition) }}
+    {{ ui.conditionValue(condition) }}
 {% endmacro %}
 
 {% macro conditionsList(conditions) %}
@@ -37,7 +46,29 @@
     {% endif %}
 {% endmacro %}
 
+{# How one split row determines its amount. With withValue the marker text is
+   part of the label; the edit view turns that text into an input and only
+   needs the kind. #}
+{% macro splitSource(split, withValue = true) %}
+    {% if split.amountSource|default(null) == 'purpose_marker' %}
+        {% if withValue %}
+            {{ 'accounting.bank_import.rules.action.split_marker'|trans({'%marker%': split.marker|default('')}) }}
+        {% else %}
+            {{ 'accounting.bank_import.rule.split_source.purpose_marker'|trans }}
+        {% endif %}
+    {% elseif split.amountSource|default(null) == 'purpose_regex' %}
+        {{ 'accounting.bank_import.rule.split_source.purpose_regex'|trans }}
+    {% elseif split.amount is defined %}
+        {{ split.amount|number_format(2, ',', '.') }}
+    {% elseif split.percent is defined %}
+        {{ split.percent|number_format(2, ',', '.') }}%
+    {% elseif split.remainder|default(false) %}
+        {{ 'accounting.bank_import.split.mode.remainder'|trans }}
+    {% endif %}
+{% endmacro %}
+
 {% macro actionSummary(action, accountsById, taxRatesById) %}
+    {% import _self as ui %}
     {% set mode = action.mode|default('ignore') %}
     {% if mode == 'ignore' %}
         <span class="badge bg-light text-dark border"><i class="fas fa-eye-slash"></i> {{ 'accounting.bank_import.rules.action.ignore'|trans }}</span>
@@ -52,15 +83,7 @@
             {% set taxRate = taxRatesById[split.taxRateId|default(0)] ?? null %}
             <div class="small mt-1">
                 <span class="text-muted">#{{ loop.index }}</span>
-                {% if split.amountSource|default(null) == 'purpose_marker' %}
-                    <code>{{ 'accounting.bank_import.rules.action.split_marker'|trans({'%marker%': split.marker|default('')}) }}</code>
-                {% elseif split.amount is defined %}
-                    <code>{{ split.amount|number_format(2, ',', '.') }}</code>
-                {% elseif split.percent is defined %}
-                    <code>{{ split.percent|number_format(2, ',', '.') }}%</code>
-                {% elseif split.remainder|default(false) %}
-                    <code>{{ 'accounting.bank_import.split.mode.remainder'|trans }}</code>
-                {% endif %}
+                <code>{{ ui.splitSource(split) }}</code>
                 {% if debit %}
                     <span class="text-muted ms-1">{{ 'accounting.bank_import.preview.col.debit'|trans }}:</span>
                     <code>{{ debit.label }}</code>

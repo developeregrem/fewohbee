@@ -53,6 +53,9 @@ workflow:
     fallback_credit_account_help: "Wird verwendet, wenn beim Steuersatz kein Erlöskonto hinterlegt ist"
     booking_entry_remark: "Bemerkung (optional)"
     booking_entry_remark_help: "Wenn leer, wird die Bezeichnung des Erlöskontos als Buchungstext verwendet (z. B. „Erlöse 7% USt“)."
+    invoice_pdf_template: "Rechnungsvorlage (PDF)"
+    invoice_pdf_template_help: "Leer lassen, um die Standard-Rechnungsvorlage zu verwenden."
+    invoice_pdf_template_attachment_help: "Vorlage der angehängten Rechnungen. Leer lassen, um die Standard-Rechnungsvorlage zu verwenden."
     attachment_mode: "Rechnungsanhang"
     attachment_mode.einvoice_preferred: "E-Rechnungs-PDF wenn möglich, sonst normales PDF"
     attachment_mode.einvoice_required: "Nur E-Rechnungs-PDF (bei unvollständigen Daten überspringen)"
@@ -96,6 +99,20 @@ workflow:
     percentage_entry_requires_document_help: Die Buchung erhält das Datum des Tages, an dem der Workflow läuft, und zählt zu dessen Monat. Markiert sie mit „Beleg fehlt“, solange keine Belegnummer eingetragen ist. Der Monat lässt sich dann erst abschließen, wenn sie nachgetragen wurde. Auf „Nein“ stellen, wenn zu diesem Abzug kein eigener Beleg kommt.
     percentage_entry_requires_document_yes: Ja
     percentage_entry_requires_document_no: Nein
+    notification_note: "Hinweistext (optional)"
+    notification_note_help: "Erklärt im Benachrichtigungsfenster, warum die Benachrichtigung erscheint — z.B. 'Zahlungsziel überschritten'."
+    notification_severity: "Wichtigkeit"
+    notification_severity_help: "Nur 'Kritisch' hebt das Benachrichtigungsfenster rot hervor."
+    notification_severity_info: "Info"
+    notification_severity_warning: "Warnung"
+    notification_severity_critical: "Kritisch"
+    notification_role: "Sichtbar für"
+    notification_role_help: "Wer die Benachrichtigung sieht."
+    notification_role_everyone: "Alle angemeldeten Benutzer"
+    notification_role_reservations: "Reservierungen"
+    notification_role_invoices: "Rechnungen"
+    notification_role_operations: "Betrieb"
+    notification_role_admin: "Nur Administratoren"
 
   # Trigger labels
   trigger:
@@ -112,6 +129,13 @@ workflow:
     days_before: "Tage vorher"
     days_after: "Tage danach"
     day_of_month: "Tag des Monats"
+    run_on_days: "An welchen Tagen ausführen?"
+    run_on_days_help: "Fällt der Stichtag auf einen ausgeschlossenen Tag, wird die Ausführung am nächsten erlaubten Tag nachgeholt – es geht nichts verloren."
+    run_on_days.daily: "Täglich"
+    run_on_days.mon_fri: "Montag bis Freitag"
+    run_on_days.mon_sat: "Montag bis Samstag"
+    run_at_hour: "Frühestens ab Uhrzeit"
+    run_at_hour_help: "Die Ausführung startet beim ersten Durchlauf ab dieser Uhrzeit. 00:00 bedeutet: so früh wie möglich."
 
   # Condition labels
   condition:
@@ -121,6 +145,7 @@ workflow:
     invoice_has_email: "Rechnung hat eine E-Mail-Adresse"
     invoice_payment_means_is: "Zahlungsmethode ist"
     reservation_origin_is: "Herkunft ist"
+    invoice_reservation_origin_is: "Herkunft der Reservierung ist"
     reservation_has_invoice: "Rechnung vorhanden"
     has_invoice.label: "Welche Rechnung muss es geben?"
     has_invoice.any: "Irgendeine Rechnung (ohne stornierte)"
@@ -137,11 +162,12 @@ workflow:
     change_invoice_status: "Rechnungsstatus ändern"
     change_payment_means: "Zahlungsmethode ändern"
     change_reservation_status: "Reservierungsstatus ändern"
+    create_in_app_notification: "Benachrichtigung in der App anzeigen"
 
   # Preview (dry run)
   preview:
     title: "Probelauf"
-    description: "Zeigt, welche Datensätze aktuell von diesem Auslöser und dieser Bedingung betroffen wären – ohne tatsächlich eine Aktion auszuführen."
+    description: "Zeigt, welche Datensätze aktuell von diesem Auslöser und dieser Bedingung betroffen wären – ohne tatsächlich eine Aktion auszuführen. Der Zeitplan (Wochentage und Uhrzeit) bleibt dabei unberücksichtigt."
     run: "Probelauf starten"
     loading: "Wird geladen …"
     empty: "Keine passenden Datensätze gefunden."
@@ -186,6 +212,12 @@ workflow:
     example_invoice_paid_reservation_status:
       name: "Beispiel: Reservierungsstatus bei Bezahlung ändern"
       description: "Ändert den Reservierungsstatus aller verknüpften Reservierungen, wenn eine Rechnung als bezahlt markiert wird."
+    notify_online_booking_inapp:
+      name: "Online-Buchung im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede Online-Buchung einen Eintrag im Benachrichtigungsfenster an."
+    notify_calendar_import_inapp:
+      name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."
 
   log:
     condition_not_met: "Bedingung nicht erfüllt"
@@ -216,6 +248,8 @@ workflow:
     reservation_status_changed: "%count% Reservierung(en) auf Status \"%status%\" geändert"
     attachment_template_not_found: "Anhang übersprungen: Vorlage #%id% wurde nicht gefunden"
     attachment_template_incompatible: "Anhang übersprungen: \"%name%\" ist keine PDF-Vorlage"
+    attachment_invoice_template_not_found: "Rechnungsanhang: Vorlage #%id% wurde nicht gefunden, es wurde die Standard-Rechnungsvorlage verwendet"
+    attachment_invoice_template_incompatible: "Rechnungsanhang: \"%name%\" ist keine Rechnungsvorlage, es wurde die Standard-Rechnungsvorlage verwendet"
     attachment_no_reservation: "Anhang übersprungen: \"%name%\" benötigt eine Reservierung"
     attachment_render_failed: "Anhang \"%name%\" konnte nicht erstellt werden: %error%"
     attachment_no_invoice: "Anhang übersprungen: es existiert keine Rechnung"
@@ -224,6 +258,7 @@ workflow:
     skipped_attachment_missing: "Übersprungen: ein benötigter Anhang fehlt – %reason%"
     skipped_attachments_too_large: "Übersprungen: die Anhänge sind mit %size% MB zu groß für den E-Mail-Versand"
     email_sent_with_attachments: "E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhang)|E-Mail an %recipient% versendet (Vorlage: \"%template%\", %count% Anhänge)"
+    notification_created: "Benachrichtigung erstellt: %title%"
 
   error:
     name_required: "Bitte gib eine Bezeichnung ein."

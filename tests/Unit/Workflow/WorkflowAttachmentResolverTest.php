@@ -312,6 +312,91 @@ final class WorkflowAttachmentResolverTest extends TestCase
         self::assertSame('HYBRID_BYTES', $set->attachments[0]->binaryPayload);
     }
 
+    public function testInvoicesUseTheConfiguredTemplate(): void
+    {
+        $this->invoicePdfTemplates = [$this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7)];
+        $chosen = $this->registerTemplate('Rechnung kompakt', 'TEMPLATE_INVOICE_PDF', 8);
+        $this->readinessService->method('check')->willReturn($this->readiness(false));
+
+        $set = $this->buildResolver()->resolve(
+            [['type' => 'invoice_pdf']],
+            $this->buildInvoice('1001'),
+            [],
+            WorkflowAttachmentResolver::POLICY_SKIP_MISSING,
+            8
+        );
+
+        self::assertSame(1, $set->count());
+        self::assertSame($chosen, $set->attachments[0]->template);
+        self::assertSame([], $set->warnings);
+    }
+
+    public function testInvoicesFallBackToTheDefaultTemplateWithoutAChoice(): void
+    {
+        $default = $this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7);
+        $this->invoicePdfTemplates = [$default];
+        $this->registerTemplate('Rechnung kompakt', 'TEMPLATE_INVOICE_PDF', 8);
+        $this->readinessService->method('check')->willReturn($this->readiness(false));
+
+        $set = $this->buildResolver()->resolve([['type' => 'invoice_pdf']], $this->buildInvoice('1001'), []);
+
+        self::assertSame($default, $set->attachments[0]->template);
+    }
+
+    public function testDeletedInvoiceTemplateFallsBackToTheDefaultAndWarns(): void
+    {
+        $default = $this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7);
+        $this->invoicePdfTemplates = [$default];
+        $this->readinessService->method('check')->willReturn($this->readiness(false));
+
+        $set = $this->buildResolver()->resolve(
+            [['type' => 'invoice_pdf']],
+            $this->buildInvoice('1001'),
+            [],
+            WorkflowAttachmentResolver::POLICY_SKIP_MISSING,
+            999
+        );
+
+        // The invoice still goes out, the reason is recorded.
+        self::assertSame(1, $set->count());
+        self::assertSame($default, $set->attachments[0]->template);
+        self::assertSame(['workflow.log.attachment_invoice_template_not_found'], $set->warnings);
+    }
+
+    public function testInvoiceTemplateOfTheWrongTypeFallsBackToTheDefaultAndWarns(): void
+    {
+        $default = $this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7);
+        $this->invoicePdfTemplates = [$default];
+        $this->registerTemplate('Rechnungsmail', 'TEMPLATE_INVOICE_EMAIL', 9);
+        $this->readinessService->method('check')->willReturn($this->readiness(false));
+
+        $set = $this->buildResolver()->resolve(
+            [['type' => 'invoice_pdf']],
+            $this->buildInvoice('1001'),
+            [],
+            WorkflowAttachmentResolver::POLICY_SKIP_MISSING,
+            9
+        );
+
+        self::assertSame($default, $set->attachments[0]->template);
+        self::assertSame(['workflow.log.attachment_invoice_template_incompatible'], $set->warnings);
+    }
+
+    public function testRequireAllPolicyEscalatesAMissingInvoiceTemplate(): void
+    {
+        $this->invoicePdfTemplates = [$this->registerTemplate('Standardrechnung', 'TEMPLATE_INVOICE_PDF', 7)];
+        $this->readinessService->method('check')->willReturn($this->readiness(false));
+
+        $this->expectException(WorkflowSkippedException::class);
+        $this->buildResolver()->resolve(
+            [['type' => 'invoice_pdf']],
+            $this->buildInvoice('1001'),
+            [],
+            WorkflowAttachmentResolver::POLICY_REQUIRE_ALL,
+            999
+        );
+    }
+
     public function testEInvoiceGenerationFailureFallsBackToPlainPdf(): void
     {
         $this->invoicePdfTemplates = [$this->registerTemplate('Rechnung PDF', 'TEMPLATE_INVOICE_PDF', 7)];

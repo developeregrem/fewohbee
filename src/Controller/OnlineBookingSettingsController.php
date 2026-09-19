@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\OnlineBookingMinStay;
-use App\Entity\OnlineBookingMinStayOverride;
+use App\Entity\BookingRestrictionRule;
 use App\Entity\OnlineBookingRoomCategoryLimit;
 use App\Form\OnlineBookingConfigType;
-use App\Repository\OnlineBookingMinStayOverrideRepository;
-use App\Repository\OnlineBookingMinStayRepository;
+use App\Repository\BookingRestrictionRuleRepository;
 use App\Repository\OnlineBookingRoomCategoryLimitRepository;
 use App\Repository\PriceRepository;
 use App\Repository\RoomCategoryRepository;
 use App\Repository\WorkflowRepository;
-use App\Service\OnlineBookingConfigService;
-use App\Service\PublicBookingCalendarService;
+use App\Service\OnlineBooking\BookingRestrictionCalendar;
+use App\Service\OnlineBooking\BookingRestrictionPresentation;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\PublicBookingCalendarService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+/** Maintains online booking presentation and room publication settings. */
 #[Route('/settings/online-booking')]
 #[IsGranted('ROLE_ADMIN')]
 class OnlineBookingSettingsController extends AbstractController
@@ -33,12 +34,13 @@ class OnlineBookingSettingsController extends AbstractController
         Request $request,
         OnlineBookingConfigService $configService,
         RoomCategoryRepository $roomCategoryRepository,
-        OnlineBookingMinStayRepository $minStayRepository,
         OnlineBookingRoomCategoryLimitRepository $limitRepository,
-        OnlineBookingMinStayOverrideRepository $overrideRepository,
         PriceRepository $priceRepository,
         PublicBookingCalendarService $calendarService,
         WorkflowRepository $workflowRepository,
+        BookingRestrictionRuleRepository $ruleRepository,
+        BookingRestrictionCalendar $calendar,
+        BookingRestrictionPresentation $presentation,
     ): Response {
         $config = $configService->getConfig();
         $form = $this->createForm(OnlineBookingConfigType::class, $config, [
@@ -56,35 +58,51 @@ class OnlineBookingSettingsController extends AbstractController
         }
 
         $categories = $roomCategoryRepository->findAll();
-        $minStayByCategory = $minStayRepository->findAllIndexedByCategory();
         $limitsByCategory = $limitRepository->findAllIndexedByCategory();
-        $overrides = $overrideRepository->findBy([], ['startDate' => 'ASC']);
-
-        // print warning when restriction special periods (overrides) exists but only in the past
-        $restrictionOverrideWarning = false;
-        $today = new \DateTimeImmutable('today');
-        $allOverridesAreInPast = [] !== $overrides && array_all(
-            $overrides,
-            static fn (OnlineBookingMinStayOverride $override): bool => $override->getEndDate() < $today
-        );
-
-        if ($allOverridesAreInPast) {
-            $restrictionOverrideWarning = true;
-        }
-
         $origin = $configService->getReservationOrigin($config);
         $priceOverview = null !== $origin
             ? $priceRepository->findActivePricesByOrigin((int) $origin->getId())
             : ['room' => [], 'misc' => [], 'extras' => []];
 
+        // Unlimited rules and special periods are the same entity; the settings page shows
+        // them in two lists because that is how an operator thinks about them.
+        $allRules = $ruleRepository->findForSettings();
+        $descriptions = [];
+        foreach ($allRules as $rule) {
+            $descriptions[(int) $rule->getId()] = $presentation->describe($rule);
+        }
+
+        $periods = array_values(array_filter($allRules, static fn (BookingRestrictionRule $rule): bool => $rule->isPeriod()));
+
+        // Special periods that have all expired silently stop restricting anything, which is
+        // easy to miss on a page this long. Only enabled periods count — a disabled one was
+        // parked deliberately. End dates are exclusive, so a period is over once its end has
+        // arrived.
+        $today = new \DateTimeImmutable('today');
+        $activePeriods = array_filter($periods, static fn (BookingRestrictionRule $rule): bool => $rule->isEnabled());
+        $periodsAllPast = [] !== $activePeriods && array_all(
+            $activePeriods,
+            static fn (BookingRestrictionRule $rule): bool => null !== $rule->getEndDate() && $rule->getEndDate() <= $today,
+        );
+
+        // The booking rules have their own tab. A submitted settings form always shows the
+        // settings tab, because that is where its errors are.
+        $activeTab = BookingRestrictionCalendar::SETTINGS_TAB === $request->query->getString('tab') && !$form->isSubmitted()
+            ? BookingRestrictionCalendar::SETTINGS_TAB
+            : 'tab-settings';
+        $calendarCategory = $roomCategoryRepository->find($request->query->getInt('category')) ?? ($categories[0] ?? null);
+
         return $this->render('Settings/OnlineBooking/index.html.twig', [
             'form' => $form->createView(),
+            'rules' => array_values(array_filter($allRules, static fn (BookingRestrictionRule $rule): bool => !$rule->isPeriod())),
+            'periods' => $periods,
+            'periodsAllPast' => $periodsAllPast,
+            'ruleDescriptions' => $descriptions,
+            'activeTab' => $activeTab,
+            'calendar' => null === $calendarCategory ? null : $calendar->build($calendarCategory, $request->query->getString('week') ?: null),
             'reservationOriginConfigured' => null !== $origin,
             'categories' => $categories,
-            'minStayByCategory' => $minStayByCategory,
             'limitsByCategory' => $limitsByCategory,
-            'overrides' => $overrides,
-            'restrictionOverrideWarning' => $restrictionOverrideWarning,
             'priceOverview' => $priceOverview,
             'bookingConfirmationWorkflow' => $workflowRepository->findBySystemCode('confirm_online_booking'),
             // Lets the theme card explain a calendar that stays empty because every
@@ -93,45 +111,27 @@ class OnlineBookingSettingsController extends AbstractController
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
-    /** Save category restrictions (min stay + max rooms) for all categories at once. */
+    /** Saves online room-count and occupancy limits; minimum stays live in the shared rule editor. */
     #[Route('/restrictions/categories', name: 'settings.online_booking.save_category_restrictions', methods: ['POST'])]
     public function saveCategoryRestrictions(
         Request $request,
         RoomCategoryRepository $roomCategoryRepository,
-        OnlineBookingMinStayRepository $minStayRepository,
         OnlineBookingRoomCategoryLimitRepository $limitRepository,
         EntityManagerInterface $em,
     ): Response {
         if (!$this->isCsrfTokenValid('ob_category_restrictions', $request->request->get('_token'))) {
             $this->addFlash('danger', 'online_booking.flash.invalid_token');
 
-            return $this->redirectToRoute('settings.online_booking.index');
+            return $this->redirectToRoute('settings.online_booking.index', ['tab' => BookingRestrictionCalendar::SETTINGS_TAB]);
         }
 
         $categories = $roomCategoryRepository->findAll();
-        $minStayByCategory = $minStayRepository->findAllIndexedByCategory();
         $limitsByCategory = $limitRepository->findAllIndexedByCategory();
 
         foreach ($categories as $category) {
             $catId = $category->getId();
-            $weekday = $this->parseNullableInt($request->request->get('min_weekday_'.$catId));
-            $weekend = $this->parseNullableInt($request->request->get('min_weekend_'.$catId));
             $maxRooms = $this->parseNullableInt($request->request->get('max_rooms_'.$catId));
             $minOccupancy = $this->parseNullableInt($request->request->get('min_occupancy_'.$catId));
-
-            // Min stay
-            $minStay = $minStayByCategory[$catId] ?? null;
-            if (null !== $weekday || null !== $weekend) {
-                if (null === $minStay) {
-                    $minStay = new OnlineBookingMinStay();
-                    $minStay->setRoomCategory($category);
-                    $em->persist($minStay);
-                }
-                $minStay->setMinNightsWeekday($weekday);
-                $minStay->setMinNightsWeekend($weekend);
-            } elseif (null !== $minStay) {
-                $em->remove($minStay);
-            }
 
             // Room limit + min occupancy
             $limit = $limitsByCategory[$catId] ?? null;
@@ -151,126 +151,10 @@ class OnlineBookingSettingsController extends AbstractController
         $em->flush();
         $this->addFlash('success', 'online_booking.flash.restrictions_saved');
 
-        return $this->redirectToRoute('settings.online_booking.index');
-    }
-
-    /** Create or update a min-stay override (special period). */
-    #[Route('/restrictions/override', name: 'settings.online_booking.save_override', methods: ['POST'])]
-    public function saveOverride(
-        Request $request,
-        RoomCategoryRepository $roomCategoryRepository,
-        OnlineBookingMinStayOverrideRepository $overrideRepository,
-        EntityManagerInterface $em,
-    ): Response {
-        if (!$this->isCsrfTokenValid('ob_override', $request->request->get('_token'))) {
-            $this->addFlash('danger', 'online_booking.flash.invalid_token');
-
-            return $this->redirectToRoute('settings.online_booking.index');
-        }
-
-        $overrideId = $this->parseNullableInt($request->request->get('override_id'));
-
-        $startDate = $request->request->get('start_date');
-        $endDate = $request->request->get('end_date');
-        $minNights = (int) $request->request->get('min_nights', 1);
-
-        if (empty($startDate) || empty($endDate) || $minNights < 1) {
-            $this->addFlash('danger', 'online_booking.flash.override_invalid');
-
-            return $this->redirectToRoute('settings.online_booking.index');
-        }
-
-        $categoryIds = $request->request->all('room_category_ids');
-
-        // Editing an existing override → update single entity
-        if (null !== $overrideId) {
-            $override = $overrideRepository->find($overrideId);
-            if (null !== $override) {
-                // When editing, use the first selected category (or null for "all")
-                $catId = $this->resolveFirstCategoryId($categoryIds);
-                $category = null !== $catId ? $roomCategoryRepository->find($catId) : null;
-                $override->setRoomCategory($category);
-                $override->setStartDate(new \DateTime($startDate));
-                $override->setEndDate(new \DateTime($endDate));
-                $override->setMinNights($minNights);
-            }
-        } else {
-            // Creating new → one override per selected category
-            $resolvedCategoryIds = $this->resolveSelectedCategoryIds($categoryIds);
-            foreach ($resolvedCategoryIds as $catId) {
-                $override = new OnlineBookingMinStayOverride();
-                $category = null !== $catId ? $roomCategoryRepository->find($catId) : null;
-                $override->setRoomCategory($category);
-                $override->setStartDate(new \DateTime($startDate));
-                $override->setEndDate(new \DateTime($endDate));
-                $override->setMinNights($minNights);
-                $em->persist($override);
-            }
-        }
-
-        $em->flush();
-        $this->addFlash('success', 'online_booking.flash.override_saved');
-
-        return $this->redirectToRoute('settings.online_booking.index');
-    }
-
-    /** Delete a min-stay override. */
-    #[Route('/restrictions/override/{id}/delete', name: 'settings.online_booking.delete_override', methods: ['DELETE'])]
-    public function deleteOverride(
-        Request $request,
-        int $id,
-        OnlineBookingMinStayOverrideRepository $overrideRepository,
-        EntityManagerInterface $em,
-    ): Response {
-        if (!$this->isCsrfTokenValid('delete'.$id, $request->request->get('_token'))) {
-            $this->addFlash('danger', 'online_booking.flash.invalid_token');
-
-            return new Response('', Response::HTTP_FORBIDDEN);
-        }
-
-        $override = $overrideRepository->find($id);
-        if (null !== $override) {
-            $em->remove($override);
-            $em->flush();
-            $this->addFlash('success', 'online_booking.flash.override_deleted');
-        }
-
-        return new Response('', Response::HTTP_NO_CONTENT);
-    }
-
-    /**
-     * Resolve category IDs from the multi-select form.
-     * Returns [null] when "All categories" is checked (value='').
-     *
-     * @return list<int|null>
-     */
-    private function resolveSelectedCategoryIds(array $categoryIds): array
-    {
-        $ids = [];
-        foreach ($categoryIds as $id) {
-            if ('' === $id || null === $id) {
-                return [null]; // "All categories"
-            }
-            $ids[] = (int) $id;
-        }
-
-        return [] === $ids ? [null] : $ids;
-    }
-
-    /**
-     * When editing a single override, pick the first selected category ID (or null for "all").
-     */
-    private function resolveFirstCategoryId(array $categoryIds): ?int
-    {
-        foreach ($categoryIds as $id) {
-            if ('' === $id || null === $id) {
-                return null;
-            }
-
-            return (int) $id;
-        }
-
-        return null;
+        return $this->redirectToRoute('settings.online_booking.index', [
+            'tab' => BookingRestrictionCalendar::SETTINGS_TAB,
+            '_fragment' => 'booking-rule-limits',
+        ]);
     }
 
     private function parseNullableInt(mixed $value): ?int

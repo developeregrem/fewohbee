@@ -2,6 +2,17 @@ parameters:
     # fallback parameters
     env(USE_PASSWORD_BLACKLIST): 'true'
     env(PASSKEY_ENABLED): 'false'
+    # OIDC single sign-on; disabled unless a provider is configured
+    env(OIDC_ENABLED): 'false'
+    env(OIDC_ISSUER): ''
+    env(OIDC_CLIENT_ID): ''
+    env(OIDC_CLIENT_SECRET): ''
+    env(OIDC_SCOPES): 'openid profile email'
+    env(OIDC_BUTTON_LABEL): ''
+    env(OIDC_USER_MATCHING): 'email'
+    env(OIDC_REQUIRE_VERIFIED_EMAIL): 'true'
+    env(OIDC_ENFORCE): 'false'
+    env(OIDC_END_SESSION): 'false'
     env(TRUSTED_PROXIES): ''
 
 framework:
@@ -53,6 +64,13 @@ framework:
             limit: 20
             interval: '15 minutes'
             cache_pool: cache.app
+        # Guards the OIDC callback: every hit triggers an outbound token request,
+        # so cap how often an unauthenticated client can force one.
+        oidc_callback:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '5 minutes'
+            cache_pool: cache.app
 
     cache:
         # Put the unique name of your app here: the prefix seed
@@ -88,6 +106,11 @@ when@test:
                 policy: 'sliding_window'
                 limit: 10000
                 interval: '15 minutes'
+                cache_pool: cache.app
+            oidc_callback:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '5 minutes'
                 cache_pool: cache.app
 
 when@dev:

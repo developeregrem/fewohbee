@@ -1,0 +1,119 @@
+{# Body of the booking-rule offcanvas. Loaded and submitted over ajax, so every validation
+   error comes back from the server and is rendered right here. Five fields at most:
+   type, weekdays, minimum nights, categories and - for a special period - the two dates. #}
+{# The live sentence is assembled in the browser, so it needs the translated patterns.
+   __NIGHTS__ is replaced by a whole phrase ("eine Nacht" / "4 Nächte"), never a bare
+   number — German has no readable singular otherwise. #}
+{% set summaries = {
+    'min_stay_arrival': 'booking_rules.summary_min_stay_arrival'|trans({'%days%': '__DAYS__', '%nights%': '__NIGHTS__'}),
+    'min_stay_through': 'booking_rules.summary_min_stay_through'|trans({'%days%': '__DAYS__', '%nights%': '__NIGHTS__'}),
+    'closed_to_arrival': 'booking_rules.summary_closed_to_arrival'|trans({'%days%': '__DAYS__', '%nights%': '__NIGHTS__'}),
+    'closed_to_departure': 'booking_rules.summary_closed_to_departure'|trans({'%days%': '__DAYS__', '%nights%': '__NIGHTS__'}),
+} %}
+{# %count% picks the branch, %nights% is the printed number — so the plural branch can be
+   rendered once with a placeholder the browser fills in. #}
+{% set nightPhrases = {
+    'one': 'booking_rules.nights_count'|trans({'%count%': 1, '%nights%': 1}),
+    'many': 'booking_rules.nights_count'|trans({'%count%': 2, '%nights%': '__COUNT__'}),
+} %}
+{{ form_start(form, {attr: {
+    'data-booking-rules-target': 'form',
+    'data-action': 'submit->booking-rules#submitRule',
+    'data-summaries': summaries|json_encode,
+    'data-nights': nightPhrases|json_encode,
+    'novalidate': 'novalidate',
+}}) }}
+
+    {{ form_errors(form) }}
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">{{ 'booking_rules.type'|trans }}</label>
+        {% for choice in form.type %}
+            {# The form theme supplies the .form-check wrapper and the label itself. #}
+            <div class="mb-2">
+                {{ form_widget(choice, {attr: {'data-booking-rules-target': 'typeInput', 'data-action': 'change->booking-rules#refresh'}}) }}
+                <p class="text-body-secondary ms-4 mb-0" style="font-size:.8rem">{{ ('booking_rules.type_help_' ~ choice.vars.value)|trans }}</p>
+            </div>
+        {% endfor %}
+        {{ form_errors(form.type) }}
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold" data-booking-rules-target="weekdayLabel"
+               data-arrival="{{ 'booking_rules.weekdays_arrival'|trans }}"
+               data-night="{{ 'booking_rules.weekdays_night'|trans }}"
+               data-departure="{{ 'booking_rules.weekdays_departure'|trans }}">{{ 'booking_rules.weekdays_arrival'|trans }}</label>
+        {# Hand-written because a toggle-button group is Bootstrap's btn-check markup, which
+           the form theme wraps in a .form-check and labels itself. setRendered() below keeps
+           form_end() from emitting the field a second time. #}
+        <div class="d-flex flex-wrap gap-1">
+            {% for day in form.weekdays %}
+                <input type="checkbox" class="btn-check" id="{{ day.vars.id }}" name="{{ day.vars.full_name }}"
+                       value="{{ day.vars.value }}"{{ day.vars.checked ? ' checked' }}
+                       data-action="change->booking-rules#refresh">
+                <label class="btn btn-sm btn-outline-primary" for="{{ day.vars.id }}"
+                       data-booking-rules-target="dayLabel"
+                       data-day="{{ ('booking_rules.day_' ~ day.vars.value)|trans }}"
+                       data-night="{{ ('booking_rules.night_' ~ day.vars.value)|trans }}">{{ ('booking_rules.day_' ~ day.vars.value)|trans }}</label>
+            {% endfor %}
+        </div>
+        {% do form.weekdays.setRendered %}
+        {{ form_errors(form.weekdays) }}
+    </div>
+
+    <div class="mb-3" data-booking-rules-target="minNightsRow">
+        <label class="form-label small fw-semibold" for="{{ form.minNights.vars.id }}">{{ 'booking_rules.min_nights'|trans }}</label>
+        {{ form_widget(form.minNights, {attr: {'class': 'form-control', 'style': 'max-width:8rem', 'data-action': 'input->booking-rules#refresh'}}) }}
+        {{ form_errors(form.minNights) }}
+    </div>
+
+    {% if isPeriod %}
+        <div class="row g-2 mb-3">
+            <div class="col-6">
+                <label class="form-label small fw-semibold" for="{{ form.startDate.vars.id }}">{{ 'booking_rules.first_date'|trans }}</label>
+                {{ form_widget(form.startDate, {attr: {'class': 'form-control'}}) }}
+            </div>
+            <div class="col-6">
+                <label class="form-label small fw-semibold" for="{{ form.lastDate.vars.id }}">{{ 'booking_rules.last_date'|trans }}</label>
+                {{ form_widget(form.lastDate, {attr: {'class': 'form-control'}}) }}
+            </div>
+            <div class="col-12">
+                {{ form_errors(form.startDate) }}
+                {{ form_errors(form.lastDate) }}
+                <p class="text-body-secondary mb-0" style="font-size:.8rem">{{ 'booking_rules.period_help'|trans }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label class="form-label small fw-semibold">{{ 'booking_rules.categories'|trans }}</label>
+        {{ form_widget(form.allCategories, {attr: {'data-action': 'change->booking-rules#refresh'}}) }}
+        <div class="border rounded p-2" style="max-height:12rem;overflow:auto" data-booking-rules-target="categoryList">
+            {% for category in form.categories %}
+                {{ form_widget(category) }}
+            {% endfor %}
+        </div>
+        {{ form_errors(form.categories) }}
+        {{ form_errors(form.allCategories) }}
+    </div>
+
+    {# The live sentence is the only place the rule is explained in words; the effect table
+       on the page behind does the rest. #}
+    <div class="alert alert-light border small py-2 px-3" data-booking-rules-target="summary"></div>
+
+    {% if overlaps|length > 0 %}
+        <div class="alert alert-warning small py-2 px-3">
+            <p class="mb-1 fw-semibold">{{ 'booking_rules.overlaps'|trans }}</p>
+            <ul class="mb-0 ps-3">
+                {% for other in overlaps %}<li>{{ descriptions[other.id] }}</li>{% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i>{{ 'booking_rules.save'|trans }}
+        </button>
+    </div>
+
+{{ form_end(form) }}

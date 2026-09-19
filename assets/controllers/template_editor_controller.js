@@ -20,6 +20,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@cod
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { templateAutocomplete } from '../js/template-autocomplete.js';
+import { enablePopovers } from '../js/utils.js';
 
 /* stimulusFetch: 'lazy' */
 
@@ -461,6 +462,7 @@ export default class extends Controller {
             this.codeWrapperTarget.removeEventListener('drop', this.onCodeWrapperDrop);
             this.codeDropListenersAttached = false;
         }
+        this.disposeSnippetPopovers();
         this.closeVariablePicker();
         this.revokePreviewPdfUrl();
     }
@@ -1054,6 +1056,7 @@ export default class extends Controller {
         }
 
         const container = this.snippetSidebarTarget;
+        this.disposeSnippetPopovers();
         container.innerHTML = '';
         const groups = this.groupSnippets();
 
@@ -1070,11 +1073,32 @@ export default class extends Controller {
                 item.dataset.content = snippet.content;
                 item.dataset.complexity = snippet.complexity || 'simple';
                 item.textContent = snippet.label;
+                if (snippet.description) {
+                    item.tabIndex = 0;
+                    item.dataset.bsToggle = 'popover';
+                    item.dataset.bsTrigger = 'hover focus';
+                    item.dataset.bsPlacement = 'right';
+                    item.dataset.bsContainer = 'body';
+                    item.dataset.bsContent = snippet.description;
+                }
                 item.addEventListener('dragstart', (event) => this.handleSnippetDragStart(event));
                 item.addEventListener('click', () => this.insertSnippetContent(snippet.content, snippet.complexity || 'simple'));
                 container.appendChild(item);
             });
         }
+
+        enablePopovers(container);
+    }
+
+    /** Dispose popovers before replacing dynamic snippet elements. */
+    disposeSnippetPopovers() {
+        if (!this.hasSnippetSidebarTarget || !window.bootstrap?.Popover) {
+            return;
+        }
+
+        this.snippetSidebarTarget.querySelectorAll('[data-bs-toggle="popover"]').forEach((element) => {
+            window.bootstrap.Popover.getInstance(element)?.dispose();
+        });
     }
 
     async refreshEmbeddableTemplates() {

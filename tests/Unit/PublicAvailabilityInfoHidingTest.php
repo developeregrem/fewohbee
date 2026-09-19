@@ -12,10 +12,10 @@ use App\Entity\Subsidiary;
 use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Service\AvailabilityService;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\PublicAvailabilityService;
-use App\Service\PublicPricingService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\PublicAvailabilityService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\RoomCategoryImageService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -47,7 +47,7 @@ final class PublicAvailabilityInfoHidingTest extends TestCase
         $configService->method('getAllowedRoomIds')->willReturn([1, 2, 3, 4, 5, 6, 7, 8]);
 
         $restrictionService = $this->createStub(OnlineBookingRestrictionService::class);
-        $restrictionService->method('isStayLongEnough')->willReturn(true);
+        $restrictionService->method('isStayAllowed')->willReturn(true);
         $restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
         $restrictionService->method('getMaxRoomsForCategory')->willReturn(null);
 
