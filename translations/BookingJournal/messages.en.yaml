@@ -133,6 +133,7 @@ accounting.taxrates.flash.created: Tax rate created successfully.
 accounting.taxrates.flash.updated: Tax rate updated successfully.
 accounting.taxrates.flash.deleted: Tax rate deleted successfully.
 accounting.taxrates.flash.cannot_delete_in_use: "This tax rate cannot be deleted because it is already used in booking journal entries. Use the validity fields to prevent future use."
+accounting.taxrates.flash.cannot_delete_in_workflow: "This tax rate cannot be deleted because a workflow books with it. Choose a different tax rate in the workflow first."
 
 # Journal - Batches
 accounting.journal.batch.add: Add Month
@@ -212,6 +213,8 @@ accounting.journal.entry.debit: Debit
 accounting.journal.entry.credit: Credit
 accounting.journal.entry.tax_rate: Tax Rate
 accounting.journal.entry.invoice: Invoice No.
+accounting.journal.entry.requires_document: Document to follow
+accounting.journal.entry.requires_document_help: The entry is waiting for a document number. The month cannot be closed while it is missing.
 accounting.journal.entry.remark: Remark
 accounting.journal.entry.empty: No entries yet.
 accounting.journal.entry.delete_ask: Delete this entry?
@@ -221,6 +224,9 @@ accounting.journal.back: Back to Journal
 # Journal - Flash Messages
 accounting.journal.flash.batch_created: Month created successfully.
 accounting.journal.flash.batch_closed: Month closed.
+accounting.journal.flash.batch_missing_document_numbers: 'Month cannot be closed: %count% entry/entries still wait for a document number.'
+accounting.journal.entry.missing_document: Document missing
+accounting.journal.entry.missing_document_hint: This entry was booked before the document it refers to. The month can only be closed once the number has been supplied.
 accounting.journal.flash.batch_reopened: Month reopened.
 accounting.journal.flash.entry_created: Entry created successfully.
 accounting.journal.flash.entry_updated: Entry updated successfully.

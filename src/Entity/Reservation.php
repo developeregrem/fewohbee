@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Enum\PaymentCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -46,6 +47,49 @@ class Reservation
     private $registrationBookEntries;
     #[ORM\ManyToOne(targetEntity: 'ReservationOrigin', inversedBy: 'reservations')]
     private $reservationOrigin;
+
+    /**
+     * The portal's commission as it stood when this reservation was booked, in
+     * percent. Pinned from the origin rather than read from it later: the origin
+     * carries the rate that applies today, so a contract renegotiated in between
+     * would otherwise be applied to bookings it never covered.
+     *
+     * Null means no rate is recorded for this booking - either it predates the
+     * pinning, or its origin carried no fees at the time. Both fall back to the
+     * origin, so a house that sets its rates up after the fact still gets them
+     * applied. A rate the origin does carry is pinned as it is, an explicit zero
+     * included.
+     */
+    #[ORM\Column(name: 'commission_percent', type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $commissionPercent = null;
+
+    /** The portal's payment fee when this reservation was booked; see commission. */
+    #[ORM\Column(name: 'payment_fee_percent', type: 'decimal', precision: 5, scale: 2, nullable: true)]
+    private ?string $paymentFeePercent = null;
+
+    /**
+     * Who collected the payment for this booking, pinned from the origin the
+     * same way the two rates are - a portal that switches to collecting
+     * payments itself must not change what happened to bookings settled before.
+     *
+     * Null where nothing is recorded: bookings that predate the column, any
+     * without an origin, and any whose origin charged no fee when it was
+     * assigned - the same bookings whose rates are left open. Those fall back to
+     * the origin, which answers for the house where there is none.
+     */
+    #[ORM\Column(name: 'payment_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
+    private ?PaymentCollection $paymentCollection = null;
+
+    /**
+     * Who collected the tourist tax for this booking, pinned like the payment
+     * above and for the same reason. Asked separately because the answers
+     * differ: a portal can settle the stay while the tax is paid on arrival.
+     *
+     * Null where nothing is recorded, in the same cases as the payment above,
+     * which then falls back to the origin.
+     */
+    #[ORM\Column(name: 'tourist_tax_collection', type: 'string', length: 16, enumType: PaymentCollection::class, nullable: true)]
+    private ?PaymentCollection $touristTaxCollection = null;
     #[ORM\OneToMany(targetEntity: 'Correspondence', mappedBy: 'reservation', cascade: ['remove'])]
     private $correspondences;
     #[ORM\ManyToMany(targetEntity: Price::class)]
@@ -294,7 +338,101 @@ class Reservation
      */
     public function setReservationOrigin(?ReservationOrigin $reservationOrigin = null)
     {
+        // Pinned here rather than in each of the paths that create a reservation
+        // - online booking, calendar import, the reservation form - because this
+        // is the one place all of them pass through. Only on an actual change, so
+        // re-saving an old reservation does not quietly restamp it with today's
+        // rates; Doctrine hydrates the property directly, so loading never does.
+        if ($reservationOrigin !== $this->reservationOrigin) {
+            $this->commissionPercent = $this->pinnedRate($reservationOrigin?->getCommissionPercent());
+            $this->paymentFeePercent = $this->pinnedRate($reservationOrigin?->getPaymentFeePercent());
+            // Who collects is pinned along with the rates, and like them only
+            // where the origin charges a fee. Without one the origin is not
+            // asked who collects and keeps its default of the house - an answer
+            // nobody gave. Pinning it would leave a booking taken before the
+            // fees were set up with the rates it falls back to, but without the
+            // stay in the payment fee's base, and nothing would say so.
+            $chargesFees = null !== $this->commissionPercent || null !== $this->paymentFeePercent;
+            $this->paymentCollection = $chargesFees ? $reservationOrigin?->getPaymentCollection() : null;
+            $this->touristTaxCollection = $chargesFees ? $reservationOrigin?->getTouristTaxCollection() : null;
+        }
+
         $this->reservationOrigin = $reservationOrigin;
+
+        return $this;
+    }
+
+    /**
+     * The origin's rate as it is, or null where it carries none.
+     *
+     * Deliberately not pinned as a zero: an origin whose fees are configured only
+     * after the first bookings have come in - the ordinary order of things when
+     * setting this up - would otherwise leave those bookings on a rate of nothing
+     * for good, with only a line in the workflow log to show for it. Null lets
+     * them fall back to the origin until it has something to say.
+     */
+    private function pinnedRate(?string $rate): ?string
+    {
+        return null !== $rate && '' !== trim($rate) ? $rate : null;
+    }
+
+    /**
+     * Portal commission that applied when this reservation was booked, null when
+     * it was booked before rates were pinned.
+     */
+    public function getCommissionPercent(): ?string
+    {
+        return $this->commissionPercent;
+    }
+
+    public function setCommissionPercent(?string $commissionPercent): self
+    {
+        $this->commissionPercent = $commissionPercent;
+
+        return $this;
+    }
+
+    /** Portal payment fee that applied when this reservation was booked; see commission. */
+    public function getPaymentFeePercent(): ?string
+    {
+        return $this->paymentFeePercent;
+    }
+
+    public function setPaymentFeePercent(?string $paymentFeePercent): self
+    {
+        $this->paymentFeePercent = $paymentFeePercent;
+
+        return $this;
+    }
+
+    /**
+     * Who collected the payment for this booking, null when nothing was
+     * recorded - then the origin answers, see the property.
+     */
+    public function getPaymentCollection(): ?PaymentCollection
+    {
+        return $this->paymentCollection;
+    }
+
+    public function setPaymentCollection(?PaymentCollection $paymentCollection): self
+    {
+        $this->paymentCollection = $paymentCollection;
+
+        return $this;
+    }
+
+    /**
+     * Who collected the tourist tax for this booking, null when nothing was
+     * recorded - then the origin answers, see the property.
+     */
+    public function getTouristTaxCollection(): ?PaymentCollection
+    {
+        return $this->touristTaxCollection;
+    }
+
+    public function setTouristTaxCollection(?PaymentCollection $touristTaxCollection): self
+    {
+        $this->touristTaxCollection = $touristTaxCollection;
 
         return $this;
     }
@@ -302,7 +440,10 @@ class Reservation
     /**
      * Get reservationOrigin.
      *
-     * @return ReservationOrigin
+     * Null for a booking that came in directly - the field is optional, and the
+     * fee calculation leans on that.
+     *
+     * @return ReservationOrigin|null
      */
     public function getReservationOrigin()
     {

@@ -189,6 +189,16 @@ export default class extends Controller {
         if (defaultActiveCheckbox) {
             defaultActiveCheckbox.disabled = !isMisc;
         }
+        // A night is what the portal brokered, so the question is only put for
+        // miscellaneous prices; PriceService keeps apartment prices on "yes".
+        const brokeredWrapper = this.element.querySelector(`#brokered-wrap-${priceId}`);
+        const brokeredCheckbox = this.element.querySelector(`#brokered-${priceId}`);
+        if (brokeredWrapper) {
+            brokeredWrapper.classList.toggle('d-none', !isMisc);
+        }
+        if (brokeredCheckbox) {
+            brokeredCheckbox.disabled = !isMisc;
+        }
         const bookableOnlineWrapper = this.element.querySelector(`#bookable-online-wrap-${priceId}`);
         const bookableOnlineCheckbox = this.element.querySelector(`#isBookableOnline-${priceId}`);
         if (bookableOnlineWrapper) {

@@ -28,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[Route('/journal')]
 #[IsGranted('ROLE_CASHJOURNAL')]
@@ -184,6 +185,8 @@ class BookingJournalController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         AuthorizationCheckerInterface $authChecker,
+        BookingEntryRepository $entryRepo,
+        TranslatorInterface $translator,
     ): Response {
         if (!$this->isCsrfTokenValid('batch_toggle_'.$batch->getId(), $request->request->get('_token'))) {
             $this->addFlash('warning', 'flash.access.denied');
@@ -195,6 +198,21 @@ class BookingJournalController extends AbstractController
             $this->addFlash('warning', 'flash.access.denied');
 
             return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId()]);
+        }
+
+        // Closing is what makes a month final, so it is also the last chance to
+        // notice an entry still waiting for the document reference it was
+        // booked ahead of. Reopening stays unguarded - the point is to let
+        // those entries be completed.
+        if (!$batch->isClosed()) {
+            $missing = $entryRepo->countMissingDocumentNumber($batch);
+            if ($missing > 0) {
+                $this->addFlash('warning', $translator->trans('accounting.journal.flash.batch_missing_document_numbers', [
+                    '%count%' => $missing,
+                ]));
+
+                return $this->redirectToRoute('journal.batch.entries', ['id' => $batch->getId()]);
+            }
         }
 
         $batch->setIsClosed(!$batch->isClosed());
@@ -258,6 +276,10 @@ class BookingJournalController extends AbstractController
         $copy->setCreditAccount($entry->getCreditAccount());
         $copy->setTaxRate($entry->getTaxRate());
         $copy->setInvoiceNumber($entry->getInvoiceNumber());
+        // Carried over like everything else: a copy of an entry booked ahead of
+        // its document is waiting for one just as much as the original, and
+        // losing the flag would let the month close on it.
+        $copy->setRequiresDocumentNumber($entry->requiresDocumentNumber());
         $copy->setRemark($entry->getRemark());
 
         $formOptions = [

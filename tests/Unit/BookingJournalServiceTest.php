@@ -21,6 +21,8 @@ use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\AppSettingsService;
 use App\Service\BookingJournal\BookingJournalService;
 use App\Service\InvoiceService;
+use App\Service\InvoiceSumCalculator;
+use App\Service\OriginFeeCalculator;
 use App\Service\PriceService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -723,6 +725,8 @@ final class BookingJournalServiceTest extends TestCase
             $this->createStub(PriceService::class),
             $this->createStub(TranslatorInterface::class),
             $appSettingsService,
+            new InvoiceSumCalculator(),
+            new OriginFeeCalculator(new InvoiceSumCalculator()),
         );
     }
 

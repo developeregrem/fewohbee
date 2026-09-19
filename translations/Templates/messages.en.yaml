@@ -68,6 +68,9 @@ templates.editor.apartment_modifier.positions: Surcharge / discount positions
 templates.editor.apartment_modifier.positions.desc: >-
   Inserts a table with all apartment surcharge / discount positions. The table is only rendered when such
   positions exist on the invoice.
+templates.editor.origin_name: Booking origin (name)
+templates.editor.origin_commission: OTA commission
+templates.editor.origin_payment_fee: OTA payment fee
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.opening_hours: Opening hours of the branch
 templates.editor.check_in_times: Check-in times of the branch

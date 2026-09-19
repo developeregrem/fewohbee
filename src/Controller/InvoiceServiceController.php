@@ -527,6 +527,9 @@ class InvoiceServiceController extends AbstractController
                     $pos->setIsFlatPrice($package->getIsFlatPrice());
                     $pos->setIsPerRoom($package->getIsPerRoom());
                     $pos->setRevenueAccount($component['component']->getRevenueAccount() ?? $package->getRevenueAccount());
+                    // The switch in the form, which starts out on the package's own
+                    // answer, covers the components it is broken into.
+                    $pos->markBrokered($invoicePosition->isBrokered());
                     $positions[] = $pos;
                 }
 

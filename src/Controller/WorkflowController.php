@@ -9,6 +9,7 @@ use App\Entity\ReservationStatus;
 use App\Entity\Template;
 use App\Entity\Workflow;
 use App\Repository\AccountingAccountRepository;
+use App\Repository\TaxRateRepository;
 use App\Repository\WorkflowLogRepository;
 use App\Repository\WorkflowRepository;
 use App\Service\AppSettingsService;
@@ -41,6 +42,7 @@ class WorkflowController extends AbstractController
         private readonly AppSettingsService $settingsService,
         private readonly AccountingSettingsService $accountingSettingsService,
         private readonly AccountingAccountRepository $accountRepo,
+        private readonly TaxRateRepository $taxRateRepo,
         private readonly DisplayNameResolver $displayNameResolver,
     ) {
     }
@@ -228,6 +230,9 @@ class WorkflowController extends AbstractController
             } elseif ($type === 'accounting_account_select') {
                 $field['type'] = 'select';
                 $field['options'] = $this->loadAccountingAccountOptions();
+            } elseif ($type === 'tax_rate_select') {
+                $field['type'] = 'select';
+                $field['options'] = $this->loadTaxRateOptions();
             } elseif ($type === 'attachment_list') {
                 // Unlike the *_select pseudo types this keeps its own type: the client
                 // renders repeatable rows instead of a plain select.
@@ -333,6 +338,48 @@ class WorkflowController extends AbstractController
         return $options;
     }
 
+
+    /**
+     * The tax rates a workflow may be configured with: those the active chart of
+     * accounts holds and that apply today.
+     *
+     * An unscoped list would offer another preset's rates - an SKR04 rate under
+     * an active SKR03 - as well as rates that have expired or do not apply yet,
+     * none of which an entry booked by the action could carry sensibly.
+     *
+     * Rates already configured somewhere are kept regardless of both filters: a
+     * rate that has since expired is what an existing workflow books with, and
+     * dropping it from the list would clear the selection the next time somebody
+     * opens that workflow for an unrelated change.
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function loadTaxRateOptions(): array
+    {
+        $preset = $this->accountingSettingsService->getActivePreset();
+        $rates = $this->taxRateRepo->findValidAt(new \DateTime('today'), $preset);
+
+        $known = [];
+        foreach ($rates as $rate) {
+            $known[$rate->getId()] = true;
+        }
+
+        foreach ($this->workflowRepository->findReferencedTaxRateIds() as $id) {
+            if (!isset($known[$id]) && null !== ($rate = $this->taxRateRepo->find($id))) {
+                $rates[] = $rate;
+            }
+        }
+
+        $options = [['value' => '', 'label' => '–']];
+        foreach ($rates as $rate) {
+            $options[] = [
+                'value' => (string) $rate->getId(),
+                'label' => $rate->getName().' ('.number_format($rate->getRateFloat(), 2, ',', '.').' %)',
+            ];
+        }
+
+        return $options;
+    }
 
     /** @param array<string, mixed> $field */
     private function translateField(array $field): array

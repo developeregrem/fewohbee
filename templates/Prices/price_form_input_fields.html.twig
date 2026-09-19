@@ -127,6 +127,15 @@
                                 <input type="checkbox" name="isDefaultActiveInReservationCreation-{{ price.id }}" id="isDefaultActiveInReservationCreation-{{ price.id }}" class="form-check-input"{% if price.isDefaultActiveInReservationCreation == 1 %} checked{% endif %}{% if not isMiscPriceType %} disabled{% endif %} value="1">
                                 <label class="form-check-label" for="isDefaultActiveInReservationCreation-{{ price.id }}">{{ 'price.defaultactiveinreservationcreation'|trans }}</label>
                             </div>
+                            {# Only offered for miscellaneous prices: a night is what the
+                               portal brokered, so the question has no answer to give there. #}
+                            <div class="form-check form-switch{% if not isMiscPriceType %} d-none{% endif %}" id="brokered-wrap-{{ price.id }}">
+                                <input type="checkbox" name="brokered-{{ price.id }}" id="brokered-{{ price.id }}" class="form-check-input"{% if price.brokered %} checked{% endif %}{% if not isMiscPriceType %} disabled{% endif %} value="1">
+                                <label class="form-check-label" for="brokered-{{ price.id }}">{{ 'price.brokered'|trans }}</label>
+                                <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'price.brokered.hint'|trans }}">
+                                    <i class="fas fa-circle-question"></i>
+                                </span>
+                            </div>
                             <div class="form-check form-switch{% if not isMiscPriceType %} d-none{% endif %}" id="bookable-online-wrap-{{ price.id }}">
                                 <input type="checkbox" name="isBookableOnline-{{ price.id }}" id="isBookableOnline-{{ price.id }}" class="form-check-input"
                                        data-action="change->prices#bookableOnlineChangeAction"

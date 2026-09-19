@@ -74,7 +74,9 @@ final class NotificationBellTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         // Whatever is present must open through the shared modal, never navigate.
-        foreach ($crawler->filter('.dropdown-item[data-url]') as $node) {
+        // Entries are links; the "mark all read" button below them carries a
+        // data-url of its own and is not one.
+        foreach ($crawler->filter('a.dropdown-item[data-url]') as $node) {
             self::assertSame(
                 'click->notifications#openItemAction',
                 $node->getAttribute('data-action'),
