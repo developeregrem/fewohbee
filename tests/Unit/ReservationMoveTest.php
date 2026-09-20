@@ -205,6 +205,7 @@ final class ReservationMoveTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $guestCategoryRepository ?? $this->createStub(GuestCategoryRepository::class),
             $availability,
+            new \App\Service\ReservationPeriodService(),
         );
     }
 }

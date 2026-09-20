@@ -48,6 +48,9 @@ profile:
       calendar_read: Kalender lesen (iCal-Export, Feiertage, eigene Kalender)
       statistics_read: Statistiken lesen
       invoices_read: Rechnungen lesen
+      prices_read: Preise lesen (Preisliste, Preisauskunft, Ratenkalender)
+      tourist_tax_read: Kurtaxe lesen (Einstellungen und Monatsabrechnung)
+      subsidiaries_read: Niederlassungen lesen (Stammdaten und Öffnungszeiten)
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen
@@ -65,3 +68,12 @@ profile:
       unauthorized: Nicht autorisiert.
       no_registration_in_progress: Es ist keine Passkey-Registrierung aktiv.
       invalid_response_type: Ungültige Antwort des Authenticators.
+  oidc:
+    title: Single Sign-On
+    linked: Dein Konto ist mit dem Single-Sign-On-Anbieter verknüpft.
+    not_linked: >-
+      Dein Konto ist noch nicht verknüpft. Die Verknüpfung entsteht automatisch,
+      sobald du dich das erste Mal über SSO anmeldest.
+    issuer: Anbieter
+    subject: Kennung
+    linked_at: Verknüpft am

@@ -20,6 +20,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
+use App\Service\Oidc\OidcConfiguration;
 
 #[Route('/reset-password')]
 class ResetPasswordController extends AbstractController
@@ -28,9 +29,24 @@ class ResetPasswordController extends AbstractController
 
     private $resetPasswordHelper;
 
-    public function __construct(private ManagerRegistry $doctrine, ResetPasswordHelperInterface $resetPasswordHelper)
-    {
+    public function __construct(
+        private ManagerRegistry $doctrine,
+        ResetPasswordHelperInterface $resetPasswordHelper,
+        private readonly OidcConfiguration $oidcConfig,
+    ) {
         $this->resetPasswordHelper = $resetPasswordHelper;
+    }
+
+    /**
+     * Password reset only makes sense while password login exists. With
+     * OIDC_ENFORCE on it would be a second way to obtain a local password, so
+     * the whole flow disappears rather than staying reachable by URL.
+     */
+    private function assertPasswordLoginEnabled(): void
+    {
+        if ($this->oidcConfig->isEnforced()) {
+            throw $this->createNotFoundException('Password login is disabled; single sign-on is enforced.');
+        }
     }
 
     /**
@@ -39,6 +55,8 @@ class ResetPasswordController extends AbstractController
     #[Route('/', name: 'app_forgot_password_request', methods: ['GET', 'POST'])]
     public function request(Request $request, MailService $mailer, TranslatorInterface $translator): Response
     {
+        $this->assertPasswordLoginEnabled();
+
         $form = $this->createForm(ResetPasswordRequestFormType::class);
         $form->handleRequest($request);
 
@@ -61,6 +79,8 @@ class ResetPasswordController extends AbstractController
     #[Route('/check-email', name: 'app_check_email', methods: ['GET'])]
     public function checkEmail(): Response
     {
+        $this->assertPasswordLoginEnabled();
+
         // We prevent users from directly accessing this page
         if (null === ($resetToken = $this->getTokenObjectFromSession())) {
             return $this->redirectToRoute('app_forgot_password_request');
@@ -77,6 +97,8 @@ class ResetPasswordController extends AbstractController
     #[Route('/reset/{token}', name: 'app_reset_password', methods: ['GET', 'POST'])]
     public function reset(Request $request, UserPasswordHasherInterface $passwordHasher, UserService $userService, ?string $token = null): Response
     {
+        $this->assertPasswordLoginEnabled();
+
         if ($token) {
             // We store the token in session and remove it from the URL, to avoid the URL being
             // loaded in a browser and potentially leaking the token to 3rd party JavaScript.

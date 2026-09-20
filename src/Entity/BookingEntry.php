@@ -64,6 +64,16 @@ class BookingEntry
     private ?string $sourceType = null;
 
     /**
+     * Marks an entry whose document reference is known to be missing rather
+     * than not applicable - a deduction booked ahead of the supplier invoice
+     * that documents it, for instance. Plenty of entries legitimately carry no
+     * number at all (cash deposits, private withdrawals, tax payments), so
+     * only this flag tells the two apart, and closing a batch checks it.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $requiresDocumentNumber = false;
+
+    /**
      * Groups entries that originate from the same underlying document, e.g. a bank
      * statement line split across multiple debit accounts. Entries with the same
      * UUID are rendered together in the journal view.
@@ -236,6 +246,24 @@ class BookingEntry
         $this->counterAccountLegacy = $counterAccountLegacy;
 
         return $this;
+    }
+
+    public function requiresDocumentNumber(): bool
+    {
+        return $this->requiresDocumentNumber;
+    }
+
+    public function setRequiresDocumentNumber(bool $requiresDocumentNumber): self
+    {
+        $this->requiresDocumentNumber = $requiresDocumentNumber;
+
+        return $this;
+    }
+
+    /** True once the entry still waits for the reference it was told to expect. */
+    public function isMissingDocumentNumber(): bool
+    {
+        return $this->requiresDocumentNumber && ('' === (string) $this->invoiceNumber);
     }
 
     public function getSourceType(): ?string

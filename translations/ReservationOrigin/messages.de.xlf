@@ -30,6 +30,38 @@
                 <source>reservationorigin.color.help</source>
                 <target>Die Farbe wird in der Reservierungsübersicht als Indikator an der Reservierung angezeigt.</target>
             </trans-unit>
+            <trans-unit id="reservationorigin.guest_surcharge_enabled">
+                <source>reservationorigin.guest_surcharge_enabled</source>
+                <target>OTA-Gebühren</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.commission_percent">
+                <source>reservationorigin.commission_percent</source>
+                <target>Kommission</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.payment_fee_percent">
+                <source>reservationorigin.payment_fee_percent</source>
+                <target>Zahlungsgebühr</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.payment_collection">
+                <source>reservationorigin.payment_collection</source>
+                <target>Zahlung wird eingezogen von</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.tourist_tax_collection">
+                <source>reservationorigin.tourist_tax_collection</source>
+                <target>Wer kassiert die Kurtaxe?</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.tourist_tax_collection.hint">
+                <source>reservationorigin.tourist_tax_collection.hint</source>
+                <target>Zahlt der Gast die Kurtaxe vor Ort, wähle „Unterkunft“. Zieht das Portal sie zusammen mit dem Buchungspreis ein, wähle „Portal“. Damit wird festgelegt, ob die Zahlungsgebühr des Portals auch auf die Kurtaxe berechnet wird.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.collection.property">
+                <source>reservationorigin.collection.property</source>
+                <target>Unterkunft</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.collection.portal">
+                <source>reservationorigin.collection.portal</source>
+                <target>Portal</target>
+            </trans-unit>
             <trans-unit id="reservationorigin.flash.create.success">
                 <source>reservationorigin.flash.create.success</source>
                 <target>Reservierungsherkunft erfolgreich angelegt.</target>
@@ -41,6 +73,18 @@
             <trans-unit id="reservationorigin.flash.edit.success">
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.flash.edit.ota_fees_enabled">
+                <source>reservationorigin.flash.edit.ota_fees_enabled</source>
+                <target>Ob einzelne Leistungen bei den Portalgebühren berücksichtigt werden, wird am jeweiligen Preis über „Bei Portalgebühren berücksichtigen“ festgelegt. Prüfe daher die vorhandenen Preise.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.flash.surcharge_invalid">
+                <source>reservationorigin.flash.surcharge_invalid</source>
+                <target>Kommission und Zahlungsgebühr müssen Prozentwerte zwischen 0 und 100 mit höchstens zwei Nachkommastellen sein.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.flash.surcharge_required">
+                <source>reservationorigin.flash.surcharge_required</source>
+                <target>Bei aktivierten OTA-Gebühren muss mindestens Kommission oder Zahlungsgebühr angegeben werden.</target>
             </trans-unit>
             <trans-unit id="reservationorigin.flash.delete.success">
                 <source>reservationorigin.flash.delete.success</source>

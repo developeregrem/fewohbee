@@ -2,23 +2,8 @@
       data-controller="settings"
       data-action="submit->settings#submitFormAction"
       data-url="{{ path('objects.edit.object', {'id': object.id}) }}">
-    <div class="modal-body ps-5 pe-5">
+    <div class="modal-body ps-3 pe-3">
         <div id="flash-message-overlay">
-        </div>
-        <div class="row" id="edit-button-area">
-            <div class="col">
-                <h4 class="pb-2">
-                    <small>
-                    <a href="#"
-                       data-action="click->settings#enableEditAction"
-                       data-fieldset-selector="#entry-form-fieldset-{{ object.id }}"
-                       data-save-selector="#entry-submit-{{ object.id }}"
-                       data-edit-area-selector="#edit-button-area"
-                       title="{{ 'button.edit'|trans }}" class="float-end text-secondary">
-                            <i class="fas fa-edit"></i></a>
-                    </small>
-                </h4>
-            </div>
         </div>
         <div class="row">
             <div class="col">                
@@ -28,7 +13,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'button.cancel'|trans }}</button>
-         <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ object.id }}"
-                class="btn btn-primary d-none">
+        <input type="submit" value="{{ 'button.save'|trans }}" id="entry-submit-{{ object.id }}"
+               class="btn btn-primary">
     </div>
 </form>

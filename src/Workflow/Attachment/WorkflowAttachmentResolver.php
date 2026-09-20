@@ -29,6 +29,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   ['type' => 'pdf_template', 'templateId' => 12]  – renders a PDF template
  *   ['type' => 'invoice_pdf']                       – all non-cancelled invoices
  *   ['type' => 'invoice_pdf_open']                  – only invoices with status OPEN
+ *
+ * Which layout the attached invoices are rendered with is not part of an item: it is
+ * one choice per action ($invoicePdfTemplateId), because an e-mail that carries several
+ * invoices should not mix layouts. Without a choice the default invoice template is used.
  */
 class WorkflowAttachmentResolver
 {
@@ -44,9 +48,10 @@ class WorkflowAttachmentResolver
     /** Template types a user may pick as an attachment. */
     private const ATTACHABLE_TEMPLATE_TYPES = ['TEMPLATE_FILE_PDF', 'TEMPLATE_RESERVATION_PDF'];
 
-    private const TYPE_PDF_TEMPLATE = 'pdf_template';
-    private const TYPE_INVOICE_PDF = 'invoice_pdf';
-    private const TYPE_INVOICE_PDF_OPEN = 'invoice_pdf_open';
+    /** Item types an attachment list can hold; shared with the UI that offers them. */
+    public const TYPE_PDF_TEMPLATE = 'pdf_template';
+    public const TYPE_INVOICE_PDF = 'invoice_pdf';
+    public const TYPE_INVOICE_PDF_OPEN = 'invoice_pdf_open';
 
     public function __construct(
         private readonly TemplatesService $templatesService,
@@ -59,9 +64,11 @@ class WorkflowAttachmentResolver
     }
 
     /**
-     * @param array<int, mixed> $items        raw actionConfig['attachments']
-     * @param Reservation[]     $reservations render and persistence context
-     * @param string            $policy       self::POLICY_*
+     * @param array<int, mixed> $items                raw actionConfig['attachments']
+     * @param Reservation[]     $reservations         render and persistence context
+     * @param string            $policy               self::POLICY_*
+     * @param int               $invoicePdfTemplateId layout for attached invoices;
+     *                                                0 uses the default invoice template
      *
      * @throws WorkflowSkippedException when POLICY_REQUIRE_ALL cannot be satisfied,
      *                                  or when the attachments exceed MAX_TOTAL_BYTES
@@ -71,6 +78,7 @@ class WorkflowAttachmentResolver
         mixed $entity,
         array $reservations,
         string $policy = self::POLICY_SKIP_MISSING,
+        int $invoicePdfTemplateId = 0,
     ): ResolvedAttachmentSet {
         $normalized = $this->normalizeItems($items);
         if ([] === $normalized) {
@@ -92,7 +100,7 @@ class WorkflowAttachmentResolver
                 case self::TYPE_INVOICE_PDF:
                 case self::TYPE_INVOICE_PDF_OPEN:
                     $onlyOpen = self::TYPE_INVOICE_PDF_OPEN === $item['type'];
-                    array_push($attachments, ...$this->resolveInvoices($entity, $reservations, $onlyOpen, $warnings));
+                    array_push($attachments, ...$this->resolveInvoices($entity, $reservations, $onlyOpen, $invoicePdfTemplateId, $warnings));
                     break;
             }
         }
@@ -237,7 +245,7 @@ class WorkflowAttachmentResolver
      *
      * @return ResolvedAttachment[]
      */
-    private function resolveInvoices(mixed $entity, array $reservations, bool $onlyOpen, array &$warnings): array
+    private function resolveInvoices(mixed $entity, array $reservations, bool $onlyOpen, int $pdfTemplateId, array &$warnings): array
     {
         $invoices = $this->collectInvoices($entity, $reservations, $onlyOpen);
         if ([] === $invoices) {
@@ -248,9 +256,7 @@ class WorkflowAttachmentResolver
             return [];
         }
 
-        $pdfTemplate = $this->templatesService->getDefaultTemplate(
-            $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF'])
-        );
+        $pdfTemplate = $this->resolveInvoiceTemplate($pdfTemplateId, $warnings);
         if (!$pdfTemplate instanceof Template) {
             $warnings[] = $this->translator->trans('workflow.log.skipped_no_pdf_template');
 
@@ -270,6 +276,34 @@ class WorkflowAttachmentResolver
         }
 
         return $resolved;
+    }
+
+    /**
+     * The layout for attached invoices: the configured one, otherwise the default.
+     *
+     * A template that has been deleted or retyped since the workflow was set up does
+     * not cost the recipient their invoice — it is rendered with the default layout and
+     * the reason is recorded as a warning, which POLICY_REQUIRE_ALL still escalates.
+     *
+     * @param string[] $warnings
+     */
+    private function resolveInvoiceTemplate(int $templateId, array &$warnings): ?Template
+    {
+        if ($templateId > 0) {
+            $template = $this->em->getRepository(Template::class)->find($templateId);
+
+            if (!$template instanceof Template) {
+                $warnings[] = $this->translator->trans('workflow.log.attachment_invoice_template_not_found', ['%id%' => $templateId]);
+            } elseif ('TEMPLATE_INVOICE_PDF' !== $template->getTemplateType()?->getName()) {
+                $warnings[] = $this->translator->trans('workflow.log.attachment_invoice_template_incompatible', ['%name%' => (string) $template->getName()]);
+            } else {
+                return $template;
+            }
+        }
+
+        return $this->templatesService->getDefaultTemplate(
+            $this->em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_INVOICE_PDF'])
+        );
     }
 
     /** @param string[] $warnings */

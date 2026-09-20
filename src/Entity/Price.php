@@ -57,9 +57,15 @@ class Price
     private $pricePeriods;
     #[ORM\Column(type: 'boolean')]
     private $allPeriods;
-    #[ORM\ManyToOne(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'prices')]
-    #[ORM\JoinColumn(nullable: true)]
-    private $roomCategory;
+    /**
+     * Room categories this price is bound to. Apartment prices need at least one; for misc prices
+     * an empty collection means "applies to every room category".
+     *
+     * @var Collection<int, RoomCategory>
+     */
+    #[ORM\ManyToMany(targetEntity: 'App\Entity\RoomCategory', inversedBy: 'prices')]
+    #[ORM\JoinTable(name: 'prices_has_room_categories')]
+    private Collection $roomCategories;
     #[ORM\Column(type: 'boolean')]
     private $includesVat;
     #[ORM\Column(type: 'boolean')]
@@ -68,6 +74,20 @@ class Price
     private bool $isPerRoom;
     #[ORM\Column(type: 'boolean')]
     private bool $isDefaultActiveInReservationCreation;
+
+    /**
+     * Whether this service is part of what a portal brokers when it is billed on
+     * a booking that came through one.
+     *
+     * False for what the house sells on site - a breakfast the guest orders at
+     * the counter, a late checkout paid in cash - which a portal neither
+     * brokered nor processed and charges no commission or payment fee on. True
+     * for everything booked along with the stay, which is the ordinary case and
+     * the default. Handed on to every invoice position made from this price,
+     * which is where it is then recorded for good.
+     */
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $brokered = true;
     #[ORM\Column(type: 'boolean')]
     private bool $isBookableOnline;
     #[ORM\Column(type: 'boolean')]
@@ -87,6 +107,7 @@ class Price
         $this->reservationOrigins = new ArrayCollection();
         $this->pricePeriods = new ArrayCollection();
         $this->components = new ArrayCollection();
+        $this->roomCategories = new ArrayCollection();
         $this->allPeriods = true;
         $this->includesVat = true;
         $this->isFlatPrice = false;
@@ -355,14 +376,26 @@ class Price
         return $this;
     }
 
-    public function getRoomCategory(): ?RoomCategory
+    /**
+     * @return Collection<int, RoomCategory>
+     */
+    public function getRoomCategories(): Collection
     {
-        return $this->roomCategory;
+        return $this->roomCategories;
     }
 
-    public function setRoomCategory(?RoomCategory $roomCategory): self
+    public function addRoomCategory(RoomCategory $roomCategory): self
     {
-        $this->roomCategory = $roomCategory;
+        if (!$this->roomCategories->contains($roomCategory)) {
+            $this->roomCategories->add($roomCategory);
+        }
+
+        return $this;
+    }
+
+    public function removeRoomCategory(RoomCategory $roomCategory): self
+    {
+        $this->roomCategories->removeElement($roomCategory);
 
         return $this;
     }
@@ -402,6 +435,19 @@ class Price
     public function setIsPerRoom(bool $isPerRoom): self
     {
         $this->isPerRoom = $isPerRoom;
+
+        return $this;
+    }
+
+    /** Whether a portal brokers this service along with the stay, see the property. */
+    public function isBrokered(): bool
+    {
+        return $this->brokered;
+    }
+
+    public function setBrokered(bool $brokered): self
+    {
+        $this->brokered = $brokered;
 
         return $this;
     }

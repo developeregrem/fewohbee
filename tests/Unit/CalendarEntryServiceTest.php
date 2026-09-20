@@ -6,8 +6,8 @@ namespace App\Tests\Unit;
 
 use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
-use App\Service\CalendarEntryService;
-use App\Service\CalendarEntryTimeRules;
+use App\Service\Calendar\Entry\CalendarEntryService;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 

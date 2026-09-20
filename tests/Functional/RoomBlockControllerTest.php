@@ -11,7 +11,7 @@ use App\Entity\Role;
 use App\Entity\RoomBlock;
 use App\Entity\Subsidiary;
 use App\Entity\User;
-use App\Service\CalendarService;
+use App\Service\Calendar\Sync\ApartmentCalendarExportService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -266,13 +266,8 @@ final class RoomBlockControllerTest extends WebTestCase
         $room = $this->createApartment();
         $block = $this->createBlock($room, '2032-01-10', '2032-01-15', 'Export-Test');
 
-        $sync = new \App\Entity\CalendarSync();
-        $sync->setUuid(Uuid::v4());
-        $sync->setApartment($room);
-        $this->getEntityManager()->persist($sync);
-        $this->getEntityManager()->flush();
-
-        $content = static::getContainer()->get(CalendarService::class)->getIcalContent($sync);
+        $sync = $room->getCalendarSync();
+        $content = static::getContainer()->get(ApartmentCalendarExportService::class)->export($sync);
 
         self::assertStringContainsString('SUMMARY:Blocked', $content);
         self::assertStringContainsString('DTSTART;VALUE=DATE:20320110', $content);

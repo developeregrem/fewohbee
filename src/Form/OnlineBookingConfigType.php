@@ -12,7 +12,7 @@ use App\Entity\ReservationOrigin;
 use App\Entity\ReservationStatus;
 use App\Entity\Subsidiary;
 use App\Service\DisplayNameResolver;
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\Form\AbstractType;

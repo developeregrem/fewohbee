@@ -88,6 +88,12 @@ class SubsidiaryServiceController extends AbstractController
             } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
+            } elseif ($sub->hasIncompleteOpeningHours($request, 'new')) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
+            } elseif ($sub->hasInvalidCheckInWindow($request, 'new')) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.check_in_window.invalid');
             } else {
                 $em = $doctrine->getManager();
                 $em->persist($object);
@@ -120,11 +126,19 @@ class SubsidiaryServiceController extends AbstractController
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values
-                $em->clear(Subsidiary::class);
+                $em->clear();
             } elseif (!$patternService->isValid((string) $object->getInvoiceNumberPattern())) {
                 $error = true;
                 $this->addFlash('warning', 'object.flash.invoice_number_pattern.invalid');
-                $em->clear(Subsidiary::class);
+                $em->clear();
+            } elseif ($sub->hasIncompleteOpeningHours($request, $id)) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.opening_hours.incomplete');
+                $em->clear();
+            } elseif ($sub->hasInvalidCheckInWindow($request, $id)) {
+                $error = true;
+                $this->addFlash('warning', 'object.flash.check_in_window.invalid');
+                $em->clear();
             } else {
                 $em->persist($object);
                 $em->flush();

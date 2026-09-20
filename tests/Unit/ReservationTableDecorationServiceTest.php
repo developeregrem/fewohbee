@@ -8,10 +8,10 @@ use App\Entity\Calendar;
 use App\Entity\CalendarEntry;
 use App\Repository\CalendarEntryRepository;
 use App\Repository\CalendarRepository;
-use App\Service\CalendarService;
+use App\Service\Calendar\PublicHolidayService;
 use App\Service\ReservationTableDecorationService;
 use PHPUnit\Framework\TestCase;
-use App\Service\CalendarEntryTimeFormatter;
+use App\Service\Calendar\Entry\CalendarEntryTimeFormatter;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Translation\Loader\ArrayLoader;
 use Symfony\Component\Translation\Translator;
@@ -90,7 +90,7 @@ final class ReservationTableDecorationServiceTest extends TestCase
         $calendarRepo = $this->createStub(CalendarRepository::class);
         $calendarRepo->method('count')->willReturn($calendarCount);
 
-        $calendarService = $this->createStub(CalendarService::class);
+        $calendarService = $this->createStub(PublicHolidayService::class);
         $calendarService->method('getPublicdaysForDay')->willReturn([]);
 
         $urlGenerator = $this->createStub(UrlGeneratorInterface::class);

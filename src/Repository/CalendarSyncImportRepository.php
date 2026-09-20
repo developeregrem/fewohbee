@@ -9,10 +9,9 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method CalendarSyncImport|null find($id, $lockMode = null, $lockVersion = null)
- * @method CalendarSyncImport|null findOneBy(array $criteria, array $orderBy = null)
- * @method CalendarSyncImport[]    findAll()
- * @method CalendarSyncImport[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * Provides queries for room-specific remote calendar import configurations.
+ *
+ * @extends ServiceEntityRepository<CalendarSyncImport>
  */
 class CalendarSyncImportRepository extends ServiceEntityRepository
 {
@@ -20,5 +19,25 @@ class CalendarSyncImportRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, CalendarSyncImport::class);
+    }
+
+    /**
+     * Return imports that permit sharing portal-label filters, optionally excluding the current one.
+     *
+     * @return list<CalendarSyncImport>
+     */
+    public function findSummaryFilterSharingImports(?CalendarSyncImport $currentImport = null): array
+    {
+        $queryBuilder = $this->createQueryBuilder('calendarImport')
+            ->andWhere('calendarImport.shareSummaryFilters = true')
+            ->orderBy('calendarImport.id', 'ASC');
+
+        if (null !== $currentImport?->getId()) {
+            $queryBuilder
+                ->andWhere('calendarImport != :currentImport')
+                ->setParameter('currentImport', $currentImport);
+        }
+
+        return $queryBuilder->getQuery()->getResult();
     }
 }

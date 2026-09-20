@@ -151,7 +151,7 @@
                             {% endif %}
                         </td>
                         <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}
@@ -225,7 +225,7 @@
                                 {{ entry.counterAccountLegacy ?? '-' }}
                             {% endif %}
                         </td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}
@@ -287,7 +287,7 @@
                         <td>{{ entry.debitAccount ? entry.debitAccount.label : (entry.counterAccountLegacy ?? '-') }}</td>
                         <td>{{ entry.creditAccount ? entry.creditAccount.label : '-' }}</td>
                         <td class="d-none d-md-table-cell">{{ entry.taxRate ? entry.taxRate.name : '-' }}</td>
-                        <td class="d-none d-md-table-cell">{{ entry.invoiceNumber ?? '-' }}</td>
+                        <td class="d-none d-md-table-cell">{% if entry.missingDocumentNumber %}<span class="badge text-bg-warning" title="{{ 'accounting.journal.entry.missing_document_hint'|trans }}">{{ 'accounting.journal.entry.missing_document'|trans }}</span>{% else %}{{ entry.invoiceNumber ?? '-' }}{% endif %}</td>
                         <td>{{ entry.remark ?? '' }}</td>
                         <td>
                             {% if not batch.closed %}

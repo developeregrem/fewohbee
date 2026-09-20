@@ -1,0 +1,156 @@
+{# Booking-rule calendar of the online booking settings: four weeks of resolved daily
+   restrictions for one room category, topped by what all rules add up to for an arrival on
+   each day. Rendered with the page and re-rendered over ajax when category or week change.
+   Presentation only — every value comes from BookingRestrictionService. #}
+{% import _self as calendarRows %}
+
+{% macro row(kind, label, sub, days) %}
+    <div class="brc-label"><span class="brc-label__main">{{ label }}</span><span class="brc-label__sub">{{ sub }}</span></div>
+    {% for day in days %}
+        {% set weekday = day.date.format('N') %}
+        {% if kind == 'arrival' or kind == 'through' %}
+            {% set rule = kind == 'arrival' ? day.arrivalRule : day.throughRule %}
+            {% set value = kind == 'arrival' ? day.minStayArrival : day.minStayThrough %}
+            {% set overridden = kind == 'arrival' ? day.arrivalOverridden : day.throughOverridden %}
+            {% set state = rule is null ? 'none' : (rule.period ? 'period' : 'general') %}
+            {% set context = kind == 'arrival'
+                ? 'booking_rules.calendar_tip_arrival'|trans
+                : 'booking_rules.calendar_tip_night'|trans({'%night%': ('booking_rules.night_' ~ weekday)|trans}) %}
+            {% set nights = 'booking_rules.nights_count'|trans({'%count%': value, '%nights%': value}) %}
+            {% set tipValue = rule is null
+                ? 'booking_rules.calendar_tip_no_minimum'|trans
+                : (kind == 'arrival' ? 'booking_rules.calendar_tip_minimum' : 'booking_rules.calendar_tip_minimum_night')|trans({'%nights%': nights}) %}
+        {% else %}
+            {% set rule = kind == 'closed_to_arrival' ? day.closedToArrivalRule : day.closedToDepartureRule %}
+            {% set overridden = [] %}
+            {% set state = rule is null ? 'open' : 'closed' %}
+            {% set context = (kind == 'closed_to_arrival' ? 'booking_rules.calendar_row_no_arrival' : 'booking_rules.calendar_row_no_departure')|trans %}
+            {% set tipValue = (rule is null ? 'booking_rules.calendar_tip_open' : 'booking_rules.calendar_tip_closed')|trans %}
+        {% endif %}
+        {% set weekdayLabel = ('booking_rules.day_' ~ weekday)|trans %}
+        <button type="button"
+                class="brc-cell brc-cell--{{ state }}{{ weekday >= 6 ? ' is-weekend' }}{{ state == 'closed' and rule.period ? ' is-period' }}{{ overridden is not empty ? ' has-override' }}"
+                data-tip-title="{{ 'booking_rules.calendar_tip_title'|trans({'%weekday%': weekdayLabel, '%date%': day.date.format('d.m.Y'), '%context%': context}) }}"
+                data-tip-value="{{ tipValue }}"
+                {% if rule is not null %}data-rule="{{ rule.id }}"{% endif %}
+                {% if overridden is not empty %}data-overridden="{{ overridden|map(r => r.id)|join(',') }}"{% endif %}
+                aria-label="{{ 'booking_rules.calendar_cell_label'|trans({'%weekday%': weekdayLabel, '%date%': day.date.format('d.m.Y'), '%context%': context, '%value%': tipValue}) }}">
+            {%- if state == 'closed' -%}
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            {%- elseif state == 'none' or state == 'open' -%}
+                ·
+            {%- else -%}
+                {{ value }}
+            {%- endif -%}
+        </button>
+    {% endfor %}
+{% endmacro %}
+
+{% set locale = app.request.locale %}
+{% set todayKey = today.format('Y-m-d') %}
+<div class="card mb-3 booking-rule-calendar" id="booking-rule-calendar"
+     data-booking-rules-target="calendar"
+     data-category="{{ category.id }}"
+     data-week="{{ weekStart.format('Y-m-d') }}"
+     data-rules="{{ rules|json_encode|e('html_attr') }}"
+     data-tip-overridden="{{ 'booking_rules.calendar_tip_overridden'|trans }}">
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <h5 class="card-title fs-6 mb-0"><i class="fas fa-calendar-days text-primary me-2"></i>{{ 'booking_rules.section_calendar'|trans }}</h5>
+            <p class="text-body-secondary small mb-0 mt-1">{{ 'booking_rules.section_calendar_desc'|trans }}</p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <label class="visually-hidden" for="booking-rule-calendar-category">{{ 'booking_rules.calendar_category'|trans }}</label>
+            <select id="booking-rule-calendar-category" class="form-select form-select-sm w-auto pe-5"
+                    data-action="change->booking-rules#changeCalendarCategory">
+                {% for option in categories %}
+                    <option value="{{ option.id }}" {{ option.id == category.id ? 'selected' }}>{{ option.name }}</option>
+                {% endfor %}
+            </select>
+            <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'booking_rules.calendar_navigation'|trans }}">
+                <button type="button" class="btn btn-outline-secondary" data-nav="previous" data-week="{{ previousWeek.format('Y-m-d') }}"
+                        data-action="booking-rules#navigateCalendar"
+                        title="{{ 'booking_rules.calendar_previous'|trans }}" aria-label="{{ 'booking_rules.calendar_previous'|trans }}">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-nav="today" data-week="{{ currentWeek.format('Y-m-d') }}"
+                        data-action="booking-rules#navigateCalendar">{{ 'booking_rules.calendar_today'|trans }}</button>
+                <button type="button" class="btn btn-outline-secondary" data-nav="next" data-week="{{ nextWeek.format('Y-m-d') }}"
+                        data-action="booking-rules#navigateCalendar"
+                        title="{{ 'booking_rules.calendar_next'|trans }}" aria-label="{{ 'booking_rules.calendar_next'|trans }}">
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <span class="small text-body-secondary font-monospace">{{ (days|first).date.format('d.m.') }} – {{ (days|last).date.format('d.m.Y') }}</span>
+        </div>
+    </div>
+
+    <div class="booking-rule-calendar__main"
+         data-action="mouseover->booking-rules#showTip focusin->booking-rules#showTip mouseleave->booking-rules#hideTip focusout->booking-rules#hideTip">
+        <div class="booking-rule-calendar__scroll">
+            <div class="booking-rule-calendar__grid" style="--brc-days: {{ days|length }}">
+                <div class="brc-label brc-month">{{ category.name }}</div>
+                {% for month in months %}
+                    <div class="brc-month" style="grid-column: span {{ month.span }}">{{ getLocalizedDate(month.date, 'LLLL yyyy', locale) }}</div>
+                {% endfor %}
+
+                <div class="brc-label"><span class="brc-label__main">{{ 'booking_rules.calendar_row_day'|trans }}</span></div>
+                {% for day in days %}
+                    <div class="brc-day{{ day.date.format('N') >= 6 ? ' is-weekend' }}{{ day.date.format('Y-m-d') == todayKey ? ' is-today' }}">
+                        <span class="brc-day__weekday">{{ ('booking_rules.day_' ~ day.date.format('N'))|trans }}</span>
+                        <span class="brc-day__date">{{ day.date.format('d') }}</span>
+                    </div>
+                {% endfor %}
+
+                {# What all rules add up to: the shortest stay bookable from each arrival day. A dot marks
+                   a day that needs more than its own rules, a ring a longer stay that fails again; the
+                   tooltip names the reason. #}
+                <div class="brc-label brc-label--effective"><span class="brc-label__main">{{ 'booking_rules.calendar_row_effective'|trans }}</span><span class="brc-label__sub">{{ 'booking_rules.calendar_row_effective_sub'|trans }}</span></div>
+                {% for day in days %}
+                    {% set arrival = arrivals[loop.index0] %}
+                    {% set weekday = day.date.format('N') %}
+                    {% set weekdayLabel = ('booking_rules.day_' ~ weekday)|trans %}
+                    {% set context = 'booking_rules.calendar_tip_effective'|trans %}
+                    <button type="button"
+                            class="brc-cell brc-cell--effective{{ arrival.nights is null ? ' brc-cell--closed' }}{{ weekday >= 6 ? ' is-weekend' }}{{ arrival.raised ? ' is-raised' }}{{ arrival.gap ? ' has-gap' }}"
+                            data-tip-title="{{ 'booking_rules.calendar_tip_title'|trans({'%weekday%': weekdayLabel, '%date%': day.date.format('d.m.Y'), '%context%': context}) }}"
+                            data-tip-value="{{ arrival.value }}"
+                            {% if day.closedToArrival %}data-rule="{{ day.closedToArrivalRule.id }}"{% endif %}
+                            {% if arrival.reasons is not empty %}data-tip-reasons="{{ arrival.reasons|json_encode|e('html_attr') }}"{% endif %}
+                            aria-label="{{ 'booking_rules.calendar_cell_label'|trans({'%weekday%': weekdayLabel, '%date%': day.date.format('d.m.Y'), '%context%': context, '%value%': arrival.value}) }}">
+                        {%- if arrival.nights is null -%}
+                            <i class="fas fa-xmark" aria-hidden="true"></i>
+                        {%- else -%}
+                            {{ arrival.nights }}
+                        {%- endif -%}
+                    </button>
+                {% endfor %}
+
+                <div class="brc-group brc-group--rules"><span>{{ 'booking_rules.calendar_group_rules'|trans }} · {{ 'booking_rules.calendar_group_min_stay'|trans }}</span></div>
+                {{ calendarRows.row('arrival', 'booking_rules.calendar_row_arrival'|trans, 'booking_rules.calendar_row_arrival_sub'|trans, days) }}
+                {{ calendarRows.row('through', 'booking_rules.calendar_row_through'|trans, 'booking_rules.calendar_row_through_sub'|trans, days) }}
+
+                <div class="brc-group"><span>{{ 'booking_rules.calendar_group_closures'|trans }}</span></div>
+                {{ calendarRows.row('closed_to_arrival', 'booking_rules.calendar_row_no_arrival'|trans, 'booking_rules.calendar_row_closure_sub'|trans, days) }}
+                {{ calendarRows.row('closed_to_departure', 'booking_rules.calendar_row_no_departure'|trans, 'booking_rules.calendar_row_closure_sub'|trans, days) }}
+            </div>
+        </div>
+
+        {# Legend and both highlight notes share one grid cell: marking a rule swaps them without changing the card height. #}
+        <div class="brc-legend-slot" data-booking-rules-target="calendarLegend">
+            <div class="brc-legend">
+                <span><span class="brc-swatch brc-cell--general">2</span>{{ 'booking_rules.legend_general'|trans }}</span>
+                <span><span class="brc-swatch brc-cell--period">3</span>{{ 'booking_rules.legend_period'|trans }}</span>
+                <span><span class="brc-swatch has-override"></span>{{ 'booking_rules.legend_override'|trans }}</span>
+                <span><span class="brc-swatch brc-cell--closed"><i class="fas fa-xmark" aria-hidden="true"></i></span>{{ 'booking_rules.legend_closed'|trans }}</span>
+                <span><span class="brc-swatch brc-cell--none">·</span>{{ 'booking_rules.legend_none'|trans }}</span>
+                <span><span class="brc-swatch is-raised"></span>{{ 'booking_rules.legend_raised'|trans }}</span>
+                <span><span class="brc-swatch has-gap"></span>{{ 'booking_rules.legend_gap'|trans }}</span>
+            </div>
+            {# The rule list may be scrolled away, so the marking can be cleared from here as well. #}
+            <p class="brc-highlight-note" data-note="found">{{ 'booking_rules.highlight_found'|trans }}<button type="button" class="brc-highlight-clear" data-action="booking-rules#clearHighlight">{{ 'booking_rules.highlight_clear'|trans }}</button></p>
+            <p class="brc-highlight-note" data-note="none">{{ 'booking_rules.highlight_none'|trans }}<button type="button" class="brc-highlight-clear" data-action="booking-rules#clearHighlight">{{ 'booking_rules.highlight_clear'|trans }}</button></p>
+        </div>
+        <div class="brc-tip" data-booking-rules-target="calendarTip" role="tooltip" hidden></div>
+    </div>
+</div>

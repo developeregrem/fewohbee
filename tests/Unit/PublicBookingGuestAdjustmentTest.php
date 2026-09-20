@@ -16,9 +16,9 @@ use App\Repository\GuestCategoryModifierRepository;
 use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Service\InvoiceService;
-use App\Service\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\PriceService;
-use App\Service\PublicPricingService;
 use PHPUnit\Framework\TestCase;
 
 /**

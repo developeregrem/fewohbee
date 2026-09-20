@@ -49,7 +49,7 @@ final class PurgeLogsCommandTest extends KernelTestCase
         self::assertSame(0, $exit);
         self::assertSame(1, (int) $this->conn->fetchOne('SELECT COUNT(*) FROM logging'));
         self::assertSame(1, (int) $this->conn->fetchOne('SELECT COUNT(*) FROM workflow_logs'));
-        self::assertStringContainsString('Deleted 1 audit log and 1 workflow log', $this->tester->getDisplay());
+        self::assertStringContainsString('Deleted 1 audit log, 1 workflow log', $this->tester->getDisplay());
 
         // GDPR-relevant: the IP/username of the purged row must be gone, only the recent row's PII remains.
         $remainingIps = $this->conn->fetchFirstColumn('SELECT ip_address FROM logging');

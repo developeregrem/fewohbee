@@ -74,6 +74,10 @@ final class AppSettingsServiceTest extends TestCase
 
         self::assertSame('db@example.com', $settings->getMailFromEmail());
         self::assertNull($settings->getSmtpHost());
+        self::assertSame('db@example.com', $service->getEffectiveMailFromEmail($settings));
+        self::assertSame('', $service->getEffectiveMailFromName($settings));
+        self::assertNull($service->getEffectiveMailReturnPath($settings));
+        self::assertFalse($service->isEffectiveMailCopyEnabled($settings));
     }
 
     public function testMissingLegacyEnvDoesNotPersistEmptyMailDefaults(): void

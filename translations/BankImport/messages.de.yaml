@@ -267,11 +267,14 @@ accounting:
         „Als Regel speichern".
       empty: Noch keine Regeln gespeichert.
       edit: Regel bearbeiten
-      edit.help: Hier kannst du Name, Priorität und Geltungsbereich anpassen.
+      edit.help: |
+        Hier kannst du Name, Priorität, Geltungsbereich und die Werte der
+        Bedingungen und der Aktion anpassen.
       edit.recreate_hint: |
-        Bedingungen und Aktion einer Regel werden in der Import-Vorschau
-        neu erfasst — falls du sie ändern willst, lösche die Regel und
-        erstelle sie aus einer neuen Bankzeile heraus.
+        Der Aufbau einer Regel — welche Bedingungen sie prüft, welche Aktion
+        sie ausführt, wie viele Teilbeträge sie kennt — wird in der
+        Import-Vorschau festgelegt. Um ihn zu ändern, lösche die Regel und
+        lege sie aus einer Bankzeile neu an.
       and: UND
       conditions_empty: Keine Bedingungen — Regel greift auf jede Zeile.
       create_hint: |
@@ -287,7 +290,9 @@ accounting:
         action: Aktion
         actions: Aktionen
       action:
+        assign: Zuordnen
         ignore: Ignorieren
+        ignore_help: Passende Zeilen werden beim Import übersprungen.
         split: Aufteilen (%count% Teile)
         split_marker: 'nach „%marker%"'
         enable: Aktivieren

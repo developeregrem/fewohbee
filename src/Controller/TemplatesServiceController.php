@@ -21,6 +21,7 @@ use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
 use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -221,7 +222,17 @@ class TemplatesServiceController extends AbstractController
             $context = $sampleContext;
         }
 
-        $params = $provider->buildPreviewRenderParams($template, $context);
+        try {
+            $params = $provider->buildPreviewRenderParams($template, $context);
+        } catch (\Throwable) {
+            return $this->json([
+                'html' => '',
+                'warning' => 'templates.preview.render.error.generic',
+                'warningText' => $translator->trans('templates.preview.render.error.generic'),
+                'warningVars' => [],
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $templateText = trim((string) $request->request->get('previewText', ''));
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
@@ -274,6 +285,7 @@ class TemplatesServiceController extends AbstractController
         TemplatesService $templatesService,
         TemplatePreviewProviderRegistry $previewRegistry,
         Request $request,
+        TranslatorInterface $translator,
         Template $template
     ): Response {
         $provider = $previewRegistry->getProvider($template);
@@ -299,7 +311,19 @@ class TemplatesServiceController extends AbstractController
             $context = $provider->buildSampleContext();
         }
 
-        $params = $provider->buildPreviewRenderParams($template, $context);
+        try {
+            $params = $provider->buildPreviewRenderParams($template, $context);
+        } catch (\Throwable) {
+            $message = $translator->trans('templates.preview.render.error.generic');
+            if ($request->isXmlHttpRequest()) {
+                return $this->json(['error' => $message], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $this->addFlash('warning', $message);
+
+            return $this->redirectToRoute('settings.templates.edit.page', ['id' => $template->getId()]);
+        }
+
         $templateText = trim((string) $request->request->get('previewText', ''));
         if ('' === $templateText) {
             $templateText = (string) $template->getText();
@@ -411,6 +435,9 @@ class TemplatesServiceController extends AbstractController
             if (!empty($snippet['label'])) {
                 $snippet['label'] = $translator->trans($snippet['label']);
             }
+            if (!empty($snippet['description'])) {
+                $snippet['description'] = $translator->trans($snippet['description']);
+            }
             if (!empty($snippet['content']) && is_string($snippet['content'])) {
                 try {
                     // Render snippet labels/text (e.g. {{ '...'|trans }}) while
@@ -474,7 +501,7 @@ class TemplatesServiceController extends AbstractController
     }
 
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
-    public function uploadImage(Request $request, FileUploader $fos)
+    public function uploadImage(Request $request, FileUploader $fos, LoggerInterface $logger): Response
     {
         /** @var UploadedFile $imageFile */
         $imageFile = $request->files->get('file');
@@ -485,6 +512,8 @@ class TemplatesServiceController extends AbstractController
         try {
             $name = $fos->upload($imageFile);
         } catch (\Symfony\Component\HttpFoundation\File\Exception\FileException $ex) {
+            $logger->error('Template image upload failed.', ['exception' => $ex]);
+
             return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 

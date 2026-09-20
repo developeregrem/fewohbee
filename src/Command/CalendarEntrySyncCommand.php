@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\CalendarRepository;
-use App\Service\CalendarEntrySyncService;
-use App\Service\Exception\CalendarSyncException;
+use App\Service\Calendar\Sync\CalendarEntrySyncService;
+use App\Exception\CalendarSyncException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsCommand(
     name: 'calendars:sync',
@@ -22,6 +23,7 @@ class CalendarEntrySyncCommand extends Command
     public function __construct(
         private readonly CalendarRepository $calendarRepository,
         private readonly CalendarEntrySyncService $syncService,
+        private readonly TranslatorInterface $translator,
     ) {
         parent::__construct();
     }
@@ -61,7 +63,7 @@ class CalendarEntrySyncCommand extends Command
                 }
             } catch (CalendarSyncException $e) {
                 $hadFailure = true;
-                $io->error(sprintf('%s: %s', $calendar->getName(), $e->getMessage()));
+                $io->error(sprintf('%s: %s', $calendar->getName(), $this->translator->trans($e->translationKey, $e->translationParameters)));
             }
         }
 

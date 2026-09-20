@@ -16,9 +16,9 @@ namespace App\Controller;
 use App\Entity\AccountingAccount;
 use App\Entity\Price;
 use App\Entity\PricePeriod;
-use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Entity\TaxRate;
+use App\Repository\ReservationOriginRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
@@ -32,23 +32,23 @@ use Symfony\Component\Routing\Attribute\Route;
 class PriceServiceController extends AbstractController
 {
     #[Route('/', name: 'prices.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine)
+    public function indexAction(ManagerRegistry $doctrine, PriceService $ps)
     {
         $em = $doctrine->getManager();
         $prices = $em->getRepository(Price::class)->findAllOrdered();
 
         return $this->render('Prices/index.html.twig', [
-            'prices' => $prices,
+            'priceGroups' => $ps->groupByRoomCategories($prices),
         ]);
     }
 
     #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, $id)
+    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository, $id)
     {
         $em = $doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $origins = $originRepository->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
         $preset = $accountingSettings->getActivePreset();
         $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
@@ -68,15 +68,16 @@ class PriceServiceController extends AbstractController
             'categories' => $categories,
             'taxRates' => $taxRates,
             'accounts' => $accounts,
+            'otaFeesEnabled' => $originRepository->hasOtaFees(),
         ]);
     }
 
     #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
-    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings)
+    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository)
     {
         $em = $doctrine->getManager();
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $origins = $originRepository->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
         $preset = $accountingSettings->getActivePreset();
         $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
@@ -99,6 +100,7 @@ class PriceServiceController extends AbstractController
             'categories' => $categories,
             'taxRates' => $taxRates,
             'accounts' => $accounts,
+            'otaFeesEnabled' => $originRepository->hasOtaFees(),
         ]);
     }
 
@@ -111,8 +113,10 @@ class PriceServiceController extends AbstractController
             $price = $ps->getPriceFromForm($request, 'new');
 
             // check for mandatory fields
+            // apartment prices must name at least one room category, misc prices without one apply to all
             if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
-                || 0 == count($price->getReservationOrigins())) {
+                || 0 == count($price->getReservationOrigins())
+                || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
             } else {
@@ -156,8 +160,10 @@ class PriceServiceController extends AbstractController
             $em = $doctrine->getManager();
 
             // check for mandatory fields
+            // apartment prices must name at least one room category, misc prices without one apply to all
             if (0 == strlen($price->getDescription()) || 0 == strlen($price->getPrice()) || 0 === $price->getVat()
-                || 0 == count($price->getReservationOrigins())) {
+                || 0 == count($price->getReservationOrigins())
+                || (2 == $price->getType() && $price->getRoomCategories()->isEmpty())) {
                 $error = true;
                 $this->addFlash('warning', 'flash.mandatory');
                 // stop auto commit of doctrine with invalid field values

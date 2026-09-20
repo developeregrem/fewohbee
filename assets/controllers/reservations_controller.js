@@ -1064,7 +1064,6 @@ export default class extends Controller {
                     this.tableContainer.innerHTML = data;
                     this.addAppartmentSelectableUrl = this.tableContainer.dataset.reservationsAddAppartmentSelectableUrl || this.addAppartmentSelectableUrl;
                 }
-                this.updateCalendarReminderBadgeFromTable();
                 this.toggleDisplayTableRows();
                 this.initStickyTables();
                 this.initFit();
@@ -1421,12 +1420,12 @@ export default class extends Controller {
                     // instead of attempting to move the table cell manually.
                     this.getNewTable();
                 },
-                onError: (error) => {
+                onError: (_message, status) => {
                     keepPopoversDisabled = false;
                     // The endpoint uses 409 for date/room collisions and 422
                     // when the target room has too few beds.
-                    const isConflict = error.startsWith('409 ');
-                    const isCapacityError = error.startsWith('422 ');
+                    const isConflict = status === 409;
+                    const isCapacityError = status === 422;
                     this.showTableAlert(
                         this.translate(
                             isConflict
@@ -1970,45 +1969,8 @@ export default class extends Controller {
                 if (this.modalContent) {
                     this.modalContent.innerHTML = data;
                 }
-                this.updateCalendarReminderBadgeFromModal();
             }
         });
-    }
-
-    updateCalendarReminderBadgeFromModal() {
-        const countSource = this.modalContent?.querySelector('[data-calendar-reminder-count]');
-        if (!countSource || !countSource.dataset || typeof countSource.dataset.calendarReminderCount === 'undefined') {
-            return;
-        }
-        this.applyCalendarReminderBadge(countSource.dataset.calendarReminderCount);
-    }
-
-    /**
-     * The reminder count rendered with the page comes from the session, which may still be
-     * empty when the table settings are restored from local storage. The table response
-     * carries the recalculated count, so the badge follows the table instead of staying stale.
-     */
-    updateCalendarReminderBadgeFromTable() {
-        const countSource = this.tableContainer?.querySelector('[data-reservations-calendar-reminder-count]');
-        if (!countSource || !countSource.dataset || typeof countSource.dataset.reservationsCalendarReminderCount === 'undefined') {
-            return;
-        }
-        this.applyCalendarReminderBadge(countSource.dataset.reservationsCalendarReminderCount);
-    }
-
-    applyCalendarReminderBadge(rawValue) {
-        const badge = document.querySelector('[data-calendar-reminder-count-badge]');
-        const button = document.querySelector('[data-calendar-reminder-button]');
-        if (!badge || !button) {
-            return;
-        }
-        const value = parseInt(rawValue || '0', 10);
-        badge.textContent = Number.isNaN(value) ? '0' : String(value);
-        if (value > 0) {
-            button.classList.remove('d-none');
-        } else {
-            button.classList.add('d-none');
-        }
     }
 
     updateReservationStatusAction(event) {
@@ -2043,6 +2005,41 @@ export default class extends Controller {
         return true;
     }
 
+    showRequestError(message, status, target = null) {
+        const base = target || this.modalContent || document;
+        const overlay = base?.querySelector ? base.querySelector('#flash-message-overlay') : null;
+        if (!overlay || !message) {
+            return false;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.dataset.reservationRequestError = 'true';
+        const column = document.createElement('div');
+        column.className = 'col-md';
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${status !== null && status >= 500 ? 'danger' : 'warning'} alert-dismissible fade show`;
+        alert.setAttribute('role', 'alert');
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'btn-close';
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        closeButton.setAttribute('aria-label', 'Close');
+
+        alert.append(document.createTextNode(message), closeButton);
+        column.append(alert);
+        row.append(column);
+        overlay.replaceChildren(row);
+
+        return true;
+    }
+
+    clearRequestError(target = null) {
+        const base = target || this.modalContent || document;
+        const overlay = base?.querySelector ? base.querySelector('#flash-message-overlay') : null;
+        overlay?.querySelector('[data-reservation-request-error]')?.remove();
+    }
+
     getAvailableAppartmentsForPeriod(mode, url = null) {
         $('#available-appartments').html('');
         iniStartOrEndDate('from', 'end', 1);
@@ -2054,11 +2051,19 @@ export default class extends Controller {
             if (!targetUrl) {
                 return false;
             }
+            const availableApartments = document.getElementById('available-appartments');
             httpRequest({
                 url: targetUrl,
                 method: 'POST',
                 data: httpSerializeForm('#reservation-period'),
-                target: document.getElementById('available-appartments')
+                target: availableApartments,
+                onSuccess: (data) => {
+                    if (availableApartments) {
+                        availableApartments.innerHTML = data;
+                    }
+                    this.clearRequestError();
+                },
+                onError: (message, status) => this.showRequestError(message, status)
             });
         }
         return false;
@@ -2713,7 +2718,8 @@ export default class extends Controller {
                     this.modalContent.innerHTML = data;
                 }
                 this.getNewTable();
-            }
+            },
+            onError: (message, status) => this.showRequestError(message, status, this.modalContent)
         });
         return false;
     }

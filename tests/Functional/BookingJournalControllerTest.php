@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 
 final class BookingJournalControllerTest extends WebTestCase
 {
@@ -56,7 +57,11 @@ final class BookingJournalControllerTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->createCashJournalUser());
 
-        // Clear any existing accounts and tax rates from previous test runs
+        // Clear any existing accounts and tax rates from previous test runs.
+        // Entries booked by earlier tests reference both, and whether any exist
+        // by now depends on the order the suite happens to run in - so they go
+        // first rather than leaving this test to fail on a foreign key.
+        $this->getEntityManager()->createQuery('DELETE FROM App\Entity\BookingEntry')->execute();
         $this->getEntityManager()->createQuery('DELETE FROM App\Entity\TaxRate')->execute();
         $this->getEntityManager()->createQuery('DELETE FROM App\Entity\AccountingAccount')->execute();
 
@@ -290,6 +295,88 @@ final class BookingJournalControllerTest extends WebTestCase
         self::assertStringNotContainsString('booking-journal#openOffcanvas', (string) $client->getResponse()->getContent());
     }
 
+    // ── Duplicating an entry ────────────────────────────────────────
+
+    public function testDuplicatingAnEntryKeepsTheDocumentFlag(): void
+    {
+        // The copy of an entry booked ahead of its document is waiting for one
+        // just as much as the original; losing the flag would let the month be
+        // closed on a deduction nothing documents.
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $entry = $this->createEntryIn(2095, 4, static function (BookingEntry $entry): void {
+            $entry->setRequiresDocumentNumber(true);
+        });
+
+        $crawler = $client->request('GET', '/journal/entry/'.$entry->getId().'/duplicate');
+
+        self::assertResponseIsSuccessful();
+        $checkbox = $crawler->filter('input[id$="_requiresDocumentNumber"]');
+        self::assertGreaterThan(0, $checkbox->count(), 'the entry form does not offer the document flag');
+        self::assertNotNull($checkbox->attr('checked'), 'the copy does not wait for the document the original waits for');
+    }
+
+    public function testDuplicatingAnOrdinaryEntryLeavesTheDocumentFlagOff(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $entry = $this->createEntryIn(2095, 5);
+
+        $crawler = $client->request('GET', '/journal/entry/'.$entry->getId().'/duplicate');
+
+        self::assertResponseIsSuccessful();
+        self::assertNull($crawler->filter('input[id$="_requiresDocumentNumber"]')->attr('checked'));
+    }
+
+    // ── Deleting a tax rate ─────────────────────────────────────────
+
+    public function testTaxRateConfiguredInAWorkflowCannotBeDeleted(): void
+    {
+        // Without the guard the rate goes, the action keeps running, and every
+        // entry it books from then on carries no tax rate at all - silently.
+        $client = static::createClient();
+        $client->loginUser($this->createCashJournalUser());
+
+        $em = $this->getEntityManager();
+        $rate = new TaxRate();
+        $rate->setName('Workflow-Satz '.bin2hex(random_bytes(3)));
+        $rate->setRate('19.00');
+        $em->persist($rate);
+        $em->flush();
+
+        $workflow = new Workflow();
+        $workflow->setName('Portalgebühr '.bin2hex(random_bytes(3)));
+        $workflow->setTriggerType('invoice.status_changed');
+        $workflow->setActionType('create_percentage_entry');
+        $workflow->setActionConfig(['percent' => '12', 'taxRateId' => (string) $rate->getId()]);
+        $em->persist($workflow);
+        $em->flush();
+
+        $this->deleteTaxRate($client, $rate);
+
+        self::assertNotNull(
+            $em->getRepository(TaxRate::class)->find($rate->getId()),
+            'a tax rate a workflow books with was deleted'
+        );
+        // Named as the workflow's doing, not the journal's: the way out differs.
+        $session = $client->getRequest()->getSession();
+        self::assertInstanceOf(FlashBagAwareSessionInterface::class, $session);
+        self::assertSame(['accounting.taxrates.flash.cannot_delete_in_workflow'], $session->getFlashBag()->peek('warning'));
+
+        // Re-read: submitting the delete cleared the manager the entity came from.
+        $em->remove($em->getRepository(Workflow::class)->find($workflow->getId()));
+        $em->flush();
+
+        $this->deleteTaxRate($client, $rate);
+
+        self::assertNull(
+            $em->getRepository(TaxRate::class)->find($rate->getId()),
+            'the rate stayed undeletable although nothing references it any more'
+        );
+    }
+
     public function testYearViewIsForbiddenWithoutRole(): void
     {
         $client = static::createClient();
@@ -309,6 +396,65 @@ final class BookingJournalControllerTest extends WebTestCase
         }
 
         return $this->em;
+    }
+
+    /**
+     * Posts the delete the settings page offers for this rate. The token has to
+     * come from that page, which is where it is minted.
+     */
+    private function deleteTaxRate(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client, TaxRate $rate): void
+    {
+        $url = '/journal/settings/tax-rates/'.$rate->getId().'/delete';
+        $crawler = $client->request('GET', '/journal/settings');
+
+        $token = null;
+        foreach ($crawler->filter('button[data-popover="delete"]') as $button) {
+            // The crawler hands out DOMNode; only an element carries attributes.
+            if (!$button instanceof \DOMElement) {
+                continue;
+            }
+
+            $content = $button->getAttribute('data-bs-content');
+            if (str_contains($content, $url) && preg_match('/name="_token" value="([^"]+)"/', $content, $m)) {
+                $token = $m[1];
+                break;
+            }
+        }
+
+        self::assertNotNull($token, 'no delete popover for the tax rate on the settings page');
+
+        $client->request('DELETE', $url, ['_token' => $token]);
+        $this->getEntityManager()->clear();
+    }
+
+    /** An entry of its own month, so the tests do not disturb each other. */
+    private function createEntryIn(int $year, int $month, ?callable $adjust = null): BookingEntry
+    {
+        $em = $this->getEntityManager();
+
+        $batch = new BookingBatch();
+        $batch->setYear($year);
+        $batch->setMonth($month);
+        $batch->setIsClosed(false);
+        $batch->setCashStart(0);
+        $batch->setCashEnd(0);
+        $em->persist($batch);
+
+        $entry = new BookingEntry();
+        $entry->setBookingBatch($batch);
+        $entry->setDate(new \DateTime(sprintf('%04d-%02d-15', $year, $month)));
+        $entry->setDocumentNumber(1);
+        $entry->setAmount('42.00');
+        $entry->setRemark('Kopier-Testbuchung');
+
+        if (null !== $adjust) {
+            $adjust($entry);
+        }
+
+        $em->persist($entry);
+        $em->flush();
+
+        return $entry;
     }
 
     private function createCashJournalUser(): User

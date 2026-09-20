@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
-use App\Service\CalendarEntryTimeRules;
+use App\Service\Calendar\Entry\CalendarEntryTimeRules;
 use PHPUnit\Framework\TestCase;
 
 final class CalendarEntryTimeRulesTest extends TestCase

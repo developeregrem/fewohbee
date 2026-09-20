@@ -1,0 +1,140 @@
+{% set exactFilterCount = importForm.excludedSummaries|length %}
+{% set termFilterCount = importForm.excludedSummaryTerms|length %}
+
+<div class="row mb-3">
+    <div class="col">
+        {{ form_row(importForm.name) }}
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col">
+        {{ form_row(importForm.url, {'attr': {
+            'data-calendar-imports-filter-url': '',
+            'data-action': 'input->calendar-imports#urlChanged'
+        }}) }}
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col">
+        {{ form_row(importForm.reservationOrigin) }}
+    </div>
+</div>
+<div class="card border-info-subtle mb-3" data-calendar-imports-filter>
+    <div class="card-body">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-start justify-content-between gap-3">
+            <div>
+                <h6 class="card-title mb-1">{{ 'calendar.sync.import.preview.title'|trans }}</h6>
+                <p class="card-text text-muted small mb-0">{{ 'calendar.sync.import.preview.hint'|trans }}</p>
+            </div>
+            <button type="button" class="btn btn-outline-primary text-nowrap"
+                    data-action="click->calendar-imports#preview"
+                    data-calendar-imports-preview-button>
+                <span data-calendar-imports-preview-button-label>
+                    <i class="fas fa-magnifying-glass me-1"></i>
+                    {{ 'calendar.sync.import.preview.button'|trans }}
+                </span>
+                <span class="d-none" data-calendar-imports-preview-loading>
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                    {{ 'calendar.sync.import.preview.loading'|trans }}
+                </span>
+            </button>
+        </div>
+
+        {% if exactFilterCount + termFilterCount > 0 %}
+            <div class="alert alert-info py-2 small mt-3 mb-0" data-calendar-imports-configured-note>
+                {{ 'calendar.sync.import.preview.configured'|trans({'%count%': exactFilterCount + termFilterCount}) }}
+            </div>
+        {% endif %}
+
+        <div class="d-none mt-3" role="status" data-calendar-imports-preview-status></div>
+        <div class="d-none mt-3" data-calendar-imports-preview-results>
+            <div class="small fw-semibold mb-1">
+                {{ 'calendar.sync.import.preview.question'|trans }}
+                <span class="ms-1 text-muted" tabindex="0" data-bs-toggle="tooltip"
+                      title="{{ 'calendar.sync.import.preview.labels_explanation'|trans }}"
+                      aria-label="{{ 'calendar.sync.import.preview.labels_explanation'|trans }}">
+                    <i class="fas fa-circle-question" aria-hidden="true"></i>
+                </span>
+            </div>
+            <p class="text-muted small mb-2">{{ 'calendar.sync.import.preview.labels_hint'|trans }}</p>
+            <div class="list-group" data-calendar-imports-preview-list></div>
+            <p class="text-muted small mt-2 mb-0">{{ 'calendar.sync.import.preview.default_safety'|trans }}</p>
+        </div>
+
+        <template data-calendar-imports-preview-row-template>
+            <label class="list-group-item d-flex align-items-center gap-3">
+                <input type="checkbox" class="form-check-input flex-shrink-0 mt-0"
+                       data-action="change->calendar-imports#toggleSummary"
+                       data-calendar-imports-preview-toggle>
+                <span class="flex-grow-1 overflow-hidden">
+                    <span class="fw-semibold text-break" data-calendar-imports-preview-summary></span>
+                    <span class="d-block text-muted small">
+                        <i class="far fa-calendar me-1"></i><span data-calendar-imports-preview-dates></span>
+                    </span>
+                </span>
+                <span class="badge text-bg-secondary rounded-pill"
+                      title="{{ 'calendar.sync.import.preview.count_title'|trans }}"
+                      data-calendar-imports-preview-count></span>
+            </label>
+        </template>
+
+        <details class="mt-3"{% if termFilterCount > 0 %} open{% endif %}>
+            <summary class="small fw-semibold">{{ 'calendar.sync.import.preview.similar.title'|trans }}</summary>
+            <p class="text-muted small mt-2 mb-2">{{ 'calendar.sync.import.preview.similar.hint'|trans }}</p>
+            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                <input type="text" class="form-control form-control-sm" maxlength="255" autocomplete="off"
+                       placeholder="{{ 'calendar.sync.import.preview.similar.placeholder'|trans }}"
+                       data-action="keydown.enter->calendar-imports#addTerm"
+                       data-calendar-imports-term-input>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded text-nowrap"
+                        data-action="click->calendar-imports#addTerm">
+                    <i class="fas fa-plus me-1"></i>{{ 'calendar.sync.import.preview.similar.add'|trans }}
+                </button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-2" data-calendar-imports-term-list></div>
+        </details>
+
+        <div class="border rounded bg-body-tertiary p-3 mt-3">
+            {{ form_widget(importForm.shareSummaryFilters, {'attr': {
+                'data-calendar-imports-filter-sharing': ''
+            }}) }}
+            {{ form_help(importForm.shareSummaryFilters) }}
+            {{ form_errors(importForm.shareSummaryFilters) }}
+        </div>
+
+        <p class="text-muted small mt-3 mb-0">
+            <i class="fas fa-circle-info me-1"></i>{{ 'calendar.sync.import.preview.existing_hint'|trans }}
+        </p>
+
+        <template data-calendar-imports-term-template>
+            <span class="badge rounded-pill bg-light fw-normal calendar-import-filter-term">
+                <span data-calendar-imports-term-label></span>
+                <button type="button" class="btn-close calendar-import-filter-remove"
+                        title="{{ 'calendar.sync.import.preview.similar.remove'|trans }}"
+                        aria-label="{{ 'calendar.sync.import.preview.similar.remove'|trans }}"
+                        data-action="click->calendar-imports#removeTerm"></button>
+            </span>
+        </template>
+
+        <span class="d-none" data-calendar-imports-empty-summary>{{ 'calendar.sync.import.preview.empty_summary'|trans }}</span>
+        <span class="d-none" data-calendar-imports-generic-error>{{ 'calendar.sync.import.preview.error.generic'|trans }}</span>
+        <div class="d-none" data-calendar-imports-exact-fields
+             data-field-name="{{ importForm.excludedSummaries.vars.full_name }}">
+            {{ form_widget(importForm.excludedSummaries) }}
+        </div>
+        <div class="d-none" data-calendar-imports-term-fields
+             data-field-name="{{ importForm.excludedSummaryTerms.vars.full_name }}">
+            {{ form_widget(importForm.excludedSummaryTerms) }}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col">{{ form_row(importForm.isActive) }}</div>
+</div>
+<div class="row mb-3">
+    <div class="col">{{ form_row(importForm.conflictStrategy) }}</div>
+</div>
+<div class="row mb-3">
+    <div class="col">{{ form_row(importForm.reservationStatus) }}</div>
+</div>

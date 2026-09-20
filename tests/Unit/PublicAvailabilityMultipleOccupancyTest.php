@@ -12,10 +12,10 @@ use App\Repository\AppartmentRepository;
 use App\Repository\ReservationRepository;
 use App\Repository\RoomBlockRepository;
 use App\Service\AvailabilityService;
-use App\Service\OnlineBookingConfigService;
-use App\Service\OnlineBookingRestrictionService;
-use App\Service\PublicAvailabilityService;
-use App\Service\PublicPricingService;
+use App\Service\OnlineBooking\OnlineBookingConfigService;
+use App\Service\OnlineBooking\OnlineBookingRestrictionService;
+use App\Service\OnlineBooking\PublicAvailabilityService;
+use App\Service\OnlineBooking\PublicPricingService;
 use App\Service\RoomCategoryImageService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -47,7 +47,7 @@ final class PublicAvailabilityMultipleOccupancyTest extends TestCase
         $this->configService->method('getAllowedSubsidiaryIds')->willReturn([1]);
         $this->configService->method('getAllowedRoomIds')->willReturn([1]);
 
-        $this->restrictionService->method('isStayLongEnough')->willReturn(true);
+        $this->restrictionService->method('isStayAllowed')->willReturn(true);
         $this->restrictionService->method('getMinOccupancyForCategory')->willReturn(null);
 
         // The multipleOccupancy rule itself lives in AvailabilityService, so this

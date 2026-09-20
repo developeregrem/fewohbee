@@ -1,4 +1,35 @@
-<fieldset id="entry-form-fieldset-{{ object.id }}" {% if object.id != "new" %} disabled {% endif %}>
+<fieldset id="entry-form-fieldset-{{ object.id }}">
+    {# Three topics share this modal, so they get a tab each rather than one long scroll —
+       the same shape as Settings → Room categories. Opening hours and check-in times sit
+       in one tab because both answer "when": when someone can be reached, and when a
+       guest may arrive. The ids carry the object id because the create form uses "new"
+       while an edit form uses the real one. #}
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="sub-tab-general-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-general-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-general-{{ object.id }}" aria-selected="true">
+                {{ 'object.tab.general'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sub-tab-opening-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-opening-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-opening-{{ object.id }}" aria-selected="false">
+                {{ 'object.tab.service_times'|trans }}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sub-tab-invoice-{{ object.id }}" data-bs-toggle="tab"
+                    data-bs-target="#sub-pane-invoice-{{ object.id }}" type="button" role="tab"
+                    aria-controls="sub-pane-invoice-{{ object.id }}" aria-selected="false">
+                {{ 'object.tab.invoice_data'|trans }}
+            </button>
+        </li>
+    </ul>
+    <div class="tab-content pt-4">
+    <div class="tab-pane fade show active" id="sub-pane-general-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-general-{{ object.id }}" tabindex="0">
     <div class="row">
         <label for="name-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.name'|trans }} *</label>
 
@@ -15,6 +46,140 @@
                    value="{{ object.description }}" required>
         </div>
     </div>
+    </div>
+
+    <div class="tab-pane fade" id="sub-pane-opening-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-opening-{{ object.id }}" tabindex="0">
+    {# Two sections, each long enough to push the other off screen. Both start folded, so
+       the tab opens on an overview rather than on a weekday grid. No data-bs-parent, so
+       both can stand open at once — following the customer form, where the same reasoning
+       applies to a form rather than a reading surface. #}
+    <div class="accordion" id="sub-times-accordion-{{ object.id }}">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="sub-heading-opening-{{ object.id }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#sub-collapse-opening-{{ object.id }}"
+                        aria-expanded="false" aria-controls="sub-collapse-opening-{{ object.id }}">
+                    {{ 'object.opening_hours'|trans }}
+                </button>
+            </h2>
+            <div id="sub-collapse-opening-{{ object.id }}" class="accordion-collapse collapse"
+                 aria-labelledby="sub-heading-opening-{{ object.id }}">
+                <div class="accordion-body px-1">
+            <p class="text-muted small mb-2">{{ 'object.opening_hours.help'|trans|raw }}</p>
+            {# w-auto on the time fields: form-control stretches an input to the full column,
+               which parks the digits on the left and the clock icon on the far right with a
+               gap between them, and makes the grid far wider than it needs to be. At their
+               content width the pairs sit together and the whole grid fits, so the wrapper
+               below only has to scroll on a genuinely narrow screen. #}
+            <div class="table-responsive">
+            <table class="table table-sm align-middle mb-2">
+                <thead>
+                    <tr>
+                        <th class="text-nowrap" style="width: 1%;"></th>
+                        <th style="width: 49.5%;">{{ 'object.opening_hours.period.1'|trans }}</th>
+                        <th style="width: 49.5%;">{{ 'object.opening_hours.period.2'|trans }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for weekday in 1..7 %}
+                        {% set ranges = object.openingHours[weekday]|default([]) %}
+                        {% set weekdayLabel = ('object.weekday.' ~ weekday)|trans %}
+                        <tr>
+                            <th scope="row" class="fw-normal text-nowrap pe-3">{{ weekdayLabel }}</th>
+                            {% for slot in 0..1 %}
+                                {% set range = ranges[slot]|default(['', '']) %}
+                                {% set periodLabel = ('object.opening_hours.period.' ~ (slot + 1))|trans %}
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <input type="time" class="form-control form-control-sm w-auto"
+                                               name="opening-hours-{{ object.id }}[{{ weekday }}][{{ slot }}][from]"
+                                               value="{{ range[0] }}"
+                                               aria-label="{{ weekdayLabel }}, {{ periodLabel }}, {{ 'object.opening_hours.from'|trans }}">
+                                        <span class="text-muted">–</span>
+                                        <input type="time" class="form-control form-control-sm w-auto"
+                                               name="opening-hours-{{ object.id }}[{{ weekday }}][{{ slot }}][to]"
+                                               value="{{ range[1] }}"
+                                               aria-label="{{ weekdayLabel }}, {{ periodLabel }}, {{ 'object.opening_hours.to'|trans }}">
+                                    </div>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <div class="row">
+                <label for="opening-hours-note-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.opening_hours_note'|trans }}</label>
+
+                <div class="col-sm-8">
+                    <textarea class="form-control" rows="2"
+                              name="opening-hours-note-{{ object.id }}"
+                              id="opening-hours-note-{{ object.id }}"
+                              placeholder="{{ 'object.opening_hours_note.placeholder'|trans }}">{{ object.openingHoursNote }}</textarea>
+                    <small class="form-text text-muted">{{ 'object.opening_hours_note.help'|trans }}</small>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="sub-heading-checkin-{{ object.id }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#sub-collapse-checkin-{{ object.id }}"
+                        aria-expanded="false" aria-controls="sub-collapse-checkin-{{ object.id }}">
+                    {{ 'object.check_in'|trans }}
+                </button>
+            </h2>
+            <div id="sub-collapse-checkin-{{ object.id }}" class="accordion-collapse collapse"
+                 aria-labelledby="sub-heading-checkin-{{ object.id }}">
+                <div class="accordion-body">
+            <p class="text-muted small mb-2">{{ 'object.check_in.help'|trans|raw }}</p>
+            <div class="row mb-2">
+                <label class="col-sm-4 col-form-label">{{ 'object.check_in.window'|trans }}</label>
+                <div class="col-sm-8">
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="time" class="form-control"
+                               name="check-in-from-{{ object.id }}"
+                               value="{{ object.checkInFrom ? object.checkInFrom|date('H:i') : '' }}"
+                               aria-label="{{ 'object.check_in.from'|trans }}">
+                        <span class="text-muted">–</span>
+                        <input type="time" class="form-control"
+                               name="check-in-until-{{ object.id }}"
+                               value="{{ object.checkInUntil ? object.checkInUntil|date('H:i') : '' }}"
+                               aria-label="{{ 'object.check_in.until'|trans }}">
+                    </div>
+                    <small class="form-text text-muted">{{ 'object.check_in.window.help'|trans }}</small>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <label for="check-out-until-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.check_out.until'|trans }}</label>
+                <div class="col-sm-8">
+                    <input type="time" class="form-control"
+                           name="check-out-until-{{ object.id }}"
+                           id="check-out-until-{{ object.id }}"
+                           value="{{ object.checkOutUntil ? object.checkOutUntil|date('H:i') : '' }}">
+                </div>
+            </div>
+            <div class="row">
+                <label for="check-in-note-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.check_in_note'|trans }}</label>
+
+                <div class="col-sm-8">
+                    <textarea class="form-control" rows="2"
+                              name="check-in-note-{{ object.id }}"
+                              id="check-in-note-{{ object.id }}"
+                              placeholder="{{ 'object.check_in_note.placeholder'|trans }}">{{ object.checkInNote }}</textarea>
+                    <small class="form-text text-muted">{{ 'object.check_in_note.help'|trans }}</small>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="tab-pane fade" id="sub-pane-invoice-{{ object.id }}" role="tabpanel"
+         aria-labelledby="sub-tab-invoice-{{ object.id }}" tabindex="0">
     <div class="row mt-2">
         <label for="invoice-number-pattern-{{ object.id }}" class="col-sm-4 col-form-label">{{ 'object.invoice_number_pattern'|trans }}</label>
 
@@ -25,6 +190,9 @@
                    value="{{ object.invoiceNumberPattern }}">
             <small class="form-text text-muted">{{ 'object.invoice_number_pattern.help'|trans|raw }}</small>
         </div>
+    </div>
+
+    </div>
     </div>
 </fieldset>
 <input name="_csrf_token" value="{{ token }}" type="hidden">

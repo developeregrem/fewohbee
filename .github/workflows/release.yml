@@ -1,0 +1,86 @@
+name: Publish release
+
+# Runs after the tag is pushed, i.e. the last step of a release. The GitHub
+# release body is generated from docs/release-notes/, so the notes are written
+# once and only once.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, e.g. v4.12.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Resolve and verify the release
+        id: check
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          tag="${INPUT_TAG:-${GITHUB_REF_NAME}}"
+          version="${tag#v}"
+          echo "tag=$tag"      >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          # The three must agree, or a release ships without notes — or with the
+          # notes of the previous version, which is worse.
+          configured=$(sed -n "s/^[[:space:]]*version:[[:space:]]*'\(.*\)'.*/\1/p" config/services.yaml | head -1)
+          if [ "$configured" != "$version" ]; then
+            echo "::error::Tag $tag says $version but config/services.yaml says $configured."
+            exit 1
+          fi
+
+          for locale in de en; do
+            if [ ! -f "docs/release-notes/${version}.${locale}.md" ]; then
+              echo "::error::docs/release-notes/${version}.${locale}.md is missing."
+              exit 1
+            fi
+          done
+
+      - name: Build the release body
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          # Front matter is for the in-app renderer, not for GitHub.
+          strip_front_matter() {
+            awk 'NR==1 && $0=="---" {inside=1; next} inside && $0=="---" {inside=0; next} !inside'
+          }
+
+          # English first: that is who reads GitHub. German follows, collapsed.
+          strip_front_matter < "docs/release-notes/${VERSION}.en.md" > body.md
+
+          {
+            printf '\n<details>\n<summary>Deutsch</summary>\n\n'
+            strip_front_matter < "docs/release-notes/${VERSION}.de.md"
+            printf '\n</details>\n'
+          } >> body.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.check.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          # Re-runnable: update the release when it already exists.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file body.md
+          else
+            gh release create "$TAG" --title "$TAG" --notes-file body.md --verify-tag
+          fi

@@ -134,6 +134,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'gdpr.addresses.block',
                 'label' => 'templates.preview.snippet.gdpr.addresses',
+                'description' => 'templates.preview.snippet.gdpr.addresses.desc',
                 'group' => 'GDPR',
                 'complexity' => 'easy',
                 'content' => "<div data-repeat=\"customer.customerAddresses\" data-repeat-as=\"address\"><h6 class=\"panel-title\">[[ 'customer.contact'|trans ]] ([[ address.type|trans ]])</h6><table class=\"general\"><tbody><tr data-if=\"address.company\"><td class=\"first\">[[ 'customer.company'|trans ]]:</td><td>[[ address.company ]]</td></tr><tr><td class=\"first\">[[ 'reservation.preview.customer.address'|trans ]]:</td><td>[[ address.address ]]<br />[[ address.zip ]] [[ address.city ]]<br />[[ address.country ]]</td></tr><tr><td class=\"first\">[[ 'customer.email'|trans ]]:</td><td>[[ address.email ? address.email : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.phone'|trans ]]:</td><td>[[ address.phone ? address.phone : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.fax'|trans ]]:</td><td>[[ address.fax ? address.fax : '-' ]]</td></tr><tr><td class=\"first\">[[ 'customer.mobilephone'|trans ]]:</td><td>[[ address.mobilephone ? address.mobilephone : '-' ]]</td></tr></tbody></table></div>",
@@ -141,6 +142,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'gdpr.reservations.block',
                 'label' => 'templates.preview.snippet.gdpr.reservations',
+                'description' => 'templates.preview.snippet.gdpr.reservations.desc',
                 'group' => 'GDPR',
                 'complexity' => 'easy',
                 'content' => "<div data-repeat=\"customer.reservations\" data-repeat-as=\"reservation\"><h6>[[ reservation.startDate|date('d.m.Y') ]] - [[ reservation.endDate|date('d.m.Y') ]] ([[ reservation.appartment.description ]])</h6><table class=\"general\"><tbody><tr><td class=\"first\">Gebucht über:</td><td>[[ reservation.reservationOrigin.name ]]</td></tr><tr><td class=\"first\">Anzahl Personen:</td><td>[[ reservation.persons ]]</td></tr><tr><td class=\"first\">Rechnungen:</td><td><span data-repeat=\"reservation.invoices\" data-repeat-as=\"invoice\">[[ invoice.number ]] ([[ invoice.date|date('d.m.Y') ]]), </span></td></tr></tbody></table></div>",
@@ -148,6 +150,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.header',
                 'label' => 'templates.preview.snippet.pdf_header',
+                'description' => 'templates.preview.snippet.pdf_header.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="header"><p>Header</p></div>',
@@ -155,6 +158,7 @@ class GdprTemplatePreviewProvider implements ITemplatePreviewProvider
             [
                 'id' => 'pdf.footer',
                 'label' => 'templates.preview.snippet.pdf_footer',
+                'description' => 'templates.editor.footer.desc',
                 'group' => 'PDF',
                 'complexity' => 'simple',
                 'content' => '<div class="footer"><p>Footer</p></div>',

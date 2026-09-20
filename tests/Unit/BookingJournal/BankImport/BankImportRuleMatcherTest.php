@@ -10,6 +10,7 @@ use App\Entity\BankImportRule;
 use App\Repository\BankImportRuleRepository;
 use App\Service\BookingJournal\BankImport\BankImportRuleMatcher;
 use App\Service\BookingJournal\BankImport\RuleActionApplicator;
+use App\Service\BookingJournal\BankImport\UserRegexCompiler;
 use App\Service\BookingJournal\BankImport\RuleConditionEvaluator;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -200,7 +201,7 @@ final class BankImportRuleMatcherTest extends TestCase
         return new BankImportRuleMatcher(
             $repo,
             new RuleConditionEvaluator(),
-            new RuleActionApplicator(),
+            new RuleActionApplicator(new UserRegexCompiler()),
             $this->translator(),
         );
     }

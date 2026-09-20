@@ -1,0 +1,25 @@
+login:
+  oidc:
+    error:
+      already_linked: >-
+        This user is already linked to a different SSO account. Please contact
+        your administrator.
+      ambiguous: >-
+        This e-mail address belongs to more than one user. Please contact your
+        administrator.
+      disabled: >-
+        SSO login is currently unavailable. Please contact your administrator.
+      email_unverified: >-
+        Your identity provider has not confirmed your e-mail address, so signing
+        in is not possible.
+      inactive: This user account is deactivated.
+      no_match: >-
+        There is no FewohBee user for this account. Please ask your administrator
+        to create one.
+      password_disabled: >-
+        Password login is disabled. Please sign in via SSO.
+      provider: The sign-in was cancelled.
+      state: >-
+        The sign-in expired or was interrupted. Please try again.
+      token: >-
+        The sign-in could not be completed. Please try again.
