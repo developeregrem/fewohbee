@@ -26,13 +26,35 @@ enum NotificationSeverity: string
         };
     }
 
-    /** Bootstrap contextual class for the badge and the list marker. */
+    /**
+     * Badge classes for a light background, i.e. inside the notification panel.
+     *
+     * White on amber only reaches 2.2:1, so the warning badge carries dark text.
+     */
     public function badgeClass(): string
     {
         return match ($this) {
-            self::CRITICAL => 'bg-danger',
-            self::WARNING => 'bg-warning',
-            self::INFO => 'bg-primary',
+            self::CRITICAL => 'bg-danger text-white',
+            self::WARNING => 'bg-warning text-dark',
+            self::INFO => 'bg-primary text-white',
+        };
+    }
+
+    /**
+     * Badge classes for the primary-coloured navbar.
+     *
+     * The navbar is #2196f3, so the info badge cannot stay bg-primary — it would
+     * be exactly the same colour (contrast 1.0, literally invisible); a light
+     * pill separates cleanly instead. Red and amber measure low against that
+     * blue too (1.5 and 1.45), but their hue carries them, and outlining them
+     * turned the badge into a halo that shouted over the rest of the navbar.
+     */
+    public function badgeClassOnPrimary(): string
+    {
+        return match ($this) {
+            self::CRITICAL => 'bg-danger text-white',
+            self::WARNING => 'bg-warning text-dark',
+            self::INFO => 'bg-light text-dark',
         };
     }
 

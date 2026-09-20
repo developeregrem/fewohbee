@@ -45,7 +45,7 @@ final class NotificationCenterServiceTest extends TestCase
 
         // A single conflict must still turn the bell red among louder-counted noise.
         self::assertSame(NotificationSeverity::CRITICAL, $service->getSummary($this->user())->severity);
-        self::assertSame('bg-danger', $service->getSummary($this->user())->badgeClass());
+        self::assertStringContainsString('bg-danger', $service->getSummary($this->user())->badgeClass());
     }
 
     public function testInvisibleProvidersAreNotCounted(): void

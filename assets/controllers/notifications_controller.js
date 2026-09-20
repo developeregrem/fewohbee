@@ -106,7 +106,18 @@ export default class extends Controller {
         }
 
         badge.classList.remove('d-none');
-        badge.className = badge.className.replace(/bg-\w+/, source.dataset.notificationBadgeClass || 'bg-secondary');
+
+        // The server sends fill and text colour together ("bg-danger text-white"),
+        // so swapping a single bg-* token is not enough: drop every colour class
+        // and apply the ones that came back. Layout and the ring stay untouched.
+        const colours = (source.dataset.notificationBadgeClass || 'bg-light text-dark')
+            .split(/\s+/)
+            .filter(Boolean);
+        Array.from(badge.classList)
+            .filter((name) => name.startsWith('bg-') || name.startsWith('text-'))
+            .forEach((name) => badge.classList.remove(name));
+        badge.classList.add(...colours);
+
         badge.querySelector('[data-notifications-count]').textContent = String(total);
     }
 }

@@ -120,7 +120,7 @@
                                data-action="show.bs.dropdown->notifications#loadPanelAction"
                                aria-label="{{ 'notification.title'|trans }}">
                                 <i class="fas fa-bell"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClass }}{{ notifications.isEmpty ? ' d-none' : '' }}"
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill {{ notifications.badgeClassOnPrimary }}{{ notifications.isEmpty ? ' d-none' : '' }}"
                                       data-notifications-badge>
                                     <span data-notifications-count>{{ notifications.total }}</span>
                                     <span class="visually-hidden">{{ 'notification.title'|trans }}</span>

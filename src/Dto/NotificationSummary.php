@@ -27,6 +27,12 @@ final readonly class NotificationSummary
 
     public function badgeClass(): string
     {
-        return $this->severity?->badgeClass() ?? 'bg-secondary';
+        return $this->severity?->badgeClass() ?? 'bg-secondary text-dark';
+    }
+
+    /** Badge classes for the navbar, which is primary-coloured. */
+    public function badgeClassOnPrimary(): string
+    {
+        return $this->severity?->badgeClassOnPrimary() ?? 'bg-light text-dark';
     }
 }
