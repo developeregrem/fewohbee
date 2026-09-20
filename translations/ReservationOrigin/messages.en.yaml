@@ -10,6 +10,7 @@ reservationorigin.flash.create.success: Reservation origin created successfully.
 reservationorigin.flash.delete.inuse.reservations: Reservation origin cannot be deleted as it is used in existing reservations.
 reservationorigin.flash.delete.success: Reservation origin successfully deleted.
 reservationorigin.flash.edit.success: Reservation origin successfully processed.
+reservationorigin.flash.edit.ota_fees_enabled: Whether individual services are included in portal fees is set on each price using “Include in portal fees”. Please review the existing prices.
 reservationorigin.flash.surcharge_invalid: Commission and payment fee must be percentages between 0 and 100 with at most two decimals.
 reservationorigin.flash.surcharge_required: With OTA fees enabled, at least a commission or a payment fee is required.
 reservationorigin.name: Description
@@ -17,8 +18,8 @@ reservationorigin.guest_surcharge_enabled: OTA fees
 reservationorigin.commission_percent: Commission
 reservationorigin.payment_fee_percent: Payment fee
 reservationorigin.payment_collection: Payment collected by
-reservationorigin.tourist_tax_collection: Tourist tax collected by
-reservationorigin.tourist_tax_collection.hint: A portal charges its payment fee on what it processed. Commission is not affected - a tourist tax billed separately is treated as carrying none. That assumes it is set up as a separate item at the portal as well; one buried in the room rate is no separate tourist tax as far as the portal is concerned.
+reservationorigin.tourist_tax_collection: Who collects the tourist tax?
+reservationorigin.tourist_tax_collection.hint: Choose “Property” if the guest pays the tourist tax on site. Choose “Portal” if the portal collects it with the booking price. This determines whether the portal's payment fee also applies to the tourist tax.
 reservationorigin.collection.property: Property
 reservationorigin.collection.portal: Portal
 reservationorigin.private: Private

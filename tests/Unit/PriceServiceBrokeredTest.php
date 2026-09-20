@@ -25,6 +25,7 @@ final class PriceServiceBrokeredTest extends TestCase
     public function testAMiscPriceTakesTheAnswerFromTheForm(): void
     {
         self::assertTrue($this->parse(type: 1, brokered: '1')->isBrokered());
+        self::assertFalse($this->parse(type: 1, brokered: '0')->isBrokered(), 'a hidden stored answer was not preserved');
         self::assertFalse($this->parse(type: 1, brokered: null)->isBrokered(), 'the switch was turned off');
     }
 

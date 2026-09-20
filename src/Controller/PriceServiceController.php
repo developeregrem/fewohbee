@@ -16,9 +16,9 @@ namespace App\Controller;
 use App\Entity\AccountingAccount;
 use App\Entity\Price;
 use App\Entity\PricePeriod;
-use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
 use App\Entity\TaxRate;
+use App\Repository\ReservationOriginRepository;
 use App\Service\BookingJournal\AccountingSettingsService;
 use App\Service\CSRFProtectionService;
 use App\Service\PriceService;
@@ -43,12 +43,12 @@ class PriceServiceController extends AbstractController
     }
 
     #[Route('/{id}/get', name: 'prices.get.price', methods: ['GET'], defaults: ['id' => '0'])]
-    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, $id)
+    public function getPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository, $id)
     {
         $em = $doctrine->getManager();
         $price = $em->getRepository(Price::class)->find($id);
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $origins = $originRepository->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
         $preset = $accountingSettings->getActivePreset();
         $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
@@ -68,15 +68,16 @@ class PriceServiceController extends AbstractController
             'categories' => $categories,
             'taxRates' => $taxRates,
             'accounts' => $accounts,
+            'otaFeesEnabled' => $originRepository->hasOtaFees(),
         ]);
     }
 
     #[Route('/new', name: 'prices.new.price', methods: ['GET'])]
-    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings)
+    public function newPriceAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, AccountingSettingsService $accountingSettings, ReservationOriginRepository $originRepository)
     {
         $em = $doctrine->getManager();
 
-        $origins = $em->getRepository(ReservationOrigin::class)->findAll();
+        $origins = $originRepository->findAll();
         $categories = $em->getRepository(RoomCategory::class)->findAll();
         $preset = $accountingSettings->getActivePreset();
         $taxRates = $em->getRepository(TaxRate::class)->findAllOrdered($preset);
@@ -99,6 +100,7 @@ class PriceServiceController extends AbstractController
             'categories' => $categories,
             'taxRates' => $taxRates,
             'accounts' => $accounts,
+            'otaFeesEnabled' => $originRepository->hasOtaFees(),
         ]);
     }
 

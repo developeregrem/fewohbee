@@ -34,11 +34,13 @@
         {{ form_widget(form.isPerRoom, {'attr': {'disabled': form.isFlatPrice.vars.checked}}) }}
     </div>
 </div>
-<div class="row mt-2 ps-5">
-    <div class="col-sm">
-        {{ form_widget(form.brokered) }}
-        <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'price.brokered.hint'|trans }}">
-            <i class="fas fa-circle-question"></i>
-        </span>
+{% if form.brokered is defined %}
+    <div class="row mt-2 ps-5">
+        <div class="col-sm">
+            {{ form_widget(form.brokered) }}
+            <span class="ms-1 text-muted" data-bs-toggle="tooltip" title="{{ 'price.brokered.hint'|trans }}">
+                <i class="fas fa-circle-question"></i>
+            </span>
+        </div>
     </div>
-</div>
+{% endif %}

@@ -184,7 +184,7 @@ class PriceService
         // brokered - the calculator counts it towards the fees whatever this
         // says - so the form does not offer the switch there, and a missing
         // field must not be read as an answer of "no".
-        $price->setBrokered(1 != $price->getType() || null != $request->request->get('brokered-'.$id));
+        $price->setBrokered(1 != $price->getType() || $request->request->getBoolean('brokered-'.$id));
 
         $mandatoryOnline = 1 == $price->getType() && null != $request->request->get('isMandatoryOnline-'.$id);
         $bookableOnline = 1 == $price->getType() && null != $request->request->get('isBookableOnline-'.$id);

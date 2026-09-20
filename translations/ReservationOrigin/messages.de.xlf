@@ -48,11 +48,11 @@
             </trans-unit>
             <trans-unit id="reservationorigin.tourist_tax_collection">
                 <source>reservationorigin.tourist_tax_collection</source>
-                <target>Kurtaxe wird eingezogen von</target>
+                <target>Wer kassiert die Kurtaxe?</target>
             </trans-unit>
             <trans-unit id="reservationorigin.tourist_tax_collection.hint">
                 <source>reservationorigin.tourist_tax_collection.hint</source>
-                <target>Die Zahlungsgebühr berechnet ein Portal auf den Betrag, den es abgewickelt hat. Auf die Kommission wirkt sich das nicht aus: eine separat ausgewiesene Kurtaxe wird als kommissionsfrei behandelt. Voraussetzung ist, dass sie auch beim Portal getrennt eingerichtet ist - steckt sie im Zimmerpreis, ist sie für das Portal keine eigene Kurtaxe.</target>
+                <target>Zahlt der Gast die Kurtaxe vor Ort, wähle „Unterkunft“. Zieht das Portal sie zusammen mit dem Buchungspreis ein, wähle „Portal“. Damit wird festgelegt, ob die Zahlungsgebühr des Portals auch auf die Kurtaxe berechnet wird.</target>
             </trans-unit>
             <trans-unit id="reservationorigin.collection.property">
                 <source>reservationorigin.collection.property</source>
@@ -73,6 +73,10 @@
             <trans-unit id="reservationorigin.flash.edit.success">
                 <source>reservationorigin.flash.edit.success</source>
                 <target>Reservierungsherkunft erfolgreich bearbeitet.</target>
+            </trans-unit>
+            <trans-unit id="reservationorigin.flash.edit.ota_fees_enabled">
+                <source>reservationorigin.flash.edit.ota_fees_enabled</source>
+                <target>Ob einzelne Leistungen bei den Portalgebühren berücksichtigt werden, wird am jeweiligen Preis über „Bei Portalgebühren berücksichtigen“ festgelegt. Prüfe daher die vorhandenen Preise.</target>
             </trans-unit>
             <trans-unit id="reservationorigin.flash.surcharge_invalid">
                 <source>reservationorigin.flash.surcharge_invalid</source>

@@ -113,8 +113,10 @@ class ReservationOriginServiceController extends AbstractController
     {
         $error = false;
         if ($csrf->validateCSRFToken($request)) {
-            $origin = $ros->getOriginFromForm($request, $id);
             $em = $doctrine->getManager();
+            $existingOrigin = $em->getRepository(ReservationOrigin::class)->find($id);
+            $otaFeesWereEnabled = $existingOrigin?->hasOtaFees() ?? false;
+            $origin = $ros->getOriginFromForm($request, $id);
 
             // check for mandatory fields
             if (0 == strlen($origin->getName())) {
@@ -133,6 +135,9 @@ class ReservationOriginServiceController extends AbstractController
 
                 // add succes message
                 $this->addFlash('success', 'reservationorigin.flash.edit.success');
+                if (!$otaFeesWereEnabled && $origin->hasOtaFees()) {
+                    $this->addFlash('info', 'reservationorigin.flash.edit.ota_fees_enabled');
+                }
             }
         }
 

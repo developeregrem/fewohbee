@@ -25,7 +25,7 @@ final class InvoiceMiscPositionTypeTest extends TestCase
             ->addExtension(new ValidatorExtension($validator))
             ->getFormFactory();
         $position = new InvoicePosition();
-        $form = $factory->create(InvoiceMiscPositionType::class, $position);
+        $form = $factory->create(InvoiceMiscPositionType::class, $position, ['show_brokered' => false]);
 
         $form->submit([
             'description' => 'Room discount',
@@ -41,6 +41,24 @@ final class InvoiceMiscPositionTypeTest extends TestCase
             self::assertNotNull($invalidField);
             self::assertGreaterThan(0, $form->get($invalidField)->getErrors()->count());
         }
+    }
+
+    public function testHiddenPortalFeeFieldPreservesTheStoredAnswer(): void
+    {
+        $factory = Forms::createFormFactory();
+        $position = (new InvoicePosition())->markBrokered(false);
+        $form = $factory->create(InvoiceMiscPositionType::class, $position, ['show_brokered' => false]);
+
+        self::assertFalse($form->has('brokered'));
+        $form->submit([
+            'description' => 'Breakfast sold at reception',
+            'amount' => '1',
+            'price' => '12.50',
+            'vat' => '7',
+        ]);
+
+        self::assertFalse($position->isBrokered());
+        self::assertFalse($position->isCommissionable());
     }
 
     /** @return iterable<string, array{string, string, string, bool, ?string}> */

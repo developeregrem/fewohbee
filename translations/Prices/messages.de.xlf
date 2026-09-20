@@ -236,11 +236,11 @@
             </trans-unit>
             <trans-unit id="price.brokered">
                 <source>price.brokered</source>
-                <target>Teil einer Portalbuchung</target>
+                <target>Bei Portalgebühren berücksichtigen</target>
             </trans-unit>
             <trans-unit id="price.brokered.hint">
                 <source>price.brokered.hint</source>
-                <target>Ausschalten für Leistungen, die das Haus vor Ort verkauft, etwa ein an der Rezeption bestelltes Frühstück. Darauf berechnet ein Portal weder Kommission noch Zahlungsgebühr.</target>
+                <target>Legt fest, ob das Portal für diese Leistung Kommission oder eine Zahlungsgebühr berechnet. Ausschalten für Leistungen, die erst vor Ort hinzugefügt werden, etwa ein an der Rezeption bestelltes Frühstück.</target>
             </trans-unit>
             <trans-unit id="price.bookableonline">
                 <source>price.bookableonline</source>

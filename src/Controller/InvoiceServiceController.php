@@ -34,6 +34,7 @@ use App\Service\EInvoice\EInvoiceExportService;
 use App\Service\EInvoice\EInvoiceReadinessService;
 use App\Service\EInvoice\Validation\EInvoiceValidationException;
 use App\Repository\InvoiceRepository;
+use App\Repository\ReservationOriginRepository;
 use App\Service\InvoiceNumberGenerator;
 use App\Service\InvoiceService;
 use App\Service\PriceService;
@@ -493,11 +494,12 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{invoiceId}/new/miscellaneous', name: 'invoices.new.miscellaneous.position', methods: ['GET', 'POST'])]
-    public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, PriceService $ps, Request $request): Response
+    public function newMiscellaneousPosition($invoiceId, ManagerRegistry $doctrine, RequestStack $requestStack, InvoiceService $is, PriceService $ps, ReservationOriginRepository $originRepository, Request $request): Response
     {
         $invoicePosition = new InvoicePosition();
         $form = $this->createForm(InvoiceMiscPositionType::class, $invoicePosition, [
             'action' => $this->generateUrl('invoices.new.miscellaneous.position', ['invoiceId' => $invoiceId]),
+            'show_brokered' => $originRepository->hasOtaFees(),
         ]);
         $form->handleRequest($request);
         $em = $doctrine->getManager();
@@ -595,7 +597,7 @@ class InvoiceServiceController extends AbstractController
     }
 
     #[Route('/{invoiceId}/edit/miscellaneous/{id}/edit', name: 'invoices.edit.miscellaneous.position', methods: ['GET', 'POST'])]
-    public function editMiscellaneousPosition($invoiceId, $id, ManagerRegistry $doctrine, Request $request, RequestStack $requestStack, InvoiceService $is): Response
+    public function editMiscellaneousPosition($invoiceId, $id, ManagerRegistry $doctrine, Request $request, RequestStack $requestStack, InvoiceService $is, ReservationOriginRepository $originRepository): Response
     {
         // during invoice create process
         if ('new' === $invoiceId) {
@@ -608,6 +610,7 @@ class InvoiceServiceController extends AbstractController
 
         $form = $this->createForm(InvoiceMiscPositionType::class, $positionMiscellaneous, [
             'action' => $this->generateUrl('invoices.edit.miscellaneous.position', ['invoiceId' => $invoiceId, 'id' => $id]),
+            'show_brokered' => $originRepository->hasOtaFees(),
         ]);
         $form->handleRequest($request);
         $em = $doctrine->getManager();

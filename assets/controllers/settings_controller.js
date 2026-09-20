@@ -121,7 +121,7 @@ export default class extends Controller {
                 }
                 // show inline flash if present
                 const flash = form.querySelector('#flash-message-overlay');
-                if (flash && typeof data === 'string' && data.length > 0) {
+                if (flash && typeof data === 'string' && data.trim().length > 0) {
                     flash.innerHTML = data;
                     return;
                 }

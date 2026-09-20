@@ -52,7 +52,10 @@ final class InvoiceMiscPositionBrokeredTest extends KernelTestCase
     {
         self::bootKernel();
         $form = static::getContainer()->get(FormFactoryInterface::class)
-            ->create(InvoiceMiscPositionType::class, $position, ['csrf_protection' => false]);
+            ->create(InvoiceMiscPositionType::class, $position, [
+                'csrf_protection' => false,
+                'show_brokered' => true,
+            ]);
 
         $data = [
             'amount' => '1',

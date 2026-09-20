@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Entity\Enum\PaymentCollection;
+use App\Repository\ReservationOriginRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: ReservationOriginRepository::class)]
 #[ORM\Table(name: 'reservation_origins')]
 class ReservationOrigin
 {
@@ -161,6 +162,11 @@ class ReservationOrigin
         $this->paymentFeePercent = $paymentFeePercent;
 
         return $this;
+    }
+
+    public function hasOtaFees(): bool
+    {
+        return null !== $this->commissionPercent || null !== $this->paymentFeePercent;
     }
 
     /** Who collects the guest's payment for a booking through this origin. */

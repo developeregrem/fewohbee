@@ -47,22 +47,27 @@ class InvoiceMiscPositionType extends AbstractType
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
             ])
-            // A position typed in here has no price to inherit the answer from, and
-            // what the house sells on site is exactly what tends to be added by
-            // hand. Through markBrokered(), so commission follows the answer.
-            ->add('brokered', CheckboxType::class, [
+        ;
+
+        // A position typed in here has no price to inherit the answer from. The
+        // question only matters when portal fees are configured; omitting the
+        // field otherwise also preserves the value of an existing position.
+        if ($options['show_brokered']) {
+            $builder->add('brokered', CheckboxType::class, [
                 'label' => 'price.brokered',
                 'label_attr' => ['class' => 'checkbox-inline checkbox-switch'],
                 'required' => false,
                 'setter' => static fn (InvoicePosition $position, ?bool $brokered) => $position->markBrokered((bool) $brokered),
-            ])
-        ;
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => InvoicePosition::class,
+            'show_brokered' => false,
         ]);
+        $resolver->setAllowedTypes('show_brokered', 'bool');
     }
 }
