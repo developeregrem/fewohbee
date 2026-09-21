@@ -34,8 +34,10 @@ class TemplateSchemaService
      *   - ['class' => 'App\Entity\Foo']                    → single entity
      *   - ['class' => 'App\Entity\Foo', 'collection' => true] → collection of entities
      *   - ['type' => 'scalar']                              → plain value (string, number, …)
+     *   - ['type' => 'date']                                → DateTimeInterface, inserted with |date()
+     *   - ['type' => 'date', 'nullable' => true]            → date that may be missing, see dateNode()
      *
-     * @param array<string, array{class?: class-string, collection?: bool, type?: string}> $variableMap
+     * @param array<string, array{class?: class-string, collection?: bool, type?: string, nullable?: bool}> $variableMap
      *
      * @return array<string, mixed> JSON-ready schema tree
      */
@@ -46,6 +48,11 @@ class TemplateSchemaService
         foreach ($variableMap as $name => $definition) {
             if (isset($definition['type']) && 'scalar' === $definition['type']) {
                 $schema[$name] = ['type' => 'scalar'];
+                continue;
+            }
+
+            if (isset($definition['type']) && 'date' === $definition['type']) {
+                $schema[$name] = $this->dateNode(!empty($definition['nullable']));
                 continue;
             }
 
@@ -145,7 +152,9 @@ class TemplateSchemaService
                 }
             } else {
                 $isDate = $this->isDateReturn($method) || $this->isDateProperty($refClass, $propertyName);
-                $properties[$propertyName] = ['type' => $isDate ? 'date' : 'scalar'];
+                $properties[$propertyName] = $isDate
+                    ? $this->dateNode($this->isNullableDate($refClass, $method, $propertyName))
+                    : ['type' => 'scalar'];
             }
         }
 
@@ -310,6 +319,37 @@ class TemplateSchemaService
         }
 
         return false;
+    }
+
+    /**
+     * Schema node for a date. The editor wraps a nullable date in a data-if guard when
+     * inserting it, because Twig's date filter prints the current date for null — a
+     * missing due date would otherwise show up as today.
+     *
+     * @return array{type: 'date', nullable?: true}
+     */
+    private function dateNode(bool $nullable): array
+    {
+        return $nullable ? ['type' => 'date', 'nullable' => true] : ['type' => 'date'];
+    }
+
+    /**
+     * Whether a date can be missing. The Doctrine column decides where there is one:
+     * getters are often typed nullable only because a new entity has no value yet,
+     * while the column tells whether a persisted one may lack it.
+     *
+     * @param \ReflectionClass<object> $refClass
+     */
+    private function isNullableDate(\ReflectionClass $refClass, \ReflectionMethod $method, string $propertyName): bool
+    {
+        if ($refClass->hasProperty($propertyName)) {
+            $attrs = $refClass->getProperty($propertyName)->getAttributes(ORM\Column::class);
+            if (!empty($attrs)) {
+                return true === ($attrs[0]->getArguments()['nullable'] ?? false);
+            }
+        }
+
+        return $method->getReturnType()?->allowsNull() ?? true;
     }
 
     /**

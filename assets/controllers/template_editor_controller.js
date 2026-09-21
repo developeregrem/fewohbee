@@ -444,6 +444,7 @@ export default class extends Controller {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
         this.updateSubjectRowVisibility();
+        this.updateImageUploadAvailability();
         this.showEditTab();
         this.refreshToolbarState();
         this.previewPdfObjectUrl = null;
@@ -705,6 +706,30 @@ export default class extends Controller {
         return typeName.toUpperCase().includes('EMAIL');
     }
 
+    /**
+     * Uploaded images only reach the reader in PDF templates, where they are inlined for
+     * mPDF. In a mail body they stay a URL — root-relative on local storage, so broken
+     * everywhere, and an external image on S3 that clients block until the reader allows it.
+     */
+    isImageUploadAllowed() {
+        return !this.isCurrentTemplateTypeEmail();
+    }
+
+    updateImageUploadAvailability() {
+        if (!this.hasToolbarHostTarget) {
+            return;
+        }
+        const button = this.toolbarHostTarget.querySelector('[data-template-command="image"]');
+        if (!button) {
+            return;
+        }
+        const allowed = this.isImageUploadAllowed();
+        button.disabled = !allowed;
+        button.title = allowed
+            ? this.getToolbarI18n('image', 'Insert image')
+            : this.getToolbarI18n('imageEmailUnsupported', 'Images are only supported in PDF templates');
+    }
+
     toggleCodeMode() {
         if (this.isCodeMode()) {
             this.enterVisualMode();
@@ -894,6 +919,7 @@ export default class extends Controller {
             link: 'i18nLink',
             table: 'i18nTable',
             image: 'i18nImage',
+            imageEmailUnsupported: 'i18nImageEmailUnsupported',
             fontFamily: 'i18nFontFamily',
             fontSize: 'i18nFontSize',
             alignLeft: 'i18nAlignLeft',
@@ -1007,6 +1033,7 @@ export default class extends Controller {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
         this.updateSubjectRowVisibility();
+        this.updateImageUploadAvailability();
         this.schemaCache = null;
         // Rebuild CodeMirror with the new template type's schema
         this.rebuildCodeMirror();
@@ -1575,7 +1602,7 @@ export default class extends Controller {
 
             if (type === 'scalar' || type === 'date') {
                 label.addEventListener('click', () => {
-                    this.insertVariable(fullPath, type);
+                    this.insertVariable(fullPath, type, def.nullable === true);
                     this.closeVariablePicker();
                 });
             } else if (type === 'entity' && def.properties) {
@@ -1632,20 +1659,28 @@ export default class extends Controller {
         }
     }
 
-    insertVariable(path, type) {
+    /**
+     * A nullable date gets a guard, because Twig's date filter prints today for null.
+     * The body wraps it in a data-if span; the plain-text subject cannot hold markup
+     * and uses the equivalent ternary instead.
+     */
+    insertVariable(path, type, nullable = false) {
         const variable = type === 'date'
             ? `[[ ${path}|date('d.m.Y') ]]`
             : `[[ ${path} ]]`;
+        const guarded = type === 'date' && nullable;
 
         if (this.variablePickerMode === 'subject') {
-            this.insertIntoSubjectInput(variable);
+            this.insertIntoSubjectInput(guarded ? `[[ ${path} ? ${path}|date('d.m.Y') ]]` : variable);
             return;
         }
 
         if (!this.editorInstance || this.isCodeMode()) {
             return;
         }
-        this.editorInstance.chain().focus().insertContent(variable).run();
+        this.editorInstance.chain().focus()
+            .insertContent(guarded ? `<span data-if="${path}">${variable}</span>` : variable)
+            .run();
     }
 
     insertCollectionLoop(collectionPath, singularName) {
@@ -1753,7 +1788,10 @@ export default class extends Controller {
         this.editorInstance.on('transaction', () => this.refreshToolbarState());
     }
 
-    async handleDrop(view, event) {
+    // handleDrop/handlePaste must answer ProseMirror synchronously: any truthy return — a
+    // Promise included — marks the event as handled and suppresses the default drop/paste.
+    // The upload therefore runs detached.
+    handleDrop(view, event) {
         const snippetContent = event.dataTransfer?.getData('application/x-template-snippet');
         if (snippetContent) {
             const complexity = event.dataTransfer?.getData('application/x-template-snippet-complexity') || 'simple';
@@ -1777,19 +1815,25 @@ export default class extends Controller {
         if (!file.type.startsWith('image/')) {
             return false;
         }
+        // Claimed even where images are not allowed, so the browser does not open the file.
         event.preventDefault();
-        await this.uploadAndInsertImage(file);
+        if (this.isImageUploadAllowed()) {
+            this.uploadAndInsertImage(file);
+        }
         return true;
     }
 
-    async handlePaste(view, event) {
+    handlePaste(view, event) {
+        if (!this.isImageUploadAllowed()) {
+            return false;
+        }
         const items = event.clipboardData?.items || [];
         for (const item of items) {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
                 if (file) {
                     event.preventDefault();
-                    await this.uploadAndInsertImage(file);
+                    this.uploadAndInsertImage(file);
                     return true;
                 }
             }
@@ -1806,7 +1850,7 @@ export default class extends Controller {
     };
 
     async uploadAndInsertImage(file) {
-        if (!this.uploadUrl || !this.editorInstance || this.isCodeMode()) {
+        if (!this.uploadUrl || !this.editorInstance || this.isCodeMode() || !this.isImageUploadAllowed()) {
             return;
         }
         try {

@@ -39,7 +39,7 @@ templates.correspondence.name: Name
 templates.correspondence.notfound: The entry could not be found.
 templates.default: Default template
 templates.hidden: Embedded template
-templates.hidden.tooltip: "Active: Template does not appear in the templateselection."
+templates.hidden.tooltip: "Active: Template is meant to be embedded in other templates and therefore does not appear in the template selection."
 templates.delete.ask: Are you sure you want to delete the template?
 templates.description: Templates for emails, invoices, etc.
 templates.edit: Edit template
@@ -68,9 +68,21 @@ templates.editor.apartment_modifier.positions: Surcharge / discount positions
 templates.editor.apartment_modifier.positions.desc: >-
   Inserts a table with all apartment surcharge / discount positions. The table is only rendered when such
   positions exist on the invoice.
-templates.editor.origin_name: Booking origin (name)
+templates.editor.origin_name: Portal with fees (name)
+templates.editor.origin_name.desc: >-
+  Inserts the name of the portal, i.e. the booking's reservation origin (e.g.
+  Booking.com). It only appears when a commission or payment fee is set for that
+  reservation origin, and is left out for direct bookings, for example.
 templates.editor.origin_commission: OTA commission
+templates.editor.origin_commission.desc: >-
+  Inserts the booking portal's commission as an amount. It is left out when no
+  commission applies or the invoice's reservations were booked at different
+  rates.
 templates.editor.origin_payment_fee: OTA payment fee
+templates.editor.origin_payment_fee.desc: >-
+  Inserts the booking portal's payment fee as an amount. It is left out when no
+  payment fee applies or the invoice's reservations differ in rate or in how they
+  were paid.
 templates.editor.tourist_tax.positions: Tourist tax positions
 templates.editor.opening_hours: Opening hours of the branch
 templates.editor.check_in_times: Check-in times of the branch
@@ -196,6 +208,7 @@ templates.editor.toolbar.ordered: Numbered list
 templates.editor.toolbar.link: Insert link
 templates.editor.toolbar.table: Insert table
 templates.editor.toolbar.image: Insert image
+templates.editor.toolbar.image_email_unsupported: Images are only supported in PDF templates
 templates.editor.toolbar.table_row_add: Add row
 templates.editor.toolbar.table_row_delete: Delete row
 templates.editor.toolbar.table_col_add: Add column

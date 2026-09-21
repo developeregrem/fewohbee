@@ -154,6 +154,7 @@
                              data-i18n-link="{{ 'templates.editor.toolbar.link'|trans }}"
                              data-i18n-table="{{ 'templates.editor.toolbar.table'|trans }}"
                              data-i18n-image="{{ 'templates.editor.toolbar.image'|trans }}"
+                             data-i18n-image-email-unsupported="{{ 'templates.editor.toolbar.image_email_unsupported'|trans }}"
                              data-i18n-font-family="{{ 'templates.editor.toolbar.font_family'|trans }}"
                              data-i18n-font-size="{{ 'templates.editor.toolbar.font_size'|trans }}"
                              data-i18n-align-left="{{ 'templates.editor.toolbar.align_left'|trans }}"
@@ -243,7 +244,7 @@
                         <div data-template-editor-target="snippetSidebar"></div>
                     </div>
                     {# Editor area - always full width when sidebar is hidden #}
-                    <div class="flex-grow-1 min-w-0">
+                    <div class="flex-grow-1 template-editor-main">
                         <div data-template-editor-target="visualWrapper">
                             <div data-template-editor-target="editor"></div>
                         </div>

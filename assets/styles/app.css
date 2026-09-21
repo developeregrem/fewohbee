@@ -369,6 +369,20 @@ body {
     font-size: 0.95rem;
 }
 
+/* A flex item does not shrink below its content's minimum width by default. A table
+   has one even at width: 100% — the sum of its columns' widest unbreakable content —
+   so it pushed the editor past the card, and next to the snippet panel the editor slid
+   right instead of narrowing. (Bootstrap has no min-w-0 utility.) */
+.template-editor-main {
+    min-width: 0;
+}
+
+/* A table that still cannot fit — too many columns, or columns sized by dragging, which
+   Tiptap turns into a pixel width — scrolls inside the editor instead of spilling over. */
+.template-editor-content .tableWrapper {
+    overflow-x: auto;
+}
+
 .template-editor-content:focus {
     outline: none;
 }
@@ -397,10 +411,16 @@ body {
     width: 100%;
 }
 
+/* Stays in view while a long template scrolls past, so a snippet is always next to
+   the spot it goes into. align-self keeps the flex row from stretching the panel to
+   the editor's full height, which would leave sticky nothing to do. */
 .template-editor-snippet-panel {
     width: 260px;
     min-width: 260px;
-    max-height: 70vh;
+    position: sticky;
+    top: 0.5rem;
+    align-self: flex-start;
+    max-height: calc(100vh - 1rem);
     overflow-y: auto;
     padding-right: 0.75rem;
     margin-right: 0.75rem;
@@ -474,6 +494,13 @@ body {
 
 .template-editor-toolbar-group .template-editor-btn:last-child {
     border-right: 0;
+}
+
+/* Bootstrap turns off pointer events on disabled buttons, which also hides the title
+   that explains why the button is unavailable. */
+.template-editor-toolbar-group .template-editor-btn:disabled {
+    pointer-events: auto;
+    cursor: not-allowed;
 }
 
 .template-editor-btn.is-active {

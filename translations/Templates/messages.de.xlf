@@ -322,6 +322,10 @@
                 <source>templates.editor.toolbar.image</source>
                 <target>Bild einfügen</target>
             </trans-unit>
+            <trans-unit id="templates.editor.toolbar.image_email_unsupported">
+                <source>templates.editor.toolbar.image_email_unsupported</source>
+                <target>Bilder werden nur in PDF-Vorlagen unterstützt</target>
+            </trans-unit>
             <trans-unit id="templates.editor.toolbar.table_row_add">
                 <source>templates.editor.toolbar.table_row_add</source>
                 <target>Zeile hinzufügen</target>
@@ -568,7 +572,7 @@
             </trans-unit>
             <trans-unit id="templates.hidden.tooltip">
                 <source>templates.hidden.tooltip</source>
-                <target>Aktiv: Vorlage erscheint nicht in der Vorlagenauswahl.</target>
+                <target>Aktiv: Vorlage ist zum Einbetten in andere Vorlagen gedacht und erscheint deshalb nicht in der Vorlagenauswahl.</target>
             </trans-unit>
             <trans-unit id="templates.recipient">
                 <source>templates.recipient</source>
@@ -824,15 +828,27 @@
             </trans-unit>
             <trans-unit id="templates.editor.origin_name">
                 <source>templates.editor.origin_name</source>
-                <target>Buchungsherkunft (Name)</target>
+                <target>Portal mit Gebühren (Name)</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_name.desc">
+                <source>templates.editor.origin_name.desc</source>
+                <target>Fügt den Namen des Portals ein, also der Reservierungsherkunft der Buchung (z. B. Booking.com). Die Angabe erscheint nur, wenn für diese Reservierungsherkunft eine Kommission oder Zahlungsgebühr hinterlegt ist, und entfällt z. B. bei Direktbuchungen.</target>
             </trans-unit>
             <trans-unit id="templates.editor.origin_commission">
                 <source>templates.editor.origin_commission</source>
                 <target>OTA-Kommission</target>
             </trans-unit>
+            <trans-unit id="templates.editor.origin_commission.desc">
+                <source>templates.editor.origin_commission.desc</source>
+                <target>Fügt die Kommission des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Kommission anfällt oder die Reservierungen der Rechnung zu unterschiedlichen Sätzen gebucht wurden.</target>
+            </trans-unit>
             <trans-unit id="templates.editor.origin_payment_fee">
                 <source>templates.editor.origin_payment_fee</source>
                 <target>OTA-Zahlungsgebühr</target>
+            </trans-unit>
+            <trans-unit id="templates.editor.origin_payment_fee.desc">
+                <source>templates.editor.origin_payment_fee.desc</source>
+                <target>Fügt die Zahlungsgebühr des Buchungsportals als Betrag ein. Die Angabe entfällt, wenn keine Zahlungsgebühr anfällt oder sich die Reservierungen der Rechnung in Satz oder Zahlungsweg unterscheiden.</target>
             </trans-unit>
             <trans-unit id="templates.editor.tourist_tax.positions">
                 <source>templates.editor.tourist_tax.positions</source>
