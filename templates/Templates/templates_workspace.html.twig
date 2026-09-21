@@ -4,6 +4,24 @@
     {{ parent() }} - {{ 'templates.edit'|trans }}
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {% if customFontFamilies is not empty %}
+        <style>
+            {% for family in customFontFamilies %}
+                {% for face in family.faces %}
+                    @font-face {
+                        font-family: '{{ family.alias }}';
+                        src: url('{{ path('settings.templates.fonts.file', {'alias': family.alias, 'style': face.style, 'v': face.version}) }}') format('{{ face.cssFormat }}');
+                        font-weight: {{ face.cssFontWeight }};
+                        font-style: {{ face.cssFontStyle }};
+                    }
+                {% endfor %}
+            {% endfor %}
+        </style>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container" data-controller="settings templates">
     <form id="entry-form-{{ template.id }}"
@@ -20,7 +38,8 @@
           data-templates-preview-render-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.render', {'id': template.id}) }}"
           data-templates-preview-pdf-url="{{ isNew|default(false) ? '' : path('settings.templates.preview.pdf', {'id': template.id}) }}"
           data-templates-embeddable-url="{{ path('settings.templates.embeddable', {'id': 'placeholder'}) }}"
-          data-templates-current-id="{{ template.id }}">
+          data-templates-current-id="{{ template.id }}"
+          data-templates-custom-fonts="{{ customFontOptions|json_encode|e('html_attr') }}">
 
         <div id="flash-message-overlay"></div>
 

@@ -31,6 +31,32 @@ templates.operations.import.failed: No templates could be imported.
 templates.operations.import.already_present: Operations report templates already exist.
 templates.operations.import.missing_type: Template type for operations reports not found.
 templates.add: Add a template
+templates.fonts.open: Manage custom fonts
+templates.fonts.title: Custom PDF fonts
+templates.fonts.description: Upload your own font files. FewohBee detects the family and available styles automatically and makes families with a regular face available in the PDF template editor.
+templates.fonts.empty: No custom fonts have been installed yet.
+templates.fonts.upload.label: Font files
+templates.fonts.upload.help: Select one or more TTF or compatible OTF files. Upload the regular face as well as any bold and italic faces you need.
+templates.fonts.upload.button: Upload fonts
+templates.fonts.license_hint: By uploading a font, you confirm that its licence permits its intended use and embedding in PDF documents. FewohBee does not verify the licence terms itself.
+templates.fonts.style.r: Regular
+templates.fonts.style.b: Bold
+templates.fonts.style.i: Italic
+templates.fonts.style.bi: Bold italic
+templates.fonts.missing_regular: Regular face missing
+templates.fonts.delete.ask: Delete this font family?
+templates.fonts.delete.hint: The font will no longer be available for new PDFs. Existing templates will use a fallback font.
+templates.fonts.flash.no_file: Select at least one font file.
+templates.fonts.flash.uploaded: "{1} One font file was installed.|]1,Inf[ %count% font files were installed."
+templates.fonts.flash.upload_failed: '"%filename%" could not be installed: %reason%'
+templates.fonts.flash.deleted: The font family was deleted.
+templates.fonts.flash.not_found: The font family no longer exists.
+templates.fonts.validation.upload: The upload was not completed.
+templates.fonts.validation.size: The font file is empty or larger than 10 MB.
+templates.fonts.validation.extension: Only TTF and OTF files are supported.
+templates.fonts.validation.mime: The uploaded file is not recognised as a font.
+templates.fonts.validation.invalid: The file is not a supported Unicode TrueType font.
+templates.fonts.validation.storage: The font storage is not writable. Check the installation permissions.
 templates.attachment: Attachment
 templates.attachment.notfound: The attachment could not be found.
 templates.correspondence.created: Date

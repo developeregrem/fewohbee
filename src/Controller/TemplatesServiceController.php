@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Dto\CustomFontFamily;
 use App\Entity\Template;
 use App\Entity\TemplateType;
+use App\Exception\CustomFontException;
 use App\Service\CSRFProtectionService;
+use App\Service\CustomFontManager;
 use App\Service\FileUploader;
 use App\Service\TemplateSchemaService;
 use App\Service\TemplatesService;
@@ -23,24 +26,30 @@ use App\Service\TemplatePreview\TemplatePreviewProviderRegistry;
 use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Twig\Environment;
 
 #[Route(path: '/settings/templates')]
+#[IsGranted('ROLE_ADMIN')]
 class TemplatesServiceController extends AbstractController
 {
     /**
      * Index-View.
      */
     #[Route('/', name: 'settings.templates.overview', methods: ['GET'])]
-    public function indexAction(ManagerRegistry $doctrine, CsrfTokenManagerInterface $csrfTokenManager): Response
-    {
+    public function indexAction(
+        ManagerRegistry $doctrine,
+        CsrfTokenManagerInterface $csrfTokenManager,
+    ): Response {
         $em = $doctrine->getManager();
         $templates = $em->getRepository(Template::class)->findAll();
         $operationsTemplates = $em->getRepository(Template::class)->loadByTypeName(['TEMPLATE_OPERATIONS_PDF']);
@@ -54,6 +63,17 @@ class TemplatesServiceController extends AbstractController
         ]);
     }
 
+    #[Route('/fonts', name: 'settings.templates.fonts.manage', methods: ['GET'])]
+    public function manageFonts(
+        CustomFontManager $customFonts,
+        CsrfTokenManagerInterface $csrfTokenManager,
+    ): Response {
+        return $this->render('Templates/_fonts_modal.html.twig', [
+            'fontUploadToken' => $csrfTokenManager->getToken('templates.fonts.upload')->getValue(),
+            'customFonts' => $customFonts->getFamilies(),
+        ]);
+    }
+
     /**
      * Full-page template workspace with edit + preview tabs.
      */
@@ -63,6 +83,7 @@ class TemplatesServiceController extends AbstractController
         CSRFProtectionService $csrf,
         TemplatesService $templatesService,
         TemplatePreviewProviderRegistry $previewRegistry,
+        CustomFontManager $customFonts,
         Template $template
     ): Response {
         $em = $doctrine->getManager();
@@ -78,6 +99,8 @@ class TemplatesServiceController extends AbstractController
             'context' => $provider ? $provider->buildSampleContext() : [],
             'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
             'formatDefaultMargins' => TemplatesService::FORMAT_DEFAULT_MARGINS,
+            'customFontFamilies' => $customFonts->getFamilies(),
+            'customFontOptions' => $this->customFontOptions($customFonts),
         ]);
     }
 
@@ -85,8 +108,12 @@ class TemplatesServiceController extends AbstractController
      * Full-page workspace for creating a new template.
      */
     #[Route('/new-page', name: 'settings.templates.new.page', methods: ['GET'])]
-    public function newPageAction(ManagerRegistry $doctrine, CSRFProtectionService $csrf, TemplatesService $templatesService): Response
-    {
+    public function newPageAction(
+        ManagerRegistry $doctrine,
+        CSRFProtectionService $csrf,
+        TemplatesService $templatesService,
+        CustomFontManager $customFonts,
+    ): Response {
         $em = $doctrine->getManager();
         $template = new Template();
         $template->setId('new');
@@ -102,6 +129,8 @@ class TemplatesServiceController extends AbstractController
             'pdfParams' => $templatesService->parseTemplateParams($template->getParams()),
             'isNew' => true,
             'formatDefaultMargins' => TemplatesService::FORMAT_DEFAULT_MARGINS,
+            'customFontFamilies' => $customFonts->getFamilies(),
+            'customFontOptions' => $this->customFontOptions($customFonts),
         ]);
     }
 
@@ -500,6 +529,112 @@ class TemplatesServiceController extends AbstractController
         return $this->json(array_values($result));
     }
 
+    #[Route('/fonts', name: 'settings.templates.fonts.upload', methods: ['POST'])]
+    public function uploadFonts(
+        Request $request,
+        CustomFontManager $customFonts,
+        TranslatorInterface $translator,
+        LoggerInterface $logger,
+    ): Response {
+        if (!$this->isCsrfTokenValid('templates.fonts.upload', (string) $request->request->get('_csrf_token'))) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $files = array_values(array_filter(
+            $request->files->all('fonts'),
+            static fn (mixed $file): bool => $file instanceof UploadedFile,
+        ));
+        if ([] === $files) {
+            $this->addFlash('warning', 'templates.fonts.flash.no_file');
+
+            return $this->redirectToRoute('settings.templates.overview');
+        }
+
+        $uploaded = 0;
+        foreach ($files as $file) {
+            try {
+                $customFonts->upload($file);
+                ++$uploaded;
+            } catch (CustomFontException $e) {
+                $filename = basename($file->getClientOriginalName());
+                $logger->warning('Custom font upload failed.', [
+                    'filename' => $filename,
+                    'reason' => $e->translationKey,
+                    'exception' => $e,
+                ]);
+                $this->addFlash('danger', $translator->trans('templates.fonts.flash.upload_failed', [
+                    '%filename%' => $filename,
+                    '%reason%' => $translator->trans($e->translationKey),
+                ]));
+            }
+        }
+
+        if ($uploaded > 0) {
+            $this->addFlash('success', $translator->trans('templates.fonts.flash.uploaded', [
+                '%count%' => $uploaded,
+            ]));
+        }
+
+        return $this->redirectToRoute('settings.templates.overview');
+    }
+
+    #[Route(
+        '/fonts/{alias}',
+        name: 'settings.templates.fonts.delete',
+        requirements: ['alias' => 'fhbcustom[0-9a-f]{16}'],
+        methods: ['DELETE'],
+    )]
+    public function deleteFontFamily(Request $request, CustomFontManager $customFonts, string $alias): Response
+    {
+        if (!$this->isCsrfTokenValid('deletefont-'.$alias, (string) $request->request->get('_token'))) {
+            $this->addFlash('warning', 'flash.invalidtoken');
+
+            return new Response('', Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            if ($customFonts->deleteFamily($alias)) {
+                $this->addFlash('success', 'templates.fonts.flash.deleted');
+            } else {
+                $this->addFlash('warning', 'templates.fonts.flash.not_found');
+            }
+        } catch (CustomFontException) {
+            $this->addFlash('danger', 'templates.fonts.validation.storage');
+
+            return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route(
+        '/fonts/{alias}/{style}',
+        name: 'settings.templates.fonts.file',
+        requirements: ['alias' => 'fhbcustom[0-9a-f]{16}', 'style' => 'BI|B|I|R'],
+        methods: ['GET'],
+    )]
+    public function fontFile(CustomFontManager $customFonts, string $alias, string $style): Response
+    {
+        $face = $customFonts->findFace($alias, $style);
+        if (null === $face) {
+            throw $this->createNotFoundException();
+        }
+
+        $response = new BinaryFileResponse($face->path);
+        $response->setContentDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            sprintf('%s-%s.%s', $alias, strtolower($style), $face->extension),
+        );
+        $response->headers->set('Content-Type', 'otf' === $face->extension ? 'font/otf' : 'font/ttf');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setPrivate();
+        $response->setMaxAge(3600);
+
+        return $response;
+    }
+
     #[Route('/upload', name: 'templates.upload', methods: ['POST'])]
     public function uploadImage(Request $request, FileUploader $fos, LoggerInterface $logger): Response
     {
@@ -520,5 +655,22 @@ class TemplatesServiceController extends AbstractController
         return $this->json([
             'location' => $fos->getPublicUrl($name),
         ]);
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    private function customFontOptions(CustomFontManager $customFonts): array
+    {
+        return array_values(array_map(
+            static fn (CustomFontFamily $family): array => [
+                'value' => $family->alias.', '.$family->fallback,
+                'label' => $family->name,
+            ],
+            array_filter(
+                $customFonts->getFamilies(),
+                static fn (CustomFontFamily $family): bool => $family->isUsable(),
+            ),
+        ));
     }
 }

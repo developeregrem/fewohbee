@@ -7,12 +7,14 @@ namespace App\Tests\Unit;
 use App\Entity\Template;
 use App\Entity\TemplateType;
 use App\Repository\TemplateRepository;
+use App\Service\CustomFontManager;
 use App\Service\MpdfService;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -430,12 +432,18 @@ final class TemplatesServiceTest extends TestCase
 
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $fontTestDirectory = sys_get_temp_dir().'/fewohbee-test-no-custom-fonts-'.bin2hex(random_bytes(6));
+        $customFonts = new CustomFontManager(
+            $fontTestDirectory,
+            $fontTestDirectory.'/analysis-cache',
+            $this->createStub(LoggerInterface::class),
+        );
 
         $service = new TemplatesService(
             new Environment(new ArrayLoader()),
             $this->createStub(EntityManagerInterface::class),
             $requestStack,
-            new MpdfService($requestStack, sys_get_temp_dir().'/mpdf-test'),
+            new MpdfService($requestStack, $customFonts, sys_get_temp_dir().'/mpdf-test', 'de'),
             $translator,
             $this->createStub(TemplateRenderParamsResolver::class),
             $this->exportStorageWith('logo-abc123.png', $png)

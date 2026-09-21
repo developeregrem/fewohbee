@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Mpdf\Mpdf;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -20,17 +23,25 @@ class MpdfService
 {
     public function __construct(
         private readonly RequestStack $requestStack,
+        private readonly CustomFontManager $customFonts,
         #[Autowire('%kernel.cache_dir%/mpdf')]
         private readonly string $tempDir,
+        #[Autowire('%locale%')]
+        private readonly string $defaultLocale,
     ) {
     }
 
-    public function getMpdf(string $format = 'A4')
+    public function getMpdf(string $format = 'A4'): Mpdf
     {
-        $locale = $this->requestStack->getCurrentRequest()->getLocale();
+        $locale = $this->requestStack->getCurrentRequest()?->getLocale() ?? $this->defaultLocale;
 
-        if (!is_dir($this->tempDir)) {
-            @mkdir($this->tempDir, 0775, true);
+        $customFontData = $this->customFonts->getMpdfFontData();
+        $tempDir = [] === $customFontData
+            ? $this->tempDir
+            : $this->tempDir.'/fonts-'.$this->customFonts->getCacheFingerprint();
+
+        if (!is_dir($tempDir)) {
+            @mkdir($tempDir, 0775, true);
         }
 
         $isA5 = 'A5' === strtoupper($format);
@@ -45,9 +56,16 @@ class MpdfService
             'margin_bottom' => $isA6 ? 8  : ($isA5 ? 12 : 20),
             'margin_header' => $isA6 ? 4  : ($isA5 ? 6  : 9),
             'margin_footer' => $isA6 ? 4  : ($isA5 ? 6  : 9),
-            'tempDir'       => $this->tempDir
+            'tempDir'       => $tempDir,
         ];
 
-        return new \Mpdf\Mpdf($config);
+        if ([] !== $customFontData) {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $config['fontDir'] = array_merge($defaultConfig['fontDir'], [$this->customFonts->getFontDirectory()]);
+            $config['fontdata'] = $defaultFontConfig['fontdata'] + $customFontData;
+        }
+
+        return new Mpdf($config);
     }
 }

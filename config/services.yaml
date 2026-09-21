@@ -7,6 +7,8 @@ parameters:
     returnPath: '%env(RETURN_PATH)%'
     publicUploadDirectory: 'resources/images/export'
     roomCategoryImagePublicDirectory: 'resources/images/room-categories'
+    defaultCustomFontDirectory: '%kernel.project_dir%/var/storage/fonts'
+    customFontDirectory: '%env(default:defaultCustomFontDirectory:CUSTOM_FONT_DIR)%'
     version: '4.12.0'
     mailCopy: '%env(default:default_mailcopy:MAIL_COPY)%'
     mailEnabled: '%env(bool:default:default_mail_enabled:MAIL_ENABLED)%'
@@ -116,7 +118,12 @@ services:
     App\Service\TemplatesService:
         arguments:
             $exportStorage: '@images.export.storage'
-            
+
+    App\Service\CustomFontManager:
+        arguments:
+            $fontDirectory: '%customFontDirectory%'
+            $analysisCacheDirectory: '%kernel.cache_dir%/font-analysis'
+
     # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally
     # wires storages that reference this id). Works with any S3-compatible provider
     # (Hetzner Object Storage, MinIO, R2, Wasabi, AWS) via the configured endpoint.

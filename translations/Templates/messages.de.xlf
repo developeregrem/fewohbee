@@ -14,6 +14,110 @@
                 <source>templates.add</source>
                 <target>Vorlage hinzufügen</target>
             </trans-unit>
+            <trans-unit id="templates.fonts.open">
+                <source>templates.fonts.open</source>
+                <target>Eigene Schriften verwalten</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.title">
+                <source>templates.fonts.title</source>
+                <target>Eigene PDF-Schriften</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.description">
+                <source>templates.fonts.description</source>
+                <target>Lade eigene Schriftdateien hoch. FewohBee erkennt Familie und vorhandene Schnitte automatisch und stellt Familien mit regulärem Schnitt im Editor für PDF-Vorlagen bereit.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.empty">
+                <source>templates.fonts.empty</source>
+                <target>Es sind noch keine eigenen Schriften installiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.label">
+                <source>templates.fonts.upload.label</source>
+                <target>Schriftdateien</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.help">
+                <source>templates.fonts.upload.help</source>
+                <target>Wähle eine oder mehrere TTF- oder kompatible OTF-Dateien aus. Lade neben dem regulären Schnitt auch die benötigten fetten und kursiven Schnitte hoch.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.upload.button">
+                <source>templates.fonts.upload.button</source>
+                <target>Schriften hochladen</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.license_hint">
+                <source>templates.fonts.license_hint</source>
+                <target>Mit dem Hochladen einer Schrift bestätigst du, dass sie im Rahmen ihrer Lizenzbedingungen verwendet und in PDF-Dokumente eingebettet werden darf. FewohBee selbst prüft die Lizenzbedingungen nicht.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.r">
+                <source>templates.fonts.style.r</source>
+                <target>Regulär</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.b">
+                <source>templates.fonts.style.b</source>
+                <target>Fett</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.i">
+                <source>templates.fonts.style.i</source>
+                <target>Kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.style.bi">
+                <source>templates.fonts.style.bi</source>
+                <target>Fett kursiv</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.missing_regular">
+                <source>templates.fonts.missing_regular</source>
+                <target>Regulärer Schnitt fehlt</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.delete.ask">
+                <source>templates.fonts.delete.ask</source>
+                <target>Diese Schriftfamilie löschen?</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.delete.hint">
+                <source>templates.fonts.delete.hint</source>
+                <target>Die Schrift steht für neue PDFs nicht mehr zur Verfügung. Bestehende Vorlagen verwenden dann eine Ersatzschrift.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.no_file">
+                <source>templates.fonts.flash.no_file</source>
+                <target>Wähle mindestens eine Schriftdatei aus.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.uploaded">
+                <source>templates.fonts.flash.uploaded</source>
+                <target>{1} Eine Schriftdatei wurde installiert.|]1,Inf[ %count% Schriftdateien wurden installiert.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.upload_failed">
+                <source>templates.fonts.flash.upload_failed</source>
+                <target>„%filename%“ konnte nicht installiert werden: %reason%</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.deleted">
+                <source>templates.fonts.flash.deleted</source>
+                <target>Die Schriftfamilie wurde gelöscht.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.flash.not_found">
+                <source>templates.fonts.flash.not_found</source>
+                <target>Die Schriftfamilie ist nicht mehr vorhanden.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.upload">
+                <source>templates.fonts.validation.upload</source>
+                <target>Der Upload wurde nicht vollständig übertragen.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.size">
+                <source>templates.fonts.validation.size</source>
+                <target>Die Schriftdatei ist leer oder größer als 10 MB.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.extension">
+                <source>templates.fonts.validation.extension</source>
+                <target>Es werden nur TTF- und OTF-Dateien unterstützt.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.mime">
+                <source>templates.fonts.validation.mime</source>
+                <target>Die hochgeladene Datei wird nicht als Schrift erkannt.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.invalid">
+                <source>templates.fonts.validation.invalid</source>
+                <target>Die Datei ist keine unterstützte Unicode-TrueType-Schrift.</target>
+            </trans-unit>
+            <trans-unit id="templates.fonts.validation.storage">
+                <source>templates.fonts.validation.storage</source>
+                <target>Der Schriftenspeicher ist nicht beschreibbar. Prüfe die Berechtigungen der Installation.</target>
+            </trans-unit>
             <trans-unit id="templates.name">
                 <source>templates.name</source>
                 <target>Name</target>

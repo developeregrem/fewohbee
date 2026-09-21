@@ -421,6 +421,7 @@ export default class extends Controller {
         this.embeddableUrlTemplate = this.form?.dataset.templatesEmbeddableUrl || '';
         this.currentTemplateId = this.form?.dataset.templatesCurrentId || null;
         this.templateTypeSelect = this.form?.querySelector('#template-type');
+        this.customFontOptions = this.parseCustomFontOptions(this.form?.dataset.templatesCustomFonts || '[]');
         this.snippets = [];
         this.codeDropListenersAttached = false;
         this.cmEditor = null; // CodeMirror instance (created on first code-mode entry)
@@ -842,6 +843,24 @@ export default class extends Controller {
         this.renderToolbar();
     }
 
+    parseCustomFontOptions(serialized) {
+        try {
+            const options = JSON.parse(serialized);
+            if (!Array.isArray(options)) {
+                return [];
+            }
+
+            return options.filter((option) => (
+                option
+                && typeof option.value === 'string'
+                && /^fhbcustom[0-9a-f]{16}, (?:serif|sans-serif|monospace|cursive)$/.test(option.value)
+                && typeof option.label === 'string'
+            ));
+        } catch (error) {
+            return [];
+        }
+    }
+
     buildToolbarConfig() {
         const t = (key, fallback) => this.getToolbarI18n(key, fallback);
         return [
@@ -867,6 +886,7 @@ export default class extends Controller {
                             { value: "'Courier New', monospace", label: 'Courier New' },
                             { value: 'Georgia, serif', label: 'Georgia' },
                             { value: 'Verdana, sans-serif', label: 'Verdana' },
+                            ...(this.isCurrentTemplateTypePdf() ? this.customFontOptions : []),
                         ],
                     },
                     {
@@ -1033,7 +1053,9 @@ export default class extends Controller {
         this.refreshSnippets();
         this.updatePdfParamsVisibility();
         this.updateSubjectRowVisibility();
+        this.initToolbar();
         this.updateImageUploadAvailability();
+        this.refreshToolbarState();
         this.schemaCache = null;
         // Rebuild CodeMirror with the new template type's schema
         this.rebuildCodeMirror();
