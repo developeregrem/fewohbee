@@ -12,14 +12,17 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final class CustomFontControllerTest extends WebTestCase
 {
-    private ?string $fontDirectory = null;
+    /** @var list<string> */
+    private array $fontDirectories = [];
 
     protected function tearDown(): void
     {
-        if (null !== $this->fontDirectory && is_dir($this->fontDirectory)) {
-            foreach (glob($this->fontDirectory.'/*') ?: [] as $path) {
-                if (is_file($path)) {
-                    unlink($path);
+        foreach ($this->fontDirectories as $fontDirectory) {
+            if (is_dir($fontDirectory)) {
+                foreach (glob($fontDirectory.'/*') ?: [] as $path) {
+                    if (is_file($path)) {
+                        unlink($path);
+                    }
                 }
             }
         }
@@ -31,11 +34,17 @@ final class CustomFontControllerTest extends WebTestCase
     {
         $client = self::createClient();
         $client->loginUser($this->getAdminUser(), 'main');
-        $this->fontDirectory = self::getContainer()->getParameter('kernel.cache_dir').'/uploaded-fonts';
-        if (is_dir($this->fontDirectory)) {
-            foreach (glob($this->fontDirectory.'/*') ?: [] as $path) {
-                if (is_file($path)) {
-                    unlink($path);
+        $cacheDirectory = (string) self::getContainer()->getParameter('kernel.cache_dir');
+        $this->fontDirectories = [
+            $cacheDirectory.'/uploaded-font-storage',
+            $cacheDirectory.'/uploaded-font-cache',
+        ];
+        foreach ($this->fontDirectories as $fontDirectory) {
+            if (is_dir($fontDirectory)) {
+                foreach (glob($fontDirectory.'/*') ?: [] as $path) {
+                    if (is_file($path)) {
+                        unlink($path);
+                    }
                 }
             }
         }

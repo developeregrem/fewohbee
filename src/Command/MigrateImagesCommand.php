@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use League\Flysystem\FilesystemException;
-use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use League\Flysystem\Visibility;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,8 +18,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Copies the contents of the legacy local upload directories into the currently
- * configured Flysystem storages (typically S3). Idempotent — existing destination
+ * Copies the contents of the local upload directories into the currently configured
+ * Flysystem storages (typically S3). Idempotent — existing destination
  * files are skipped unless --overwrite is given.
  *
  * Typical workflow when switching to S3:
@@ -26,7 +27,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *   2. bin/console cache:clear
  *   3. bin/console app:storage:migrate-images
  */
-#[AsCommand(name: 'app:storage:migrate-images', description: 'Copy local image uploads into the configured Flysystem storages (e.g. S3).')]
+#[AsCommand(name: 'app:storage:migrate-images', description: 'Copy local uploads into the configured Flysystem storages (e.g. S3).')]
 final class MigrateImagesCommand extends Command
 {
     public function __construct(
@@ -34,8 +35,12 @@ final class MigrateImagesCommand extends Command
         private readonly FilesystemOperator $exportStorage,
         #[Autowire(service: 'images.roomcat.storage')]
         private readonly FilesystemOperator $roomCatStorage,
+        #[Autowire(service: 'fonts.storage')]
+        private readonly FilesystemOperator $fontStorage,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
+        #[Autowire('%customFontDirectory%')]
+        private readonly string $customFontDirectory,
     ) {
         parent::__construct();
     }
@@ -54,14 +59,15 @@ final class MigrateImagesCommand extends Command
         $dryRun = (bool) $input->getOption('dry-run');
 
         $jobs = [
-            ['Template uploads (export)', $this->projectDir . '/public/resources/images/export', $this->exportStorage],
-            ['Room category images', $this->projectDir . '/public/resources/images/room-categories', $this->roomCatStorage],
+            ['Template uploads (export)', $this->projectDir.'/public/resources/images/export', $this->exportStorage, []],
+            ['Room category images', $this->projectDir.'/public/resources/images/room-categories', $this->roomCatStorage, []],
+            ['Custom PDF fonts', $this->customFontDirectory, $this->fontStorage, ['visibility' => Visibility::PRIVATE]],
         ];
 
         $totalCopied = 0;
         $totalSkipped = 0;
 
-        foreach ($jobs as [$label, $sourceDir, $storage]) {
+        foreach ($jobs as [$label, $sourceDir, $storage, $writeOptions]) {
             $io->section($label);
 
             if (!is_dir($sourceDir)) {
@@ -103,16 +109,18 @@ final class MigrateImagesCommand extends Command
                     continue;
                 }
 
+                $stream = null;
                 try {
                     $stream = $source->readStream($path);
-                    $storage->writeStream($path, $stream);
-                    if (is_resource($stream)) {
-                        fclose($stream);
-                    }
+                    $storage->writeStream($path, $stream, $writeOptions);
                     ++$copied;
                 } catch (FilesystemException $e) {
                     $io->error(sprintf('Failed to copy %s: %s', $path, $e->getMessage()));
                     return Command::FAILURE;
+                } finally {
+                    if (is_resource($stream)) {
+                        fclose($stream);
+                    }
                 }
             }
 

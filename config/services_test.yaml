@@ -1,3 +1,6 @@
+parameters:
+    customFontDirectory: '%kernel.cache_dir%/uploaded-font-storage'
+
 services:
     _defaults:
         public: true
@@ -11,5 +14,6 @@ services:
     App\Service\CustomFontManager:
         autowire: true
         arguments:
-            $fontDirectory: '%kernel.cache_dir%/uploaded-fonts'
+            $storage: '@fonts.storage'
+            $fontCacheDirectory: '%kernel.cache_dir%/uploaded-font-cache'
             $analysisCacheDirectory: '%kernel.cache_dir%/font-analysis'

@@ -7,6 +7,9 @@ namespace App\Service;
 use App\Dto\CustomFontFace;
 use App\Dto\CustomFontFamily;
 use App\Exception\CustomFontException;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\Visibility;
 use Mpdf\Cache;
 use Mpdf\Fonts\FontCache;
 use Mpdf\TTFontFileAnalysis;
@@ -14,10 +17,10 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
- * Discovers and manages custom TrueType fonts stored outside the application code.
+ * Discovers and manages custom TrueType fonts stored through Flysystem.
  *
- * Font metadata is the source of truth, so native installations and Docker volumes use
- * the same directory layout without a database manifest that could get out of sync.
+ * mPDF requires real local paths. Flysystem remains the source of truth while each
+ * process materializes content-addressed font objects in its local application cache.
  */
 final class CustomFontManager
 {
@@ -46,7 +49,8 @@ final class CustomFontManager
     private ?array $families = null;
 
     public function __construct(
-        private readonly string $fontDirectory,
+        private readonly FilesystemOperator $storage,
+        private readonly string $fontCacheDirectory,
         private readonly string $analysisCacheDirectory,
         private readonly LoggerInterface $logger,
     ) {
@@ -155,7 +159,7 @@ final class CustomFontManager
 
     public function getFontDirectory(): string
     {
-        return $this->fontDirectory;
+        return $this->fontCacheDirectory;
     }
 
     /** A content-derived cache namespace prevents stale mPDF metrics after replacement. */
@@ -229,30 +233,48 @@ final class CustomFontManager
             throw new CustomFontException('templates.fonts.validation.invalid');
         }
 
-        $this->ensureStorageDirectory();
         $filename = sprintf('%s-%s-%s.%s', $alias, strtolower($metadata['style']), substr($checksum, 0, 16), $extension);
-        $targetPath = $this->fontDirectory.DIRECTORY_SEPARATOR.$filename;
-
+        $this->synchronizeLocalCache(true);
         $replacedFiles = $this->filesForFamilyAndStyle($alias, $metadata['style']);
 
+        $stream = @fopen($file->getPathname(), 'rb');
+        if (false === $stream) {
+            throw new CustomFontException('templates.fonts.validation.storage');
+        }
+
         try {
-            if (!is_file($targetPath)) {
-                $file->move($this->fontDirectory, $filename);
-                @chmod($targetPath, 0644);
+            $this->storage->writeStream($filename, $stream, ['visibility' => Visibility::PRIVATE]);
+        } catch (FilesystemException $e) {
+            throw new CustomFontException('templates.fonts.validation.storage', $e);
+        } finally {
+            fclose($stream);
+        }
+
+        foreach ($replacedFiles as $replacedFile) {
+            $replacedFilename = basename($replacedFile);
+            if ($replacedFilename === $filename) {
+                continue;
             }
 
-            foreach ($replacedFiles as $replacedFile) {
-                if ($replacedFile !== $targetPath && is_file($replacedFile) && !@unlink($replacedFile)) {
-                    $this->logger->warning('An obsolete custom font face could not be removed.', [
-                        'filename' => basename($replacedFile),
-                    ]);
+            try {
+                $this->storage->delete($replacedFilename);
+            } catch (FilesystemException $e) {
+                $this->logger->warning('An obsolete custom font face could not be removed.', [
+                    'filename' => $replacedFilename,
+                    'exception' => $e,
+                ]);
+                try {
+                    $this->storage->delete($filename);
+                } catch (FilesystemException) {
+                    // The next synchronization still handles duplicate objects safely.
                 }
+
+                throw new CustomFontException('templates.fonts.validation.storage', $e);
             }
-        } catch (\Throwable $e) {
-            throw new CustomFontException('templates.fonts.validation.storage', $e);
         }
 
         $this->families = null;
+        $this->synchronizeLocalCache(true);
 
         return $this->findFamily($alias)
             ?? throw new CustomFontException('templates.fonts.validation.storage');
@@ -281,11 +303,14 @@ final class CustomFontManager
         }
 
         foreach ($matchingFiles as $path) {
-            if (!@unlink($path)) {
-                throw new CustomFontException('templates.fonts.validation.storage');
+            try {
+                $this->storage->delete(basename($path));
+            } catch (FilesystemException $e) {
+                throw new CustomFontException('templates.fonts.validation.storage', $e);
             }
         }
         $this->families = null;
+        $this->synchronizeLocalCache(true);
 
         return true;
     }
@@ -295,20 +320,18 @@ final class CustomFontManager
      */
     private function fontFiles(): array
     {
-        if (!is_dir($this->fontDirectory)) {
-            return [];
-        }
+        $this->synchronizeLocalCache();
 
-        $entries = scandir($this->fontDirectory);
+        $entries = scandir($this->fontCacheDirectory);
         if (false === $entries) {
-            $this->logger->warning('The custom font directory could not be read.');
+            $this->logger->warning('The local custom font cache could not be read.');
 
             return [];
         }
 
         $files = [];
         foreach ($entries as $entry) {
-            $path = $this->fontDirectory.DIRECTORY_SEPARATOR.$entry;
+            $path = $this->fontCacheDirectory.DIRECTORY_SEPARATOR.$entry;
             $extension = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
             if (in_array($extension, self::ALLOWED_EXTENSIONS, true) && is_file($path) && !is_link($path)) {
                 $files[] = $path;
@@ -368,15 +391,159 @@ final class CustomFontManager
         ];
     }
 
-    private function ensureStorageDirectory(): void
+    private function synchronizeLocalCache(bool $failOnStorageError = false): void
     {
-        if (!is_dir($this->fontDirectory) && !@mkdir($this->fontDirectory, 0775, true) && !is_dir($this->fontDirectory)) {
+        $this->ensureCacheDirectory();
+
+        try {
+            $storedPaths = $this->storedFontPaths();
+        } catch (CustomFontException $e) {
+            if ($failOnStorageError) {
+                throw $e;
+            }
+
+            $this->logger->error('Custom font storage could not be synchronized; using the local cache.', [
+                'exception' => $e,
+            ]);
+
+            return;
+        }
+
+        $expectedFiles = [];
+        foreach ($storedPaths as $storedPath) {
+            $filename = basename($storedPath);
+            $expectedFiles[$filename] = true;
+            $localPath = $this->fontCacheDirectory.DIRECTORY_SEPARATOR.$filename;
+            if ($this->isContentAddressedFilename($filename) && is_file($localPath)) {
+                continue;
+            }
+
+            try {
+                $this->cacheStoredFont($storedPath, $localPath);
+            } catch (CustomFontException $e) {
+                if ($failOnStorageError && 'templates.fonts.validation.storage' === $e->translationKey) {
+                    throw $e;
+                }
+
+                $this->logger->warning('A custom font could not be cached locally.', [
+                    'filename' => $filename,
+                    'reason' => $e->translationKey,
+                    'exception' => $e,
+                ]);
+            }
+        }
+
+        $entries = scandir($this->fontCacheDirectory);
+        if (false === $entries) {
             throw new CustomFontException('templates.fonts.validation.storage');
         }
 
-        if (!is_writable($this->fontDirectory)) {
+        foreach ($entries as $entry) {
+            $path = $this->fontCacheDirectory.DIRECTORY_SEPARATOR.$entry;
+            $extension = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
+            if (!isset($expectedFiles[$entry])
+                && in_array($extension, self::ALLOWED_EXTENSIONS, true)
+                && is_file($path)
+                && !is_link($path)
+                && !@unlink($path)
+            ) {
+                $this->logger->warning('An obsolete locally cached font could not be removed.', [
+                    'filename' => $entry,
+                ]);
+            }
+        }
+    }
+
+    private function ensureCacheDirectory(): void
+    {
+        if (!is_dir($this->fontCacheDirectory)
+            && !@mkdir($this->fontCacheDirectory, 0775, true)
+            && !is_dir($this->fontCacheDirectory)
+        ) {
             throw new CustomFontException('templates.fonts.validation.storage');
         }
+
+        if (!is_writable($this->fontCacheDirectory)) {
+            throw new CustomFontException('templates.fonts.validation.storage');
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function storedFontPaths(): array
+    {
+        $paths = [];
+
+        try {
+            foreach ($this->storage->listContents('', false) as $item) {
+                $path = $item->path();
+                $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                if ($item->isFile()
+                    && basename($path) === $path
+                    && in_array($extension, self::ALLOWED_EXTENSIONS, true)
+                ) {
+                    $paths[] = $path;
+                }
+            }
+        } catch (FilesystemException $e) {
+            throw new CustomFontException('templates.fonts.validation.storage', $e);
+        }
+
+        sort($paths, SORT_STRING);
+
+        return $paths;
+    }
+
+    private function cacheStoredFont(string $storedPath, string $localPath): void
+    {
+        $temporaryPath = $this->fontCacheDirectory.DIRECTORY_SEPARATOR.'.font-'.bin2hex(random_bytes(8)).'.tmp';
+        $source = null;
+        $target = null;
+        $downloaded = false;
+
+        try {
+            $source = $this->storage->readStream($storedPath);
+            if (!is_resource($source)) {
+                throw new CustomFontException('templates.fonts.validation.storage');
+            }
+            $target = @fopen($temporaryPath, 'wb');
+            if (false === $target) {
+                throw new CustomFontException('templates.fonts.validation.storage');
+            }
+
+            $copied = stream_copy_to_stream($source, $target, self::MAX_FILE_SIZE + 1);
+            if (false === $copied) {
+                throw new CustomFontException('templates.fonts.validation.storage');
+            }
+            if ($copied > self::MAX_FILE_SIZE) {
+                throw new CustomFontException('templates.fonts.validation.size');
+            }
+            $downloaded = true;
+        } catch (FilesystemException $e) {
+            throw new CustomFontException('templates.fonts.validation.storage', $e);
+        } finally {
+            if (is_resource($source)) {
+                fclose($source);
+            }
+            if (is_resource($target)) {
+                fclose($target);
+            }
+            if (!$downloaded) {
+                @unlink($temporaryPath);
+            }
+        }
+
+        @chmod($temporaryPath, 0644);
+        if (!@rename($temporaryPath, $localPath)) {
+            @unlink($temporaryPath);
+            throw new CustomFontException('templates.fonts.validation.storage');
+        }
+    }
+
+    private function isContentAddressedFilename(string $filename): bool
+    {
+        return 1 === preg_match('/^fhbcustom[0-9a-f]{16}-(?:r|b|i|bi)-[0-9a-f]{16}\.(?:ttf|otf)$/', $filename);
     }
 
     /**

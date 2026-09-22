@@ -40,7 +40,7 @@ parameters:
     env(REDIS_SYSTEM_IDX): '%env(REDIS_IDX)%'
     env(REDIS_SESSION_IDX): '%env(REDIS_IDX)%'
     env(REDIS_PREFIX): 'fewohbee_'
-    # storage adapter: 'local' (default, uploads in public/) or 's3' (S3-compatible bucket)
+    # storage adapter: 'local' (default, local upload directories) or 's3' (S3-compatible bucket)
     env(STORAGE_ADAPTER): 'local'
     env(STORAGE_S3_ENDPOINT): ''
     env(STORAGE_S3_REGION): ''
@@ -121,7 +121,8 @@ services:
 
     App\Service\CustomFontManager:
         arguments:
-            $fontDirectory: '%customFontDirectory%'
+            $storage: '@fonts.storage'
+            $fontCacheDirectory: '%kernel.cache_dir%/custom-fonts'
             $analysisCacheDirectory: '%kernel.cache_dir%/font-analysis'
 
     # S3 client (only instantiated when STORAGE_ADAPTER=s3; flysystem.php conditionally

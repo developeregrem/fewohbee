@@ -8,6 +8,10 @@ use App\Dto\CustomFontFace;
 use App\Exception\CustomFontException;
 use App\Service\CustomFontManager;
 use App\Service\MpdfService;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
+use League\Flysystem\Visibility;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -18,6 +22,7 @@ final class CustomFontManagerTest extends TestCase
 {
     private string $workDirectory;
     private string $fontDirectory;
+    private FilesystemOperator $storage;
     private CustomFontManager $manager;
 
     protected function setUp(): void
@@ -25,8 +30,10 @@ final class CustomFontManagerTest extends TestCase
         $this->workDirectory = sys_get_temp_dir().'/fewohbee-font-test-'.bin2hex(random_bytes(6));
         $this->fontDirectory = $this->workDirectory.'/fonts';
         mkdir($this->workDirectory.'/uploads', 0775, true);
+        $this->storage = new Filesystem(new InMemoryFilesystemAdapter());
 
         $this->manager = new CustomFontManager(
+            $this->storage,
             $this->fontDirectory,
             $this->workDirectory.'/analysis-cache',
             $this->createStub(LoggerInterface::class),
@@ -58,6 +65,10 @@ final class CustomFontManagerTest extends TestCase
             $fontData[$families[0]->alias][CustomFontFace::REGULAR] ?? null,
         );
         self::assertSame(0xFF, $fontData[$families[0]->alias]['useOTL'] ?? null);
+        self::assertSame(
+            Visibility::PRIVATE,
+            $this->storage->visibility($families[0]->faces[CustomFontFace::REGULAR]->filename),
+        );
     }
 
     public function testFontWithoutRegularFaceIsListedButNotRegisteredWithMpdf(): void
@@ -96,6 +107,25 @@ final class CustomFontManagerTest extends TestCase
         self::assertTrue($this->manager->deleteFamily($family->alias));
         self::assertSame([], $this->manager->getFamilies());
         self::assertSame([], glob($this->fontDirectory.'/*') ?: []);
+        self::assertSame([], iterator_to_array($this->storage->listContents('', false)));
+    }
+
+    public function testSharedStorageMakesFontAvailableToAnotherReplica(): void
+    {
+        $uploaded = $this->manager->upload($this->uploadedFont('DejaVuSans.ttf'));
+        $replicaCache = $this->workDirectory.'/replica-fonts';
+        $otherReplica = new CustomFontManager(
+            $this->storage,
+            $replicaCache,
+            $this->workDirectory.'/replica-analysis-cache',
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $discovered = $otherReplica->findFamily($uploaded->alias);
+
+        self::assertNotNull($discovered);
+        self::assertSame('DejaVu Sans', $discovered->name);
+        self::assertFileExists($replicaCache.'/'.$discovered->faces[CustomFontFace::REGULAR]->filename);
     }
 
     public function testUploadRejectsUnsupportedExtensionBeforeStoringFile(): void

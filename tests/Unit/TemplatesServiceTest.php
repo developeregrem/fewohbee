@@ -12,7 +12,9 @@ use App\Service\MpdfService;
 use App\Service\TemplatePreview\TemplateRenderParamsResolver;
 use App\Service\TemplatesService;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
+use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -434,6 +436,7 @@ final class TemplatesServiceTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $fontTestDirectory = sys_get_temp_dir().'/fewohbee-test-no-custom-fonts-'.bin2hex(random_bytes(6));
         $customFonts = new CustomFontManager(
+            new Filesystem(new InMemoryFilesystemAdapter()),
             $fontTestDirectory,
             $fontTestDirectory.'/analysis-cache',
             $this->createStub(LoggerInterface::class),
