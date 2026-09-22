@@ -533,7 +533,7 @@ class WorkflowController extends AbstractController
         }
 
         $triggerChoices = [];
-        foreach ($this->triggerRegistry->all() as $trigger) {
+        foreach ($this->triggerRegistry->getOffered($isNew ? null : $workflow->getTriggerType()) as $trigger) {
             $triggerChoices[] = [
                 'type' => $trigger->getType(),
                 'label' => $trigger->getLabelKey(),

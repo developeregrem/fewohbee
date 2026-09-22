@@ -14,6 +14,9 @@ parameters:
     env(OIDC_ENFORCE): 'false'
     env(OIDC_END_SESSION): 'false'
     env(TRUSTED_PROXIES): ''
+    # MCP server for AI assistants; see config/packages/mcp.yaml
+    env(MCP_ENABLED): 'false'
+    env(MCP_ALLOW_INSECURE_HTTP): 'false'
 
 framework:
     secret: '%env(APP_SECRET)%'
@@ -64,6 +67,19 @@ framework:
             limit: 20
             interval: '15 minutes'
             cache_pool: cache.app
+        # AI assistants fire bursts of tool calls, but a runaway agent must not
+        # starve the few PHP-FPM workers the web interface shares with it.
+        mcp:
+            policy: 'sliding_window'
+            limit: 120
+            interval: '1 minute'
+            cache_pool: cache.app
+        # Reservations created through MCP, per token.
+        mcp_write:
+            policy: 'sliding_window'
+            limit: 20
+            interval: '1 hour'
+            cache_pool: cache.app
         # Guards the OIDC callback: every hit triggers an outbound token request,
         # so cap how often an unauthenticated client can force one.
         oidc_callback:
@@ -111,6 +127,16 @@ when@test:
                 policy: 'sliding_window'
                 limit: 10000
                 interval: '5 minutes'
+                cache_pool: cache.app
+            mcp:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 minute'
+                cache_pool: cache.app
+            mcp_write:
+                policy: 'sliding_window'
+                limit: 10000
+                interval: '1 hour'
                 cache_pool: cache.app
 
 when@dev:

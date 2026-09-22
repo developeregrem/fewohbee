@@ -128,7 +128,7 @@ class CreateInAppNotificationAction implements WorkflowActionInterface
         $trigger = (string) ($context['triggerType'] ?? '');
         $isNewBooking = in_array(
             $trigger,
-            ['online_booking.created', 'calendar_import.created', 'reservation.created'],
+            ['online_booking.created', 'calendar_import.created', 'reservation.created', 'assistant_booking.created'],
             true
         );
 

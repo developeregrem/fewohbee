@@ -83,6 +83,23 @@ class AppSettings
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $smtpPasswordEncrypted = null;
 
+    /** Administrator switch for AI assistants (MCP); only effective when MCP_ENABLED=true. */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $mcpEnabled = false;
+
+    /** Whether AI assistants may create reservations (additionally needs the reservations:write scope). */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $mcpWriteEnabled = false;
+
+    /**
+     * Host names the MCP endpoint answers for (DNS rebinding protection), normalized by McpSettings.
+     * Loopback names are always allowed on top.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $mcpAllowedHosts = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private \DateTime $updatedAt;
 
@@ -214,6 +231,44 @@ class AppSettings
     public function setMailReturnPath(?string $mailReturnPath): self
     {
         $this->mailReturnPath = $this->normalizeNullableString($mailReturnPath);
+
+        return $this;
+    }
+
+    public function isMcpEnabled(): bool
+    {
+        return $this->mcpEnabled;
+    }
+
+    public function setMcpEnabled(bool $mcpEnabled): self
+    {
+        $this->mcpEnabled = $mcpEnabled;
+
+        return $this;
+    }
+
+    public function isMcpWriteEnabled(): bool
+    {
+        return $this->mcpWriteEnabled;
+    }
+
+    public function setMcpWriteEnabled(bool $mcpWriteEnabled): self
+    {
+        $this->mcpWriteEnabled = $mcpWriteEnabled;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getMcpAllowedHosts(): array
+    {
+        return $this->mcpAllowedHosts ?? [];
+    }
+
+    /** @param list<string> $mcpAllowedHosts */
+    public function setMcpAllowedHosts(array $mcpAllowedHosts): self
+    {
+        $this->mcpAllowedHosts = [] === $mcpAllowedHosts ? null : array_values($mcpAllowedHosts);
 
         return $this;
     }

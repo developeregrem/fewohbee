@@ -49,7 +49,7 @@ final class ProfileApiTokenController extends AbstractController
             $expiresIn = (string) ($data['expiresIn'] ?? '');
             $expiresAt = '' !== $expiresIn ? (new \DateTimeImmutable())->modify($expiresIn) : null;
 
-            $result = $this->apiTokenService->createToken($user, (string) $data['name'], $data['scopes'], $expiresAt);
+            $result = $this->apiTokenService->createToken($user, (string) $data['name'], ApiTokenType::collectScopes($data), $expiresAt);
 
             // Shown exactly once on the next page load; never stored in plain text.
             $this->addFlash('api_token_plain', $result->plainToken);

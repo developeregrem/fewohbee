@@ -30,6 +30,36 @@ class TouristTaxReportService
     }
 
     /**
+     * Monthly tourist-tax totals for the REST API and the MCP tools: buildPayload() reduced to one
+     * row per month with its taxes and their sum.
+     *
+     * @param \DateTimeImmutable $start first day of the first month
+     * @param \DateTimeImmutable $end   last moment of the last month
+     * @param int[]              $statusIds
+     *
+     * @return array{months: list<array{month: string, taxes: list<array<string, mixed>>, total: float}>, guestCategories: list<array<string, mixed>>}
+     */
+    public function buildMonthlySummary(\DateTimeImmutable $start, \DateTimeImmutable $end, ?Subsidiary $subsidiary, array $statusIds = []): array
+    {
+        $payload = $this->buildPayload($start, $end, $subsidiary, $statusIds);
+
+        $months = [];
+        foreach ($payload['months'] as $month) {
+            $taxes = array_values($month['taxes']);
+            $months[] = [
+                'month' => sprintf('%d-%02d', $month['year'], $month['month']),
+                'taxes' => $taxes,
+                'total' => round(array_sum(array_map(
+                    static fn (array $tax): float => (float) $tax['totalAmount'],
+                    $taxes
+                )), 2),
+            ];
+        }
+
+        return ['months' => $months, 'guestCategories' => $payload['guestCategories']];
+    }
+
+    /**
      * Build tourist-tax payload covering the reporting range.
      *
      * Live-calculates breakdowns via TouristTaxService (single source of truth with the invoice

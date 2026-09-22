@@ -6,6 +6,7 @@ namespace App\Workflow;
 
 use App\Entity\Workflow;
 use App\Repository\WorkflowRepository;
+use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -62,6 +63,31 @@ class WorkflowSeeder
             triggerType: 'calendar_import.created',
             actionType: 'send_notification_email',
             defaultEnabled: true,
+            isSystem: true,
+        );
+
+        $this->em->flush();
+    }
+
+    /**
+     * Seeds the system workflows of the AI assistant (MCP) feature. Called when an administrator
+     * switches MCP on, not by a migration: installations that never use MCP should not see them.
+     * Idempotent; re-enabling MCP neither duplicates the workflow nor re-enables it.
+     */
+    public function seedAssistantWorkflows(): void
+    {
+        $this->createOrUpdate(
+            systemCode: 'notify_assistant_booking',
+            name: 'workflow.system.notify_assistant_booking.name',
+            description: 'workflow.system.notify_assistant_booking.description',
+            triggerType: AssistantReservationCreatedTrigger::TYPE,
+            actionType: 'create_in_app_notification',
+            defaultEnabled: true,
+            actionConfig: [
+                'severity' => 'info',
+                'requiredRole' => '',
+                'note' => $this->translator->trans('workflow.system.notify_assistant_booking.note'),
+            ],
             isSystem: true,
         );
 

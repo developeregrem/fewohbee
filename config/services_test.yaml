@@ -1,5 +1,8 @@
 parameters:
     customFontDirectory: '%kernel.cache_dir%/uploaded-font-storage'
+    # Operator switch on, so functional tests can exercise the MCP endpoint; the administrator
+    # switch in AppSettings still decides per test.
+    mcp_enabled: true
 
 services:
     _defaults:

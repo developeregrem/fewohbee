@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\ApiToken;
+use App\Entity\Enum\ApiScope;
 use App\Entity\User;
 use App\Repository\ApiTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +20,8 @@ class ApiTokenService
     public const TOKEN_PREFIX = 'fwb_';
     private const PREFIX_DISPLAY_LENGTH = 12;
     private const LAST_USED_UPDATE_INTERVAL = 300; // seconds
+    // Tokens for AI assistants must expire; a leaked one then stops working on its own.
+    private const MCP_MAX_LIFETIME = '+1 year +1 day';
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -36,9 +39,19 @@ class ApiTokenService
 
     /**
      * @param list<string> $scopes
+     *
+     * @throws \InvalidArgumentException when a token for AI assistants (mcp:access) lacks an expiry
+     *                                   or would live longer than one year
      */
     public function createToken(User $user, string $name, array $scopes, ?\DateTimeImmutable $expiresAt): ApiTokenCreationResult
     {
+        if (\in_array(ApiScope::MCP_ACCESS->value, $scopes, true)) {
+            $latestExpiry = (new \DateTimeImmutable())->modify(self::MCP_MAX_LIFETIME);
+            if (null === $expiresAt || $expiresAt > $latestExpiry) {
+                throw new \InvalidArgumentException('Tokens for AI assistants must expire within one year.');
+            }
+        }
+
         $plainToken = self::TOKEN_PREFIX.bin2hex(random_bytes(32));
 
         $token = new ApiToken();
@@ -53,6 +66,22 @@ class ApiTokenService
         $this->em->flush();
 
         return new ApiTokenCreationResult($plainToken, $token);
+    }
+
+    /**
+     * Filters scopes down to those the given roles can back (see ApiScope::requiredRole()).
+     *
+     * @param list<ApiScope> $scopes
+     * @param list<string>   $reachableRoles roles including those inherited through the hierarchy
+     *
+     * @return list<ApiScope>
+     */
+    public static function grantableScopes(array $scopes, array $reachableRoles): array
+    {
+        return array_values(array_filter(
+            $scopes,
+            static fn (ApiScope $scope): bool => null === $scope->requiredRole() || \in_array($scope->requiredRole(), $reachableRoles, true),
+        ));
     }
 
     /**

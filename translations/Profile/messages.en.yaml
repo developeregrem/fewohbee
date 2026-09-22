@@ -51,6 +51,37 @@ profile:
       prices_read: Read prices (price list, price quote, rate calendar)
       tourist_tax_read: Read tourist tax (settings and monthly report)
       subsidiaries_read: Read branches (master data and opening hours)
+      mcp_access: AI assistant (MCP)
+      guests_read: Share guest data (names, contact details, remarks)
+      reservations_write: Create reservations
+    kind:
+      label: Use
+      api: REST API and calendar clients
+      mcp: AI assistant (MCP)
+      mcp_badge: AI assistant
+      help: >-
+        An access for an AI assistant only works with AI tools, not with the REST API, and expires after the
+        chosen validity. The AI may only read what you select under "Permissions".
+    mcp:
+      title: Additionally for AI assistants
+      label: Additional permissions for the AI
+      privacy_hint: >-
+        Everything the AI assistant retrieves is transferred to the AI provider (e.g. Anthropic or OpenAI,
+        possibly outside the EU). Without "Share guest data" the AI receives no names, contact details or
+        remarks. Sharing guest data usually requires a data processing agreement with the provider.
+      write_disabled: '"Create reservations" is switched off in the settings for all users.'
+      write_disabled_link: Go to settings
+      expiry_required: Access for AI assistants needs a limited validity.
+      connect_hint: >-
+        Connect AI assistants: enter this address in your AI tool as an MCP server (type HTTP) and pass the token of
+        an AI access as header "Authorization: Bearer <Token>".
+      endpoint: Address
+      example: 'Example for Claude Code:'
+      more: Further tools and details in the
+      more_link: wiki
+      usage_hint: >-
+        Usage: enter the interface address (below the table) in your AI tool and pass the token as header
+        "Authorization: Bearer <Token>". This access does not work with the REST API.
   passkeys:
     title: Passwordless sign-in (Passkeys)
     create: Add passkey

@@ -14,7 +14,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 /**
- * Throttles /api/ requests per token (fallback: per client IP).
+ * Throttles /api/ and /mcp requests per token (fallback: per client IP), each with its own limiter.
  * runs right after the firewall listener, so the token is known.
  */
 class ApiRateLimitSubscriber implements EventSubscriberInterface
@@ -22,6 +22,8 @@ class ApiRateLimitSubscriber implements EventSubscriberInterface
     public function __construct(
         #[Autowire(service: 'limiter.api')]
         private readonly RateLimiterFactoryInterface $apiLimiter,
+        #[Autowire(service: 'limiter.mcp')]
+        private readonly RateLimiterFactoryInterface $mcpLimiter,
         private readonly ApiTokenContext $apiTokenContext,
     ) {
     }
@@ -37,13 +39,17 @@ class ApiRateLimitSubscriber implements EventSubscriberInterface
             return;
         }
         $request = $event->getRequest();
-        if (!str_starts_with($request->getPathInfo(), '/api/')) {
+        if (str_starts_with($request->getPathInfo(), '/api/')) {
+            $limiter = $this->apiLimiter;
+        } elseif (McpAccessSubscriber::isMcpPath($request->getPathInfo())) {
+            $limiter = $this->mcpLimiter;
+        } else {
             return;
         }
 
         $apiToken = $this->apiTokenContext->getToken();
         $key = null !== $apiToken ? 'token-'.$apiToken->getId() : 'ip-'.($request->getClientIp() ?? 'unknown');
-        $limit = $this->apiLimiter->create($key)->consume();
+        $limit = $limiter->create($key)->consume();
 
         if (!$limit->isAccepted()) {
             $retryAfter = max(1, $limit->getRetryAfter()->getTimestamp() - time());

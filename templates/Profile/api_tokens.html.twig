@@ -1,6 +1,6 @@
 {% use "common/delete_popover.html.twig" %}
 {% trans_default_domain 'messages' %}
-<div class="row mb-4">
+<div class="row mb-4" id="api-tokens">
     <div class="col-lg">
         <div class="card shadow-sm">
             <div class="card-body">
@@ -16,7 +16,11 @@
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
-                        <p class="mb-0 mt-2 small text-muted">{{ 'profile.apitokens.usage_hint'|trans }}</p>
+                        {% if newApiTokenIsMcp|default(false) %}
+                            <p class="mb-0 mt-2 small text-muted">{{ 'profile.apitokens.mcp.usage_hint'|trans }}</p>
+                        {% else %}
+                            <p class="mb-0 mt-2 small text-muted">{{ 'profile.apitokens.usage_hint'|trans }}</p>
+                        {% endif %}
                     </div>
                 {% endif %}
 
@@ -38,7 +42,10 @@
                                 <td>{{ apiToken.name }}</td>
                                 <td class="font-monospace">{{ apiToken.tokenPrefix }}&hellip;</td>
                                 <td>
-                                    {% for scope in apiToken.scopes %}
+                                    {% if 'mcp:access' in apiToken.scopes %}
+                                        <span class="badge text-bg-primary"><i class="fas fa-robot"></i> {{ 'profile.apitokens.kind.mcp_badge'|trans }}</span>
+                                    {% endif %}
+                                    {% for scope in apiToken.scopes|filter(scope => scope != 'mcp:access') %}
                                         <span class="badge text-bg-secondary">{{ scope }}</span>
                                     {% endfor %}
                                 </td>
@@ -86,6 +93,26 @@
                     <a href="{{ path('profile.apitokens.openapi') }}">{{ 'profile.apitokens.openapi'|trans }}</a>
                     {{ 'profile.apitokens.openapi_hint'|trans }}
                 </p>
+                {% if mcpEndpointUrl|default(null) %}
+                    <div class="form-text mt-2" id="mcp-connection">
+                        <div class="mb-1"><i class="fas fa-robot"></i> {{ 'profile.apitokens.mcp.connect_hint'|trans }}</div>
+                        <div class="input-group input-group-sm mb-1" style="max-width: 36rem" data-controller="copy" data-copy-hint-value="{{ 'copy.sucess'|trans }}">
+                            <span class="input-group-text">{{ 'profile.apitokens.mcp.endpoint'|trans }}</span>
+                            <input type="text" id="mcp-endpoint" readonly class="form-control font-monospace" value="{{ mcpEndpointUrl }}" data-copy-target="input">
+                            <button class="btn btn-outline-secondary shadow-none" type="button" data-action="click->copy#copy" title="{{ 'copy.text'|trans }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div>
+                            {{ 'profile.apitokens.mcp.example'|trans }}
+                            <code>claude mcp add --transport http fewohbee {{ mcpEndpointUrl }} --header "Authorization: Bearer fwb_…"</code>
+                        </div>
+                        <div>
+                            {{ 'profile.apitokens.mcp.more'|trans }}
+                            <a href="https://github.com/developeregrem/fewohbee/wiki/MCP-AI-Assistants" target="_blank" rel="noopener noreferrer">{{ 'profile.apitokens.mcp.more_link'|trans }}</a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -97,11 +124,31 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        {{ form_start(apiTokenForm, {attr: {'data-turbo': 'false'}}) }}
+        {{ form_start(apiTokenForm, {attr: {'data-turbo': 'false', 'data-controller': 'api-token-form'}}) }}
         {{ form_errors(apiTokenForm) }}
         {{ form_row(apiTokenForm.name) }}
+        {% if apiTokenForm.kind is defined %}
+            {{ form_row(apiTokenForm.kind) }}
+        {% endif %}
         {{ form_row(apiTokenForm.expiresIn) }}
         {{ form_row(apiTokenForm.scopes) }}
+        {% if apiTokenForm.kind is defined %}
+            <div class="border-top pt-3 mt-3" data-api-token-form-target="mcpSection">
+                <h6><i class="fas fa-robot"></i> {{ 'profile.apitokens.mcp.title'|trans }}</h6>
+                <div class="alert alert-warning small">{{ 'profile.apitokens.mcp.privacy_hint'|trans }}</div>
+                {% if apiTokenForm.mcpScopes is defined %}
+                    {{ form_row(apiTokenForm.mcpScopes) }}
+                {% endif %}
+                {% if apiTokenForm.vars.mcp_write_globally_disabled %}
+                    <p class="small text-body-secondary mb-0">
+                        <i class="fas fa-info-circle"></i> {{ 'profile.apitokens.mcp.write_disabled'|trans }}
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('settings.mcp.index') }}">{{ 'profile.apitokens.mcp.write_disabled_link'|trans }}</a>
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
         <div class="mt-3 text-end">
             <button type="submit" class="btn btn-primary">{{ 'profile.apitokens.submit'|trans }}</button>
         </div>

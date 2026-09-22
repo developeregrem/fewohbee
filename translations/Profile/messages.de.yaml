@@ -51,6 +51,38 @@ profile:
       prices_read: Preise lesen (Preisliste, Preisauskunft, Ratenkalender)
       tourist_tax_read: Kurtaxe lesen (Einstellungen und Monatsabrechnung)
       subsidiaries_read: Niederlassungen lesen (Stammdaten und Öffnungszeiten)
+      mcp_access: KI-Assistent (MCP)
+      guests_read: Gästedaten weitergeben (Namen, Kontaktdaten, Bemerkungen)
+      reservations_write: Reservierungen anlegen
+    kind:
+      label: Verwendung
+      api: REST-API und Kalender-Programme
+      mcp: KI-Assistent (MCP)
+      mcp_badge: KI-Assistent
+      help: >-
+        Ein Zugang für einen KI-Assistenten funktioniert nur mit KI-Programmen, nicht mit der REST-API, und
+        läuft nach der gewählten Gültigkeit ab. Die KI darf nur lesen, was du unter „Berechtigungen“ auswählst.
+    mcp:
+      title: Zusätzlich für KI-Assistenten
+      label: Zusätzliche Rechte für die KI
+      privacy_hint: >-
+        Alles, was der KI-Assistent abruft, wird an den Anbieter der KI übertragen (z. B. Anthropic oder
+        OpenAI, ggf. außerhalb der EU). Ohne „Gästedaten weitergeben“ erhält die KI keine Namen, Kontaktdaten
+        oder Bemerkungen. Für die Weitergabe von Gästedaten brauchst du in der Regel einen
+        Auftragsverarbeitungsvertrag mit dem Anbieter.
+      write_disabled: „Reservierungen anlegen“ ist in den Einstellungen für alle Benutzer abgeschaltet.
+      write_disabled_link: Zu den Einstellungen
+      expiry_required: Zugänge für KI-Assistenten brauchen eine begrenzte Gültigkeit.
+      connect_hint: >-
+        KI-Assistenten verbinden: Trage diese Adresse in deinem KI-Programm als MCP-Server (Typ HTTP) ein und gib
+        das Token eines KI-Zugangs als Header „Authorization: Bearer <Token>“ mit.
+      endpoint: Adresse
+      example: 'Beispiel für Claude Code:'
+      more: Weitere Programme und Details im
+      more_link: Wiki
+      usage_hint: >-
+        Verwendung: Trage in deinem KI-Programm die Adresse der Schnittstelle (unter der Tabelle) ein und gib das
+        Token als Header „Authorization: Bearer <Token>“ mit. Mit der REST-API funktioniert dieser Zugang nicht.
   passkeys:
     title: Passwortlose Anmeldung (Passkeys)
     create: Passkey anlegen

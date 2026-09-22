@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace App\Service\Exception;
+namespace App\Exception;
 
 /**
  * Thrown when an invoice number pattern cannot be compiled, e.g. because it has no

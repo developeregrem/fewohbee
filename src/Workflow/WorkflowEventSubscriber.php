@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Workflow;
 
 use App\Entity\Reservation;
+use App\Event\AssistantReservationCreatedEvent;
 use App\Event\CalendarImportBookingCreatedEvent;
 use App\Event\InvoiceCreatedEvent;
 use App\Event\InvoiceStatusChangedEvent;
 use App\Event\OnlineBookingCreatedEvent;
 use App\Event\ReservationCreatedEvent;
 use App\Event\ReservationStatusChangedEvent;
+use App\Workflow\Trigger\AssistantReservationCreatedTrigger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -28,6 +30,7 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
         return [
             OnlineBookingCreatedEvent::class => 'onOnlineBookingCreated',
             CalendarImportBookingCreatedEvent::class => 'onCalendarImportBookingCreated',
+            AssistantReservationCreatedEvent::class => 'onAssistantReservationCreated',
             ReservationCreatedEvent::class => 'onReservationCreated',
             ReservationStatusChangedEvent::class => 'onReservationStatusChanged',
             InvoiceCreatedEvent::class => 'onInvoiceCreated',
@@ -51,6 +54,13 @@ class WorkflowEventSubscriber implements EventSubscriberInterface
     public function onCalendarImportBookingCreated(CalendarImportBookingCreatedEvent $event): void
     {
         $this->engine->processEvent('calendar_import.created', $event->reservation);
+    }
+
+    public function onAssistantReservationCreated(AssistantReservationCreatedEvent $event): void
+    {
+        $this->engine->processEvent(AssistantReservationCreatedTrigger::TYPE, $event->reservation, [
+            'booker' => $event->booker,
+        ]);
     }
 
     public function onReservationCreated(ReservationCreatedEvent $event): void

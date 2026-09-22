@@ -1,0 +1,76 @@
+mcp:
+  nav:
+    label: KI-Assistenten
+  settings:
+    page_title: KI-Assistenten (MCP)
+    intro: >-
+      Verbinde KI-Assistenten wie Claude, ChatGPT-kompatible Werkzeuge oder n8n direkt mit FewohBee. Sie können
+      dann Auswertungen erstellen, Verfügbarkeiten prüfen und – wenn du es erlaubst – Reservierungen anlegen.
+      Jeder Zugang hat genau die Rechte, die du ihm beim Anlegen gibst.
+    section:
+      access: Einstellungen für alle Benutzer
+      access_desc: >-
+        Diese Schalter gelten für die ganze Installation. Was ein einzelner KI-Zugang lesen und tun darf,
+        legt jeder Benutzer beim Anlegen seines Zugangs im Profil fest – aber nie mehr, als hier erlaubt ist.
+      users: Zugänge der Benutzer
+      tokens: Aktive KI-Zugänge
+      log: Letzte Aktionen
+    enabled:
+      label: KI-Assistenten erlauben
+      help: Schaltet die Schnittstelle für alle Benutzer ein oder aus. Bestehende KI-Zugänge funktionieren nur, solange dieser Schalter an ist.
+    write_enabled:
+      label: KI-Assistenten dürfen Reservierungen anlegen
+      help: >-
+        Ist der Schalter aus, kann kein KI-Zugang Reservierungen anlegen. Ist er an, entscheidet jeder Benutzer
+        beim Anlegen seines Zugangs, ob die KI Reservierungen anlegen darf. Jede Reservierung durch einen
+        KI-Assistenten erscheint im Benachrichtigungsfenster.
+    allowed_hosts:
+      label: Adressen dieser FewohBee-Installation
+      help: >-
+        Die Hostnamen, unter denen deine FewohBee erreichbar ist – einer pro Zeile, z. B. fewohbee.example.com
+        aus https://fewohbee.example.com/mcp. Nicht die Adresse des KI-Programms. Anfragen an andere Hostnamen
+        werden abgelehnt. localhost ist immer erlaubt.
+      invalid: 'Keine gültigen Hostnamen: %hosts%'
+    privacy_hint: >-
+      Alles, was ein KI-Assistent abruft, wird an den Anbieter der KI übertragen. Gästedaten (Namen, Kontaktdaten,
+      Bemerkungen) gehen nur an die KI, wenn ein Zugang die Berechtigung „Gästedaten weitergeben“ hat. Kläre vorher,
+      ob du dafür einen Auftragsverarbeitungsvertrag mit dem Anbieter brauchst.
+    connection:
+      host_not_allowed: >-
+        Unter dieser Adresse (%host%) ist die Schnittstelle nicht erreichbar. Trage den Hostnamen unten bei
+        „Adressen dieser FewohBee-Installation“ ein und speichere.
+      https_required: >-
+        Die Schnittstelle funktioniert nur über HTTPS (verschlüsselt), weil der Zugang bei jeder Anfrage mitgeschickt
+        wird. Richte ein gültiges Zertifikat ein.
+      insecure_allowed: >-
+        Die Schnittstelle ist ohne Verschlüsselung (HTTP) freigegeben. Nutze das nur in einem vertrauenswürdigen
+        lokalen Netz.
+    users:
+      text: >-
+        Jeder Benutzer legt seinen Zugang selbst in seinem Profil unter „API-Zugänge“ an und wählt als Verwendung
+        „KI-Assistent (MCP)“. Dabei legt er fest, was die KI lesen und tun darf – im Rahmen seiner Rolle und der
+        Schalter oben. Dort findet er auch die Adresse der Schnittstelle und Beispiele für die Einrichtung.
+      link: Eigenen Zugang im Profil anlegen
+    tokens:
+      desc: Alle Zugänge mit der Berechtigung für KI-Assistenten, von allen Benutzern.
+      user: Benutzer
+      none: Es gibt noch keine Zugänge für KI-Assistenten.
+      revoke: Zugang widerrufen
+      revoke_ask: Zugang widerrufen?
+      revoked: Der Zugang wurde widerrufen.
+    log:
+      desc: Die letzten 50 Aufrufe von KI-Assistenten. Einträge werden nach 90 Tagen gelöscht.
+      date: Zeitpunkt
+      tool: Aktion
+      outcome: Ergebnis
+      details: Details
+      reservation: 'Reservierung #%id%'
+      none: Noch keine Aufrufe.
+      outcomes:
+        ok: erfolgreich
+        denied: abgelehnt
+        invalid: ungültig
+        rate_limited: Limit erreicht
+        error: Fehler
+    flash:
+      saved: Die Einstellungen wurden gespeichert.

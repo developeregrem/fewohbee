@@ -118,6 +118,7 @@ workflow:
   trigger:
     online_booking_created: "Neue Online-Buchung eingegangen"
     calendar_import_created: "Neue Buchung via Kalenderimport"
+    assistant_booking_created: "Neue Reservierung durch KI-Assistent"
     reservation_created: "Neue Reservierung angelegt (manuell)"
     invoice_created: "Neue Rechnung erstellt"
     invoice_status_changed: "Rechnungsstatus geändert"
@@ -215,6 +216,10 @@ workflow:
     notify_online_booking_inapp:
       name: "Online-Buchung im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede Online-Buchung einen Eintrag im Benachrichtigungsfenster an."
+    notify_assistant_booking:
+      name: "KI-Reservierungen im Benachrichtigungsfenster anzeigen"
+      description: "Legt für jede Reservierung, die ein KI-Assistent angelegt hat, einen Eintrag im Benachrichtigungsfenster an."
+      note: "Angelegt durch einen KI-Assistenten."
     notify_calendar_import_inapp:
       name: "Kalender-Import im Benachrichtigungsfenster anzeigen"
       description: "Legt für jede importierte Buchung einen Eintrag im Benachrichtigungsfenster an."

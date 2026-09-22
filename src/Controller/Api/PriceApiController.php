@@ -15,15 +15,13 @@ namespace App\Controller\Api;
 
 use App\Dto\Api\PriceDto;
 use App\Entity\Appartment;
-use App\Entity\GuestCategory;
 use App\Entity\ReservationOrigin;
 use App\Entity\RoomCategory;
-use App\Repository\GuestCategoryRepository;
 use App\Repository\PriceRepository;
 use App\Security\Voter\ApiScopeVoter;
 use App\Service\Api\PriceQuoteService;
+use App\Service\Api\StayParameterResolver;
 use App\Service\Api\RateCalendarService;
-use App\Service\OnlineBooking\OnlineBookingConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -54,8 +52,7 @@ class PriceApiController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly PriceRepository $priceRepository,
-        private readonly GuestCategoryRepository $guestCategoryRepository,
-        private readonly OnlineBookingConfigService $bookingConfigService,
+        private readonly StayParameterResolver $stayParameterResolver,
         private readonly PriceQuoteService $priceQuoteService,
         private readonly RateCalendarService $rateCalendarService,
     ) {
@@ -208,31 +205,15 @@ class PriceApiController extends AbstractController
         return $category;
     }
 
-    /**
-     * Prices are joined to a reservation origin, so a quote without one cannot be
-     * calculated at all — different origins legitimately carry different price rows.
-     * Falls back to the origin configured for online booking.
-     */
     private function resolveOrigin(Request $request): ReservationOrigin
     {
         $id = $request->query->get('originId');
-        if (null !== $id && '' !== $id) {
-            $origin = $this->em->getRepository(ReservationOrigin::class)->find((int) $id);
-            if (!$origin instanceof ReservationOrigin) {
-                throw new BadRequestHttpException("Unknown 'originId'.");
-            }
 
-            return $origin;
+        try {
+            return $this->stayParameterResolver->resolveOrigin(null !== $id && '' !== $id ? (int) $id : null);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage(), $e);
         }
-
-        $origin = $this->bookingConfigService->getReservationOrigin();
-        if (!$origin instanceof ReservationOrigin) {
-            throw new BadRequestHttpException(
-                "Parameter 'originId' is required: no default booking origin is configured."
-            );
-        }
-
-        return $origin;
     }
 
     /**
@@ -240,34 +221,11 @@ class PriceApiController extends AbstractController
      */
     private function resolveGuestCounts(Request $request): array
     {
-        $param = $request->query->all()['guestCounts'] ?? null;
-        if (null === $param || '' === $param || [] === $param) {
-            return [];
+        try {
+            return $this->stayParameterResolver->resolveGuestCounts($request->query->all()['guestCounts'] ?? null);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage(), $e);
         }
-        if (!\is_array($param)) {
-            throw new BadRequestHttpException("Parameter 'guestCounts' must be given as guestCounts[categoryId]=count.");
-        }
-
-        $categories = [];
-        foreach ($this->guestCategoryRepository->findActiveOrdered() as $category) {
-            $categories[(int) $category->getId()] = $category;
-        }
-
-        $result = [];
-        foreach ($param as $categoryId => $count) {
-            $categoryId = (int) $categoryId;
-            if (!isset($categories[$categoryId])) {
-                throw new BadRequestHttpException(sprintf("Unknown guest category '%d' in 'guestCounts'.", $categoryId));
-            }
-            if (!is_numeric($count) || (int) $count < 0) {
-                throw new BadRequestHttpException("Values in 'guestCounts' must be non-negative integers.");
-            }
-            if ((int) $count > 0) {
-                $result[$categoryId] = (int) $count;
-            }
-        }
-
-        return $result;
     }
 
     /**
@@ -275,30 +233,11 @@ class PriceApiController extends AbstractController
      */
     private function resolvePersons(Request $request, array $guestCounts): int
     {
-        $persons = $this->parsePositiveInt($request, 'persons');
-        if (null !== $persons) {
-            return $persons;
+        try {
+            return $this->stayParameterResolver->resolvePersons($this->parsePositiveInt($request, 'persons'), $guestCounts);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage(), $e);
         }
-
-        // Occupancy is what the apartment price is matched against, and only categories
-        // flagged as counting toward occupancy belong in it (an infant in a cot does not).
-        $categories = [];
-        foreach ($this->guestCategoryRepository->findActiveOrdered() as $category) {
-            $categories[(int) $category->getId()] = $category;
-        }
-        $sum = 0;
-        foreach ($guestCounts as $categoryId => $count) {
-            $category = $categories[$categoryId] ?? null;
-            if ($category instanceof GuestCategory && $category->isCountedInOccupancy()) {
-                $sum += $count;
-            }
-        }
-
-        if ($sum < 1) {
-            throw new BadRequestHttpException("Parameter 'persons' is required when 'guestCounts' carries no occupancy-counted guests.");
-        }
-
-        return $sum;
     }
 
     /**

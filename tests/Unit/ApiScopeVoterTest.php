@@ -111,6 +111,45 @@ final class ApiScopeVoterTest extends TestCase
         );
     }
 
+    public function testMcpAccessNeedsNoRole(): void
+    {
+        $context = $this->buildContext([ApiScope::MCP_ACCESS->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($this->buildSecurityToken(['ROLE_CASHJOURNAL']), null, [ApiScopeVoter::MCP_ACCESS]));
+    }
+
+    public function testGuestDataScopeRequiresCustomersRole(): void
+    {
+        $context = $this->buildContext([ApiScope::GUESTS_READ->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($this->buildSecurityToken(['ROLE_RESERVATIONS']), null, [ApiScopeVoter::GUESTS_READ]));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($this->buildSecurityToken(['ROLE_CUSTOMERS']), null, [ApiScopeVoter::GUESTS_READ]));
+    }
+
+    public function testReservationWriteScopeRejectsReadOnlyRole(): void
+    {
+        $context = $this->buildContext([ApiScope::RESERVATIONS_WRITE->value]);
+        $voter = $this->buildVoter($context);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($this->buildSecurityToken(['ROLE_RESERVATIONS_RO']), null, [ApiScopeVoter::RESERVATIONS_WRITE]));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($this->buildSecurityToken(['ROLE_RESERVATIONS']), null, [ApiScopeVoter::RESERVATIONS_WRITE]));
+    }
+
+    public function testEveryScopeHasAVoterAttribute(): void
+    {
+        $voter = $this->buildVoter($this->buildContext(array_map(static fn (ApiScope $s): string => $s->value, ApiScope::cases())));
+
+        foreach (ApiScope::cases() as $scope) {
+            self::assertSame(
+                VoterInterface::ACCESS_GRANTED,
+                $voter->vote($this->buildSecurityToken(['ROLE_ADMIN']), null, [ApiScopeVoter::attributeFor($scope)]),
+                $scope->value
+            );
+        }
+    }
+
     public function testAbstainsForUnknownAttribute(): void
     {
         $voter = $this->buildVoter(new ApiTokenContext());

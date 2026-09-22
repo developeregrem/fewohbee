@@ -25,6 +25,9 @@ class ApiScopeVoter extends Voter
     public const PRICES_READ = 'API_SCOPE_PRICES_READ';
     public const TOURIST_TAX_READ = 'API_SCOPE_TOURIST_TAX_READ';
     public const SUBSIDIARIES_READ = 'API_SCOPE_SUBSIDIARIES_READ';
+    public const MCP_ACCESS = 'API_SCOPE_MCP_ACCESS';
+    public const GUESTS_READ = 'API_SCOPE_GUESTS_READ';
+    public const RESERVATIONS_WRITE = 'API_SCOPE_RESERVATIONS_WRITE';
 
     private const ATTRIBUTE_SCOPES = [
         self::RESERVATIONS_READ => ApiScope::RESERVATIONS_READ,
@@ -34,12 +37,21 @@ class ApiScopeVoter extends Voter
         self::PRICES_READ => ApiScope::PRICES_READ,
         self::TOURIST_TAX_READ => ApiScope::TOURIST_TAX_READ,
         self::SUBSIDIARIES_READ => ApiScope::SUBSIDIARIES_READ,
+        self::MCP_ACCESS => ApiScope::MCP_ACCESS,
+        self::GUESTS_READ => ApiScope::GUESTS_READ,
+        self::RESERVATIONS_WRITE => ApiScope::RESERVATIONS_WRITE,
     ];
 
     public function __construct(
         private readonly ApiTokenContext $apiTokenContext,
         private readonly RoleHierarchyInterface $roleHierarchy,
     ) {
+    }
+
+    /** The voter attribute for a scope, e.g. API_SCOPE_RESERVATIONS_READ. */
+    public static function attributeFor(ApiScope $scope): string
+    {
+        return 'API_SCOPE_'.$scope->name;
     }
 
     protected function supports(string $attribute, mixed $subject): bool
@@ -59,8 +71,13 @@ class ApiScopeVoter extends Voter
             return false;
         }
 
+        $requiredRole = $scope->requiredRole();
+        if (null === $requiredRole) {
+            return true;
+        }
+
         $reachableRoles = $this->roleHierarchy->getReachableRoleNames($token->getRoleNames());
 
-        return \in_array($scope->requiredRole(), $reachableRoles, true);
+        return \in_array($requiredRole, $reachableRoles, true);
     }
 }

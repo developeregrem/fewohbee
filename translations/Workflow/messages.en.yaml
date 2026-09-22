@@ -117,6 +117,7 @@ workflow:
   trigger:
     online_booking_created: "New online booking received"
     calendar_import_created: "New booking via calendar import"
+    assistant_booking_created: "New reservation by AI assistant"
     reservation_created: "New reservation created (manually)"
     invoice_created: "New invoice created"
     invoice_status_changed: "Invoice status changed"
@@ -210,6 +211,10 @@ workflow:
     notify_online_booking_inapp:
       name: "Show online bookings in the notification window"
       description: "Creates an entry in the notification window for every online booking."
+    notify_assistant_booking:
+      name: "Show AI assistant reservations in the notification window"
+      description: "Creates an entry in the notification window for every reservation an AI assistant created."
+      note: "Created by an AI assistant."
     notify_calendar_import_inapp:
       name: "Show calendar imports in the notification window"
       description: "Creates an entry in the notification window for every imported booking."

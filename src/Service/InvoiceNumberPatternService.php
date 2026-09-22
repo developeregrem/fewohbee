@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\InvoiceNumberPattern;
-use App\Service\Exception\InvalidInvoiceNumberPatternException;
+use App\Exception\InvalidInvoiceNumberPatternException;
 
 /**
  * Parses and validates user-written invoice number patterns such as `RE-<year>-<number:4>`.

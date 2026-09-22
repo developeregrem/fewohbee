@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\LogRepository;
+use App\Repository\McpToolCallLogRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\WorkflowLogRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -25,13 +26,14 @@ class PurgeLogsCommand extends Command
         private readonly LogRepository $logRepository,
         private readonly WorkflowLogRepository $workflowLogRepository,
         private readonly NotificationRepository $notificationRepository,
+        private readonly McpToolCallLogRepository $mcpToolCallLogRepository,
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit log, workflow log and notification entries older than this many days.', 90);
+        $this->addOption('days', null, InputOption::VALUE_REQUIRED, 'Delete audit log, workflow log, notification and AI assistant (MCP) call entries older than this many days.', 90);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -55,12 +57,14 @@ class PurgeLogsCommand extends Command
         $workflow = $this->workflowLogRepository->purgeOlderThan($before);
         // Read state is removed with the notification by the FK cascade.
         $notifications = $this->notificationRepository->purgeOlderThan($before);
+        $mcpCalls = $this->mcpToolCallLogRepository->purgeOlderThan($before);
 
         $io->success(sprintf(
-            'Deleted %d audit log, %d workflow log and %d notification entries older than %d days.',
+            'Deleted %d audit log, %d workflow log, %d notification and %d AI assistant call entries older than %d days.',
             $audit,
             $workflow,
             $notifications,
+            $mcpCalls,
             $days,
         ));
 

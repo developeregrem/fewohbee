@@ -18,6 +18,8 @@ parameters:
     oidc_enabled: '%env(bool:OIDC_ENABLED)%'
     oidc_enforce: '%env(bool:OIDC_ENFORCE)%'
     oidc_button_label: '%env(OIDC_BUTTON_LABEL)%'
+    # Operator switch for the MCP server; administrators still have to enable it under Settings.
+    mcp_enabled: '%env(bool:MCP_ENABLED)%'
     # Plain HTTP to the identity provider would expose the client secret and
     # every token in transit. Relaxed for dev and test at the bottom of this
     # file so a local provider without a certificate can be used.
@@ -80,7 +82,7 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/*'
-        exclude: '../src/{Entity,GeoEntity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
+        exclude: '../src/{Mcp/DependencyInjection,Entity,GeoEntity,Migrations,Tests,Controller/Attribute,Exception,Kernel.php}'
 
     # controllers are imported separately to make sure services can be injected
     # as action arguments even if you don't extend any base controller class

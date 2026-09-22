@@ -1,0 +1,158 @@
+{% extends 'base.html.twig' %}
+{% use "common/delete_popover.html.twig" %}
+
+{% block title %}
+    {{ parent() }} - {{ 'mcp.settings.page_title'|trans }}
+{% endblock %}
+
+{% block description %}
+    {{ parent() }} - {{ 'mcp.settings.page_title'|trans }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="fs-4 mb-0">
+                    <i class="fas fa-robot text-primary me-1"></i>
+                    {{ 'mcp.settings.page_title'|trans }}
+                </h2>
+            </div>
+            <p class="text-body-secondary">{{ 'mcp.settings.intro'|trans }}</p>
+
+            {% if not hostAllowed %}
+                <div class="alert alert-danger small">{{ 'mcp.settings.connection.host_not_allowed'|trans({'%host%': currentHost}) }}</div>
+            {% endif %}
+            {% if not secure and not insecureHttpAllowed %}
+                <div class="alert alert-warning small">{{ 'mcp.settings.connection.https_required'|trans }}</div>
+            {% elseif not secure %}
+                <div class="alert alert-warning small">{{ 'mcp.settings.connection.insecure_allowed'|trans }}</div>
+            {% endif %}
+
+            {{ form_start(form) }}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-toggle-on text-primary me-2"></i>{{ 'mcp.settings.section.access'|trans }}</h5>
+                    <p class="text-body-secondary small mb-0 mt-1">{{ 'mcp.settings.section.access_desc'|trans }}</p>
+                </div>
+                <div class="card-body">
+                    {{ form_row(form.mcpEnabled) }}
+                    {{ form_row(form.mcpWriteEnabled) }}
+                    {{ form_row(form.allowedHosts) }}
+                    <div class="alert alert-warning small mb-0">{{ 'mcp.settings.privacy_hint'|trans }}</div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">{{ 'button.save'|trans }}</button>
+                </div>
+            </div>
+            {{ form_end(form) }}
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title fs-6 mb-0"><i class="fas fa-user-cog text-primary me-2"></i>{{ 'mcp.settings.section.users'|trans }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-2">{{ 'mcp.settings.users.text'|trans }}</p>
+                    <a href="{{ path('profile') }}#api-tokens" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-key"></i> {{ 'mcp.settings.users.link'|trans }}
+                    </a>
+                </div>
+            </div>
+
+            {% if active %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0"><i class="fas fa-key text-primary me-2"></i>{{ 'mcp.settings.section.tokens'|trans }}</h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'mcp.settings.tokens.desc'|trans }}</p>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'mcp.settings.tokens.user'|trans }}</th>
+                                    <th>{{ 'profile.apitokens.name'|trans }}</th>
+                                    <th>{{ 'profile.apitokens.scopes.label'|trans }}</th>
+                                    <th>{{ 'profile.apitokens.last_used'|trans }}</th>
+                                    <th>{{ 'profile.apitokens.expiry.label'|trans }}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for apiToken in mcpTokens %}
+                                    <tr>
+                                        <td>{{ apiToken.user.userIdentifier }}</td>
+                                        <td>{{ apiToken.name }} <span class="font-monospace text-body-secondary small">{{ apiToken.tokenPrefix }}&hellip;</span></td>
+                                        <td>
+                                            {% for scope in apiToken.scopes|filter(scope => scope != 'mcp:access') %}
+                                                <span class="badge text-bg-secondary">{{ scope }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>{{ apiToken.lastUsedAt ? apiToken.lastUsedAt|date('Y-m-d H:i') : 'profile.apitokens.never'|trans }}</td>
+                                        <td>{{ apiToken.expiresAt ? apiToken.expiresAt|date('Y-m-d') : 'profile.apitokens.expiry.never'|trans }}</td>
+                                        <td class="text-end">
+                                            {% set id = apiToken.id %}
+                                            {% set targetUrl = path('settings.mcp.token_revoke', {id: apiToken.id}) %}
+                                            <a href="#" title="{{ 'mcp.settings.tokens.revoke'|trans }}">
+                                                <i class="fas fa-trash-alt"
+                                                   data-popover="delete"
+                                                   data-title="{{ 'mcp.settings.tokens.revoke_ask'|trans }}"
+                                                   data-bs-content='{{ block('deletePopoverContent') }}'></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="6" class="text-center text-body-secondary">{{ 'mcp.settings.tokens.none'|trans }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="card-title fs-6 mb-0"><i class="fas fa-list text-primary me-2"></i>{{ 'mcp.settings.section.log'|trans }}</h5>
+                        <p class="text-body-secondary small mb-0 mt-1">{{ 'mcp.settings.log.desc'|trans }}</p>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'mcp.settings.log.date'|trans }}</th>
+                                    <th>{{ 'mcp.settings.tokens.user'|trans }}</th>
+                                    <th>{{ 'mcp.settings.log.tool'|trans }}</th>
+                                    <th>{{ 'mcp.settings.log.outcome'|trans }}</th>
+                                    <th>{{ 'mcp.settings.log.details'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                    <tr>
+                                        <td class="text-nowrap">{{ log.createdAt|date('Y-m-d H:i:s') }}</td>
+                                        <td>{{ log.username }} <span class="font-monospace text-body-secondary small">{{ log.tokenPrefix }}</span></td>
+                                        <td class="font-monospace small">{{ log.toolName }}</td>
+                                        <td>
+                                            <span class="badge {{ log.outcome.value == 'ok' ? 'text-bg-success' : (log.outcome.value == 'error' ? 'text-bg-danger' : 'text-bg-warning') }}">
+                                                {{ ('mcp.settings.log.outcomes.' ~ log.outcome.value)|trans }}
+                                            </span>
+                                        </td>
+                                        <td class="small">
+                                            {% if log.details.reservationId is defined %}
+                                                {{ 'mcp.settings.log.reservation'|trans({'%id%': log.details.reservationId}) }}
+                                                {% if log.details.arrival is defined %}{{ log.details.arrival }} – {{ log.details.departure }}{% endif %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="5" class="text-center text-body-secondary">{{ 'mcp.settings.log.none'|trans }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

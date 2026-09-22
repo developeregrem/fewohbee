@@ -9,6 +9,8 @@ use App\Entity\Log;
 use App\Entity\MonthlyStatsSnapshot;
 use App\Entity\User;
 use App\Entity\WorkflowLog;
+use App\EventSubscriber\McpAccessSubscriber;
+use App\Security\ApiTokenContext;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
@@ -52,6 +54,7 @@ final class EntityChangeLogListener
         private readonly Security $security,
         private readonly RequestStack $requestStack,
         private readonly LoggerInterface $logger,
+        private readonly ApiTokenContext $apiTokenContext,
     ) {
     }
 
@@ -125,7 +128,15 @@ final class EntityChangeLogListener
         $user = $this->security->getUser();
         $username = $user instanceof User ? $user->getUserIdentifier() : null;
         $userId = $user instanceof User ? $user->getId() : null;
-        $ip = $this->requestStack->getCurrentRequest()?->getClientIp();
+        $request = $this->requestStack->getCurrentRequest();
+        $ip = $request?->getClientIp();
+        $apiToken = $this->apiTokenContext->getToken();
+        $channel = match (true) {
+            null === $request => null,
+            null === $apiToken => 'web',
+            McpAccessSubscriber::isMcpPath($request->getPathInfo()) => 'mcp',
+            default => 'api',
+        };
         $now = new \DateTimeImmutable();
 
         // background EM isolates audit writes from the primary flush so they cannot recurse or pick up unrelated dirty entities.
@@ -150,6 +161,8 @@ final class EntityChangeLogListener
                 $log->setUser($userRef);
                 $log->setUsername($username);
                 $log->setIpAddress($ip);
+                $log->setChannel($channel);
+                $log->setApiTokenPrefix($apiToken?->getTokenPrefix());
                 $logEm->persist($log);
             }
             $logEm->flush();

@@ -1,0 +1,75 @@
+mcp:
+  nav:
+    label: AI assistants
+  settings:
+    page_title: AI assistants (MCP)
+    intro: >-
+      Connect AI assistants such as Claude, ChatGPT-compatible tools or n8n directly to FewohBee. They can then
+      create evaluations, check availability and – if you allow it – create reservations. Every access has exactly
+      the permissions you grant it when you create it.
+    section:
+      access: Settings for all users
+      access_desc: >-
+        These switches apply to the whole installation. What a single AI access may read and do is chosen by
+        each user when creating their access in the profile – but never more than allowed here.
+      users: User accesses
+      tokens: Active AI accesses
+      log: Recent actions
+    enabled:
+      label: Allow AI assistants
+      help: Switches the interface on or off for all users. Existing AI accesses only work while this switch is on.
+    write_enabled:
+      label: AI assistants may create reservations
+      help: >-
+        When off, no AI access can create reservations. When on, each user decides when creating their access
+        whether the AI may create reservations. Every reservation created by an AI assistant appears in the
+        notification window.
+    allowed_hosts:
+      label: Addresses of this FewohBee installation
+      help: >-
+        The host names under which your FewohBee is reached – one per line, e.g. fewohbee.example.com from
+        https://fewohbee.example.com/mcp. Not the address of the AI tool. Requests for other host names are
+        rejected. localhost is always allowed.
+      invalid: 'Not valid host names: %hosts%'
+    privacy_hint: >-
+      Everything an AI assistant retrieves is transferred to the AI provider. Guest data (names, contact details,
+      remarks) is only sent to the AI when an access has the permission "Share guest data". Check beforehand whether
+      you need a data processing agreement with the provider.
+    connection:
+      host_not_allowed: >-
+        The interface is not reachable under this address (%host%). Add the host name below under "Addresses of
+        this FewohBee installation" and save.
+      https_required: >-
+        The interface only works over HTTPS (encrypted), because the access is sent with every request. Set up a
+        valid certificate.
+      insecure_allowed: >-
+        The interface is enabled without encryption (HTTP). Only use this in a trusted local network.
+    users:
+      text: >-
+        Every user creates their own access in their profile under "API access" and chooses "AI assistant (MCP)"
+        as its use. There they decide what the AI may read and do – within their role and the switches above.
+        They also find the interface address and setup examples there.
+      link: Create your own access in the profile
+    tokens:
+      desc: All accesses with the permission for AI assistants, of all users.
+      user: User
+      none: There are no accesses for AI assistants yet.
+      revoke: Revoke access
+      revoke_ask: Revoke access?
+      revoked: The access was revoked.
+    log:
+      desc: The last 50 calls by AI assistants. Entries are deleted after 90 days.
+      date: Time
+      tool: Action
+      outcome: Result
+      details: Details
+      reservation: 'Reservation #%id%'
+      none: No calls yet.
+      outcomes:
+        ok: successful
+        denied: denied
+        invalid: invalid
+        rate_limited: limit reached
+        error: error
+    flash:
+      saved: The settings were saved.
